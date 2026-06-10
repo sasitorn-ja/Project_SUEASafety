@@ -3,8 +3,8 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
-import { Home, ShieldCheck, UsersRound, Bell, Menu, Heart, X, LogIn, Trophy, Gift, Settings2 } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Home, ShieldCheck, UsersRound, Bell, Menu, Heart, X, LogIn, Trophy, Gift, Settings2, ClipboardCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { isExactNavActive, isMainNavActive } from "@/lib/navigation";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -15,9 +15,9 @@ function NavTo(props: any) {
 
 const NAV_ITEMS = [
   { id: "dashboard", label: "Home", icon: Home, href: "/" },
-  { id: "features", label: "Features", icon: Menu, href: "/work-permit" },
   { id: "safety-effort", label: "Safety Effort", icon: ShieldCheck, href: "/category" },
   { id: "were-ok", label: "We're OK", icon: UsersRound, href: "/were-ok" },
+  { id: "work-permit", label: "Work Permit", icon: ClipboardCheck, href: "/work-permit" },
   { id: "safety-culture", label: "Safety Culture", icon: Heart, href: "/safety-culture" },
 ];
 
@@ -74,8 +74,13 @@ const ENABLED_HREFS = new Set(["/", "/category", "/were-ok", "/work-permit", "/s
 export function DesktopTopbar() {
   const pathname = usePathname() ?? "";
   const [open, setOpen] = useState(false);
+  const [desktopMenu, setDesktopMenu] = useState<"safety-culture" | "admin" | null>(null);
 
   const isActive = (href: string) => isMainNavActive(pathname, href);
+
+  useEffect(() => {
+    setDesktopMenu(null);
+  }, [pathname]);
 
   return (
     <header
@@ -214,22 +219,35 @@ export function DesktopTopbar() {
 
             if (item.id === "safety-culture") {
               return (
-                <div key={item.id} className="flex items-center gap-2">
-                  <div className="group relative">
-                  <NavTo
-                    href={item.href}
-                    className={cn(
-                      "inline-flex h-11 items-center justify-center gap-2 rounded-full px-4 text-sm font-bold whitespace-nowrap transition-all",
-                      active
-                        ? "bg-[#9a5b08] text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.18),0_8px_18px_rgba(0,0,0,0.18)]"
-                        : "bg-transparent text-white/[0.82] hover:bg-white/10 hover:text-white"
-                    )}
+                <div
+                  key={item.id}
+                  className="flex items-center gap-2"
+                  onMouseLeave={() => setDesktopMenu(null)}
+                >
+                  <div
+                    className="relative"
+                    onMouseEnter={() => setDesktopMenu("safety-culture")}
+                    onFocus={() => setDesktopMenu("safety-culture")}
                   >
-                    <Icon className="h-[17px] w-[17px]" strokeWidth={2.35} />
-                    <span>{item.label}</span>
-                  </NavTo>
+                    <NavTo
+                      href={item.href}
+                      className={cn(
+                        "inline-flex h-11 items-center justify-center gap-2 rounded-full px-4 text-sm font-bold whitespace-nowrap transition-all",
+                        active
+                          ? "bg-[#9a5b08] text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.18),0_8px_18px_rgba(0,0,0,0.18)]"
+                          : "bg-transparent text-white/[0.82] hover:bg-white/10 hover:text-white"
+                      )}
+                    >
+                      <Icon className="h-[17px] w-[17px]" strokeWidth={2.35} />
+                      <span>{item.label}</span>
+                    </NavTo>
 
-                    <div className="invisible absolute left-1/2 top-full z-50 w-[360px] -translate-x-1/2 pt-2.5 opacity-0 transition-all duration-150 group-hover:visible group-hover:translate-y-0 group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100">
+                    <div
+                      className={cn(
+                        "absolute left-1/2 top-full z-50 w-[360px] -translate-x-1/2 pt-2.5 transition-all duration-150",
+                        desktopMenu === "safety-culture" ? "visible opacity-100" : "invisible opacity-0"
+                      )}
+                    >
                       <div className="rounded-xl border border-white/[0.14] bg-[rgba(59,29,7,0.88)] p-2.5 text-white shadow-[0_18px_44px_rgba(38,18,3,0.24)] backdrop-blur-xl">
                         {SAFETY_CULTURE_ITEMS.map((subitem) => {
                           const SubIcon = subitem.icon;
@@ -257,9 +275,14 @@ export function DesktopTopbar() {
                     </div>
                   </div>
 
-                  <div className="group relative">
+                  <div
+                    className="relative"
+                    onMouseEnter={() => setDesktopMenu("admin")}
+                    onFocus={() => setDesktopMenu("admin")}
+                  >
                     <button
                       type="button"
+                      onClick={() => setDesktopMenu("admin")}
                       className={cn(
                         "inline-flex h-11 items-center justify-center gap-2 rounded-full px-4 text-sm font-bold whitespace-nowrap transition-all",
                         pathname === "/safety-admin" || pathname.startsWith("/safety-culture/admin-")
@@ -271,7 +294,12 @@ export function DesktopTopbar() {
                       <span>Admin</span>
                     </button>
 
-                    <div className="invisible absolute left-1/2 top-full z-50 w-[360px] -translate-x-1/2 pt-2.5 opacity-0 transition-all duration-150 group-hover:visible group-hover:translate-y-0 group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100">
+                    <div
+                      className={cn(
+                        "absolute left-1/2 top-full z-50 w-[360px] -translate-x-1/2 pt-2.5 transition-all duration-150",
+                        desktopMenu === "admin" ? "visible opacity-100" : "invisible opacity-0"
+                      )}
+                    >
                       <div className="rounded-xl border border-white/[0.14] bg-[rgba(59,29,7,0.88)] p-2.5 text-white shadow-[0_18px_44px_rgba(38,18,3,0.24)] backdrop-blur-xl">
                         {ADMIN_ITEMS.map((subitem) => {
                           const SubIcon = subitem.icon;
