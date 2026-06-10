@@ -2,7 +2,6 @@
 
 import Image from "next/image";
 import { useState } from "react";
-import { AppShell } from "@/components/layout/app-shell";
 import { SafetyCultureHero } from "@/components/safety-culture/safety-culture-hero";
 import { SafetyCultureTabs } from "@/components/safety-culture/safety-culture-tabs";
 import { SafetyCulturePageHeader } from "@/components/safety-culture/safety-culture-page-header";
@@ -74,7 +73,7 @@ export default function RewardsPage() {
         );
 
   return (
-    <AppShell>
+    <>
       <div className="mx-auto w-full max-w-[1180px] px-3.5 pt-2 pb-8 md:px-4">
         <div className="anim-fade" style={animStyle(0)}>
           <SafetyCultureHero
@@ -237,6 +236,6 @@ export default function RewardsPage() {
           </button>
         </DialogContent>
       </Dialog>
-    </AppShell>
+    </>
   );
 }

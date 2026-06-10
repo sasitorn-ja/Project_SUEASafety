@@ -10,7 +10,6 @@ import {
   type Comment as CommentType,
   getSafetyCultureEventPhase,
 } from "@/providers/app-providers";
-import { AppShell } from "@/components/layout/app-shell";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -251,7 +250,7 @@ export default function Page() {
   };
 
   return (
-    <AppShell>
+    <>
       <div className="mx-auto w-full max-w-[1180px] bg-[#f1ecdf] px-3.5 pt-0 pb-8 md:px-4 font-sarabun">
         <div className="anim-fade" style={animStyle(0)}>
           <SafetyCultureHero
@@ -590,6 +589,6 @@ export default function Page() {
           </div>
         </div>
       </div>
-    </AppShell>
+    </>
   );
 }

@@ -4,7 +4,6 @@ import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAppState, useAppActions } from "@/providers/app-providers";
-import { AppShell } from "@/components/layout/app-shell";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
@@ -141,7 +140,7 @@ export default function KytPage() {
   };
 
   return (
-    <AppShell>
+    <>
       <div className="w-full min-h-[calc(100vh-80px)] bg-background flex justify-center items-start">
         <div className="w-full max-w-[500px] lg:max-w-full mx-auto px-5 md:px-20 py-6 md:py-[60px] flex flex-col">
           <div className="w-full max-w-[600px] lg:max-w-full mx-auto flex flex-col flex-1">
@@ -309,6 +308,6 @@ export default function KytPage() {
         onChange={handleFileChange}
       />
       <canvas ref={canvasRef} className="hidden" />
-    </AppShell>
+    </>
   );
 }

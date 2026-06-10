@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { ClipboardCheck, HeartPulse, ShieldCheck, UsersRound } from "lucide-react";
-import { AppShell } from "@/components/layout/app-shell";
 import { Card } from "@/components/ui/card";
 
 const MODULES = [
@@ -34,7 +33,7 @@ const MODULES = [
 
 export default function HomePage() {
   return (
-    <AppShell>
+    <>
       <div className="mx-auto w-full max-w-[1180px] px-4 pb-8 font-sarabun">
         <section className="overflow-hidden rounded-[28px] bg-[linear-gradient(135deg,#3b1d07,#75410f)] px-6 py-8 text-white shadow-[0_16px_38px_rgba(59,29,7,0.18)] md:px-10 md:py-12">
           <p className="text-xs font-extrabold uppercase tracking-[0.18em] text-[#ffcf55]">SUEA Safety Home</p>
@@ -61,6 +60,6 @@ export default function HomePage() {
           })}
         </section>
       </div>
-    </AppShell>
+    </>
   );
 }

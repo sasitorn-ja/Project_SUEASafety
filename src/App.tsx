@@ -3,9 +3,6 @@ import { useEffect, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import { Navigate, Route, Routes, useLocation, useNavigate } from "./lib/router-compat";
 const mascotLogo = "/images/mascots/suea-mascot-logo.png";
-import { DesktopTopbar as HubDesktopTopbar } from "@/components/layout/desktop-topbar";
-import { MobileTopbar as HubMobileTopbar } from "@/components/layout/mobile-topbar";
-import { MobileBottomNav as HubMobileBottomNav } from "@/components/layout/mobile-bottom-nav";
 
 const screenLoading = (label) => (
   <div
@@ -800,7 +797,6 @@ export default function App() {
       <>
         <style>{GLOBAL_STYLES}</style>
         <div style={{ height: "100vh", overflow: "hidden", background: T.background, fontFamily: "'Prompt','Sarabun',sans-serif", color: T.foreground }}>
-          <HubMobileTopbar hidden={!navVisible} />
           <main
             ref={mainRef}
             onScroll={handleScroll}
@@ -816,9 +812,6 @@ export default function App() {
           >
             <AppRoutes onScroll={handleScroll} />
           </main>
-          {!hideBottomNav && (
-            <HubMobileBottomNav hidden={!navVisible} />
-          )}
         </div>
       </>
     );
@@ -829,7 +822,6 @@ export default function App() {
     <>
       <style>{GLOBAL_STYLES}</style>
       <div style={{ height: "100vh", overflow: "hidden", background: T.background, fontFamily: "'Prompt','Sarabun',sans-serif", color: T.foreground }}>
-        <HubDesktopTopbar />
         <div style={{
           position: "absolute", inset: 0,
           paddingTop: 68,

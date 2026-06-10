@@ -11,6 +11,7 @@ import {
   useMemo,
   useState,
 } from "react";
+import { usePathname } from "next/navigation";
 
 type LegacyLocation = {
   pathname: string;
@@ -68,6 +69,7 @@ function normalizePath(path?: string) {
 }
 
 export function BrowserRouter({ children }: BrowserRouterProps) {
+  const nextPathname = usePathname();
   const [location, setLocation] = useState(readLocation);
 
   useEffect(() => {
@@ -80,6 +82,10 @@ export function BrowserRouter({ children }: BrowserRouterProps) {
       window.removeEventListener("legacy-router:navigate", syncLocation);
     };
   }, []);
+
+  useEffect(() => {
+    setLocation(readLocation());
+  }, [nextPathname]);
 
   const navigate = useMemo<NavigateFn>(
     () => (to, options = {}) => {

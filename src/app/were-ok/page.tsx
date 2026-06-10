@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useAppState, useAppActions } from "@/providers/app-providers";
-import { AppShell } from "@/components/layout/app-shell";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -102,7 +101,7 @@ export default function WereOkPage() {
   };
 
   return (
-    <AppShell>
+    <>
       <div className="w-full min-h-[calc(100vh-80px)] bg-background flex justify-center items-start">
         <div className="w-full max-w-[1360px] mx-auto px-4 pb-8 md:px-10 md:pb-8 md:pt-8 pt-2">
           {/* Header */}
@@ -457,6 +456,6 @@ export default function WereOkPage() {
           </div>
         </div>
       )}
-    </AppShell>
+    </>
   );
 }
