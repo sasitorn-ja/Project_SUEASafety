@@ -23,7 +23,7 @@ export function SafetyCultureTabs() {
           const active = pathname === tab.href;
 
           return (
-            <Link key={tab.href} href={tab.href} className="flex-1">
+            <Link key={tab.href} href={tab.href} prefetch={false} className="flex-1">
               <Button
                 variant="ghost"
                 className={cn(

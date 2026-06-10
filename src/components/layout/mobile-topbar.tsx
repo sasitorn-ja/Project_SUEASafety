@@ -23,7 +23,7 @@ import { cn } from "@/lib/utils";
 import { isExactNavActive, isMainNavActive } from "@/lib/navigation";
 
 function NavTo(props: any) {
-  return <Link {...props} />;
+  return <Link prefetch={false} {...props} />;
 }
 
 const MAIN_ITEMS = [

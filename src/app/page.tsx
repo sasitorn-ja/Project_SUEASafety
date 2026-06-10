@@ -48,7 +48,7 @@ export default function HomePage() {
           {MODULES.map((module) => {
             const Icon = module.icon;
             return (
-              <Link key={module.href} href={module.href} className="group">
+              <Link key={module.href} href={module.href} prefetch={false} className="group">
                 <Card className="h-full rounded-[24px] border-[#5c3214]/15 bg-[#fffdf7] p-5 transition-all group-hover:-translate-y-0.5 group-hover:border-[#f5bb00] group-hover:shadow-[0_12px_24px_rgba(59,29,7,0.10)]">
                   <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#fff1c9] text-[#6d4716]">
                     <Icon className="h-6 w-6" strokeWidth={2.3} />

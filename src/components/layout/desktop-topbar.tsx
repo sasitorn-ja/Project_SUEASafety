@@ -10,7 +10,7 @@ import { isExactNavActive, isMainNavActive } from "@/lib/navigation";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
 function NavTo(props: any) {
-  return <Link {...props} />;
+  return <Link prefetch={false} {...props} />;
 }
 
 const NAV_ITEMS = [

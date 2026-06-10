@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 import { isMainNavActive } from "@/lib/navigation";
 
 function NavTo(props: any) {
-  return <Link {...props} />;
+  return <Link prefetch={false} {...props} />;
 }
 
 const NAV_ITEMS = [
