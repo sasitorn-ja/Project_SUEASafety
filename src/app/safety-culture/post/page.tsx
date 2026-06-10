@@ -1,0 +1,389 @@
+"use client";
+
+import { useRef, useState } from "react";
+import Image from "next/image";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { ArrowLeft, Camera, Plus, X } from "lucide-react";
+import { toast } from "sonner";
+import { useAppActions, useAppState } from "@/providers/app-providers";
+import { AppShell } from "@/components/layout/app-shell";
+import { SafetyCultureHero } from "@/components/safety-culture/safety-culture-hero";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Textarea } from "@/components/ui/textarea";
+import { SAFETY_CULTURE_CATEGORIES } from "@/lib/safety-culture";
+import { cn } from "@/lib/utils";
+
+const CATEGORIES = SAFETY_CULTURE_CATEGORIES.filter(
+  (category) => !["ทั้งหมด", "ทีมของฉัน"].includes(category)
+);
+const MAX_PHOTOS = 5;
+const MAX_PHOTO_EDGE = 1600;
+const PHOTO_OUTPUT_QUALITY = 0.78;
+
+type DraftPhoto = {
+  type: string;
+  dataUrl: string;
+};
+
+function loadImage(src: string) {
+  return new Promise<HTMLImageElement>((resolve, reject) => {
+    const image = new window.Image();
+    image.onload = () => resolve(image);
+    image.onerror = () => reject(new Error("Unable to load image"));
+    image.src = src;
+  });
+}
+
+async function fileToDataUrl(file: File) {
+  return new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = (event) => resolve((event.target?.result as string) || "");
+    reader.onerror = () => reject(new Error("Unable to read image"));
+    reader.readAsDataURL(file);
+  });
+}
+
+async function optimizeImage(file: File) {
+  const sourceUrl = await fileToDataUrl(file);
+  const image = await loadImage(sourceUrl);
+  const scale = Math.min(1, MAX_PHOTO_EDGE / Math.max(image.width, image.height));
+  const width = Math.max(1, Math.round(image.width * scale));
+  const height = Math.max(1, Math.round(image.height * scale));
+  const canvas = document.createElement("canvas");
+  canvas.width = width;
+  canvas.height = height;
+
+  const context = canvas.getContext("2d");
+  if (!context) return sourceUrl;
+
+  context.drawImage(image, 0, 0, width, height);
+  return canvas.toDataURL("image/jpeg", PHOTO_OUTPUT_QUALITY);
+}
+
+export default function PostSocialPage() {
+  const router = useRouter();
+  const actions = useAppActions();
+  const { safetyCultureEvent, isEventLive } = useAppState();
+  const shouldShowEventHint = safetyCultureEvent.status !== "draft";
+  const [text, setText] = useState("");
+  const [activeCategory, setActiveCategory] = useState("KYT");
+  const [photos, setPhotos] = useState<DraftPhoto[]>([]);
+  const [isProcessingPhotos, setIsProcessingPhotos] = useState(false);
+  const cameraRef = useRef<HTMLInputElement>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  const animStyle = (delay: number) => ({
+    animationDelay: `${delay}s`,
+  });
+
+  const appendFiles = async (files: File[], type: "capture" | "upload") => {
+    if (!files.length) return;
+
+    setIsProcessingPhotos(true);
+
+    try {
+      const remainingSlots = Math.max(0, MAX_PHOTOS - photos.length);
+      const selectedFiles = files.slice(0, remainingSlots);
+      const nextPhotos: DraftPhoto[] = [];
+
+      for (const file of selectedFiles) {
+        try {
+          const dataUrl = await optimizeImage(file);
+          nextPhotos.push({ type, dataUrl });
+        } catch {
+          toast.error("แนบรูปไม่สำเร็จ", {
+            description: "มีบางรูปที่ไม่สามารถเพิ่มได้ กรุณาลองใหม่อีกครั้ง",
+          });
+        }
+      }
+
+      if (nextPhotos.length > 0) {
+        setPhotos((prev) => [...prev, ...nextPhotos].slice(0, MAX_PHOTOS));
+      }
+    } finally {
+      setIsProcessingPhotos(false);
+    }
+  };
+
+  const handleCameraChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    await appendFiles([file], "capture");
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    e.target.value = "";
+    await appendFiles(files, "upload");
+  };
+
+  const handleSubmit = () => {
+    if (!text.trim()) {
+      toast.error("ยังโพสต์ไม่ได้", {
+        description: "กรุณาเขียนรายละเอียดก่อนโพสต์",
+      });
+      return;
+    }
+
+    if (isProcessingPhotos) {
+      toast.error("กำลังเตรียมรูปภาพ", {
+        description: "กรุณารอสักครู่แล้วลองโพสต์อีกครั้ง",
+      });
+      return;
+    }
+
+    const timestamp = Date.now();
+    const attachedPhotos = photos
+      .filter((photo) => photo.dataUrl)
+      .map((photo, index) => ({
+        id: `${timestamp}-${index}`,
+        dataUrl: photo.dataUrl,
+        type: photo.type,
+      }));
+
+    actions.addPost({
+      id: timestamp,
+      author: "Chaiwat T.",
+      avatarBg: "#F5BB00",
+      avatarColor: "#1A1A1A",
+      avatarText: "C",
+      isYou: true,
+      createdAt: timestamp,
+      subtext: "BPI-04 · เมื่อสักครู่ · Yellow",
+      category: activeCategory,
+      body: text,
+      photos: attachedPhotos,
+      imageData: null,
+      likes: 0,
+      comments: [],
+      points: 6,
+      hasLiked: false,
+    });
+
+    const bonusLabel =
+      safetyCultureEvent.bonusMode === "multiplier"
+        ? `x${safetyCultureEvent.multiplier}`
+        : `+${safetyCultureEvent.fixedPoints} แต้มเพิ่ม`;
+
+    toast.success("โพสต์สำเร็จ", {
+      description: isEventLive
+        ? `แชร์เรื่องความปลอดภัยแล้ว ได้ฐาน +6 แต้ม และโบนัสอีเว้น ${bonusLabel}`
+        : "แชร์เรื่องความปลอดภัยแล้ว ได้รับ +6 แต้ม",
+    });
+
+    setTimeout(() => router.push("/safety-culture"), 800);
+  };
+
+  return (
+    <AppShell>
+      <div className="mx-auto w-full max-w-[600px] px-4 pb-8 pt-2">
+        <header
+          className="anim-fade flex items-center justify-between pb-3 pt-2"
+          style={animStyle(0)}
+        >
+          <div className="flex items-center gap-3">
+            <Link href="/safety-culture">
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-10 w-10 rounded-full border-[#E4D4B8] bg-[#FFFDF7] hover:border-foreground hover:bg-[#EFEBE0]"
+              >
+                <ArrowLeft className="h-5 w-5" />
+              </Button>
+            </Link>
+            <h1 className="text-xl font-extrabold text-foreground">
+              แชร์เรื่องปลอดภัย
+            </h1>
+          </div>
+          <Button
+            onClick={handleSubmit}
+            disabled={isProcessingPhotos}
+            className="rounded-full bg-[#1A1A1A] px-6 text-sm font-extrabold text-white shadow-[0_4px_10px_rgba(0,0,0,0.1)] transition-all hover:bg-[#F5BB00] hover:text-[#1A1A1A] disabled:cursor-wait disabled:opacity-70"
+          >
+            โพสต์
+          </Button>
+        </header>
+
+        <div className="anim-fade mb-5" style={animStyle(0.03)}>
+          <SafetyCultureHero
+            eyebrow="SUEA SAFETY POST"
+            title={
+              <>
+                แชร์เรื่อง <span className="text-[#F5BB00]">ปลอดภัย</span>
+              </>
+            }
+            description="เล่าเหตุการณ์ดี ๆ หรือจุดเสี่ยงให้เพื่อนร่วมทีมเห็นได้เร็วขึ้น"
+            mascotSrc="/images/mascots/suea-mascot.png"
+            mascotAlt="SUEA Mascot"
+          />
+        </div>
+
+        <div
+          className="anim-fade mb-5 flex items-center gap-3 rounded-[20px] border-[1.5px] border-[#DDD9CD] bg-white p-4"
+          style={animStyle(0.05)}
+        >
+          <div className="flex h-11 w-11 items-center justify-center rounded-full border-2 border-[#F5BB00] bg-[#FFF9E6] text-lg font-extrabold text-[#F5BB00]">
+            C
+          </div>
+          <div className="flex flex-col gap-1">
+            <span className="text-[15px] font-extrabold text-foreground">
+              Chaiwat T.
+            </span>
+            <div className="flex gap-1.5">
+              <span className="rounded-md border border-[#F5BB00] bg-[#FFF9E6] px-2 py-0.5 text-[10px] font-[850] tracking-wide text-[#B58A00]">
+                TEAM YELLOW
+              </span>
+              <span className="rounded-md border border-[#C5C1B5] bg-[#EFEBE0] px-2 py-0.5 text-[10px] font-[850] tracking-wide text-[#555149]">
+                📍 BPI-04
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div
+          className="anim-fade mb-5 flex min-h-[180px] flex-col gap-2.5 rounded-3xl border-2 border-[#5C350C] bg-[#FFFDF7] p-4 md:p-5"
+          style={animStyle(0.1)}
+        >
+          <Textarea
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            maxLength={500}
+            placeholder="ร่วมแชร์วิธีทำงานที่ปลอดภัย สภาพหน้างานที่เป็นอันตราย หรือวิธีป้องกันแก้ไขอุบัติเหตุร่วมกัน..."
+            className="min-h-[120px] flex-1 resize-none border-0 bg-transparent p-0 text-[15.5px] font-semibold leading-relaxed text-[#33312C] focus-visible:ring-0"
+          />
+          <div className="flex justify-end">
+            <span className="text-[11.5px] font-bold text-muted-foreground">
+              {text.length} / 500
+            </span>
+          </div>
+        </div>
+
+        <div className="anim-fade mb-5" style={animStyle(0.15)}>
+          <h3 className="mb-2 text-[13.5px] font-[850] uppercase tracking-wide text-foreground">
+            หมวดหมู่
+          </h3>
+          <div className="flex flex-wrap gap-2">
+            {CATEGORIES.map((category) => (
+              <button
+                key={category}
+                onClick={() => setActiveCategory(category)}
+                className={cn(
+                  "rounded-full border-[1.5px] px-4 py-2 text-[13px] font-bold outline-none transition-all",
+                  activeCategory === category
+                    ? "border-[#5C350C] bg-[#5C350C] text-white shadow-[0_3px_8px_rgba(245,187,0,0.15)]"
+                    : "border-[#E4D4B8] bg-white text-[#6B5844] hover:border-[#B78922] hover:bg-[#FFF7E8]"
+                )}
+              >
+                {category}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="anim-fade mb-5" style={animStyle(0.2)}>
+          <div className="mb-2 flex items-center justify-between gap-3">
+            <h3 className="text-[13.5px] font-[850] uppercase tracking-wide text-foreground">
+              รูปภาพ · {photos.length} / {MAX_PHOTOS}
+            </h3>
+            {isProcessingPhotos ? (
+              <span className="text-[11px] font-bold text-[#8E8A81]">
+                กำลังเตรียมรูปภาพ...
+              </span>
+            ) : null}
+          </div>
+          <div className="grid grid-cols-3 gap-3">
+            {photos.map((photo, idx) => (
+              <div
+                key={idx}
+                className="relative aspect-square overflow-hidden rounded-2xl border-[1.5px] border-[#DDD9CD] bg-[#EFEBE0]"
+              >
+                <Image
+                  src={photo.dataUrl}
+                  alt={`Upload ${idx + 1}`}
+                  fill
+                  unoptimized
+                  className="object-cover"
+                />
+                <button
+                  onClick={() =>
+                    setPhotos((prev) => prev.filter((_, photoIndex) => photoIndex !== idx))
+                  }
+                  className="absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-black/60 text-white transition-colors hover:bg-black/80"
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              </div>
+            ))}
+
+            {photos.length < MAX_PHOTOS && (
+              <button
+                onClick={() => cameraRef.current?.click()}
+                disabled={isProcessingPhotos}
+                className="flex aspect-square flex-col items-center justify-center gap-1 rounded-2xl border-2 border-dashed border-[#C5C1B5] bg-white text-xs font-bold text-[#555149] transition-colors hover:border-foreground hover:bg-[#FAF9F5] disabled:cursor-wait disabled:opacity-60"
+              >
+                <Camera className="mb-0.5 h-5 w-5" />
+                ถ่ายรูป
+              </button>
+            )}
+
+            {photos.length < MAX_PHOTOS && (
+              <button
+                onClick={() => fileRef.current?.click()}
+                disabled={isProcessingPhotos}
+                className="flex aspect-square flex-col items-center justify-center gap-1 rounded-2xl border-2 border-dashed border-[#C5C1B5] bg-white text-xs font-bold text-[#555149] transition-colors hover:border-foreground hover:bg-[#FAF9F5] disabled:cursor-wait disabled:opacity-60"
+              >
+                <Plus className="mb-0.5 h-5 w-5" />
+                เพิ่มรูป
+              </button>
+            )}
+          </div>
+        </div>
+
+        {shouldShowEventHint ? (
+          <Card
+            className="anim-fade mb-5 flex w-full flex-row items-center justify-start gap-2 rounded-[18px] border border-[#F5BB00] bg-[#FFF9E6] px-3.5 py-2.5 text-left"
+            style={animStyle(0.25)}
+          >
+            <span className="flex-shrink-0 text-base">⚡</span>
+            <span className="text-[12.5px] font-bold leading-normal text-[#555149]">
+              โพสต์ที่ได้รับอนุมัติ +6 แต้ม · อีเว้นตอนนี้{" "}
+              {isEventLive ? "กำลัง Live" : "ยังไม่ Live"} · โบนัส{" "}
+              {safetyCultureEvent.bonusMode === "multiplier"
+                ? `x${safetyCultureEvent.multiplier}`
+                : `+${safetyCultureEvent.fixedPoints}`}
+            </span>
+          </Card>
+        ) : null}
+
+        <Button
+          onClick={handleSubmit}
+          disabled={isProcessingPhotos}
+          className="anim-fade h-auto w-full rounded-2xl bg-[#1A1A1A] py-4 text-[15px] font-extrabold text-white shadow-[0_8px_18px_rgba(26,26,26,0.12)] transition-all hover:bg-[#F5BB00] hover:text-[#1A1A1A] active:scale-[0.98] disabled:cursor-wait disabled:opacity-70"
+          style={animStyle(0.28)}
+        >
+          {isProcessingPhotos ? "กำลังเตรียมรูปภาพ..." : "โพสต์"}
+        </Button>
+
+        <input
+          type="file"
+          ref={cameraRef}
+          accept="image/*"
+          capture="environment"
+          className="hidden"
+          onChange={handleCameraChange}
+        />
+        <input
+          type="file"
+          ref={fileRef}
+          accept="image/*"
+          multiple
+          className="hidden"
+          onChange={handleFileChange}
+        />
+      </div>
+    </AppShell>
+  );
+}
