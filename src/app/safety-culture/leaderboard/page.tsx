@@ -25,7 +25,7 @@ export default function LeaderboardPage() {
 
   return (
     <>
-      <div className="mx-auto w-full max-w-[1180px] bg-[var(--background)] px-3.5 pt-0 pb-8 font-sarabun md:px-4">
+      <div className="mx-auto w-full max-w-[1180px] bg-[var(--background)] px-3.5 pt-2 pb-8 font-sarabun md:px-4">
         <div className="anim-fade" style={animStyle(0)}>
           <SafetyCultureHero
             eyebrow="SUEA SAFETY SCOREBOARD"

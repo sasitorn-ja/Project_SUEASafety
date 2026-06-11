@@ -30,7 +30,7 @@ export function SafetyCultureHero({
   return (
     <Card className="relative overflow-hidden rounded-[18px] border-[2px] border-[var(--brand-accent)] bg-[linear-gradient(135deg,var(--brand-hero-start)_0%,var(--brand-nav)_50%,var(--brand-hero-end)_100%)] shadow-[0_12px_28px_var(--brand-shadow)] font-sarabun">
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_84%_34%,rgba(var(--brand-accent-rgb),0.20),transparent_28%),linear-gradient(90deg,rgba(22,10,2,0.24),transparent_54%)]" />
-      <div className="absolute bottom-0 left-0 right-0 h-3 bg-[repeating-linear-gradient(-45deg,var(--brand-accent-strong),var(--brand-accent-strong)_12px,#15120e_12px,#15120e_24px)] md:h-[13px]" />
+      <div className="absolute bottom-0 left-0 right-0 h-3 bg-[repeating-linear-gradient(-45deg,var(--brand-accent-strong),var(--brand-accent-strong)_12px,var(--c-15120e)_12px,var(--c-15120e)_24px)] md:h-[13px]" />
 
       <div
         className={cn(

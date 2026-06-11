@@ -388,13 +388,13 @@ export default function FitToDrivePage() {
                       <path
                         d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
                         fill="none"
-                        stroke="#ECEAE0"
+                        stroke="var(--c-eceae0)"
                         strokeWidth="2.5"
                       />
                       <path
                         d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
                         fill="none"
-                        stroke={alcVal !== null && !isNaN(alcVal) && alcVal > 0 ? "#D9383A" : alcVal !== null && !isNaN(alcVal) && alcVal === 0 ? "#3D9A6A" : "#ECEAE0"}
+                        stroke={alcVal !== null && !isNaN(alcVal) && alcVal > 0 ? "#D9383A" : alcVal !== null && !isNaN(alcVal) && alcVal === 0 ? "#3D9A6A" : "var(--c-eceae0)"}
                         strokeWidth="2.5"
                         strokeDasharray="100, 100"
                         style={{ transition: "stroke 0.2s" }}

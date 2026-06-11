@@ -80,15 +80,15 @@ export default function CreatePost() {
                 gap: 10,
               }}
             >
-              <div style={{ borderRadius: 12, background: "#f8f4ea", padding: "12px 14px" }}>
+              <div style={{ borderRadius: 12, background: "var(--c-f8f4ea)", padding: "12px 14px" }}>
                 <div style={{ fontSize: 11, fontWeight: 800, color: T.foreground3, textTransform: "uppercase" }}>Location</div>
                 <div style={{ marginTop: 4, fontSize: 15, fontWeight: 800 }}>{checkin?.name ?? "-"}</div>
               </div>
-              <div style={{ borderRadius: 12, background: "#f8f4ea", padding: "12px 14px" }}>
+              <div style={{ borderRadius: 12, background: "var(--c-f8f4ea)", padding: "12px 14px" }}>
                 <div style={{ fontSize: 11, fontWeight: 800, color: T.foreground3, textTransform: "uppercase" }}>Activity</div>
                 <div style={{ marginTop: 4, fontSize: 15, fontWeight: 800 }}>{activity?.label ?? "-"}</div>
               </div>
-              <div style={{ borderRadius: 12, background: "#f8f4ea", padding: "12px 14px" }}>
+              <div style={{ borderRadius: 12, background: "var(--c-f8f4ea)", padding: "12px 14px" }}>
                 <div style={{ fontSize: 11, fontWeight: 800, color: T.foreground3, textTransform: "uppercase" }}>Date</div>
                 <div style={{ marginTop: 4, fontSize: 15, fontWeight: 800 }}>{linewalkData?.date ?? "-"}</div>
               </div>
@@ -127,7 +127,7 @@ export default function CreatePost() {
                 height: 38,
                 borderRadius: 10,
                 border: "none",
-                background: `linear-gradient(180deg, ${T.primary} 0%, #e0ad00 100%)`,
+                background: `linear-gradient(180deg, ${T.primary} 0%, var(--c-e0ad00) 100%)`,
                 color: T.primaryFg,
                 fontFamily: "inherit",
                 fontSize: 14,

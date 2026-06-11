@@ -489,7 +489,7 @@ function DesktopNavbar({ activeId, onNav, navVisible }) {
           <span style={{ fontSize: 15, fontWeight: 800, color: "#ffffff", lineHeight: 1.2, letterSpacing: "0.02em" }}>
             SUEA Safety
           </span>
-          <span style={{ fontSize: 9.5, fontWeight: 500, color: "#d9c3b0", marginTop: 1 }}>
+          <span style={{ fontSize: 9.5, fontWeight: 500, color: "var(--c-d9c3b0)", marginTop: 1 }}>
             Safety User Environment Awareness
           </span>
         </div>
@@ -518,7 +518,7 @@ function DesktopNavbar({ activeId, onNav, navVisible }) {
                 borderRadius: "999px",
                 border: "none",
                 background: active ? "var(--brand-nav-active)" : "transparent",
-                color: active ? "#ffffff" : "#d9c3b0",
+                color: active ? "#ffffff" : "var(--c-d9c3b0)",
                 fontSize: 13.5,
                 fontWeight: active ? 700 : 500,
                 cursor: "pointer",
@@ -534,7 +534,7 @@ function DesktopNavbar({ activeId, onNav, navVisible }) {
               onMouseLeave={e => {
                 if (!active) {
                   e.currentTarget.style.background = "transparent";
-                  e.currentTarget.style.color = "#d9c3b0";
+                  e.currentTarget.style.color = "var(--c-d9c3b0)";
                 }
               }}
             >
@@ -646,7 +646,7 @@ function MobileTopBar({ visible }) {
               fontFamily: "'Prompt',sans-serif", lineHeight: 1.2
             }}>SUEA Safety</span>
             <span style={{
-              fontSize: 8.5, color: "#d9c3b0",
+              fontSize: 8.5, color: "var(--c-d9c3b0)",
               fontFamily: "'Prompt',sans-serif", marginTop: 1
             }}>Safety User Environment Awareness</span>
           </div>

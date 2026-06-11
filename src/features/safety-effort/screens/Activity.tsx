@@ -346,7 +346,7 @@ const STYLES = `
   }
   .ci-stepper-node.active {
     background: var(--brand-accent);
-    color: #1a1613;
+    color: var(--c-1a1613);
     box-shadow: 0 0 8px rgba(var(--brand-accent-rgb), 0.6);
   }
   .ci-stepper-node.done {
@@ -526,7 +526,7 @@ const STYLES = `
     display: flex; align-items: center; justify-content: center;
     transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
     flex-shrink: 0;
-    background: #f7f6f2; color: #767269;
+    background: var(--c-f7f6f2); color: #767269;
     border: 1px solid rgba(0,0,0,0.02);
   }
   .ac-card:hover:not(.sel) .ac-icon-box { background: var(--secondary); color: #0e0f12; }
@@ -632,7 +632,7 @@ const STYLES = `
     letter-spacing: 0.02em; position: relative; overflow: hidden;
   }
   .ac-cta.ready {
-    background: linear-gradient(135deg, var(--brand-text) 0%, #1a1613 100%); color: #fff;
+    background: linear-gradient(135deg, var(--brand-text) 0%, var(--c-1a1613) 100%); color: #fff;
     box-shadow: 0 10px 25px rgba(26, 22, 19, 0.25);
     padding: 14px;
   }
@@ -647,11 +647,11 @@ const STYLES = `
   .ac-cta.ready:hover {
     transform: translateY(-2px);
     box-shadow: 0 12px 28px rgba(26,22,19,0.32);
-    background: linear-gradient(135deg, #3d2f24 0%, var(--brand-text) 100%);
+    background: linear-gradient(135deg, var(--c-3d2f24) 0%, var(--brand-text) 100%);
   }
   .ac-cta.ready:active { transform: scale(0.985) translateY(-1px); }
   .ac-cta.disabled {
-    background: #e8e5dc; color: #9c988f;
+    background: var(--c-e8e5dc); color: #9c988f;
     cursor: not-allowed; box-shadow: none;
     padding: 14px;
     border: 1px solid rgba(0,0,0,0.03);
@@ -665,7 +665,7 @@ const STYLES = `
   }
   .ac-modal {
     width: 100%; max-width: 530px;
-    background: #fbf9f4; border-radius: 24px 24px 0 0;
+    background: var(--c-fbf9f4); border-radius: 24px 24px 0 0;
     padding: 24px 24px 38px;
     font-family: 'Sarabun', sans-serif;
     animation: ac-modal-in 0.35s cubic-bezier(0.16, 1, 0.3, 1);
@@ -759,7 +759,7 @@ const STYLES = `
   }
   .ac-modal-confirm:hover { opacity: 0.9; transform: translateY(-1px); }
   .ac-modal-confirm:disabled {
-    background: #e8e5dc; color: #9c988f;
+    background: var(--c-e8e5dc); color: #9c988f;
     cursor: not-allowed; box-shadow: none; transform: none; opacity: 1;
     border: 1px solid rgba(0,0,0,0.03);
   }

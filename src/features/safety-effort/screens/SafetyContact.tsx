@@ -12,7 +12,7 @@ const T = {
   primary: "#2f63df",
   primaryDark: "#264fba",
   border: "rgba(14,15,18,0.10)",
-  soft: "#f6f4ee",
+  soft: "var(--c-f6f4ee)",
 };
 
 export default function SafetyContact() {

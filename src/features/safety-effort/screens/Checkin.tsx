@@ -551,7 +551,7 @@ function AddModal({ onAdd, onClose, userPos }) {
         <div style={{
           display: "flex", gap: 6, marginBottom: 10,
           padding: "6px 12px", borderRadius: 10,
-          background: "#f4eedf", border: `1px solid rgba(14,15,18,0.06)`,
+          background: "var(--c-f4eedf)", border: `1px solid rgba(14,15,18,0.06)`,
           fontSize: 11, fontFamily: "'Prompt',monospace", color: T.foreground3, fontWeight: 700,
           letterSpacing: "0.02em",
         }}>
@@ -799,7 +799,7 @@ const STYLES = `
   }
   .ci-stepper-node.active {
     background: var(--brand-accent);
-    color: #1a1613;
+    color: var(--c-1a1613);
     box-shadow: 0 0 8px rgba(var(--brand-accent-rgb), 0.6);
   }
   .ci-stepper-node.done {
@@ -943,7 +943,7 @@ const STYLES = `
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   }
   .ci-filter-chip:hover:not(.active) {
-    background: #f7f6f2;
+    background: var(--c-f7f6f2);
     border-color: rgba(14,15,18,0.15);
     color: ${T.foreground};
   }
@@ -1010,7 +1010,7 @@ const STYLES = `
     border-radius: 12px; flex-shrink: 0;
     width: 42px; height: 42px; min-width: 42px; min-height: 42px;
     display: flex; align-items: center; justify-content: center;
-    background: #f7f6f2;
+    background: var(--c-f7f6f2);
     color: #767269;
     transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
     border: 1px solid rgba(0,0,0,0.02);
@@ -1058,9 +1058,9 @@ const STYLES = `
     padding: 1.5px 6px;
     letter-spacing: 0.01em;
   }
-  .ci-type-badge.type-factory { background: #fff2e6; color: #e65c00; border: 1px solid #ffe0cc; }
-  .ci-type-badge.type-site { background: #fefcee; color: #a16207; border: 1px solid #fef08a; }
-  .ci-type-badge.type-construction { background: #fefcee; color: #a16207; border: 1px solid #fef08a; }
+  .ci-type-badge.type-factory { background: var(--c-fff2e6); color: var(--c-e65c00); border: 1px solid var(--c-ffe0cc); }
+  .ci-type-badge.type-site { background: var(--c-fefcee); color: var(--c-a16207); border: 1px solid var(--c-fef08a); }
+  .ci-type-badge.type-construction { background: var(--c-fefcee); color: var(--c-a16207); border: 1px solid var(--c-fef08a); }
   .ci-type-badge.type-warehouse { background: #eff6ff; color: #1d4ed8; border: 1px solid #dbeafe; }
   .ci-type-badge.type-office { background: #f0fdf4; color: #15803d; border: 1px solid #dcfce7; }
   .ci-type-badge.type-others { background: #f5f5f5; color: #525252; border: 1px solid #e5e5e5; }
@@ -1069,7 +1069,7 @@ const STYLES = `
     font-size: 11px; font-weight: 800; color: ${T.foreground3};
     font-family: 'Prompt', sans-serif; white-space: nowrap;
     margin-left: auto; margin-right: 10px; flex-shrink: 0;
-    background: #f7f6f2;
+    background: var(--c-f7f6f2);
     padding: 3px 8px;
     border-radius: 6px;
     display: flex;
@@ -1079,7 +1079,7 @@ const STYLES = `
   }
   .ci-loc-card.sel .ci-dist {
     color: ${yellowDark};
-    background: #fffbeb;
+    background: var(--c-fffbeb);
     border-color: rgba(var(--brand-accent-rgb),0.15);
   }
 
@@ -1153,7 +1153,7 @@ const STYLES = `
     font-size: 15px;
   }
   .ci-cta.ready {
-    background: linear-gradient(135deg, var(--brand-text) 0%, #1a1613 100%);
+    background: linear-gradient(135deg, var(--brand-text) 0%, var(--c-1a1613) 100%);
     color: #fff;
     box-shadow: 0 10px 25px rgba(26, 22, 19, 0.25);
     padding: 14px;
@@ -1167,11 +1167,11 @@ const STYLES = `
   .ci-cta.ready:hover {
     transform: translateY(-2px);
     box-shadow: 0 12px 28px rgba(26,22,19,0.32);
-    background: linear-gradient(135deg, #3d2f24 0%, var(--brand-text) 100%);
+    background: linear-gradient(135deg, var(--c-3d2f24) 0%, var(--brand-text) 100%);
   }
   .ci-cta.ready:active { transform: scale(0.985) translateY(-1px); }
   .ci-cta.disabled {
-    background: #e8e5dc;
+    background: var(--c-e8e5dc);
     color: #9c988f;
     cursor: not-allowed;
     box-shadow: none;
@@ -1211,7 +1211,7 @@ const STYLES = `
   }
   .ci-modal {
     width: min(100%, 680px); max-width: 680px;
-    background: #fbf9f4; border-radius: 24px 24px 0 0;
+    background: var(--c-fbf9f4); border-radius: 24px 24px 0 0;
     padding: 28px 28px 42px;
     font-family: 'Sarabun', sans-serif;
     animation: ci-modal-in 0.35s cubic-bezier(0.16, 1, 0.3, 1);
@@ -1594,7 +1594,7 @@ export default function Checkin() {
               display: "flex", flexDirection: "column",
               border: `1px solid ${T.border}`,
               borderRadius: "20px",
-              background: "#faf9f6",
+              background: "var(--c-faf9f6)",
               boxShadow: "0 12px 30px rgba(34,25,11,0.06)",
               height: "clamp(380px, calc(100vh - 240px), 550px)",
               overflow: "hidden",
@@ -1703,7 +1703,7 @@ export default function Checkin() {
         <div
           id="ci-mobile-scroll-area"
           className="ci-list"
-          style={{ flex: 1, overflowY: "auto", display: "flex", flexDirection: "column", background: "#faf9f6" }}
+          style={{ flex: 1, overflowY: "auto", display: "flex", flexDirection: "column", background: "var(--c-faf9f6)" }}
         >
           <StepHeader />
 

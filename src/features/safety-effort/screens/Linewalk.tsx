@@ -105,7 +105,7 @@ function StepPips({ current = 3, total = 4 }) {
               width:18, height:18, borderRadius:"50%", display:"flex", alignItems:"center", justifyContent:"center",
               fontSize:"9.5px", fontWeight:900, fontFamily:"'Prompt',sans-serif", transition:"all 0.3s",
               background:isDone?"#1f7a55":isActive?"var(--brand-accent)":"rgba(255,255,255,0.1)",
-              color:isDone?"#fff":isActive?"#1a1613":"rgba(255,255,255,0.4)",
+              color:isDone?"#fff":isActive?"var(--c-1a1613)":"rgba(255,255,255,0.4)",
               boxShadow:isActive?"0 0 8px rgba(var(--brand-accent-rgb),0.6)":"none",
               border:(!isDone&&!isActive)?"1px solid rgba(255,255,255,0.08)":"none"
             }}>
@@ -160,7 +160,7 @@ function SearchInput({ label, required, value, onChange, placeholder, options })
       )}
       <div style={{
         height:42, borderRadius:10, border:`1px solid ${active?T.primary:"rgba(14,15,18,0.15)"}`,
-        background:"#fbfbfa", padding:"0 12px", display:"flex", alignItems:"center", gap:8,
+        background:"var(--c-fbfbfa)", padding:"0 12px", display:"flex", alignItems:"center", gap:8,
         transition:"all 0.2s", boxShadow:active?`0 0 0 3px ${T.primarySoft}`:"none"
       }}>
         <input
@@ -232,7 +232,7 @@ const STYLES = `
   .lw-level-btn.active { background:var(--brand-accent); color:#0e0f12; border-color:var(--brand-accent); box-shadow:0 4px 12px rgba(var(--brand-accent-rgb),0.25); }
   .lw-basic-grid > *:nth-child(n+2) { display:none !important; }
 
-  .lw-tab-slider { display:grid; grid-template-columns:1fr 1fr; background:#ebe6da; border-radius:12px; padding:4px; box-shadow:inset 0 2px 5px rgba(0,0,0,0.05); }
+  .lw-tab-slider { display:grid; grid-template-columns:1fr 1fr; background:var(--c-ebe6da); border-radius:12px; padding:4px; box-shadow:inset 0 2px 5px rgba(0,0,0,0.05); }
   .lw-tab-btn {
     background:transparent; border:none; border-radius:9px; height:38px;
     font-family:'Prompt',sans-serif; font-size:13.5px; font-weight:700;
@@ -256,23 +256,23 @@ const STYLES = `
   .lw-accordion { border:1px solid rgba(14,15,18,0.08); border-radius:12px; background:#fff; overflow:hidden; margin-bottom:8px; box-shadow:0 4px 12px rgba(0,0,0,0.015); transition:all 0.2s; }
   .lw-accordion:hover { border-color:rgba(14,15,18,0.18); }
   .lw-accordion.active { border-color:var(--brand-accent); box-shadow:0 8px 24px rgba(146,64,14,0.06); }
-  .lw-accordion-hdr { padding:14px 18px; background:#fbfbf9; cursor:pointer; display:flex; align-items:center; justify-content:space-between; gap:16px; transition:background 0.15s; }
-  .lw-accordion-hdr:hover { background:#f6f6f2; }
+  .lw-accordion-hdr { padding:14px 18px; background:var(--c-fbfbf9); cursor:pointer; display:flex; align-items:center; justify-content:space-between; gap:16px; transition:background 0.15s; }
+  .lw-accordion-hdr:hover { background:var(--c-f6f6f2); }
   .lw-accordion-arrow { color:${T.foreground3}; transition:transform 0.2s; display:flex; align-items:center; }
   .lw-accordion.active .lw-accordion-arrow { transform:rotate(180deg); }
 
   .lw-status-btn { display:flex; align-items:center; gap:8px; padding:8px 16px; border-radius:20px; border:1px solid rgba(14,15,18,0.12); background:#fff; cursor:pointer; font-family:'Prompt',sans-serif; font-size:12px; font-weight:700; transition:all 0.2s; }
   .lw-status-btn.safe { color:${T.ok}; } .lw-status-btn.safe.active { background:#e6f7ed; border-color:${T.ok}; }
   .lw-status-btn.unsafe-cond { color:${T.danger}; } .lw-status-btn.unsafe-cond.active { background:#fee2e2; border-color:${T.danger}; }
-  .lw-status-btn.unsafe-act { color:#d97706; } .lw-status-btn.unsafe-act.active { background:#fef3c7; border-color:#d97706; }
+  .lw-status-btn.unsafe-act { color:var(--c-d97706); } .lw-status-btn.unsafe-act.active { background:var(--c-fef3c7); border-color:var(--c-d97706); }
 
-  .lw-note-box { width:100%; min-height:80px; border-radius:8px; border:1px solid rgba(14,15,18,0.15); background:#fbfbf9; padding:10px 12px; font-family:inherit; font-size:13px; color:${T.foreground}; resize:vertical; transition:all 0.2s; }
+  .lw-note-box { width:100%; min-height:80px; border-radius:8px; border:1px solid rgba(14,15,18,0.15); background:var(--c-fbfbf9); padding:10px 12px; font-family:inherit; font-size:13px; color:${T.foreground}; resize:vertical; transition:all 0.2s; }
   .lw-note-box:focus { outline:none; border-color:${T.primary}; box-shadow:0 0 0 3px ${T.primarySoft}; background:#fff; }
 
-  .lw-upload-trigger { height:64px; padding:0 16px; border-radius:8px; border:1.5px dashed rgba(14,15,18,0.18); background:#fcfcfb; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; font-family:'Prompt',sans-serif; font-size:12.5px; font-weight:700; color:${T.foreground3}; transition:all 0.2s; }
-  .lw-upload-trigger:hover { background:#f7f7f3; border-color:${T.foreground2}; color:${T.foreground}; }
+  .lw-upload-trigger { height:64px; padding:0 16px; border-radius:8px; border:1.5px dashed rgba(14,15,18,0.18); background:var(--c-fcfcfb); cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; font-family:'Prompt',sans-serif; font-size:12.5px; font-weight:700; color:${T.foreground3}; transition:all 0.2s; }
+  .lw-upload-trigger:hover { background:var(--c-f7f7f3); border-color:${T.foreground2}; color:${T.foreground}; }
 
-  .lw-cta { width:100%; border-radius:14px; border:none; font-family:'Prompt',sans-serif; font-weight:700; font-size:15px; display:flex; align-items:center; justify-content:center; gap:10px; cursor:pointer; transition:all 0.3s; background:linear-gradient(135deg,var(--brand-text) 0%,#1a1613 100%); color:#fff; box-shadow:0 10px 25px rgba(26,22,19,0.25); padding:14px; }
+  .lw-cta { width:100%; border-radius:14px; border:none; font-family:'Prompt',sans-serif; font-weight:700; font-size:15px; display:flex; align-items:center; justify-content:center; gap:10px; cursor:pointer; transition:all 0.3s; background:linear-gradient(135deg,var(--brand-text) 0%,var(--c-1a1613) 100%); color:#fff; box-shadow:0 10px 25px rgba(26,22,19,0.25); padding:14px; }
   .lw-cta:hover { transform:translateY(-2px); box-shadow:0 12px 28px rgba(26,22,19,0.32); }
   .lw-cta:active { transform:scale(0.985); }
   .lw-cta:disabled { cursor:not-allowed; opacity:0.6; transform:none; box-shadow:0 10px 25px rgba(26,22,19,0.16); }
@@ -281,7 +281,7 @@ const STYLES = `
   @keyframes lw-pulse { 0%{box-shadow:0 0 0 0 rgba(31,122,85,0.4)} 70%{box-shadow:0 0 0 6px rgba(31,122,85,0)} 100%{box-shadow:0 0 0 0 rgba(31,122,85,0)} }
 
   .lw-progress-track { position:relative; height:4px; background:rgba(255,255,255,0.12); border-radius:99px; margin-top:10px; overflow:hidden; }
-  .lw-progress-fill { height:100%; background:linear-gradient(90deg,var(--brand-accent),#ffe066); border-radius:99px; transition:width 0.5s cubic-bezier(0.4,0,0.2,1); }
+  .lw-progress-fill { height:100%; background:linear-gradient(90deg,var(--brand-accent),var(--c-ffe066)); border-radius:99px; transition:width 0.5s cubic-bezier(0.4,0,0.2,1); }
   @media (min-width: 768px) {
     .lw-card {
       padding: 12px 20px !important;
@@ -626,7 +626,7 @@ export default function Linewalk() {
           {!isQuestionScreen && (
           <div className="lw-card" style={{ margin:isMobileViewport ? "0 16px" : "0 auto", width:isMobileViewport ? "auto" : "100%", maxWidth:isMobileViewport ? "none" : "540px", display:"flex", flexDirection:"column", gap:16 }}>
             <div style={{ display:"flex", alignItems:"center", gap:10 }}>
-              <div style={{ width:28, height:28, borderRadius:8, background:"var(--brand-accent)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:13, fontWeight:900, fontFamily:"'Prompt',sans-serif", color:"#1a1613", flexShrink:0 }}>1</div>
+              <div style={{ width:28, height:28, borderRadius:8, background:"var(--brand-accent)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:13, fontWeight:900, fontFamily:"'Prompt',sans-serif", color:"var(--c-1a1613)", flexShrink:0 }}>1</div>
               <span style={{ fontFamily:"'Prompt',sans-serif", fontWeight:800, fontSize:14, color:T.foreground }}>ข้อมูลพื้นฐาน</span>
             </div>
 
@@ -639,7 +639,7 @@ export default function Linewalk() {
                 <div style={{
                   height:42, borderRadius:10,
                   border:`1px solid ${date?T.primary:"rgba(14,15,18,0.15)"}`,
-                  background:"#fbfbfa", padding:"0 12px", display:"flex", alignItems:"center", gap:8,
+                  background:"var(--c-fbfbfa)", padding:"0 12px", display:"flex", alignItems:"center", gap:8,
                   transition:"all 0.2s", boxShadow:date?`0 0 0 3px ${T.primarySoft}`:"none"
                 }}>
                   <IcoCalendar />
@@ -684,7 +684,7 @@ export default function Linewalk() {
           <FadeSlide show={false} delay={0}>
             <div className="lw-card" style={{ margin:"0 16px", display:"flex", flexDirection:"column", gap:14 }}>
               <div style={{ display:"flex", alignItems:"center", gap:10 }}>
-                <div style={{ width:28, height:28, borderRadius:8, background: step1Complete?"var(--brand-accent)":"#e5e7eb", display:"flex", alignItems:"center", justifyContent:"center", fontSize:13, fontWeight:900, fontFamily:"'Prompt',sans-serif", color:"#1a1613", flexShrink:0, transition:"background 0.3s" }}>2</div>
+                <div style={{ width:28, height:28, borderRadius:8, background: step1Complete?"var(--brand-accent)":"#e5e7eb", display:"flex", alignItems:"center", justifyContent:"center", fontSize:13, fontWeight:900, fontFamily:"'Prompt',sans-serif", color:"var(--c-1a1613)", flexShrink:0, transition:"background 0.3s" }}>2</div>
                 <span style={{ fontFamily:"'Prompt',sans-serif", fontWeight:800, fontSize:14, color:T.foreground }}>เลือกประเภทกิจกรรม</span>
               </div>
               <div className="lw-tab-slider">
@@ -712,8 +712,8 @@ export default function Linewalk() {
                       style={{
                         alignSelf:"flex-start",
                         background: submitDisabled
-                          ? "linear-gradient(135deg,#8f8578,#6f665b)"
-                          : "linear-gradient(135deg,var(--brand-text),#1a1613)",
+                          ? "linear-gradient(135deg,var(--c-8f8578),var(--c-6f665b))"
+                          : "linear-gradient(135deg,var(--brand-text),var(--c-1a1613))",
                         color:"#fff", border:"none", borderRadius:10,
                         padding:"10px 24px",
                         fontFamily:"'Prompt',sans-serif", fontSize:14, fontWeight:700,
@@ -741,7 +741,7 @@ export default function Linewalk() {
           <FadeSlide show={false} delay={60}>
             <div className="lw-card" style={{ margin:"0 16px", display:"flex", flexDirection:"column", gap:14 }}>
               <div style={{ display:"flex", alignItems:"center", gap:10 }}>
-                <div style={{ width:28, height:28, borderRadius:8, background:"var(--brand-accent)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:13, fontWeight:900, fontFamily:"'Prompt',sans-serif", color:"#1a1613", flexShrink:0 }}>3</div>
+                <div style={{ width:28, height:28, borderRadius:8, background:"var(--brand-accent)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:13, fontWeight:900, fontFamily:"'Prompt',sans-serif", color:"var(--c-1a1613)", flexShrink:0 }}>3</div>
                 <span style={{ fontFamily:"'Prompt',sans-serif", fontWeight:800, fontSize:14, color:T.foreground }}>สถานที่จะไป Line Walk</span>
               </div>
               <div className="lw-loc-box">
@@ -762,7 +762,7 @@ export default function Linewalk() {
           <FadeSlide show={false} delay={80}>
             <div className="lw-card" style={{ margin:"0 16px", display:"flex", flexDirection:"column", gap:14 }}>
               <div style={{ display:"flex", alignItems:"center", gap:10 }}>
-                <div style={{ width:28, height:28, borderRadius:8, background:"var(--brand-accent)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:13, fontWeight:900, fontFamily:"'Prompt',sans-serif", color:"#1a1613", flexShrink:0 }}>4</div>
+                <div style={{ width:28, height:28, borderRadius:8, background:"var(--brand-accent)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:13, fontWeight:900, fontFamily:"'Prompt',sans-serif", color:"var(--c-1a1613)", flexShrink:0 }}>4</div>
                 <span style={{ fontFamily:"'Prompt',sans-serif", fontWeight:800, fontSize:14, color:T.foreground }}>
                   {locType === "โรงงาน" ? "ข้อมูลโรงงาน" : locType === "สำนักงาน" ? "ข้อมูลสำนักงาน" : "ข้อมูล Site งาน"}
                 </span>
@@ -793,7 +793,7 @@ export default function Linewalk() {
           {isSafetyContactFlow && (
             <div className="lw-card" style={{ margin:"0 16px", display:"flex", flexDirection:"column", gap:14 }}>
               <div style={{ display:"flex", alignItems:"center", gap:10 }}>
-                <div style={{ width:28, height:28, borderRadius:8, background:"var(--brand-accent)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:13, fontWeight:900, fontFamily:"'Prompt',sans-serif", color:"#1a1613", flexShrink:0 }}>2</div>
+                <div style={{ width:28, height:28, borderRadius:8, background:"var(--brand-accent)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:13, fontWeight:900, fontFamily:"'Prompt',sans-serif", color:"var(--c-1a1613)", flexShrink:0 }}>2</div>
                 <span style={{ fontFamily:"'Prompt',sans-serif", fontWeight:800, fontSize:14, color:T.foreground }}>Safety Contact</span>
               </div>
               <textarea
@@ -824,8 +824,8 @@ export default function Linewalk() {
                     height:42,
                     borderRadius:14,
                     border:"1px solid rgba(64,38,16,0.10)",
-                    background:"linear-gradient(180deg,var(--brand-soft) 0%, #f3e8d3 100%)",
-                    color:"#4a2a12",
+                    background:"linear-gradient(180deg,var(--brand-soft) 0%, var(--c-f3e8d3) 100%)",
+                    color:"var(--c-4a2a12)",
                     display:"flex",
                     alignItems:"center",
                     justifyContent:"center",
@@ -837,7 +837,7 @@ export default function Linewalk() {
                   <IcoBack />
                 </button>
                 <div style={{ minWidth:0 }}>
-                  <div style={{ fontFamily:"'Prompt',sans-serif", fontSize:11, fontWeight:800, color:"#8a6a45", textTransform:"uppercase", letterSpacing:"0.04em", textAlign:"right" }}>
+                  <div style={{ fontFamily:"'Prompt',sans-serif", fontSize:11, fontWeight:800, color:"var(--c-8a6a45)", textTransform:"uppercase", letterSpacing:"0.04em", textAlign:"right" }}>
                     Line Walk
                   </div>
                   <div style={{ fontFamily:"'Prompt',sans-serif", fontSize:isMobileQuestionScreen ? 13 : 15, fontWeight:900, color:"var(--brand-text)", textAlign:"right" }}>
@@ -878,13 +878,13 @@ export default function Linewalk() {
                         justifySelf:isMobileQuestionScreen ? "center" : undefined,
                         height:isMobileQuestionScreen ? 36 : 40,
                         borderRadius:"50%",
-                        border: active ? "1.5px solid #8b5a14" : "1px solid rgba(64,38,16,0.10)",
+                        border: active ? "1.5px solid var(--c-8b5a14)" : "1px solid rgba(64,38,16,0.10)",
                         background: active
                           ? "linear-gradient(180deg,var(--brand-accent) 0%, var(--brand-accent-strong) 100%)"
                           : answered
                             ? "var(--brand-soft)"
                             : "linear-gradient(180deg,#ffffff 0%, var(--brand-surface) 100%)",
-                        color: active ? "var(--brand-text)" : answered ? "var(--brand-text)" : "#8d7a63",
+                        color: active ? "var(--brand-text)" : answered ? "var(--brand-text)" : "var(--c-8d7a63)",
                         fontFamily:"'Prompt',sans-serif",
                         fontWeight:800,
                         fontSize:isMobileQuestionScreen ? 12 : 14,
@@ -901,13 +901,13 @@ export default function Linewalk() {
                 })}
               </div>
 
-              <div className="lw-card" style={{ padding:isMobileQuestionScreen ? "12px 12px 10px" : "18px 18px 20px", display:"flex", flexDirection:"column", gap:isMobileQuestionScreen ? 8 : 16, flex:1, minHeight:0, overflow:"hidden", background:"linear-gradient(180deg,var(--brand-surface) 0%, #fff8ee 100%)", border:"1px solid rgba(82,52,24,0.08)", boxShadow:"0 16px 32px rgba(64,38,16,0.08)" }}>
+              <div className="lw-card" style={{ padding:isMobileQuestionScreen ? "12px 12px 10px" : "18px 18px 20px", display:"flex", flexDirection:"column", gap:isMobileQuestionScreen ? 8 : 16, flex:1, minHeight:0, overflow:"hidden", background:"linear-gradient(180deg,var(--brand-surface) 0%, var(--c-fff8ee) 100%)", border:"1px solid rgba(82,52,24,0.08)", boxShadow:"0 16px 32px rgba(64,38,16,0.08)" }}>
                   <div style={{ display:"flex", alignItems:"center", gap:isMobileQuestionScreen ? 8 : 12, flexShrink:0 }}>
-                    <div style={{ width:isMobileQuestionScreen ? 34 : 42, height:isMobileQuestionScreen ? 34 : 42, borderRadius:"50%", background:"linear-gradient(180deg,#f7c948 0%, #d89b00 100%)", color:"var(--brand-text)", display:"flex", alignItems:"center", justifyContent:"center", fontFamily:"'Prompt',sans-serif", fontWeight:900, fontSize:isMobileQuestionScreen ? 15 : 18 }}>
+                    <div style={{ width:isMobileQuestionScreen ? 34 : 42, height:isMobileQuestionScreen ? 34 : 42, borderRadius:"50%", background:"linear-gradient(180deg,var(--c-f7c948) 0%, var(--c-d89b00) 100%)", color:"var(--brand-text)", display:"flex", alignItems:"center", justifyContent:"center", fontFamily:"'Prompt',sans-serif", fontWeight:900, fontSize:isMobileQuestionScreen ? 15 : 18 }}>
                     {currentQuestionIndex + 1}
                   </div>
                   <div>
-                    <div style={{ fontFamily:"'Prompt',sans-serif", fontSize:isMobileQuestionScreen ? 11 : 13, fontWeight:800, color:"#8a6a45" }}>
+                    <div style={{ fontFamily:"'Prompt',sans-serif", fontSize:isMobileQuestionScreen ? 11 : 13, fontWeight:800, color:"var(--c-8a6a45)" }}>
                       ข้อ {currentQuestionIndex + 1} จาก {totalItems}
                     </div>
                     <h3 style={{ margin:"2px 0 0", fontFamily:"'Prompt',sans-serif", fontSize:isMobileQuestionScreen ? 15 : 20, fontWeight:900, color:"var(--brand-text)", lineHeight:isMobileQuestionScreen ? 1.18 : 1.35 }}>
@@ -917,7 +917,7 @@ export default function Linewalk() {
                 </div>
 
                 {currentItem.guideTitle !== false && (
-                  <p style={{ margin:0, fontFamily:"'Prompt',sans-serif", fontSize:isMobileQuestionScreen ? 10.5 : 12.5, fontWeight:700, color:"#8a6a45", flexShrink:0 }}>
+                  <p style={{ margin:0, fontFamily:"'Prompt',sans-serif", fontSize:isMobileQuestionScreen ? 10.5 : 12.5, fontWeight:700, color:"var(--c-8a6a45)", flexShrink:0 }}>
                     {currentItem.guideTitle || `แนวทางการตรวจ ${currentItem.title.split(":")[0]}`}
                   </p>
                 )}
@@ -930,14 +930,14 @@ export default function Linewalk() {
                   {[
                     { key:"safe", label:"ปลอดภัย", sub:"ข้อความนี้ถูกต้อง", border:"#34c97b", bg:"#eefaf3", color:"#18794e", icon:"✓" },
                     { key:"unsafe_condition", label:"สภาพไม่ปลอดภัย", sub:"พบสภาพแวดล้อมที่ต้องแก้ไข", border:"#ff6b6b", bg:"#fff1f1", color:"#d5301a", icon:"!" },
-                    { key:"unsafe_action", label:"พฤติกรรมไม่ปลอดภัย", sub:"พบพฤติกรรมเสี่ยงระหว่างทำงาน", border:"#ffb020", bg:"var(--brand-soft)", color:"#b76a00", icon:"×" },
+                    { key:"unsafe_action", label:"พฤติกรรมไม่ปลอดภัย", sub:"พบพฤติกรรมเสี่ยงระหว่างทำงาน", border:"var(--c-ffb020)", bg:"var(--brand-soft)", color:"var(--c-b76a00)", icon:"×" },
                   ].map((choice) => {
                     const selected = currentState.status === choice.key;
                     const themedChoice = choice.key === "safe"
-                      ? { ...choice, border:"#d5a21a", bg:"#fff6db", color:"#8b5a14", icon:"✓" }
+                      ? { ...choice, border:"var(--c-d5a21a)", bg:"var(--c-fff6db)", color:"var(--c-8b5a14)", icon:"✓" }
                       : choice.key === "unsafe_condition"
-                        ? { ...choice, border:"#db7b4f", bg:"#fff1e8", color:"#8f3b16", icon:"!" }
-                        : { ...choice, border:"var(--brand-text)", bg:"#f6ece1", color:"var(--brand-text)", icon:"×" };
+                        ? { ...choice, border:"var(--c-db7b4f)", bg:"var(--c-fff1e8)", color:"var(--c-8f3b16)", icon:"!" }
+                        : { ...choice, border:"var(--brand-text)", bg:"var(--c-f6ece1)", color:"var(--brand-text)", icon:"×" };
                     return (
                       <button
                         key={choice.key}
@@ -978,7 +978,7 @@ export default function Linewalk() {
 
                 {isMobileQuestionScreen && (
                   <div style={{ display:"flex", flexWrap:"wrap", gap:6, alignItems:"center" }}>
-                    <label className="lw-upload-trigger" style={{ height:40, padding:"0 12px", borderColor:"rgba(95,64,37,0.22)", background:"#fff8ee", color:"var(--brand-text)", fontSize:11.5 }}>
+                    <label className="lw-upload-trigger" style={{ height:40, padding:"0 12px", borderColor:"rgba(95,64,37,0.22)", background:"var(--c-fff8ee)", color:"var(--brand-text)", fontSize:11.5 }}>
                       <IcoUpload /> Upload รูปภาพ
                       <input type="file" accept="image/*" style={{ display:"none" }} onChange={e => handlePhotoUpload(currentItem.id, e)} />
                     </label>
@@ -1112,7 +1112,7 @@ export default function Linewalk() {
 
               <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", padding:"4px 2px" }}>
                 <div style={{ display:"flex", alignItems:"center", gap:10 }}>
-                  <div style={{ width:28, height:28, borderRadius:8, background:"var(--brand-accent)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:13, fontWeight:900, fontFamily:"'Prompt',sans-serif", color:"#1a1613", flexShrink:0 }}>5</div>
+                  <div style={{ width:28, height:28, borderRadius:8, background:"var(--brand-accent)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:13, fontWeight:900, fontFamily:"'Prompt',sans-serif", color:"var(--c-1a1613)", flexShrink:0 }}>5</div>
                   <h3 style={{ margin:0, fontSize:15, fontWeight:900, color:T.foreground, fontFamily:"'Prompt',sans-serif" }}>
                     หัวข้อตรวจสอบ ({totalItems} หัวข้อ)
                   </h3>
@@ -1141,8 +1141,8 @@ export default function Linewalk() {
                         {statusLabel && (
                           <span style={{
                             fontSize:11, fontWeight:700, padding:"2px 8px", borderRadius:99, fontFamily:"'Prompt',sans-serif",
-                            background: state.status==="safe"?"#e6f7ed":state.status==="unsafe_condition"?"#fee2e2":"#fef3c7",
-                            color: state.status==="safe"?T.ok:state.status==="unsafe_condition"?T.danger:"#d97706",
+                            background: state.status==="safe"?"#e6f7ed":state.status==="unsafe_condition"?"#fee2e2":"var(--c-fef3c7)",
+                            color: state.status==="safe"?T.ok:state.status==="unsafe_condition"?T.danger:"var(--c-d97706)",
                           }}>{statusLabel}</span>
                         )}
                         <div className="lw-accordion-arrow"><IcoChevron /></div>

@@ -11,19 +11,19 @@ const T = {
   foreground3: "#7b7469",
   border: "rgba(14,15,18,0.08)",
   gold: "var(--brand-accent)",
-  goldDeep: "#d89b00",
+  goldDeep: "var(--c-d89b00)",
   brown: "var(--brand-text)",
-  brownSoft: "#f5ead7",
-  safe: "#8b5a14",
-  issue: "#8f3b16",
+  brownSoft: "var(--c-f5ead7)",
+  safe: "var(--c-8b5a14)",
+  issue: "var(--c-8f3b16)",
   action: "var(--brand-text)",
 };
 
 function statusMeta(status) {
-  if (status === "safe") return { label: "ปลอดภัย", color: T.safe, bg: "#fff6db", border: "#d5a21a" };
-  if (status === "unsafe_condition") return { label: "สภาพไม่ปลอดภัย", color: T.issue, bg: "#fff1e8", border: "#db7b4f" };
-  if (status === "unsafe_action") return { label: "พฤติกรรมไม่ปลอดภัย", color: T.action, bg: "#f6ece1", border: "var(--brand-text)" };
-  return { label: "ยังไม่ตอบ", color: T.foreground3, bg: "#f8f6f1", border: "rgba(14,15,18,0.08)" };
+  if (status === "safe") return { label: "ปลอดภัย", color: T.safe, bg: "var(--c-fff6db)", border: "var(--c-d5a21a)" };
+  if (status === "unsafe_condition") return { label: "สภาพไม่ปลอดภัย", color: T.issue, bg: "var(--c-fff1e8)", border: "var(--c-db7b4f)" };
+  if (status === "unsafe_action") return { label: "พฤติกรรมไม่ปลอดภัย", color: T.action, bg: "var(--c-f6ece1)", border: "var(--brand-text)" };
+  return { label: "ยังไม่ตอบ", color: T.foreground3, bg: "var(--c-f8f6f1)", border: "rgba(14,15,18,0.08)" };
 }
 
 export default function AssessmentSummary() {
@@ -126,9 +126,9 @@ export default function AssessmentSummary() {
 
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(120px,1fr))", gap: 10 }}>
             {[
-              { label: "ปลอดภัย", value: counts.safe, color: T.safe, bg: "#fff6db" },
-              { label: "สภาพไม่ปลอดภัย", value: counts.condition, color: T.issue, bg: "#fff1e8" },
-              { label: "พฤติกรรมไม่ปลอดภัย", value: counts.action, color: T.action, bg: "#f6ece1" },
+              { label: "ปลอดภัย", value: counts.safe, color: T.safe, bg: "var(--c-fff6db)" },
+              { label: "สภาพไม่ปลอดภัย", value: counts.condition, color: T.issue, bg: "var(--c-fff1e8)" },
+              { label: "พฤติกรรมไม่ปลอดภัย", value: counts.action, color: T.action, bg: "var(--c-f6ece1)" },
             ].map((item) => (
               <div key={item.label} style={{ background: item.bg, borderRadius: 14, padding: "12px 12px 10px" }}>
                 <div style={{ fontSize: 11, fontWeight: 800, color: item.color }}>{item.label}</div>
@@ -198,7 +198,7 @@ export default function AssessmentSummary() {
               height: 50,
               border: "none",
               borderRadius: 14,
-              background: "linear-gradient(135deg,var(--brand-text) 0%,#1a1613 100%)",
+              background: "linear-gradient(135deg,var(--brand-text) 0%,var(--c-1a1613) 100%)",
               color: "#fff",
               fontFamily: "inherit",
               fontSize: 15,

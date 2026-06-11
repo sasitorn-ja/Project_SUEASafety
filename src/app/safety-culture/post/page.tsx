@@ -235,7 +235,7 @@ export default function PostSocialPage() {
               <span className="rounded-md border border-[var(--brand-accent)] bg-[var(--brand-soft)] px-2 py-0.5 text-[10px] font-[850] tracking-wide text-[var(--brand-accent-strong)]">
                 TEAM YELLOW
               </span>
-              <span className="rounded-md border border-[#C5C1B5] bg-[var(--secondary)] px-2 py-0.5 text-[10px] font-[850] tracking-wide text-[#555149]">
+              <span className="rounded-md border border-[var(--c-c5c1b5)] bg-[var(--secondary)] px-2 py-0.5 text-[10px] font-[850] tracking-wide text-[#555149]">
                 📍 BPI-04
               </span>
             </div>

@@ -206,7 +206,7 @@ export default function AdminLeaderboardPage() {
 
   return (
     <>
-      <div className="mx-auto w-full max-w-[1320px] bg-[var(--background)] px-3.5 pt-0 pb-8 font-sarabun md:px-4">
+      <div className="mx-auto w-full max-w-[1320px] bg-[var(--background)] px-3.5 pt-2 pb-8 font-sarabun md:px-4">
         <SafetyCultureHero
           eyebrow="SAFETY CULTURE ADMIN"
           title={
@@ -292,7 +292,7 @@ export default function AdminLeaderboardPage() {
                             />
                             <div>
                               <div className="text-[15px] font-black text-[#20324d]">{team.name}</div>
-                              <div className="text-[12px] font-bold text-[#9d8a73]">อันดับ #{team.rank}</div>
+                              <div className="text-[12px] font-bold text-[var(--c-9d8a73)]">อันดับ #{team.rank}</div>
                             </div>
                           </div>
                         </td>
@@ -306,7 +306,7 @@ export default function AdminLeaderboardPage() {
                             <button
                               type="button"
                               onClick={() => openEditTeam(team)}
-                              className="flex h-9 w-9 items-center justify-center rounded-full border border-[var(--border)] bg-white text-[var(--brand-text)] transition-colors hover:border-[var(--brand-accent)] hover:bg-[var(--brand-soft)] hover:text-[#a36206]"
+                              className="flex h-9 w-9 items-center justify-center rounded-full border border-[var(--border)] bg-white text-[var(--brand-text)] transition-colors hover:border-[var(--brand-accent)] hover:bg-[var(--brand-soft)] hover:text-[var(--c-a36206)]"
                               aria-label={`แก้ไขทีม ${team.name}`}
                             >
                               <Pencil className="h-4 w-4" strokeWidth={2.2} />
@@ -410,7 +410,7 @@ export default function AdminLeaderboardPage() {
                 </Button>
                 <Button
                   onClick={confirmTeamEdit}
-                  className="h-10 rounded-full bg-[var(--brand-text)] px-4 text-[13px] text-white hover:bg-[#4a280f] sm:h-11 sm:px-5 sm:text-[14px]"
+                  className="h-10 rounded-full bg-[var(--brand-text)] px-4 text-[13px] text-white hover:bg-[var(--c-4a280f)] sm:h-11 sm:px-5 sm:text-[14px]"
                 >
                   {editingTeam?.mode === "create" ? "Confirm Create" : "Confirm Update"}
                 </Button>

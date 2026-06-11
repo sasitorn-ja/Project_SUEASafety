@@ -172,7 +172,7 @@ export default function RewardsPage() {
                 </div>
 
                 {locked ? (
-                  <button disabled className="w-full cursor-not-allowed rounded-xl border-[1.5px] border-[var(--border)] bg-[var(--secondary)] py-2.5 text-center text-[13px] font-[850] text-[#A39E92]">
+                  <button disabled className="w-full cursor-not-allowed rounded-xl border-[1.5px] border-[var(--border)] bg-[var(--secondary)] py-2.5 text-center text-[13px] font-[850] text-[var(--c-a39e92)]">
                     ยังไม่พอ
                   </button>
                 ) : (

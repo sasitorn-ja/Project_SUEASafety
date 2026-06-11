@@ -180,7 +180,7 @@ export default function KytPage() {
 
             {/* Photo capture area */}
             <div className="flex flex-col gap-4 anim-fade" style={animStyle(0.08)}>
-              <div className="relative w-full h-[280px] md:h-[380px] bg-[var(--secondary)] bg-[repeating-linear-gradient(45deg,var(--secondary),var(--secondary)_10px,var(--brand-soft)_10px,var(--brand-soft)_20px)] border-2 border-dashed border-[#C5C1B5] rounded-[16px] md:rounded-[36px] overflow-hidden flex flex-col items-center justify-center shadow-[inset_0_2px_8px_rgba(0,0,0,0.02)]">
+              <div className="relative w-full h-[280px] md:h-[380px] bg-[var(--secondary)] bg-[repeating-linear-gradient(45deg,var(--secondary),var(--secondary)_10px,var(--brand-soft)_10px,var(--brand-soft)_20px)] border-2 border-dashed border-[var(--c-c5c1b5)] rounded-[16px] md:rounded-[36px] overflow-hidden flex flex-col items-center justify-center shadow-[inset_0_2px_8px_rgba(0,0,0,0.02)]">
                 <div className="absolute top-5 left-5 w-8 h-8 md:w-10 md:h-10 bg-[var(--brand-accent)] rounded-lg shadow-[0_2px_6px_rgba(var(--brand-accent-rgb),0.25)]" />
 
                 {isCameraActive ? (

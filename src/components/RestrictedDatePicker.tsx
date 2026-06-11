@@ -195,7 +195,7 @@ export default function RestrictedDatePicker({
                 borderRadius: 999,
                 border: `1px solid ${active ? accent : "rgba(14,15,18,0.12)"}`,
                 background: active ? accent : "#fff",
-                color: active ? "#1a1613" : "#33312c",
+                color: active ? "var(--c-1a1613)" : "#33312c",
                 fontFamily: "'Prompt','Sarabun',sans-serif",
                 fontSize: 12.5,
                 fontWeight: 700,

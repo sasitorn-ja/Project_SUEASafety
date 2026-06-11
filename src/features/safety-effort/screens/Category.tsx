@@ -30,7 +30,7 @@ const T = {
   primarySoft: "var(--brand-soft)",
   ok: "#1f7a55",
   info: "#234c8e",
-  warning: "#c97a00",
+  warning: "var(--c-c97a00)",
   border: "rgba(14,15,18,0.10)",
   borderStrong: "#0e0f12",
   radius: "14px",
@@ -80,7 +80,7 @@ function Badge({ icon: Icon, children, dark = false }) {
         borderRadius: 999,
         border: `1px solid ${dark ? "rgba(255,255,255,0.18)" : T.border}`,
         background: dark ? "rgba(255,255,255,0.09)" : T.card,
-        color: dark ? "#fff7df" : T.foreground2,
+        color: dark ? "var(--c-fff7df)" : T.foreground2,
         fontSize: 12,
         fontWeight: 800,
         whiteSpace: "nowrap",
@@ -311,7 +311,7 @@ function CategoryCard({ cat, isOpen, onToggle, onStart }) {
               borderTop: `1px solid ${T.border}`,
               background: isAudit
                 ? "linear-gradient(180deg, color-mix(in srgb, var(--brand-soft) 68%, white) 0%, var(--secondary) 100%)"
-                : "linear-gradient(180deg, #f8f2e7 0%, #eee6d6 100%)",
+                : "linear-gradient(180deg, var(--c-f8f2e7) 0%, var(--c-eee6d6) 100%)",
               padding: 18,
             }}
           >

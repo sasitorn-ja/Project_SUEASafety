@@ -83,7 +83,7 @@ function getThemedImage(theme: AppTheme, src: string) {
 
 function getThemedColor(theme: AppTheme, color?: string) {
   if (!color) return "var(--brand-accent)";
-  if (theme === "wangjai" && ["#f8e46a", "#f5bb00", "#ffb000"].includes(color.toLowerCase())) {
+  if (theme === "wangjai" && ["var(--c-f8e46a)", "var(--c-f5bb00)", "var(--c-ffb000)"].includes(color.toLowerCase())) {
     return "var(--brand-accent)";
   }
   return color;

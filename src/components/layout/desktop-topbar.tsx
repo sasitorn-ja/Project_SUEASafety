@@ -46,28 +46,34 @@ const SAFETY_CULTURE_ITEMS = [
 
 const ADMIN_ITEMS = [
   {
-    label: "Safety Admin",
+    label: "Settings Safety Effort",
     href: "/safety-admin",
     icon: ShieldCheck,
     description: "จัดการ Safety Effort และตรวจประเมินความปลอดภัย",
   },
   {
-    label: "Admin Edit Event",
+    label: "Settings Edit Event",
     href: "/safety-culture/admin-event",
     icon: Settings2,
     description: "Manage Happy Hour Bonus and future event settings",
   },
   {
-    label: "Admin Edit Leaderboard",
+    label: "Settings Edit Leaderboard",
     href: "/safety-culture/admin-leaderboard",
     icon: Trophy,
     description: "Update teams, leaders, scores, and spotlight rankings",
   },
   {
-    label: "Admin Edit Reward",
+    label: "Settings Edit Reward",
     href: "/safety-culture/admin-reward",
     icon: Gift,
     description: "Manage reward items, featured rewards, and point costs",
+  },
+  {
+    label: "Settings Safety Awareness",
+    href: "/safety-culture/admin-awareness",
+    icon: ShieldCheck,
+    description: "จัดการคลังคำถาม Safety Awareness และนำเข้าข้อคำถาม",
   },
 ] as const;
 
@@ -256,11 +262,11 @@ export function DesktopTopbar() {
 
                     <div
                       className={cn(
-                        "absolute left-1/2 top-full z-50 w-[360px] -translate-x-1/2 pt-2.5 transition-all duration-150",
+                        "absolute left-1/2 top-full z-50 w-[290px] -translate-x-1/2 pt-2 transition-all duration-150",
                         desktopMenu === "safety-culture" ? "visible opacity-100" : "invisible opacity-0"
                       )}
                     >
-                      <div className="rounded-xl border border-white/[0.14] bg-[rgba(var(--brand-nav-rgb),0.88)] p-2.5 text-white shadow-[0_18px_44px_var(--brand-shadow)] backdrop-blur-xl">
+                      <div className="rounded-xl border border-white/[0.14] bg-[rgba(var(--brand-nav-rgb),0.88)] p-1.5 text-white shadow-[0_18px_44px_var(--brand-shadow)] backdrop-blur-xl">
                         {SAFETY_CULTURE_ITEMS.map((subitem) => {
                           const SubIcon = subitem.icon;
 
@@ -269,16 +275,16 @@ export function DesktopTopbar() {
                               key={subitem.href}
                               href={subitem.href}
                               className={cn(
-                                "flex gap-3 rounded-lg p-3 text-white transition-colors hover:bg-white/10 focus:bg-white/10 focus:outline-none",
+                                "flex items-center gap-2.5 rounded-lg p-2 text-white transition-colors hover:bg-white/10 focus:bg-white/10 focus:outline-none",
                                 isExactNavActive(pathname, subitem.href) && "bg-white/10"
                               )}
                             >
-                              <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full border border-white/10 bg-[rgba(var(--brand-accent-rgb),0.18)] text-[var(--brand-hero-label)]">
-                                <SubIcon className="h-5 w-5" strokeWidth={2.35} />
+                              <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full border border-white/10 bg-[rgba(var(--brand-accent-rgb),0.18)] text-[var(--brand-hero-label)]">
+                                <SubIcon className="h-[17px] w-[17px]" strokeWidth={2.35} />
                               </span>
                               <span className="min-w-0">
-                                <span className="block text-sm font-extrabold leading-5 text-white">{subitem.label}</span>
-                                <span className="mt-0.5 block text-xs font-semibold leading-5 text-white/[0.68]">{subitem.description}</span>
+                                <span className="block text-[12.5px] font-extrabold leading-[16px] text-white">{subitem.label}</span>
+                                <span className="mt-0.5 block text-[10.5px] font-semibold leading-[14px] text-white/[0.68]">{subitem.description}</span>
                               </span>
                             </NavTo>
                           );
@@ -308,11 +314,11 @@ export function DesktopTopbar() {
 
                     <div
                       className={cn(
-                        "absolute left-1/2 top-full z-50 w-[360px] -translate-x-1/2 pt-2.5 transition-all duration-150",
+                        "absolute left-1/2 top-full z-50 w-[290px] -translate-x-1/2 pt-2 transition-all duration-150",
                         desktopMenu === "admin" ? "visible opacity-100" : "invisible opacity-0"
                       )}
                     >
-                      <div className="rounded-xl border border-white/[0.14] bg-[rgba(var(--brand-nav-rgb),0.88)] p-2.5 text-white shadow-[0_18px_44px_var(--brand-shadow)] backdrop-blur-xl">
+                      <div className="rounded-xl border border-white/[0.14] bg-[rgba(var(--brand-nav-rgb),0.88)] p-1.5 text-white shadow-[0_18px_44px_var(--brand-shadow)] backdrop-blur-xl">
                         {ADMIN_ITEMS.map((subitem) => {
                           const SubIcon = subitem.icon;
 
@@ -321,16 +327,16 @@ export function DesktopTopbar() {
                               key={subitem.href}
                               href={subitem.href}
                               className={cn(
-                                "flex gap-3 rounded-lg p-3 text-white transition-colors hover:bg-white/10 focus:bg-white/10 focus:outline-none",
+                                "flex items-center gap-2.5 rounded-lg p-2 text-white transition-colors hover:bg-white/10 focus:bg-white/10 focus:outline-none",
                                 isExactNavActive(pathname, subitem.href) && "bg-white/10"
                               )}
                             >
-                              <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full border border-white/10 bg-[rgba(var(--brand-accent-rgb),0.18)] text-[var(--brand-hero-label)]">
-                                <SubIcon className="h-5 w-5" strokeWidth={2.35} />
+                              <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full border border-white/10 bg-[rgba(var(--brand-accent-rgb),0.18)] text-[var(--brand-hero-label)]">
+                                <SubIcon className="h-[17px] w-[17px]" strokeWidth={2.35} />
                               </span>
                               <span className="min-w-0">
-                                <span className="block text-sm font-extrabold leading-5 text-white">{subitem.label}</span>
-                                <span className="mt-0.5 block text-xs font-semibold leading-5 text-white/[0.68]">{subitem.description}</span>
+                                <span className="block text-[12.5px] font-extrabold leading-[16px] text-white">{subitem.label}</span>
+                                <span className="mt-0.5 block text-[10.5px] font-semibold leading-[14px] text-white/[0.68]">{subitem.description}</span>
                               </span>
                             </NavTo>
                           );

@@ -179,7 +179,7 @@ function RewardPreviewPanelLegacy({
             <span className="inline-flex items-center rounded-full border border-[var(--border)] bg-white px-3 py-1 text-[11px] font-black uppercase tracking-[0.16em] text-[var(--brand-text)]">
               Public Preview
             </span>
-            <span className="inline-flex items-center rounded-full border border-[var(--border)] bg-[var(--brand-soft)] px-3 py-1 text-[12px] font-black text-[#6f665b]">
+            <span className="inline-flex items-center rounded-full border border-[var(--border)] bg-[var(--brand-soft)] px-3 py-1 text-[12px] font-black text-[var(--c-6f665b)]">
               {getCategoryMeta(reward.category).label}
             </span>
             {reward.isHot ? (
@@ -195,7 +195,7 @@ function RewardPreviewPanelLegacy({
               {reward.name || "Reward name"}
             </div>
               <div className="mt-3 rounded-[18px] border border-[var(--border)] bg-[var(--brand-surface)] px-4 py-3">
-                <p className="line-clamp-6 min-h-[8.1rem] text-[14px] font-bold leading-relaxed text-[#6f665b] [overflow-wrap:anywhere] sm:text-[15px]">
+                <p className="line-clamp-6 min-h-[8.1rem] text-[14px] font-bold leading-relaxed text-[var(--c-6f665b)] [overflow-wrap:anywhere] sm:text-[15px]">
 
               {reward.description || "รายละเอียด reward จะแสดงตรงนี้บนหน้า Rewards"}
 
@@ -267,7 +267,7 @@ function RewardPreviewPanel({
       <button
         type="button"
         disabled
-        className="w-full cursor-not-allowed rounded-xl border-[1.5px] border-[var(--border)] bg-[var(--secondary)] py-2.5 text-center text-[13px] font-[850] text-[#A39E92]"
+        className="w-full cursor-not-allowed rounded-xl border-[1.5px] border-[var(--border)] bg-[var(--secondary)] py-2.5 text-center text-[13px] font-[850] text-[var(--c-a39e92)]"
       >
         ยังไม่พอ
       </button>
@@ -513,7 +513,7 @@ export default function AdminRewardPage() {
                         </div>
                       </div>
 
-                      <p className="mt-3 line-clamp-3 min-h-[60px] text-[13px] font-bold leading-relaxed text-[#6f665b]">
+                      <p className="mt-3 line-clamp-3 min-h-[60px] text-[13px] font-bold leading-relaxed text-[var(--c-6f665b)]">
                         {reward.description}
                       </p>
                     </div>
@@ -526,7 +526,7 @@ export default function AdminRewardPage() {
                         <button
                           type="button"
                           onClick={() => openEditReward(reward)}
-                          className="flex h-9 w-9 items-center justify-center rounded-full border border-[var(--border)] bg-white text-[var(--brand-text)] transition-colors hover:border-[var(--brand-accent)] hover:bg-[var(--brand-soft)] hover:text-[#a36206]"
+                          className="flex h-9 w-9 items-center justify-center rounded-full border border-[var(--border)] bg-white text-[var(--brand-text)] transition-colors hover:border-[var(--brand-accent)] hover:bg-[var(--brand-soft)] hover:text-[var(--c-a36206)]"
                           aria-label={`แก้ไขรางวัล ${reward.name}`}
                         >
                           <Pencil className="h-4 w-4" strokeWidth={2.2} />
@@ -884,7 +884,7 @@ export default function AdminRewardPage() {
                 </Button>
                 <Button
                   onClick={confirmRewardEdit}
-                  className="h-10 rounded-full bg-[var(--brand-text)] px-4 text-[13px] text-white hover:bg-[#4a280f]"
+                  className="h-10 rounded-full bg-[var(--brand-text)] px-4 text-[13px] text-white hover:bg-[var(--c-4a280f)]"
                 >
                   {editingReward?.mode === "create" ? "Confirm Create" : "Confirm Update"}
                 </Button>

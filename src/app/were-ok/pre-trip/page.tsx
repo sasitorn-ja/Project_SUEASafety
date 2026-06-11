@@ -220,7 +220,7 @@ export default function PreTripPage() {
             <div
               className="absolute inset-0 opacity-65 pointer-events-none"
               style={{
-                backgroundImage: "radial-gradient(#E4E2D9 1.5px, transparent 1.5px)",
+                backgroundImage: "radial-gradient(var(--c-e4e2d9) 1.5px, transparent 1.5px)",
                 backgroundSize: "10px 10px",
               }}
             />

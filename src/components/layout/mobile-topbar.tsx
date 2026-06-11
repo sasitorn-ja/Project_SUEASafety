@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { useState } from "react";
 import {
   Bell,
+  ChevronDown,
   ClipboardCheck,
   Gift,
   Heart,
@@ -28,15 +29,6 @@ function NavTo(props: any) {
   return <Link prefetch={false} {...props} />;
 }
 
-const MAIN_ITEMS = [
-  { id: "dashboard", label: "Home", icon: Home, href: "/" },
-  { id: "safety-effort", label: "Safety Effort", icon: ShieldCheck, href: "/category" },
-  { id: "were-ok", label: "We're OK", icon: HeartPulse, href: "/were-ok" },
-  { id: "work-permit", label: "Work Permit", icon: ClipboardCheck, href: "/work-permit" },
-  { id: "safety-culture", label: "Safety Culture", icon: UsersRound, href: "/safety-culture" },
-  { id: "admin", label: "Admin", icon: Settings2, href: "/safety-admin" },
-];
-
 const CULTURE_ITEMS = [
   { label: "Feed", icon: Heart, href: "/safety-culture" },
   { label: "Leaderboard", icon: Trophy, href: "/safety-culture/leaderboard" },
@@ -44,11 +36,29 @@ const CULTURE_ITEMS = [
 ];
 
 const ADMIN_ITEMS = [
-  { label: "Safety Admin", icon: ShieldCheck, href: "/safety-admin" },
-  { label: "Admin Edit Event", icon: Settings2, href: "/safety-culture/admin-event" },
-  { label: "Admin Edit Leaderboard", icon: Trophy, href: "/safety-culture/admin-leaderboard" },
-  { label: "Admin Edit Reward", icon: Gift, href: "/safety-culture/admin-reward" },
-] as const;
+  { label: "Settings Safety Effort", icon: ShieldCheck, href: "/safety-admin" },
+  { label: "Settings Edit Event", icon: Settings2, href: "/safety-culture/admin-event" },
+  { label: "Settings Edit Leaderboard", icon: Trophy, href: "/safety-culture/admin-leaderboard" },
+  { label: "Settings Edit Reward", icon: Gift, href: "/safety-culture/admin-reward" },
+  { label: "Settings Safety Awareness", icon: ShieldCheck, href: "/safety-culture/admin-awareness" },
+];
+
+type NavNode = {
+  id: string;
+  label: string;
+  icon: typeof Home;
+  href?: string;
+  children?: ReadonlyArray<{ label: string; icon: typeof Home; href: string }>;
+};
+
+const NAV_TREE: NavNode[] = [
+  { id: "dashboard", label: "Home", icon: Home, href: "/" },
+  { id: "safety-effort", label: "Safety Effort", icon: ShieldCheck, href: "/category" },
+  { id: "were-ok", label: "We're OK", icon: HeartPulse, href: "/were-ok" },
+  { id: "work-permit", label: "Work Permit", icon: ClipboardCheck, href: "/work-permit" },
+  { id: "safety-culture", label: "Safety Culture", icon: UsersRound, href: "/safety-culture", children: CULTURE_ITEMS },
+  { id: "admin", label: "Admin", icon: Settings2, children: ADMIN_ITEMS },
+];
 
 const ENABLED_HREFS = new Set([
   "/category",
@@ -69,6 +79,15 @@ export function MobileTopbar({ hidden = false }: { hidden?: boolean }) {
   const isWangjai = theme === "wangjai";
 
   const isActive = (href: string) => isMainNavActive(pathname, href);
+
+  const cultureActive = CULTURE_ITEMS.some((item) => isExactNavActive(pathname, item.href));
+  const adminActive = pathname === "/safety-admin" || pathname.startsWith("/safety-culture/admin-");
+  const [openSections, setOpenSections] = useState<Record<string, boolean>>(() => ({
+    "safety-culture": cultureActive,
+    admin: adminActive,
+  }));
+  const toggleSection = (id: string) =>
+    setOpenSections((current) => ({ ...current, [id]: !current[id] }));
 
   const closeDrawer = () => setOpen(false);
   const menuLabel = open ? "ปิดเมนู" : "เปิดเมนู";
@@ -159,15 +178,72 @@ export function MobileTopbar({ hidden = false }: { hidden?: boolean }) {
           <button className="mobile-drawer-overlay" aria-label="ปิดเมนู" onClick={closeDrawer} />
           <aside className="mobile-drawer-aside" aria-label="เมนูหลัก">
             <div className="grid grid-cols-1 gap-2">
-              {MAIN_ITEMS.map((item) => {
+              {NAV_TREE.map((item) => {
                 const Icon = item.icon;
-                const active = isActive(item.href);
-                const enabled = ENABLED_HREFS.has(item.href);
+
+                // Parent with a nested sub-menu → expandable accordion.
+                if (item.children) {
+                  const isOpen = !!openSections[item.id];
+                  const sectionActive = item.id === "admin" ? adminActive : cultureActive;
+
+                  return (
+                    <div key={item.id}>
+                      <button
+                        type="button"
+                        onClick={() => toggleSection(item.id)}
+                        aria-expanded={isOpen}
+                        className={cn(
+                          "flex min-h-11 w-full items-center gap-3 rounded-xl px-3 text-xs font-extrabold transition-colors",
+                          sectionActive
+                            ? "bg-white/[0.14] text-[var(--brand-accent)]"
+                            : "bg-white/10 text-[var(--brand-soft)] hover:bg-white/[0.14]"
+                        )}
+                      >
+                        <Icon className="h-4 w-4 flex-shrink-0 text-[var(--brand-accent)]" strokeWidth={2.35} />
+                        <span className="flex-1 truncate text-left">{item.label}</span>
+                        <ChevronDown
+                          className={cn("h-4 w-4 flex-shrink-0 transition-transform duration-200", isOpen && "rotate-180")}
+                          strokeWidth={2.5}
+                        />
+                      </button>
+
+                      {isOpen && (
+                        <div className="mt-1 ml-[18px] grid grid-cols-1 gap-1 border-l border-white/15 pl-2">
+                          {item.children.map((sub) => {
+                            const SubIcon = sub.icon;
+
+                            return (
+                              <NavTo
+                                key={sub.href}
+                                href={sub.href}
+                                onClick={closeDrawer}
+                                className={cn(
+                                  "flex min-h-9 items-center gap-2.5 rounded-lg px-2.5 text-[11.5px] font-bold transition-colors hover:bg-white/[0.12]",
+                                  isExactNavActive(pathname, sub.href)
+                                    ? "bg-white/[0.12] text-[var(--brand-accent)]"
+                                    : "text-[var(--brand-soft)]"
+                                )}
+                              >
+                                <SubIcon className="h-[15px] w-[15px] flex-shrink-0 text-[var(--brand-accent)]" strokeWidth={2.35} />
+                                <span className="truncate">{sub.label}</span>
+                              </NavTo>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  );
+                }
+
+                // Plain link.
+                const href = item.href ?? "#";
+                const active = isActive(href);
+                const enabled = ENABLED_HREFS.has(href);
 
                 return (
                   <NavTo
                     key={item.id}
-                    href={enabled ? item.href : "#"}
+                    href={enabled ? href : "#"}
                     onClick={() => enabled && closeDrawer()}
                     className={cn(
                       "flex min-h-11 items-center gap-3 truncate rounded-xl px-3 text-xs font-extrabold transition-colors",
@@ -186,60 +262,6 @@ export function MobileTopbar({ hidden = false }: { hidden?: boolean }) {
                   </NavTo>
                 );
               })}
-            </div>
-
-            <div className="mt-3 rounded-2xl border border-white/10 bg-[rgba(255,247,232,0.10)] p-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]">
-              <div className="mb-1.5 flex items-center gap-2 px-2 py-1 text-[10px] font-extrabold uppercase tracking-[0.16em] text-[var(--brand-hero-label)]">
-                <ShieldCheck className="h-3.5 w-3.5" strokeWidth={2.4} />
-                <span>Safety Culture</span>
-              </div>
-              <div className="grid grid-cols-1 gap-1.5">
-                {CULTURE_ITEMS.map((item) => {
-                  const Icon = item.icon;
-
-                  return (
-                    <NavTo
-                      key={item.href}
-                      href={item.href}
-                      onClick={closeDrawer}
-                      className={cn(
-                        "flex min-h-10 items-center gap-3 rounded-xl px-3 text-xs font-extrabold transition-colors hover:bg-white/[0.12]",
-                        isExactNavActive(pathname, item.href) ? "bg-white/[0.12] text-[var(--brand-accent)]" : "text-[var(--brand-soft)]"
-                      )}
-                    >
-                      <Icon className="h-4 w-4 flex-shrink-0 text-[var(--brand-accent)]" strokeWidth={2.35} />
-                      <span>{item.label}</span>
-                    </NavTo>
-                  );
-                })}
-              </div>
-            </div>
-
-            <div className="mt-3 rounded-2xl border border-white/10 bg-[rgba(255,247,232,0.10)] p-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]">
-              <div className="mb-1.5 flex items-center gap-2 px-2 py-1 text-[10px] font-extrabold uppercase tracking-[0.16em] text-[var(--brand-hero-label)]">
-                <Settings2 className="h-3.5 w-3.5" strokeWidth={2.4} />
-                <span>Admin</span>
-              </div>
-              <div className="grid grid-cols-1 gap-1.5">
-                {ADMIN_ITEMS.map((item) => {
-                  const Icon = item.icon;
-
-                  return (
-                    <NavTo
-                      key={item.href}
-                      href={item.href}
-                      onClick={closeDrawer}
-                      className={cn(
-                        "flex min-h-10 items-center gap-3 rounded-xl px-3 text-xs font-extrabold transition-colors hover:bg-white/[0.12]",
-                        isExactNavActive(pathname, item.href) ? "bg-white/[0.12] text-[var(--brand-accent)]" : "text-[var(--brand-soft)]"
-                      )}
-                    >
-                      <Icon className="h-4 w-4 flex-shrink-0 text-[var(--brand-accent)]" strokeWidth={2.35} />
-                      <span>{item.label}</span>
-                    </NavTo>
-                  );
-                })}
-              </div>
             </div>
           </aside>
         </div>

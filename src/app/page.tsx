@@ -71,7 +71,7 @@ export default function HomePage() {
   const showEvent = eventPhase !== "draft";
 
   return (
-    <div className="mx-auto w-full max-w-[1100px] px-3.5 pb-8 font-sarabun md:px-4">
+    <div className="mx-auto w-full max-w-[1100px] px-3.5 pt-2 pb-8 font-sarabun md:px-4">
       {/* ===== HERO: แดชบอร์ดคะแนน ===== */}
       <section className="relative overflow-hidden rounded-[16px] bg-[linear-gradient(135deg,var(--brand-hero-start),var(--brand-hero-end))] px-3.5 py-3.5 text-white shadow-[0_12px_28px_var(--brand-shadow)] md:px-7 md:py-6">
         <div className="absolute inset-x-0 top-0 h-2 bg-[repeating-linear-gradient(-45deg,var(--brand-accent),var(--brand-accent)_10px,#1a1a1a_10px,#1a1a1a_20px)]" />

@@ -8,6 +8,7 @@ import { MobileBottomNav } from "./mobile-bottom-nav";
 import { useAppState, useAppActions } from "@/providers/app-providers";
 import { SAFETY_EFFORT_ROUTES } from "@/lib/navigation";
 import { cn } from "@/lib/utils";
+import { SafetyAwarenessGate } from "@/components/safety-awareness/safety-awareness-gate";
 
 export function AppShell({ children }: { children: ReactNode }) {
   const { notification } = useAppState();
@@ -129,6 +130,8 @@ export function AppShell({ children }: { children: ReactNode }) {
       <main className={cn(isSafetyEffort ? "legacy-page-content" : "page-content")}>{children}</main>
 
       <MobileBottomNav hidden={btmHidden} />
+
+      <SafetyAwarenessGate />
     </div>
   );
 }

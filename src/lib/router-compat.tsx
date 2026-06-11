@@ -70,10 +70,10 @@ function normalizePath(path?: string) {
 
 export function BrowserRouter({ children }: BrowserRouterProps) {
   const nextPathname = usePathname();
-  const [location, setLocation] = useState(readLocation);
+  const [tick, setTick] = useState(0);
 
   useEffect(() => {
-    const syncLocation = () => setLocation(readLocation());
+    const syncLocation = () => setTick((value) => value + 1);
     window.addEventListener("popstate", syncLocation);
     window.addEventListener("legacy-router:navigate", syncLocation);
 
@@ -83,9 +83,11 @@ export function BrowserRouter({ children }: BrowserRouterProps) {
     };
   }, []);
 
-  useEffect(() => {
-    setLocation(readLocation());
-  }, [nextPathname]);
+  // Derive the location synchronously during render. When Next updates the URL
+  // (nextPathname changes) window.location is already current, so the legacy
+  // <Routes> never renders a stale page for a frame — fixes the brief flash of
+  // the previous legacy screen (e.g. Safety Effort) when opening Safety Admin.
+  const location = useMemo<LegacyLocation>(() => readLocation(), [nextPathname, tick]);
 
   const navigate = useMemo<NavigateFn>(
     () => (to, options = {}) => {
