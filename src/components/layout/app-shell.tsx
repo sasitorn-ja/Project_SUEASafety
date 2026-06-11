@@ -6,11 +6,14 @@ import { MobileTopbar } from "./mobile-topbar";
 import { DesktopTopbar } from "./desktop-topbar";
 import { MobileBottomNav } from "./mobile-bottom-nav";
 import { useAppState, useAppActions } from "@/providers/app-providers";
+import { SAFETY_EFFORT_ROUTES } from "@/lib/navigation";
+import { cn } from "@/lib/utils";
 
 export function AppShell({ children }: { children: ReactNode }) {
   const { notification } = useAppState();
   const { dismissNotification } = useAppActions();
-  const pathname = usePathname();
+  const pathname = usePathname() ?? "";
+  const isSafetyEffort = SAFETY_EFFORT_ROUTES.has(pathname) || pathname === "/safety-admin";
 
   const [topHidden, setTopHidden] = useState(false);
   const [btmHidden, setBtmHidden] = useState(false);
@@ -123,7 +126,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       <MobileTopbar hidden={topHidden} />
       <DesktopTopbar />
 
-      <main className="page-content">{children}</main>
+      <main className={cn(isSafetyEffort ? "legacy-page-content" : "page-content")}>{children}</main>
 
       <MobileBottomNav hidden={btmHidden} />
     </div>

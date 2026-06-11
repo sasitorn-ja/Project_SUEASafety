@@ -3,52 +3,61 @@ import { useEffect, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import { Navigate, Route, Routes, useLocation, useNavigate } from "./lib/router-compat";
 const mascotLogo = "/images/mascots/suea-mascot-logo.png";
-import Category from "@/features/safety-effort/screens/Category";
-import Activity from "@/features/safety-effort/screens/Activity";
-import CreatePost from "@/features/safety-effort/screens/CreatePost";
-import Linewalk from "@/features/safety-effort/screens/Linewalk";
-import SafetyContact from "@/features/safety-effort/screens/SafetyContact";
-import AssessmentSummary from "@/features/safety-effort/screens/AssessmentSummary";
-import { DesktopTopbar as HubDesktopTopbar } from "@/components/layout/desktop-topbar";
-import { MobileTopbar as HubMobileTopbar } from "@/components/layout/mobile-topbar";
-import { MobileBottomNav as HubMobileBottomNav } from "@/components/layout/mobile-bottom-nav";
+
+const screenLoading = (label) => (
+  <div
+    style={{
+      minHeight: "100%",
+      display: "grid",
+      placeItems: "center",
+      background: "#f1ecdf",
+      color: "#33312c",
+      fontFamily: "'Sarabun','Prompt',sans-serif",
+      fontWeight: 700,
+    }}
+  >
+    กำลังโหลด{label}...
+  </div>
+);
+
+const Category = dynamic(() => import("@/features/safety-effort/screens/Category"), {
+  ssr: false,
+  loading: () => screenLoading("หน้า Safety Effort"),
+});
+
+const Activity = dynamic(() => import("@/features/safety-effort/screens/Activity"), {
+  ssr: false,
+  loading: () => screenLoading("หน้ากิจกรรม"),
+});
+
+const CreatePost = dynamic(() => import("@/features/safety-effort/screens/CreatePost"), {
+  ssr: false,
+  loading: () => screenLoading("หน้าสร้างโพสต์"),
+});
+
+const Linewalk = dynamic(() => import("@/features/safety-effort/screens/Linewalk"), {
+  ssr: false,
+  loading: () => screenLoading("หน้า Line Walk"),
+});
+
+const SafetyContact = dynamic(() => import("@/features/safety-effort/screens/SafetyContact"), {
+  ssr: false,
+  loading: () => screenLoading("หน้าติดต่อ Safety"),
+});
+
+const AssessmentSummary = dynamic(() => import("@/features/safety-effort/screens/AssessmentSummary"), {
+  ssr: false,
+  loading: () => screenLoading("หน้าสรุปผล"),
+});
 
 const Checkin = dynamic(() => import("@/features/safety-effort/screens/Checkin"), {
   ssr: false,
-  loading: () => (
-    <div
-      style={{
-        minHeight: "100%",
-        display: "grid",
-        placeItems: "center",
-        background: "#f1ecdf",
-        color: "#33312c",
-        fontFamily: "'Sarabun','Prompt',sans-serif",
-        fontWeight: 700,
-      }}
-    >
-      กำลังโหลดหน้าเช็คอิน...
-    </div>
-  ),
+  loading: () => screenLoading("หน้าเช็คอิน"),
 });
 
 const SafetyAdmin = dynamic(() => import("@/features/safety-effort/screens/SafetyAdmin"), {
   ssr: false,
-  loading: () => (
-    <div
-      style={{
-        minHeight: "100%",
-        display: "grid",
-        placeItems: "center",
-        background: "#f1ecdf",
-        color: "#33312c",
-        fontFamily: "'Sarabun','Prompt',sans-serif",
-        fontWeight: 700,
-      }}
-    >
-      กำลังโหลดหน้า Admin...
-    </div>
-  ),
+  loading: () => screenLoading("หน้า Admin"),
 });
 
 // ─────────────────────────────────────────────────────────
@@ -788,7 +797,6 @@ export default function App() {
       <>
         <style>{GLOBAL_STYLES}</style>
         <div style={{ height: "100vh", overflow: "hidden", background: T.background, fontFamily: "'Prompt','Sarabun',sans-serif", color: T.foreground }}>
-          <HubMobileTopbar hidden={!navVisible} />
           <main
             ref={mainRef}
             onScroll={handleScroll}
@@ -804,9 +812,6 @@ export default function App() {
           >
             <AppRoutes onScroll={handleScroll} />
           </main>
-          {!hideBottomNav && (
-            <HubMobileBottomNav hidden={!navVisible} />
-          )}
         </div>
       </>
     );
@@ -817,7 +822,6 @@ export default function App() {
     <>
       <style>{GLOBAL_STYLES}</style>
       <div style={{ height: "100vh", overflow: "hidden", background: T.background, fontFamily: "'Prompt','Sarabun',sans-serif", color: T.foreground }}>
-        <HubDesktopTopbar />
         <div style={{
           position: "absolute", inset: 0,
           paddingTop: 68,

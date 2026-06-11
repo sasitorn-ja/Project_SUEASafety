@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { ArrowLeft, LayoutList, Pencil, Plus, Trash2 } from "lucide-react";
-import { AppShell } from "@/components/layout/app-shell";
 import { SafetyCultureHero } from "@/components/safety-culture/safety-culture-hero";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -204,7 +203,7 @@ export default function AdminLeaderboardPage() {
   };
 
   return (
-    <AppShell>
+    <>
       <div className="mx-auto w-full max-w-[1320px] bg-[#f1ecdf] px-3.5 pt-0 pb-8 font-sarabun md:px-4">
         <SafetyCultureHero
           eyebrow="SAFETY CULTURE ADMIN"
@@ -470,6 +469,6 @@ export default function AdminLeaderboardPage() {
           </DialogContent>
         </Dialog>
       </div>
-    </AppShell>
+    </>
   );
 }

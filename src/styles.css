@@ -1,4 +1,2 @@
-/* Sarabun webfont — ยังถูกอ้างอิงโดย inline font-family ในหน้าจอ Safety Effort
-   ส่วน reset / สี / ฟอนต์ระดับแอป จัดการที่ app/globals.css (Tailwind v4 design tokens)
+/* Reset / สี / ฟอนต์ระดับแอป จัดการที่ app/globals.css (Tailwind v4 design tokens)
    และ next/font ใน app/layout.tsx แล้ว (ไม่ต้องมี design-system ซ้ำที่นี่) */
-@import url("https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap");

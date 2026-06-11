@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { AppShell } from "@/components/layout/app-shell";
 import { SafetyCultureHero } from "@/components/safety-culture/safety-culture-hero";
 import { SafetyCultureTabs } from "@/components/safety-culture/safety-culture-tabs";
 import { SafetyCulturePageHeader } from "@/components/safety-culture/safety-culture-page-header";
@@ -22,7 +21,7 @@ export default function LeaderboardPage() {
   });
 
   return (
-    <AppShell>
+    <>
       <div className="mx-auto w-full max-w-[1180px] bg-[#f1ecdf] px-3.5 pt-0 pb-8 font-sarabun md:px-4">
         <div className="anim-fade" style={animStyle(0)}>
           <SafetyCultureHero
@@ -152,6 +151,6 @@ export default function LeaderboardPage() {
           </div>
         </div>
       </div>
-    </AppShell>
+    </>
   );
 }

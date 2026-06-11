@@ -7,7 +7,6 @@ import { useRouter } from "next/navigation";
 import { ArrowLeft, Camera, Plus, X } from "lucide-react";
 import { toast } from "sonner";
 import { useAppActions, useAppState } from "@/providers/app-providers";
-import { AppShell } from "@/components/layout/app-shell";
 import { SafetyCultureHero } from "@/components/safety-culture/safety-culture-hero";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -178,7 +177,7 @@ export default function PostSocialPage() {
   };
 
   return (
-    <AppShell>
+    <>
       <div className="mx-auto w-full max-w-[600px] px-4 pb-8 pt-2">
         <header
           className="anim-fade flex items-center justify-between pb-3 pt-2"
@@ -384,6 +383,6 @@ export default function PostSocialPage() {
           onChange={handleFileChange}
         />
       </div>
-    </AppShell>
+    </>
   );
 }

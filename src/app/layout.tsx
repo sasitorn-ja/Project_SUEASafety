@@ -5,6 +5,7 @@ import { Noto_Sans_Thai, Sarabun } from "next/font/google";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "@/components/ui/sonner";
 import { AppProviders } from "@/providers/app-providers";
+import { AppShell } from "@/components/layout/app-shell";
 
 const notoSansThai = Noto_Sans_Thai({
   variable: "--font-noto-sans-thai",
@@ -39,7 +40,9 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col bg-background text-foreground font-sans">
         <TooltipProvider>
-          <AppProviders>{children}</AppProviders>
+          <AppProviders>
+            <AppShell>{children}</AppShell>
+          </AppProviders>
           <Toaster position="top-center" richColors />
         </TooltipProvider>
       </body>

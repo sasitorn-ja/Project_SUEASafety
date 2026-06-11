@@ -4,7 +4,6 @@ import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAppState, useAppActions } from "@/providers/app-providers";
-import { AppShell } from "@/components/layout/app-shell";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -169,7 +168,7 @@ export default function FitToDrivePage() {
   };
 
   return (
-    <AppShell>
+    <>
       <div className="w-full min-h-[calc(100vh-80px)] bg-background flex justify-center items-start">
         <div className="w-full max-w-[1360px] mx-auto px-5 md:px-20 py-6 md:py-[50px] flex flex-col">
           {/* Header */}
@@ -526,7 +525,7 @@ export default function FitToDrivePage() {
       <input type="file" ref={bpFileRef} accept="image/*" capture="environment" className="hidden" onChange={handleBpFile} />
       <input type="file" ref={alcFileRef} accept="image/*" capture="environment" className="hidden" onChange={handleAlcFile} />
       <canvas ref={canvasRef} className="hidden" />
-    </AppShell>
+    </>
   );
 }
 

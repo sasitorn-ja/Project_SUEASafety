@@ -2,24 +2,24 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, ShieldCheck, HeartPulse, ClipboardCheck, UsersRound, Bell } from "lucide-react";
+import { Home, ShieldCheck, HeartPulse, ClipboardCheck, UsersRound, Settings2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { isMainNavActive } from "@/lib/navigation";
 
 function NavTo(props: any) {
-  return <Link {...props} />;
+  return <Link prefetch={false} {...props} />;
 }
 
 const NAV_ITEMS = [
-  { id: "dashboard", label: "หน้าแรก", icon: Home, href: "/" },
+  { id: "dashboard", label: "Home", icon: Home, href: "/" },
   { id: "safety-effort", label: "Safety Effort", icon: ShieldCheck, href: "/category" },
   { id: "were-ok", label: "We're OK", icon: HeartPulse, href: "/were-ok" },
   { id: "work-permit", label: "Work Permit", icon: ClipboardCheck, href: "/work-permit" },
   { id: "safety-culture", label: "Safety Culture", icon: UsersRound, href: "/safety-culture" },
-  { id: "notifications", label: "Notifications", icon: Bell, href: "/notifications", badge: 3 },
+  { id: "admin", label: "Admin", icon: Settings2, href: "/safety-admin" },
 ];
 
-const ENABLED_HREFS = new Set(["/", "/category", "/were-ok", "/work-permit", "/safety-culture", "/notifications"]);
+const ENABLED_HREFS = new Set(["/", "/category", "/were-ok", "/work-permit", "/safety-culture", "/safety-admin"]);
 
 export function MobileBottomNav({ hidden = false }: { hidden?: boolean }) {
   const pathname = usePathname() ?? "";
@@ -81,14 +81,6 @@ export function MobileBottomNav({ hidden = false }: { hidden?: boolean }) {
                 style={{ transition: "background 150ms" }}
               >
                 <Icon className="h-[18px] w-[18px] transition-all" strokeWidth={active && enabled ? 2.45 : 2.1} />
-                {item.badge && (
-                  <span
-                    className="absolute -top-1 -right-[7px] flex h-[15px] min-w-[15px] items-center justify-center rounded-full bg-[#d5301a] px-[3px] text-[9px] font-extrabold text-white"
-                    style={{ outline: "2px solid var(--nav-brown)" }}
-                  >
-                    {item.badge > 9 ? "9+" : item.badge}
-                  </span>
-                )}
               </span>
               <span
                 className="max-w-[52px] overflow-hidden"

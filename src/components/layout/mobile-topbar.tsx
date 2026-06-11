@@ -23,16 +23,16 @@ import { cn } from "@/lib/utils";
 import { isExactNavActive, isMainNavActive } from "@/lib/navigation";
 
 function NavTo(props: any) {
-  return <Link {...props} />;
+  return <Link prefetch={false} {...props} />;
 }
 
 const MAIN_ITEMS = [
-  { id: "dashboard", label: "หน้าแรก", icon: Home, href: "/" },
+  { id: "dashboard", label: "Home", icon: Home, href: "/" },
   { id: "safety-effort", label: "Safety Effort", icon: ShieldCheck, href: "/category" },
   { id: "were-ok", label: "We're OK", icon: HeartPulse, href: "/were-ok" },
   { id: "work-permit", label: "Work Permit", icon: ClipboardCheck, href: "/work-permit" },
   { id: "safety-culture", label: "Safety Culture", icon: UsersRound, href: "/safety-culture" },
-  { id: "notifications", label: "Notifications", icon: Bell, href: "/notifications" },
+  { id: "admin", label: "Admin", icon: Settings2, href: "/safety-admin" },
 ];
 
 const CULTURE_ITEMS = [
@@ -56,6 +56,7 @@ const ENABLED_HREFS = new Set([
   "/safety-culture",
   "/safety-culture/leaderboard",
   "/safety-culture/rewards",
+  "/safety-admin",
   "/notifications",
 ]);
 

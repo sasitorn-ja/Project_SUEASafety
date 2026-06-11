@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { ClipboardCheck, HeartPulse, ShieldCheck, UsersRound } from "lucide-react";
-import { AppShell } from "@/components/layout/app-shell";
 import { Card } from "@/components/ui/card";
 
 const MODULES = [
@@ -34,7 +33,7 @@ const MODULES = [
 
 export default function HomePage() {
   return (
-    <AppShell>
+    <>
       <div className="mx-auto w-full max-w-[1180px] px-4 pb-8 font-sarabun">
         <section className="overflow-hidden rounded-[28px] bg-[linear-gradient(135deg,#3b1d07,#75410f)] px-6 py-8 text-white shadow-[0_16px_38px_rgba(59,29,7,0.18)] md:px-10 md:py-12">
           <p className="text-xs font-extrabold uppercase tracking-[0.18em] text-[#ffcf55]">SUEA Safety Home</p>
@@ -48,7 +47,7 @@ export default function HomePage() {
           {MODULES.map((module) => {
             const Icon = module.icon;
             return (
-              <Link key={module.href} href={module.href} className="group">
+              <Link key={module.href} href={module.href} prefetch={false} className="group">
                 <Card className="h-full rounded-[24px] border-[#5c3214]/15 bg-[#fffdf7] p-5 transition-all group-hover:-translate-y-0.5 group-hover:border-[#f5bb00] group-hover:shadow-[0_12px_24px_rgba(59,29,7,0.10)]">
                   <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#fff1c9] text-[#6d4716]">
                     <Icon className="h-6 w-6" strokeWidth={2.3} />
@@ -61,6 +60,6 @@ export default function HomePage() {
           })}
         </section>
       </div>
-    </AppShell>
+    </>
   );
 }
