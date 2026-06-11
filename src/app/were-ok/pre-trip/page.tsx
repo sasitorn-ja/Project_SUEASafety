@@ -107,8 +107,8 @@ export default function PreTripPage() {
       <Card
         key={pt.id}
         className={cn(
-          "p-4 md:p-5 rounded-[20px] md:rounded-3xl border-[1.5px] bg-card flex flex-col gap-3 transition-all anim-fade",
-          isChecked && selected === "pass" && "bg-[#FFFDF7] border-[#3D9A6A]/30",
+          "p-4 md:p-4 rounded-[16px] md:rounded-3xl border-[1.5px] bg-card flex flex-col gap-3 transition-all anim-fade",
+          isChecked && selected === "pass" && "bg-[var(--brand-surface)] border-[#3D9A6A]/30",
           isChecked && selected === "fail" && "bg-red-50 border-[#D9383A]/30"
         )}
         style={animStyle(0.1 + pt.id * 0.03)}
@@ -118,10 +118,10 @@ export default function PreTripPage() {
             className={cn(
               "w-8 h-8 rounded-[10px] flex items-center justify-center text-[13.5px] font-extrabold flex-shrink-0",
               isChecked && selected === "pass"
-                ? "bg-[#FFF9E6] text-[#F5BB00]"
+                ? "bg-[var(--brand-soft)] text-[var(--brand-accent)]"
                 : isChecked && selected === "fail"
                 ? "bg-red-100 text-[#D9383A]"
-                : "bg-[#EFEBE0] text-foreground"
+                : "bg-[var(--secondary)] text-foreground"
             )}
           >
             {isChecked ? (
@@ -184,7 +184,7 @@ export default function PreTripPage() {
           {/* Header */}
           <header className="flex items-center gap-3 mb-2 md:mb-4 anim-fade" style={animStyle(0)}>
             <Link href="/were-ok">
-              <button className="w-9 h-9 md:w-11 md:h-11 rounded-xl bg-white border-none shadow-[0_2px_6px_rgba(0,0,0,0.03)] flex items-center justify-center text-foreground transition-colors active:bg-[#EFEBE0]">
+              <button className="w-9 h-9 md:w-11 md:h-11 rounded-xl bg-white border-none shadow-[0_2px_6px_rgba(0,0,0,0.03)] flex items-center justify-center text-foreground transition-colors active:bg-[var(--secondary)]">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
                   <line x1="19" y1="12" x2="5" y2="12"/>
                   <polyline points="12 19 5 12 12 5"/>
@@ -211,12 +211,12 @@ export default function PreTripPage() {
           <div className="flex gap-1 mb-4 md:mb-6 pl-1 anim-fade" style={animStyle(0.04)}>
             <div className="h-1 md:h-1.5 rounded bg-foreground w-6 md:w-9" />
             <div className="h-1 md:h-1.5 rounded bg-foreground w-6 md:w-9 ml-0.5" />
-            <div className="h-1 md:h-1.5 rounded bg-[#F5BB00] w-6 md:w-9 ml-0.5" />
-            <div className="h-1 md:h-1.5 rounded bg-[#DDD9CD] w-3 md:w-4 ml-0.5" />
+            <div className="h-1 md:h-1.5 rounded bg-[var(--brand-accent)] w-6 md:w-9 ml-0.5" />
+            <div className="h-1 md:h-1.5 rounded bg-[var(--border)] w-3 md:w-4 ml-0.5" />
           </div>
 
           {/* Truck illustration panel */}
-          <Card className="bg-card border-[#E4DFD3] rounded-3xl md:rounded-[28px] p-4 md:p-6 mb-5 md:mb-6 relative overflow-hidden flex flex-col items-center anim-fade" style={animStyle(0.06)}>
+          <Card className="bg-card border-[var(--border)] rounded-3xl md:rounded-[16px] p-4 md:p-4 mb-5 md:mb-6 relative overflow-hidden flex flex-col items-center anim-fade" style={animStyle(0.06)}>
             <div
               className="absolute inset-0 opacity-65 pointer-events-none"
               style={{
@@ -250,7 +250,7 @@ export default function PreTripPage() {
               {allDone && (
                 <button
                   onClick={handleComplete}
-                  className="w-full md:mt-4 bg-[#121214] hover:bg-[#252528] text-white font-extrabold text-[15px] md:text-base rounded-[20px] md:rounded-3xl py-4 md:py-5 shadow-[0_4px_14px_rgba(0,0,0,0.1)] flex items-center justify-center gap-1.5 transition-all active:scale-[0.99] anim-fade"
+                  className="w-full md:mt-4 bg-[#121214] hover:bg-[#252528] text-white font-extrabold text-[15px] md:text-base rounded-[16px] md:rounded-3xl py-4 md:py-5 shadow-[0_4px_14px_rgba(0,0,0,0.1)] flex items-center justify-center gap-1.5 transition-all active:scale-[0.99] anim-fade"
                   style={animStyle(0.1)}
                 >
                   <span>กลับไปหน้าหลักเพื่อยืนยันเข้ารับคิวงาน</span>

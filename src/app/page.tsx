@@ -1,65 +1,302 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
-import { ClipboardCheck, HeartPulse, ShieldCheck, UsersRound } from "lucide-react";
+import { useMemo } from "react";
+import {
+  Award,
+  ChevronRight,
+  Gift,
+  Sparkles,
+  Trophy,
+  UsersRound,
+  Zap,
+} from "lucide-react";
 import { Card } from "@/components/ui/card";
-
-const MODULES = [
-  {
-    href: "/category",
-    title: "Safety Effort",
-    description: "เริ่มกิจกรรม ตรวจประเมิน และติดตามงานด้านความปลอดภัย",
-    icon: ShieldCheck,
-  },
-  {
-    href: "/were-ok",
-    title: "We're OK",
-    description: "เตรียมความพร้อมก่อนขับ ตรวจสุขภาพ รถ และเส้นทาง",
-    icon: HeartPulse,
-  },
-  {
-    href: "/work-permit",
-    title: "Work Permit",
-    description: "จัดการใบอนุญาตทำงานและขั้นตอนก่อนเริ่มปฏิบัติงาน",
-    icon: ClipboardCheck,
-  },
-  {
-    href: "/safety-culture",
-    title: "Safety Culture",
-    description: "แชร์เรื่องราว ดูอันดับทีม และแลกรางวัลจากคะแนน Safety",
-    icon: UsersRound,
-  },
-] as const;
+import { useAppState, getSafetyCultureEventPhase } from "@/providers/app-providers";
+import { useAppTheme } from "@/providers/theme-provider";
 
 export default function HomePage() {
-  return (
-    <>
-      <div className="mx-auto w-full max-w-[1180px] px-4 pb-8 font-sarabun">
-        <section className="overflow-hidden rounded-[28px] bg-[linear-gradient(135deg,#3b1d07,#75410f)] px-6 py-8 text-white shadow-[0_16px_38px_rgba(59,29,7,0.18)] md:px-10 md:py-12">
-          <p className="text-xs font-extrabold uppercase tracking-[0.18em] text-[#ffcf55]">SUEA Safety Home</p>
-          <h1 className="mt-2 text-3xl font-black md:text-5xl">ศูนย์รวมงานความปลอดภัย</h1>
-          <p className="mt-3 max-w-2xl text-sm font-semibold leading-7 text-white/75 md:text-base">
-            เลือกโมดูลที่ต้องการใช้งานจากหน้านี้ แต่ละเมนูมีเนื้อหาและขั้นตอนการทำงานแยกจากกัน
-          </p>
-        </section>
+  const { mascot } = useAppTheme();
+  const {
+    currentUserPoints,
+    rewardsCatalog,
+    personalRankings,
+    teamStandings,
+    safetyCultureEvent,
+    eventNow,
+  } = useAppState();
 
-        <section className="mt-5 grid gap-4 sm:grid-cols-2">
-          {MODULES.map((module) => {
-            const Icon = module.icon;
-            return (
-              <Link key={module.href} href={module.href} prefetch={false} className="group">
-                <Card className="h-full rounded-[24px] border-[#5c3214]/15 bg-[#fffdf7] p-5 transition-all group-hover:-translate-y-0.5 group-hover:border-[#f5bb00] group-hover:shadow-[0_12px_24px_rgba(59,29,7,0.10)]">
-                  <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#fff1c9] text-[#6d4716]">
-                    <Icon className="h-6 w-6" strokeWidth={2.3} />
+  const me = personalRankings.find((person) => person.active);
+  const myTeam = me ? teamStandings.find((team) => team.name === me.team) : undefined;
+
+  // ความคืบหน้าสู่รางวัล
+  const sortedRewards = useMemo(
+    () => [...rewardsCatalog].sort((a, b) => a.points - b.points),
+    [rewardsCatalog]
+  );
+  const redeemableCount = sortedRewards.filter((reward) => reward.points <= currentUserPoints).length;
+  const nextReward = sortedRewards.find((reward) => reward.points > currentUserPoints);
+  const progress = nextReward
+    ? Math.min(100, Math.round((currentUserPoints / nextReward.points) * 100))
+    : 100;
+  const remaining = nextReward ? nextReward.points - currentUserPoints : 0;
+
+  // อีเวนต์ที่กำลังจัด
+  const eventPhase = getSafetyCultureEventPhase(safetyCultureEvent, eventNow);
+  const startAt = new Date(`${safetyCultureEvent.startDate}T${safetyCultureEvent.startTime}`);
+  const endAt = new Date(`${safetyCultureEvent.endDate}T${safetyCultureEvent.endTime}`);
+  const eventBonusLabel =
+    safetyCultureEvent.bonusMode === "multiplier"
+      ? `x${safetyCultureEvent.multiplier}`
+      : `+${safetyCultureEvent.fixedPoints} pts`;
+  const timeRangeLabel = `${startAt.toLocaleDateString("th-TH", { day: "2-digit", month: "short" })} ${safetyCultureEvent.startTime} - ${endAt.toLocaleDateString("th-TH", { day: "2-digit", month: "short" })} ${safetyCultureEvent.endTime}`;
+
+  const isLive = eventPhase === "live";
+  let eventStatusLabel = "Draft";
+  let countdownLabel = "ยังไม่มีกิจกรรมในตอนนี้";
+  if (eventPhase === "live") {
+    eventStatusLabel = "กำลังจัด";
+    countdownLabel = `เหลือเวลาอีก ${Math.max(0, Math.ceil((endAt.getTime() - eventNow) / 60000))} นาที`;
+  } else if (eventPhase === "upcoming") {
+    eventStatusLabel = "ใกล้เริ่ม";
+    countdownLabel = `เริ่มในอีก ${Math.max(0, Math.ceil((startAt.getTime() - eventNow) / 60000))} นาที`;
+  } else if (eventPhase === "ended") {
+    eventStatusLabel = "จบแล้ว";
+    countdownLabel = "กิจกรรมสิ้นสุดแล้ว";
+  } else if (eventPhase === "paused") {
+    eventStatusLabel = "หยุดชั่วคราว";
+    countdownLabel = "กิจกรรมถูกหยุดชั่วคราว";
+  }
+  const showEvent = eventPhase !== "draft";
+
+  return (
+    <div className="mx-auto w-full max-w-[1100px] px-3.5 pb-8 font-sarabun md:px-4">
+      {/* ===== HERO: แดชบอร์ดคะแนน ===== */}
+      <section className="relative overflow-hidden rounded-[16px] bg-[linear-gradient(135deg,var(--brand-hero-start),var(--brand-hero-end))] px-3.5 py-3.5 text-white shadow-[0_12px_28px_var(--brand-shadow)] md:px-7 md:py-6">
+        <div className="absolute inset-x-0 top-0 h-2 bg-[repeating-linear-gradient(-45deg,var(--brand-accent),var(--brand-accent)_10px,#1a1a1a_10px,#1a1a1a_20px)]" />
+        <Image
+          src={mascot("big")}
+          alt=""
+          width={150}
+          height={150}
+          className="pointer-events-none absolute -bottom-3 right-3 hidden h-[150px] w-[150px] object-contain opacity-90 md:block"
+        />
+
+        <div className="relative md:hidden">
+          <p className="flex items-center gap-1.5 text-[10px] font-extrabold uppercase tracking-[0.14em] text-[var(--brand-hero-label)]">
+            <Sparkles className="h-3.5 w-3.5" strokeWidth={2.4} />
+            คะแนน Safety ของฉัน
+          </p>
+
+          <div className="mt-1.5 grid grid-cols-[auto_minmax(0,1fr)] items-center gap-3">
+            <div className="flex items-end gap-1.5">
+              <span className="text-[40px] font-black leading-none tracking-tight">
+                {currentUserPoints.toLocaleString()}
+              </span>
+              <span className="mb-1 text-[12px] font-extrabold text-white/75">แต้ม</span>
+            </div>
+
+            {nextReward && (
+              <div className="min-w-0 border-l border-white/15 pl-3">
+                <div className="flex items-center justify-between gap-1">
+                  <span className="text-[9px] font-extrabold text-[var(--brand-hero-label)]">รางวัลถัดไป</span>
+                  <span className="text-[9px] font-black text-white/75">{nextReward.points} แต้ม</span>
+                </div>
+                <p className="truncate text-[12px] font-black">{nextReward.name}</p>
+                <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-white/20">
+                  <div
+                    className="h-full rounded-full bg-[var(--brand-accent)]"
+                    style={{ width: `${progress}%` }}
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div className="mt-2 flex items-center gap-1.5">
+            {me && (
+              <span className="inline-flex items-center gap-1 rounded-full bg-white/12 px-2 py-0.5 text-[9.5px] font-black">
+                <Trophy className="h-3 w-3 text-[var(--brand-hero-label)]" strokeWidth={2.5} />
+                #{me.rank} ในทีม
+              </span>
+            )}
+            {myTeam && (
+              <span className="inline-flex items-center gap-1 rounded-full bg-white/12 px-2 py-0.5 text-[9.5px] font-black">
+                <UsersRound className="h-3 w-3 text-[var(--brand-hero-label)]" strokeWidth={2.5} />
+                {myTeam.name}
+              </span>
+            )}
+            <Link
+              href="/safety-culture/rewards"
+              className="ml-auto inline-flex h-6 items-center gap-1 rounded-lg bg-[var(--brand-accent)] px-2 text-[9.5px] font-black text-[var(--brand-accent-contrast)]"
+            >
+              <Gift className="h-3 w-3" strokeWidth={2.5} />
+              แลกรางวัล
+            </Link>
+          </div>
+        </div>
+
+        <div className="relative hidden gap-4 md:grid md:grid-cols-[minmax(0,1fr)_minmax(260px,330px)] md:items-center">
+          {/* คะแนน */}
+          <div>
+            <p className="flex items-center gap-2 text-xs font-extrabold uppercase tracking-[0.18em] text-[var(--brand-hero-label)]">
+              <Sparkles className="h-4 w-4" strokeWidth={2.4} />
+              คะแนน Safety ของฉัน
+            </p>
+            <div className="mt-1.5 flex items-end gap-2">
+              <span className="text-[44px] font-black leading-none tracking-tight md:text-[58px]">
+                {currentUserPoints.toLocaleString()}
+              </span>
+              <span className="mb-1.5 text-base font-extrabold text-white/75">แต้ม</span>
+            </div>
+            <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
+              {me && (
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-white/12 px-2.5 py-1 text-[11.5px] font-black md:px-3 md:text-[12.5px]">
+                  <Trophy className="h-3.5 w-3.5 text-[var(--brand-hero-label)]" strokeWidth={2.5} />
+                  อันดับ {me.rank} ในทีม
+                </span>
+              )}
+              {myTeam && (
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-white/12 px-2.5 py-1 text-[11.5px] font-black md:px-3 md:text-[12.5px]">
+                  <UsersRound className="h-3.5 w-3.5 text-[var(--brand-hero-label)]" strokeWidth={2.5} />
+                  {myTeam.name}
+                </span>
+              )}
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-white/12 px-2.5 py-1 text-[11.5px] font-black md:px-3 md:text-[12.5px]">
+                <Gift className="h-3.5 w-3.5 text-[var(--brand-hero-label)]" strokeWidth={2.5} />
+                แลกได้แล้ว {redeemableCount} รางวัล
+              </span>
+            </div>
+          </div>
+
+          {/* ความคืบหน้าสู่รางวัล */}
+          <div className="rounded-[14px] border border-white/15 bg-white/10 p-3 backdrop-blur-[6px] md:rounded-[16px] md:p-4">
+            {nextReward ? (
+              <>
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-[12px] font-extrabold uppercase tracking-wide text-[var(--brand-hero-label)]">
+                    รางวัลถัดไป
                   </span>
-                  <h2 className="mt-4 text-xl font-black text-[#3b1d07]">{module.title}</h2>
-                  <p className="mt-1.5 text-sm font-semibold leading-6 text-[#5c3214]/70">{module.description}</p>
-                </Card>
+                  <span className="rounded-full bg-[var(--brand-accent)] px-2.5 py-0.5 text-[11px] font-black text-[var(--brand-accent-contrast)]">
+                    {nextReward.points.toLocaleString()} แต้ม
+                  </span>
+                </div>
+                <p className="mt-1 truncate text-[16px] font-black md:mt-1.5 md:text-[17px]">{nextReward.name}</p>
+                <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-white/20 md:mt-3 md:h-2.5">
+                  <div
+                    className="h-full rounded-full bg-[var(--brand-accent)] transition-[width] duration-700 ease-out"
+                    style={{ width: `${progress}%` }}
+                  />
+                </div>
+                <p className="mt-1.5 text-[12px] font-bold text-white/80 md:mt-2 md:text-[12.5px]">
+                  อีก <span className="font-black text-white">{remaining.toLocaleString()}</span> แต้ม ก็แลกได้ ({progress}%)
+                </p>
+              </>
+            ) : (
+              <div className="flex items-center gap-2.5">
+                <Award className="h-7 w-7 flex-shrink-0 text-[var(--brand-hero-label)]" strokeWidth={2.2} />
+                <p className="text-[14px] font-extrabold leading-snug">
+                  เยี่ยมมาก! คะแนนของคุณแลกได้ทุกรางวัลในตอนนี้แล้ว
+                </p>
+              </div>
+            )}
+
+            <div className="mt-2.5 grid grid-cols-2 gap-2 md:mt-3">
+              <Link
+                href="/safety-culture/rewards"
+                className="flex h-8 items-center justify-center gap-1.5 rounded-xl bg-[var(--brand-accent)] text-[12px] font-black text-[var(--brand-accent-contrast)] transition-transform hover:scale-[1.02] md:h-9 md:text-[13px]"
+              >
+                <Gift className="h-4 w-4" strokeWidth={2.5} />
+                แลกรางวัล
               </Link>
-            );
-          })}
-        </section>
-      </div>
-    </>
+              <Link
+                href="/safety-culture/leaderboard"
+                className="flex h-8 items-center justify-center gap-1.5 rounded-xl border border-white/30 bg-white/10 text-[12px] font-black text-white transition-colors hover:bg-white/20 md:h-9 md:text-[13px]"
+              >
+                <Trophy className="h-4 w-4" strokeWidth={2.5} />
+                ดูอันดับ
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ===== กิจกรรม/อีเวนต์ที่กำลังจัด ===== */}
+      <section className="mt-3 md:mt-4">
+        <div className="mb-2 flex items-center justify-between md:mb-2.5">
+          <h2 className="flex items-center gap-1.5 text-[15px] font-black text-[var(--brand-nav)] md:gap-2 md:text-[17px]">
+            <Zap className="h-4 w-4 text-[var(--brand-accent-strong)] md:h-5 md:w-5" strokeWidth={2.4} />
+            กิจกรรมที่กำลังจัด
+          </h2>
+          <Link
+            href="/safety-culture"
+            className="inline-flex items-center gap-0.5 text-[11px] font-extrabold text-[var(--brand-text)]/70 hover:text-[var(--brand-accent-strong)] md:text-[13px]"
+          >
+            ดูทั้งหมด
+            <ChevronRight className="h-4 w-4" strokeWidth={2.5} />
+          </Link>
+        </div>
+
+        {showEvent ? (
+          <Link href="/safety-culture" className="group block">
+            <Card className="overflow-hidden rounded-[16px] border border-[var(--border)] bg-[var(--brand-surface)] p-0 shadow-[0_8px_20px_var(--brand-shadow)] transition-all group-hover:-translate-y-0.5 group-hover:border-[var(--brand-accent)]">
+              <div className="flex items-center gap-2 p-2.5 md:flex-row md:items-center md:justify-between md:gap-3 md:p-4">
+                <div className="flex items-start gap-2.5 md:gap-3">
+                  <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-[var(--brand-nav)] text-[var(--brand-accent)] md:h-12 md:w-12 md:rounded-2xl">
+                    <Zap className="h-4.5 w-4.5 md:h-6 md:w-6" strokeWidth={2.4} />
+                  </div>
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-1.5 md:gap-2">
+                      <span className="text-[13px] font-black text-[var(--brand-nav)] md:text-[16px]">
+                        {safetyCultureEvent.headline}
+                      </span>
+                      <span
+                        className={
+                          "rounded-full px-2 py-0.5 text-[8.5px] font-black uppercase tracking-[0.1em] md:px-2.5 md:text-[10px] md:tracking-[0.14em] " +
+                          (isLive
+                            ? "bg-[#daf5e6] text-[#19734a]"
+                            : "bg-[var(--brand-soft)] text-[var(--brand-text)]")
+                        }
+                      >
+                        {isLive && (
+                          <span className="mr-1 inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-[#19734a] align-middle" />
+                        )}
+                        {eventStatusLabel}
+                      </span>
+                    </div>
+                    <p className="mt-1 hidden text-[13px] font-bold leading-relaxed text-[var(--brand-text)]/80 md:block">
+                      {safetyCultureEvent.supportingText}
+                    </p>
+                    <p className="mt-0.5 text-[10px] font-black text-[var(--brand-accent-strong)] md:mt-1 md:text-[12px]">
+                      {countdownLabel}
+                    </p>
+                  </div>
+                </div>
+                <div className="ml-auto flex flex-shrink-0 flex-wrap items-center gap-1.5 md:ml-0 md:flex-col md:items-end md:gap-2">
+                  <span className="rounded-full bg-[var(--brand-accent)] px-2 py-0.5 text-[9px] font-black text-[var(--brand-accent-contrast)] md:px-3 md:py-1 md:text-[12.5px]">
+                    โบนัส {eventBonusLabel}
+                  </span>
+                  <span className="hidden rounded-full border border-[var(--border)] px-3 py-1 text-[12px] font-bold text-[var(--brand-text)]/75 md:inline-flex">
+                    {timeRangeLabel}
+                  </span>
+                </div>
+              </div>
+            </Card>
+          </Link>
+        ) : (
+          <Card className="rounded-[16px] border border-dashed border-[var(--border)] bg-[var(--brand-surface)] px-5 py-5 text-center">
+            <Zap className="mx-auto h-8 w-8 text-[var(--brand-muted-text)]" strokeWidth={1.8} />
+            <p className="mt-2 text-[14px] font-extrabold text-[var(--brand-text)]/70">
+              ยังไม่มีกิจกรรมในตอนนี้
+            </p>
+            <p className="mt-0.5 text-[12.5px] font-bold text-[var(--brand-muted-text)]">
+              ติดตามกิจกรรมและโบนัสคะแนนได้ที่หน้า Safety Culture
+            </p>
+          </Card>
+        )}
+      </section>
+
+    </div>
   );
 }

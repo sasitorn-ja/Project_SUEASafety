@@ -2,7 +2,8 @@
 import { useEffect, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import { Navigate, Route, Routes, useLocation, useNavigate } from "./lib/router-compat";
-const mascotLogo = "/images/mascots/suea-mascot-logo.png";
+import { ThemeToggle } from "@/components/theme-toggle";
+import { useAppTheme } from "@/providers/theme-provider";
 
 const screenLoading = (label) => (
   <div
@@ -10,7 +11,7 @@ const screenLoading = (label) => (
       minHeight: "100%",
       display: "grid",
       placeItems: "center",
-      background: "#f1ecdf",
+      background: "var(--background)",
       color: "#33312c",
       fontFamily: "'Sarabun','Prompt',sans-serif",
       fontWeight: 700,
@@ -64,16 +65,16 @@ const SafetyAdmin = dynamic(() => import("@/features/safety-effort/screens/Safet
 // DESIGN TOKENS — navigation-design-spec.md §2 & §10
 // ─────────────────────────────────────────────────────────
 const T = {
-  background:  "#f1ecdf",
-  background2: "#ece5d2",
+  background:  "var(--background)",
+  background2: "var(--secondary)",
   foreground:  "#0e0f12",
   foreground2: "#33312c",
   foreground3: "#767269",
   card:        "#ffffff",
-  surface2:    "#f5eedf",
-  primary:     "#ffc400",
+  surface2:    "var(--secondary)",
+  primary:     "var(--brand-accent)",
   primaryFg:   "#0e0f12",
-  primarySoft: "#fff4cf",
+  primarySoft: "var(--brand-soft)",
   danger:      "#d5301a",
   ok:          "#1f7a55",
   border:      "rgba(14,15,18,0.10)",
@@ -124,14 +125,14 @@ const NAV_ICONS = [IcoShield, IcoHeart, IcoClip, IcoUsers, IcoBell];
 // LOGO
 // ─────────────────────────────────────────────────────────
 function Logo({ size = 28 }) {
+  const { mascot, theme } = useAppTheme();
   return (
     <img
-      src={mascotLogo}
-      alt="SUEA Safety"
+      src={mascot("logo")}
+      alt={theme === "wangjai" ? "น้องวางใจ Safety" : "SUEA Safety tiger"}
       style={{
         width: size, height: size,
         objectFit: "contain", flexShrink: 0, display: "block",
-        mixBlendMode: "multiply",
       }}
     />
   );
@@ -147,7 +148,7 @@ const GLOBAL_STYLES = `
 
   html, body, #root {
     height: 100%; margin: 0; padding: 0;
-    background: #f1ecdf;
+    background: var(--background);
     font-family: 'Sarabun','Prompt',sans-serif;
     color: #0e0f12;
   }
@@ -156,7 +157,7 @@ const GLOBAL_STYLES = `
   .app-sidebar {
     position: fixed; left: 0; top: 0;
     width: 256px; height: 100vh;
-    background: #f1ecdf;
+    background: var(--background);
     border-right: 1px solid rgba(14,15,18,0.10);
     display: flex; flex-direction: column;
     z-index: 40; overflow-y: auto;
@@ -192,20 +193,20 @@ const GLOBAL_STYLES = `
     transition: background 0.15s, color 0.15s;
     font-family: inherit;
   }
-  .sb-item:hover  { background: #f5eedf; color: #0e0f12; }
-  .sb-item.active { background: #fff4cf; color: #0e0f12; }
+  .sb-item:hover  { background: var(--secondary); color: #0e0f12; }
+  .sb-item.active { background: var(--brand-soft); color: #0e0f12; }
 
   .sb-rail {
     position: absolute; left: 0; top: 50%; transform: translateY(-50%);
     width: 3px; height: 20px;
     border-radius: 0 999px 999px 0;
-    background: #ffc400;
+    background: var(--brand-accent);
   }
 
   /* ── Desktop header — spec §3.2: height 60px ── */
   .app-dheader {
     height: 60px; flex-shrink: 0;
-    background: #f1ecdf;
+    background: var(--background);
     border-bottom: 1px solid rgba(14,15,18,0.10);
     display: flex; align-items: center; justify-content: space-between;
     padding: 0 20px; z-index: 30;
@@ -221,24 +222,24 @@ const GLOBAL_STYLES = `
     cursor: pointer; transition: background 0.15s, color 0.15s, border-color 0.15s;
     font-family: inherit;
   }
-  .dh-toggle:hover { background: #f5eedf; border-color: rgba(14,15,18,0.10); color: #0e0f12; }
+  .dh-toggle:hover { background: var(--secondary); border-color: rgba(14,15,18,0.10); color: #0e0f12; }
 
   .dh-notif {
     position: relative;
     width: 32px; height: 32px; border-radius: 6px;
     border: 1px solid rgba(14,15,18,0.10);
-    background: #fcf7eb; color: #33312c;
+    background: var(--brand-surface); color: #33312c;
     display: flex; align-items: center; justify-content: center;
     cursor: pointer; transition: background 0.15s;
     font-family: inherit;
   }
-  .dh-notif:hover { background: #f5eedf; }
+  .dh-notif:hover { background: var(--secondary); }
 
   .dh-user {
     display: flex; align-items: center; gap: 6px;
     height: 32px; padding: 0 10px;
     border: 1px solid rgba(14,15,18,0.10);
-    background: #fcf7eb; border-radius: 6px;
+    background: var(--brand-surface); border-radius: 6px;
     color: #33312c; font-size: 14px; font-family: inherit;
     max-width: 192px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
   }
@@ -246,7 +247,7 @@ const GLOBAL_STYLES = `
   /* ── Mobile top bar — spec §4.1 ── */
   .app-topbar {
     position: fixed; top: 0; left: 0; right: 0; z-index: 50;
-    background: #301b0f;
+    background: var(--brand-nav);
     border-bottom: 1px solid rgba(255,255,255,0.06);
     box-shadow: 0 2px 10px rgba(0,0,0,0.12);
     transition: transform 200ms cubic-bezier(0.2,0.8,0.2,1);
@@ -261,7 +262,7 @@ const GLOBAL_STYLES = `
     position: fixed; bottom: 0; left: 0; right: 0; z-index: 50;
     min-height: calc(76px + env(safe-area-inset-bottom));
     padding-bottom: calc(6px + env(safe-area-inset-bottom));
-    background: #301b0f;
+    background: var(--brand-nav);
     border-top: 1px solid rgba(255,255,255,0.06);
     box-shadow: 0 -2px 10px rgba(0,0,0,0.10);
     transition: transform 200ms cubic-bezier(0.2,0.8,0.2,1);
@@ -283,7 +284,7 @@ const GLOBAL_STYLES = `
     cursor: pointer; -webkit-tap-highlight-color: transparent;
     transition: color 0.15s; font-family: inherit;
   }
-  .bn-item.active { color: #ffd93d; font-weight: 800; }
+  .bn-item.active { color: var(--brand-accent); font-weight: 800; }
   .bn-item:active { background: rgba(255,255,255,0.06); }
 
   .bn-icon {
@@ -294,12 +295,12 @@ const GLOBAL_STYLES = `
     background: transparent;
     transition: background 0.2s;
   }
-  .bn-item.active .bn-icon { background: #ffd93d; color: #301b0f; }
+  .bn-item.active .bn-icon { background: var(--brand-accent); color: var(--brand-nav); }
 
   .bn-indicator {
     position: absolute; top: 0; left: 50%; transform: translateX(-50%);
     width: 26px; height: 3px; border-radius: 999px;
-    background: #ffd93d; opacity: 0; transition: opacity 0.2s;
+    background: var(--brand-accent); opacity: 0; transition: opacity 0.2s;
   }
   .bn-item.active .bn-indicator { opacity: 1; }
 
@@ -309,7 +310,7 @@ const GLOBAL_STYLES = `
     background: #d5301a; color: #fff;
     font-size: 10px; font-weight: 800; line-height: 16px;
     display: flex; align-items: center; justify-content: center;
-    outline: 2px solid #301b0f; padding: 0 3px;
+    outline: 2px solid var(--brand-nav); padding: 0 3px;
   }
 
   .sb-badge {
@@ -326,7 +327,7 @@ const GLOBAL_STYLES = `
     background: #d5301a; color: #fff;
     font-size: 10px; font-weight: 700;
     display: flex; align-items: center; justify-content: center;
-    outline: 2px solid #301b0f; padding: 0 3px;
+    outline: 2px solid var(--brand-nav); padding: 0 3px;
   }
 
   .bn-label {
@@ -466,7 +467,7 @@ function DesktopNavbar({ activeId, onNav, navVisible }) {
         left: 0,
         right: 0,
         height: 68,
-        background: "#301b0f",
+        background: "var(--brand-nav)",
         borderBottom: "1px solid rgba(255, 255, 255, 0.08)",
         display: "flex",
         alignItems: "center",
@@ -516,7 +517,7 @@ function DesktopNavbar({ activeId, onNav, navVisible }) {
                 padding: "8px 16px",
                 borderRadius: "999px",
                 border: "none",
-                background: active ? "#7a4115" : "transparent",
+                background: active ? "var(--brand-nav-active)" : "transparent",
                 color: active ? "#ffffff" : "#d9c3b0",
                 fontSize: 13.5,
                 fontWeight: active ? 700 : 500,
@@ -546,6 +547,7 @@ function DesktopNavbar({ activeId, onNav, navVisible }) {
 
       {/* Right part: Notification + Login/CTA */}
       <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+        <ThemeToggle compact />
         {/* Notification Bell */}
         <button
           style={{
@@ -574,8 +576,8 @@ function DesktopNavbar({ activeId, onNav, navVisible }) {
               minWidth: 16,
               height: 16,
               borderRadius: "50%",
-              background: "#ffc400",
-              color: "#301b0f",
+              background: "var(--brand-accent)",
+              color: "var(--brand-nav)",
               fontSize: 10,
               fontWeight: 800,
               display: "flex",
@@ -596,7 +598,7 @@ function DesktopNavbar({ activeId, onNav, navVisible }) {
             gap: 8,
             padding: "10px 18px",
             borderRadius: "10px",
-            background: "linear-gradient(135deg, #ff9f00 0%, #ff6f00 100%)",
+            background: "linear-gradient(135deg, var(--brand-accent) 0%, var(--brand-accent) 100%)",
             border: "none",
             color: "#ffffff",
             fontSize: 13,
@@ -652,6 +654,7 @@ function MobileTopBar({ visible }) {
 
         {/* Right: Search and Notification */}
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <ThemeToggle compact />
           <button style={{ background: "transparent", border: "none", color: "#ffffff", padding: 0, cursor: "pointer", display: "flex", alignItems: "center" }}>
             <IcoSearch size={18} />
           </button>
@@ -665,8 +668,8 @@ function MobileTopBar({ visible }) {
                 minWidth: 14,
                 height: 14,
                 borderRadius: "50%",
-                background: "#ffc400",
-                color: "#301b0f",
+                background: "var(--brand-accent)",
+                color: "var(--brand-nav)",
                 fontSize: 9,
                 fontWeight: 900,
                 display: "flex",

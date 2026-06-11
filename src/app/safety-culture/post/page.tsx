@@ -146,7 +146,7 @@ export default function PostSocialPage() {
     actions.addPost({
       id: timestamp,
       author: "Chaiwat T.",
-      avatarBg: "#F5BB00",
+      avatarBg: "var(--brand-accent)",
       avatarColor: "#1A1A1A",
       avatarText: "C",
       isYou: true,
@@ -188,7 +188,7 @@ export default function PostSocialPage() {
               <Button
                 variant="outline"
                 size="icon"
-                className="h-10 w-10 rounded-full border-[#E4D4B8] bg-[#FFFDF7] hover:border-foreground hover:bg-[#EFEBE0]"
+                className="h-10 w-10 rounded-full border-[var(--border)] bg-[var(--brand-surface)] hover:border-foreground hover:bg-[var(--secondary)]"
               >
                 <ArrowLeft className="h-5 w-5" />
               </Button>
@@ -200,7 +200,7 @@ export default function PostSocialPage() {
           <Button
             onClick={handleSubmit}
             disabled={isProcessingPhotos}
-            className="rounded-full bg-[#1A1A1A] px-6 text-sm font-extrabold text-white shadow-[0_4px_10px_rgba(0,0,0,0.1)] transition-all hover:bg-[#F5BB00] hover:text-[#1A1A1A] disabled:cursor-wait disabled:opacity-70"
+            className="rounded-full bg-[#1A1A1A] px-6 text-sm font-extrabold text-white shadow-[0_4px_10px_rgba(0,0,0,0.1)] transition-all hover:bg-[var(--brand-accent)] hover:text-[#1A1A1A] disabled:cursor-wait disabled:opacity-70"
           >
             โพสต์
           </Button>
@@ -211,7 +211,7 @@ export default function PostSocialPage() {
             eyebrow="SUEA SAFETY POST"
             title={
               <>
-                แชร์เรื่อง <span className="text-[#F5BB00]">ปลอดภัย</span>
+                แชร์เรื่อง <span className="text-[var(--brand-accent)]">ปลอดภัย</span>
               </>
             }
             description="เล่าเหตุการณ์ดี ๆ หรือจุดเสี่ยงให้เพื่อนร่วมทีมเห็นได้เร็วขึ้น"
@@ -221,10 +221,10 @@ export default function PostSocialPage() {
         </div>
 
         <div
-          className="anim-fade mb-5 flex items-center gap-3 rounded-[20px] border-[1.5px] border-[#DDD9CD] bg-white p-4"
+          className="anim-fade mb-5 flex items-center gap-3 rounded-[16px] border-[1.5px] border-[var(--border)] bg-white p-4"
           style={animStyle(0.05)}
         >
-          <div className="flex h-11 w-11 items-center justify-center rounded-full border-2 border-[#F5BB00] bg-[#FFF9E6] text-lg font-extrabold text-[#F5BB00]">
+          <div className="flex h-11 w-11 items-center justify-center rounded-full border-2 border-[var(--brand-accent)] bg-[var(--brand-soft)] text-lg font-extrabold text-[var(--brand-accent)]">
             C
           </div>
           <div className="flex flex-col gap-1">
@@ -232,10 +232,10 @@ export default function PostSocialPage() {
               Chaiwat T.
             </span>
             <div className="flex gap-1.5">
-              <span className="rounded-md border border-[#F5BB00] bg-[#FFF9E6] px-2 py-0.5 text-[10px] font-[850] tracking-wide text-[#B58A00]">
+              <span className="rounded-md border border-[var(--brand-accent)] bg-[var(--brand-soft)] px-2 py-0.5 text-[10px] font-[850] tracking-wide text-[var(--brand-accent-strong)]">
                 TEAM YELLOW
               </span>
-              <span className="rounded-md border border-[#C5C1B5] bg-[#EFEBE0] px-2 py-0.5 text-[10px] font-[850] tracking-wide text-[#555149]">
+              <span className="rounded-md border border-[#C5C1B5] bg-[var(--secondary)] px-2 py-0.5 text-[10px] font-[850] tracking-wide text-[#555149]">
                 📍 BPI-04
               </span>
             </div>
@@ -243,7 +243,7 @@ export default function PostSocialPage() {
         </div>
 
         <div
-          className="anim-fade mb-5 flex min-h-[180px] flex-col gap-2.5 rounded-3xl border-2 border-[#5C350C] bg-[#FFFDF7] p-4 md:p-5"
+          className="anim-fade mb-5 flex min-h-[180px] flex-col gap-2.5 rounded-3xl border-2 border-[var(--brand-text)] bg-[var(--brand-surface)] p-4 md:p-4"
           style={animStyle(0.1)}
         >
           <Textarea
@@ -272,8 +272,8 @@ export default function PostSocialPage() {
                 className={cn(
                   "rounded-full border-[1.5px] px-4 py-2 text-[13px] font-bold outline-none transition-all",
                   activeCategory === category
-                    ? "border-[#5C350C] bg-[#5C350C] text-white shadow-[0_3px_8px_rgba(245,187,0,0.15)]"
-                    : "border-[#E4D4B8] bg-white text-[#6B5844] hover:border-[#B78922] hover:bg-[#FFF7E8]"
+                    ? "border-[var(--brand-text)] bg-[var(--brand-text)] text-white shadow-[0_3px_8px_rgba(var(--brand-accent-rgb),0.15)]"
+                    : "border-[var(--border)] bg-white text-[var(--brand-text)] hover:border-[var(--brand-accent)] hover:bg-[var(--brand-soft)]"
                 )}
               >
                 {category}
@@ -297,7 +297,7 @@ export default function PostSocialPage() {
             {photos.map((photo, idx) => (
               <div
                 key={idx}
-                className="relative aspect-square overflow-hidden rounded-2xl border-[1.5px] border-[#DDD9CD] bg-[#EFEBE0]"
+                className="relative aspect-square overflow-hidden rounded-2xl border-[1.5px] border-[var(--border)] bg-[var(--secondary)]"
               >
                 <Image
                   src={photo.dataUrl}
@@ -321,7 +321,7 @@ export default function PostSocialPage() {
               <button
                 onClick={() => cameraRef.current?.click()}
                 disabled={isProcessingPhotos}
-                className="flex aspect-square flex-col items-center justify-center gap-1 rounded-2xl border-2 border-dashed border-[#C5C1B5] bg-white text-xs font-bold text-[#555149] transition-colors hover:border-foreground hover:bg-[#FAF9F5] disabled:cursor-wait disabled:opacity-60"
+                className="flex aspect-square flex-col items-center justify-center gap-1 rounded-2xl border-2 border-dashed border-[var(--border)] bg-white text-xs font-bold text-[var(--brand-text)] transition-colors hover:border-[var(--brand-accent)] hover:bg-[var(--brand-hover-surface)] disabled:cursor-wait disabled:opacity-60"
               >
                 <Camera className="mb-0.5 h-5 w-5" />
                 ถ่ายรูป
@@ -332,7 +332,7 @@ export default function PostSocialPage() {
               <button
                 onClick={() => fileRef.current?.click()}
                 disabled={isProcessingPhotos}
-                className="flex aspect-square flex-col items-center justify-center gap-1 rounded-2xl border-2 border-dashed border-[#C5C1B5] bg-white text-xs font-bold text-[#555149] transition-colors hover:border-foreground hover:bg-[#FAF9F5] disabled:cursor-wait disabled:opacity-60"
+                className="flex aspect-square flex-col items-center justify-center gap-1 rounded-2xl border-2 border-dashed border-[var(--border)] bg-white text-xs font-bold text-[var(--brand-text)] transition-colors hover:border-[var(--brand-accent)] hover:bg-[var(--brand-hover-surface)] disabled:cursor-wait disabled:opacity-60"
               >
                 <Plus className="mb-0.5 h-5 w-5" />
                 เพิ่มรูป
@@ -343,7 +343,7 @@ export default function PostSocialPage() {
 
         {shouldShowEventHint ? (
           <Card
-            className="anim-fade mb-5 flex w-full flex-row items-center justify-start gap-2 rounded-[18px] border border-[#F5BB00] bg-[#FFF9E6] px-3.5 py-2.5 text-left"
+            className="anim-fade mb-5 flex w-full flex-row items-center justify-start gap-2 rounded-[18px] border border-[var(--brand-accent)] bg-[var(--brand-soft)] px-3.5 py-2.5 text-left"
             style={animStyle(0.25)}
           >
             <span className="flex-shrink-0 text-base">⚡</span>
@@ -360,7 +360,7 @@ export default function PostSocialPage() {
         <Button
           onClick={handleSubmit}
           disabled={isProcessingPhotos}
-          className="anim-fade h-auto w-full rounded-2xl bg-[#1A1A1A] py-4 text-[15px] font-extrabold text-white shadow-[0_8px_18px_rgba(26,26,26,0.12)] transition-all hover:bg-[#F5BB00] hover:text-[#1A1A1A] active:scale-[0.98] disabled:cursor-wait disabled:opacity-70"
+          className="anim-fade h-auto w-full rounded-2xl bg-[#1A1A1A] py-4 text-[15px] font-extrabold text-white shadow-[0_8px_18px_rgba(26,26,26,0.12)] transition-all hover:bg-[var(--brand-accent)] hover:text-[#1A1A1A] active:scale-[0.98] disabled:cursor-wait disabled:opacity-70"
           style={animStyle(0.28)}
         >
           {isProcessingPhotos ? "กำลังเตรียมรูปภาพ..." : "โพสต์"}

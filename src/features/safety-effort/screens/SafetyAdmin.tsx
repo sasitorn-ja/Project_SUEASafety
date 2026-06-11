@@ -11,16 +11,16 @@ import {
 } from "@/features/safety-effort/config/checklists";
 
 const T = {
-  page: "#f1ecdf",
-  panel: "#fffaf0",
+  page: "var(--background)",
+  panel: "var(--brand-soft)",
   card: "#ffffff",
   ink: "#1f1a17",
   sub: "#6f665e",
   line: "rgba(31,26,23,0.10)",
   lineStrong: "rgba(31,26,23,0.18)",
-  accent: "#f59e0b",
-  accentDeep: "#7c3f10",
-  accentSoft: "#fff2cf",
+  accent: "var(--brand-accent-strong)",
+  accentDeep: "var(--brand-text)",
+  accentSoft: "var(--brand-soft)",
   danger: "#c73a21",
   ok: "#1f7a55",
   shadow: "0 20px 40px rgba(63, 37, 17, 0.08)",
@@ -54,13 +54,13 @@ const buttonPrimaryStyle = {
   height: 44,
   borderRadius: 14,
   border: "none",
-  background: "linear-gradient(135deg, #f59e0b 0%, #d97706 100%)",
+  background: "linear-gradient(135deg, var(--brand-accent-strong) 0%, var(--brand-accent) 100%)",
   color: "#fff",
   padding: "0 18px",
   fontWeight: 800,
   fontFamily: "inherit",
   cursor: "pointer",
-  boxShadow: "0 10px 24px rgba(217,119,6,0.22)",
+  boxShadow: "0 10px 24px var(--brand-shadow)",
 };
 
 const buttonGhostStyle = {
@@ -131,7 +131,7 @@ function PreviewCard({ question }) {
       style={{
         border: `1px solid ${T.line}`,
         borderRadius: 18,
-        background: "#fffef8",
+        background: "var(--brand-surface)",
         padding: 18,
         display: "grid",
         gap: 12,
@@ -315,7 +315,7 @@ export default function SafetyAdmin() {
     <div
       style={{
         height: isMobile ? "auto" : "100%",
-        background: `radial-gradient(circle at top right, rgba(245,158,11,0.18), transparent 28%), ${T.page}`,
+        background: `radial-gradient(circle at top right, rgba(var(--brand-accent-rgb),0.18), transparent 28%), ${T.page}`,
         color: T.ink,
         fontFamily: "'Prompt','Sarabun',sans-serif",
         display: "flex",
@@ -725,7 +725,7 @@ export default function SafetyAdmin() {
                             gap: 10,
                             border: `1px solid ${T.line}`,
                             borderRadius: 12,
-                            background: "#fffdfa",
+                            background: "var(--brand-surface)",
                             padding: "6px 12px",
                           }}
                         >
@@ -802,7 +802,7 @@ export default function SafetyAdmin() {
                   border: `1px dashed ${T.lineStrong}`,
                   borderRadius: 24,
                   padding: 28,
-                  background: "#fffdf7",
+                  background: "var(--brand-surface)",
                   color: T.sub,
                 }}
               >
@@ -829,7 +829,7 @@ export default function SafetyAdmin() {
           <div
             style={{
               width: "min(100%, 460px)",
-              background: "#fffdf8",
+              background: "var(--brand-surface)",
               borderRadius: 24,
               border: `1px solid ${T.line}`,
               boxShadow: "0 24px 60px rgba(31,26,23,0.22)",

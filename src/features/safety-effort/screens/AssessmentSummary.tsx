@@ -1,27 +1,28 @@
 // @ts-nocheck
 import { useEffect, useMemo } from "react";
 import { useLocation, useNavigate } from "@/lib/router-compat";
+import TigerMascot from "@/components/TigerMascot";
 
 const T = {
-  background: "#f1ecdf",
+  background: "var(--background)",
   card: "#ffffff",
   foreground: "#0e0f12",
   foreground2: "#33312c",
   foreground3: "#7b7469",
   border: "rgba(14,15,18,0.08)",
-  gold: "#ffc400",
+  gold: "var(--brand-accent)",
   goldDeep: "#d89b00",
-  brown: "#2f1d12",
+  brown: "var(--brand-text)",
   brownSoft: "#f5ead7",
   safe: "#8b5a14",
   issue: "#8f3b16",
-  action: "#5f4025",
+  action: "var(--brand-text)",
 };
 
 function statusMeta(status) {
   if (status === "safe") return { label: "ปลอดภัย", color: T.safe, bg: "#fff6db", border: "#d5a21a" };
   if (status === "unsafe_condition") return { label: "สภาพไม่ปลอดภัย", color: T.issue, bg: "#fff1e8", border: "#db7b4f" };
-  if (status === "unsafe_action") return { label: "พฤติกรรมไม่ปลอดภัย", color: T.action, bg: "#f6ece1", border: "#5f4025" };
+  if (status === "unsafe_action") return { label: "พฤติกรรมไม่ปลอดภัย", color: T.action, bg: "#f6ece1", border: "var(--brand-text)" };
   return { label: "ยังไม่ตอบ", color: T.foreground3, bg: "#f8f6f1", border: "rgba(14,15,18,0.08)" };
 }
 
@@ -65,7 +66,7 @@ export default function AssessmentSummary() {
     <div
       style={{
         minHeight: "100%",
-        background: "linear-gradient(180deg,#efe6d4 0%, #f1ecdf 160px, #f1ecdf 100%)",
+        background: "linear-gradient(180deg,var(--secondary) 0%, var(--background) 160px, var(--background) 100%)",
         padding: "18px 16px 32px",
         color: T.foreground,
         fontFamily: "'Prompt','Sarabun',sans-serif",
@@ -76,23 +77,26 @@ export default function AssessmentSummary() {
           style={{
             borderRadius: 18,
             overflow: "hidden",
-            background: "linear-gradient(105deg,rgba(58,28,5,0.98) 0%,rgba(84,47,12,0.95) 48%,rgba(39,24,10,0.96) 100%)",
-            color: "#fff8e6",
+            background: "linear-gradient(105deg, var(--brand-hero-start) 0%, var(--brand-hero-end) 48%, var(--brand-nav) 100%)",
+            color: "var(--brand-soft)",
             boxShadow: "0 16px 32px rgba(42,26,9,0.14)",
           }}
         >
-          <div style={{ padding: "22px 20px 26px" }}>
-            <div style={{ display: "inline-flex", alignItems: "center", padding: "4px 10px", borderRadius: 999, background: "rgba(255,196,0,0.16)", color: T.gold, fontSize: 11, fontWeight: 800, textTransform: "uppercase" }}>
-              Assessment Complete
+          <div style={{ padding: "22px 20px 26px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16 }}>
+            <div>
+              <div style={{ display: "inline-flex", alignItems: "center", padding: "4px 10px", borderRadius: 999, background: "color-mix(in srgb, var(--brand-accent) 18%, transparent)", color: "var(--brand-accent)", fontSize: 11, fontWeight: 800, textTransform: "uppercase" }}>
+                Assessment Complete
+              </div>
+              <h1 style={{ margin: "12px 0 6px", fontSize: 28, lineHeight: 1.15, fontWeight: 900 }}>
+                สรุปผลการทำแบบประเมิน
+              </h1>
+              <p style={{ margin: 0, color: "rgba(255,255,255,0.76)", fontSize: 14, fontWeight: 600 }}>
+                ตรวจสอบข้อมูลที่ทำไว้ก่อนกลับไปหน้าหมวดกิจกรรม
+              </p>
             </div>
-            <h1 style={{ margin: "12px 0 6px", fontSize: 28, lineHeight: 1.15, fontWeight: 900 }}>
-              สรุปผลการทำแบบประเมิน
-            </h1>
-            <p style={{ margin: 0, color: "rgba(255,248,230,0.78)", fontSize: 14, fontWeight: 600 }}>
-              ตรวจสอบข้อมูลที่ทำไว้ก่อนกลับไปหน้าหมวดกิจกรรม
-            </p>
+            <TigerMascot action="happy" size="104px" animation="float" />
           </div>
-          <div style={{ height: 10, background: "repeating-linear-gradient(135deg,#ffc400 0 18px,#0e0f12 18px 36px)" }} />
+          <div style={{ height: 10, background: "repeating-linear-gradient(135deg,var(--brand-accent) 0 18px,#0e0f12 18px 36px)" }} />
         </section>
 
         <section
@@ -194,7 +198,7 @@ export default function AssessmentSummary() {
               height: 50,
               border: "none",
               borderRadius: 14,
-              background: "linear-gradient(135deg,#2b211a 0%,#1a1613 100%)",
+              background: "linear-gradient(135deg,var(--brand-text) 0%,#1a1613 100%)",
               color: "#fff",
               fontFamily: "inherit",
               fontSize: 15,
@@ -211,4 +215,3 @@ export default function AssessmentSummary() {
   );
 }
 // @ts-nocheck
-

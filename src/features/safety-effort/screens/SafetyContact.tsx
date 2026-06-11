@@ -4,7 +4,7 @@ import { useLocation, useNavigate } from "@/lib/router-compat";
 import RestrictedDatePicker from "@/components/RestrictedDatePicker";
 
 const T = {
-  background: "#f1ecdf",
+  background: "var(--background)",
   card: "#ffffff",
   foreground: "#0e0f12",
   foreground2: "#33312c",
@@ -47,7 +47,7 @@ export default function SafetyContact() {
     <div
       style={{
         minHeight: "100%",
-        background: `linear-gradient(180deg, #efe6d4 0%, ${T.background} 180px, ${T.background} 100%)`,
+        background: `linear-gradient(180deg, var(--secondary) 0%, ${T.background} 180px, ${T.background} 100%)`,
         padding: "20px 16px 32px",
         color: T.foreground,
         fontFamily: "'Prompt','Sarabun',sans-serif",

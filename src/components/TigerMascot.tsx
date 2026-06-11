@@ -1,23 +1,5 @@
 // @ts-nocheck
-const mascotLogo = "/images/mascots/suea-mascot-logo.png";
-const sueaShield = "/images/mascots/suea-shield.png";
-const sueaThumbsUp = "/images/mascots/suea-thumbs-up.png";
-
-const ACTION_IMAGE_MAP = {
-  big: mascotLogo,
-  "thumbs-up": sueaThumbsUp,
-  salute: mascotLogo,
-  radio: mascotLogo,
-  stop: sueaShield,
-  danger: sueaShield,
-  shield: sueaShield,
-  clipboard: mascotLogo,
-  flashlight: sueaShield,
-  whistle: mascotLogo,
-  running: mascotLogo,
-  smile: mascotLogo,
-  happy: sueaThumbsUp,
-};
+import { useAppTheme } from "@/providers/theme-provider";
 
 const ANIMATION_CLASS_MAP = {
   none: "",
@@ -37,7 +19,8 @@ export default function TigerMascot({
   className = "",
   ...props
 }) {
-  const image = ACTION_IMAGE_MAP[action] || mascotLogo;
+  const { mascot, theme } = useAppTheme();
+  const image = mascot(action);
   const animationClass = ANIMATION_CLASS_MAP[animation] || "";
 
   return (
@@ -81,7 +64,7 @@ export default function TigerMascot({
       <img
         className={`${className} ${animationClass}`.trim()}
         src={image}
-        alt="SUEA mascot"
+        alt={theme === "wangjai" ? "น้องวางใจ Safety mascot" : "SUEA tiger mascot"}
         style={{
           width: size,
           height: "auto",

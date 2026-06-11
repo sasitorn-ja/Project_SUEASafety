@@ -8,6 +8,8 @@ import { Home, ShieldCheck, UsersRound, Bell, Menu, Heart, X, LogIn, Trophy, Gif
 import { cn } from "@/lib/utils";
 import { isExactNavActive, isMainNavActive } from "@/lib/navigation";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { ThemeToggle } from "@/components/theme-toggle";
+import { useAppTheme } from "@/providers/theme-provider";
 
 function NavTo(props: any) {
   return <Link prefetch={false} {...props} />;
@@ -72,8 +74,10 @@ const ADMIN_ITEMS = [
 const ENABLED_HREFS = new Set(["/", "/category", "/were-ok", "/work-permit", "/safety-culture", "/notifications"]);
 
 export function DesktopTopbar() {
+  const { mascot, theme } = useAppTheme();
   const pathname = usePathname() ?? "";
   const [open, setOpen] = useState(false);
+  const isWangjai = theme === "wangjai";
   const [desktopMenu, setDesktopMenu] = useState<"safety-culture" | "admin" | null>(null);
 
   const isActive = (href: string) => isMainNavActive(pathname, href);
@@ -86,30 +90,38 @@ export function DesktopTopbar() {
     <header
       className={cn(
         "hidden md:flex fixed top-0 left-0 right-0 z-40 items-center",
-        "bg-[rgba(59,29,7,0.92)] border-b border-white/10",
-        "shadow-[0_10px_30px_rgba(38,18,3,0.18)] backdrop-blur-[16px]",
+        "bg-[rgba(var(--brand-nav-rgb),0.92)] border-b border-white/10",
+        "shadow-[0_10px_30px_var(--brand-shadow)] backdrop-blur-[16px]",
         "[transition:margin-left_200ms_ease-out]",
         "ml-0"
       )}
       style={{ fontFamily: "var(--font-sans)", height: "var(--topbar-h)" }}
     >
-      <div className="mx-auto flex h-full w-full max-w-[1540px] items-center justify-between gap-[22px] px-6 xl:px-12">
-        <NavTo href="/" className="flex min-w-[270px] items-center gap-3">
-          <div className="flex h-[46px] w-[46px] flex-shrink-0 items-center justify-center overflow-hidden rounded-md">
+      <div className="desktop-topbar-inner mx-auto flex h-full w-full max-w-[1540px] items-center justify-between gap-[22px] px-6 xl:px-12">
+        <NavTo href="/" className="desktop-brand flex min-w-[270px] items-center gap-3">
+          <div className="desktop-brand-logo flex h-[46px] w-[46px] flex-shrink-0 items-center justify-center overflow-hidden rounded-md">
             <Image
-              src="/images/branding/logo.png"
+              src={mascot("logo")}
               alt="SUEA Safety Logo"
               width={46}
               height={46}
               className="h-full w-full object-contain"
             />
           </div>
-          <div className="overflow-hidden">
-            <div className="whitespace-nowrap text-2xl font-extrabold leading-none tracking-normal text-white">
-              <span className="text-[#ffcf55]">SUEA</span> Safety
+          <div className="desktop-brand-copy overflow-hidden">
+            <div className="desktop-brand-title whitespace-nowrap text-2xl font-extrabold leading-none tracking-normal text-white">
+              {isWangjai ? (
+                <>
+                  <span className="text-[var(--brand-accent)]">C.P.A.C</span> Safe +
+                </>
+              ) : (
+                <>
+                  <span className="text-[var(--brand-accent)]">SUEA</span> Safety
+                </>
+              )}
             </div>
-            <div className="mt-1 whitespace-nowrap text-[10px] font-semibold text-white/[0.62]">
-              Safety User Environment Awareness
+            <div className="desktop-brand-subtitle mt-1 whitespace-nowrap text-[10px] font-semibold text-white/[0.62]">
+              {isWangjai ? "Creating Protection And Care" : "Safety User Environment Awareness"}
             </div>
           </div>
         </NavTo>
@@ -142,7 +154,7 @@ export function DesktopTopbar() {
                       className={cn(
                         "flex min-h-11 items-center gap-2.5 rounded-lg px-3 text-sm font-bold transition-colors",
                         active && enabled
-                          ? "bg-[#F5BB00] text-[#3b1d07]"
+                          ? "bg-[var(--brand-accent)] text-[var(--brand-nav)]"
                           : "bg-white/[0.08] text-white/[0.82] hover:bg-white/10",
                         !enabled && "cursor-not-allowed opacity-[0.58]"
                       )}
@@ -155,7 +167,7 @@ export function DesktopTopbar() {
               </div>
 
               <div className="rounded-2xl border border-white/10 bg-white/[0.06] p-2.5">
-                <div className="mb-2 flex items-center gap-2 px-1.5 text-[10px] font-extrabold uppercase tracking-[0.18em] text-[#f7d99d]">
+                <div className="mb-2 flex items-center gap-2 px-1.5 text-[10px] font-extrabold uppercase tracking-[0.18em] text-[var(--brand-hero-label)]">
                   <ShieldCheck className="h-3.5 w-3.5" strokeWidth={2.3} />
                   <span>Safety Culture</span>
                 </div>
@@ -170,10 +182,10 @@ export function DesktopTopbar() {
                         onClick={() => setOpen(false)}
                         className={cn(
                           "flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-bold transition-colors hover:bg-white/10",
-                          isExactNavActive(pathname, item.href) ? "bg-white/10 text-[#ffcf55]" : "text-white/[0.86]"
+                          isExactNavActive(pathname, item.href) ? "bg-white/10 text-[var(--brand-accent)]" : "text-white/[0.86]"
                         )}
                       >
-                        <Icon className="h-[17px] w-[17px] text-[#ffcf55]" strokeWidth={2.3} />
+                        <Icon className="h-[17px] w-[17px] text-[var(--brand-accent)]" strokeWidth={2.3} />
                         {item.label}
                       </NavTo>
                     );
@@ -182,7 +194,7 @@ export function DesktopTopbar() {
               </div>
 
               <div className="rounded-2xl border border-white/10 bg-white/[0.06] p-2.5">
-                <div className="mb-2 flex items-center gap-2 px-1.5 text-[10px] font-extrabold uppercase tracking-[0.18em] text-[#f7d99d]">
+                <div className="mb-2 flex items-center gap-2 px-1.5 text-[10px] font-extrabold uppercase tracking-[0.18em] text-[var(--brand-hero-label)]">
                   <Settings2 className="h-3.5 w-3.5" strokeWidth={2.3} />
                   <span>Admin</span>
                 </div>
@@ -197,10 +209,10 @@ export function DesktopTopbar() {
                         onClick={() => setOpen(false)}
                         className={cn(
                           "flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-bold transition-colors hover:bg-white/10",
-                          isExactNavActive(pathname, item.href) ? "bg-white/10 text-[#ffcf55]" : "text-white/[0.86]"
+                          isExactNavActive(pathname, item.href) ? "bg-white/10 text-[var(--brand-accent)]" : "text-white/[0.86]"
                         )}
                       >
-                        <Icon className="h-[17px] w-[17px] text-[#ffcf55]" strokeWidth={2.3} />
+                        <Icon className="h-[17px] w-[17px] text-[var(--brand-accent)]" strokeWidth={2.3} />
                         {item.label}
                       </NavTo>
                     );
@@ -232,14 +244,14 @@ export function DesktopTopbar() {
                     <NavTo
                       href={item.href}
                       className={cn(
-                        "inline-flex h-11 items-center justify-center gap-2 rounded-full px-4 text-sm font-bold whitespace-nowrap transition-all",
+                        "desktop-nav-item inline-flex h-11 items-center justify-center gap-2 rounded-full px-4 text-sm font-bold whitespace-nowrap transition-all",
                         active
-                          ? "bg-[#9a5b08] text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.18),0_8px_18px_rgba(0,0,0,0.18)]"
+                          ? "bg-[var(--brand-nav-active)] text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.18),0_8px_18px_rgba(0,0,0,0.18)]"
                           : "bg-transparent text-white/[0.82] hover:bg-white/10 hover:text-white"
                       )}
                     >
                       <Icon className="h-[17px] w-[17px]" strokeWidth={2.35} />
-                      <span>{item.label}</span>
+                      <span className="desktop-nav-label">{item.label}</span>
                     </NavTo>
 
                     <div
@@ -248,7 +260,7 @@ export function DesktopTopbar() {
                         desktopMenu === "safety-culture" ? "visible opacity-100" : "invisible opacity-0"
                       )}
                     >
-                      <div className="rounded-xl border border-white/[0.14] bg-[rgba(59,29,7,0.88)] p-2.5 text-white shadow-[0_18px_44px_rgba(38,18,3,0.24)] backdrop-blur-xl">
+                      <div className="rounded-xl border border-white/[0.14] bg-[rgba(var(--brand-nav-rgb),0.88)] p-2.5 text-white shadow-[0_18px_44px_var(--brand-shadow)] backdrop-blur-xl">
                         {SAFETY_CULTURE_ITEMS.map((subitem) => {
                           const SubIcon = subitem.icon;
 
@@ -261,7 +273,7 @@ export function DesktopTopbar() {
                                 isExactNavActive(pathname, subitem.href) && "bg-white/10"
                               )}
                             >
-                              <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full border border-white/10 bg-[rgba(255,176,0,0.18)] text-[#ffca33]">
+                              <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full border border-white/10 bg-[rgba(var(--brand-accent-rgb),0.18)] text-[var(--brand-hero-label)]">
                                 <SubIcon className="h-5 w-5" strokeWidth={2.35} />
                               </span>
                               <span className="min-w-0">
@@ -284,14 +296,14 @@ export function DesktopTopbar() {
                       type="button"
                       onClick={() => setDesktopMenu("admin")}
                       className={cn(
-                        "inline-flex h-11 items-center justify-center gap-2 rounded-full px-4 text-sm font-bold whitespace-nowrap transition-all",
+                        "desktop-nav-item inline-flex h-11 items-center justify-center gap-2 rounded-full px-4 text-sm font-bold whitespace-nowrap transition-all",
                         pathname === "/safety-admin" || pathname.startsWith("/safety-culture/admin-")
-                          ? "bg-[#9a5b08] text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.18),0_8px_18px_rgba(0,0,0,0.18)]"
+                          ? "bg-[var(--brand-nav-active)] text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.18),0_8px_18px_rgba(0,0,0,0.18)]"
                           : "bg-transparent text-white/[0.82] hover:bg-white/10 hover:text-white"
                       )}
                     >
                       <Settings2 className="h-[17px] w-[17px]" strokeWidth={2.35} />
-                      <span>Admin</span>
+                      <span className="desktop-nav-label">Admin</span>
                     </button>
 
                     <div
@@ -300,7 +312,7 @@ export function DesktopTopbar() {
                         desktopMenu === "admin" ? "visible opacity-100" : "invisible opacity-0"
                       )}
                     >
-                      <div className="rounded-xl border border-white/[0.14] bg-[rgba(59,29,7,0.88)] p-2.5 text-white shadow-[0_18px_44px_rgba(38,18,3,0.24)] backdrop-blur-xl">
+                      <div className="rounded-xl border border-white/[0.14] bg-[rgba(var(--brand-nav-rgb),0.88)] p-2.5 text-white shadow-[0_18px_44px_var(--brand-shadow)] backdrop-blur-xl">
                         {ADMIN_ITEMS.map((subitem) => {
                           const SubIcon = subitem.icon;
 
@@ -313,7 +325,7 @@ export function DesktopTopbar() {
                                 isExactNavActive(pathname, subitem.href) && "bg-white/10"
                               )}
                             >
-                              <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full border border-white/10 bg-[rgba(255,176,0,0.18)] text-[#ffca33]">
+                              <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full border border-white/10 bg-[rgba(var(--brand-accent-rgb),0.18)] text-[var(--brand-hero-label)]">
                                 <SubIcon className="h-5 w-5" strokeWidth={2.35} />
                               </span>
                               <span className="min-w-0">
@@ -335,9 +347,9 @@ export function DesktopTopbar() {
                 key={item.id}
                 href={enabled ? item.href : "#"}
                 className={cn(
-                  "inline-flex h-11 items-center justify-center gap-2 rounded-full px-4 text-sm font-bold whitespace-nowrap transition-all",
+                  "desktop-nav-item inline-flex h-11 items-center justify-center gap-2 rounded-full px-4 text-sm font-bold whitespace-nowrap transition-all",
                   active && enabled
-                    ? "bg-[#9a5b08] text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.18),0_8px_18px_rgba(0,0,0,0.18)]"
+                    ? "bg-[var(--brand-nav-active)] text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.18),0_8px_18px_rgba(0,0,0,0.18)]"
                     : "bg-transparent text-white/[0.82] hover:bg-white/10",
                   !enabled && "cursor-not-allowed opacity-[0.62] hover:bg-transparent"
                 )}
@@ -345,23 +357,24 @@ export function DesktopTopbar() {
                 aria-disabled={!enabled}
               >
                 <Icon className="h-[17px] w-[17px]" strokeWidth={2.35} />
-                <span>{item.label}</span>
+                <span className="desktop-nav-label">{item.label}</span>
               </NavTo>
             );
           })}
         </nav>
 
-        <div className="flex items-center gap-2">
+        <div className="desktop-actions flex items-center gap-2">
+          <ThemeToggle />
           <button
             className={cn(
               "relative flex h-11 w-11 flex-shrink-0 cursor-pointer items-center justify-center rounded-full",
-              "border border-white/[0.14] bg-white/10 text-white transition-colors hover:bg-white/16"
+              "bg-transparent text-white transition-opacity hover:opacity-70"
             )}
             aria-label="Notifications"
           >
             <Bell className="h-5 w-5" strokeWidth={2.3} />
             <span
-              className="absolute -top-[5px] -right-[5px] flex h-4 min-w-4 items-center justify-center rounded-full bg-[#ffcf55] px-[3px] text-[10px] font-bold text-[#1A1A1A]"
+              className="absolute -top-[5px] -right-[5px] flex h-4 min-w-4 items-center justify-center rounded-full bg-[var(--brand-accent)] px-[3px] text-[10px] font-bold text-[var(--brand-accent-contrast)]"
               style={{ outline: "2px solid var(--nav-brown)" }}
             >
               3
@@ -369,8 +382,8 @@ export function DesktopTopbar() {
           </button>
           <button
             className={cn(
-              "login-btn-compact inline-flex h-11 cursor-pointer items-center gap-2.5 rounded-xl bg-[#ff9f05] px-[18px] text-sm font-extrabold text-white",
-              "shadow-[0_8px_18px_rgba(255,153,0,0.22)] transition-colors hover:bg-[#F5BB00]"
+              "login-btn-compact inline-flex h-11 cursor-pointer items-center gap-2.5 rounded-xl bg-[var(--brand-accent)] px-[18px] text-sm font-extrabold text-white",
+              "shadow-[0_8px_18px_rgba(var(--brand-accent-rgb),0.22)] transition-colors hover:bg-[var(--brand-accent)]"
             )}
           >
             <span className="login-text-visible">เข้าสู่ระบบ / เริ่มใช้งาน</span>

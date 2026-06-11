@@ -27,7 +27,7 @@ export function SafetyCulturePageHeader({
       </div>
 
       {rightSlot ?? (pointsLabel && pointsValue ? (
-        <div className="flex min-w-[90px] flex-col items-center justify-center rounded-2xl border-[1.5px] border-[#DDD9CD] bg-white px-4 py-2 shadow-[0_4px_10px_rgba(0,0,0,0.02)]">
+        <div className="flex min-w-[90px] flex-col items-center justify-center rounded-2xl border-[1.5px] border-[var(--border)] bg-white px-4 py-2 shadow-[0_4px_10px_rgba(0,0,0,0.02)]">
           <span className="text-[8.5px] font-extrabold tracking-wide text-[#8E8A81]">
             {pointsLabel}
           </span>

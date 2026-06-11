@@ -57,7 +57,7 @@ function buildCalendarDays(viewMonth) {
 export default function RestrictedDatePicker({
   value,
   onChange,
-  accent = "#ffc400",
+  accent = "var(--brand-accent)",
   modeLabels = { today: "ทำวันนี้", backdate: "ทำย้อนหลัง" },
 }) {
   const today = useMemo(() => startOfDay(new Date()), []);
@@ -334,14 +334,14 @@ export default function RestrictedDatePicker({
                   minHeight: "clamp(38px, 11vw, 52px)",
                   borderRadius: "clamp(10px, 3vw, 14px)",
                   border: isSelected ? `2px solid ${accent}` : "1px solid transparent",
-                  background: isSelected ? "#fff7d1" : allowed ? "transparent" : "rgba(14,15,18,0.04)",
+                  background: isSelected ? "var(--brand-soft)" : allowed ? "transparent" : "rgba(14,15,18,0.04)",
                   color: allowed ? "#111111" : "rgba(17,17,17,0.26)",
                   fontSize: "clamp(14px, 5.5vw, 24px)",
                   fontWeight: 800,
                   fontFamily: "'Prompt','Sarabun',sans-serif",
                   cursor: allowed ? "pointer" : "not-allowed",
                   opacity: allowed ? 1 : 0.8,
-                  boxShadow: isToday && allowed && !isSelected ? "inset 0 0 0 1px rgba(255,196,0,0.55)" : "none",
+                  boxShadow: isToday && allowed && !isSelected ? "inset 0 0 0 1px rgba(var(--brand-accent-rgb),0.55)" : "none",
                 }}
               >
                 {date.getDate()}

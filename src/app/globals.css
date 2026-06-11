@@ -49,6 +49,9 @@
   --color-warning-foreground: var(--warning-foreground);
   --color-brand-gold: var(--brand-gold);
   --color-brand-brown: var(--brand-brown);
+  --color-brand-accent: var(--brand-accent);
+  --color-brand-nav: var(--brand-nav);
+  --color-brand-soft: var(--brand-soft);
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);
@@ -103,6 +106,82 @@
   --mobile-topbar-h: 48px;
   --mobile-bottomnav-h: 66px;
   --nav-brown: #3b1d07;
+  --brand-accent: #f5bb00;
+  --brand-accent-strong: #ffb000;
+  --brand-accent-rgb: 245, 187, 0;
+  --brand-accent-contrast: #1a1a1a;
+  --brand-nav: #3b1d07;
+  --brand-nav-rgb: 59, 29, 7;
+  --brand-nav-active: #9a5b08;
+  --brand-soft: #fff4cf;
+  --brand-surface: #fffdf7;
+  --brand-text: #5c3214;
+  --brand-muted-text: #978d7c;
+  --brand-image-placeholder: #f7ead6;
+  --brand-hover-surface: #fff2d8;
+  --brand-hero-copy: #f8ead7;
+  --brand-hero-label: #ffd96a;
+  --brand-hero-start: #3b1d07;
+  --brand-hero-end: #75410f;
+  --brand-shadow: rgba(59, 29, 7, 0.18);
+}
+
+:root[data-theme="wangjai"] {
+  --background: #f4f8fc;
+  --foreground: #12243d;
+  --card: #ffffff;
+  --card-foreground: #12243d;
+  --popover: #ffffff;
+  --popover-foreground: #12243d;
+  --primary: #1769aa;
+  --primary-foreground: #ffffff;
+  --secondary: #e8f1f8;
+  --secondary-foreground: #194d78;
+  --muted: #edf3f8;
+  --muted-foreground: #61758a;
+  --accent: #dcecf7;
+  --accent-foreground: #194d78;
+  --border: rgba(22, 78, 119, 0.14);
+  --input: rgba(22, 78, 119, 0.16);
+  --ring: #3d8bc2;
+  --brand-gold: #55a4d8;
+  --brand-brown: #123f68;
+  --chart-1: #55a4d8;
+  --chart-2: #1769aa;
+  --sidebar: #ffffff;
+  --sidebar-foreground: #12243d;
+  --sidebar-primary: #1769aa;
+  --sidebar-accent: #e8f1f8;
+  --sidebar-accent-foreground: #194d78;
+  --sidebar-border: rgba(22, 78, 119, 0.14);
+  --sidebar-ring: #3d8bc2;
+  --nav-brown: #123f68;
+  --brand-accent: #55a4d8;
+  --brand-accent-strong: #2b82bc;
+  --brand-accent-rgb: 85, 164, 216;
+  --brand-accent-contrast: #ffffff;
+  --brand-nav: #123f68;
+  --brand-nav-rgb: 18, 63, 104;
+  --brand-nav-active: #1769aa;
+  --brand-soft: #e7f3fb;
+  --brand-surface: #ffffff;
+  --brand-text: #194d78;
+  --brand-muted-text: #6b8296;
+  --brand-image-placeholder: #e8f1f8;
+  --brand-hover-surface: #dcecf7;
+  --brand-hero-copy: #e8f4fc;
+  --brand-hero-label: #9ed9ff;
+  --brand-hero-start: #123f68;
+  --brand-hero-end: #1769aa;
+  --brand-shadow: rgba(18, 63, 104, 0.18);
+}
+
+:root[data-theme="wangjai"] [style*="background-color:#F8E46A" i] {
+  background-color: var(--brand-accent) !important;
+}
+
+:root[data-theme="wangjai"] [style*="color:#F8E46A" i] {
+  color: var(--brand-accent) !important;
 }
 
 @layer base {
@@ -172,7 +251,7 @@
   width: min(318px, 86vw);
   overflow-y: auto;
   border-right: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(59, 29, 7, 0.96);
+  background: rgba(var(--brand-nav-rgb), 0.96);
   padding: 12px;
   box-shadow: 18px 0 34px rgba(38, 18, 3, 0.34);
   backdrop-filter: blur(16px);
@@ -190,7 +269,7 @@
   top: var(--topbar-h) !important;
   border-top: 1px solid rgba(255, 255, 255, 0.1) !important;
   border-bottom: none !important;
-  background: rgba(59, 29, 7, 0.98) !important;
+  background: rgba(var(--brand-nav-rgb), 0.98) !important;
   padding: 16px 24px !important;
   box-shadow: 0 18px 36px rgba(38, 18, 3, 0.24) !important;
 }
@@ -209,15 +288,7 @@
   }
 }
 
-@media (max-width: 1023px) and (min-width: 768px) {
-  .compact-toggle-visible {
-    display: inline-flex !important;
-  }
-
-  .desktop-nav-visible {
-    display: none !important;
-  }
-
+@media (max-width: 1535px) and (min-width: 768px) {
   .login-text-visible {
     display: none !important;
   }
@@ -226,6 +297,74 @@
     width: 44px !important;
     justify-content: center !important;
     padding: 0 !important;
+  }
+}
+
+@media (max-width: 1399px) and (min-width: 768px) {
+  .desktop-topbar-inner {
+    gap: 8px !important;
+    padding-inline: 14px !important;
+  }
+
+  .desktop-brand {
+    min-width: 190px !important;
+    gap: 8px !important;
+  }
+
+  .desktop-brand-logo {
+    width: 38px !important;
+    height: 38px !important;
+  }
+
+  .desktop-brand-title {
+    font-size: 19px !important;
+  }
+
+  .desktop-brand-subtitle {
+    display: none !important;
+  }
+
+  .desktop-nav-visible {
+    gap: 1px !important;
+  }
+
+  .desktop-nav-item {
+    height: 40px !important;
+    gap: 5px !important;
+    padding-inline: 9px !important;
+    font-size: 12px !important;
+  }
+
+  .desktop-actions {
+    gap: 4px !important;
+  }
+
+  .desktop-actions > button,
+  .desktop-actions > .theme-toggle {
+    width: 40px !important;
+    height: 40px !important;
+  }
+}
+
+@media (max-width: 1099px) and (min-width: 768px) {
+  .desktop-brand {
+    min-width: 46px !important;
+  }
+
+  .desktop-brand-copy {
+    display: none !important;
+  }
+
+  .desktop-nav-item {
+    width: auto !important;
+    gap: 3px !important;
+    padding-inline: 5px !important;
+    font-size: 10px !important;
+  }
+
+  .desktop-nav-item svg {
+    width: 14px !important;
+    height: 14px !important;
   }
 }
 

@@ -21,6 +21,8 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { isExactNavActive, isMainNavActive } from "@/lib/navigation";
+import { ThemeToggle } from "@/components/theme-toggle";
+import { useAppTheme } from "@/providers/theme-provider";
 
 function NavTo(props: any) {
   return <Link prefetch={false} {...props} />;
@@ -61,8 +63,10 @@ const ENABLED_HREFS = new Set([
 ]);
 
 export function MobileTopbar({ hidden = false }: { hidden?: boolean }) {
+  const { mascot, theme } = useAppTheme();
   const pathname = usePathname() ?? "";
   const [open, setOpen] = useState(false);
+  const isWangjai = theme === "wangjai";
 
   const isActive = (href: string) => isMainNavActive(pathname, href);
 
@@ -74,7 +78,7 @@ export function MobileTopbar({ hidden = false }: { hidden?: boolean }) {
       <div
         className={cn(
           "fixed top-0 right-0 left-0 z-50 flex items-center justify-between gap-2 px-2.5 md:hidden",
-          "border-b border-white/[0.08] bg-[rgba(59,29,7,0.96)] shadow-[0_8px_24px_rgba(38,18,3,0.18)]",
+          "border-b border-white/[0.08] bg-[rgba(var(--brand-nav-rgb),0.96)] shadow-[0_8px_24px_var(--brand-shadow)]",
           "backdrop-blur-[14px] transition-transform duration-200",
           "[transition-timing-function:cubic-bezier(0.2,0.8,0.2,1)]",
           hidden && "-translate-y-full"
@@ -86,7 +90,7 @@ export function MobileTopbar({ hidden = false }: { hidden?: boolean }) {
           <button
             type="button"
             onClick={() => setOpen((current) => !current)}
-            className="inline-flex h-8 w-8 flex-shrink-0 cursor-pointer items-center justify-center rounded-full bg-white/10 text-white"
+            className="inline-flex h-8 w-8 flex-shrink-0 cursor-pointer items-center justify-center rounded-full bg-transparent text-white transition-opacity hover:opacity-70"
             aria-label={menuLabel}
             title={menuLabel}
             aria-expanded={open}
@@ -101,7 +105,7 @@ export function MobileTopbar({ hidden = false }: { hidden?: boolean }) {
           <NavTo href="/" onClick={closeDrawer} className="flex min-w-0 items-center gap-[9px]">
             <div className="flex h-[30px] w-[30px] flex-shrink-0 items-center justify-center overflow-hidden">
               <Image
-                src="/images/branding/logo.png"
+                src={mascot("logo")}
                 alt="SUEA Safety Logo"
                 width={30}
                 height={30}
@@ -110,18 +114,27 @@ export function MobileTopbar({ hidden = false }: { hidden?: boolean }) {
             </div>
             <div className="flex min-w-0 flex-col leading-[1.1]">
               <span className="overflow-hidden text-ellipsis whitespace-nowrap text-[15px] font-extrabold tracking-normal text-white">
-                <strong className="text-[#ffb000]">SUEA</strong> Safety
+                {isWangjai ? (
+                  <>
+                    <strong className="text-[var(--brand-accent)]">C.P.A.C</strong> Safe +
+                  </>
+                ) : (
+                  <>
+                    <strong className="text-[var(--brand-accent)]">SUEA</strong> Safety
+                  </>
+                )}
               </span>
               <span className="overflow-hidden text-ellipsis whitespace-nowrap text-[8px] font-bold text-white/[0.58]">
-                Safety User Environment Awareness
+                {isWangjai ? "Creating Protection And Care" : "Safety User Environment Awareness"}
               </span>
             </div>
           </NavTo>
         </div>
 
         <div className="flex flex-shrink-0 items-center gap-2">
+          <ThemeToggle compact />
           <button
-            className="relative inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-full border border-white/[0.12] bg-white/10 text-white"
+            className="relative inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-full bg-transparent text-white transition-opacity hover:opacity-70"
             aria-label="ค้นหา"
             title="ค้นหา"
           >
@@ -129,12 +142,12 @@ export function MobileTopbar({ hidden = false }: { hidden?: boolean }) {
           </button>
           <NavTo
             href="/notifications"
-            className="relative inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-full border border-white/[0.12] bg-white/10 text-white"
+            className="relative inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-full bg-transparent text-white transition-opacity hover:opacity-70"
             aria-label="การแจ้งเตือน"
             title="การแจ้งเตือน"
           >
             <Bell className="h-[17px] w-[17px]" strokeWidth={2.4} />
-            <span className="absolute -top-[3px] -right-0.5 flex h-[17px] w-[17px] items-center justify-center rounded-full border-[1.5px] border-[#3b1d07] bg-[#ffb000] text-[10px] font-extrabold text-[#3b1d07]">
+            <span className="absolute -top-[3px] -right-0.5 flex h-[17px] w-[17px] items-center justify-center rounded-full border-[1.5px] border-[var(--brand-nav)] bg-[var(--brand-accent-strong)] text-[10px] font-extrabold text-[var(--brand-nav)]">
               3
             </span>
           </NavTo>
@@ -159,14 +172,14 @@ export function MobileTopbar({ hidden = false }: { hidden?: boolean }) {
                     className={cn(
                       "flex min-h-11 items-center gap-3 truncate rounded-xl px-3 text-xs font-extrabold transition-colors",
                       active && enabled
-                        ? "bg-[#ffb000] text-[#3b1d07]"
-                        : "bg-white/10 text-[#fff7e8] hover:bg-white/[0.14]",
+                        ? "bg-[var(--brand-accent-strong)] text-[var(--brand-nav)]"
+                        : "bg-white/10 text-[var(--brand-soft)] hover:bg-white/[0.14]",
                       !enabled && "cursor-not-allowed opacity-60"
                     )}
                     aria-disabled={!enabled}
                   >
                     <Icon
-                      className={cn("h-4 w-4 flex-shrink-0", active && enabled ? "text-[#3b1d07]" : "text-[#ffcf55]")}
+                      className={cn("h-4 w-4 flex-shrink-0", active && enabled ? "text-[var(--brand-nav)]" : "text-[var(--brand-accent)]")}
                       strokeWidth={2.35}
                     />
                     <span className="truncate">{item.label}</span>
@@ -176,7 +189,7 @@ export function MobileTopbar({ hidden = false }: { hidden?: boolean }) {
             </div>
 
             <div className="mt-3 rounded-2xl border border-white/10 bg-[rgba(255,247,232,0.10)] p-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]">
-              <div className="mb-1.5 flex items-center gap-2 px-2 py-1 text-[10px] font-extrabold uppercase tracking-[0.16em] text-[#f7d99d]">
+              <div className="mb-1.5 flex items-center gap-2 px-2 py-1 text-[10px] font-extrabold uppercase tracking-[0.16em] text-[var(--brand-hero-label)]">
                 <ShieldCheck className="h-3.5 w-3.5" strokeWidth={2.4} />
                 <span>Safety Culture</span>
               </div>
@@ -191,10 +204,10 @@ export function MobileTopbar({ hidden = false }: { hidden?: boolean }) {
                       onClick={closeDrawer}
                       className={cn(
                         "flex min-h-10 items-center gap-3 rounded-xl px-3 text-xs font-extrabold transition-colors hover:bg-white/[0.12]",
-                        isExactNavActive(pathname, item.href) ? "bg-white/[0.12] text-[#ffcf55]" : "text-[#fff7e8]"
+                        isExactNavActive(pathname, item.href) ? "bg-white/[0.12] text-[var(--brand-accent)]" : "text-[var(--brand-soft)]"
                       )}
                     >
-                      <Icon className="h-4 w-4 flex-shrink-0 text-[#ffcf55]" strokeWidth={2.35} />
+                      <Icon className="h-4 w-4 flex-shrink-0 text-[var(--brand-accent)]" strokeWidth={2.35} />
                       <span>{item.label}</span>
                     </NavTo>
                   );
@@ -203,7 +216,7 @@ export function MobileTopbar({ hidden = false }: { hidden?: boolean }) {
             </div>
 
             <div className="mt-3 rounded-2xl border border-white/10 bg-[rgba(255,247,232,0.10)] p-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]">
-              <div className="mb-1.5 flex items-center gap-2 px-2 py-1 text-[10px] font-extrabold uppercase tracking-[0.16em] text-[#f7d99d]">
+              <div className="mb-1.5 flex items-center gap-2 px-2 py-1 text-[10px] font-extrabold uppercase tracking-[0.16em] text-[var(--brand-hero-label)]">
                 <Settings2 className="h-3.5 w-3.5" strokeWidth={2.4} />
                 <span>Admin</span>
               </div>
@@ -218,10 +231,10 @@ export function MobileTopbar({ hidden = false }: { hidden?: boolean }) {
                       onClick={closeDrawer}
                       className={cn(
                         "flex min-h-10 items-center gap-3 rounded-xl px-3 text-xs font-extrabold transition-colors hover:bg-white/[0.12]",
-                        isExactNavActive(pathname, item.href) ? "bg-white/[0.12] text-[#ffcf55]" : "text-[#fff7e8]"
+                        isExactNavActive(pathname, item.href) ? "bg-white/[0.12] text-[var(--brand-accent)]" : "text-[var(--brand-soft)]"
                       )}
                     >
-                      <Icon className="h-4 w-4 flex-shrink-0 text-[#ffcf55]" strokeWidth={2.35} />
+                      <Icon className="h-4 w-4 flex-shrink-0 text-[var(--brand-accent)]" strokeWidth={2.35} />
                       <span>{item.label}</span>
                     </NavTo>
                   );

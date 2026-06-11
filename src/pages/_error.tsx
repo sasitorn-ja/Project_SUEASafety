@@ -14,7 +14,7 @@ function ErrorPage({ statusCode }: ErrorPageProps) {
         padding: "24px",
         textAlign: "center",
         fontFamily: "system-ui, sans-serif",
-        background: "#f1ecdf",
+        background: "var(--background)",
         color: "#0e0f12",
       }}
     >

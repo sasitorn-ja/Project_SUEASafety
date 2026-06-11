@@ -147,7 +147,7 @@ export default function KytPage() {
             {/* Header */}
             <header className="flex items-center gap-3 mb-2 md:mb-4 anim-fade" style={animStyle(0)}>
               <Link href="/were-ok">
-                <button className="w-9 h-9 md:w-11 md:h-11 rounded-xl bg-white border-none shadow-[0_2px_6px_rgba(0,0,0,0.03)] flex items-center justify-center text-foreground transition-colors active:bg-[#EFEBE0]">
+                <button className="w-9 h-9 md:w-11 md:h-11 rounded-xl bg-white border-none shadow-[0_2px_6px_rgba(0,0,0,0.03)] flex items-center justify-center text-foreground transition-colors active:bg-[var(--secondary)]">
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.2" strokeLinecap="round" strokeLinejoin="round">
                     <line x1="19" y1="12" x2="5" y2="12"/>
                     <polyline points="12 19 5 12 12 5"/>
@@ -162,26 +162,26 @@ export default function KytPage() {
 
             {/* Progress bar */}
             <div className="flex gap-1 mb-4 md:mb-8 pl-1 anim-fade" style={animStyle(0.04)}>
-              <div className="h-1 md:h-1.5 rounded bg-[#F5BB00] w-6 md:w-9" />
-              <div className="h-1 md:h-1.5 rounded bg-[#DDD9CD] w-3 md:w-4 ml-0.5" />
-              <div className="h-1 md:h-1.5 rounded bg-[#DDD9CD] w-3 md:w-4 ml-0.5" />
-              <div className="h-1 md:h-1.5 rounded bg-[#DDD9CD] w-3 md:w-4 ml-0.5" />
+              <div className="h-1 md:h-1.5 rounded bg-[var(--brand-accent)] w-6 md:w-9" />
+              <div className="h-1 md:h-1.5 rounded bg-[var(--border)] w-3 md:w-4 ml-0.5" />
+              <div className="h-1 md:h-1.5 rounded bg-[var(--border)] w-3 md:w-4 ml-0.5" />
+              <div className="h-1 md:h-1.5 rounded bg-[var(--border)] w-3 md:w-4 ml-0.5" />
             </div>
 
             {/* Badges */}
             <div className="flex gap-2 mb-5 md:mb-8 pl-1 anim-fade" style={animStyle(0.06)}>
-              <Badge className="bg-[#F5BB00] text-[#1A1A1A] hover:bg-[#F5BB00] text-[11px] md:text-[13px] font-extrabold px-3 py-1 md:px-3.5 md:py-1.5 rounded-full shadow-[0_2px_6px_rgba(245,187,0,0.1)]">
+              <Badge className="bg-[var(--brand-accent)] text-[var(--brand-accent-contrast)] hover:bg-[var(--brand-accent)] text-[11px] md:text-[13px] font-extrabold px-3 py-1 md:px-3.5 md:py-1.5 rounded-full shadow-[0_2px_6px_rgba(var(--brand-accent-rgb),0.1)]">
                 KYT ZONE
               </Badge>
-              <Badge variant="outline" className="text-[11px] md:text-[13px] font-extrabold px-3 py-1 md:px-3.5 md:py-1.5 rounded-full border-[#DDD9CD] bg-card">
+              <Badge variant="outline" className="text-[11px] md:text-[13px] font-extrabold px-3 py-1 md:px-3.5 md:py-1.5 rounded-full border-[var(--border)] bg-card">
                 {currentTime || "09:41"}
               </Badge>
             </div>
 
             {/* Photo capture area */}
             <div className="flex flex-col gap-4 anim-fade" style={animStyle(0.08)}>
-              <div className="relative w-full h-[280px] md:h-[380px] bg-[#EAE6DA] bg-[repeating-linear-gradient(45deg,#EAE6DA,#EAE6DA_10px,#EDE8DC_10px,#EDE8DC_20px)] border-2 border-dashed border-[#C5C1B5] rounded-[28px] md:rounded-[36px] overflow-hidden flex flex-col items-center justify-center shadow-[inset_0_2px_8px_rgba(0,0,0,0.02)]">
-                <div className="absolute top-5 left-5 w-8 h-8 md:w-10 md:h-10 bg-[#F5BB00] rounded-lg shadow-[0_2px_6px_rgba(245,187,0,0.25)]" />
+              <div className="relative w-full h-[280px] md:h-[380px] bg-[var(--secondary)] bg-[repeating-linear-gradient(45deg,var(--secondary),var(--secondary)_10px,var(--brand-soft)_10px,var(--brand-soft)_20px)] border-2 border-dashed border-[#C5C1B5] rounded-[16px] md:rounded-[36px] overflow-hidden flex flex-col items-center justify-center shadow-[inset_0_2px_8px_rgba(0,0,0,0.02)]">
+                <div className="absolute top-5 left-5 w-8 h-8 md:w-10 md:h-10 bg-[var(--brand-accent)] rounded-lg shadow-[0_2px_6px_rgba(var(--brand-accent-rgb),0.25)]" />
 
                 {isCameraActive ? (
                   <video ref={videoRef} autoPlay playsInline className="w-full h-full object-cover -scale-x-100" />
@@ -215,15 +215,15 @@ export default function KytPage() {
                 )}
 
                 {photo && !isPhotoConfirmed && (
-                  <div className="absolute inset-0 bg-[rgba(18,18,20,0.88)] backdrop-blur-sm flex flex-col items-center justify-center gap-3.5 p-5 text-white text-center animate-[fadeIn_0.2s_ease-out]">
-                    <div className="text-base md:text-lg font-extrabold text-[#F5BB00]">ต้องการใช้รูปภาพนี้ใช่หรือไม่?</div>
-                    <p className="text-xs md:text-sm text-[#DDD9CD] leading-relaxed max-w-[280px]">
+                  <div className="absolute inset-0 bg-[rgba(18,18,20,0.88)] backdrop-blur-sm flex flex-col items-center justify-center gap-3.5 p-4 text-white text-center animate-[fadeIn_0.2s_ease-out]">
+                    <div className="text-base md:text-lg font-extrabold text-[var(--brand-accent)]">ต้องการใช้รูปภาพนี้ใช่หรือไม่?</div>
+                    <p className="text-xs md:text-sm text-[var(--border)] leading-relaxed max-w-[280px]">
                       กรุณายืนยันภาพถ่ายร่วมพูดคุยความปลอดภัย KYT Zone เพื่อรับคะแนนเช็กอิน
                     </p>
                     <div className="flex gap-2.5 w-full max-w-[240px]">
                       <button
                         onClick={() => setIsPhotoConfirmed(true)}
-                        className="flex-[1.2] bg-[#F5BB00] text-[#1A1A1A] border-none rounded-xl py-2.5 text-[13.5px] md:text-sm font-extrabold transition-transform active:scale-[0.97]"
+                        className="flex-[1.2] bg-[var(--brand-accent)] text-[var(--brand-accent-contrast)] border-none rounded-xl py-2.5 text-[13.5px] md:text-sm font-extrabold transition-transform active:scale-[0.97]"
                       >
                         ยืนยันใช้รูปนี้
                       </button>
@@ -253,7 +253,7 @@ export default function KytPage() {
                   onClick={handleSubmit}
                   disabled={(!photo || !isPhotoConfirmed) && !isSubmitted}
                   className={cn(
-                    "w-full rounded-[20px] md:rounded-3xl py-4 md:py-5 h-auto font-extrabold text-[15px] md:text-base flex items-center justify-center gap-2 transition-all select-none",
+                    "w-full rounded-[16px] md:rounded-3xl py-4 md:py-5 h-auto font-extrabold text-[15px] md:text-base flex items-center justify-center gap-2 transition-all select-none",
                     isSubmitted
                       ? "bg-[#3D9A6A] text-white cursor-default shadow-[0_4px_14px_rgba(61,154,106,0.2)]"
                       : "bg-[#121214] hover:bg-[#252528] text-white shadow-[0_4px_14px_rgba(0,0,0,0.1)] active:scale-[0.99]"

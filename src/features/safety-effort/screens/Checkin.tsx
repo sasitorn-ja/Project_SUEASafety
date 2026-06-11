@@ -4,7 +4,7 @@ import { useLocation, useNavigate } from "@/lib/router-compat";
 import { MapContainer, TileLayer, Marker, Popup, useMap, useMapEvents } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
-const mascotTiger = "/images/mascots/suea-mascot-logo.png";
+import { useAppTheme } from "@/providers/theme-provider";
 
 // ─── Fix default Leaflet icon paths ───────────────────────────────────────────
 delete L.Icon.Default.prototype._getIconUrl;
@@ -88,16 +88,16 @@ function getLocationTypeLabel(type, id = "") {
 
 // ─── Design tokens ────────────────────────────────────────────────────────────
 const T = {
-  background:   "#f1ecdf",
-  background2:  "#ece5d2",
+  background:   "var(--background)",
+  background2:  "var(--secondary)",
   foreground:   "#0e0f12",
   foreground2:  "#33312c",
   foreground3:  "#767269",
   card:         "#ffffff",
-  surface2:     "#f5eedf",
-  primary:      "#ffc400",
-  primaryFg:    "#0e0f12",
-  primarySoft:  "#fff4cf",
+  surface2:     "var(--secondary)",
+  primary:      "var(--brand-accent)",
+  primaryFg:    "var(--brand-accent-contrast)",
+  primarySoft:  "var(--brand-soft)",
   danger:       "#d5301a",
   ok:           "#1f7a55",
   border:       "rgba(14,15,18,0.08)",
@@ -107,8 +107,8 @@ const T = {
 
 const yellow     = T.primary;
 const yellowBg   = T.primarySoft;
-const yellowBdr  = "#ffd93d";
-const yellowDark = "#92400E";
+const yellowBdr  = "var(--brand-accent)";
+const yellowDark = "var(--brand-text)";
 const navy       = "#1C2B4A";
 const navyDeep   = "#0F172A";
 
@@ -116,7 +116,7 @@ const navyDeep   = "#0F172A";
 // ─── Leaflet custom icons ─────────────────────────────────────────────────────
 const makePin = (fill, size = 28, selected = false) => {
   const glowHtml = selected
-    ? `<div style="position:absolute;bottom:-6px;left:50%;transform:translateX(-50%);width:18px;height:6px;background:rgba(255,196,0,0.4);border-radius:50%;box-shadow:0 0 10px 4px rgba(255,196,0,0.8);animation:pulse-marker 1.5s infinite;"></div>`
+    ? `<div style="position:absolute;bottom:-6px;left:50%;transform:translateX(-50%);width:18px;height:6px;background:rgba(var(--brand-accent-rgb),0.4);border-radius:50%;box-shadow:0 0 10px 4px rgba(var(--brand-accent-rgb),0.8);animation:pulse-marker 1.5s infinite;"></div>`
     : `<div style="position:absolute;bottom:-4px;left:50%;transform:translateX(-50%);width:12px;height:4px;background:rgba(0,0,0,0.15);border-radius:50%;"></div>`;
 
   return L.divIcon({
@@ -150,9 +150,9 @@ const meIcon = L.divIcon({
   className: "",
   html: `
     <div style="position:relative;width:34px;height:34px;display:flex;align-items:center;justify-content:center;">
-      <div style="position:absolute;width:34px;height:34px;border-radius:50%;background:rgba(255,196,0,0.2);animation:ci-me-pulse 2.2s ease-in-out infinite;"></div>
-      <div style="position:absolute;width:24px;height:24px;border-radius:50%;background:rgba(255,196,0,0.4);animation:ci-me-pulse2 2.2s ease-in-out infinite;"></div>
-      <div style="width:16px;height:16px;border-radius:50%;background:${yellow};border:3px solid #fff;box-shadow:0 3px 10px rgba(255,196,0,0.6);position:relative;z-index:1;"></div>
+      <div style="position:absolute;width:34px;height:34px;border-radius:50%;background:rgba(var(--brand-accent-rgb),0.2);animation:ci-me-pulse 2.2s ease-in-out infinite;"></div>
+      <div style="position:absolute;width:24px;height:24px;border-radius:50%;background:rgba(var(--brand-accent-rgb),0.4);animation:ci-me-pulse2 2.2s ease-in-out infinite;"></div>
+      <div style="width:16px;height:16px;border-radius:50%;background:${yellow};border:3px solid #fff;box-shadow:0 3px 10px rgba(var(--brand-accent-rgb),0.6);position:relative;z-index:1;"></div>
     </div>
     <style>
       @keyframes ci-me-pulse{0%,100%{transform:scale(1);opacity:0.7;}50%{transform:scale(1.8);opacity:0.15;}}
@@ -527,7 +527,7 @@ function AddModal({ onAdd, onClose, userPos }) {
             borderRadius: 99, padding: "4px 12px", fontSize: 11, fontWeight: 700,
             color: yellowDark, pointerEvents: "none", whiteSpace: "nowrap",
             boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
-            border: `1px solid rgba(255,196,0,0.3)`,
+            border: `1px solid rgba(var(--brand-accent-rgb),0.3)`,
           }}>
             แตะแผนที่เพื่อเลือกตำแหน่ง
           </div>
@@ -598,7 +598,7 @@ function AddModal({ onAdd, onClose, userPos }) {
               color: T.foreground3, fontSize: 14, fontWeight: 700,
               cursor: "pointer", fontFamily: "inherit", transition: "background 0.15s",
             }}
-            onMouseEnter={e => e.currentTarget.style.background = "#f5eedf"}
+            onMouseEnter={e => e.currentTarget.style.background = "var(--secondary)"}
             onMouseLeave={e => e.currentTarget.style.background = "transparent"}
           >
             ยกเลิก
@@ -630,7 +630,7 @@ const STYLES = `
   .ci, .ci * { box-sizing: border-box; }
   .ci {
     font-family: 'Sarabun', 'Prompt', sans-serif;
-    background: linear-gradient(180deg, #efe6d4 0%, ${T.background} 190px, ${T.background} 100%);
+    background: linear-gradient(180deg, var(--secondary) 0%, ${T.background} 190px, ${T.background} 100%);
     color: ${T.foreground};
     min-height: 100%;
     -webkit-font-smoothing: antialiased;
@@ -670,12 +670,12 @@ const STYLES = `
 
   /* ── Compact & Elegant StepHeader ── */
   .ci-step-header-compact {
-    background: linear-gradient(105deg, rgba(58,28,5,0.98) 0%, rgba(84,47,12,0.95) 48%, rgba(39,24,10,0.96) 100%);
+    background: linear-gradient(105deg, var(--brand-hero-start) 0%, var(--brand-hero-end) 48%, var(--brand-nav) 100%);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
     padding: 12px 20px 20px;
     flex-shrink: 0;
-    color: #fff8e6;
+    color: var(--brand-soft);
     position: relative;
     overflow: hidden;
     box-shadow: 0 8px 24px rgba(42,26,9,0.15);
@@ -693,8 +693,8 @@ const STYLES = `
     position: absolute;
     inset: 0;
     background-image:
-      linear-gradient(rgba(255,196,0,0.03) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(255,196,0,0.03) 1px, transparent 1px);
+      linear-gradient(rgba(var(--brand-accent-rgb),0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(var(--brand-accent-rgb),0.03) 1px, transparent 1px);
     background-size: 22px 22px;
     opacity: 0.6;
     pointer-events: none;
@@ -705,7 +705,7 @@ const STYLES = `
     position: absolute;
     right: -40px; top: -40px;
     width: 200px; height: 200px;
-    background: radial-gradient(circle, rgba(255,196,0,0.10) 0%, transparent 70%);
+    background: radial-gradient(circle, rgba(var(--brand-accent-rgb),0.10) 0%, transparent 70%);
     pointer-events: none;
     z-index: 0;
   }
@@ -782,8 +782,8 @@ const STYLES = `
     transition: all 0.3s;
   }
   .ci-stepper-line.active {
-    background: #ffc400;
-    box-shadow: 0 0 6px #ffc400;
+    background: var(--brand-accent);
+    box-shadow: 0 0 6px var(--brand-accent);
   }
   .ci-stepper-node {
     width: 18px;
@@ -798,9 +798,9 @@ const STYLES = `
     transition: all 0.3s;
   }
   .ci-stepper-node.active {
-    background: #ffc400;
+    background: var(--brand-accent);
     color: #1a1613;
-    box-shadow: 0 0 8px rgba(255, 196, 0, 0.6);
+    box-shadow: 0 0 8px rgba(var(--brand-accent-rgb), 0.6);
   }
   .ci-stepper-node.done {
     background: #1f7a55;
@@ -821,14 +821,14 @@ const STYLES = `
     cursor: pointer;
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     flex-shrink: 0;
-    color: #fff8e6;
+    color: var(--brand-soft);
   }
   .ci-back-btn:hover {
     background: rgba(255,255,255,0.16);
     border-color: ${yellow};
     color: #fff;
     transform: translateX(-2px);
-    box-shadow: 0 0 10px rgba(255, 196, 0, 0.22);
+    box-shadow: 0 0 10px rgba(var(--brand-accent-rgb), 0.22);
   }
 
   .ci-locate-btn {
@@ -846,18 +846,18 @@ const STYLES = `
   }
   .ci-locate-btn:hover {
     transform: translateY(-1.5px);
-    box-shadow: 0 5px 14px rgba(255,196,0,0.18);
+    box-shadow: 0 5px 14px rgba(var(--brand-accent-rgb),0.18);
     border-color: ${yellow};
   }
   .ci-locate-btn.active {
     border-color: ${yellow};
     background: ${yellow};
     color: ${T.primaryFg};
-    box-shadow: 0 0 10px rgba(255,196,0,0.4);
+    box-shadow: 0 0 10px rgba(var(--brand-accent-rgb),0.4);
   }
   .ci-locate-btn.idle {
     background: rgba(255,255,255,0.08);
-    color: #fff8e6;
+    color: var(--brand-soft);
     backdrop-filter: blur(8px);
   }
 
@@ -888,7 +888,7 @@ const STYLES = `
   }
   .ci-search-box:focus-within {
     border-color: ${yellowBdr};
-    box-shadow: 0 0 0 3px rgba(255,196,0,0.15), inset 0 2px 4px rgba(0,0,0,0.01);
+    box-shadow: 0 0 0 3px rgba(var(--brand-accent-rgb),0.15), inset 0 2px 4px rgba(0,0,0,0.01);
   }
   .ci-search-box input {
     width: 100%;
@@ -948,23 +948,23 @@ const STYLES = `
     color: ${T.foreground};
   }
   .ci-filter-chip.active {
-    background: linear-gradient(135deg, ${yellow} 0%, #f59e0b 100%);
+    background: linear-gradient(135deg, ${yellow} 0%, var(--brand-accent-strong) 100%);
     border-color: transparent;
     color: ${T.primaryFg};
-    box-shadow: 0 4px 10px rgba(255,196,0,0.22);
+    box-shadow: 0 4px 10px rgba(var(--brand-accent-rgb),0.22);
   }
 
   /* ── Ultra-compact tip style ── */
   .ci-side-tip-compact {
     margin: 10px 16px 4px;
-    border: 1px solid rgba(255, 196, 0, 0.24);
+    border: 1px solid rgba(var(--brand-accent-rgb), 0.24);
     border-radius: 12px;
-    background: linear-gradient(135deg, #fffcf2 0%, #fffbf2 100%);
+    background: linear-gradient(135deg, #ffffff 0%, var(--brand-surface) 100%);
     padding: 8px 12px;
     display: flex;
     align-items: center;
     gap: 8px;
-    box-shadow: 0 4px 12px rgba(255, 196, 0, 0.03);
+    box-shadow: 0 4px 12px rgba(var(--brand-accent-rgb), 0.03);
     flex-shrink: 0;
   }
 
@@ -992,18 +992,18 @@ const STYLES = `
     border-radius: 16px 0 0 16px;
   }
   .ci-loc-card:hover {
-    border-color: rgba(255, 196, 0, 0.35);
+    border-color: rgba(var(--brand-accent-rgb), 0.35);
     box-shadow: 0 8px 20px rgba(34,25,11,0.05);
     transform: translateY(-1.5px);
   }
   .ci-loc-card.sel {
-    background: linear-gradient(135deg, #ffffff 0%, #fffdf4 100%);
+    background: linear-gradient(135deg, #ffffff 0%, var(--brand-surface) 100%);
     border-color: ${yellowBdr};
-    box-shadow: 0 8px 24px rgba(255,196,0,0.14);
+    box-shadow: 0 8px 24px rgba(var(--brand-accent-rgb),0.14);
   }
   .ci-loc-card.sel::before {
     background: ${yellow};
-    box-shadow: 2px 0 8px rgba(255,196,0,0.6);
+    box-shadow: 2px 0 8px rgba(var(--brand-accent-rgb),0.6);
   }
 
   .ci-loc-icon {
@@ -1016,13 +1016,13 @@ const STYLES = `
     border: 1px solid rgba(0,0,0,0.02);
   }
   .ci-loc-card.sel .ci-loc-icon {
-    background: linear-gradient(135deg, ${yellow} 0%, #f59e0b 100%);
+    background: linear-gradient(135deg, ${yellow} 0%, var(--brand-accent-strong) 100%);
     color: ${T.primaryFg};
-    box-shadow: 0 3px 10px rgba(255,196,0,0.25);
+    box-shadow: 0 3px 10px rgba(var(--brand-accent-rgb),0.25);
     border-color: transparent;
   }
   .ci-loc-card:hover:not(.sel) .ci-loc-icon {
-    background: #efece5;
+    background: var(--secondary);
     color: #0e0f12;
   }
 
@@ -1039,12 +1039,12 @@ const STYLES = `
     border: 1px solid transparent;
   }
   .ci-tag-sel {
-    background: rgba(255,196,0,0.12);
+    background: rgba(var(--brand-accent-rgb),0.12);
     color: ${yellowDark};
-    border-color: rgba(255,196,0,0.18);
+    border-color: rgba(var(--brand-accent-rgb),0.18);
   }
   .ci-tag-def {
-    background: #f1ecdf;
+    background: var(--background);
     color: #767269;
     border-color: rgba(14,15,18,0.06);
   }
@@ -1080,7 +1080,7 @@ const STYLES = `
   .ci-loc-card.sel .ci-dist {
     color: ${yellowDark};
     background: #fffbeb;
-    border-color: rgba(255,196,0,0.15);
+    border-color: rgba(var(--brand-accent-rgb),0.15);
   }
 
   /* ── Bouncing Check Circle ── */
@@ -1094,9 +1094,9 @@ const STYLES = `
   }
   .ci-check-circle {
     width: 22px; height: 22px; border-radius: 50%;
-    background: linear-gradient(135deg, ${yellow} 0%, #f59e0b 100%);
+    background: linear-gradient(135deg, ${yellow} 0%, var(--brand-accent-strong) 100%);
     display: flex; align-items: center; justify-content: center;
-    box-shadow: 0 3px 8px rgba(255,196,0,0.3);
+    box-shadow: 0 3px 8px rgba(var(--brand-accent-rgb),0.3);
     animation: ci-pop 0.3s cubic-bezier(0.34,1.56,0.64,1) forwards;
   }
   .ci-check-circle-placeholder {
@@ -1107,7 +1107,7 @@ const STYLES = `
     transition: border-color 0.2s;
   }
   .ci-loc-card:hover .ci-check-circle-placeholder {
-    border-color: rgba(255, 196, 0, 0.4);
+    border-color: rgba(var(--brand-accent-rgb), 0.4);
   }
 
   @keyframes ci-pop { from { transform: scale(0); opacity: 0; } to { transform: scale(1); opacity: 1; } }
@@ -1126,16 +1126,16 @@ const STYLES = `
     background: #ffffff;
     border-color: ${yellow};
     color: ${T.foreground};
-    box-shadow: 0 6px 16px rgba(255,196,0,0.08);
+    box-shadow: 0 6px 16px rgba(var(--brand-accent-rgb),0.08);
     transform: translateY(-1px);
   }
 
   .ci-preview {
-    background: linear-gradient(135deg, #ffffff 0%, #fffdf0 100%);
-    border: 1px solid rgba(255,196,0,0.35);
+    background: linear-gradient(135deg, #ffffff 0%, var(--brand-surface) 100%);
+    border: 1px solid rgba(var(--brand-accent-rgb),0.35);
     border-radius: 16px;
     animation: ci-slide 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-    box-shadow: 0 10px 24px rgba(255,196,0,0.1);
+    box-shadow: 0 10px 24px rgba(var(--brand-accent-rgb),0.1);
     display: flex;
     align-items: center;
     gap: 12px;
@@ -1153,7 +1153,7 @@ const STYLES = `
     font-size: 15px;
   }
   .ci-cta.ready {
-    background: linear-gradient(135deg, #2b211a 0%, #1a1613 100%);
+    background: linear-gradient(135deg, var(--brand-text) 0%, #1a1613 100%);
     color: #fff;
     box-shadow: 0 10px 25px rgba(26, 22, 19, 0.25);
     padding: 14px;
@@ -1167,7 +1167,7 @@ const STYLES = `
   .ci-cta.ready:hover {
     transform: translateY(-2px);
     box-shadow: 0 12px 28px rgba(26,22,19,0.32);
-    background: linear-gradient(135deg, #3d2f24 0%, #2b211a 100%);
+    background: linear-gradient(135deg, #3d2f24 0%, var(--brand-text) 100%);
   }
   .ci-cta.ready:active { transform: scale(0.985) translateY(-1px); }
   .ci-cta.disabled {
@@ -1255,7 +1255,7 @@ const STYLES = `
     transition: all 0.2s;
     box-shadow: inset 0 2px 4px rgba(0,0,0,0.01);
   }
-  .ci-input:focus { border-color: ${yellow}; box-shadow: 0 0 0 3.5px rgba(255,196,0,0.18), inset 0 2px 4px rgba(0,0,0,0.01); }
+  .ci-input:focus { border-color: ${yellow}; box-shadow: 0 0 0 3.5px rgba(var(--brand-accent-rgb),0.18), inset 0 2px 4px rgba(0,0,0,0.01); }
 
   .ci-label {
     font-size: 11px; font-weight: 800; color: ${T.foreground3};
@@ -1267,13 +1267,13 @@ const STYLES = `
     padding: 14px 16px 12px;
     border-bottom: 1px solid rgba(14,15,18,0.06);
     flex-shrink: 0;
-    background: linear-gradient(180deg, rgba(255,248,220,0.72) 0%, rgba(252,247,235,0.92) 100%);
+    background: linear-gradient(180deg, color-mix(in srgb, var(--brand-soft) 72%, transparent) 0%, color-mix(in srgb, var(--brand-surface) 92%, transparent) 100%);
   }
 
   .ci-footer-panel {
     flex-shrink: 0; border-top: 1px solid rgba(14,15,18,0.08);
     padding: 12px 16px 16px;
-    background: rgba(252,247,235,0.85);
+    background: color-mix(in srgb, var(--brand-surface) 85%, transparent);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
   }
@@ -1326,6 +1326,7 @@ const STYLES = `
 
 // ─── Main component ───────────────────────────────────────────────────────────
 export default function Checkin() {
+  const { mascot, theme } = useAppTheme();
   const navigate = useNavigate();
   const location = useLocation();
   const activity = location.state?.activity ?? null;
@@ -1475,13 +1476,13 @@ export default function Checkin() {
           <button className="ci-back-btn" onClick={handleBack} aria-label="ย้อนกลับ">
             <IcoBack />
           </button>
-          
+
           <div style={{ width: 1, height: 22, background: "rgba(255,255,255,0.15)" }} />
 
           <div style={{ minWidth: 0 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
               <span className="ci-hero-badge-compact">Step 2</span>
-              <span className="ci-hero-badge-compact" style={{ background: "rgba(255, 196, 0, 0.16)", color: "#ffc400" }}>Check-in</span>
+              <span className="ci-hero-badge-compact" style={{ background: "rgba(var(--brand-accent-rgb), 0.16)", color: "var(--brand-accent)" }}>Check-in</span>
             </div>
             <h1 className="ci-hdr-title">เช็คอินสถานที่ตรวจ</h1>
           </div>
@@ -1502,13 +1503,13 @@ export default function Checkin() {
             </span>
             <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
               <StepPips current={2} />
-              <span style={{ fontSize: 11, color: "#ffc400", fontWeight: 900, fontFamily: "'Prompt',sans-serif" }}>
+              <span style={{ fontSize: 11, color: "var(--brand-accent)", fontWeight: 900, fontFamily: "'Prompt',sans-serif" }}>
                 2 / 4
               </span>
             </div>
           </div>
 
-          <img className="ci-hdr-mascot-compact" src={mascotTiger} alt="SUEA Safety tiger mascot" />
+          <img className="ci-hdr-mascot-compact" src={mascot("big")} alt={theme === "wangjai" ? "น้องวางใจ Safety mascot" : "SUEA tiger mascot"} />
         </div>
       </div>
       <div
@@ -1519,7 +1520,7 @@ export default function Checkin() {
           bottom: 0,
           height: 6,
           background:
-            "repeating-linear-gradient(135deg, #ffc400 0 10px, #0e0f12 10px 20px)",
+            "repeating-linear-gradient(135deg, var(--brand-accent) 0 10px, #0e0f12 10px 20px)",
         }}
       />
     </div>
@@ -1606,7 +1607,7 @@ export default function Checkin() {
                       เลือกสถานที่ตรวจ
                     </div>
                   </div>
-                  <span style={{ fontSize: 11, color: T.foreground3, fontFamily: "'Prompt',sans-serif", fontWeight: 700, background: "#efece5", padding: "3px 8px", borderRadius: "6px" }}>
+                  <span style={{ fontSize: 11, color: T.foreground3, fontFamily: "'Prompt',sans-serif", fontWeight: 700, background: "var(--secondary)", padding: "3px 8px", borderRadius: "6px" }}>
                     {visibleLocations.length} สถานที่
                   </span>
                   <span style={{ display: "none" }}>
@@ -1718,7 +1719,7 @@ export default function Checkin() {
                   เลือกสถานที่ตรวจ
                 </div>
               </div>
-              <span style={{ fontSize: 11, color: T.foreground3, fontFamily: "'Prompt',sans-serif", fontWeight: 700, background: "#efece5", padding: "3px 8px", borderRadius: "6px" }}>
+              <span style={{ fontSize: 11, color: T.foreground3, fontFamily: "'Prompt',sans-serif", fontWeight: 700, background: "var(--secondary)", padding: "3px 8px", borderRadius: "6px" }}>
                 {visibleLocations.length} สถานที่
               </span>
               <span style={{ display: "none" }}>

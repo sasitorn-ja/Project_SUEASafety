@@ -17,7 +17,7 @@ export function SafetyCultureTabs() {
 
   return (
     <div className="flex w-full justify-start font-sarabun md:hidden">
-      <div className="flex w-full sm:max-w-[480px] items-center rounded-full border-[2.8px] border-[#5c3214] bg-[#FFFDF7] p-[3px] shadow-[inset_0_2px_4px_rgba(0,0,0,0.06),0_4px_10px_rgba(92,50,20,0.04)]">
+      <div className="flex w-full sm:max-w-[480px] items-center rounded-full border-[2.8px] border-[var(--brand-text)] bg-[var(--brand-surface)] p-[3px] shadow-[inset_0_2px_4px_rgba(0,0,0,0.06),0_4px_10px_rgba(92,50,20,0.04)]">
         {TABS.map((tab) => {
           const Icon = tab.icon;
           const active = pathname === tab.href;
@@ -29,8 +29,8 @@ export function SafetyCultureTabs() {
                 className={cn(
                   "h-[32px] w-full rounded-full text-[13px] md:text-[13.5px] font-bold tracking-[-0.1px] md:h-[36px] transition-all duration-200",
                   active
-                    ? "bg-[#5c3214] text-white hover:bg-[#5c3214] hover:text-white shadow-[0_3px_8px_rgba(92,50,20,0.25)]"
-                    : "text-[#5c3214]/75 hover:bg-transparent hover:text-[#5c3214]"
+                    ? "bg-[var(--brand-text)] text-white hover:bg-[var(--brand-text)] hover:text-white shadow-[0_3px_8px_rgba(92,50,20,0.25)]"
+                    : "text-[var(--brand-text)]/75 hover:bg-transparent hover:text-[var(--brand-text)]"
                 )}
               >
                 <Icon className="mr-1.5 h-[13px] w-[13px]" strokeWidth={2} />

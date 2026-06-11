@@ -174,7 +174,7 @@ export default function FitToDrivePage() {
           {/* Header */}
           <header className="flex items-center gap-3 mb-2 md:mb-4 anim-fade" style={animStyle(0)}>
             <Link href="/were-ok">
-              <button className="w-9 h-9 md:w-11 md:h-11 rounded-xl bg-white border-none shadow-[0_2px_6px_rgba(0,0,0,0.03)] flex items-center justify-center text-foreground transition-colors active:bg-[#EFEBE0]">
+              <button className="w-9 h-9 md:w-11 md:h-11 rounded-xl bg-white border-none shadow-[0_2px_6px_rgba(0,0,0,0.03)] flex items-center justify-center text-foreground transition-colors active:bg-[var(--secondary)]">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
                   <line x1="19" y1="12" x2="5" y2="12"/>
                   <polyline points="12 19 5 12 12 5"/>
@@ -190,14 +190,14 @@ export default function FitToDrivePage() {
           {/* Steps bar */}
           <div className="flex gap-1 mb-5 md:mb-8 pl-1 anim-fade" style={animStyle(0.04)}>
             <div className="h-1 md:h-1.5 rounded bg-foreground w-6 md:w-9" />
-            <div className="h-1 md:h-1.5 rounded bg-[#F5BB00] w-6 md:w-9 ml-0.5" />
-            <div className="h-1 md:h-1.5 rounded bg-[#DDD9CD] w-3 md:w-4 ml-0.5" />
+            <div className="h-1 md:h-1.5 rounded bg-[var(--brand-accent)] w-6 md:w-9 ml-0.5" />
+            <div className="h-1 md:h-1.5 rounded bg-[var(--border)] w-3 md:w-4 ml-0.5" />
           </div>
 
           {/* Cards grid */}
           <div className="flex flex-col lg:grid lg:grid-cols-2 lg:gap-x-[50px] lg:gap-y-8 items-start">
             {/* BP Card */}
-            <Card className="bg-card border-[#E4DFD3] rounded-3xl md:rounded-[28px] p-5 md:p-8 shadow-[0_4px_12px_rgba(0,0,0,0.02)] anim-fade" style={animStyle(0.08)}>
+            <Card className="bg-card border-[var(--border)] rounded-3xl md:rounded-[16px] p-4 md:p-8 shadow-[0_4px_12px_rgba(0,0,0,0.02)] anim-fade" style={animStyle(0.08)}>
               <CardContent className="p-0">
                 <div className="flex items-center justify-between mb-4 md:mb-5">
                   <h2 className="text-sm md:text-[17px] font-extrabold text-foreground">ความดันโลหิต</h2>
@@ -205,9 +205,9 @@ export default function FitToDrivePage() {
                     className={cn(
                       "text-[11px] md:text-[13px] font-extrabold px-2.5 py-1 md:px-3.5 md:py-1 rounded-full tracking-wide",
                       bpStatus.class === "normal" && "bg-[#E6FAF1] text-[#3D9A6A]",
-                      bpStatus.class === "warning" && "bg-[#FFF9E6] text-[#F5BB00]",
+                      bpStatus.class === "warning" && "bg-[var(--brand-soft)] text-[var(--brand-accent)]",
                       bpStatus.class === "danger" && "bg-[#FDF2F2] text-[#D9383A]",
-                      bpStatus.class === "pending" && "bg-[#EDE8DD] text-muted-foreground"
+                      bpStatus.class === "pending" && "bg-[var(--secondary)] text-muted-foreground"
                     )}
                   >
                     {bpStatus.text}
@@ -225,7 +225,7 @@ export default function FitToDrivePage() {
                       placeholder="120"
                       min={50}
                       max={250}
-                      className="rounded-xl border-[1.5px] border-[#E4DFD3] bg-white font-bold text-foreground focus:border-[#F5BB00] focus:shadow-[0_0_0_3px_rgba(245,187,0,0.15)] focus:ring-0 focus-visible:ring-0 focus-visible:ring-offset-0"
+                      className="rounded-xl border-[1.5px] border-[var(--border)] bg-white font-bold text-foreground focus:border-[var(--brand-accent)] focus:shadow-[0_0_0_3px_rgba(var(--brand-accent-rgb),0.15)] focus:ring-0 focus-visible:ring-0 focus-visible:ring-offset-0"
                     />
                   </div>
                   <div className="flex flex-col gap-1.5">
@@ -237,7 +237,7 @@ export default function FitToDrivePage() {
                       placeholder="80"
                       min={30}
                       max={150}
-                      className="rounded-xl border-[1.5px] border-[#E4DFD3] bg-white font-bold text-foreground focus:border-[#F5BB00] focus:shadow-[0_0_0_3px_rgba(245,187,0,0.15)] focus:ring-0 focus-visible:ring-0 focus-visible:ring-offset-0"
+                      className="rounded-xl border-[1.5px] border-[var(--border)] bg-white font-bold text-foreground focus:border-[var(--brand-accent)] focus:shadow-[0_0_0_3px_rgba(var(--brand-accent-rgb),0.15)] focus:ring-0 focus-visible:ring-0 focus-visible:ring-offset-0"
                     />
                   </div>
                   <div className="flex flex-col gap-1.5">
@@ -249,18 +249,18 @@ export default function FitToDrivePage() {
                       placeholder="72"
                       min={30}
                       max={200}
-                      className="rounded-xl border-[1.5px] border-[#E4DFD3] bg-white font-bold text-foreground focus:border-[#F5BB00] focus:shadow-[0_0_0_3px_rgba(245,187,0,0.15)] focus:ring-0 focus-visible:ring-0 focus-visible:ring-offset-0"
+                      className="rounded-xl border-[1.5px] border-[var(--border)] bg-white font-bold text-foreground focus:border-[var(--brand-accent)] focus:shadow-[0_0_0_3px_rgba(var(--brand-accent-rgb),0.15)] focus:ring-0 focus-visible:ring-0 focus-visible:ring-offset-0"
                     />
                   </div>
                 </div>
 
                 {/* BP Values display */}
-                <div className="flex items-baseline justify-between pb-4 mb-4 border-b border-[#EFEBE0]">
-                  <div className="flex-1 border-r border-[#EDE8DD] pr-3">
+                <div className="flex items-baseline justify-between pb-4 mb-4 border-b border-[var(--secondary)]">
+                  <div className="flex-1 border-r border-[var(--secondary)] pr-3">
                     <div className="text-[32px] md:text-[56px] font-extrabold leading-none text-foreground">{sysVal ?? "—"}</div>
                     <div className="text-[9px] md:text-[11px] text-muted-foreground font-bold mt-1">SYSTOLIC mmHg</div>
                   </div>
-                  <div className="flex-1 border-r border-[#EDE8DD] px-3">
+                  <div className="flex-1 border-r border-[var(--secondary)] px-3">
                     <div className="text-[32px] md:text-[56px] font-extrabold leading-none text-foreground">{diaVal ?? "—"}</div>
                     <div className="text-[9px] md:text-[11px] text-muted-foreground font-bold mt-1">DIASTOLIC mmHg</div>
                   </div>
@@ -272,7 +272,7 @@ export default function FitToDrivePage() {
 
                 {/* Gauge */}
                 <div className="relative pb-5">
-                  <div className="h-2 md:h-3 rounded-full w-full bg-[linear-gradient(90deg,#3D9A6A_0%,#3D9A6A_55%,#F5BB00_55%,#F5BB00_78%,#D9383A_78%,#D9383A_100%)] relative">
+                  <div className="h-2 md:h-3 rounded-full w-full bg-[linear-gradient(90deg,#3D9A6A_0%,#3D9A6A_55%,var(--brand-accent)_55%,var(--brand-accent)_78%,#D9383A_78%,#D9383A_100%)] relative">
                     {sysVal !== null && !isNaN(sysVal) && (
                       <div
                         className="absolute top-[-2px] md:top-[-3px] w-1 md:w-1.5 h-3 md:h-[18px] bg-black rounded transition-[left_0.25s_ease-out]"
@@ -289,7 +289,7 @@ export default function FitToDrivePage() {
                 </div>
 
                 {/* BP Camera */}
-                <div className="mt-4 pt-4 border-t border-[#F3EFE3]">
+                <div className="mt-4 pt-4 border-t border-[var(--secondary)]">
                   <span className="text-[11px] font-extrabold text-foreground uppercase tracking-wide mb-2 block">
                     📸 ถ่ายภาพเครื่องวัดความดันโลหิต
                   </span>
@@ -299,7 +299,7 @@ export default function FitToDrivePage() {
                         launchCamera(bpFileRef, bpVideoRef, setBpCameraStream, setIsBpCameraActive, setBpPhoto);
                       }
                     }}
-                    className="relative w-full h-40 rounded-2xl border-2 border-dashed border-[#E4DFD3] bg-[#FAF8F2] overflow-hidden flex flex-col items-center justify-center cursor-pointer transition-all hover:border-[#F5BB00] hover:bg-[#FFF9E6]"
+                    className="relative w-full h-40 rounded-2xl border-2 border-dashed border-[var(--border)] bg-[var(--brand-surface)] overflow-hidden flex flex-col items-center justify-center cursor-pointer transition-all hover:border-[var(--brand-accent)] hover:bg-[var(--brand-soft)]"
                   >
                     {isBpCameraActive ? (
                       <video ref={bpVideoRef} autoPlay playsInline className="w-full h-full object-cover" />
@@ -351,7 +351,7 @@ export default function FitToDrivePage() {
             </Card>
 
             {/* Alcohol Card */}
-            <Card className="bg-card border-[#E4DFD3] rounded-3xl md:rounded-[28px] p-5 md:p-8 shadow-[0_4px_12px_rgba(0,0,0,0.02)] anim-fade" style={animStyle(0.14)}>
+            <Card className="bg-card border-[var(--border)] rounded-3xl md:rounded-[16px] p-4 md:p-8 shadow-[0_4px_12px_rgba(0,0,0,0.02)] anim-fade" style={animStyle(0.14)}>
               <CardContent className="p-0">
                 <div className="flex items-center justify-between mb-4 md:mb-5">
                   <h2 className="text-sm md:text-[17px] font-extrabold text-foreground">แอลกอฮอล์ในลมหายใจ</h2>
@@ -360,7 +360,7 @@ export default function FitToDrivePage() {
                       "text-[11px] md:text-[13px] font-extrabold px-2.5 py-1 md:px-3.5 md:py-1 rounded-full tracking-wide",
                       alcStatus.class === "normal" && "bg-[#E6FAF1] text-[#3D9A6A]",
                       alcStatus.class === "danger" && "bg-[#FDF2F2] text-[#D9383A]",
-                      alcStatus.class === "pending" && "bg-[#EDE8DD] text-muted-foreground"
+                      alcStatus.class === "pending" && "bg-[var(--secondary)] text-muted-foreground"
                     )}
                   >
                     {alcStatus.text}
@@ -378,7 +378,7 @@ export default function FitToDrivePage() {
                     placeholder="0.00"
                     min={0}
                     max={10}
-                    className="rounded-xl border-[1.5px] border-[#E4DFD3] bg-white font-bold text-foreground focus:border-[#F5BB00] focus:shadow-[0_0_0_3px_rgba(245,187,0,0.15)] focus:ring-0 focus-visible:ring-0 focus-visible:ring-offset-0"
+                    className="rounded-xl border-[1.5px] border-[var(--border)] bg-white font-bold text-foreground focus:border-[var(--brand-accent)] focus:shadow-[0_0_0_3px_rgba(var(--brand-accent-rgb),0.15)] focus:ring-0 focus-visible:ring-0 focus-visible:ring-offset-0"
                   />
                 </div>
 
@@ -420,9 +420,9 @@ export default function FitToDrivePage() {
                 <div
                   className="rounded-xl p-3 flex gap-2 items-start text-[11.5px] md:text-[13.5px] font-semibold leading-relaxed transition-all"
                   style={{
-                    backgroundColor: alcVal !== null && !isNaN(alcVal) && alcVal > 0 ? "#FDF2F2" : "#FAF3E0",
-                    border: `1px solid ${alcVal !== null && !isNaN(alcVal) && alcVal > 0 ? "rgba(217, 56, 58, 0.15)" : "rgba(245, 187, 0, 0.15)"}`,
-                    color: alcVal !== null && !isNaN(alcVal) && alcVal > 0 ? "#D9383A" : "#A27B00",
+                    backgroundColor: alcVal !== null && !isNaN(alcVal) && alcVal > 0 ? "#FDF2F2" : "var(--brand-soft)",
+                    border: `1px solid ${alcVal !== null && !isNaN(alcVal) && alcVal > 0 ? "rgba(217, 56, 58, 0.15)" : "var(--border)"}`,
+                    color: alcVal !== null && !isNaN(alcVal) && alcVal > 0 ? "#D9383A" : "var(--brand-text)",
                   }}
                 >
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="flex-shrink-0 mt-0.5">
@@ -438,7 +438,7 @@ export default function FitToDrivePage() {
                 </div>
 
                 {/* Alc Camera */}
-                <div className="mt-4 pt-4 border-t border-[#F3EFE3]">
+                <div className="mt-4 pt-4 border-t border-[var(--secondary)]">
                   <span className="text-[11px] font-extrabold text-foreground uppercase tracking-wide mb-2 block">
                     📸 ถ่ายภาพเครื่องเป่าแอลกอฮอล์
                   </span>
@@ -448,7 +448,7 @@ export default function FitToDrivePage() {
                         launchCamera(alcFileRef, alcVideoRef, setAlcCameraStream, setIsAlcCameraActive, setAlcPhoto);
                       }
                     }}
-                    className="relative w-full h-40 rounded-2xl border-2 border-dashed border-[#E4DFD3] bg-[#FAF8F2] overflow-hidden flex flex-col items-center justify-center cursor-pointer transition-all hover:border-[#F5BB00] hover:bg-[#FFF9E6]"
+                    className="relative w-full h-40 rounded-2xl border-2 border-dashed border-[var(--border)] bg-[var(--brand-surface)] overflow-hidden flex flex-col items-center justify-center cursor-pointer transition-all hover:border-[var(--brand-accent)] hover:bg-[var(--brand-soft)]"
                   >
                     {isAlcCameraActive ? (
                       <video ref={alcVideoRef} autoPlay playsInline className="w-full h-full object-cover" />
@@ -505,10 +505,10 @@ export default function FitToDrivePage() {
                 onClick={handleNext}
                 disabled={!isFormValid}
                 className={cn(
-                  "w-full lg:w-auto lg:min-w-[240px] bg-[#121214] text-white font-extrabold text-[15px] md:text-base rounded-[20px] md:rounded-3xl py-4 md:py-5 px-8 shadow-[0_4px_14px_rgba(0,0,0,0.1)] flex items-center justify-center gap-1.5 transition-all select-none",
+                  "w-full lg:w-auto lg:min-w-[240px] bg-[#121214] text-white font-extrabold text-[15px] md:text-base rounded-[16px] md:rounded-3xl py-4 md:py-5 px-8 shadow-[0_4px_14px_rgba(0,0,0,0.1)] flex items-center justify-center gap-1.5 transition-all select-none",
                   isFormValid
                     ? "hover:bg-[#252528] active:scale-[0.99]"
-                    : "bg-[#DDD9CD] text-muted-foreground cursor-not-allowed shadow-none"
+                    : "bg-[var(--border)] text-muted-foreground cursor-not-allowed shadow-none"
                 )}
               >
                 <span>ถัดไป · ตรวจรถ</span>

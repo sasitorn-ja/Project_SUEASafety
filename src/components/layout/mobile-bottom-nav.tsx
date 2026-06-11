@@ -30,8 +30,8 @@ export function MobileBottomNav({ hidden = false }: { hidden?: boolean }) {
     <nav
       className={cn(
         "md:hidden fixed bottom-0 left-0 right-0 z-50",
-        "bg-[rgba(59,29,7,0.96)] border-t border-white/[0.08]",
-        "shadow-[0_-10px_28px_rgba(38,18,3,0.22)] backdrop-blur-[16px]",
+        "bg-[rgba(var(--brand-nav-rgb),0.96)] border-t border-white/[0.08]",
+        "shadow-[0_-10px_28px_var(--brand-shadow)] backdrop-blur-[16px]",
         "mobile-bottom-nav",
         hidden && "is-hidden"
       )}
@@ -55,7 +55,7 @@ export function MobileBottomNav({ hidden = false }: { hidden?: boolean }) {
               className={cn(
                 "relative flex min-h-[54px] cursor-pointer select-none flex-col items-center gap-[2px] rounded-[10px] pt-1 pb-0 text-center",
                 "[-webkit-tap-highlight-color:transparent]",
-                active && enabled ? "font-black text-[#ffcf55]" : "font-bold text-white/[0.62]",
+                active && enabled ? "font-black text-[var(--brand-accent)]" : "font-bold text-white/[0.62]",
                 !enabled && "cursor-not-allowed opacity-[0.56]",
                 !enabled && "active:bg-transparent"
               )}
@@ -69,14 +69,14 @@ export function MobileBottomNav({ hidden = false }: { hidden?: boolean }) {
             >
               <span
                 className={cn(
-                  "absolute -top-[1px] left-1/2 h-[3px] w-6 -translate-x-1/2 rounded-full bg-[#ffb000] transition-opacity",
+                  "absolute -top-[1px] left-1/2 h-[3px] w-6 -translate-x-1/2 rounded-full bg-[var(--brand-accent)] transition-opacity",
                   active ? "opacity-100" : "opacity-0"
                 )}
               />
               <span
                 className={cn(
                   "relative flex h-[26px] w-[26px] items-center justify-center rounded-full transition-all",
-                  active && enabled ? "bg-[#ffb000] text-[#3b1d07] shadow-[0_8px_16px_rgba(255,176,0,0.24)]" : "bg-transparent"
+                  active && enabled ? "bg-[var(--brand-accent)] text-[var(--brand-nav)] shadow-[0_8px_16px_var(--brand-shadow)]" : "bg-transparent"
                 )}
                 style={{ transition: "background 150ms" }}
               >

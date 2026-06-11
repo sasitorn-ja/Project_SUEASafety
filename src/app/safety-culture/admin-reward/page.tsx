@@ -32,6 +32,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { type RewardCatalogItem, useAppActions, useAppState } from "@/providers/app-providers";
+import { useAppTheme } from "@/providers/theme-provider";
 
 type RewardEditorState = {
   mode: "create" | "edit";
@@ -75,13 +76,13 @@ function SectionCard({
   return (
     <Card
       className={cn(
-        "rounded-[26px] border border-[#e3d0ae] bg-[#fffdfa] p-4 shadow-[0_8px_18px_rgba(62,36,13,0.04)] md:p-5",
+        "rounded-[18px] border border-[var(--border)] bg-[var(--brand-surface)] p-4 shadow-[0_8px_18px_rgba(62,36,13,0.04)] md:p-4",
         className
       )}
     >
       <div className="mb-4 flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
         <div className="flex items-start gap-3">
-          <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-2xl bg-[#fff1c9] text-[#6d4716]">
+          <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-2xl bg-[var(--brand-soft)] text-[var(--brand-text)]">
             {icon}
           </div>
           <div className="min-w-0">
@@ -136,10 +137,11 @@ function RewardImage({
   reward: Pick<RewardCatalogItem, "name" | "imageSrc" | "imageText" | "isHot">;
   className?: string;
 }) {
+  const { themedImage } = useAppTheme();
   return (
     <div
       className={cn(
-        "relative flex aspect-[4/3] items-center justify-center overflow-hidden rounded-[22px] border border-[#eadcc7] bg-[#f7ead6]",
+        "relative flex aspect-[4/3] items-center justify-center overflow-hidden rounded-[16px] border border-[var(--border)] bg-[var(--brand-image-placeholder)]",
         className
       )}
     >
@@ -149,7 +151,7 @@ function RewardImage({
         </span>
       ) : null}
       {reward.imageSrc ? (
-        <Image src={reward.imageSrc} alt={reward.name} fill className="object-cover" />
+        <Image src={themedImage(reward.imageSrc)} alt={reward.name} fill className="object-cover" />
       ) : (
         <span className="px-4 text-center text-[13px] font-extrabold lowercase tracking-[0.02em] text-[#8E8A81]">
           {reward.imageText}
@@ -167,17 +169,17 @@ function RewardPreviewPanelLegacy({
   layout?: "split" | "stacked";
 }) {
   return (
-    <div className="rounded-[26px] border border-[#e6d5b7] bg-[linear-gradient(135deg,#fff7de_0%,#fffef9_100%)] p-4 shadow-[0_10px_24px_rgba(62,36,13,0.06)] sm:p-5">
+    <div className="rounded-[18px] border border-[var(--border)] bg-[linear-gradient(135deg,var(--brand-soft)_0%,var(--brand-surface)_100%)] p-4 shadow-[0_10px_24px_var(--brand-shadow)] sm:p-4">
       <div className={cn("grid gap-4", layout === "split" ? "lg:grid-cols-[minmax(0,300px)_minmax(0,1fr)] lg:gap-5" : "grid-cols-1")}>
         <RewardImage reward={reward} className="min-h-[220px]" />
 
-        <div className="min-w-0 rounded-[24px] border border-[#efdfc7] bg-white/55 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.72)] sm:p-5">
+        <div className="min-w-0 rounded-[18px] border border-[var(--border)] bg-white/55 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.72)] sm:p-4">
           <div className="flex h-full min-w-0 flex-col gap-4 lg:min-h-[220px]">
           <div className="flex flex-wrap items-center gap-2">
-            <span className="inline-flex items-center rounded-full border border-[#ead2a5] bg-white px-3 py-1 text-[11px] font-black uppercase tracking-[0.16em] text-[#8b5a12]">
+            <span className="inline-flex items-center rounded-full border border-[var(--border)] bg-white px-3 py-1 text-[11px] font-black uppercase tracking-[0.16em] text-[var(--brand-text)]">
               Public Preview
             </span>
-            <span className="inline-flex items-center rounded-full border border-[#eadcc7] bg-[#fffaf0] px-3 py-1 text-[12px] font-black text-[#6f665b]">
+            <span className="inline-flex items-center rounded-full border border-[var(--border)] bg-[var(--brand-soft)] px-3 py-1 text-[12px] font-black text-[#6f665b]">
               {getCategoryMeta(reward.category).label}
             </span>
             {reward.isHot ? (
@@ -192,19 +194,19 @@ function RewardPreviewPanelLegacy({
               <div className="line-clamp-2 text-[28px] font-black leading-[0.92] text-[#1A1A1A] [overflow-wrap:anywhere] sm:text-[34px]">
               {reward.name || "Reward name"}
             </div>
-              <div className="mt-3 rounded-[18px] border border-[#efdfc7] bg-[#fffdf7] px-4 py-3">
+              <div className="mt-3 rounded-[18px] border border-[var(--border)] bg-[var(--brand-surface)] px-4 py-3">
                 <p className="line-clamp-6 min-h-[8.1rem] text-[14px] font-bold leading-relaxed text-[#6f665b] [overflow-wrap:anywhere] sm:text-[15px]">
-              
+
               {reward.description || "รายละเอียด reward จะแสดงตรงนี้บนหน้า Rewards"}
-              
+
                 </p>
               </div>
             </div>
 
-            <div className="mt-auto flex flex-wrap items-end justify-between gap-4 border-t border-[#efdfc7] pt-4">
-              <div className="rounded-[22px] border border-[#eadcc7] bg-white px-4 py-3 shadow-[0_8px_18px_rgba(62,36,13,0.04)]">
-              <div className="text-[11px] font-black uppercase tracking-[0.16em] text-[#b58a00]">Points</div>
-              <div className="mt-1 text-[30px] font-black leading-none text-[#5c3214]">
+            <div className="mt-auto flex flex-wrap items-end justify-between gap-4 border-t border-[var(--border)] pt-4">
+              <div className="rounded-[16px] border border-[var(--border)] bg-white px-4 py-3 shadow-[0_8px_18px_rgba(62,36,13,0.04)]">
+              <div className="text-[11px] font-black uppercase tracking-[0.16em] text-[var(--brand-accent-strong)]">Points</div>
+              <div className="mt-1 text-[30px] font-black leading-none text-[var(--brand-text)]">
                 {reward.points.toLocaleString()}
               </div>
             </div>
@@ -226,20 +228,21 @@ function RewardPreviewPanel({
   reward: RewardEditorState;
   layout?: "split" | "stacked";
 }) {
+  const { themedImage, mascot } = useAppTheme();
   const previewCard = (
-    <Card className="relative flex flex-col gap-3 rounded-[22px] border-[#E4D4B8] bg-[#FFFDF7] p-3.5 shadow-[0_4px_10px_rgba(0,0,0,0.01)]">
+    <Card className="relative flex flex-col gap-3 rounded-[16px] border-[var(--border)] bg-[var(--brand-surface)] p-3.5 shadow-[0_4px_10px_rgba(0,0,0,0.01)]">
       {reward.isHot ? (
         <span className="absolute top-2.5 left-2.5 z-10 rounded-md bg-[#D9383A] px-2 py-0.5 text-[9.5px] font-black tracking-wide text-white shadow-[0_2px_6px_rgba(217,56,58,0.25)]">
           HOT
         </span>
       ) : null}
 
-      <div className="relative flex aspect-[4/3] w-full items-center justify-center overflow-hidden rounded-[14px] border-[1.5px] border-[#E4D4B8] bg-[#F7EAD6]">
+      <div className="relative flex aspect-[4/3] w-full items-center justify-center overflow-hidden rounded-[14px] border-[1.5px] border-[var(--border)] bg-[var(--brand-image-placeholder)]">
         {reward.imageSrc ? (
-          <Image src={reward.imageSrc} alt={reward.name} fill className="object-cover" />
+          <Image src={themedImage(reward.imageSrc)} alt={reward.name} fill className="object-cover" />
         ) : reward.isHot ? (
           <Image
-            src="/images/mascots/gallery/ppe-1.png"
+            src={mascot("salute")}
             alt="SUEA reward"
             fill
             className="object-cover"
@@ -256,7 +259,7 @@ function RewardPreviewPanel({
         <p className="line-clamp-2 text-[12.5px] font-bold leading-relaxed text-[#7d766b] [overflow-wrap:anywhere]">
           {reward.description}
         </p>
-        <span className="pt-1 text-[12.5px] font-extrabold text-[#B58A00]">
+        <span className="pt-1 text-[12.5px] font-extrabold text-[var(--brand-accent-strong)]">
           {reward.points.toLocaleString()} <span className="ml-0.5 text-[10px] font-bold text-muted-foreground">POINTS</span>
         </span>
       </div>
@@ -264,7 +267,7 @@ function RewardPreviewPanel({
       <button
         type="button"
         disabled
-        className="w-full cursor-not-allowed rounded-xl border-[1.5px] border-[#DDD9CD] bg-[#EAE6DA] py-2.5 text-center text-[13px] font-[850] text-[#A39E92]"
+        className="w-full cursor-not-allowed rounded-xl border-[1.5px] border-[var(--border)] bg-[var(--secondary)] py-2.5 text-center text-[13px] font-[850] text-[#A39E92]"
       >
         ยังไม่พอ
       </button>
@@ -272,7 +275,7 @@ function RewardPreviewPanel({
   );
 
   return (
-    <div className="rounded-[26px] border border-[#e6d5b7] bg-[linear-gradient(135deg,#fff7de_0%,#fffef9_100%)] p-4 shadow-[0_10px_24px_rgba(62,36,13,0.06)] sm:p-5">
+    <div className="rounded-[18px] border border-[var(--border)] bg-[linear-gradient(135deg,var(--brand-soft)_0%,var(--brand-surface)_100%)] p-4 shadow-[0_10px_24px_var(--brand-shadow)] sm:p-4">
       {layout === "split" ? <div className="mx-auto w-full max-w-[360px]">{previewCard}</div> : previewCard}
     </div>
   );
@@ -290,7 +293,7 @@ function DetailCard({
   className?: string;
 }) {
   return (
-    <div className={cn("rounded-[22px] border border-[#eadcc7] bg-white p-4 shadow-[0_8px_18px_rgba(62,36,13,0.04)] sm:p-5", className)}>
+    <div className={cn("rounded-[16px] border border-[var(--border)] bg-white p-4 shadow-[0_8px_18px_rgba(62,36,13,0.04)] sm:p-4", className)}>
       <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
         <div className="text-[14px] font-black text-[#1A1A1A]">{title}</div>
         {subtitle ? <div className="text-[12px] font-bold text-[#8E8A81]">{subtitle}</div> : null}
@@ -397,12 +400,12 @@ export default function AdminRewardPage() {
 
   return (
     <>
-      <div className="mx-auto w-full max-w-[1320px] bg-[#f1ecdf] px-3.5 pt-0 pb-8 font-sarabun md:px-4">
+      <div className="mx-auto w-full max-w-[1320px] bg-[var(--background)] px-3.5 pt-0 pb-8 font-sarabun md:px-4">
         <SafetyCultureHero
           eyebrow="SAFETY CULTURE ADMIN"
           title={
             <>
-              จัดการ <span className="text-[#F5BB00]">Rewards</span>
+              จัดการ <span className="text-[var(--brand-accent)]">Rewards</span>
             </>
           }
           description="ออกแบบ reward catalog, รูปภาพ, รายละเอียด และราคา ให้หน้า Rewards ใช้งานง่ายและดูดีขึ้นจากที่เดียว"
@@ -421,15 +424,15 @@ export default function AdminRewardPage() {
         />
 
         <div className="mt-4">
-          <Card className="rounded-[24px] border border-[#e4d3b3] bg-[#fffaf0] p-4 shadow-[0_8px_18px_rgba(62,36,13,0.04)]">
+          <Card className="rounded-[18px] border border-[var(--border)] bg-[var(--brand-soft)] p-4 shadow-[0_8px_18px_var(--brand-shadow)]">
             <div className="mb-4 flex flex-wrap gap-2">
-              <Badge className="rounded-xl border border-[#d7c5a7] bg-white px-3 py-2 text-[11px] font-black text-[#5c3214]">
+              <Badge className="rounded-xl border border-[var(--border)] bg-white px-3 py-2 text-[11px] font-black text-[var(--brand-text)]">
                 {totalRewards} rewards
               </Badge>
-              <Badge className="rounded-xl border border-[#d7c5a7] bg-[#fff6d6] px-3 py-2 text-[11px] font-black text-[#8b5a12]">
+              <Badge className="rounded-xl border border-[var(--border)] bg-[var(--brand-soft)] px-3 py-2 text-[11px] font-black text-[var(--brand-text)]">
                 {hotRewards} hot items
               </Badge>
-              <Badge className="rounded-xl border border-[#d7c5a7] bg-white px-3 py-2 text-[11px] font-black text-[#5c3214]">
+              <Badge className="rounded-xl border border-[var(--border)] bg-white px-3 py-2 text-[11px] font-black text-[var(--brand-text)]">
                 Avg {averagePoints.toLocaleString()} pts
               </Badge>
             </div>
@@ -440,10 +443,10 @@ export default function AdminRewardPage() {
                 return (
                   <div
                     key={item.value}
-                    className="flex items-center justify-between gap-4 rounded-[20px] border border-[#eadcc7] bg-white px-4 py-4"
+                    className="flex items-center justify-between gap-4 rounded-[16px] border border-[var(--border)] bg-white px-4 py-4"
                   >
                     <div className="flex min-w-0 items-center gap-3">
-                      <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-2xl bg-[#fff1c9] text-[#8b5a12]">
+                      <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-2xl bg-[var(--brand-soft)] text-[var(--brand-text)]">
                         <Icon className="h-4.5 w-4.5" strokeWidth={2.2} />
                       </div>
                       <div className="min-w-0">
@@ -453,7 +456,7 @@ export default function AdminRewardPage() {
                     </div>
                     <div className="text-right">
                       <div className="text-[24px] font-black leading-none text-[#1A1A1A]">{item.count}</div>
-                      <div className="mt-1 text-[11px] font-black uppercase tracking-[0.14em] text-[#b58a00]">
+                      <div className="mt-1 text-[11px] font-black uppercase tracking-[0.14em] text-[var(--brand-accent-strong)]">
                         items
                       </div>
                     </div>
@@ -478,7 +481,7 @@ export default function AdminRewardPage() {
             actions={
               <Button
                 onClick={addReward}
-                className="h-11 rounded-xl bg-[#ffb000] px-5 text-[13px] font-black text-[#3b1d07] hover:bg-[#ffc02a]"
+                className="h-11 rounded-xl bg-[var(--brand-accent-strong)] px-5 text-[13px] font-black text-white hover:bg-[var(--brand-accent)]"
               >
                 <Plus className="mr-1.5 h-4 w-4" />
                 New Reward
@@ -493,7 +496,7 @@ export default function AdminRewardPage() {
                 return (
                   <Card
                     key={reward.id}
-                    className="overflow-hidden rounded-[24px] border border-[#e3d0ae] bg-white p-0 shadow-[0_8px_18px_rgba(62,36,13,0.05)] transition-transform hover:-translate-y-1"
+                    className="overflow-hidden rounded-[18px] border border-[var(--border)] bg-white p-0 shadow-[0_8px_18px_rgba(62,36,13,0.05)] transition-transform hover:-translate-y-1"
                   >
                     <div className="p-4">
                       <RewardImage reward={reward} />
@@ -501,11 +504,11 @@ export default function AdminRewardPage() {
                         <div className="min-w-0">
                           <div className="truncate text-[17px] font-black text-[#1A1A1A]">{reward.name}</div>
                           <div className="mt-1 flex items-center gap-2 text-[12px] font-black text-[#8E8A81]">
-                            <CategoryIcon className="h-3.5 w-3.5 text-[#8b5a12]" strokeWidth={2.2} />
+                            <CategoryIcon className="h-3.5 w-3.5 text-[var(--brand-text)]" strokeWidth={2.2} />
                             {category.label}
                           </div>
                         </div>
-                        <div className="rounded-full bg-[#fff1c9] px-3 py-1 text-[12px] font-black text-[#8b5a12]">
+                        <div className="rounded-full bg-[var(--brand-soft)] px-3 py-1 text-[12px] font-black text-[var(--brand-text)]">
                           {reward.points.toLocaleString()} pts
                         </div>
                       </div>
@@ -515,7 +518,7 @@ export default function AdminRewardPage() {
                       </p>
                     </div>
 
-                    <div className="flex items-center justify-between border-t border-[#f0e2ca] bg-[#fffaf0] px-4 py-3">
+                    <div className="flex items-center justify-between border-t border-[var(--border)] bg-[var(--brand-soft)] px-4 py-3">
                       <div className="text-[12px] font-black text-[#8E8A81]">
                         {reward.isHot ? "Featured on public page" : reward.imageText}
                       </div>
@@ -523,7 +526,7 @@ export default function AdminRewardPage() {
                         <button
                           type="button"
                           onClick={() => openEditReward(reward)}
-                          className="flex h-9 w-9 items-center justify-center rounded-full border border-[#eadcc7] bg-white text-[#5c3214] transition-colors hover:border-[#f5bb00] hover:bg-[#fff7e1] hover:text-[#a36206]"
+                          className="flex h-9 w-9 items-center justify-center rounded-full border border-[var(--border)] bg-white text-[var(--brand-text)] transition-colors hover:border-[var(--brand-accent)] hover:bg-[var(--brand-soft)] hover:text-[#a36206]"
                           aria-label={`แก้ไขรางวัล ${reward.name}`}
                         >
                           <Pencil className="h-4 w-4" strokeWidth={2.2} />
@@ -548,14 +551,14 @@ export default function AdminRewardPage() {
         <Dialog open={!!editingReward} onOpenChange={(open) => !open && setEditingReward(null)}>
           <DialogContent
             className={cn(
-              "grid h-[min(90vh,960px)] w-[calc(100vw-16px)] grid-rows-[auto_minmax(0,1fr)_auto] overflow-hidden rounded-[28px] border border-[#e3d0ae] bg-[#fffdfa] p-0 shadow-[0_24px_50px_rgba(62,36,13,0.18)] sm:w-[calc(100vw-32px)] sm:rounded-[32px]",
+              "grid h-[min(90vh,960px)] w-[calc(100vw-16px)] grid-rows-[auto_minmax(0,1fr)_auto] overflow-hidden rounded-[16px] border border-[var(--border)] bg-[var(--brand-surface)] p-0 shadow-[0_24px_50px_rgba(62,36,13,0.18)] sm:w-[calc(100vw-32px)] sm:rounded-[32px]",
               editingReward?.mode === "create"
                 ? "sm:!max-w-[1180px] lg:!max-w-[1280px]"
                 : "sm:!max-w-[1240px] lg:!max-w-[1360px]"
             )}
           >
-            <DialogHeader className="border-b border-[#eadcc7] bg-[linear-gradient(180deg,#fff8eb_0%,#fff3d9_100%)] px-5 pt-5 pb-4 sm:px-6 sm:pt-6 sm:pb-5 lg:px-8">
-              <DialogTitle className="text-[24px] font-black text-[#5c3214] sm:text-[30px]">
+            <DialogHeader className="border-b border-[var(--border)] bg-[linear-gradient(180deg,var(--brand-soft)_0%,var(--brand-soft)_100%)] px-5 pt-5 pb-4 sm:px-6 sm:pt-6 sm:pb-5 lg:px-8">
+              <DialogTitle className="text-[24px] font-black text-[var(--brand-text)] sm:text-[30px]">
                 {editingReward?.mode === "create" ? "Create Reward" : "Edit Reward"}
               </DialogTitle>
               <DialogDescription className="max-w-[840px] text-[13px] font-bold leading-relaxed text-[#8E8A81] sm:text-[14px]">
@@ -566,7 +569,7 @@ export default function AdminRewardPage() {
             </DialogHeader>
 
             {editingReward ? (
-              <div className="min-h-0 overflow-y-auto bg-[#fffcf6] px-4 py-4 sm:px-6 sm:py-6 lg:px-8 lg:py-7">
+              <div className="min-h-0 overflow-y-auto bg-[var(--brand-surface)] px-4 py-4 sm:px-6 sm:py-6 lg:px-8 lg:py-5">
                 <input
                   ref={fileInputRef}
                   type="file"
@@ -585,7 +588,7 @@ export default function AdminRewardPage() {
                           <button
                             type="button"
                             onClick={() => fileInputRef.current?.click()}
-                            className="flex h-12 w-full items-center justify-center gap-2 rounded-[16px] border border-dashed border-[#c89a4f] bg-[#fff8eb] px-4 text-[13px] font-black text-[#8b5a12] transition-colors hover:bg-[#fff1d0]"
+                            className="flex h-12 w-full items-center justify-center gap-2 rounded-[16px] border border-dashed border-[var(--border)] bg-[var(--brand-soft)] px-4 text-[13px] font-black text-[var(--brand-text)] transition-colors hover:bg-[var(--brand-soft)]"
                           >
                             <ImagePlus className="h-4 w-4" strokeWidth={2.2} />
                             เลือกรูปหรืออัปโหลดรูป
@@ -593,7 +596,7 @@ export default function AdminRewardPage() {
                           <button
                             type="button"
                             onClick={() => updateEditingReward("imageSrc", null)}
-                            className="flex h-12 w-full items-center justify-center rounded-[16px] border border-[#eadcc7] bg-white px-4 text-[13px] font-black text-[#5c3214] transition-colors hover:bg-[#fff7e1]"
+                            className="flex h-12 w-full items-center justify-center rounded-[16px] border border-[var(--border)] bg-white px-4 text-[13px] font-black text-[var(--brand-text)] transition-colors hover:bg-[var(--brand-soft)]"
                           >
                             ลบรูปออก
                           </button>
@@ -605,52 +608,52 @@ export default function AdminRewardPage() {
                       <DetailCard title="ข้อมูลหลัก" subtitle="เริ่มจากชื่อ ราคา และคำอธิบาย">
                         <div className="space-y-4">
                           <div className="flex flex-col gap-2">
-                            <Label className="text-[12px] font-black text-[#5c3214]">Reward Name</Label>
+                            <Label className="text-[12px] font-black text-[var(--brand-text)]">Reward Name</Label>
                             <Input
                               value={editingReward.name}
                               onChange={(event) => updateEditingReward("name", event.target.value)}
-                              className="h-12 rounded-[18px] border-[#d7c5a7] bg-white px-4 text-[15px] font-bold text-[#2d2116] focus-visible:border-[#f5bb00] focus-visible:ring-0"
+                              className="h-12 rounded-[18px] border-[var(--border)] bg-white px-4 text-[15px] font-bold text-[var(--foreground)] focus-visible:border-[var(--brand-accent)] focus-visible:ring-0"
                             />
                           </div>
 
                           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                             <div className="flex flex-col gap-2">
-                              <Label className="text-[12px] font-black text-[#5c3214]">Points</Label>
+                              <Label className="text-[12px] font-black text-[var(--brand-text)]">Points</Label>
                               <Input
                                 value={`${editingReward.points}`}
                                 onChange={(event) => updateEditingReward("points", Number(event.target.value) || 0)}
-                                className="h-12 rounded-[18px] border-[#d7c5a7] bg-white px-4 text-[15px] font-bold text-[#2d2116] focus-visible:border-[#f5bb00] focus-visible:ring-0"
+                                className="h-12 rounded-[18px] border-[var(--border)] bg-white px-4 text-[15px] font-bold text-[var(--foreground)] focus-visible:border-[var(--brand-accent)] focus-visible:ring-0"
                               />
                             </div>
                             <div className="flex flex-col gap-2">
-                              <Label className="text-[12px] font-black text-[#5c3214]">Image Text Fallback</Label>
+                              <Label className="text-[12px] font-black text-[var(--brand-text)]">Image Text Fallback</Label>
                               <Input
                                 value={editingReward.imageText}
                                 onChange={(event) => updateEditingReward("imageText", event.target.value)}
-                                className="h-12 rounded-[18px] border-[#d7c5a7] bg-white px-4 text-[15px] font-bold text-[#2d2116] focus-visible:border-[#f5bb00] focus-visible:ring-0"
+                                className="h-12 rounded-[18px] border-[var(--border)] bg-white px-4 text-[15px] font-bold text-[var(--foreground)] focus-visible:border-[var(--brand-accent)] focus-visible:ring-0"
                               />
                             </div>
                           </div>
 
                           <div className="flex flex-col gap-2">
-                            <Label className="text-[12px] font-black text-[#5c3214]">Description</Label>
+                            <Label className="text-[12px] font-black text-[var(--brand-text)]">Description</Label>
                             <Textarea
                               value={editingReward.description}
                               onChange={(event) => updateEditingReward("description", event.target.value)}
-                              className="min-h-[156px] rounded-[18px] border-[#d7c5a7] bg-white px-4 py-3 text-[14px] font-bold leading-relaxed text-[#2d2116] focus-visible:border-[#f5bb00] focus-visible:ring-0"
+                              className="min-h-[156px] rounded-[18px] border-[var(--border)] bg-white px-4 py-3 text-[14px] font-bold leading-relaxed text-[var(--foreground)] focus-visible:border-[var(--brand-accent)] focus-visible:ring-0"
                             />
                           </div>
 
-                          <div className="rounded-[18px] border border-[#eadcc7] bg-[#fff8eb] p-4">
+                          <div className="rounded-[18px] border border-[var(--border)] bg-[var(--brand-soft)] p-4">
                             <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-                              <div className="text-[13px] font-black text-[#5c3214]">รูปภาพรางวัล</div>
+                              <div className="text-[13px] font-black text-[var(--brand-text)]">รูปภาพรางวัล</div>
                               <div className="text-[12px] font-bold text-[#8E8A81]">อัปโหลดรูปจริงหรือใช้ mockup จาก Image Text</div>
                             </div>
                             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                               <button
                                 type="button"
                                 onClick={() => fileInputRef.current?.click()}
-                                className="flex h-12 w-full items-center justify-center gap-2 rounded-[16px] border border-dashed border-[#c89a4f] bg-[#fff8eb] px-4 text-[13px] font-black text-[#8b5a12] transition-colors hover:bg-[#fff1d0]"
+                                className="flex h-12 w-full items-center justify-center gap-2 rounded-[16px] border border-dashed border-[var(--border)] bg-[var(--brand-soft)] px-4 text-[13px] font-black text-[var(--brand-text)] transition-colors hover:bg-[var(--brand-soft)]"
                               >
                                 <ImagePlus className="h-4 w-4" strokeWidth={2.2} />
                                 เลือกรูปหรืออัปโหลดรูป
@@ -658,7 +661,7 @@ export default function AdminRewardPage() {
                               <button
                                 type="button"
                                 onClick={() => updateEditingReward("imageSrc", null)}
-                                className="flex h-12 w-full items-center justify-center rounded-[16px] border border-[#eadcc7] bg-white px-4 text-[13px] font-black text-[#5c3214] transition-colors hover:bg-[#fff7e1]"
+                                className="flex h-12 w-full items-center justify-center rounded-[16px] border border-[var(--border)] bg-white px-4 text-[13px] font-black text-[var(--brand-text)] transition-colors hover:bg-[var(--brand-soft)]"
                               >
                                 ลบรูปออก
                               </button>
@@ -679,13 +682,13 @@ export default function AdminRewardPage() {
                                 type="button"
                                 onClick={() => updateEditingReward("category", option.value)}
                                 className={cn(
-                                  "rounded-[20px] border p-4 text-left transition-colors",
+                                  "rounded-[16px] border p-4 text-left transition-colors",
                                   isActive
-                                    ? "border-[#f5bb00] bg-[#fff5cf] shadow-[0_8px_18px_rgba(245,187,0,0.14)]"
-                                    : "border-[#eadcc7] bg-[#fffdfa] hover:bg-[#fff8eb]"
+                                    ? "border-[var(--brand-accent)] bg-[var(--brand-soft)] shadow-[0_8px_18px_rgba(var(--brand-accent-rgb),0.14)]"
+                                    : "border-[var(--border)] bg-[var(--brand-surface)] hover:bg-[var(--brand-soft)]"
                                 )}
                               >
-                                <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-2xl bg-white text-[#8b5a12]">
+                                <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-2xl bg-white text-[var(--brand-text)]">
                                   <Icon className="h-4 w-4" strokeWidth={2.2} />
                                 </div>
                                 <div className="text-[15px] font-black text-[#1A1A1A]">{option.label}</div>
@@ -706,7 +709,7 @@ export default function AdminRewardPage() {
                             "flex w-full items-center justify-between rounded-[18px] border px-4 py-3 text-left transition-colors",
                             editingReward.isHot
                               ? "border-[#f1c6c6] bg-[#fff3f3] text-[#b43a33]"
-                              : "border-[#d7c5a7] bg-[#fffdfa] text-[#5c3214]"
+                              : "border-[var(--border)] bg-[var(--brand-surface)] text-[var(--brand-text)]"
                           )}
                         >
                           <span>
@@ -732,7 +735,7 @@ export default function AdminRewardPage() {
                           <button
                             type="button"
                             onClick={() => fileInputRef.current?.click()}
-                            className="flex h-12 items-center justify-center gap-2 rounded-[16px] border border-dashed border-[#c89a4f] bg-[#fff8eb] text-[13px] font-black text-[#8b5a12] transition-colors hover:bg-[#fff1d0]"
+                            className="flex h-12 items-center justify-center gap-2 rounded-[16px] border border-dashed border-[var(--border)] bg-[var(--brand-soft)] text-[13px] font-black text-[var(--brand-text)] transition-colors hover:bg-[var(--brand-soft)]"
                           >
                             <ImagePlus className="h-4 w-4" strokeWidth={2.2} />
                             อัปโหลดรูป
@@ -740,7 +743,7 @@ export default function AdminRewardPage() {
                           <button
                             type="button"
                             onClick={() => updateEditingReward("imageSrc", null)}
-                            className="flex h-12 items-center justify-center rounded-[16px] border border-[#eadcc7] bg-white text-[13px] font-black text-[#5c3214] transition-colors hover:bg-[#fff7e1]"
+                            className="flex h-12 items-center justify-center rounded-[16px] border border-[var(--border)] bg-white text-[13px] font-black text-[var(--brand-text)] transition-colors hover:bg-[var(--brand-soft)]"
                           >
                             ลบรูปออก
                           </button>
@@ -752,48 +755,48 @@ export default function AdminRewardPage() {
                       <DetailCard title="ข้อมูลหลัก" subtitle="แก้ชื่อ ราคา และคำอธิบายได้จากตรงนี้">
                         <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
                           <div className="flex flex-col gap-2 lg:col-span-2">
-                            <Label className="text-[12px] font-black text-[#5c3214]">Reward Name</Label>
+                            <Label className="text-[12px] font-black text-[var(--brand-text)]">Reward Name</Label>
                             <Input
                               value={editingReward.name}
                               onChange={(event) => updateEditingReward("name", event.target.value)}
-                              className="h-12 rounded-[18px] border-[#d7c5a7] bg-white px-4 text-[15px] font-bold text-[#2d2116] focus-visible:border-[#f5bb00] focus-visible:ring-0"
+                              className="h-12 rounded-[18px] border-[var(--border)] bg-white px-4 text-[15px] font-bold text-[var(--foreground)] focus-visible:border-[var(--brand-accent)] focus-visible:ring-0"
                             />
                           </div>
                           <div className="flex flex-col gap-2">
-                            <Label className="text-[12px] font-black text-[#5c3214]">Points</Label>
+                            <Label className="text-[12px] font-black text-[var(--brand-text)]">Points</Label>
                             <Input
                               value={`${editingReward.points}`}
                               onChange={(event) => updateEditingReward("points", Number(event.target.value) || 0)}
-                              className="h-12 rounded-[18px] border-[#d7c5a7] bg-white px-4 text-[15px] font-bold text-[#2d2116] focus-visible:border-[#f5bb00] focus-visible:ring-0"
+                              className="h-12 rounded-[18px] border-[var(--border)] bg-white px-4 text-[15px] font-bold text-[var(--foreground)] focus-visible:border-[var(--brand-accent)] focus-visible:ring-0"
                             />
                           </div>
                           <div className="flex flex-col gap-2">
-                            <Label className="text-[12px] font-black text-[#5c3214]">Image Text Fallback</Label>
+                            <Label className="text-[12px] font-black text-[var(--brand-text)]">Image Text Fallback</Label>
                             <Input
                               value={editingReward.imageText}
                               onChange={(event) => updateEditingReward("imageText", event.target.value)}
-                              className="h-12 rounded-[18px] border-[#d7c5a7] bg-white px-4 text-[15px] font-bold text-[#2d2116] focus-visible:border-[#f5bb00] focus-visible:ring-0"
+                              className="h-12 rounded-[18px] border-[var(--border)] bg-white px-4 text-[15px] font-bold text-[var(--foreground)] focus-visible:border-[var(--brand-accent)] focus-visible:ring-0"
                             />
                           </div>
                           <div className="flex flex-col gap-2 lg:col-span-2">
-                            <Label className="text-[12px] font-black text-[#5c3214]">Description</Label>
+                            <Label className="text-[12px] font-black text-[var(--brand-text)]">Description</Label>
                             <Textarea
                               value={editingReward.description}
                               onChange={(event) => updateEditingReward("description", event.target.value)}
-                              className="min-h-[160px] rounded-[18px] border-[#d7c5a7] bg-white px-4 py-3 text-[14px] font-bold leading-relaxed text-[#2d2116] focus-visible:border-[#f5bb00] focus-visible:ring-0"
+                              className="min-h-[160px] rounded-[18px] border-[var(--border)] bg-white px-4 py-3 text-[14px] font-bold leading-relaxed text-[var(--foreground)] focus-visible:border-[var(--brand-accent)] focus-visible:ring-0"
                             />
                           </div>
 
-                          <div className="rounded-[18px] border border-[#eadcc7] bg-[#fff8eb] p-4 lg:col-span-2">
+                          <div className="rounded-[18px] border border-[var(--border)] bg-[var(--brand-soft)] p-4 lg:col-span-2">
                             <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-                              <div className="text-[13px] font-black text-[#5c3214]">รูปภาพรางวัล</div>
+                              <div className="text-[13px] font-black text-[var(--brand-text)]">รูปภาพรางวัล</div>
                               <div className="text-[12px] font-bold text-[#8E8A81]">อัปเดตรูปหรือเคลียร์กลับเป็น mockup</div>
                             </div>
                             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                               <button
                                 type="button"
                                 onClick={() => fileInputRef.current?.click()}
-                                className="flex h-12 items-center justify-center gap-2 rounded-[16px] border border-dashed border-[#c89a4f] bg-[#fff8eb] text-[13px] font-black text-[#8b5a12] transition-colors hover:bg-[#fff1d0]"
+                                className="flex h-12 items-center justify-center gap-2 rounded-[16px] border border-dashed border-[var(--border)] bg-[var(--brand-soft)] text-[13px] font-black text-[var(--brand-text)] transition-colors hover:bg-[var(--brand-soft)]"
                               >
                                 <ImagePlus className="h-4 w-4" strokeWidth={2.2} />
                                 อัปโหลดรูป
@@ -801,7 +804,7 @@ export default function AdminRewardPage() {
                               <button
                                 type="button"
                                 onClick={() => updateEditingReward("imageSrc", null)}
-                                className="flex h-12 items-center justify-center rounded-[16px] border border-[#eadcc7] bg-white text-[13px] font-black text-[#5c3214] transition-colors hover:bg-[#fff7e1]"
+                                className="flex h-12 items-center justify-center rounded-[16px] border border-[var(--border)] bg-white text-[13px] font-black text-[var(--brand-text)] transition-colors hover:bg-[var(--brand-soft)]"
                               >
                                 ลบรูปออก
                               </button>
@@ -813,13 +816,13 @@ export default function AdminRewardPage() {
                       <DetailCard title="Display Settings" subtitle="หมวดหมู่ ข้อความสำรอง และสถานะเด่น">
                         <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
                           <div className="flex flex-col gap-2">
-                            <Label className="text-[12px] font-black text-[#5c3214]">Category</Label>
+                            <Label className="text-[12px] font-black text-[var(--brand-text)]">Category</Label>
                             <select
                               value={editingReward.category}
                               onChange={(event) =>
                                 updateEditingReward("category", event.target.value as RewardCatalogItem["category"])
                               }
-                              className="h-12 rounded-[18px] border border-[#d7c5a7] bg-white px-4 text-[15px] font-bold text-[#2d2116] outline-none"
+                              className="h-12 rounded-[18px] border border-[var(--border)] bg-white px-4 text-[15px] font-bold text-[var(--foreground)] outline-none"
                             >
                               {CATEGORY_OPTIONS.map((option) => (
                                 <option key={option.value} value={option.value}>
@@ -832,8 +835,8 @@ export default function AdminRewardPage() {
                             </div>
                           </div>
 
-                          <div className="rounded-[18px] border border-[#eadcc7] bg-[#fffdf8] px-4 py-3">
-                            <div className="text-[12px] font-black text-[#5c3214]">Current Fallback</div>
+                          <div className="rounded-[18px] border border-[var(--border)] bg-[var(--brand-surface)] px-4 py-3">
+                            <div className="text-[12px] font-black text-[var(--brand-text)]">Current Fallback</div>
                             <div className="mt-2 text-[15px] font-black text-[#1A1A1A]">
                               {editingReward.imageText || "ยังไม่มีข้อความสำรอง"}
                             </div>
@@ -850,7 +853,7 @@ export default function AdminRewardPage() {
                             "mt-4 flex w-full items-center justify-between rounded-[18px] border px-4 py-3 text-left transition-colors",
                             editingReward.isHot
                               ? "border-[#f1c6c6] bg-[#fff3f3] text-[#b43a33]"
-                              : "border-[#d7c5a7] bg-[#fffdfa] text-[#5c3214]"
+                              : "border-[var(--border)] bg-[var(--brand-surface)] text-[var(--brand-text)]"
                           )}
                         >
                           <span>
@@ -870,18 +873,18 @@ export default function AdminRewardPage() {
               </div>
             ) : null}
 
-            <DialogFooter className="mx-0 mb-0 rounded-b-[28px] border-t border-[#eadcc7] bg-[#fff8eb] px-5 py-4 sm:px-6 lg:px-8">
+            <DialogFooter className="mx-0 mb-0 rounded-b-[28px] border-t border-[var(--border)] bg-[var(--brand-soft)] px-5 py-4 sm:px-6 lg:px-8">
               <div className="flex w-full flex-col-reverse gap-2 sm:flex-row sm:justify-end sm:pr-1 lg:pr-2">
                 <Button
                   variant="outline"
                   onClick={() => setEditingReward(null)}
-                  className="h-10 rounded-full border-[#d7c5a7] bg-white px-4 text-[13px] text-[#5c3214] hover:bg-[#fff4de]"
+                  className="h-10 rounded-full border-[var(--border)] bg-white px-4 text-[13px] text-[var(--brand-text)] hover:bg-[var(--brand-soft)]"
                 >
                   Cancel
                 </Button>
                 <Button
                   onClick={confirmRewardEdit}
-                  className="h-10 rounded-full bg-[#5c3214] px-4 text-[13px] text-white hover:bg-[#4a280f]"
+                  className="h-10 rounded-full bg-[var(--brand-text)] px-4 text-[13px] text-white hover:bg-[#4a280f]"
                 >
                   {editingReward?.mode === "create" ? "Confirm Create" : "Confirm Update"}
                 </Button>
@@ -891,8 +894,8 @@ export default function AdminRewardPage() {
         </Dialog>
 
         <Dialog open={!!deletingReward} onOpenChange={(open) => !open && setDeletingReward(null)}>
-          <DialogContent className="max-w-[520px] overflow-hidden rounded-[26px] border border-[#e3d0ae] bg-[#fffdfa] p-0 shadow-[0_24px_50px_rgba(62,36,13,0.18)] sm:rounded-[30px]">
-            <DialogHeader className="border-b border-[#eadcc7] bg-[linear-gradient(180deg,#fff8eb_0%,#fff3d9_100%)] px-4 pt-4 pb-3 sm:px-6 sm:pt-6 sm:pb-5">
+          <DialogContent className="max-w-[520px] overflow-hidden rounded-[18px] border border-[var(--border)] bg-[var(--brand-surface)] p-0 shadow-[0_24px_50px_rgba(62,36,13,0.18)] sm:rounded-[30px]">
+            <DialogHeader className="border-b border-[var(--border)] bg-[linear-gradient(180deg,var(--brand-soft)_0%,var(--brand-soft)_100%)] px-4 pt-4 pb-3 sm:px-6 sm:pt-6 sm:pb-5">
               <DialogTitle className="text-[22px] font-black text-[#8a2f2b] sm:text-[26px]">
                 Confirm Delete
               </DialogTitle>
@@ -902,14 +905,14 @@ export default function AdminRewardPage() {
             </DialogHeader>
 
             {deletingReward ? (
-              <div className="bg-[#fffcf6] px-4 py-4 sm:px-6 sm:py-6">
-                <div className="rounded-[20px] border border-[#f1d1cf] bg-white px-4 py-4 shadow-[0_8px_18px_rgba(62,36,13,0.04)]">
+              <div className="bg-[var(--brand-surface)] px-4 py-4 sm:px-6 sm:py-6">
+                <div className="rounded-[16px] border border-[#f1d1cf] bg-white px-4 py-4 shadow-[0_8px_18px_rgba(62,36,13,0.04)]">
                   <div className="flex items-center gap-3">
-                    <div className="relative flex h-12 w-12 flex-shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-[#fff1c9]">
+                    <div className="relative flex h-12 w-12 flex-shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-[var(--brand-soft)]">
                       {deletingReward.imageSrc ? (
                         <Image src={deletingReward.imageSrc} alt={deletingReward.name} fill className="object-cover" />
                       ) : (
-                        <Gift className="h-4 w-4 text-[#8b5a12]" strokeWidth={2.2} />
+                        <Gift className="h-4 w-4 text-[var(--brand-text)]" strokeWidth={2.2} />
                       )}
                     </div>
                     <div className="min-w-0">
@@ -925,12 +928,12 @@ export default function AdminRewardPage() {
               </div>
             ) : null}
 
-            <DialogFooter className="mx-0 mb-0 rounded-b-[26px] border-t border-[#eadcc7] bg-[#fff8eb] px-5 py-4 sm:rounded-b-[30px] sm:px-6 sm:py-5">
+            <DialogFooter className="mx-0 mb-0 rounded-b-[26px] border-t border-[var(--border)] bg-[var(--brand-soft)] px-5 py-4 sm:rounded-b-[30px] sm:px-6 sm:py-5">
               <div className="flex w-full justify-end gap-2">
                 <Button
                   variant="outline"
                   onClick={() => setDeletingReward(null)}
-                  className="h-10 rounded-full border-[#d7c5a7] bg-white px-4 text-[13px] text-[#5c3214] hover:bg-[#fff4de]"
+                  className="h-10 rounded-full border-[var(--border)] bg-white px-4 text-[13px] text-[var(--brand-text)] hover:bg-[var(--brand-soft)]"
                 >
                   Cancel
                 </Button>

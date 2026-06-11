@@ -1,28 +1,28 @@
 // @ts-nocheck
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "@/lib/router-compat";
-const mascotTiger = "/images/mascots/suea-mascot-logo.png";
+import { useAppTheme } from "@/providers/theme-provider";
 
 // ฤฤฤ Design tokens ฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤ
 const T = {
-  background:   "#f1ecdf",
-  background2:  "#ece5d2",
+  background:   "var(--background)",
+  background2:  "var(--secondary)",
   foreground:   "#0e0f12",
   foreground2:  "#33312c",
   foreground3:  "#767269",
   card:         "#ffffff",
-  surface2:     "#f5eedf",
-  primary:      "#ffc400",
-  primaryFg:    "#0e0f12",
-  primarySoft:  "#fff4cf",
+  surface2:     "var(--secondary)",
+  primary:      "var(--brand-accent)",
+  primaryFg:    "var(--brand-accent-contrast)",
+  primarySoft:  "var(--brand-soft)",
   danger:       "#d5301a",
   ok:           "#1f7a55",
   border:       "rgba(14,15,18,0.08)",
   borderStrong: "#0e0f12",
   radius:       "16px",
   // derived
-  primaryDark:  "#92400e",
-  primaryBdr:   "#ffd93d",
+  primaryDark:  "var(--brand-text)",
+  primaryBdr:   "var(--brand-accent)",
   navy:         "#1c2b4a",
   navyDeep:     "#0f172a",
   okBg:         "#ecfdf5",
@@ -175,7 +175,7 @@ const STYLES = `
   .ac, .ac * { box-sizing: border-box; }
   .ac {
     font-family: 'Sarabun', 'Prompt', sans-serif;
-    background: linear-gradient(180deg, #efe6d4 0%, ${T.background} 190px, ${T.background} 100%);
+    background: linear-gradient(180deg, var(--secondary) 0%, ${T.background} 190px, ${T.background} 100%);
     color: ${T.foreground};
     min-height: 100%;
     display: flex;
@@ -185,12 +185,12 @@ const STYLES = `
 
   /* ฤฤ Compact StepHeader (aligned with Checkin) ฤฤ */
   .ac-step-header-compact {
-    background: linear-gradient(105deg, rgba(58,28,5,0.98) 0%, rgba(84,47,12,0.95) 48%, rgba(39,24,10,0.96) 100%);
+    background: linear-gradient(105deg, var(--brand-hero-start) 0%, var(--brand-hero-end) 48%, var(--brand-nav) 100%);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
     padding: 12px 20px 20px;
     flex-shrink: 0;
-    color: #fff8e6;
+    color: var(--brand-soft);
     position: relative;
     overflow: hidden;
     box-shadow: 0 8px 24px rgba(42,26,9,0.15);
@@ -208,8 +208,8 @@ const STYLES = `
     position: absolute;
     inset: 0;
     background-image:
-      linear-gradient(rgba(255,196,0,0.03) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(255,196,0,0.03) 1px, transparent 1px);
+      linear-gradient(rgba(var(--brand-accent-rgb),0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(var(--brand-accent-rgb),0.03) 1px, transparent 1px);
     background-size: 22px 22px;
     opacity: 0.6;
     pointer-events: none;
@@ -220,7 +220,7 @@ const STYLES = `
     position: absolute;
     right: -40px; top: -40px;
     width: 200px; height: 200px;
-    background: radial-gradient(circle, rgba(255,196,0,0.10) 0%, transparent 70%);
+    background: radial-gradient(circle, rgba(var(--brand-accent-rgb),0.10) 0%, transparent 70%);
     pointer-events: none;
     z-index: 0;
   }
@@ -307,7 +307,7 @@ const STYLES = `
   }
   .ac-stepper-count-lbl {
     font-size: 11px;
-    color: #ffc400;
+    color: var(--brand-accent);
     font-weight: 900;
     font-family: 'Prompt', sans-serif;
   }
@@ -329,8 +329,8 @@ const STYLES = `
     transition: all 0.3s;
   }
   .ci-stepper-line.active {
-    background: #ffc400;
-    box-shadow: 0 0 6px #ffc400;
+    background: var(--brand-accent);
+    box-shadow: 0 0 6px var(--brand-accent);
   }
   .ci-stepper-node {
     width: 18px;
@@ -345,9 +345,9 @@ const STYLES = `
     transition: all 0.3s;
   }
   .ci-stepper-node.active {
-    background: #ffc400;
+    background: var(--brand-accent);
     color: #1a1613;
-    box-shadow: 0 0 8px rgba(255, 196, 0, 0.6);
+    box-shadow: 0 0 8px rgba(var(--brand-accent-rgb), 0.6);
   }
   .ci-stepper-node.done {
     background: #1f7a55;
@@ -369,14 +369,14 @@ const STYLES = `
     cursor: pointer;
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     flex-shrink: 0;
-    color: #fff8e6;
+    color: var(--brand-soft);
   }
   .ac-back-btn:hover {
     background: rgba(255,255,255,0.16);
     border-color: ${yellow};
     color: #fff;
     transform: translateX(-2px);
-    box-shadow: 0 0 10px rgba(255, 196, 0, 0.22);
+    box-shadow: 0 0 10px rgba(var(--brand-accent-rgb), 0.22);
   }
 
   /* ฤฤ Panel label ฤฤ */
@@ -403,7 +403,7 @@ const STYLES = `
     left: 0; top: 0; bottom: 0;
     width: 4px;
     background: ${T.primary};
-    box-shadow: 2px 0 8px rgba(255,196,0,0.6);
+    box-shadow: 2px 0 8px rgba(var(--brand-accent-rgb),0.6);
   }
 
   .ac-badge-pin-box {
@@ -413,7 +413,7 @@ const STYLES = `
     color: ${T.primaryDark};
     display: flex; align-items: center; justify-content: center;
     flex-shrink: 0;
-    box-shadow: 0 2px 6px rgba(255,196,0,0.15);
+    box-shadow: 0 2px 6px rgba(var(--brand-accent-rgb),0.15);
   }
 
   .ac-badge-name {
@@ -425,8 +425,8 @@ const STYLES = `
   .ac-badge-tag {
     font-size: 9.5px; font-weight: 700;
     color: ${T.primaryDark};
-    background: rgba(255,196,0,0.12);
-    border: 1px solid rgba(255,196,0,0.18);
+    background: rgba(var(--brand-accent-rgb),0.12);
+    border: 1px solid rgba(var(--brand-accent-rgb),0.18);
     border-radius: 5px; padding: 1.5px 6px;
     letter-spacing: 0.04em; font-family: 'Prompt', monospace;
     white-space: nowrap;
@@ -457,14 +457,14 @@ const STYLES = `
   /* ฤฤ Ultra-compact tip style ฤฤ */
   .ac-side-tip-compact {
     margin: 10px 20px 4px;
-    border: 1px solid rgba(255, 196, 0, 0.24);
+    border: 1px solid rgba(var(--brand-accent-rgb), 0.24);
     border-radius: 12px;
-    background: linear-gradient(135deg, #fffcf2 0%, #fffbf2 100%);
+    background: linear-gradient(135deg, #ffffff 0%, var(--brand-surface) 100%);
     padding: 8px 12px;
     display: flex;
     align-items: center;
     gap: 8px;
-    box-shadow: 0 4px 12px rgba(255, 196, 0, 0.03);
+    box-shadow: 0 4px 12px rgba(var(--brand-accent-rgb), 0.03);
     flex-shrink: 0;
   }
 
@@ -492,19 +492,19 @@ const STYLES = `
     border-radius: 16px 0 0 16px;
   }
   .ac-card:hover {
-    border-color: rgba(255, 196, 0, 0.35);
+    border-color: rgba(var(--brand-accent-rgb), 0.35);
     box-shadow: 0 12px 24px rgba(34,25,11,0.06);
     transform: translateY(-2px);
   }
   .ac-card:active { transform: scale(0.99) translateY(-1px); }
   .ac-card.sel {
-    background: linear-gradient(135deg, #ffffff 0%, #fffdf4 100%);
+    background: linear-gradient(135deg, #ffffff 0%, var(--brand-surface) 100%);
     border-color: ${yellowBdr};
-    box-shadow: 0 12px 28px rgba(255,196,0,0.14);
+    box-shadow: 0 12px 28px rgba(var(--brand-accent-rgb),0.14);
   }
   .ac-card.sel::before {
     background: ${yellow};
-    box-shadow: 2px 0 8px rgba(255,196,0,0.6);
+    box-shadow: 2px 0 8px rgba(var(--brand-accent-rgb),0.6);
   }
   .ac-card.dashed {
     border-style: dashed;
@@ -516,9 +516,9 @@ const STYLES = `
     border-style: solid;
     border-color: ${yellow};
     background: #ffffff;
-    box-shadow: 0 8px 20px rgba(255,196,0,0.06);
+    box-shadow: 0 8px 20px rgba(var(--brand-accent-rgb),0.06);
   }
-  .ac-card.dashed.sel { border-style: solid; background: linear-gradient(135deg, #ffffff 0%, #fffdf4 100%); }
+  .ac-card.dashed.sel { border-style: solid; background: linear-gradient(135deg, #ffffff 0%, var(--brand-surface) 100%); }
 
   /* ฤฤ Card icon box ฤฤ */
   .ac-icon-box {
@@ -529,10 +529,10 @@ const STYLES = `
     background: #f7f6f2; color: #767269;
     border: 1px solid rgba(0,0,0,0.02);
   }
-  .ac-card:hover:not(.sel) .ac-icon-box { background: #efece5; color: #0e0f12; }
+  .ac-card:hover:not(.sel) .ac-icon-box { background: var(--secondary); color: #0e0f12; }
   .ac-card.sel .ac-icon-box {
-    background: linear-gradient(135deg, ${yellow} 0%, #f59e0b 100%); color: ${T.primaryFg};
-    box-shadow: 0 3px 10px rgba(255,196,0,0.25);
+    background: linear-gradient(135deg, ${yellow} 0%, var(--brand-accent-strong) 100%); color: ${T.primaryFg};
+    box-shadow: 0 3px 10px rgba(var(--brand-accent-rgb),0.25);
     border-color: transparent;
   }
 
@@ -554,22 +554,22 @@ const STYLES = `
   .ac-hot-dot {
     width: 8px; height: 8px; border-radius: 50%;
     background: ${T.primary};
-    box-shadow: 0 0 0 3px rgba(255,196,0,0.22);
+    box-shadow: 0 0 0 3px rgba(var(--brand-accent-rgb),0.22);
     animation: ac-dot-pulse 2s ease-in-out infinite;
     flex-shrink: 0;
   }
   @keyframes ac-dot-pulse {
-    0%,100% { box-shadow: 0 0 0 3px rgba(255,196,0,0.22); }
-    50%      { box-shadow: 0 0 0 6px rgba(255,196,0,0.07); }
+    0%,100% { box-shadow: 0 0 0 3px rgba(var(--brand-accent-rgb),0.22); }
+    50%      { box-shadow: 0 0 0 6px rgba(var(--brand-accent-rgb),0.07); }
   }
 
   /* ฤฤ Check ring ฤฤ */
   .ac-check-ring {
     width: 22px; height: 22px; border-radius: 50%;
-    background: linear-gradient(135deg, ${yellow} 0%, #f59e0b 100%);
+    background: linear-gradient(135deg, ${yellow} 0%, var(--brand-accent-strong) 100%);
     color: #fff;
     display: flex; align-items: center; justify-content: center;
-    box-shadow: 0 3px 8px rgba(255,196,0,0.3);
+    box-shadow: 0 3px 8px rgba(var(--brand-accent-rgb),0.3);
     animation: ac-pop 0.3s cubic-bezier(0.34,1.56,0.64,1) forwards;
     flex-shrink: 0;
   }
@@ -582,13 +582,13 @@ const STYLES = `
   /* ฤฤ Selected preview banner ฤฤ */
   .ac-preview {
     display: flex; align-items: center; gap: 12px;
-    background: linear-gradient(135deg, #ffffff 0%, #fffdf0 100%);
-    border: 1px solid rgba(255,196,0,0.35);
+    background: linear-gradient(135deg, #ffffff 0%, var(--brand-surface) 100%);
+    border: 1px solid rgba(var(--brand-accent-rgb),0.35);
     border-radius: 16px;
     padding: 10px 14px;
     margin-bottom: 10px;
     animation: ac-slide 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-    box-shadow: 0 10px 24px rgba(255,196,0,0.1);
+    box-shadow: 0 10px 24px rgba(var(--brand-accent-rgb),0.1);
   }
   @keyframes ac-slide {
     from { opacity: 0; transform: translateY(10px); }
@@ -600,7 +600,7 @@ const STYLES = `
       flex-shrink: 0; border-top: 1px solid rgba(14,15,18,0.08);
       margin-top: auto;
       padding: 12px 16px 16px;
-      background: rgba(252,247,235,0.85);
+      background: color-mix(in srgb, var(--brand-surface) 85%, transparent);
       backdrop-filter: blur(20px);
       -webkit-backdrop-filter: blur(20px);
       position: fixed;
@@ -632,7 +632,7 @@ const STYLES = `
     letter-spacing: 0.02em; position: relative; overflow: hidden;
   }
   .ac-cta.ready {
-    background: linear-gradient(135deg, #2b211a 0%, #1a1613 100%); color: #fff;
+    background: linear-gradient(135deg, var(--brand-text) 0%, #1a1613 100%); color: #fff;
     box-shadow: 0 10px 25px rgba(26, 22, 19, 0.25);
     padding: 14px;
   }
@@ -647,7 +647,7 @@ const STYLES = `
   .ac-cta.ready:hover {
     transform: translateY(-2px);
     box-shadow: 0 12px 28px rgba(26,22,19,0.32);
-    background: linear-gradient(135deg, #3d2f24 0%, #2b211a 100%);
+    background: linear-gradient(135deg, #3d2f24 0%, var(--brand-text) 100%);
   }
   .ac-cta.ready:active { transform: scale(0.985) translateY(-1px); }
   .ac-cta.disabled {
@@ -707,7 +707,7 @@ const STYLES = `
   }
   .ac-input:focus {
     border-color: ${T.primary};
-    box-shadow: 0 0 0 3.5px rgba(255,196,0,0.18), inset 0 2px 4px rgba(0,0,0,0.01);
+    box-shadow: 0 0 0 3.5px rgba(var(--brand-accent-rgb),0.18), inset 0 2px 4px rgba(0,0,0,0.01);
   }
 
   /* ฤฤ Icon grid ฤฤ */
@@ -727,8 +727,8 @@ const STYLES = `
   .ac-icon-btn:hover { border-color: ${T.primaryBdr}; transform: translateY(-1.5px); box-shadow: 0 4px 10px rgba(0,0,0,0.02); }
   .ac-icon-btn.active {
     border-color: transparent;
-    background: linear-gradient(135deg, ${yellow} 0%, #f59e0b 100%); color: ${T.primaryFg};
-    box-shadow: 0 4px 12px rgba(255,196,0,0.28);
+    background: linear-gradient(135deg, ${yellow} 0%, var(--brand-accent-strong) 100%); color: ${T.primaryFg};
+    box-shadow: 0 4px 12px rgba(var(--brand-accent-rgb),0.28);
   }
 
   /* ฤฤ Modal close ฤฤ */
@@ -748,7 +748,7 @@ const STYLES = `
     color: ${T.foreground3}; font-size: 13.5px; font-weight: 700;
     cursor: pointer; font-family: inherit; transition: background 0.15s;
   }
-  .ac-modal-cancel:hover { background: #f5eedf; }
+  .ac-modal-cancel:hover { background: var(--secondary); }
   .ac-modal-confirm {
     flex: 2; padding: 12px; border-radius: 14px;
     border: none; background: ${T.navyDeep}; color: #fff;
@@ -935,6 +935,7 @@ function CustomModal({ onConfirm, onClose }) {
 
 // ฤฤฤ Main component ฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤ
 export default function Activity() {
+  const { mascot, theme } = useAppTheme();
   const navigate = useNavigate();
   const location = useLocation();
   const checkin  = location.state?.checkin ?? null;
@@ -1013,13 +1014,13 @@ export default function Activity() {
           <button className="ac-back-btn" onClick={handleBack} aria-label="ย้อนกลับ">
             <IcoBack />
           </button>
-          
+
           <div style={{ width: 1, height: 22, background: "rgba(255,255,255,0.15)" }} />
 
           <div style={{ minWidth: 0 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
               <span className="ac-hero-badge-compact">Step 1</span>
-              <span className="ac-hero-badge-compact" style={{ background: "rgba(255, 196, 0, 0.16)", color: "#ffc400" }}>Activity</span>
+              <span className="ac-hero-badge-compact" style={{ background: "rgba(var(--brand-accent-rgb), 0.16)", color: "var(--brand-accent)" }}>Activity</span>
             </div>
             <h1 className="ac-hdr-title">เลือกหมวดกิจกรรม</h1>
           </div>
@@ -1039,7 +1040,7 @@ export default function Activity() {
             </div>
           </div>
 
-          <img className="ac-hdr-mascot-compact" src={mascotTiger} alt="SUEA Safety tiger mascot" />
+          <img className="ac-hdr-mascot-compact" src={mascot("big")} alt={theme === "wangjai" ? "น้องวางใจ Safety mascot" : "SUEA tiger mascot"} />
         </div>
       </div>
       <div
@@ -1050,7 +1051,7 @@ export default function Activity() {
           bottom: 0,
           height: 6,
           background:
-            "repeating-linear-gradient(135deg, #ffc400 0 10px, #0e0f12 10px 20px)",
+            "repeating-linear-gradient(135deg, var(--brand-accent) 0 10px, #0e0f12 10px 20px)",
         }}
       />
     </div>
@@ -1091,9 +1092,9 @@ export default function Activity() {
       {selected && (
         <div className="ac-preview">
           <div style={{
-            width: 34, height: 34, borderRadius: 10, background: "linear-gradient(135deg, #ffc400 0%, #f59e0b 100%)",
+            width: 34, height: 34, borderRadius: 10, background: "linear-gradient(135deg, var(--brand-accent) 0%, var(--brand-accent-strong) 100%)",
             flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center",
-            boxShadow: "0 3px 10px rgba(255,196,0,0.3)", alignContent: "center"
+            boxShadow: "0 3px 10px rgba(var(--brand-accent-rgb),0.3)", alignContent: "center"
           }}>
             {(() => { const Icon = selected.icon; return <Icon />; })()}
           </div>
@@ -1147,7 +1148,7 @@ export default function Activity() {
                 รายการกิจกรรม
               </div>
             </div>
-            <span style={{ fontSize: 11, color: T.foreground3, fontFamily: "'Prompt',sans-serif", fontWeight: 700, background: "#efece5", padding: "3px 8px", borderRadius: "6px" }}>
+            <span style={{ fontSize: 11, color: T.foreground3, fontFamily: "'Prompt',sans-serif", fontWeight: 700, background: "var(--secondary)", padding: "3px 8px", borderRadius: "6px" }}>
               {displayedActivities.length} รายการ
             </span>
           </div>

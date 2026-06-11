@@ -114,7 +114,7 @@ export default function WereOkPage() {
                 We&apos;re OK, We&apos;re Ready
               </h1>
             </div>
-            <div className="bg-[#F5BB00] text-[#1A1A1A] text-[11px] md:text-[13px] font-extrabold tracking-wider px-3.5 py-1.5 md:px-[18px] md:py-2 rounded-xl shadow-[0_2px_6px_rgba(245,187,0,0.15)]">
+            <div className="bg-[var(--brand-accent)] text-[var(--brand-accent-contrast)] text-[11px] md:text-[13px] font-extrabold tracking-wider px-3.5 py-1.5 md:px-[18px] md:py-2 rounded-xl shadow-[0_2px_6px_rgba(var(--brand-accent-rgb),0.15)]">
               ON DUTY
             </div>
           </header>
@@ -123,8 +123,8 @@ export default function WereOkPage() {
             <div className="flex flex-col lg:grid lg:grid-cols-[330px_1fr] lg:gap-x-[50px] lg:gap-y-8 items-start">
               {/* Progress Panel */}
               <Card className="bg-[#121214] text-white border-none rounded-3xl overflow-hidden shadow-[0_8px_24px_rgba(0,0,0,0.08)] mb-5 lg:mb-0 anim-fade" style={animStyle(0.06)}>
-                <div className="h-2.5 w-full bg-[repeating-linear-gradient(-45deg,#F5BB00,#F5BB00_8px,#121214_8px,#121214_16px)]" />
-                <CardContent className="p-5 md:p-6 flex flex-col lg:h-[calc(100%-10px)]">
+                <div className="h-2.5 w-full bg-[repeating-linear-gradient(-45deg,var(--brand-accent),var(--brand-accent)_8px,#121214_8px,#121214_16px)]" />
+                <CardContent className="p-4 md:p-4 flex flex-col lg:h-[calc(100%-10px)]">
                   <div className="text-xs text-[#8E8A81] font-semibold mb-1.5 tracking-wide">
                     พร้อมขับ · {totalDone} / {STEPS.length} ขั้นตอน
                   </div>
@@ -137,7 +137,7 @@ export default function WereOkPage() {
                         key={step.id}
                         className={cn(
                           "flex-1 h-1.5 rounded transition-colors duration-400",
-                          completedSteps.includes(step.id) ? "bg-[#F5BB00]" : "bg-[#2D2D30]"
+                          completedSteps.includes(step.id) ? "bg-[var(--brand-accent)]" : "bg-[#2D2D30]"
                         )}
                       />
                     ))}
@@ -161,14 +161,14 @@ export default function WereOkPage() {
                       key={step.id}
                       href={isLocked || step.id === 6 ? "#" : `/were-ok/${step.key}`}
                       className={cn(
-                        "group flex items-center gap-3.5 md:gap-4 p-4 md:p-5 lg:p-6 rounded-2xl md:rounded-3xl border-[1.5px] transition-all cursor-pointer select-none active:scale-[0.98] anim-fade",
+                        "group flex items-center gap-3.5 md:gap-4 p-4 md:p-4 lg:p-4 rounded-2xl md:rounded-3xl border-[1.5px] transition-all cursor-pointer select-none active:scale-[0.98] anim-fade",
                         failed && isDone
                           ? "bg-red-50 border-[#D9383A]"
                           : isDone
                           ? "bg-card border-transparent"
                           : isActive
                           ? "bg-card border-[#1A1A1A] shadow-[0_4px_12px_rgba(0,0,0,0.04)]"
-                          : "bg-[#EDE9DD] border-transparent opacity-65 cursor-not-allowed"
+                          : "bg-[var(--secondary)] border-transparent opacity-65 cursor-not-allowed"
                       )}
                       style={animStyle(0.1 + idx * 0.05)}
                     >
@@ -180,8 +180,8 @@ export default function WereOkPage() {
                             : isDone
                             ? "bg-[#E6FAF1] text-[#3D9A6A]"
                             : isActive
-                            ? "bg-[#F5BB00] text-[#1A1A1A]"
-                            : "bg-[#DDD9CD] text-[#8E8A81]"
+                            ? "bg-[var(--brand-accent)] text-[#1A1A1A]"
+                            : "bg-[var(--border)] text-[#8E8A81]"
                         )}
                       >
                         {failed && isDone ? (
@@ -231,7 +231,7 @@ export default function WereOkPage() {
                     {hasAnyFailure ? (
                       <button
                         disabled
-                        className="w-full py-4 md:py-5 rounded-[20px] md:rounded-3xl bg-[#D9383A] text-white font-extrabold text-base md:text-[16.5px] flex items-center justify-center gap-2 shadow-[0_4px_14px_rgba(0,0,0,0.06)] cursor-not-allowed"
+                        className="w-full py-4 md:py-5 rounded-[16px] md:rounded-3xl bg-[#D9383A] text-white font-extrabold text-base md:text-[16.5px] flex items-center justify-center gap-2 shadow-[0_4px_14px_rgba(0,0,0,0.06)] cursor-not-allowed"
                       >
                         <X className="w-5 h-5" />
                         <span>ไม่สามารถเข้าคิวงานได้ เนื่องจากไม่ผ่านเกณฑ์ความปลอดภัย</span>
@@ -239,7 +239,7 @@ export default function WereOkPage() {
                     ) : queueConfirmed ? (
                       <button
                         disabled
-                        className="w-full py-4 md:py-5 rounded-[20px] md:rounded-3xl bg-[#3D9A6A] text-white font-extrabold text-base md:text-[16.5px] flex items-center justify-center gap-2 opacity-85 cursor-default"
+                        className="w-full py-4 md:py-5 rounded-[16px] md:rounded-3xl bg-[#3D9A6A] text-white font-extrabold text-base md:text-[16.5px] flex items-center justify-center gap-2 opacity-85 cursor-default"
                       >
                         <Check className="w-5 h-5" />
                         <span>ยืนยันเข้าคิวรับงานสำเร็จแล้ว</span>
@@ -247,7 +247,7 @@ export default function WereOkPage() {
                     ) : (
                       <button
                         onClick={actions.confirmQueue}
-                        className="w-full py-4 md:py-5 rounded-[20px] md:rounded-3xl bg-[#3D9A6A] text-white font-extrabold text-base md:text-[16.5px] flex items-center justify-center gap-2 shadow-[0_4px_14px_rgba(0,0,0,0.06)] transition-all hover:bg-[#2F7A53] hover:-translate-y-0.5 hover:shadow-[0_6px_20px_rgba(61,154,106,0.25)] active:translate-y-0"
+                        className="w-full py-4 md:py-5 rounded-[16px] md:rounded-3xl bg-[#3D9A6A] text-white font-extrabold text-base md:text-[16.5px] flex items-center justify-center gap-2 shadow-[0_4px_14px_rgba(0,0,0,0.06)] transition-all hover:bg-[#2F7A53] hover:-translate-y-0.5 hover:shadow-[0_6px_20px_rgba(61,154,106,0.25)] active:translate-y-0"
                       >
                         <Check className="w-5 h-5" />
                         <span>ยืนยันเข้าคิวรับงาน</span>
@@ -261,8 +261,8 @@ export default function WereOkPage() {
             /* Queue confirmed view */
             <div className="flex flex-col lg:grid lg:grid-cols-[330px_1fr] lg:gap-x-[50px] lg:gap-y-8 items-start anim-fade" style={animStyle(0.24)}>
               <Card className="bg-[#121214] text-white border-none rounded-3xl overflow-hidden shadow-[0_8px_24px_rgba(0,0,0,0.08)] mb-5 lg:mb-0 lg:min-h-[160px]">
-                <div className="h-2.5 w-full bg-[repeating-linear-gradient(-45deg,#F5BB00,#F5BB00_8px,#121214_8px,#121214_16px)]" />
-                <CardContent className="p-5 md:p-6 flex flex-col">
+                <div className="h-2.5 w-full bg-[repeating-linear-gradient(-45deg,var(--brand-accent),var(--brand-accent)_8px,#121214_8px,#121214_16px)]" />
+                <CardContent className="p-4 md:p-4 flex flex-col">
                   <div className="text-xs text-[#8E8A81] font-semibold mb-1.5 tracking-wide">
                     คิวงานล่าสุด · ระบบจ่ายงานอัตโนมัติ
                   </div>
@@ -270,7 +270,7 @@ export default function WereOkPage() {
                     {MOCK_JOB_DATA.jobLabel} · {MOCK_JOB_DATA.jobCode}
                   </div>
                   <div className="flex flex-col gap-1.5 mt-auto">
-                    <div className="flex items-center gap-2 text-sm font-extrabold text-[#F5BB00] mt-1.5">
+                    <div className="flex items-center gap-2 text-sm font-extrabold text-[var(--brand-accent)] mt-1.5">
                       <span>{MOCK_JOB_DATA.startNode}</span>
                       <span className="text-xs opacity-80">🚚</span>
                       <span>{MOCK_JOB_DATA.endNode}</span>
@@ -317,12 +317,12 @@ export default function WereOkPage() {
                       key={step.id}
                       href={isLocked || step.id === 6 ? "#" : `/were-ok/${step.key}`}
                       className={cn(
-                        "group flex items-center gap-3.5 md:gap-4 p-4 md:p-5 lg:p-6 rounded-2xl md:rounded-3xl border-[1.5px] transition-all select-none anim-fade",
+                        "group flex items-center gap-3.5 md:gap-4 p-4 md:p-4 lg:p-4 rounded-2xl md:rounded-3xl border-[1.5px] transition-all select-none anim-fade",
                         isDone
                           ? "bg-card border-transparent"
                           : isActive
                           ? "bg-card border-[#1A1A1A] shadow-[0_4px_12px_rgba(0,0,0,0.04)] cursor-pointer active:scale-[0.98]"
-                          : "bg-[#EDE9DD] border-transparent opacity-65 cursor-not-allowed"
+                          : "bg-[var(--secondary)] border-transparent opacity-65 cursor-not-allowed"
                       )}
                       style={animStyle(0.3)}
                     >
@@ -332,8 +332,8 @@ export default function WereOkPage() {
                           isDone
                             ? "bg-[#E6FAF1] text-[#3D9A6A]"
                             : isActive
-                            ? "bg-[#F5BB00] text-[#1A1A1A]"
-                            : "bg-[#DDD9CD] text-[#8E8A81]"
+                            ? "bg-[var(--brand-accent)] text-[#1A1A1A]"
+                            : "bg-[var(--border)] text-[#8E8A81]"
                         )}
                       >
                         {isDone ? <Check className="w-5 h-5 stroke-[3]" /> : step.num}
@@ -369,7 +369,7 @@ export default function WereOkPage() {
           onClick={() => setSosOpen(false)}
         >
           <div
-            className="bg-[#FAF8F2] border-[3px] border-[#1A1A1A] rounded-[28px] p-5 md:p-6 w-full max-w-[480px] shadow-[0_16px_40px_rgba(0,0,0,0.22)] flex flex-col gap-3.5 animate-[scaleUp_0.3s_cubic-bezier(0.175,0.885,0.32,1.275)_both] max-h-[94vh] overflow-y-auto"
+            className="bg-[var(--brand-surface)] border-[3px] border-[#1A1A1A] rounded-[16px] p-4 md:p-4 w-full max-w-[480px] shadow-[0_16px_40px_rgba(0,0,0,0.22)] flex flex-col gap-3.5 animate-[scaleUp_0.3s_cubic-bezier(0.175,0.885,0.32,1.275)_both] max-h-[94vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="text-[21px] font-extrabold text-[#D9383A] flex items-center justify-center gap-2.5 text-center">
@@ -386,7 +386,7 @@ export default function WereOkPage() {
               <button
                 type="button"
                 onClick={() => setSosHours((h) => Math.max(1, h - 1))}
-                className="w-12 h-12 rounded-full bg-white border-2 border-[#1A1A1A] text-[#1A1A1A] text-[22px] font-extrabold flex items-center justify-center transition-all hover:bg-[#EFEBE0] active:scale-[0.92] outline-none"
+                className="w-12 h-12 rounded-full bg-white border-2 border-[#1A1A1A] text-[#1A1A1A] text-[22px] font-extrabold flex items-center justify-center transition-all hover:bg-[var(--secondary)] active:scale-[0.92] outline-none"
               >
                 −
               </button>
@@ -397,7 +397,7 @@ export default function WereOkPage() {
               <button
                 type="button"
                 onClick={() => setSosHours((h) => Math.min(48, h + 1))}
-                className="w-12 h-12 rounded-full bg-white border-2 border-[#1A1A1A] text-[#1A1A1A] text-[22px] font-extrabold flex items-center justify-center transition-all hover:bg-[#EFEBE0] active:scale-[0.92] outline-none"
+                className="w-12 h-12 rounded-full bg-white border-2 border-[#1A1A1A] text-[#1A1A1A] text-[22px] font-extrabold flex items-center justify-center transition-all hover:bg-[var(--secondary)] active:scale-[0.92] outline-none"
               >
                 +
               </button>
@@ -420,18 +420,18 @@ export default function WereOkPage() {
                   className={cn(
                     "w-full flex items-center gap-2.5 px-3.5 py-3 rounded-2xl border-2 text-sm font-extrabold text-left transition-all whitespace-nowrap",
                     sosReason === reason.value
-                      ? "bg-[#FFF9E6] border-[#F5BB00] shadow-[0_4px_12px_rgba(245,187,0,0.15)]"
-                      : "bg-white border-[#DDD9CD] hover:border-[#1A1A1A] hover:bg-[#FAF9F5]"
+                      ? "bg-[var(--brand-soft)] border-[var(--brand-accent)] shadow-[0_4px_12px_rgba(var(--brand-accent-rgb),0.15)]"
+                      : "bg-white border-[var(--border)] hover:border-[#1A1A1A] hover:bg-[var(--brand-hover-surface)]"
                   )}
                 >
                   <span
                     className={cn(
                       "w-[18px] h-[18px] rounded-full border-2 flex items-center justify-center flex-shrink-0",
-                      sosReason === reason.value ? "border-[#F5BB00]" : "border-[#8E8A81]"
+                      sosReason === reason.value ? "border-[var(--brand-accent)]" : "border-[#8E8A81]"
                     )}
                   >
                     {sosReason === reason.value && (
-                      <span className="w-2.5 h-2.5 rounded-full bg-[#F5BB00]" />
+                      <span className="w-2.5 h-2.5 rounded-full bg-[var(--brand-accent)]" />
                     )}
                   </span>
                   {reason.label}
@@ -442,13 +442,13 @@ export default function WereOkPage() {
             <div className="flex flex-col gap-2 mt-1.5 w-full">
               <button
                 onClick={handleSosSubmit}
-                className="w-full bg-[#D9383A] text-white border-none rounded-[20px] py-4 text-base font-extrabold flex items-center justify-center gap-2 shadow-[0_6px_18px_rgba(217,56,58,0.2)] transition-all hover:bg-[#B2292B] active:scale-[0.98]"
+                className="w-full bg-[#D9383A] text-white border-none rounded-[16px] py-4 text-base font-extrabold flex items-center justify-center gap-2 shadow-[0_6px_18px_rgba(217,56,58,0.2)] transition-all hover:bg-[#B2292B] active:scale-[0.98]"
               >
                 🚨 ยืนยันแจ้งขอพักปฏิบัติงาน
               </button>
               <button
                 onClick={() => setSosOpen(false)}
-                className="w-full bg-[#EAE6DA] text-[#1A1A1A] border-none rounded-[20px] py-3.5 text-[15px] font-extrabold transition-all hover:bg-[#DDD9CD] active:scale-[0.98]"
+                className="w-full bg-[var(--secondary)] text-[#1A1A1A] border-none rounded-[16px] py-3.5 text-[15px] font-extrabold transition-all hover:bg-[var(--border)] active:scale-[0.98]"
               >
                 ปิดหน้าต่างนี้ / ยกเลิก
               </button>

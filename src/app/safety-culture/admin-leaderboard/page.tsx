@@ -23,6 +23,7 @@ import {
   useAppActions,
   useAppState,
 } from "@/providers/app-providers";
+import { useAppTheme } from "@/providers/theme-provider";
 
 type TeamEditorState = {
   mode: "create" | "edit";
@@ -56,13 +57,13 @@ function SectionCard({
   return (
     <Card
       className={cn(
-        "rounded-[24px] border border-[#e3d0ae] bg-[#fffdfa] p-4 shadow-[0_8px_18px_rgba(62,36,13,0.04)] md:p-5",
+        "rounded-[18px] border border-[var(--border)] bg-[var(--brand-surface)] p-4 shadow-[0_8px_18px_rgba(62,36,13,0.04)] md:p-4",
         className
       )}
     >
       <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="flex items-start gap-3">
-          <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-2xl bg-[#fff1c9] text-[#6d4716]">
+          <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-2xl bg-[var(--brand-soft)] text-[var(--brand-text)]">
             {icon}
           </div>
           <div className="min-w-0">
@@ -84,7 +85,7 @@ function makeTeamDraft(index: number): LeaderboardTeam {
     name: `ทีมใหม่ ${index + 1}`,
     leader: "หัวหน้าทีม",
     members: 100,
-    color: "#F5BB00",
+    color: "var(--brand-accent)",
     points: 0,
     percent: 0,
     streak: 1,
@@ -109,6 +110,7 @@ function createTeamEditor(team: LeaderboardTeam): TeamEditorState {
 }
 
 export default function AdminLeaderboardPage() {
+  const { themedColor } = useAppTheme();
   const { teamStandings } = useAppState();
   const { updateTeamStandings } = useAppActions();
 
@@ -204,12 +206,12 @@ export default function AdminLeaderboardPage() {
 
   return (
     <>
-      <div className="mx-auto w-full max-w-[1320px] bg-[#f1ecdf] px-3.5 pt-0 pb-8 font-sarabun md:px-4">
+      <div className="mx-auto w-full max-w-[1320px] bg-[var(--background)] px-3.5 pt-0 pb-8 font-sarabun md:px-4">
         <SafetyCultureHero
           eyebrow="SAFETY CULTURE ADMIN"
           title={
             <>
-              จัดการ <span className="text-[#F5BB00]">Leaderboard</span>
+              จัดการ <span className="text-[var(--brand-accent)]">Leaderboard</span>
             </>
           }
           description="โฟกัสเฉพาะการจัดการทีมและคะแนนให้พร้อมใช้งานจริง โดยแก้ผ่าน modal แล้วค่อย confirm ก่อนบันทึก"
@@ -227,16 +229,16 @@ export default function AdminLeaderboardPage() {
           }
         />
 
-        <Card className="mt-4 rounded-[22px] border border-[#e4d3b3] bg-[#fffaf0] p-3.5 shadow-[0_8px_18px_rgba(62,36,13,0.04)] md:p-4">
+        <Card className="mt-4 rounded-[16px] border border-[var(--border)] bg-[var(--brand-soft)] p-3.5 shadow-[0_8px_18px_var(--brand-shadow)] md:p-4">
           <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
             <div className="flex flex-wrap gap-2">
-              <Badge className="rounded-xl border border-[#d7c5a7] bg-white px-3 py-2 text-[11px] font-black text-[#5c3214]">
+              <Badge className="rounded-xl border border-[var(--border)] bg-white px-3 py-2 text-[11px] font-black text-[var(--brand-text)]">
                 {draftTeams.length} ทีม
               </Badge>
-              <Badge className="rounded-xl border border-[#d7c5a7] bg-[#fff6d6] px-3 py-2 text-[11px] font-black text-[#8b5a12]">
+              <Badge className="rounded-xl border border-[var(--border)] bg-[var(--brand-soft)] px-3 py-2 text-[11px] font-black text-[var(--brand-text)]">
                 {totalMembers.toLocaleString()} สมาชิก
               </Badge>
-              <Badge className="rounded-xl border border-[#d7c5a7] bg-white px-3 py-2 text-[11px] font-black text-[#5c3214]">
+              <Badge className="rounded-xl border border-[var(--border)] bg-white px-3 py-2 text-[11px] font-black text-[var(--brand-text)]">
                 {totalPoints.toLocaleString()} คะแนนรวม
               </Badge>
             </div>
@@ -257,36 +259,36 @@ export default function AdminLeaderboardPage() {
             actions={
               <Button
                 onClick={addTeam}
-                className="h-11 rounded-xl bg-[#ffb000] px-5 text-[13px] font-black text-[#3b1d07] hover:bg-[#ffc02a]"
+                className="h-11 rounded-xl bg-[var(--brand-accent-strong)] px-5 text-[13px] font-black text-white hover:bg-[var(--brand-accent)]"
               >
                 <Plus className="mr-1.5 h-4 w-4" />
                 New Team
               </Button>
             }
           >
-            <div className="overflow-hidden rounded-[22px] border border-[#e3d0ae] bg-[#fffdfa] shadow-[0_8px_18px_rgba(62,36,13,0.04)]">
+            <div className="overflow-hidden rounded-[16px] border border-[var(--border)] bg-[var(--brand-surface)] shadow-[0_8px_18px_rgba(62,36,13,0.04)]">
               <div className="overflow-x-auto">
                 <table className="min-w-[980px] w-full">
-                  <thead className="bg-[#fff8eb] text-left">
-                    <tr className="border-b border-[#e3d0ae]">
-                      <th className="px-4 py-4 text-[12px] font-black text-[#7a5a2f]">Team Name</th>
-                      <th className="px-4 py-4 text-[12px] font-black text-[#7a5a2f]">Leader</th>
-                      <th className="px-4 py-4 text-[12px] font-black text-[#7a5a2f]">Members</th>
-                      <th className="px-4 py-4 text-[12px] font-black text-[#7a5a2f]">Total Points</th>
-                      <th className="px-4 py-4 text-[12px] font-black text-[#7a5a2f]">Actions</th>
+                  <thead className="bg-[var(--brand-soft)] text-left">
+                    <tr className="border-b border-[var(--border)]">
+                      <th className="px-4 py-4 text-[12px] font-black text-[var(--brand-text)]">Team Name</th>
+                      <th className="px-4 py-4 text-[12px] font-black text-[var(--brand-text)]">Leader</th>
+                      <th className="px-4 py-4 text-[12px] font-black text-[var(--brand-text)]">Members</th>
+                      <th className="px-4 py-4 text-[12px] font-black text-[var(--brand-text)]">Total Points</th>
+                      <th className="px-4 py-4 text-[12px] font-black text-[var(--brand-text)]">Actions</th>
                     </tr>
                   </thead>
                   <tbody>
                     {draftTeams.map((team) => (
                       <tr
                         key={team.id}
-                        className="border-b border-[#eadcc7] transition-colors hover:bg-[#fffcf6] last:border-b-0"
+                        className="border-b border-[var(--border)] transition-colors hover:bg-[var(--brand-surface)] last:border-b-0"
                       >
                         <td className="px-4 py-5">
                           <div className="flex items-center gap-3">
                             <span
                               className="h-4 w-4 rounded-full shadow-[0_0_0_2px_rgba(255,255,255,0.8)]"
-                              style={{ backgroundColor: team.color }}
+                              style={{ backgroundColor: themedColor(team.color) }}
                             />
                             <div>
                               <div className="text-[15px] font-black text-[#20324d]">{team.name}</div>
@@ -304,7 +306,7 @@ export default function AdminLeaderboardPage() {
                             <button
                               type="button"
                               onClick={() => openEditTeam(team)}
-                              className="flex h-9 w-9 items-center justify-center rounded-full border border-[#eadcc7] bg-white text-[#5c3214] transition-colors hover:border-[#f5bb00] hover:bg-[#fff7e1] hover:text-[#a36206]"
+                              className="flex h-9 w-9 items-center justify-center rounded-full border border-[var(--border)] bg-white text-[var(--brand-text)] transition-colors hover:border-[var(--brand-accent)] hover:bg-[var(--brand-soft)] hover:text-[#a36206]"
                               aria-label={`แก้ไขทีม ${team.name}`}
                             >
                               <Pencil className="h-4 w-4" strokeWidth={2.2} />
@@ -329,9 +331,9 @@ export default function AdminLeaderboardPage() {
         </div>
 
         <Dialog open={!!editingTeam} onOpenChange={(open) => !open && setEditingTeam(null)}>
-          <DialogContent className="max-h-[88vh] max-w-[620px] overflow-hidden rounded-[26px] border border-[#e3d0ae] bg-[#fffdfa] p-0 shadow-[0_24px_50px_rgba(62,36,13,0.18)] sm:rounded-[30px] sm:max-w-[680px]">
-            <DialogHeader className="border-b border-[#eadcc7] bg-[linear-gradient(180deg,#fff8eb_0%,#fff3d9_100%)] px-4 pt-4 pb-3 sm:px-6 sm:pt-6 sm:pb-5">
-              <DialogTitle className="text-[22px] font-black text-[#5c3214] sm:text-[28px]">
+          <DialogContent className="max-h-[88vh] max-w-[620px] overflow-hidden rounded-[18px] border border-[var(--border)] bg-[var(--brand-surface)] p-0 shadow-[0_24px_50px_rgba(62,36,13,0.18)] sm:rounded-[30px] sm:max-w-[680px]">
+            <DialogHeader className="border-b border-[var(--border)] bg-[linear-gradient(180deg,var(--brand-soft)_0%,var(--brand-soft)_100%)] px-4 pt-4 pb-3 sm:px-6 sm:pt-6 sm:pb-5">
+              <DialogTitle className="text-[22px] font-black text-[var(--brand-text)] sm:text-[28px]">
                 {editingTeam?.mode === "create" ? "Create Team" : "Edit Team"}
               </DialogTitle>
               <DialogDescription className="max-w-[460px] text-[12px] font-bold leading-relaxed text-[#8E8A81] sm:text-[14px]">
@@ -342,11 +344,11 @@ export default function AdminLeaderboardPage() {
             </DialogHeader>
 
             {editingTeam ? (
-              <div className="max-h-[calc(88vh-132px)] overflow-y-auto bg-[#fffcf6] px-4 py-4 sm:max-h-[calc(88vh-150px)] sm:px-6 sm:py-6">
-                <div className="mb-4 rounded-[18px] border border-[#eadcc7] bg-white px-4 py-3 shadow-[0_8px_18px_rgba(62,36,13,0.04)] sm:mb-5 sm:rounded-[22px] sm:px-5 sm:py-4">
+              <div className="max-h-[calc(88vh-132px)] overflow-y-auto bg-[var(--brand-surface)] px-4 py-4 sm:max-h-[calc(88vh-150px)] sm:px-6 sm:py-6">
+                <div className="mb-4 rounded-[18px] border border-[var(--border)] bg-white px-4 py-3 shadow-[0_8px_18px_rgba(62,36,13,0.04)] sm:mb-5 sm:rounded-[16px] sm:px-5 sm:py-4">
                   <div className="flex items-center gap-3">
                     <span
-                      className="h-5 w-5 flex-shrink-0 rounded-full ring-4 ring-[#fff7e8]"
+                      className="h-5 w-5 flex-shrink-0 rounded-full ring-4 ring-[var(--brand-soft)]"
                       style={{ backgroundColor: editingTeam.color }}
                     />
                     <div className="min-w-0">
@@ -364,31 +366,31 @@ export default function AdminLeaderboardPage() {
 
                 <div className="grid grid-cols-1 gap-3 pb-2 sm:grid-cols-2 sm:gap-4 sm:pb-1">
                   <div className="flex flex-col gap-2">
-                    <Label className="text-[12px] font-black text-[#5c3214]">Team Name</Label>
+                    <Label className="text-[12px] font-black text-[var(--brand-text)]">Team Name</Label>
                     <Input
                       value={editingTeam.name}
                       onChange={(event) => updateEditingTeam("name", event.target.value)}
-                      className="h-11 rounded-[18px] border-[#d7c5a7] bg-white px-4 text-[14px] font-bold text-[#2d2116] focus-visible:border-[#f5bb00] focus-visible:ring-0 sm:h-12 sm:text-[15px]"
+                      className="h-11 rounded-[18px] border-[var(--border)] bg-white px-4 text-[14px] font-bold text-[var(--foreground)] focus-visible:border-[var(--brand-accent)] focus-visible:ring-0 sm:h-12 sm:text-[15px]"
                     />
                   </div>
                   <div className="flex flex-col gap-2">
-                    <Label className="text-[12px] font-black text-[#5c3214]">Leader</Label>
+                    <Label className="text-[12px] font-black text-[var(--brand-text)]">Leader</Label>
                     <Input
                       value={editingTeam.leader}
                       onChange={(event) => updateEditingTeam("leader", event.target.value)}
-                      className="h-11 rounded-[18px] border-[#d7c5a7] bg-white px-4 text-[14px] font-bold text-[#2d2116] focus-visible:border-[#f5bb00] focus-visible:ring-0 sm:h-12 sm:text-[15px]"
+                      className="h-11 rounded-[18px] border-[var(--border)] bg-white px-4 text-[14px] font-bold text-[var(--foreground)] focus-visible:border-[var(--brand-accent)] focus-visible:ring-0 sm:h-12 sm:text-[15px]"
                     />
                   </div>
                   <div className="flex flex-col gap-2 sm:col-span-2">
-                    <Label className="text-[12px] font-black text-[#5c3214]">Team Color</Label>
-                    <div className="flex h-11 items-center gap-3 rounded-[18px] border border-[#d7c5a7] bg-white px-4 sm:h-12">
+                    <Label className="text-[12px] font-black text-[var(--brand-text)]">Team Color</Label>
+                    <div className="flex h-11 items-center gap-3 rounded-[18px] border border-[var(--border)] bg-white px-4 sm:h-12">
                       <input
                         type="color"
                         value={editingTeam.color}
                         onChange={(event) => updateEditingTeam("color", event.target.value)}
                         className="h-7 w-9 cursor-pointer border-0 bg-transparent p-0 sm:h-8 sm:w-10"
                       />
-                      <span className="text-[12px] font-bold text-[#5c3214] sm:text-[14px]">
+                      <span className="text-[12px] font-bold text-[var(--brand-text)] sm:text-[14px]">
                         {editingTeam.color}
                       </span>
                     </div>
@@ -397,18 +399,18 @@ export default function AdminLeaderboardPage() {
               </div>
             ) : null}
 
-            <DialogFooter className="rounded-b-[26px] border-t border-[#eadcc7] bg-[#fff8eb] px-5 py-4 sm:rounded-b-[30px] sm:px-6 sm:py-5">
+            <DialogFooter className="rounded-b-[26px] border-t border-[var(--border)] bg-[var(--brand-soft)] px-5 py-4 sm:rounded-b-[30px] sm:px-6 sm:py-5">
               <div className="flex w-full justify-end gap-2 pr-1 pb-1 sm:pr-0 sm:pb-0">
                 <Button
                   variant="outline"
                   onClick={() => setEditingTeam(null)}
-                  className="h-10 rounded-full border-[#d7c5a7] bg-white px-4 text-[13px] text-[#5c3214] hover:bg-[#fff4de] sm:h-11 sm:px-5 sm:text-[14px]"
+                  className="h-10 rounded-full border-[var(--border)] bg-white px-4 text-[13px] text-[var(--brand-text)] hover:bg-[var(--brand-soft)] sm:h-11 sm:px-5 sm:text-[14px]"
                 >
                   Cancel
                 </Button>
                 <Button
                   onClick={confirmTeamEdit}
-                  className="h-10 rounded-full bg-[#5c3214] px-4 text-[13px] text-white hover:bg-[#4a280f] sm:h-11 sm:px-5 sm:text-[14px]"
+                  className="h-10 rounded-full bg-[var(--brand-text)] px-4 text-[13px] text-white hover:bg-[#4a280f] sm:h-11 sm:px-5 sm:text-[14px]"
                 >
                   {editingTeam?.mode === "create" ? "Confirm Create" : "Confirm Update"}
                 </Button>
@@ -418,8 +420,8 @@ export default function AdminLeaderboardPage() {
         </Dialog>
 
         <Dialog open={!!deletingTeam} onOpenChange={(open) => !open && setDeletingTeam(null)}>
-          <DialogContent className="max-w-[520px] overflow-hidden rounded-[26px] border border-[#e3d0ae] bg-[#fffdfa] p-0 shadow-[0_24px_50px_rgba(62,36,13,0.18)] sm:rounded-[30px]">
-            <DialogHeader className="border-b border-[#eadcc7] bg-[linear-gradient(180deg,#fff8eb_0%,#fff3d9_100%)] px-4 pt-4 pb-3 sm:px-6 sm:pt-6 sm:pb-5">
+          <DialogContent className="max-w-[520px] overflow-hidden rounded-[18px] border border-[var(--border)] bg-[var(--brand-surface)] p-0 shadow-[0_24px_50px_rgba(62,36,13,0.18)] sm:rounded-[30px]">
+            <DialogHeader className="border-b border-[var(--border)] bg-[linear-gradient(180deg,var(--brand-soft)_0%,var(--brand-soft)_100%)] px-4 pt-4 pb-3 sm:px-6 sm:pt-6 sm:pb-5">
               <DialogTitle className="text-[22px] font-black text-[#8a2f2b] sm:text-[26px]">
                 Confirm Delete
               </DialogTitle>
@@ -429,11 +431,11 @@ export default function AdminLeaderboardPage() {
             </DialogHeader>
 
             {deletingTeam ? (
-              <div className="bg-[#fffcf6] px-4 py-4 sm:px-6 sm:py-6">
-                <div className="rounded-[20px] border border-[#f1d1cf] bg-white px-4 py-4 shadow-[0_8px_18px_rgba(62,36,13,0.04)]">
+              <div className="bg-[var(--brand-surface)] px-4 py-4 sm:px-6 sm:py-6">
+                <div className="rounded-[16px] border border-[#f1d1cf] bg-white px-4 py-4 shadow-[0_8px_18px_rgba(62,36,13,0.04)]">
                   <div className="flex items-center gap-3">
                     <span
-                      className="h-5 w-5 flex-shrink-0 rounded-full ring-4 ring-[#fff7e8]"
+                      className="h-5 w-5 flex-shrink-0 rounded-full ring-4 ring-[var(--brand-soft)]"
                       style={{ backgroundColor: deletingTeam.color }}
                     />
                     <div className="min-w-0">
@@ -449,12 +451,12 @@ export default function AdminLeaderboardPage() {
               </div>
             ) : null}
 
-            <DialogFooter className="rounded-b-[26px] border-t border-[#eadcc7] bg-[#fff8eb] px-5 py-4 sm:rounded-b-[30px] sm:px-6 sm:py-5">
+            <DialogFooter className="rounded-b-[26px] border-t border-[var(--border)] bg-[var(--brand-soft)] px-5 py-4 sm:rounded-b-[30px] sm:px-6 sm:py-5">
               <div className="flex w-full justify-end gap-2">
                 <Button
                   variant="outline"
                   onClick={() => setDeletingTeam(null)}
-                  className="h-10 rounded-full border-[#d7c5a7] bg-white px-4 text-[13px] text-[#5c3214] hover:bg-[#fff4de] sm:h-11 sm:px-5 sm:text-[14px]"
+                  className="h-10 rounded-full border-[var(--border)] bg-white px-4 text-[13px] text-[var(--brand-text)] hover:bg-[var(--brand-soft)] sm:h-11 sm:px-5 sm:text-[14px]"
                 >
                   Cancel
                 </Button>

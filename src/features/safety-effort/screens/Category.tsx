@@ -15,20 +15,19 @@ import {
   UsersRound,
 } from "lucide-react";
 import TigerMascot from "@/components/TigerMascot";
-const sueaShield = "/images/mascots/suea-shield.png";
-const sueaThumbsUp = "/images/mascots/suea-thumbs-up.png";
+import { useAppTheme } from "@/providers/theme-provider";
 
 const T = {
-  background: "#f1ecdf",
-  background2: "#ece5d2",
-  foreground: "#0e0f12",
-  foreground2: "#33312c",
-  foreground3: "#767269",
-  card: "#ffffff",
-  surface2: "#f5eedf",
-  primary: "#ffc400",
+  background: "var(--background)",
+  background2: "var(--secondary)",
+  foreground: "var(--foreground)",
+  foreground2: "color-mix(in srgb, var(--foreground) 78%, transparent)",
+  foreground3: "color-mix(in srgb, var(--foreground) 54%, transparent)",
+  card: "var(--card)",
+  surface2: "var(--secondary)",
+  primary: "var(--brand-accent)",
   primaryForeground: "#0e0f12",
-  primarySoft: "#fff4cf",
+  primarySoft: "var(--brand-soft)",
   ok: "#1f7a55",
   info: "#234c8e",
   warning: "#c97a00",
@@ -159,7 +158,7 @@ function Timeline({ steps, variant }) {
               background: accent,
               fontSize: 12,
               fontWeight: 900,
-              boxShadow: isAudit ? "0 8px 16px rgba(255,196,0,0.22)" : "none",
+              boxShadow: isAudit ? "0 8px 16px color-mix(in srgb, var(--brand-accent) 24%, transparent)" : "none",
             }}
           >
             {index + 1}
@@ -186,11 +185,11 @@ function CategoryCard({ cat, isOpen, onToggle, onStart }) {
     <article
       style={{
         background: T.card,
-        border: `1px solid ${isOpen ? (isAudit ? "rgba(201,122,0,0.42)" : "rgba(14,15,18,0.22)") : T.border}`,
+        border: `1px solid ${isOpen ? "color-mix(in srgb, var(--brand-accent) 54%, transparent)" : T.border}`,
         borderRadius: T.radius,
         boxShadow: isOpen
-          ? "0 16px 34px rgba(34,25,11,0.10)"
-          : "0 8px 22px rgba(34,25,11,0.05)",
+          ? "0 16px 34px var(--brand-shadow)"
+          : "0 8px 22px rgba(22,63,104,0.06)",
         overflow: "hidden",
       }}
     >
@@ -226,7 +225,7 @@ function CategoryCard({ cat, isOpen, onToggle, onStart }) {
               placeItems: "center",
               background: isAudit ? T.primarySoft : T.surface2,
               color: isAudit ? T.warning : T.foreground,
-              border: `1px solid ${isAudit ? "rgba(255,196,0,0.38)" : T.border}`,
+              border: `1px solid ${isAudit ? "color-mix(in srgb, var(--brand-accent) 42%, transparent)" : T.border}`,
             }}
           >
             <Icon size={26} strokeWidth={2.2} />
@@ -311,7 +310,7 @@ function CategoryCard({ cat, isOpen, onToggle, onStart }) {
             style={{
               borderTop: `1px solid ${T.border}`,
               background: isAudit
-                ? "linear-gradient(180deg, #fff8dc 0%, #f5eedf 100%)"
+                ? "linear-gradient(180deg, color-mix(in srgb, var(--brand-soft) 68%, white) 0%, var(--secondary) 100%)"
                 : "linear-gradient(180deg, #f8f2e7 0%, #eee6d6 100%)",
               padding: 18,
             }}
@@ -324,7 +323,7 @@ function CategoryCard({ cat, isOpen, onToggle, onStart }) {
                 width: "100%",
                 marginTop: 18,
                 minHeight: 44,
-                border: `1px solid ${isAudit ? "rgba(201,122,0,0.22)" : T.foreground}`,
+                border: `1px solid ${isAudit ? "color-mix(in srgb, var(--brand-accent) 46%, transparent)" : T.foreground}`,
                 borderRadius: 12,
                 background: isAudit ? T.primary : T.foreground,
                 color: isAudit ? T.primaryForeground : T.card,
@@ -336,7 +335,7 @@ function CategoryCard({ cat, isOpen, onToggle, onStart }) {
                 fontSize: 14,
                 fontWeight: 900,
                 cursor: "pointer",
-                boxShadow: isAudit ? "0 12px 18px rgba(255,196,0,0.22)" : "none",
+                boxShadow: isAudit ? "0 12px 18px color-mix(in srgb, var(--brand-accent) 24%, transparent)" : "none",
               }}
             >
               เริ่มกิจกรรม
@@ -352,6 +351,7 @@ function CategoryCard({ cat, isOpen, onToggle, onStart }) {
 
 
 function Hero({ isDesktop }) {
+  const { mascot, theme } = useAppTheme();
   const [isHovered, setIsHovered] = useState(false);
 
   return (
@@ -362,18 +362,18 @@ function Hero({ isDesktop }) {
         borderRadius: isDesktop ? 18 : 16,
         border: "1px solid rgba(255,255,255,0.12)",
         background:
-          "linear-gradient(105deg, rgba(58,28,5,0.98) 0%, rgba(84,47,12,0.95) 48%, rgba(39,24,10,0.96) 100%)",
-        color: "#fff8e6",
+          "linear-gradient(105deg, var(--brand-hero-start) 0%, var(--brand-hero-end) 48%, var(--brand-nav) 100%)",
+        color: "var(--brand-soft)",
         minHeight: isDesktop ? 220 : 280,
-        boxShadow: "0 20px 42px rgba(42,26,9,0.16)",
+        boxShadow: "0 20px 42px var(--brand-shadow)",
       }}
     >
       <div
         style={{
           position: "absolute",
           inset: 0,
-          background:
-            "linear-gradient(90deg, rgba(255,196,0,0.16) 0 1px, transparent 1px 100%), linear-gradient(0deg, rgba(255,196,0,0.10) 0 1px, transparent 1px 100%)",
+          backgroundImage:
+            "linear-gradient(90deg, color-mix(in srgb, var(--brand-accent) 16%, transparent) 0 1px, transparent 1px 100%), linear-gradient(0deg, color-mix(in srgb, var(--brand-accent) 10%, transparent) 0 1px, transparent 1px 100%)",
           backgroundSize: "44px 44px",
           opacity: 0.22,
         }}
@@ -386,7 +386,7 @@ function Hero({ isDesktop }) {
           bottom: 0,
           height: 12,
           background:
-            "repeating-linear-gradient(135deg, #ffc400 0 22px, #0e0f12 22px 44px)",
+            "repeating-linear-gradient(135deg, var(--brand-accent) 0 22px, #0e0f12 22px 44px)",
         }}
       />
 
@@ -445,8 +445,8 @@ function Hero({ isDesktop }) {
           }}
         >
           <img
-            src={isHovered ? sueaThumbsUp : sueaShield}
-            alt="SUEA Safety Mascot"
+            src={isHovered ? mascot("thumbs-up") : mascot("clipboard")}
+            alt={theme === "wangjai" ? "น้องวางใจ Safety mascot" : "SUEA tiger mascot"}
             style={{
               width: isDesktop ? "185px" : "120px",
               height: "auto",
@@ -481,7 +481,7 @@ export default function Category() {
       style={{
         minHeight: "100%",
         background:
-          "linear-gradient(180deg, #efe6d4 0%, #f1ecdf 170px, #f1ecdf 100%)",
+          "linear-gradient(180deg, var(--secondary) 0%, var(--background) 170px, var(--background) 100%)",
         fontFamily: "'Prompt','Sarabun','TH Sarabun New',Helvetica,sans-serif",
         color: T.foreground,
         padding: `18px ${px}px ${width >= 768 ? 32 : 24}px`,
@@ -540,7 +540,7 @@ export default function Category() {
                 border: `1px solid ${T.border}`,
                 borderRadius: T.radius,
                 padding: 18,
-                boxShadow: "0 8px 22px rgba(34,25,11,0.05)",
+                boxShadow: "0 8px 22px rgba(22,63,104,0.06)",
                 display: "grid",
                 gap: 14,
               }}
@@ -584,7 +584,7 @@ export default function Category() {
                 border: `1px solid ${T.border}`,
                 borderRadius: T.radius,
                 padding: 18,
-                boxShadow: "0 8px 22px rgba(34,25,11,0.05)",
+                boxShadow: "0 8px 22px rgba(22,63,104,0.06)",
                 display: "grid",
                 gap: 14,
               }}
@@ -602,7 +602,7 @@ export default function Category() {
                     lineHeight: 1.5,
                     padding: "8px 12px",
                     borderRadius: 10,
-                    background: "#fff9eb",
+                    background: "color-mix(in srgb, var(--brand-soft) 60%, white)",
                     borderLeft: `3px solid ${T.primary}`,
                   }}
                 >
@@ -615,8 +615,8 @@ export default function Category() {
                     lineHeight: 1.5,
                     padding: "8px 12px",
                     borderRadius: 10,
-                    background: "#f0f6ff",
-                    borderLeft: `3px solid #3b82f6`,
+                    background: "color-mix(in srgb, var(--secondary) 62%, white)",
+                    borderLeft: `3px solid var(--brand-accent-strong)`,
                   }}
                 >
                   <strong>การดูแล PPE:</strong> หมวกนิรภัยที่ชำรุดหรือร้าวควรส่งเคลมทันทีเพื่อความปลอดภัยเต็มประสิทธิภาพ
@@ -646,4 +646,3 @@ export default function Category() {
   );
 }
 // @ts-nocheck
-

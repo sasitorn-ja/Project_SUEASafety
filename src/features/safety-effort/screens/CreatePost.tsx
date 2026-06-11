@@ -4,12 +4,12 @@ import { useLocation, useNavigate } from "@/lib/router-compat";
 import TigerMascot from "@/components/TigerMascot";
 
 const T = {
-  background: "#f1ecdf",
+  background: "var(--background)",
   card: "#ffffff",
   foreground: "#0e0f12",
   foreground2: "#33312c",
   foreground3: "#767269",
-  primary: "#ffc400",
+  primary: "var(--brand-accent)",
   primaryFg: "#0e0f12",
   border: "rgba(14,15,18,0.10)",
 };
@@ -39,7 +39,7 @@ export default function CreatePost() {
     <div
       style={{
         minHeight: "100%",
-        background: `linear-gradient(180deg, #efe6d4 0%, ${T.background} 180px, ${T.background} 100%)`,
+        background: `linear-gradient(180deg, var(--secondary) 0%, ${T.background} 180px, ${T.background} 100%)`,
         padding: "20px 16px 32px",
         color: T.foreground,
         fontFamily: "'Prompt','Sarabun',sans-serif",
@@ -133,7 +133,7 @@ export default function CreatePost() {
                 fontSize: 14,
                 fontWeight: 800,
                 cursor: "pointer",
-                boxShadow: "0 10px 18px rgba(255,196,0,0.20)",
+                boxShadow: "0 10px 18px rgba(var(--brand-accent-rgb),0.20)",
               }}
             >
               บันทึก

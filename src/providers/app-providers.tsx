@@ -183,7 +183,7 @@ const INITIAL_POSTS: Post[] = [
   {
     id: 1,
     author: "Nattaya K.",
-    avatarBg: "#F5BB00",
+    avatarBg: "var(--brand-accent)",
     avatarColor: "#1A1A1A",
     avatarText: "N",
     subtext: "OBK-C2 · 12 นาที · Yellow",
@@ -203,7 +203,7 @@ const INITIAL_POSTS: Post[] = [
   {
     id: 2,
     author: "Chaiwat T.",
-    avatarBg: "#F5BB00",
+    avatarBg: "var(--brand-accent)",
     avatarColor: "#1A1A1A",
     avatarText: "C",
     isYou: true,

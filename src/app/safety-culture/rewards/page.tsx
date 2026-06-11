@@ -10,8 +10,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { useAppActions, useAppState } from "@/providers/app-providers";
 import { cn } from "@/lib/utils";
 import { REWARD_TAGS } from "@/lib/safety-culture";
+import { useAppTheme } from "@/providers/theme-provider";
 
 export default function RewardsPage() {
+  const { themedImage, mascot } = useAppTheme();
   const { currentUserPoints, rewardsCatalog } = useAppState();
   const { redeemPoints } = useAppActions();
   const [filter, setFilter] = useState("ทั้งหมด");
@@ -80,11 +82,11 @@ export default function RewardsPage() {
             eyebrow="SUEA REWARDS SHOP"
             title={
               <>
-                ทำดี แลกของ <span className="text-[#F5BB00]">ให้ทีมภูมิใจ</span>
+                ทำดี แลกของ <span className="text-[var(--brand-accent)]">ให้ทีมภูมิใจ</span>
               </>
             }
             description="คะแนน Safety ของคุณเปลี่ยนเป็นรางวัลได้ พี่ SUEA คอยเชียร์ให้เก็บแต้มต่อทุกวัน"
-            mascotSrc="/images/mascots/gallery/ppe-2.png"
+            mascotSrc={mascot("happy")}
             mascotAlt="SUEA Mascot"
           />
         </div>
@@ -98,7 +100,7 @@ export default function RewardsPage() {
             eyebrow="แลกของรางวัลรายบุคคล"
             title="ร้านแลกของรางวัล"
             rightSlot={
-              <div className="flex items-center gap-1.5 rounded-xl border-2 border-[#F5BB00] bg-[#FFF9E6] px-3.5 py-1.5 text-[13.5px] font-black text-[#1A1A1A] shadow-[0_2px_6px_rgba(245,187,0,0.12)]">
+              <div className="flex items-center gap-1.5 rounded-xl border-2 border-[var(--brand-accent)] bg-[var(--brand-soft)] px-3.5 py-1.5 text-[13.5px] font-black text-[var(--brand-text)] shadow-[0_2px_6px_rgba(var(--brand-accent-rgb),0.12)]">
                 <span>🪙</span>
                 <span>{currentUserPoints.toLocaleString()} แต้ม</span>
               </div>
@@ -114,8 +116,8 @@ export default function RewardsPage() {
               className={cn(
                 "flex-shrink-0 whitespace-nowrap rounded-full border-[1.5px] px-4 py-2 text-[13.5px] font-bold transition-all",
                 filter === tag
-                  ? "border-[#5C350C] bg-[#5C350C] text-white shadow-[0_4px_10px_rgba(0,0,0,0.08)]"
-                  : "border-[#DDD9CD] bg-white text-[#555149] hover:border-[#B78922] hover:bg-[#FFF7E8]"
+                  ? "border-[var(--brand-text)] bg-[var(--brand-text)] text-white shadow-[0_4px_10px_rgba(0,0,0,0.08)]"
+                  : "border-[var(--border)] bg-white text-[var(--brand-text)] hover:border-[var(--brand-accent)] hover:bg-[var(--brand-soft)]"
               )}
             >
               {tag}
@@ -130,7 +132,7 @@ export default function RewardsPage() {
             return (
               <Card
                 key={reward.id}
-                className="relative flex flex-col gap-3 rounded-[22px] border-[#E4D4B8] bg-[#FFFDF7] p-3.5 shadow-[0_4px_10px_rgba(0,0,0,0.01)] transition-all hover:-translate-y-0.5 hover:border-[#C49A45] hover:shadow-[0_12px_28px_rgba(62,36,13,0.08)] anim-fade"
+                className="relative flex flex-col gap-3 rounded-[16px] border-[var(--border)] bg-[var(--brand-surface)] p-3.5 shadow-[0_4px_10px_rgba(0,0,0,0.01)] transition-all hover:-translate-y-0.5 hover:border-[var(--brand-accent)] hover:shadow-[0_12px_28px_var(--brand-shadow)] anim-fade"
                 style={animStyle(0.15 + idx * 0.05)}
               >
                 {reward.isHot && (
@@ -139,44 +141,44 @@ export default function RewardsPage() {
                   </span>
                 )}
 
-                <div className="relative flex aspect-[4/3] w-full items-center justify-center overflow-hidden rounded-[14px] border-[1.5px] border-[#E4D4B8] bg-[#F7EAD6]">
+                <div className="relative flex aspect-[4/3] w-full items-center justify-center overflow-hidden rounded-[14px] border-[1.5px] border-[var(--border)] bg-[var(--brand-image-placeholder)]">
                   {reward.imageSrc ? (
                     <Image
-                      src={reward.imageSrc}
+                      src={themedImage(reward.imageSrc)}
                       alt={reward.name}
                       fill
                       className="object-cover"
                     />
                   ) : reward.isHot ? (
                     <Image
-                      src="/images/mascots/gallery/ppe-1.png"
+                      src={mascot("salute")}
                       alt="SUEA reward"
                       fill
                       className="object-cover"
                     />
                   ) : (
-                    <span className="text-[13px] font-extrabold lowercase text-[#8E8A81]">{reward.imageText}</span>
+                    <span className="text-[13px] font-extrabold lowercase text-[var(--brand-muted-text)]">{reward.imageText}</span>
                   )}
                 </div>
 
                 <div className="flex flex-1 flex-col gap-1">
                   <span className="text-[14.5px] font-[850] text-foreground">{reward.name}</span>
-                  <p className="line-clamp-2 text-[12.5px] font-bold leading-relaxed text-[#7d766b]">
+                  <p className="line-clamp-2 text-[12.5px] font-bold leading-relaxed text-[var(--brand-muted-text)]">
                     {reward.description}
                   </p>
-                  <span className="pt-1 text-[12.5px] font-extrabold text-[#B58A00]">
+                  <span className="pt-1 text-[12.5px] font-extrabold text-[var(--brand-accent-strong)]">
                     {reward.points.toLocaleString()} <span className="ml-0.5 text-[10px] font-bold text-muted-foreground">POINTS</span>
                   </span>
                 </div>
 
                 {locked ? (
-                  <button disabled className="w-full cursor-not-allowed rounded-xl border-[1.5px] border-[#DDD9CD] bg-[#EAE6DA] py-2.5 text-center text-[13px] font-[850] text-[#A39E92]">
+                  <button disabled className="w-full cursor-not-allowed rounded-xl border-[1.5px] border-[var(--border)] bg-[var(--secondary)] py-2.5 text-center text-[13px] font-[850] text-[#A39E92]">
                     ยังไม่พอ
                   </button>
                 ) : (
                   <button
                     onClick={() => handleRedeem(reward)}
-                    className="w-full rounded-xl bg-[#1A1A1A] py-2.5 text-center text-[13px] font-[850] text-white outline-none transition-all hover:bg-[#F5BB00] hover:text-[#1A1A1A]"
+                    className="w-full rounded-xl bg-[#1A1A1A] py-2.5 text-center text-[13px] font-[850] text-white outline-none transition-all hover:bg-[var(--brand-accent)] hover:text-[#1A1A1A]"
                   >
                     แลกรางวัล
                   </button>
@@ -188,12 +190,12 @@ export default function RewardsPage() {
       </div>
 
       <Dialog open={!!redeeming} onOpenChange={(open) => !open && setRedeeming(null)}>
-        <DialogContent className="rounded-[28px] border-[3px] border-[#1A1A1A] bg-[#FAF8F2] p-6 text-center sm:max-w-sm">
+        <DialogContent className="rounded-[16px] border-[3px] border-[#1A1A1A] bg-[var(--brand-surface)] p-4 text-center sm:max-w-sm">
           <DialogHeader>
             <DialogTitle className="flex flex-col items-center gap-3 text-xl font-extrabold text-foreground">
               <div className="w-[120px] animate-[sueaMascotFloat_1.8s_ease-in-out_infinite_alternate]">
                 <Image
-                  src="/images/mascots/gallery/reward-highlight.png"
+                  src={mascot("happy")}
                   alt="SUEA Mascot"
                   width={120}
                   height={120}
@@ -204,17 +206,17 @@ export default function RewardsPage() {
             </DialogTitle>
           </DialogHeader>
           <p className="text-sm font-semibold leading-relaxed text-[#555149]">
-            คุณต้องการใช้คะแนนจำนวน <strong className="text-[#B58A00]">{redeeming?.points} แต้ม</strong> เพื่อแลก
+            คุณต้องการใช้คะแนนจำนวน <strong className="text-[var(--brand-accent-strong)]">{redeeming?.points} แต้ม</strong> เพื่อแลก
             <br />
             <strong>&quot;{redeeming?.name}&quot;</strong> ใช่หรือไม่?
           </p>
           <div className="flex flex-col gap-2.5">
-            <button onClick={confirmRedeem} className="w-full rounded-xl bg-[#1A1A1A] py-3 text-center text-[13px] font-[850] text-white transition-all hover:bg-[#F5BB00] hover:text-[#1A1A1A]">
+            <button onClick={confirmRedeem} className="w-full rounded-xl bg-[#1A1A1A] py-3 text-center text-[13px] font-[850] text-white transition-all hover:bg-[var(--brand-accent)] hover:text-[#1A1A1A]">
               ยืนยันการแลก
             </button>
             <button
               onClick={() => setRedeeming(null)}
-              className="w-full rounded-xl bg-[#EAE6DA] py-2.5 text-center text-[13px] font-[850] text-foreground transition-colors hover:bg-[#DDD9CD]"
+              className="w-full rounded-xl bg-[var(--secondary)] py-2.5 text-center text-[13px] font-[850] text-foreground transition-colors hover:bg-[var(--border)]"
             >
               ยกเลิก
             </button>
@@ -223,7 +225,7 @@ export default function RewardsPage() {
       </Dialog>
 
       <Dialog open={!!result} onOpenChange={(open) => !open && setResult(null)}>
-        <DialogContent className="rounded-[28px] border-[3px] border-[#1A1A1A] bg-[#FAF8F2] p-6 text-center sm:max-w-sm">
+        <DialogContent className="rounded-[16px] border-[3px] border-[#1A1A1A] bg-[var(--brand-surface)] p-4 text-center sm:max-w-sm">
           <DialogHeader>
             <DialogTitle className="flex flex-col items-center gap-3 text-xl font-extrabold text-foreground">
               <span className="text-[52px] leading-none">{result?.type === "success" ? "✓" : "!"}</span>
@@ -231,7 +233,7 @@ export default function RewardsPage() {
             </DialogTitle>
           </DialogHeader>
           <p className="text-sm font-semibold leading-relaxed text-[#555149]">{result?.desc}</p>
-          <button onClick={() => setResult(null)} className="w-full rounded-xl bg-[#1A1A1A] py-3 text-center text-[13px] font-[850] text-white transition-all hover:bg-[#F5BB00] hover:text-[#1A1A1A]">
+          <button onClick={() => setResult(null)} className="w-full rounded-xl bg-[#1A1A1A] py-3 text-center text-[13px] font-[850] text-white transition-all hover:bg-[var(--brand-accent)] hover:text-[#1A1A1A]">
             ตกลง
           </button>
         </DialogContent>
