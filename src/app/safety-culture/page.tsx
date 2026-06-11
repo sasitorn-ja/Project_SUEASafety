@@ -1,13 +1,14 @@
-"use client";
+﻿"use client";
 
 import Image from "next/image";
 import Link from "next/link";
-import { useState, useCallback, type CSSProperties } from "react";
+import { useState, useCallback, useEffect, type CSSProperties } from "react";
 import {
   useAppState,
   useAppActions,
   type Post,
   type Comment as CommentType,
+  type SafetyCultureFeedEvent,
   getSafetyCultureEventPhase,
 } from "@/providers/app-providers";
 import { AppShell } from "@/components/layout/app-shell";
@@ -20,7 +21,7 @@ import {
   COMMENT_REACTION_CHOICES,
   formatPostSubtext,
 } from "@/lib/safety-culture";
-import { Heart, Trophy, Gift, ImageIcon } from "lucide-react";
+import { CalendarDays, ChevronLeft, ChevronRight, Clock3, Heart, ImageIcon, Sparkles, Trophy, X } from "lucide-react";
 import { SafetyCultureHero } from "@/components/safety-culture/safety-culture-hero";
 import { SafetyCultureTabs } from "@/components/safety-culture/safety-culture-tabs";
 
@@ -142,14 +143,34 @@ function SUEATipCard({ className, style, tipText }: { className?: string; style?
   );
 }
 
+function getActivityStatusMeta(status: SafetyCultureFeedEvent["status"]) {
+  return status === "open"
+    ? {
+        label: "เปิดกิจกรรม",
+        badgeClass: "border-[#b8e7d2] bg-[#effff6] text-[#127a52]",
+        iconClass: "text-[#18b989]",
+        note: "กิจกรรมนี้ยังเปิดรับการมีส่วนร่วม",
+      }
+    : {
+        label: "ปิดกิจกรรม",
+        badgeClass: "border-[#ddd9cd] bg-[#faf8f2] text-[#6a6256]",
+        iconClass: "text-[#71809c]",
+        note: "กิจกรรมนี้ไม่รับการส่งข้อมูลแล้ว",
+      };
+}
+
 export default function Page() {
-  const { posts, safetyCultureEvent, isEventLive, eventNow } = useAppState();
+  const { posts, safetyCultureEvent, feedEvents, isEventLive, eventNow } = useAppState();
   const { toggleLike, addComment } = useAppActions();
 
   const [activeCategory, setActiveCategory] = useState("ทั้งหมด");
   const [commentDrafts, setCommentDrafts] = useState<Record<number, string>>({});
   const [expandedComments, setExpandedComments] = useState<Record<number, boolean>>({});
   const [activePhotoByPost, setActivePhotoByPost] = useState<Record<number, number>>({});
+  const [expandedPhoto, setExpandedPhoto] = useState<{ src: string; alt: string; postAuthor: string; index: number; total: number } | null>(null);
+  const [expandedActivity, setExpandedActivity] = useState<SafetyCultureFeedEvent | null>(null);
+  const [mobileActivityStartIndex, setMobileActivityStartIndex] = useState(0);
+  const [desktopActivityStartIndex, setDesktopActivityStartIndex] = useState(0);
   const [commentReactionState, setCommentReactionState] = useState<Record<string, { selected: string | null; counts: Record<string, number> }>>({});
   const [openCommentReactionPicker, setOpenCommentReactionPicker] = useState<string | null>(null);
 
@@ -169,6 +190,20 @@ export default function Page() {
     }
     return post.imageData ? [{ id: `${post.id}-legacy`, dataUrl: post.imageData, type: "legacy" }] : [];
   }, []);
+
+  useEffect(() => {
+    if (!expandedPhoto && !expandedActivity) return;
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setExpandedPhoto(null);
+        setExpandedActivity(null);
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [expandedActivity, expandedPhoto]);
 
 
   const handleCommentSubmit = (postId: number) => {
@@ -198,10 +233,21 @@ export default function Page() {
   const tipText = `โพสต์ที่ได้รับอนุมัติ +6 แต้ม · Happy Hour ${eventBonusLabel} · คอมเมนต์และ reaction จะได้โบนัสตามช่วงอีเว้น`;
 
   const eventPhase = getSafetyCultureEventPhase(safetyCultureEvent, eventNow);
-  const shouldShowEventBanner = eventPhase !== "draft";
+  const visibleFeedEvents = feedEvents.filter((event) => event.published);
+  const maxMobileActivityStartIndex = Math.max(0, visibleFeedEvents.length - 1);
+  const maxDesktopActivityStartIndex = Math.max(0, visibleFeedEvents.length - 3);
+  const shouldShowEventBanner = safetyCultureEvent.bannerVisible && eventPhase !== "draft";
   const startAt = new Date(`${safetyCultureEvent.startDate}T${safetyCultureEvent.startTime}`);
   const endAt = new Date(`${safetyCultureEvent.endDate}T${safetyCultureEvent.endTime}`);
   const timeRangeLabel = `${startAt.toLocaleDateString("th-TH", { day: "2-digit", month: "short" })} ${safetyCultureEvent.startTime} - ${endAt.toLocaleDateString("th-TH", { day: "2-digit", month: "short" })} ${safetyCultureEvent.endTime}`;
+
+  useEffect(() => {
+    setMobileActivityStartIndex((current) => Math.min(current, Math.max(0, visibleFeedEvents.length - 1)));
+  }, [visibleFeedEvents.length]);
+
+  useEffect(() => {
+    setDesktopActivityStartIndex((current) => Math.min(current, Math.max(0, visibleFeedEvents.length - 3)));
+  }, [visibleFeedEvents.length]);
 
   let eventStatusLabel: string = safetyCultureEvent.status;
   let countdownLabel = "รอการตั้งเวลาอีเว้น";
@@ -260,20 +306,6 @@ export default function Page() {
             description="พื้นที่แชร์เรื่องความปลอดภัยของทีม อ่านง่าย อบอุ่น และช่วยกันต่อยอดพฤติกรรมปลอดภัยในทุกวัน"
             mascotSrc="/images/mascots/gallery/line-walk-3.png"
             mascotAlt="SUEA Mascot"
-            actions={
-              <div className="mt-[12px] flex flex-wrap gap-2 font-sarabun">
-                <Link href="/safety-culture/post">
-                  <Button className="h-[30px] rounded-full border border-[#d89b09] bg-[#ffb000] px-3.5 text-[12.5px] font-black text-[#3b1d07] shadow-[0_4px_10px_rgba(255,176,0,0.15)] hover:bg-[#ffc02a] md:h-[34px] md:px-4.5 md:text-[13.5px]">
-                    แชร์เรื่องปลอดภัย
-                  </Button>
-                </Link>
-                <Link href="/safety-culture/leaderboard">
-                  <Button className="h-[30px] rounded-full border border-white/35 bg-white/10 px-3.5 text-[12.5px] font-black text-white shadow-none hover:bg-white/15 md:h-[34px] md:px-4.5 md:text-[13.5px]">
-                    ดูอันดับทีม
-                  </Button>
-                </Link>
-              </div>
-            }
           />
         </div>
 
@@ -319,6 +351,170 @@ export default function Page() {
         <div className="mt-[13px] mb-[20px] anim-fade" style={animStyle(0.02)}>
           <SafetyCultureTabs />
         </div>
+
+        {visibleFeedEvents.length > 0 ? (
+          <Card className="mb-4 overflow-hidden rounded-[24px] border border-[#e4d3b3] bg-[#fffdfa] p-4 shadow-[0_8px_18px_rgba(62,36,13,0.04)] anim-fade md:p-5" style={animStyle(0.03)}>
+            <div className="mb-5 flex items-start gap-3 text-[#5c3214]">
+              <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[#fff1c9] text-[#f0a400] shadow-[0_6px_14px_rgba(240,164,0,0.15)]">
+                <Sparkles className="h-5 w-5" strokeWidth={2.2} />
+              </div>
+              <div className="flex-1 pt-0.5">
+                <h2 className="text-[20px] font-black">กิจกรรมปัจจุบัน</h2>
+                <p className="text-[12px] font-bold text-[#8E8A81]">Admin สามารถจัดการกิจกรรม และผู้ใช้กดดูรายละเอียดเพิ่มเติมได้ทันที</p>
+              </div>
+            </div>
+
+            <div className="relative lg:hidden">
+              <button
+                type="button"
+                onClick={() => setMobileActivityStartIndex((current) => Math.max(0, current - 1))}
+                disabled={mobileActivityStartIndex === 0}
+                className="absolute top-1/2 left-[-14px] z-10 inline-flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-[#d7c5a7] bg-white text-[#5c3214] shadow-[0_8px_18px_rgba(62,36,13,0.08)] transition-all duration-200 hover:-translate-x-0.5 hover:bg-[#fff4df] disabled:cursor-not-allowed disabled:opacity-45 disabled:hover:translate-x-0"
+                aria-label="เลื่อนดูกิจกรรมก่อนหน้า"
+              >
+                <ChevronLeft className="h-5 w-5" strokeWidth={2.5} />
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setMobileActivityStartIndex((current) => Math.min(maxMobileActivityStartIndex, current + 1))}
+                disabled={mobileActivityStartIndex >= maxMobileActivityStartIndex}
+                className="absolute top-1/2 right-[-14px] z-10 inline-flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-[#d7c5a7] bg-white text-[#5c3214] shadow-[0_8px_18px_rgba(62,36,13,0.08)] transition-all duration-200 hover:translate-x-0.5 hover:bg-[#fff4df] disabled:cursor-not-allowed disabled:opacity-45 disabled:hover:translate-x-0"
+                aria-label="เลื่อนดูกิจกรรมถัดไป"
+              >
+                <ChevronRight className="h-5 w-5" strokeWidth={2.5} />
+              </button>
+
+              <div className="overflow-hidden rounded-[24px]">
+                <div
+                  className="flex transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] will-change-transform"
+                  style={{ transform: `translateX(-${mobileActivityStartIndex * 100}%)` }}
+                >
+                  {visibleFeedEvents.map((activity) => {
+                const statusMeta = getActivityStatusMeta(activity.status);
+
+                return (
+                  <article
+                    key={activity.id}
+                    className="flex min-w-full flex-[0_0_100%] flex-col rounded-[22px] border border-[#e4d3b3] bg-white shadow-[0_10px_20px_rgba(62,36,13,0.05)]"
+                  >
+                    <div className="relative aspect-[1.2/1] overflow-hidden rounded-t-[22px] bg-[#f7e7cf]">
+                      {activity.imageSrc ? (
+                        <Image src={activity.imageSrc} alt={activity.title} fill className="object-cover" />
+                      ) : (
+                        <div className="flex h-full items-center justify-center px-6 text-center text-[18px] font-black text-[#8E8A81]">
+                          {activity.imageText}
+                        </div>
+                      )}
+                      <span className={cn("absolute top-3 right-3 rounded-full border px-3 py-1 text-[11px] font-black backdrop-blur-[2px]", statusMeta.badgeClass)}>
+                        {statusMeta.label}
+                      </span>
+                    </div>
+
+                    <div className="flex flex-1 flex-col p-4">
+                      <h3 className="text-[18px] font-black text-[#2f261d]">{activity.title}</h3>
+                      <p className="mt-2 line-clamp-3 text-[13.5px] font-bold leading-relaxed text-[#667085]">{activity.summary}</p>
+
+                      <div className="mt-4 flex flex-wrap items-center justify-between gap-2 text-[12px] font-black">
+                        <span className="inline-flex items-center gap-1.5 text-[#7d776c]">
+                          <CalendarDays className="h-4 w-4" strokeWidth={2.1} />
+                          {activity.dateLabel}
+                        </span>
+                        <span className="text-[#18b989]">+{activity.points} คะแนน</span>
+                      </div>
+
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => setExpandedActivity(activity)}
+                        className="mt-4 h-10 rounded-[14px] border-[#d7c5a7] bg-[#faf8f2] text-[13px] font-black text-[#5c3214] hover:bg-[#fff2d8]"
+                      >
+                        ดูรายละเอียด
+                      </Button>
+                    </div>
+                  </article>
+                );
+                  })}
+                </div>
+              </div>
+            </div>
+
+            <div className="relative hidden lg:block">
+              <button
+                type="button"
+                onClick={() => setDesktopActivityStartIndex((current) => Math.max(0, current - 1))}
+                disabled={desktopActivityStartIndex === 0}
+                className="absolute top-1/2 left-[-22px] z-10 inline-flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-[#d7c5a7] bg-white text-[#5c3214] shadow-[0_8px_20px_rgba(62,36,13,0.08)] transition-all duration-200 hover:-translate-x-0.5 hover:bg-[#fff4df] disabled:cursor-not-allowed disabled:opacity-45 disabled:hover:translate-x-0"
+                aria-label="เลื่อนดูกิจกรรมก่อนหน้า"
+              >
+                <ChevronLeft className="h-5 w-5" strokeWidth={2.5} />
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setDesktopActivityStartIndex((current) => Math.min(maxDesktopActivityStartIndex, current + 1))}
+                disabled={desktopActivityStartIndex >= maxDesktopActivityStartIndex}
+                className="absolute top-1/2 right-[-22px] z-10 inline-flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-[#d7c5a7] bg-white text-[#5c3214] shadow-[0_8px_20px_rgba(62,36,13,0.08)] transition-all duration-200 hover:translate-x-0.5 hover:bg-[#fff4df] disabled:cursor-not-allowed disabled:opacity-45 disabled:hover:translate-x-0"
+                aria-label="เลื่อนดูกิจกรรมถัดไป"
+              >
+                <ChevronRight className="h-5 w-5" strokeWidth={2.5} />
+              </button>
+
+              <div className="overflow-hidden rounded-[24px]">
+                <div
+                  className="flex gap-4 transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] will-change-transform"
+                  style={{ transform: `translateX(calc(-${desktopActivityStartIndex} * ((100% - 2rem) / 3 + 1rem)))` }}
+                >
+                  {visibleFeedEvents.map((activity) => {
+                  const statusMeta = getActivityStatusMeta(activity.status);
+
+                  return (
+                    <article
+                      key={activity.id}
+                      className="flex min-w-[calc((100%-2rem)/3)] flex-[0_0_calc((100%-2rem)/3)] flex-col rounded-[22px] border border-[#e4d3b3] bg-white shadow-[0_10px_20px_rgba(62,36,13,0.05)] transition-transform duration-300 hover:-translate-y-1"
+                    >
+                      <div className="relative aspect-[1.2/1] overflow-hidden rounded-t-[22px] bg-[#f7e7cf]">
+                        {activity.imageSrc ? (
+                          <Image src={activity.imageSrc} alt={activity.title} fill className="object-cover" />
+                        ) : (
+                          <div className="flex h-full items-center justify-center px-6 text-center text-[18px] font-black text-[#8E8A81]">
+                            {activity.imageText}
+                          </div>
+                        )}
+                        <span className={cn("absolute top-3 right-3 rounded-full border px-3 py-1 text-[11px] font-black backdrop-blur-[2px]", statusMeta.badgeClass)}>
+                          {statusMeta.label}
+                        </span>
+                      </div>
+
+                      <div className="flex flex-1 flex-col p-4">
+                        <h3 className="text-[18px] font-black text-[#2f261d]">{activity.title}</h3>
+                        <p className="mt-2 line-clamp-3 text-[13.5px] font-bold leading-relaxed text-[#667085]">{activity.summary}</p>
+
+                        <div className="mt-4 flex flex-wrap items-center justify-between gap-2 text-[12px] font-black">
+                          <span className="inline-flex items-center gap-1.5 text-[#7d776c]">
+                            <CalendarDays className="h-4 w-4" strokeWidth={2.1} />
+                            {activity.dateLabel}
+                          </span>
+                          <span className="text-[#18b989]">+{activity.points} คะแนน</span>
+                        </div>
+
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => setExpandedActivity(activity)}
+                          className="mt-4 h-10 rounded-[14px] border-[#d7c5a7] bg-[#faf8f2] text-[13px] font-black text-[#5c3214] hover:bg-[#fff2d8]"
+                        >
+                          ดูรายละเอียด
+                        </Button>
+                      </div>
+                    </article>
+                  );
+                  })}
+                </div>
+              </div>
+            </div>
+          </Card>
+        ) : null}
 
 <div className="grid grid-cols-1 gap-4 md:gap-5 xl:grid-cols-[minmax(0,1.45fr)_minmax(320px,0.82fr)]">
           <div className="flex flex-col gap-3">
@@ -417,12 +613,30 @@ export default function Page() {
                       <div className="relative aspect-[1.34/1] w-full overflow-hidden rounded-[16px] border-[1.5px] border-[#e5cfad] bg-[#f7e7cf]">
                         {activePhoto ? (
                           <>
-                            <Image src={activePhoto.dataUrl} alt="Attached post scene" fill className="object-cover" />
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setExpandedPhoto({
+                                  src: activePhoto.dataUrl,
+                                  alt: `Attached post scene by ${post.author}`,
+                                  postAuthor: post.author,
+                                  index: activePhotoIndex,
+                                  total: postPhotos.length,
+                                })
+                              }
+                              className="absolute inset-0 z-0 cursor-zoom-in"
+                              aria-label="ดูรูปภาพเต็ม"
+                            >
+                              <Image src={activePhoto.dataUrl} alt={`Attached post scene by ${post.author}`} fill className="object-cover" />
+                            </button>
                             {postPhotos.length > 1 && (
                               <span className="absolute right-3 bottom-3 z-10 rounded-full bg-[rgba(53,50,48,0.86)] px-2.5 py-1 text-[13px] font-black text-white">
                                 {activePhotoIndex + 1} / {postPhotos.length}
                               </span>
                             )}
+                            <span className="pointer-events-none absolute top-3 right-3 z-10 rounded-full bg-[rgba(53,50,48,0.72)] px-2.5 py-1 text-[11px] font-black text-white">
+                              แตะเพื่อดูเต็มรูป
+                            </span>
                           </>
                         ) : (
                           <div className="flex h-full flex-col items-center justify-center gap-2 text-[15px] font-black lowercase text-[#8E8A81]">
@@ -590,6 +804,115 @@ export default function Page() {
           </div>
         </div>
       </div>
+
+      {expandedPhoto ? (
+        <div
+          className="fixed inset-0 z-[90] flex items-center justify-center bg-[rgba(20,13,7,0.88)] p-4 backdrop-blur-[4px]"
+          onClick={() => setExpandedPhoto(null)}
+          role="dialog"
+          aria-modal="true"
+          aria-label="ภาพเต็มของโพสต์"
+        >
+          <div
+            className="relative flex max-h-[92vh] w-fit max-w-[calc(100vw-2rem)] flex-col gap-3"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="flex items-center justify-between gap-3 text-white">
+              <div className="min-w-0">
+                <div className="truncate text-[15px] font-extrabold">{expandedPhoto.postAuthor}</div>
+                <div className="text-[12px] font-bold text-white/70">
+                  {expandedPhoto.total > 1 ? `รูปที่ ${expandedPhoto.index + 1} จาก ${expandedPhoto.total}` : "ภาพเต็ม"}
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setExpandedPhoto(null)}
+                className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/18 bg-white/10 text-white transition-colors hover:bg-white/16"
+                aria-label="ปิดภาพเต็ม"
+              >
+                <X className="h-5 w-5" strokeWidth={2.4} />
+              </button>
+            </div>
+
+            <div className="flex max-h-[calc(92vh-56px)] max-w-full items-center justify-center overflow-hidden rounded-[24px] border border-white/10 bg-[rgba(255,255,255,0.04)] shadow-[0_20px_50px_rgba(0,0,0,0.35)]">
+              <img
+                src={expandedPhoto.src}
+                alt={expandedPhoto.alt}
+                className="block max-h-[78vh] max-w-full object-contain"
+              />
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {expandedActivity ? (
+        <div
+          className="fixed inset-0 z-[92] flex items-center justify-center bg-[rgba(20,13,7,0.82)] p-3 animate-[fadeIn_0.2s_ease-out_both] md:p-5"
+          onClick={() => setExpandedActivity(null)}
+          role="dialog"
+          aria-modal="true"
+          aria-label="รายละเอียดกิจกรรม"
+        >
+          <div
+            className="relative flex max-h-[94vh] w-full max-w-[920px] flex-col overflow-hidden rounded-[28px] border border-[#e4d3b3] bg-[#fffdfa] shadow-[0_24px_60px_rgba(0,0,0,0.28)] animate-[scaleUp_0.24s_cubic-bezier(0.175,0.885,0.32,1.12)_both]"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="flex items-start justify-between gap-4 border-b border-[#eee2cb] px-5 py-4 md:px-7 md:py-5">
+              <div className="min-w-0">
+                <h3 className="text-[26px] font-black text-[#2f261d]">{expandedActivity.title}</h3>
+                <p className="mt-1 text-[13px] font-bold text-[#667085]">{expandedActivity.subtitle}</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setExpandedActivity(null)}
+                className="inline-flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full border border-[#ddd9cd] bg-white text-[#667085] transition-colors hover:bg-[#faf8f2]"
+                aria-label="ปิดรายละเอียดกิจกรรม"
+              >
+                <X className="h-5 w-5" strokeWidth={2.3} />
+              </button>
+            </div>
+
+            <div className="overflow-y-auto px-5 py-5 md:px-7 md:py-6">
+              <div className="grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,1.05fr)_minmax(280px,0.95fr)]">
+                <div className="overflow-hidden rounded-[24px] border border-[#eee2cb] bg-[#faf8f2]">
+                  {expandedActivity.imageSrc ? (
+                    <img src={expandedActivity.imageSrc} alt={expandedActivity.title} className="block w-full object-cover" />
+                  ) : (
+                    <div className="flex min-h-[320px] items-center justify-center px-8 text-center text-[22px] font-black text-[#8E8A81]">
+                      {expandedActivity.imageText}
+                    </div>
+                  )}
+                </div>
+
+                <div className="grid grid-cols-1 gap-4">
+                  <Card className="rounded-[22px] border-[#e4d3b3] bg-white p-5 shadow-none">
+                    <div className="mb-3 text-[18px] font-black text-[#2f261d]">รายละเอียดของกิจกรรมนี้:</div>
+                    <p className="text-[15px] font-bold leading-relaxed text-[#667085]">{expandedActivity.details}</p>
+                    <div className="mt-4 inline-flex items-center gap-2 rounded-full bg-[#effff6] px-3 py-1.5 text-[13px] font-black text-[#18b989]">
+                      <Trophy className="h-4 w-4" strokeWidth={2.2} />
+                      Points: {expandedActivity.points}
+                    </div>
+                  </Card>
+
+                  <Card className="rounded-[22px] border-[#e4d3b3] bg-white p-5 shadow-none">
+                    <div className="mb-3 text-[18px] font-black text-[#2f261d]">สถานะกิจกรรม:</div>
+                    <div className="flex flex-col items-center justify-center gap-3 rounded-[18px] border border-[#eee2cb] bg-[#faf8f2] px-4 py-5 text-center">
+                      <Clock3 className={cn("h-14 w-14", getActivityStatusMeta(expandedActivity.status).iconClass)} strokeWidth={1.8} />
+                      <div className="text-[20px] font-black text-[#5c3214]">{getActivityStatusMeta(expandedActivity.status).label}</div>
+                      <p className="max-w-[260px] text-[14px] font-bold leading-relaxed text-[#667085]">
+                        {getActivityStatusMeta(expandedActivity.status).note}
+                      </p>
+                      <span className="rounded-full border border-[#ddd9cd] bg-white px-3 py-1 text-[12px] font-black text-[#5c3214]">
+                        {expandedActivity.dateLabel}
+                      </span>
+                    </div>
+                  </Card>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </AppShell>
   );
 }

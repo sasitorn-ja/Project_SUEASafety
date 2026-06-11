@@ -82,6 +82,7 @@ export type SafetyCultureEventConfig = {
   headline: string;
   supportingText: string;
   bannerNote: string;
+  bannerVisible: boolean;
   status: SafetyCultureEventStatus;
   bonusMode: SafetyCultureBonusMode;
   multiplier: number;
@@ -94,6 +95,23 @@ export type SafetyCultureEventConfig = {
 };
 
 export type SafetyCultureEventPhase = "draft" | "upcoming" | "live" | "ended" | "paused";
+export type SafetyCultureFeedEventStatus = "open" | "closed";
+
+export type SafetyCultureFeedEvent = {
+  id: string;
+  title: string;
+  subtitle: string;
+  summary: string;
+  details: string;
+  imageSrc: string | null;
+  imageText: string;
+  startDate?: string;
+  endDate?: string;
+  dateLabel: string;
+  points: number;
+  status: SafetyCultureFeedEventStatus;
+  published: boolean;
+};
 
 export type LeaderboardTeam = {
   id: string;
@@ -130,6 +148,7 @@ type AppState = {
   notification: NotificationType;
   currentUserPoints: number;
   safetyCultureEvent: SafetyCultureEventConfig;
+  feedEvents: SafetyCultureFeedEvent[];
   teamStandings: LeaderboardTeam[];
   personalRankings: LeaderboardPerson[];
   rewardsCatalog: RewardCatalogItem[];
@@ -150,6 +169,7 @@ type AppActions = {
   toggleLike: (postId: number) => void;
   addComment: (postId: number, text: string) => void;
   updateSafetyCultureEvent: (data: SafetyCultureEventConfig) => void;
+  updateFeedEvents: (events: SafetyCultureFeedEvent[]) => void;
   updateTeamStandings: (teams: LeaderboardTeam[]) => void;
   updatePersonalRankings: (rankings: LeaderboardPerson[]) => void;
   updateRewardsCatalog: (rewards: RewardCatalogItem[]) => void;
@@ -225,6 +245,7 @@ const INITIAL_POSTS: Post[] = [
 const STORAGE_KEYS = {
   posts: "safety-hub:safety-culture-posts",
   event: "safety-hub:safety-culture-event",
+  feedEvents: "safety-hub:safety-culture-feed-events",
   currentUserPoints: "safety-hub:safety-culture-current-user-points",
   teamStandings: "safety-hub:safety-culture-team-standings",
   personalRankings: "safety-hub:safety-culture-personal-rankings",
@@ -239,6 +260,7 @@ const DEFAULT_SAFETY_CULTURE_EVENT: SafetyCultureEventConfig = {
   headline: "Happy Hour Bonus x1.5",
   supportingText: "แชร์เรื่องความปลอดภัยช่วง 14:00 - 16:00 แล้วรับคะแนนคูณเพิ่มทันที",
   bannerNote: "เน้นกิจกรรมโพสต์ดีๆ ระหว่างกะบ่าย เพื่อดึงคนกลับเข้ามาใช้งานอีกครั้ง",
+  bannerVisible: true,
   status: "scheduled",
   bonusMode: "multiplier",
   multiplier: 1.5,
@@ -249,6 +271,57 @@ const DEFAULT_SAFETY_CULTURE_EVENT: SafetyCultureEventConfig = {
   endTime: "16:00",
   enabledActions: ["approved-post", "comment"],
 };
+
+const DEFAULT_FEED_EVENTS: SafetyCultureFeedEvent[] = [
+  {
+    id: "activity-1",
+    title: "Walk Safe Challenge",
+    subtitle: "Activity Details and Submission",
+    summary: "ชวนทีมแชร์การเดินตรวจพื้นที่และแนวทางแก้ไขจุดเสี่ยงที่พบในหน้างานประจำวัน",
+    details:
+      "หมวดกิจกรรม: Line Walk | รายละเอียดกิจกรรม: ถ่ายภาพก่อนและหลังการปรับปรุงจุดเสี่ยง พร้อมเขียนสรุปสิ่งที่แก้ไขและผลลัพธ์ที่เกิดขึ้น | เงื่อนไข: ส่งได้ทีมละ 1 ครั้งต่อสัปดาห์",
+    imageSrc: "/images/mascots/gallery/line-walk-1.png",
+    imageText: "Walk Safe Challenge",
+    startDate: "2026-06-10",
+    endDate: "2026-06-25",
+    dateLabel: "10 Jun - 25 Jun",
+    points: 100,
+    status: "open",
+    published: true,
+  },
+  {
+    id: "activity-2",
+    title: "PPE Buddy Check",
+    subtitle: "Activity Details and Submission",
+    summary: "จับคู่เพื่อนร่วมงานตรวจ PPE ก่อนเริ่มกะและแชร์วิธีเตือนกันอย่างสร้างสรรค์",
+    details:
+      "หมวดกิจกรรม: PPE | รายละเอียดกิจกรรม: อัปโหลดภาพการตรวจ PPE คู่กันก่อนเริ่มงาน พร้อมระบุสิ่งที่ตรวจพบและแนวทางแก้ไข | เงื่อนไข: ส่งได้วันละ 1 ครั้งต่อคน",
+    imageSrc: "/images/mascots/gallery/ppe-1.png",
+    imageText: "PPE Buddy Check",
+    startDate: "2026-06-12",
+    endDate: "2026-06-30",
+    dateLabel: "12 Jun - 30 Jun",
+    points: 120,
+    status: "open",
+    published: true,
+  },
+  {
+    id: "activity-3",
+    title: "5S Flash Mission",
+    subtitle: "Activity Details and Submission",
+    summary: "เคลียร์พื้นที่กองวัสดุและแชร์ before/after เพื่อสร้างแรงบันดาลใจให้ทีมอื่นทำตาม",
+    details:
+      "หมวดกิจกรรม: 5S | รายละเอียดกิจกรรม: แนบภาพก่อนและหลังการจัดระเบียบพื้นที่ พร้อมอธิบายว่าลดความเสี่ยงหรือเพิ่มความคล่องตัวอย่างไร | เงื่อนไข: จำกัด 2 ผลงานต่อแผนกต่อเดือน",
+    imageSrc: "/images/mascots/gallery/five-s-1.png",
+    imageText: "5S Flash Mission",
+    startDate: "2026-06-15",
+    endDate: "2026-07-05",
+    dateLabel: "15 Jun - 05 Jul",
+    points: 100,
+    status: "closed",
+    published: true,
+  },
+];
 
 const LEGACY_DEFAULT_EVENT_RANGE = {
   startDate: "2026-06-12",
@@ -333,6 +406,24 @@ function getEventTimestamp(date: string, time: string) {
   const parsed = new Date(`${date}T${time}`);
   const timestamp = parsed.getTime();
   return Number.isNaN(timestamp) ? null : timestamp;
+}
+
+function formatFeedEventDateLabel(startDate?: string, endDate?: string) {
+  if (!startDate || !endDate) return "TBD";
+
+  const start = new Date(`${startDate}T00:00:00`);
+  const end = new Date(`${endDate}T00:00:00`);
+
+  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) {
+    return "TBD";
+  }
+
+  const formatter = new Intl.DateTimeFormat("en-GB", {
+    day: "2-digit",
+    month: "short",
+  });
+
+  return `${formatter.format(start)} - ${formatter.format(end)}`;
 }
 
 export function getSafetyCultureEventPhase(event: SafetyCultureEventConfig, now = Date.now()): SafetyCultureEventPhase {
@@ -455,6 +546,31 @@ function createDefaultRewardsCatalog() {
   return normalizeRewardsCatalog(REWARDS_LIST.map((reward) => ({ ...reward })));
 }
 
+function normalizeFeedEvents(events: SafetyCultureFeedEvent[]): SafetyCultureFeedEvent[] {
+  return events.map((event, index) => ({
+    id: event.id || `activity-${index + 1}`,
+    title: event.title || `กิจกรรม ${index + 1}`,
+    subtitle: event.subtitle || "Activity Details and Submission",
+    summary: event.summary || "รายละเอียดกิจกรรมจะปรากฏที่นี่",
+    details: event.details || event.summary || "รายละเอียดกิจกรรมจะปรากฏที่นี่",
+    imageSrc: event.imageSrc ?? null,
+    imageText: event.imageText || event.title || `Activity ${index + 1}`,
+    startDate: event.startDate || "",
+    endDate: event.endDate || "",
+    dateLabel:
+      formatFeedEventDateLabel(event.startDate, event.endDate) !== "TBD"
+        ? formatFeedEventDateLabel(event.startDate, event.endDate)
+        : event.dateLabel || "TBD",
+    points: Math.max(0, Number(event.points) || 0),
+    status: event.status === "closed" ? "closed" : "open",
+    published: event.published !== false,
+  }));
+}
+
+function createDefaultFeedEvents() {
+  return normalizeFeedEvents(DEFAULT_FEED_EVENTS);
+}
+
 export function AppProviders({ children }: { children: ReactNode }) {
   const [completedSteps, setCompletedSteps] = useState<number[]>([]);
   const [healthData, setHealthData] = useState<HealthData>(null);
@@ -466,6 +582,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
   const [notification, setNotification] = useState<NotificationType>(null);
   const [currentUserPoints, setCurrentUserPoints] = useState(INITIAL_CURRENT_USER_POINTS);
   const [safetyCultureEvent, setSafetyCultureEvent] = useState<SafetyCultureEventConfig>(() => createDefaultSafetyCultureEvent());
+  const [feedEvents, setFeedEvents] = useState<SafetyCultureFeedEvent[]>(() => createDefaultFeedEvents());
   const [teamStandings, setTeamStandings] = useState<LeaderboardTeam[]>(() => createDefaultTeamStandings());
   const [personalRankings, setPersonalRankings] = useState<LeaderboardPerson[]>(() => createDefaultPersonalRankings());
   const [rewardsCatalog, setRewardsCatalog] = useState<RewardCatalogItem[]>(() => createDefaultRewardsCatalog());
@@ -475,6 +592,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
     try {
       const storedPosts = window.localStorage.getItem(STORAGE_KEYS.posts);
       const storedEvent = window.localStorage.getItem(STORAGE_KEYS.event);
+      const storedFeedEvents = window.localStorage.getItem(STORAGE_KEYS.feedEvents);
       const storedCurrentUserPoints = window.localStorage.getItem(STORAGE_KEYS.currentUserPoints);
       const storedTeamStandings = window.localStorage.getItem(STORAGE_KEYS.teamStandings);
       const storedPersonalRankings = window.localStorage.getItem(STORAGE_KEYS.personalRankings);
@@ -490,6 +608,13 @@ export function AppProviders({ children }: { children: ReactNode }) {
       if (storedEvent) {
         const parsedEvent = JSON.parse(storedEvent) as Partial<SafetyCultureEventConfig>;
         setSafetyCultureEvent(normalizeStoredSafetyCultureEvent(parsedEvent));
+      }
+
+      if (storedFeedEvents) {
+        const parsedFeedEvents = JSON.parse(storedFeedEvents) as SafetyCultureFeedEvent[];
+        if (Array.isArray(parsedFeedEvents) && parsedFeedEvents.length > 0) {
+          setFeedEvents(normalizeFeedEvents(parsedFeedEvents));
+        }
       }
 
       if (storedCurrentUserPoints) {
@@ -539,6 +664,14 @@ export function AppProviders({ children }: { children: ReactNode }) {
       // Ignore persistence failures and keep in-memory state.
     }
   }, [safetyCultureEvent]);
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(STORAGE_KEYS.feedEvents, JSON.stringify(feedEvents));
+    } catch {
+      // Ignore persistence failures and keep in-memory state.
+    }
+  }, [feedEvents]);
 
   useEffect(() => {
     try {
@@ -663,6 +796,10 @@ export function AppProviders({ children }: { children: ReactNode }) {
     setSafetyCultureEvent(data);
   }, []);
 
+  const updateFeedEvents = useCallback((events: SafetyCultureFeedEvent[]) => {
+    setFeedEvents(normalizeFeedEvents(events));
+  }, []);
+
   const updateTeamStandings = useCallback((teams: LeaderboardTeam[]) => {
     setTeamStandings(normalizeTeamStandings(teams));
   }, []);
@@ -698,6 +835,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
     notification,
     currentUserPoints,
     safetyCultureEvent,
+    feedEvents,
     teamStandings,
     personalRankings,
     rewardsCatalog,
@@ -718,6 +856,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
     toggleLike,
     addComment,
     updateSafetyCultureEvent,
+    updateFeedEvents,
     updateTeamStandings,
     updatePersonalRankings,
     updateRewardsCatalog,
