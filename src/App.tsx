@@ -805,10 +805,12 @@ export default function App() {
             onScroll={handleScroll}
               style={{
                 position: "absolute", inset: 0,
-                paddingTop: 52,
+                paddingTop: 48,
                 paddingBottom: isLinewalkQuestionScreen
                   ? "env(safe-area-inset-bottom)"
-                  : "calc(112px + env(safe-area-inset-bottom))",
+                  : (pathname === "/checkin"
+                      ? "calc(76px + env(safe-area-inset-bottom))"
+                      : "calc(112px + env(safe-area-inset-bottom))"),
                 overflow: isFixedContent ? "hidden" : "auto",
                 minWidth: 0,
               }}

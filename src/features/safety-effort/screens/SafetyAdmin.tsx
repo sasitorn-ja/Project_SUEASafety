@@ -9,6 +9,7 @@ import {
   restoreChecklistDefaults,
   saveChecklistDraft,
 } from "@/features/safety-effort/config/checklists";
+import { GripVertical } from "lucide-react";
 
 const T = {
   page: "var(--background)",
@@ -149,40 +150,22 @@ function PreviewCard({ question }) {
         )}
       </div>
 
-      <div style={{ display: "grid", gap: 8 }}>
-        {question.guidelines.length ? (
+      <div style={{ display: "grid", gap: 4 }}>
+        {question.guidelines.length && (question.guidelines.length > 1 || question.guidelines[0] !== "") ? (
           question.guidelines.map((line, index) => (
             <div
               key={`${question.id}-preview-${index}`}
               style={{
-                display: "grid",
-                gridTemplateColumns: "22px 1fr",
-                gap: 10,
-                alignItems: "start",
                 fontSize: 14,
                 lineHeight: 1.6,
+                minHeight: line.trim() === "" ? "1.2em" : "auto",
               }}
             >
-              <div
-                style={{
-                  width: 22,
-                  height: 22,
-                  borderRadius: 999,
-                  display: "grid",
-                  placeItems: "center",
-                  background: T.accentSoft,
-                  color: T.accentDeep,
-                  fontWeight: 800,
-                  fontSize: 11,
-                }}
-              >
-                {index + 1}
-              </div>
-              <div>{line}</div>
+              {line}
             </div>
           ))
         ) : (
-          <div style={{ fontSize: 14, color: T.sub }}>ยังไม่มี guideline สำหรับข้อนี้</div>
+          <div style={{ fontSize: 14, color: T.sub }}>ยังไม่มีรายละเอียดสำหรับข้อนี้</div>
         )}
       </div>
     </div>
@@ -198,6 +181,21 @@ export default function SafetyAdmin() {
   const [deleteTargetId, setDeleteTargetId] = useState(null);
   const [lastSavedAt, setLastSavedAt] = useState("");
   const [showPreview, setShowPreview] = useState(false);
+  const [draggedId, setDraggedId] = useState(null);
+  const [dragOverId, setDragOverId] = useState(null);
+  const [backdateMode, setBackdateMode] = useState(() => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("safety_backdate_mode") || "today";
+    }
+    return "today";
+  });
+
+  const handleToggleMode = (mode) => {
+    setBackdateMode(mode);
+    if (typeof window !== "undefined") {
+      localStorage.setItem("safety_backdate_mode", mode);
+    }
+  };
 
   const [width, setWidth] = useState(typeof window !== "undefined" ? window.innerWidth : 1024);
   const isMobile = width < 768;
@@ -244,7 +242,7 @@ export default function SafetyAdmin() {
       id: createQuestionId(selectedType, "หัวข้อใหม่", existingIds),
       title: "หัวข้อใหม่",
       guideTitle: "",
-      guidelines: ["เพิ่ม guideline ที่นี่"],
+      guidelines: ["เพิ่มรายละเอียดที่นี่"],
     };
 
     updateCurrentList((list) => [...list, newQuestion]);
@@ -406,6 +404,46 @@ export default function SafetyAdmin() {
             alignItems: isMobile ? "stretch" : "center",
             gap: 12
           }}>
+            {/* Toggle switch for Today vs Backdate */}
+            <div style={{ display: "flex", alignItems: "center", gap: 8, background: "#f5f3f0", padding: 4, borderRadius: 12, border: `1px solid ${T.line}` }}>
+              <button
+                type="button"
+                onClick={() => handleToggleMode("today")}
+                style={{
+                  height: 28,
+                  padding: "0 12px",
+                  borderRadius: 8,
+                  border: "none",
+                  background: backdateMode === "today" ? T.accent : "transparent",
+                  color: backdateMode === "today" ? "#fff" : T.sub,
+                  fontWeight: 800,
+                  fontSize: 12,
+                  cursor: "pointer",
+                  transition: "all 0.2s",
+                }}
+              >
+                ทำวันนี้
+              </button>
+              <button
+                type="button"
+                onClick={() => handleToggleMode("backdate")}
+                style={{
+                  height: 28,
+                  padding: "0 12px",
+                  borderRadius: 8,
+                  border: "none",
+                  background: backdateMode === "backdate" ? T.accent : "transparent",
+                  color: backdateMode === "backdate" ? "#fff" : T.sub,
+                  fontWeight: 800,
+                  fontSize: 12,
+                  cursor: "pointer",
+                  transition: "all 0.2s",
+                }}
+              >
+                ทำย้อนหลัง
+              </button>
+            </div>
+
             <div
               style={{
                 display: "inline-flex",
@@ -464,35 +502,109 @@ export default function SafetyAdmin() {
                   <div style={{ fontSize: 13, fontWeight: 800, color: T.accentDeep }}>รายการข้อประเมิน</div>
                   <div style={{ fontSize: 12.5, color: T.sub }}>{LOCATION_TYPE_LABELS[selectedType]}</div>
                 </div>
-                <button type="button" onClick={handleAddQuestion} style={{ ...buttonPrimaryStyle, height: 32, padding: "0 12px", borderRadius: 8, fontSize: 12.5, boxShadow: "none" }}>
-                  + เพิ่มข้อ
-                </button>
+                <div style={{ display: "flex", gap: 6 }}>
+                  <button
+                    type="button"
+                    onClick={handleDuplicateQuestion}
+                    disabled={!selectedQuestion}
+                    style={{
+                      ...buttonGhostStyle,
+                      height: 32,
+                      padding: "0 12px",
+                      borderRadius: 8,
+                      fontSize: 12.5,
+                      opacity: !selectedQuestion ? 0.5 : 1,
+                      cursor: !selectedQuestion ? "not-allowed" : "pointer",
+                    }}
+                  >
+                    Duplicate
+                  </button>
+                  <button type="button" onClick={handleAddQuestion} style={{ ...buttonPrimaryStyle, height: 32, padding: "0 12px", borderRadius: 8, fontSize: 12.5, boxShadow: "none" }}>
+                    + เพิ่มข้อ
+                  </button>
+                </div>
               </div>
 
-              <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="ค้นหาชื่อข้อหรือ guideline" style={{ ...inputStyle, minHeight: 38, borderRadius: 10, fontSize: 13 }} />
+              <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="ค้นหาชื่อข้อหรือรายละเอียด" style={{ ...inputStyle, minHeight: 38, borderRadius: 10, fontSize: 13 }} />
             </div>
 
             <div style={{ flex: isMobile ? "none" : 1, display: "flex", flexDirection: "column", gap: 8, overflowY: isMobile ? "visible" : "auto", marginTop: 12, paddingRight: 4 }}>
               {filteredList.map((item, index) => {
                 const active = item.id === selectedQuestionId;
+                const isDragging = draggedId === item.id;
+                const isOver = dragOverId === item.id;
+
                 return (
-                  <button
+                  <div
                     key={item.id}
-                    type="button"
+                    role="button"
+                    tabIndex={0}
+                    draggable
+                    onDragStart={(e) => {
+                      setDraggedId(item.id);
+                      e.dataTransfer.effectAllowed = "move";
+                      e.dataTransfer.setData("text/plain", item.id);
+                    }}
+                    onDragOver={(e) => {
+                      e.preventDefault();
+                    }}
+                    onDragEnter={() => {
+                      if (draggedId && draggedId !== item.id) {
+                        setDragOverId(item.id);
+                      }
+                    }}
+                    onDragLeave={() => {
+                      setDragOverId((prev) => (prev === item.id ? null : prev));
+                    }}
+                    onDragEnd={() => {
+                      setDraggedId(null);
+                      setDragOverId(null);
+                    }}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      if (!draggedId || draggedId === item.id) return;
+
+                      updateCurrentList((list) => {
+                        const fromIndex = list.findIndex((x) => x.id === draggedId);
+                        const toIndex = list.findIndex((x) => x.id === item.id);
+                        if (fromIndex === -1 || toIndex === -1) return list;
+
+                        const next = [...list];
+                        const [draggedItem] = next.splice(fromIndex, 1);
+                        next.splice(toIndex, 0, draggedItem);
+                        return next;
+                      });
+                      setDraggedId(null);
+                      setDragOverId(null);
+                    }}
                     onClick={() => {
                       setSelectedQuestionId(item.id);
                       if (isMobile) setMobileActiveView("editor");
                     }}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        setSelectedQuestionId(item.id);
+                        if (isMobile) setMobileActiveView("editor");
+                      }
+                    }}
                     style={{
                       textAlign: "left",
-                      border: active ? `1px solid ${T.accent}` : `1px solid ${T.line}`,
+                      border: isOver
+                        ? `2px dashed ${T.accent}`
+                        : active
+                          ? `1px solid ${T.accent}`
+                          : `1px solid ${T.line}`,
                       background: active ? "var(--c-fff5de)" : "#fff",
                       borderRadius: 14,
                       padding: 10,
                       display: "grid",
                       gap: 4,
-                      cursor: "pointer",
+                      cursor: isDragging ? "grabbing" : "grab",
                       fontFamily: "inherit",
+                      opacity: isDragging ? 0.4 : 1,
+                      transition: "all 0.15s ease",
+                      transform: isOver ? "scale(0.98)" : "none",
+                      outline: "none",
                     }}
                   >
                     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
@@ -512,10 +624,10 @@ export default function SafetyAdmin() {
                       >
                         {index + 1}
                       </span>
-                      <span style={{ fontSize: 11, color: T.sub }}>{item.guidelines.length} guidelines</span>
+                      <GripVertical size={14} style={{ color: T.sub, opacity: 0.6, cursor: "grab" }} />
                     </div>
                     <div style={{ fontSize: 13, fontWeight: 800, lineHeight: 1.4, color: T.ink }}>{item.title}</div>
-                  </button>
+                  </div>
                 );
               })}
 
@@ -589,9 +701,6 @@ export default function SafetyAdmin() {
                       </div>
                     </div>
                     <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap", justifyContent: isMobile ? "flex-start" : "flex-end" }}>
-                      <button type="button" onClick={() => handleMove(-1)} style={{ ...buttonGhostStyle, height: 30, borderRadius: 8, fontSize: 11.5, padding: "0 10px" }}>ย้ายขึ้น</button>
-                      <button type="button" onClick={() => handleMove(1)} style={{ ...buttonGhostStyle, height: 30, borderRadius: 8, fontSize: 11.5, padding: "0 10px" }}>ย้ายลง</button>
-                      <button type="button" onClick={handleDuplicateQuestion} style={{ ...buttonGhostStyle, height: 30, borderRadius: 8, fontSize: 11.5, padding: "0 10px" }}>Duplicate</button>
                       <button type="button" onClick={() => setDeleteTargetId(selectedQuestion.id)} style={{ ...buttonDangerStyle, height: 30, borderRadius: 8, fontSize: 11.5, padding: "0 10px" }}>ลบข้อ</button>
                     </div>
                   </div>
@@ -656,8 +765,8 @@ export default function SafetyAdmin() {
                 >
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, flexShrink: 0 }}>
                     <div>
-                      <div style={{ fontSize: 13, fontWeight: 800, color: T.accentDeep }}>Guidelines & Preview</div>
-                      <div style={{ fontSize: 12, color: T.sub }}>สลับการทำงานระหว่างการแก้ไขข้อความและดูพรีวิวแบบเรียลไทม์</div>
+                      <div style={{ fontSize: 13, fontWeight: 800, color: T.accentDeep }}>รายละเอียด & Preview</div>
+                      <div style={{ fontSize: 12, color: T.sub }}>ใส่รายละเอียดข้อประเมินแยกกันทีละบรรทัด (กด Enter เพื่อขึ้นบรรทัดใหม่)</div>
                     </div>
                     <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                       <div style={{ display: "flex", background: T.soft, borderRadius: 8, padding: 3, border: `1px solid ${T.line}` }}>
@@ -698,15 +807,6 @@ export default function SafetyAdmin() {
                           Preview จริง
                         </button>
                       </div>
-                      {!showPreview && (
-                        <button
-                          type="button"
-                          onClick={() => updateQuestion(selectedQuestion.id, (item) => ({ ...item, guidelines: [...item.guidelines, "เพิ่ม guideline ใหม่"] }))}
-                          style={{ ...buttonPrimaryStyle, height: 32, borderRadius: 8, fontSize: 12, padding: "0 12px", boxShadow: "none" }}
-                        >
-                          + เพิ่ม guideline
-                        </button>
-                      )}
                     </div>
                   </div>
 
@@ -715,84 +815,30 @@ export default function SafetyAdmin() {
                       <PreviewCard question={selectedQuestion} />
                     </div>
                   ) : (
-                    <div style={{ display: "flex", flexDirection: "column", gap: 8, overflowY: isMobile ? "visible" : "auto", flex: isMobile ? "none" : 1, paddingRight: 4 }}>
-                      {selectedQuestion.guidelines.map((line, index) => (
-                        <div
-                          key={`${selectedQuestion.id}-guide-${index}`}
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: 10,
-                            border: `1px solid ${T.line}`,
-                            borderRadius: 12,
-                            background: "var(--brand-surface)",
-                            padding: "6px 12px",
-                          }}
-                        >
-                          <div
-                            style={{
-                              width: 24,
-                              height: 24,
-                              borderRadius: 6,
-                              background: T.accentSoft,
-                              display: "grid",
-                              placeItems: "center",
-                              fontWeight: 800,
-                              color: T.accentDeep,
-                              fontSize: 11,
-                              flexShrink: 0,
-                            }}
-                          >
-                            {index + 1}
-                          </div>
-
-                          <textarea
-                            value={line}
-                            onChange={(event) =>
-                              updateQuestion(selectedQuestion.id, (item) => ({
-                                ...item,
-                                guidelines: item.guidelines.map((entry, entryIndex) => (entryIndex === index ? event.target.value : entry)),
-                              }))
-                            }
-                            style={{
-                              ...inputStyle,
-                              minHeight: 40,
-                              height: 40,
-                              resize: "vertical",
-                              paddingTop: 8,
-                              paddingBottom: 8,
-                              fontSize: 13,
-                              borderRadius: 8,
-                              flex: 1,
-                            }}
-                          />
-
-                          <div style={{ display: "flex", gap: isMobile ? 2 : 4, flexShrink: 0 }}>
-                            <button
-                              type="button"
-                              onClick={() => updateQuestion(selectedQuestion.id, (item) => ({ ...item, guidelines: moveItem(item.guidelines, index, index - 1) }))}
-                              style={{ ...buttonGhostStyle, height: 28, padding: isMobile ? "0 6px" : "0 8px", fontSize: isMobile ? 10.5 : 11, borderRadius: 6 }}
-                            >
-                              ขึ้น
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => updateQuestion(selectedQuestion.id, (item) => ({ ...item, guidelines: moveItem(item.guidelines, index, index + 1) }))}
-                              style={{ ...buttonGhostStyle, height: 28, padding: isMobile ? "0 6px" : "0 8px", fontSize: isMobile ? 10.5 : 11, borderRadius: 6 }}
-                            >
-                              ลง
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => updateQuestion(selectedQuestion.id, (item) => ({ ...item, guidelines: item.guidelines.filter((_, entryIndex) => entryIndex !== index) }))}
-                              style={{ ...buttonDangerStyle, height: 28, padding: isMobile ? "0 6px" : "0 8px", fontSize: isMobile ? 10.5 : 11, borderRadius: 6 }}
-                            >
-                              ลบ
-                            </button>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
+                    <textarea
+                      value={selectedQuestion.guidelines.join("\n")}
+                      onChange={(event) =>
+                        updateQuestion(selectedQuestion.id, (item) => ({
+                          ...item,
+                          guidelines: event.target.value.split("\n"),
+                        }))
+                      }
+                      placeholder="ใส่รายละเอียดการตรวจแต่ละข้อแยกตามบรรทัด"
+                      style={{
+                        ...inputStyle,
+                        flex: 1,
+                        minHeight: 180,
+                        height: "100%",
+                        resize: "vertical",
+                        padding: "12px 14px",
+                        fontSize: 13,
+                        lineHeight: 1.6,
+                        borderRadius: 14,
+                        border: `1px solid ${T.lineStrong}`,
+                        fontFamily: "inherit",
+                        outline: "none",
+                      }}
+                    />
                   )}
                 </div>
               </>

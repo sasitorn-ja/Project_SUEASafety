@@ -39,7 +39,7 @@ const T = {
 const categories = [
   {
     id: "A",
-    title: "ตรวจ Safety Audit / Caring",
+    title: "ตรวจ Linewalk / Safety Contact",
     subtitle: "เลือกหมวดกิจกรรม >> Check-in สถานที่ >> เลือกวัน >> Linewalk หรือ Safety Contact",
     points: 10,
     steps: [
@@ -552,12 +552,8 @@ export default function Category() {
 
               <div style={{ display: "grid", gap: 12 }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <span style={{ fontSize: 13, color: T.foreground2, fontWeight: 600 }}>ชั่วโมงทำงานปลอดภัยสะสม:</span>
-                  <span style={{ fontSize: 14, fontWeight: 800, color: T.ok }}>1,250,480 ชม.</span>
-                </div>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                   <span style={{ fontSize: 13, color: T.foreground2, fontWeight: 600 }}>การตรวจเดือนนี้สำเร็จแล้ว:</span>
-                  <span style={{ fontSize: 14, fontWeight: 800, color: T.foreground }}>48 ครั้ง</span>
+                  <span style={{ fontSize: 14, fontWeight: 800, color: T.foreground }}>9 ครั้ง</span>
                 </div>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                   <span style={{ fontSize: 13, color: T.foreground2, fontWeight: 600 }}>ระดับความเสี่ยงภาพรวม:</span>
@@ -571,7 +567,7 @@ export default function Category() {
                       borderRadius: 6,
                     }}
                   >
-                    ต่ำมาก (Class A)
+                    ต่ำมาก
                   </span>
                 </div>
               </div>

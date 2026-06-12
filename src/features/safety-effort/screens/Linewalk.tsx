@@ -81,6 +81,19 @@ function normalizeChecklistType(type) {
   return "โรงงาน";
 }
 
+function getOptimalColumns(total: number): number {
+  if (total <= 5) return total;
+  if (total === 6) return 3;
+  if (total === 7) return 4;
+  if (total === 8) return 4;
+  if (total === 9) return 5;
+  if (total === 10) return 5;
+  if (total % 5 === 0) return 5;
+  if (total % 4 === 0) return 4;
+  if (total % 3 === 0) return 3;
+  return 5;
+}
+
 // ─── Icons ──────────────────────────────────────────────────────────────────
 const IcoBack    = () => <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>;
 const IcoShield  = () => <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>;
@@ -262,9 +275,9 @@ const STYLES = `
   .lw-accordion.active .lw-accordion-arrow { transform:rotate(180deg); }
 
   .lw-status-btn { display:flex; align-items:center; gap:8px; padding:8px 16px; border-radius:20px; border:1px solid rgba(14,15,18,0.12); background:#fff; cursor:pointer; font-family:'Prompt',sans-serif; font-size:12px; font-weight:700; transition:all 0.2s; }
-  .lw-status-btn.safe { color:${T.ok}; } .lw-status-btn.safe.active { background:#e6f7ed; border-color:${T.ok}; }
-  .lw-status-btn.unsafe-cond { color:${T.danger}; } .lw-status-btn.unsafe-cond.active { background:#fee2e2; border-color:${T.danger}; }
-  .lw-status-btn.unsafe-act { color:var(--c-d97706); } .lw-status-btn.unsafe-act.active { background:var(--c-fef3c7); border-color:var(--c-d97706); }
+  .lw-status-btn.safe { color:#15803d; } .lw-status-btn.safe.active { background:#e6f7ed; border-color:#15803d; }
+  .lw-status-btn.unsafe-cond { color:#dc2626; } .lw-status-btn.unsafe-cond.active { background:#fee2e2; border-color:#dc2626; }
+  .lw-status-btn.unsafe-act { color:#ea580c; } .lw-status-btn.unsafe-act.active { background:#fff7ed; border-color:#ea580c; }
 
   .lw-note-box { width:100%; min-height:80px; border-radius:8px; border:1px solid rgba(14,15,18,0.15); background:var(--c-fbfbf9); padding:10px 12px; font-family:inherit; font-size:13px; color:${T.foreground}; resize:vertical; transition:all 0.2s; }
   .lw-note-box:focus { outline:none; border-color:${T.primary}; box-shadow:0 0 0 3px ${T.primarySoft}; background:#fff; }
@@ -282,6 +295,8 @@ const STYLES = `
 
   .lw-progress-track { position:relative; height:4px; background:rgba(255,255,255,0.12); border-radius:99px; margin-top:10px; overflow:hidden; }
   .lw-progress-fill { height:100%; background:linear-gradient(90deg,var(--brand-accent),var(--c-ffe066)); border-radius:99px; transition:width 0.5s cubic-bezier(0.4,0,0.2,1); }
+  .no-scrollbar::-webkit-scrollbar { display: none !important; }
+  .no-scrollbar { -ms-overflow-style: none !important; scrollbar-width: none !important; }
   @media (min-width: 768px) {
     .lw-card {
       padding: 12px 20px !important;
@@ -458,11 +473,6 @@ export default function Linewalk() {
       itemStates,
     };
 
-    // Safety Contact shortcut (came from Category, NOT via Activity)
-    if (isSafetyContactFlow) {
-      navigate("/category");
-      return;
-    }
 
     // All other cases → CreatePost
     navigate("/assessment-summary", {
@@ -533,17 +543,24 @@ export default function Linewalk() {
   return (
     <>
       <style>{STYLES}</style>
+      {(isMobileQuestionScreen || (isMobileViewport && isQuestionScreen && isSafetyContactFlow)) && (
+        <style>{`
+          .mobile-bottom-nav, .app-bottomnav {
+            display: none !important;
+          }
+        `}</style>
+      )}
       <div className="lw" style={isMobileQuestionScreen ? { height:"100%", overflow:"hidden" } : undefined}>
-        <div style={{ width:"100%", maxWidth:isMobileViewport ? "100%" : 1180, margin:"0 auto", display:"flex", flexDirection:"column", gap:isMobileQuestionScreen ? 8 : (isMobileViewport ? 12 : 10), padding:isMobileQuestionScreen ? "0 0 8px" : (isMobileViewport ? "0 0 60px" : "12px 20px 20px"), minHeight:isMobileQuestionScreen ? "100%" : undefined, height:isMobileQuestionScreen ? "100%" : undefined, overflow:isMobileQuestionScreen ? "hidden" : undefined }}>
+        <div style={{ width:"100%", maxWidth:isMobileViewport ? "100%" : 1180, margin:"0 auto", display:"flex", flexDirection:"column", gap:isMobileQuestionScreen ? 8 : (isMobileViewport ? 12 : 10), padding:isMobileQuestionScreen ? "0 0 8px" : (isMobileViewport ? "0 0 60px" : (isQuestionScreen ? "4px 20px 4px" : "12px 20px 20px")), minHeight:isMobileQuestionScreen ? "100%" : undefined, height:isMobileQuestionScreen ? "100%" : undefined, overflow:isMobileQuestionScreen ? "hidden" : undefined }}>
 
           {/* ── HEADER ── */}
           {!isMobileQuestionScreen && <div style={{
             background:"linear-gradient(105deg, var(--brand-hero-start) 0%, var(--brand-hero-end) 48%, var(--brand-nav) 100%)",
-            padding:isMobileQuestionScreen ? "10px 14px 12px" : "14px 20px 18px", color:"var(--brand-soft)", position:"relative", overflow:"hidden",
+            padding:isMobileQuestionScreen ? "10px 14px 12px" : (isQuestionScreen ? "10px 18px 12px" : "14px 20px 18px"), color:"var(--brand-soft)", position:"relative", overflow:"hidden",
             boxShadow:"0 8px 24px rgba(42,26,9,0.15)",
             borderRadius: isMobileViewport ? 0 : "16px",
             border: isMobileViewport ? "none" : "1px solid rgba(255,255,255,0.08)",
-            marginBottom: isMobileViewport ? 0 : 6,
+            marginBottom: isMobileViewport ? 0 : (isQuestionScreen ? 2 : 6),
           }}>
             <div style={{ position:"absolute", inset:0, backgroundImage:"linear-gradient(rgba(var(--brand-accent-rgb),0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(var(--brand-accent-rgb),0.03) 1px,transparent 1px)", backgroundSize:"22px 22px", pointerEvents:"none" }} />
             <div style={{ position:"absolute", right:-40, top:-40, width:200, height:200, background:"radial-gradient(circle,rgba(var(--brand-accent-rgb),0.10) 0%,transparent 70%)", pointerEvents:"none" }} />
@@ -562,11 +579,11 @@ export default function Linewalk() {
                         </span>
                       )}
                       <span style={{ display:"inline-flex", alignItems:"center", padding:"2px 8px", borderRadius:99, background:"rgba(var(--brand-accent-rgb),0.18)", border:"1px solid rgba(var(--brand-accent-rgb),0.25)", color:"var(--brand-accent)", fontSize:"9.5px", fontWeight:800, textTransform:"uppercase" }}>
-                        {isQuestionScreen ? "Assessment" : "Line Walk"}
+                        {isSafetyContactFlow ? (isQuestionScreen ? "Safety Contact" : "Line Walk") : (isQuestionScreen ? "Assessment" : "Line Walk")}
                       </span>
                     </div>
-                    <h1 style={{ margin:0, fontSize:18, fontWeight:900, color:"#fff", fontFamily:"'Prompt',sans-serif", lineHeight:1.25 }}>
-                      {isQuestionScreen ? "ทำแบบประเมินความปลอดภัย" : "ทำรายการตรวจความปลอดภัย"}
+                    <h1 style={{ margin:0, fontSize:isQuestionScreen ? 16 : 18, fontWeight:900, color:"#fff", fontFamily:"'Prompt',sans-serif", lineHeight:1.25 }}>
+                      {isQuestionScreen ? (isSafetyContactFlow ? "ทำแบบบันทึก Safety Contact" : "ทำแบบประเมินความปลอดภัย") : "ทำรายการตรวจความปลอดภัย"}
                     </h1>
                   </div>
                 </div>
@@ -586,7 +603,7 @@ export default function Linewalk() {
                 )}
               </div>
 
-              <div className="lw-progress-track" style={{ marginTop:isMobileQuestionScreen ? 8 : 12 }}>
+              <div className="lw-progress-track" style={{ marginTop:isMobileQuestionScreen ? 8 : (isQuestionScreen ? 8 : 12) }}>
                 <div className="lw-progress-fill" style={{ width:`${progressPct}%` }} />
               </div>
 
@@ -614,9 +631,9 @@ export default function Linewalk() {
             {!isMobileViewport && (
               <TigerMascot
                 action="clipboard"
-                size="88px"
+                size={isQuestionScreen ? "68px" : "88px"}
                 animation="float"
-                style={{ position: "absolute", right: fromActivity ? 118 : 20, bottom: 4, zIndex: 0 }}
+                style={{ position: "absolute", right: fromActivity ? 118 : 20, bottom: isQuestionScreen ? -2 : 4, zIndex: 0 }}
               />
             )}
             <div style={{ position:"absolute", left:0, right:0, bottom:0, height:5, background:"repeating-linear-gradient(135deg,var(--brand-accent) 0 10px,#0e0f12 10px 20px)" }} />
@@ -668,11 +685,11 @@ export default function Linewalk() {
                 กรุณากรอกข้อมูลให้ครบทุกช่อง เพื่อดำเนินการต่อ
               </p>
             )}
-            {step1Complete && !isSafetyContactFlow && !isQuestionScreen && (
+            {step1Complete && !isQuestionScreen && (
               <div style={{ display:"flex", justifyContent:"center" }}>
                 <button type="button" onClick={handleStartLinewalk} className="lw-cta" style={{ maxWidth:320 }}>
                   <IcoShield />
-                  เริ่มทำ Line Walk
+                  {isSafetyContactFlow ? "เริ่มทำ Safety Contact" : "เริ่มทำ Line Walk"}
                   <IcoArrow />
                 </button>
               </div>
@@ -790,23 +807,76 @@ export default function Linewalk() {
           </FadeSlide>
 
           {/* ── STEP 5: Checklist ── */}
-          {isSafetyContactFlow && (
-            <div className="lw-card" style={{ margin:"0 16px", display:"flex", flexDirection:"column", gap:14 }}>
-              <div style={{ display:"flex", alignItems:"center", gap:10 }}>
-                <div style={{ width:28, height:28, borderRadius:8, background:"var(--brand-accent)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:13, fontWeight:900, fontFamily:"'Prompt',sans-serif", color:"var(--c-1a1613)", flexShrink:0 }}>2</div>
-                <span style={{ fontFamily:"'Prompt',sans-serif", fontWeight:800, fontSize:14, color:T.foreground }}>Safety Contact</span>
+          {isSafetyContactFlow && isQuestionScreen && (
+            <div className="lw-card" style={{ margin: isMobileViewport ? "0 8px" : "0 auto", width: isMobileViewport ? "auto" : "100%", maxWidth: isMobileViewport ? "none" : "540px", display: "flex", flexDirection: "column", gap: 16 }}>
+              {isMobileViewport && (
+                <div style={{ display: "flex", alignItems: "center", gap: 12, borderBottom: "1px solid rgba(82,52,24,0.08)", paddingBottom: 10, marginBottom: 4 }}>
+                  <button className="lw-back-btn" onClick={handlePrevQuestion} style={{ background: "rgba(14,15,18,0.05)", border: "1px solid rgba(14,15,18,0.1)", color: "var(--brand-text)" }}><IcoBack /></button>
+                  <div>
+                    <span style={{ display: "inline-flex", alignItems: "center", padding: "2px 8px", borderRadius: 99, background: "var(--brand-soft)", color: "var(--brand-text)", fontSize: "9px", fontWeight: 800, textTransform: "uppercase", marginBottom: 2 }}>
+                      Safety Contact
+                    </span>
+                    <h1 style={{ margin: 0, fontSize: 15, fontWeight: 900, color: T.foreground, fontFamily: "'Prompt',sans-serif" }}>
+                      บันทึกการสื่อสารความปลอดภัย
+                    </h1>
+                  </div>
+                </div>
+              )}
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <div style={{ width: 28, height: 28, borderRadius: 8, background: "var(--brand-accent)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 900, fontFamily: "'Prompt',sans-serif", color: "var(--c-1a1613)", flexShrink: 0 }}>2</div>
+                <span style={{ fontFamily: "'Prompt',sans-serif", fontWeight: 800, fontSize: 14, color: T.foreground }}>Safety Contact</span>
               </div>
               <textarea
                 className="lw-note-box"
-                style={{ minHeight:120 }}
+                style={{
+                  width: "100%",
+                  minHeight: 180,
+                  resize: "none",
+                  borderRadius: 12,
+                  border: `1px solid rgba(14,15,18,0.15)`,
+                  padding: "14px 16px",
+                  fontFamily: "inherit",
+                  fontSize: 14,
+                  color: T.foreground,
+                  outline: "none",
+                  background: "#fcfcfb",
+                  transition: "all 0.2s",
+                }}
                 placeholder="กรุณากรอกรายละเอียด Safety Contact..."
                 value={safetyContactText}
                 onChange={e => setSafetyContactText(e.target.value)}
+                onFocus={e => {
+                  e.currentTarget.style.borderColor = "var(--brand-accent)";
+                  e.currentTarget.style.boxShadow = "0 0 0 3px var(--brand-soft)";
+                  e.currentTarget.style.background = "#fff";
+                }}
+                onBlur={e => {
+                  e.currentTarget.style.borderColor = "rgba(14,15,18,0.15)";
+                  e.currentTarget.style.boxShadow = "none";
+                  e.currentTarget.style.background = "#fcfcfb";
+                }}
               />
-              <div>
-                <button type="button" onClick={handleSubmit} className="lw-cta" disabled={submitDisabled}>
+              <div style={{ display: "flex", justifyContent: "center", marginTop: 6 }}>
+                <button
+                  type="button"
+                  onClick={handleSubmit}
+                  disabled={submitDisabled}
+                  className="lw-cta"
+                  style={{
+                    width: "100%",
+                    height: 50,
+                    borderRadius: 14,
+                    fontSize: 15,
+                    minHeight: 0,
+                    background: submitDisabled
+                      ? "linear-gradient(180deg, #9ca3af 0%, #6b7280 100%)"
+                      : undefined,
+                    boxShadow: submitDisabled ? "none" : undefined,
+                    cursor: submitDisabled ? "not-allowed" : "pointer",
+                  }}
+                >
                   <IcoShield />
-                  บันทึก Safety Contact
+                  ถัดไป
                   <IcoArrow />
                 </button>
               </div>
@@ -847,52 +917,77 @@ export default function Linewalk() {
               </div>}
 
               <div
+                className="no-scrollbar"
                 style={{
-                  display:isMobileQuestionScreen ? "grid" : "flex",
-                  gap:isMobileQuestionScreen ? 8 : 12,
-                  gridTemplateColumns:isMobileQuestionScreen ? `repeat(${mobileQuestionNavColumns}, minmax(0, 1fr))` : undefined,
-                  flexWrap:"nowrap",
-                  justifyContent:"center",
-                  alignItems:"center",
-                  flexShrink:0,
-                  overflowX:"visible",
-                  width:"100%",
-                  maxWidth:isMobileQuestionScreen ? (totalItems <= 8 ? 360 : 320) : undefined,
-                  margin:isMobileQuestionScreen ? "0 auto 8px" : "2px 0 6px",
-                  padding:isMobileQuestionScreen ? "10px 6px 12px" : "6px 4px 10px",
-                  scrollbarWidth:"none",
-                  msOverflowStyle:"none",
+                  display: isMobileQuestionScreen ? "grid" : "flex",
+                  gridTemplateColumns: isMobileQuestionScreen
+                    ? `repeat(${getOptimalColumns(totalItems)}, 36px)`
+                    : undefined,
+                  flexWrap: isMobileQuestionScreen ? undefined : "nowrap",
+                  gap: isMobileQuestionScreen ? "6px 12px" : 12,
+                  justifyContent: "center",
+                  alignItems: "center",
+                  flexShrink: 0,
+                  overflowX: "visible",
+                  width: "100%",
+                  maxWidth: isMobileQuestionScreen ? undefined : (isQuestionScreen ? 360 : undefined),
+                  margin: isMobileQuestionScreen ? "0 auto 8px" : (isQuestionScreen ? "0px auto 2px" : "2px 0 6px"),
+                  padding: isMobileQuestionScreen ? "10px 16px 12px" : (isQuestionScreen ? "4px 4px 6px" : "6px 4px 10px"),
+                  scrollbarWidth: "none",
+                  msOverflowStyle: "none",
                 }}
               >
                 {checklist.map((item, idx) => {
-                  const answered = (itemStates[item.id] || {}).status !== null;
+                  const state = itemStates[item.id] || {};
+                  const answered = state.status !== null && state.status !== undefined;
+                  const status = state.status;
                   const active = idx === currentQuestionIndex;
+
+                  let bg = "linear-gradient(180deg,#ffffff 0%, var(--brand-surface) 100%)";
+                  let color = "var(--c-8d7a63)";
+                  let border = active ? "2.5px solid var(--c-8b5a14)" : "1px solid rgba(64,38,16,0.10)";
+
+                  if (status === "safe") {
+                    bg = "#e6f7ed";
+                    color = "#15803d";
+                    border = active ? "2.5px solid #15803d" : "1.5px solid #86efac";
+                  } else if (status === "unsafe_condition") {
+                    bg = "#fee2e2";
+                    color = "#dc2626";
+                    border = active ? "2.5px solid #dc2626" : "1.5px solid #fca5a5";
+                  } else if (status === "unsafe_action") {
+                    bg = "#fff7ed";
+                    color = "#ea580c";
+                    border = active ? "2.5px solid #ea580c" : "1.5px solid #ffedd5";
+                  } else if (active) {
+                    bg = "linear-gradient(180deg,var(--brand-accent) 0%, var(--brand-accent-strong) 100%)";
+                    color = "var(--brand-text)";
+                  }
+
+                  const shadowColor = active
+                    ? (status === "safe" ? "rgba(22,101,52,0.3)" : status === "unsafe_condition" ? "rgba(185,28,28,0.3)" : status === "unsafe_action" ? "rgba(234,88,12,0.3)" : "rgba(139,90,20,0.35)")
+                    : "rgba(64,38,16,0.05)";
+
                   return (
                     <button
                       key={item.id}
                       type="button"
                       onClick={() => setCurrentQuestionIndex(idx)}
                       style={{
-                        width:isMobileQuestionScreen ? "100%" : 40,
-                        maxWidth:isMobileQuestionScreen ? 42 : undefined,
-                        justifySelf:isMobileQuestionScreen ? "center" : undefined,
-                        height:isMobileQuestionScreen ? 36 : 40,
-                        borderRadius:"50%",
-                        border: active ? "1.5px solid var(--c-8b5a14)" : "1px solid rgba(64,38,16,0.10)",
-                        background: active
-                          ? "linear-gradient(180deg,var(--brand-accent) 0%, var(--brand-accent-strong) 100%)"
-                          : answered
-                            ? "var(--brand-soft)"
-                            : "linear-gradient(180deg,#ffffff 0%, var(--brand-surface) 100%)",
-                        color: active ? "var(--brand-text)" : answered ? "var(--brand-text)" : "var(--c-8d7a63)",
-                        fontFamily:"'Prompt',sans-serif",
-                        fontWeight:800,
-                        fontSize:isMobileQuestionScreen ? 12 : 14,
-                        cursor:"pointer",
-                        flex:"0 0 auto",
+                        width: isMobileQuestionScreen ? 36 : (isQuestionScreen ? 34 : 40),
+                        height: isMobileQuestionScreen ? 36 : (isQuestionScreen ? 34 : 40),
+                        borderRadius: "50%",
+                        border: border,
+                        background: bg,
+                        color: color,
+                        fontFamily: "'Prompt',sans-serif",
+                        fontWeight: 800,
+                        fontSize: isMobileQuestionScreen ? 12 : (isQuestionScreen ? 13 : 14),
+                        cursor: "pointer",
+                        flex: "0 0 auto",
                         boxShadow: active
-                          ? "0 8px 18px rgba(139,90,20,0.18)"
-                          : "0 2px 8px rgba(64,38,16,0.05)",
+                          ? `0 0 0 3px ${shadowColor}, 0 8px 18px rgba(0,0,0,0.12)`
+                          : `0 2px 8px ${shadowColor}`,
                       }}
                     >
                       {idx + 1}
@@ -901,173 +996,183 @@ export default function Linewalk() {
                 })}
               </div>
 
-              <div className="lw-card" style={{ padding:isMobileQuestionScreen ? "12px 12px 10px" : "18px 18px 20px", display:"flex", flexDirection:"column", gap:isMobileQuestionScreen ? 8 : 16, flex:1, minHeight:0, overflow:"hidden", background:"linear-gradient(180deg,var(--brand-surface) 0%, var(--c-fff8ee) 100%)", border:"1px solid rgba(82,52,24,0.08)", boxShadow:"0 16px 32px rgba(64,38,16,0.08)" }}>
-                  <div style={{ display:"flex", alignItems:"center", gap:isMobileQuestionScreen ? 8 : 12, flexShrink:0 }}>
-                    <div style={{ width:isMobileQuestionScreen ? 34 : 42, height:isMobileQuestionScreen ? 34 : 42, borderRadius:"50%", background:"linear-gradient(180deg,var(--c-f7c948) 0%, var(--c-d89b00) 100%)", color:"var(--brand-text)", display:"flex", alignItems:"center", justifyContent:"center", fontFamily:"'Prompt',sans-serif", fontWeight:900, fontSize:isMobileQuestionScreen ? 15 : 18 }}>
-                    {currentQuestionIndex + 1}
-                  </div>
-                  <div>
-                    <div style={{ fontFamily:"'Prompt',sans-serif", fontSize:isMobileQuestionScreen ? 11 : 13, fontWeight:800, color:"var(--c-8a6a45)" }}>
-                      ข้อ {currentQuestionIndex + 1} จาก {totalItems}
+              <div className="lw-card" style={{ padding:isMobileQuestionScreen ? "12px 12px 10px" : (isQuestionScreen ? "10px 16px 8px" : "18px 18px 20px"), display:"flex", flexDirection:"column", gap:isMobileQuestionScreen ? 8 : (isQuestionScreen ? 6 : 16), flex:1, minHeight:0, overflow:"hidden", background:"linear-gradient(180deg,var(--brand-surface) 0%, var(--c-fff8ee) 100%)", border:"1px solid rgba(82,52,24,0.08)", boxShadow:"0 16px 32px rgba(64,38,16,0.08)" }}>
+                <div style={{
+                  display: (isMobileQuestionScreen || isMobileViewport) ? "block" : "flex",
+                  gap: (isMobileQuestionScreen || isMobileViewport) ? 0 : 28,
+                  alignItems: "stretch",
+                  minHeight: 0
+                }}>
+                  {/* Left Column: Title and Guidelines */}
+                  <div style={{
+                    flex: 1,
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 12,
+                    borderRight: (isMobileQuestionScreen || isMobileViewport) ? "none" : "1px solid rgba(82,52,24,0.08)",
+                    paddingRight: (isMobileQuestionScreen || isMobileViewport) ? 0 : 28
+                  }}>
+                    <div style={{ display:"flex", alignItems:"center", gap:isMobileQuestionScreen ? 8 : (isQuestionScreen ? 10 : 12), flexShrink:0 }}>
+                      <div style={{ width:isMobileQuestionScreen ? 34 : (isQuestionScreen ? 38 : 42), height:isMobileQuestionScreen ? 34 : (isQuestionScreen ? 38 : 42), borderRadius:"50%", background:"linear-gradient(180deg,var(--c-f7c948) 0%, var(--c-d89b00) 100%)", color:"var(--brand-text)", display:"flex", alignItems:"center", justifyContent:"center", fontFamily:"'Prompt',sans-serif", fontWeight:900, fontSize:isMobileQuestionScreen ? 15 : (isQuestionScreen ? 17 : 18) }}>
+                        {currentQuestionIndex + 1}
+                      </div>
+                      <div>
+                        <div style={{ fontFamily:"'Prompt',sans-serif", fontSize:isMobileQuestionScreen ? 11 : (isQuestionScreen ? 12 : 13), fontWeight:800, color:"var(--c-8a6a45)" }}>
+                          ข้อ {currentQuestionIndex + 1} จาก {totalItems}
+                        </div>
+                        <h3 style={{ margin:"2px 0 0", fontFamily:"'Prompt',sans-serif", fontSize:isMobileQuestionScreen ? 15 : (isQuestionScreen ? 18 : 20), fontWeight:900, color:"var(--brand-text)", lineHeight:isMobileQuestionScreen ? 1.18 : 1.35 }}>
+                          {currentItem.title}
+                        </h3>
+                      </div>
                     </div>
-                    <h3 style={{ margin:"2px 0 0", fontFamily:"'Prompt',sans-serif", fontSize:isMobileQuestionScreen ? 15 : 20, fontWeight:900, color:"var(--brand-text)", lineHeight:isMobileQuestionScreen ? 1.18 : 1.35 }}>
-                      {currentItem.title}
-                    </h3>
+
+                    {currentItem.guideTitle !== false && (
+                      <p style={{ margin:0, fontFamily:"'Prompt',sans-serif", fontSize:isMobileQuestionScreen ? 10.5 : (isQuestionScreen ? 12 : 12.5), fontWeight:700, color:"var(--c-8a6a45)", flexShrink:0 }}>
+                        {currentItem.guideTitle || `แนวทางการตรวจ ${currentItem.title.split(":")[0]}`}
+                      </p>
+                    )}
+
+                    <ul style={{ margin:"0 0 2px", paddingLeft:isMobileQuestionScreen ? 15 : (isQuestionScreen ? 16 : 18), fontSize:isMobileQuestionScreen ? "10.5px" : (isQuestionScreen ? "12px" : "12.5px"), color:T.foreground2, lineHeight:isMobileQuestionScreen ? 1.32 : (isQuestionScreen ? 1.42 : 1.7) }}>
+                      {currentItem.guidelines.map((g, gi) => <li key={gi} style={{ marginBottom:2 }}>{g}</li>)}
+                    </ul>
                   </div>
-                </div>
 
-                {currentItem.guideTitle !== false && (
-                  <p style={{ margin:0, fontFamily:"'Prompt',sans-serif", fontSize:isMobileQuestionScreen ? 10.5 : 12.5, fontWeight:700, color:"var(--c-8a6a45)", flexShrink:0 }}>
-                    {currentItem.guideTitle || `แนวทางการตรวจ ${currentItem.title.split(":")[0]}`}
-                  </p>
-                )}
+                  {/* Right Column: Choices and Inputs */}
+                  <div style={{
+                    flex: 1.1,
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 12,
+                    justifyContent: "center",
+                    marginTop: (isMobileQuestionScreen || isMobileViewport) ? 12 : 0
+                  }}>
+                    <div style={{ display:"grid", gap:isMobileQuestionScreen ? 7 : (isQuestionScreen ? 6 : 10), marginTop:0 }}>
+                      {[
+                        { key:"safe", label:"ปลอดภัย", sub:"ข้อความนี้ถูกต้อง", border:"#22c55e", bg:"#f0fdf4", color:"#15803d", icon:"✓" },
+                        { key:"unsafe_condition", label:"สภาพไม่ปลอดภัย", sub:"พบสภาพแวดล้อมที่ต้องแก้ไข", border:"#ef4444", bg:"#fef2f2", color:"#b91c1c", icon:"!" },
+                        { key:"unsafe_action", label:"พฤติกรรมไม่ปลอดภัย", sub:"พบพฤติกรรมเสี่ยงระหว่างทำงาน", border:"#f97316", bg:"#fff7ed", color:"#c2410c", icon:"×" },
+                      ].map((choice) => {
+                        const selected = currentState.status === choice.key;
+                        const themedChoice = choice;
+                        return (
+                          <button
+                            key={choice.key}
+                            type="button"
+                            onClick={() => handleStatusChange(currentItem.id, choice.key)}
+                            style={{
+                              width:"100%",
+                              borderRadius:isMobileQuestionScreen ? 16 : 14,
+                              border:`3px solid ${themedChoice.border}`,
+                              background:selected ? themedChoice.bg : "#fff",
+                              padding:isMobileQuestionScreen ? "10px 12px" : (isQuestionScreen ? "8px 14px" : "16px 18px"),
+                              display:"flex",
+                              alignItems:"center",
+                              justifyContent:"space-between",
+                              gap:isMobileQuestionScreen ? 8 : (isQuestionScreen ? 10 : 12),
+                              cursor:"pointer",
+                              textAlign:"left",
+                            }}
+                          >
+                            <div style={{ display:"flex", alignItems:"center", gap:isMobileQuestionScreen ? 8 : (isQuestionScreen ? 10 : 14), minWidth:0 }}>
+                              <div style={{ width:isMobileQuestionScreen ? 28 : (isQuestionScreen ? 30 : 34), height:isMobileQuestionScreen ? 28 : (isQuestionScreen ? 30 : 34), borderRadius:10, background:selected ? themedChoice.border : "rgba(14,15,18,0.06)", color:selected ? "#fff" : themedChoice.color, display:"flex", alignItems:"center", justifyContent:"center", fontWeight:900, fontSize:isMobileQuestionScreen ? 16 : (isQuestionScreen ? 18 : 22), flexShrink:0 }}>
+                                {themedChoice.icon}
+                              </div>
+                              <div style={{ minWidth:0 }}>
+                                <div style={{ fontFamily:"'Prompt',sans-serif", fontSize:isMobileQuestionScreen ? 14 : (isQuestionScreen ? 15.5 : 17), fontWeight:900, color:themedChoice.color }}>
+                                  {choice.label}
+                                </div>
+                                <div style={{ fontFamily:"'Prompt',sans-serif", fontSize:isMobileQuestionScreen ? 10 : (isQuestionScreen ? 11 : 12), fontWeight:600, color:T.foreground3 }}>
+                                  {choice.sub}
+                                </div>
+                              </div>
+                            </div>
+                            <div style={{ width:isMobileQuestionScreen ? 22 : (isQuestionScreen ? 24 : 28), height:isMobileQuestionScreen ? 22 : (isQuestionScreen ? 24 : 28), borderRadius:"50%", border:`3px solid ${selected ? themedChoice.border : "rgba(14,15,18,0.16)"}`, background:selected ? themedChoice.border : "#fff", flexShrink:0 }} />
+                          </button>
+                        );
+                      })}
+                    </div>
 
-                <ul style={{ margin:"0 0 2px", paddingLeft:isMobileQuestionScreen ? 15 : 18, fontSize:isMobileQuestionScreen ? "10.5px" : "12.5px", color:T.foreground2, lineHeight:isMobileQuestionScreen ? 1.32 : 1.7 }}>
-                  {currentItem.guidelines.map((g, gi) => <li key={gi} style={{ marginBottom:2 }}>{g}</li>)}
-                </ul>
-
-                  <div style={{ display:"grid", gap:isMobileQuestionScreen ? 7 : 12, marginTop:0 }}>
-                  {[
-                    { key:"safe", label:"ปลอดภัย", sub:"ข้อความนี้ถูกต้อง", border:"#34c97b", bg:"#eefaf3", color:"#18794e", icon:"✓" },
-                    { key:"unsafe_condition", label:"สภาพไม่ปลอดภัย", sub:"พบสภาพแวดล้อมที่ต้องแก้ไข", border:"#ff6b6b", bg:"#fff1f1", color:"#d5301a", icon:"!" },
-                    { key:"unsafe_action", label:"พฤติกรรมไม่ปลอดภัย", sub:"พบพฤติกรรมเสี่ยงระหว่างทำงาน", border:"var(--c-ffb020)", bg:"var(--brand-soft)", color:"var(--c-b76a00)", icon:"×" },
-                  ].map((choice) => {
-                    const selected = currentState.status === choice.key;
-                    const themedChoice = choice.key === "safe"
-                      ? { ...choice, border:"var(--c-d5a21a)", bg:"var(--c-fff6db)", color:"var(--c-8b5a14)", icon:"✓" }
-                      : choice.key === "unsafe_condition"
-                        ? { ...choice, border:"var(--c-db7b4f)", bg:"var(--c-fff1e8)", color:"var(--c-8f3b16)", icon:"!" }
-                        : { ...choice, border:"var(--brand-text)", bg:"var(--c-f6ece1)", color:"var(--brand-text)", icon:"×" };
-                    return (
-                      <button
-                        key={choice.key}
-                        type="button"
-                        onClick={() => handleStatusChange(currentItem.id, choice.key)}
-                        style={{
-                          width:"100%",
-                          borderRadius:isMobileQuestionScreen ? 16 : 18,
-                          border:`3px solid ${themedChoice.border}`,
-                          background:selected ? themedChoice.bg : "#fff",
-                          padding:isMobileQuestionScreen ? "10px 12px" : "16px 18px",
-                          display:"flex",
-                          alignItems:"center",
-                          justifyContent:"space-between",
-                          gap:isMobileQuestionScreen ? 8 : 12,
-                          cursor:"pointer",
-                          textAlign:"left",
-                        }}
-                      >
-                          <div style={{ display:"flex", alignItems:"center", gap:isMobileQuestionScreen ? 8 : 14, minWidth:0 }}>
-                            <div style={{ width:isMobileQuestionScreen ? 28 : 34, height:isMobileQuestionScreen ? 28 : 34, borderRadius:10, background:selected ? themedChoice.border : "rgba(14,15,18,0.06)", color:selected ? "#fff" : themedChoice.color, display:"flex", alignItems:"center", justifyContent:"center", fontWeight:900, fontSize:isMobileQuestionScreen ? 16 : 22, flexShrink:0 }}>
-                            {themedChoice.icon}
+                    {currentState.status !== null && (
+                      <div style={{
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: 12,
+                        marginTop: 4
+                      }}>
+                        {/* Note Box: Show only when status is unsafe_condition or unsafe_action */}
+                        {(currentState.status === "unsafe_condition" || currentState.status === "unsafe_action") && (
+                          <div style={{ display:"flex", flexDirection:"column", gap:6 }}>
+                            <span style={{ fontSize:11, color:T.foreground3, fontWeight:700, fontFamily:"'Prompt',sans-serif" }}>
+                              หมายเหตุ / รายละเอียดเพิ่มเติม
+                            </span>
+                            <textarea
+                              className="lw-note-box"
+                              style={{ minHeight: 50, height: 50, resize: "none" }}
+                              value={currentState.note}
+                              placeholder="กรอกรายละเอียดเพิ่มเติม..."
+                              onChange={e => handleNoteChange(currentItem.id, e.target.value)}
+                            />
                           </div>
-                          <div style={{ minWidth:0 }}>
-                              <div style={{ fontFamily:"'Prompt',sans-serif", fontSize:isMobileQuestionScreen ? 14 : 17, fontWeight:900, color:themedChoice.color }}>
-                              {choice.label}
-                            </div>
-                              <div style={{ fontFamily:"'Prompt',sans-serif", fontSize:isMobileQuestionScreen ? 10 : 12, fontWeight:600, color:T.foreground3 }}>
-                              {choice.sub}
-                            </div>
+                        )}
+
+                        {/* Photo Upload: Show when status is safe, unsafe_condition, or unsafe_action */}
+                        <div style={{ display:"flex", flexDirection:"column", gap:6 }}>
+                          <span style={{ fontFamily:"'Prompt',sans-serif", fontSize:isMobileQuestionScreen ? "10.5px" : "11.5px", fontWeight:800, color:T.foreground3, textTransform:"uppercase" }}>
+                            แนบรูปภาพ ({currentState.photos.length} / 5 รูป)
+                          </span>
+                          <div style={{ display:"flex", flexWrap:"wrap", gap:isMobileQuestionScreen ? 6 : 8, alignItems:"center" }}>
+                            {currentState.photos.length < 5 && (
+                              <label className="lw-upload-trigger" style={isMobileQuestionScreen ? { height:40, padding:"0 12px", borderColor:"rgba(95,64,37,0.22)", background:"var(--c-fff8ee)", color:"var(--brand-text)", fontSize:11.5, margin:0 } : { height:40, padding:"0 16px", borderRadius:8, margin:0 }}>
+                                <IcoUpload /> Upload รูปภาพ
+                                <input type="file" accept="image/*" style={{ display:"none" }} onChange={e => handlePhotoUpload(currentItem.id, e)} />
+                              </label>
+                            )}
+                            {currentState.photos.map((url, pi) => (
+                              <div key={pi} style={{ width:40, height:40, borderRadius:8, position:"relative", overflow:"hidden", border:"1px solid rgba(14,15,18,0.08)" }}>
+                                <img src={url} alt="" style={{ width:"100%", height:"100%", objectFit:"cover" }} />
+                                <button
+                                  type="button"
+                                  onClick={() => handleDeletePhoto(currentItem.id, pi)}
+                                  style={{
+                                    position:"absolute",
+                                    top:1,
+                                    right:1,
+                                    width:14,
+                                    height:14,
+                                    borderRadius:"50%",
+                                    background:"rgba(0,0,0,0.6)",
+                                    color:"#fff",
+                                    border:"none",
+                                    display:"flex",
+                                    alignItems:"center",
+                                    justifyContent:"center",
+                                    cursor:"pointer",
+                                  }}
+                                >
+                                  <IcoX />
+                                </button>
+                              </div>
+                            ))}
                           </div>
                         </div>
-                        <div style={{ width:isMobileQuestionScreen ? 22 : 28, height:isMobileQuestionScreen ? 22 : 28, borderRadius:"50%", border:`3px solid ${selected ? themedChoice.border : "rgba(14,15,18,0.16)"}`, background:selected ? themedChoice.border : "#fff", flexShrink:0 }} />
-                      </button>
-                    );
-                  })}
+                      </div>
+                    )}
+                  </div>
                 </div>
 
-                {isMobileQuestionScreen && (
-                  <div style={{ display:"flex", flexWrap:"wrap", gap:6, alignItems:"center" }}>
-                    <label className="lw-upload-trigger" style={{ height:40, padding:"0 12px", borderColor:"rgba(95,64,37,0.22)", background:"var(--c-fff8ee)", color:"var(--brand-text)", fontSize:11.5 }}>
-                      <IcoUpload /> Upload รูปภาพ
-                      <input type="file" accept="image/*" style={{ display:"none" }} onChange={e => handlePhotoUpload(currentItem.id, e)} />
-                    </label>
-                    {currentState.photos.map((url, pi) => (
-                      <div key={pi} style={{ width:40, height:40, borderRadius:8, position:"relative", overflow:"hidden", border:"1px solid rgba(14,15,18,0.08)" }}>
-                        <img src={url} alt="" style={{ width:"100%", height:"100%", objectFit:"cover" }} />
-                        <button
-                          type="button"
-                          onClick={() => handleDeletePhoto(currentItem.id, pi)}
-                          style={{
-                            position:"absolute",
-                            top:2,
-                            right:2,
-                            width:16,
-                            height:16,
-                            borderRadius:"50%",
-                            background:"rgba(0,0,0,0.6)",
-                            color:"#fff",
-                            border:"none",
-                            display:"flex",
-                            alignItems:"center",
-                            justifyContent:"center",
-                            cursor:"pointer",
-                          }}
-                        >
-                          <IcoX />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                {!isMobileQuestionScreen && <div style={{ display:"flex", flexDirection:"column", gap:6 }}>
-                  <span style={{ fontSize:11, color:T.foreground3, fontWeight:700, fontFamily:"'Prompt',sans-serif" }}>หมายเหตุ / รายละเอียดเพิ่มเติม</span>
-                  <textarea
-                    className="lw-note-box"
-                    value={currentState.note}
-                    placeholder="กรอกรายละเอียดเพิ่มเติม..."
-                    onChange={e => handleNoteChange(currentItem.id, e.target.value)}
-                  />
-                </div>}
-
-                {!isMobileQuestionScreen && <div style={{ fontFamily:"'Prompt',sans-serif", fontSize:"11.5px", fontWeight:800, color:T.foreground3, textTransform:"uppercase" }}>แนบรูปภาพ</div>}
-                {!isMobileQuestionScreen && <div style={{ display:"flex", flexWrap:"wrap", gap:8, alignItems:"center" }}>
-                  <label className="lw-upload-trigger">
-                    <IcoUpload /> Upload รูปภาพ
-                    <input type="file" accept="image/*" style={{ display:"none" }} onChange={e => handlePhotoUpload(currentItem.id, e)} />
-                  </label>
-                  {currentState.photos.map((url, pi) => (
-                    <div key={pi} style={{ width:64, height:64, borderRadius:8, position:"relative", overflow:"hidden", border:"1px solid rgba(14,15,18,0.08)" }}>
-                      <img src={url} alt="" style={{ width:"100%", height:"100%", objectFit:"cover" }} />
-                      <button
-                        type="button"
-                        onClick={() => handleDeletePhoto(currentItem.id, pi)}
-                        style={{
-                          position:"absolute",
-                          top:2,
-                          right:2,
-                          width:16,
-                          height:16,
-                          borderRadius:"50%",
-                          background:"rgba(0,0,0,0.6)",
-                          color:"#fff",
-                          border:"none",
-                          display:"flex",
-                          alignItems:"center",
-                          justifyContent:"center",
-                          cursor:"pointer",
-                        }}
-                      >
-                        <IcoX />
-                      </button>
-                    </div>
-                  ))}
-                </div>}
-
-                <div style={{ display:"flex", gap:isMobileQuestionScreen ? 8 : 12, justifyContent:"space-between", marginTop:isMobileQuestionScreen ? 2 : 8, flexShrink:0, position:isMobileQuestionScreen ? "fixed" : "static", left:isMobileQuestionScreen ? 0 : undefined, right:isMobileQuestionScreen ? 0 : undefined, bottom:isMobileQuestionScreen ? 0 : undefined, zIndex:isMobileQuestionScreen ? 45 : undefined, background:isMobileQuestionScreen ? "linear-gradient(180deg, rgba(241,236,223,0) 0%, rgba(241,236,223,0.96) 18%, rgba(241,236,223,1) 40%)" : undefined, padding:isMobileQuestionScreen ? "8px 12px calc(8px + env(safe-area-inset-bottom))" : undefined, boxShadow:isMobileQuestionScreen ? "0 -10px 24px rgba(34,25,11,0.10)" : undefined }}>
+                <div style={{ display:"flex", gap:isMobileQuestionScreen ? 8 : 12, justifyContent:"space-between", marginTop:isMobileQuestionScreen ? 2 : 6, flexShrink:0, position:isMobileQuestionScreen ? "fixed" : "static", left:isMobileQuestionScreen ? 0 : undefined, right:isMobileQuestionScreen ? 0 : undefined, bottom:isMobileQuestionScreen ? 0 : undefined, zIndex:isMobileQuestionScreen ? 99 : undefined, background:isMobileQuestionScreen ? "linear-gradient(180deg, rgba(241,236,223,0) 0%, rgba(241,236,223,0.96) 18%, rgba(241,236,223,1) 40%)" : undefined, padding:isMobileQuestionScreen ? "8px 12px calc(8px + env(safe-area-inset-bottom))" : undefined, boxShadow:isMobileQuestionScreen ? "0 -10px 24px rgba(34,25,11,0.10)" : undefined }}>
                   <button
                     type="button"
                     onClick={handlePrevQuestion}
                     style={{
                       minWidth:isMobileQuestionScreen ? 88 : 110,
-                      height:isMobileQuestionScreen ? 44 : 54,
-                      borderRadius:isMobileQuestionScreen ? 14 : 16,
+                      height:isMobileQuestionScreen ? 44 : (isQuestionScreen ? 40 : 54),
+                      borderRadius:isMobileQuestionScreen ? 14 : (isQuestionScreen ? 12 : 16),
                       border:"1px solid rgba(14,15,18,0.12)",
                       background:"#fff",
                       color:T.foreground2,
                       fontFamily:"'Prompt',sans-serif",
-                      fontSize:isMobileQuestionScreen ? 14 : 16,
+                      fontSize:isMobileQuestionScreen ? 14 : (isQuestionScreen ? 14 : 16),
                       fontWeight:800,
                       cursor:"pointer",
                     }}
@@ -1076,7 +1181,7 @@ export default function Linewalk() {
                   </button>
 
                   {currentQuestionIndex < totalItems - 1 ? (
-                      <button type="button" onClick={handleNextQuestion} className="lw-cta" style={{ flex:1, minHeight:isMobileQuestionScreen ? 44 : undefined, padding:isMobileQuestionScreen ? "10px" : undefined }}>
+                      <button type="button" onClick={handleNextQuestion} className="lw-cta" style={{ flex:1, height:isMobileQuestionScreen ? 44 : (isQuestionScreen ? 40 : undefined), padding:isMobileQuestionScreen ? "10px" : (isQuestionScreen ? "0 16px" : undefined), borderRadius:isMobileQuestionScreen ? 14 : (isQuestionScreen ? 12 : undefined), fontSize:isMobileQuestionScreen ? 14 : (isQuestionScreen ? 14 : undefined), minHeight:0 }}>
                       ถัดไป →
                     </button>
                   ) : (
@@ -1084,7 +1189,7 @@ export default function Linewalk() {
                       type="button"
                       onClick={handleSubmit}
                       className="lw-cta"
-                      style={{ flex:1, minHeight:isMobileQuestionScreen ? 44 : undefined, padding:isMobileQuestionScreen ? "10px" : undefined }}
+                      style={{ flex:1, height:isMobileQuestionScreen ? 44 : (isQuestionScreen ? 40 : undefined), padding:isMobileQuestionScreen ? "10px" : (isQuestionScreen ? "0 16px" : undefined), borderRadius:isMobileQuestionScreen ? 14 : (isQuestionScreen ? 12 : undefined), fontSize:isMobileQuestionScreen ? 14 : (isQuestionScreen ? 14 : undefined), minHeight:0 }}
                       disabled={submitDisabled}
                       aria-disabled={submitDisabled}
                     >

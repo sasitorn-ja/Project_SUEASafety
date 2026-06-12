@@ -63,6 +63,13 @@ export default function RestrictedDatePicker({
   const today = useMemo(() => startOfDay(new Date()), []);
   const minBackdate = useMemo(() => startOfDay(addDays(today, -5)), [today]);
   const [mode, setMode] = useState("today");
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const savedMode = localStorage.getItem("safety_backdate_mode") || "today";
+      setMode(savedMode);
+    }
+  }, []);
   const [viewMonth, setViewMonth] = useState(today);
 
   const selectedDate = useMemo(() => {
@@ -178,35 +185,7 @@ export default function RestrictedDatePicker({
           }
         }
       `}</style>
-      <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-        {[
-          { id: "today", label: modeLabels.today },
-          { id: "backdate", label: modeLabels.backdate },
-        ].map((item) => {
-          const active = mode === item.id;
-          return (
-            <button
-              key={item.id}
-              type="button"
-              onClick={() => setMode(item.id)}
-              style={{
-                minHeight: 32,
-                padding: "0 14px",
-                borderRadius: 999,
-                border: `1px solid ${active ? accent : "rgba(14,15,18,0.12)"}`,
-                background: active ? accent : "#fff",
-                color: active ? "var(--c-1a1613)" : "#33312c",
-                fontFamily: "'Prompt','Sarabun',sans-serif",
-                fontSize: 12.5,
-                fontWeight: 700,
-                cursor: "pointer",
-              }}
-            >
-              {item.label}
-            </button>
-          );
-        })}
-      </div>
+
 
       <p
         style={{

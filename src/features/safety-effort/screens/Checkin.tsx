@@ -28,12 +28,12 @@ function haversine(lat1, lng1, lat2, lng2) {
 
 // ─── Preset locations ─────────────────────────────────────────────────────────
 const PRESET_LOCATIONS = [
-  { id: "BPI-04", name: "บจก. ผลิตภัณฑ์และวัตถุก่อสร้าง (สำนักงานใหญ่)", tag: "BPI-04", type: "บริษัท", lat: 13.7574, lng: 100.5408 },
-  { id: "OBK-C2", name: "CPAC Solution Center", tag: "OBK-C2", type: "โรงงาน", lat: 13.7572, lng: 100.5405 },
-  { id: "MRT-PS", name: "CPAC", tag: "MRT-PS", type: "ก่อสร้าง", lat: 13.7570, lng: 100.5412 },
+  { id: "BPI-04", name: "บจก. ผลิตภัณฑ์และวัตถุก่อสร้าง (สำนักงานใหญ่)", tag: "BPI-04", type: "บริษัท", lat: 13.819307, lng: 100.514304 },
+  { id: "OBK-C2", name: "CPAC Solution Center", tag: "OBK-C2", type: "โรงงาน", lat: 13.820500, lng: 100.513500 },
+  { id: "MRT-PS", name: "CPAC", tag: "MRT-PS", type: "ก่อสร้าง", lat: 13.817500, lng: 100.515200 },
 ];
 
-const DEFAULT_CENTER = { lat: 14.0, lng: 100.57 };
+const DEFAULT_CENTER = { lat: 13.819307, lng: 100.514304 };
 
 const LOCATION_FILTERS = [
   { key: "all", label: "ทั้งหมด" },
@@ -194,8 +194,20 @@ function FitAll({ points }) {
   return null;
 }
 
+function InvalidateMapSize({ trigger }) {
+  const map = useMap();
+  useEffect(() => {
+    map.invalidateSize();
+    const timer = setTimeout(() => {
+      map.invalidateSize();
+    }, 200);
+    return () => clearTimeout(timer);
+  }, [map, trigger]);
+  return null;
+}
+
 // ─── Map View (top-level to prevent re-creation on each render) ─────────────
-function CheckinMapView({ height = "100%", mapMounted, mapInstanceKey, mapCenter, userPos, allLocations, selected, setSelected, fitPoints }) {
+function CheckinMapView({ height = "100%", mapMounted, mapInstanceKey, mapCenter, userPos, allLocations, selected, setSelected, fitPoints, windowWidth }) {
   return (
     <div className="ci-map-wrap" style={{ height, width: "100%" }}>
       {mapMounted ? (
@@ -237,6 +249,7 @@ function CheckinMapView({ height = "100%", mapMounted, mapInstanceKey, mapCenter
           <FlyTo target={selected} />
           <Recenter position={userPos} zoom={13} />
           <FitAll points={fitPoints} />
+          <InvalidateMapSize trigger={windowWidth} />
         </MapContainer>
       ) : (
         <div style={{ width: "100%", height: "100%", background: T.surface2 }} />
@@ -519,6 +532,7 @@ function AddModal({ onAdd, onClose, userPos }) {
             />
             <MapPicker position={pinPos} onPick={setPinPos} />
             <Recenter position={recenterTarget} />
+            <InvalidateMapSize />
           </MapContainer>
 
           <div style={{
@@ -1587,7 +1601,7 @@ export default function Checkin() {
             gridTemplateColumns: "1fr 370px",
             gap: 18,
           }}>
-            <CheckinMapView height="clamp(380px, calc(100vh - 240px), 550px)" mapMounted={mapMounted} mapInstanceKey={mapInstanceKey} mapCenter={mapCenter} userPos={userPos} allLocations={allLocations} selected={selected} setSelected={setSelected} fitPoints={fitPoints} />
+            <CheckinMapView height="clamp(380px, calc(100vh - 240px), 550px)" mapMounted={mapMounted} mapInstanceKey={mapInstanceKey} mapCenter={mapCenter} userPos={userPos} allLocations={allLocations} selected={selected} setSelected={setSelected} fitPoints={fitPoints} windowWidth={width} />
 
             {/* Right panel — this is the scrollable area on desktop */}
             <div style={{
@@ -1666,7 +1680,7 @@ export default function Checkin() {
                   display: "flex", flexDirection: "column", gap: 9,
                 }}
               >
-                {filteredLocations.length > 0 ? (
+                {visibleLocations.length > 0 ? (
                     visibleLocations.map(loc => (
                       <FilteredLocCard
                       key={loc.id}
@@ -1708,7 +1722,7 @@ export default function Checkin() {
           <StepHeader />
 
           <div style={{ flexShrink: 0, height: 230 }}>
-            <CheckinMapView height="230px" mapMounted={mapMounted} mapInstanceKey={mapInstanceKey} mapCenter={mapCenter} userPos={userPos} allLocations={allLocations} selected={selected} setSelected={setSelected} fitPoints={fitPoints} />
+             <CheckinMapView height="230px" mapMounted={mapMounted} mapInstanceKey={mapInstanceKey} mapCenter={mapCenter} userPos={userPos} allLocations={allLocations} selected={selected} setSelected={setSelected} fitPoints={fitPoints} windowWidth={width} />
           </div>
 
           <div style={{ flexShrink: 0, padding: "12px 18px 10px", borderBottom: `1px solid rgba(14,15,18,0.06)`, background: "#ffffff" }}>
