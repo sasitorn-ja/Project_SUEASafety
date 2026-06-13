@@ -9,9 +9,10 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 
 type LegacyLocation = {
   pathname: string;
@@ -69,11 +70,13 @@ function normalizePath(path?: string) {
 }
 
 export function BrowserRouter({ children }: BrowserRouterProps) {
+  const router = useRouter();
   const nextPathname = usePathname();
-  const [tick, setTick] = useState(0);
+  const [location, setLocation] = useState<LegacyLocation>(readLocation);
+  const pendingNavigation = useRef<LegacyLocation | null>(null);
 
   useEffect(() => {
-    const syncLocation = () => setTick((value) => value + 1);
+    const syncLocation = () => setLocation(readLocation());
     window.addEventListener("popstate", syncLocation);
     window.addEventListener("legacy-router:navigate", syncLocation);
 
@@ -83,11 +86,29 @@ export function BrowserRouter({ children }: BrowserRouterProps) {
     };
   }, []);
 
-  // Derive the location synchronously during render. When Next updates the URL
-  // (nextPathname changes) window.location is already current, so the legacy
-  // <Routes> never renders a stale page for a frame — fixes the brief flash of
-  // the previous legacy screen (e.g. Safety Effort) when opening Safety Admin.
-  const location = useMemo<LegacyLocation>(() => readLocation(), [nextPathname, tick]);
+  useEffect(() => {
+    setLocation((current) => {
+      const pathname = nextPathname || window.location.pathname || "/";
+      const pending = pendingNavigation.current;
+
+      if (pending?.pathname === pathname) {
+        pendingNavigation.current = null;
+        window.history.replaceState(
+          { ...(window.history.state ?? {}), __legacyState: pending.state },
+          "",
+          window.location.href
+        );
+        return pending;
+      }
+
+      return {
+        pathname,
+        state: current.pathname === pathname
+          ? current.state
+          : window.history.state?.__legacyState ?? null,
+      };
+    });
+  }, [nextPathname]);
 
   const navigate = useMemo<NavigateFn>(
     () => (to, options = {}) => {
@@ -95,26 +116,37 @@ export function BrowserRouter({ children }: BrowserRouterProps) {
 
       if (typeof to === "number") {
         if (to < 0) {
-          window.history.go(to);
+          router.back();
         }
         return;
       }
 
       const nextPath = normalizePath(to);
       const nextState = options.state ?? null;
-      const method = options.replace ? "replaceState" : "pushState";
-      const currentState = window.history.state ?? {};
+      const nextLocation = { pathname: nextPath, state: nextState };
 
-      window.history[method](
-        { ...currentState, __legacyState: nextState },
-        "",
-        nextPath
-      );
+      if (nextPath === location.pathname) {
+        const method = options.replace ? "replaceState" : "pushState";
+        window.history[method](
+          { ...(window.history.state ?? {}), __legacyState: nextState },
+          "",
+          nextPath
+        );
+        setLocation(nextLocation);
+        window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+        return;
+      }
 
-      window.dispatchEvent(new Event("legacy-router:navigate"));
+      pendingNavigation.current = nextLocation;
+
+      if (options.replace) {
+        router.replace(nextPath, { scroll: false });
+      } else {
+        router.push(nextPath, { scroll: false });
+      }
       window.scrollTo({ top: 0, left: 0, behavior: "auto" });
     },
-    []
+    [location.pathname, router]
   );
 
   const value = useMemo(

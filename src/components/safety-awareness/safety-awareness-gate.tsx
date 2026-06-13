@@ -15,7 +15,7 @@ const QUESTIONS_PER_DAY = 3;
  * and cannot be closed until all questions are answered.
  */
 export function SafetyAwarenessGate() {
-  const { awarenessQuestions, awarenessDoneToday } = useAppState();
+  const { awarenessQuestions, awarenessDoneToday, awarenessRequiredToday } = useAppState();
   const { markAwarenessDone } = useAppActions();
   const { mascot } = useAppTheme();
 
@@ -32,11 +32,11 @@ export function SafetyAwarenessGate() {
 
   // Build the day's quiz exactly once, when the gate should open.
   useEffect(() => {
-    if (!mounted || awarenessDoneToday || enabled.length === 0 || quiz.length > 0) return;
+    if (!mounted || awarenessDoneToday || !awarenessRequiredToday || enabled.length === 0 || quiz.length > 0) return;
     setQuiz(pickRandom(enabled, QUESTIONS_PER_DAY));
-  }, [mounted, awarenessDoneToday, enabled, quiz.length]);
+  }, [mounted, awarenessDoneToday, awarenessRequiredToday, enabled, quiz.length]);
 
-  const open = mounted && !awarenessDoneToday && quiz.length > 0;
+  const open = mounted && awarenessRequiredToday && !awarenessDoneToday && quiz.length > 0;
 
   // Lock background scrolling while the gate is open.
   useEffect(() => {
@@ -197,7 +197,18 @@ export function SafetyAwarenessGate() {
               </p>
               <button
                 type="button"
-                onClick={markAwarenessDone}
+                onClick={() =>
+                  markAwarenessDone({
+                    score: correctCount,
+                    total: quiz.length,
+                    questions: quiz.map((question) => ({
+                      id: question.id,
+                      category: question.category,
+                      text: question.text,
+                      correct: answers[question.id] === question.answer,
+                    })),
+                  })
+                }
                 className="flex h-11 items-center justify-center gap-2 rounded-xl bg-[var(--brand-nav)] px-5 text-[14px] font-black text-[var(--brand-accent)] transition-transform hover:scale-[1.02]"
               >
                 เริ่มใช้งาน

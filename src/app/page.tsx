@@ -5,11 +5,17 @@ import Link from "next/link";
 import { useMemo } from "react";
 import {
   Award,
+  CalendarDays,
+  CheckCircle2,
   ChevronRight,
+  Clock3,
   Gift,
+  ShieldCheck,
   Sparkles,
+  Target,
   Trophy,
   UsersRound,
+  XCircle,
   Zap,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
@@ -25,6 +31,10 @@ export default function HomePage() {
     teamStandings,
     safetyCultureEvent,
     eventNow,
+    awarenessDoneToday,
+    awarenessHistory,
+    awarenessHolidays,
+    awarenessRequiredToday,
   } = useAppState();
 
   const me = personalRankings.find((person) => person.active);
@@ -69,6 +79,21 @@ export default function HomePage() {
     countdownLabel = "กิจกรรมถูกหยุดชั่วคราว";
   }
   const showEvent = eventPhase !== "draft";
+  const today = new Date();
+  const todayDateKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+  const awarenessDays = Array.from({ length: 14 }, (_, index) => {
+    const date = new Date(today);
+    date.setDate(today.getDate() - (13 - index));
+    const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+    const holiday = awarenessHolidays.find((item) => item.date === key);
+    const excludedReason = [0, 6].includes(date.getDay()) ? "วันหยุดสุดสัปดาห์" : holiday?.name;
+    return { key, date, completion: awarenessHistory.find((item) => item.date === key), excludedReason };
+  });
+  const awarenessCountedDays = awarenessDays.filter((item) => !item.excludedReason);
+  const awarenessCompletedCount = awarenessCountedDays.filter((item) => item.completion).length;
+  const awarenessPastDays = awarenessCountedDays.filter((item) => item.key !== todayDateKey);
+  const awarenessRate = awarenessCountedDays.length > 0 ? Math.round((awarenessCompletedCount / awarenessCountedDays.length) * 100) : 100;
+  const latestAwareness = [...awarenessHistory].sort((a, b) => b.completedAt.localeCompare(a.completedAt))[0];
 
   return (
     <div className="mx-auto w-full max-w-[1100px] px-3.5 pt-2 pb-8 font-sarabun md:px-4">
@@ -220,6 +245,111 @@ export default function HomePage() {
             </div>
           </div>
         </div>
+      </section>
+
+      {/* ===== Safety Awareness KPI ===== */}
+      <section className="mt-3 md:mt-4">
+        <div className="mb-2 flex items-center justify-between md:mb-2.5">
+          <h2 className="flex items-center gap-1.5 text-[15px] font-black text-[var(--brand-nav)] md:gap-2 md:text-[17px]">
+            <ShieldCheck className="h-4 w-4 text-[var(--brand-accent-strong)] md:h-5 md:w-5" strokeWidth={2.5} />
+            Safety Awareness KPI
+          </h2>
+          <span className="text-[10.5px] font-extrabold text-[var(--brand-muted-text)] md:text-[12px]">ย้อนหลัง 14 วัน</span>
+        </div>
+
+        <Card className="overflow-hidden rounded-[18px] border border-[var(--border)] bg-[var(--brand-surface)] p-0 shadow-[0_10px_26px_var(--brand-shadow)]">
+          <div className="grid gap-3 border-b border-[var(--border)] p-3.5 md:grid-cols-[1fr_auto] md:items-center md:p-5">
+            <div>
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[var(--brand-nav)] text-[var(--brand-accent)]">
+                  <Target className="h-5 w-5" strokeWidth={2.5} />
+                </span>
+                <div>
+                  <p className="text-[11px] font-extrabold uppercase tracking-[0.12em] text-[var(--brand-muted-text)]">Completion rate</p>
+                  <p className="text-[22px] font-black leading-none text-[var(--brand-nav)] md:text-[28px]">{awarenessRate}%</p>
+                </div>
+                <span className={`ml-auto rounded-full px-2.5 py-1 text-[10px] font-black md:ml-2 ${!awarenessRequiredToday ? "bg-[var(--secondary)] text-[var(--brand-muted-text)]" : awarenessDoneToday ? "bg-[#daf5e6] text-[#19734a]" : "bg-[#fff0d8] text-[#a45b00]"}`}>
+                  วันนี้: {!awarenessRequiredToday ? "ไม่นับ KPI" : awarenessDoneToday ? "ทำแล้ว" : "รอดำเนินการ"}
+                </span>
+              </div>
+              <div className="mt-3 h-2.5 overflow-hidden rounded-full bg-[var(--secondary)]">
+                <div className="h-full rounded-full bg-[var(--brand-accent-strong)]" style={{ width: `${awarenessRate}%` }} />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-3 gap-2">
+              <div className="rounded-xl bg-[var(--brand-soft)] px-3 py-2 text-center">
+                <p className="text-[18px] font-black text-[var(--brand-nav)]">{awarenessCompletedCount}</p>
+                <p className="text-[9px] font-extrabold text-[var(--brand-muted-text)]">ทำแล้ว</p>
+              </div>
+              <div className="rounded-xl bg-[#fdeee9] px-3 py-2 text-center">
+                <p className="text-[18px] font-black text-[#b3271a]">{awarenessPastDays.filter((item) => !item.completion).length}</p>
+                <p className="text-[9px] font-extrabold text-[#b3271a]/70">ไม่ได้ทำ</p>
+              </div>
+              <div className="rounded-xl bg-[var(--secondary)] px-3 py-2 text-center">
+                <p className="text-[18px] font-black text-[var(--brand-nav)]">{latestAwareness?.total ? `${latestAwareness.score}/${latestAwareness.total}` : "-"}</p>
+                <p className="text-[9px] font-extrabold text-[var(--brand-muted-text)]">คะแนนล่าสุด</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="p-3.5 md:p-5">
+            <div className="grid grid-cols-7 gap-1.5 md:gap-2">
+              {awarenessDays.map(({ key, date, completion, excludedReason }) => {
+                const isToday = key === todayDateKey;
+                const status = excludedReason ? "excluded" : completion ? "done" : isToday ? "pending" : "missed";
+                return (
+                  <div
+                    key={key}
+                    title={`${date.toLocaleDateString("th-TH", { day: "numeric", month: "short", year: "numeric" })}: ${status === "excluded" ? `ไม่นับ KPI (${excludedReason})` : status === "done" ? "ทำแล้ว" : status === "pending" ? "รอดำเนินการ" : "ไม่ได้ทำ"}`}
+                    className={`grid min-h-[58px] place-items-center rounded-xl border px-1 py-2 text-center ${
+                      status === "excluded"
+                        ? "border-[var(--border)] bg-[var(--secondary)] text-[var(--brand-muted-text)]"
+                        : status === "done"
+                        ? "border-[#9eddbb] bg-[#eafaf1] text-[#19734a]"
+                        : status === "pending"
+                          ? "border-[var(--brand-accent)] bg-[var(--brand-soft)] text-[var(--brand-text)]"
+                          : "border-[#f2c6bd] bg-[#fff5f2] text-[#b3271a]"
+                    }`}
+                  >
+                    <span className="text-[8.5px] font-extrabold opacity-65">{date.toLocaleDateString("th-TH", { weekday: "short" })}</span>
+                    <span className="text-[13px] font-black">{date.getDate()}</span>
+                    {status === "excluded" ? <span className="text-[8px] font-black">ไม่นับ</span> : status === "done" ? <CheckCircle2 className="h-3.5 w-3.5" strokeWidth={2.8} /> : status === "pending" ? <Clock3 className="h-3.5 w-3.5" strokeWidth={2.6} /> : <XCircle className="h-3.5 w-3.5" strokeWidth={2.6} />}
+                  </div>
+                );
+              })}
+            </div>
+
+            <div className="mt-4 rounded-[14px] border border-[var(--border)] bg-background/70 p-3">
+              <div className="flex items-center gap-2">
+                <CalendarDays className="h-4 w-4 text-[var(--brand-accent-strong)]" strokeWidth={2.5} />
+                <p className="text-[12px] font-black text-[var(--brand-nav)]">รายการล่าสุด</p>
+              </div>
+              {latestAwareness ? (
+                <div className="mt-2 grid gap-2 md:grid-cols-[auto_1fr] md:items-start">
+                  <div className="rounded-xl bg-[var(--brand-soft)] px-3 py-2 text-[11px] font-black text-[var(--brand-text)]">
+                    {new Date(latestAwareness.completedAt).toLocaleDateString("th-TH", { day: "numeric", month: "short", year: "numeric" })}
+                    {latestAwareness.total > 0 && ` · ${latestAwareness.score}/${latestAwareness.total} คะแนน`}
+                  </div>
+                  <div className="grid gap-1.5">
+                    {latestAwareness.questions.length > 0 ? latestAwareness.questions.map((question) => (
+                      <div key={question.id} className={`flex items-start gap-2 rounded-xl px-2.5 py-2 text-[10px] font-bold ${question.correct ? "bg-[#daf5e6] text-[#19734a]" : "bg-[#fdeee9] text-[#b3271a]"}`}>
+                        {question.correct ? <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 flex-shrink-0" strokeWidth={2.8} /> : <XCircle className="mt-0.5 h-3.5 w-3.5 flex-shrink-0" strokeWidth={2.8} />}
+                        <span>
+                          <strong className="font-black">{question.category}:</strong> {question.text}
+                        </span>
+                      </div>
+                    )) : (
+                      <span className="text-[10.5px] font-bold text-[var(--brand-muted-text)]">มีประวัติการทำแล้ว แต่ยังไม่มีรายละเอียดคำถามจากระบบเวอร์ชันเดิม</span>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                <p className="mt-2 text-[11px] font-bold text-[var(--brand-muted-text)]">ยังไม่มีประวัติ Safety Awareness เริ่มทำวันนี้เพื่อสร้างข้อมูล KPI</p>
+              )}
+            </div>
+          </div>
+        </Card>
       </section>
 
       {/* ===== กิจกรรม/อีเวนต์ที่กำลังจัด ===== */}

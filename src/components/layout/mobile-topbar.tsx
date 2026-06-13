@@ -13,10 +13,10 @@ import {
   HeartPulse,
   Home,
   Menu,
-  Search,
   Settings2,
   ShieldCheck,
   Trophy,
+  UserRound,
   UsersRound,
   X,
 } from "lucide-react";
@@ -135,7 +135,7 @@ export function MobileTopbar({ hidden = false }: { hidden?: boolean }) {
               <span className="overflow-hidden text-ellipsis whitespace-nowrap text-[15px] font-extrabold tracking-normal text-white">
                 {isWangjai ? (
                   <>
-                    <strong className="text-[var(--brand-accent)]">C.P.A.C</strong> Safe +
+                    <strong className="text-[var(--brand-accent)]">CPAC</strong> Safe +
                   </>
                 ) : (
                   <>
@@ -152,13 +152,14 @@ export function MobileTopbar({ hidden = false }: { hidden?: boolean }) {
 
         <div className="flex flex-shrink-0 items-center gap-2">
           <ThemeToggle compact />
-          <button
+          <NavTo
+            href="/profile"
             className="relative inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-full bg-transparent text-white transition-opacity hover:opacity-70"
-            aria-label="ค้นหา"
-            title="ค้นหา"
+            aria-label="โปรไฟล์ของฉัน"
+            title="โปรไฟล์ของฉัน"
           >
-            <Search className="h-[17px] w-[17px]" strokeWidth={2.4} />
-          </button>
+            <UserRound className="h-[17px] w-[17px]" strokeWidth={2.4} />
+          </NavTo>
           <NavTo
             href="/notifications"
             className="relative inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-full bg-transparent text-white transition-opacity hover:opacity-70"

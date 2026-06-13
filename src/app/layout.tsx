@@ -42,7 +42,7 @@ export default function RootLayout({
   return (
     <html
       lang="th"
-      data-theme="tiger"
+      data-theme="wangjai"
       suppressHydrationWarning
       className={`${notoSansThai.variable} ${sarabun.variable} h-full antialiased`}
     >
@@ -50,7 +50,7 @@ export default function RootLayout({
         <script
           dangerouslySetInnerHTML={{
             __html:
-              "try{var t=localStorage.getItem('suea-safety-theme');document.documentElement.dataset.theme=t==='wangjai'?'wangjai':'tiger'}catch(e){}",
+              "try{var t=localStorage.getItem('suea-safety-theme');document.documentElement.dataset.theme=t==='tiger'?'tiger':'wangjai'}catch(e){}",
           }}
         />
       </head>

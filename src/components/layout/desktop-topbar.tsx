@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Home, ShieldCheck, UsersRound, Bell, Menu, Heart, X, LogIn, Trophy, Gift, Settings2, ClipboardCheck } from "lucide-react";
+import { Home, ShieldCheck, UsersRound, UserRound, Bell, Menu, Heart, X, Trophy, Gift, Settings2, ClipboardCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { isExactNavActive, isMainNavActive } from "@/lib/navigation";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -118,7 +118,7 @@ export function DesktopTopbar() {
             <div className="desktop-brand-title whitespace-nowrap text-2xl font-extrabold leading-none tracking-normal text-white">
               {isWangjai ? (
                 <>
-                  <span className="text-[var(--brand-accent)]">C.P.A.C</span> Safe +
+                  <span className="text-[var(--brand-accent)]">CPAC</span> Safe +
                 </>
               ) : (
                 <>
@@ -386,15 +386,18 @@ export function DesktopTopbar() {
               3
             </span>
           </button>
-          <button
+          <NavTo
+            href="/profile"
+            aria-label="โปรไฟล์ของฉัน"
+            title="โปรไฟล์ของฉัน"
             className={cn(
               "login-btn-compact inline-flex h-11 cursor-pointer items-center gap-2.5 rounded-xl bg-[var(--brand-accent)] px-[18px] text-sm font-extrabold text-white",
               "shadow-[0_8px_18px_rgba(var(--brand-accent-rgb),0.22)] transition-colors hover:bg-[var(--brand-accent)]"
             )}
           >
-            <span className="login-text-visible">เข้าสู่ระบบ / เริ่มใช้งาน</span>
-            <LogIn className="h-[18px] w-[18px]" strokeWidth={2.5} />
-          </button>
+            <span className="login-text-visible">โปรไฟล์ของฉัน</span>
+            <UserRound className="h-[18px] w-[18px]" strokeWidth={2.5} />
+          </NavTo>
         </div>
       </div>
     </header>

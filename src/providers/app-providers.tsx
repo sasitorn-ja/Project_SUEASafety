@@ -143,6 +143,19 @@ export type LeaderboardPerson = {
 
 export type RewardCatalogItem = RewardItem;
 
+export type AwarenessCompletion = {
+  date: string;
+  completedAt: string;
+  score: number;
+  total: number;
+  questions: Array<{ id: string; category: string; text: string; correct: boolean }>;
+};
+
+export type AwarenessHoliday = {
+  date: string;
+  name: string;
+};
+
 type AppState = {
   completedSteps: number[];
   healthData: HealthData;
@@ -161,6 +174,9 @@ type AppState = {
   awarenessQuestions: SafetyAwarenessQuestion[];
   /** true once the user has completed today's Safety Awareness popup. */
   awarenessDoneToday: boolean;
+  awarenessHistory: AwarenessCompletion[];
+  awarenessHolidays: AwarenessHoliday[];
+  awarenessRequiredToday: boolean;
   isEventLive: boolean;
   eventNow: number;
 };
@@ -183,8 +199,9 @@ type AppActions = {
   updatePersonalRankings: (rankings: LeaderboardPerson[]) => void;
   updateRewardsCatalog: (rewards: RewardCatalogItem[]) => void;
   updateAwarenessQuestions: (questions: SafetyAwarenessQuestion[]) => void;
+  updateAwarenessHolidays: (holidays: AwarenessHoliday[]) => void;
   /** Mark today's Safety Awareness popup as completed. */
-  markAwarenessDone: () => void;
+  markAwarenessDone: (completion: Omit<AwarenessCompletion, "date" | "completedAt">) => void;
   redeemPoints: (points: number) => boolean;
 };
 
@@ -264,6 +281,8 @@ const STORAGE_KEYS = {
   rewardsCatalog: "safety-hub:safety-culture-rewards-catalog",
   awarenessQuestions: "safety-hub:safety-awareness-questions",
   awarenessDoneDate: "safety-hub:safety-awareness-done-date",
+  awarenessHistory: "safety-hub:safety-awareness-history",
+  awarenessHolidays: "safety-hub:safety-awareness-holidays",
 } as const;
 
 const INITIAL_CURRENT_USER_POINTS = 254;
@@ -602,7 +621,9 @@ export function AppProviders({ children }: { children: ReactNode }) {
   const [rewardsCatalog, setRewardsCatalog] = useState<RewardCatalogItem[]>(() => createDefaultRewardsCatalog());
   const [awarenessQuestions, setAwarenessQuestions] = useState<SafetyAwarenessQuestion[]>(() => createDefaultAwarenessQuestions());
   const [awarenessDoneDate, setAwarenessDoneDate] = useState<string>("");
-  const [eventNow, setEventNow] = useState(() => Date.now());
+  const [awarenessHistory, setAwarenessHistory] = useState<AwarenessCompletion[]>([]);
+  const [awarenessHolidays, setAwarenessHolidays] = useState<AwarenessHoliday[]>([]);
+  const [eventNow, setEventNow] = useState(0);
 
   useEffect(() => {
     try {
@@ -733,6 +754,18 @@ export function AppProviders({ children }: { children: ReactNode }) {
       }
       const storedDone = window.localStorage.getItem(STORAGE_KEYS.awarenessDoneDate);
       if (storedDone) setAwarenessDoneDate(storedDone);
+      const storedHistory = window.localStorage.getItem(STORAGE_KEYS.awarenessHistory);
+      if (storedHistory) {
+        const parsed = JSON.parse(storedHistory) as AwarenessCompletion[];
+        if (Array.isArray(parsed)) setAwarenessHistory(parsed);
+      } else if (storedDone) {
+        setAwarenessHistory([{ date: storedDone, completedAt: `${storedDone}T00:00:00.000Z`, score: 0, total: 0, questions: [] }]);
+      }
+      const storedHolidays = window.localStorage.getItem(STORAGE_KEYS.awarenessHolidays);
+      if (storedHolidays) {
+        const parsed = JSON.parse(storedHolidays) as AwarenessHoliday[];
+        if (Array.isArray(parsed)) setAwarenessHolidays(parsed);
+      }
     } catch {
       // Keep defaults on parse/storage failure.
     }
@@ -757,6 +790,24 @@ export function AppProviders({ children }: { children: ReactNode }) {
   }, [awarenessDoneDate]);
 
   useEffect(() => {
+    try {
+      window.localStorage.setItem(STORAGE_KEYS.awarenessHistory, JSON.stringify(awarenessHistory));
+    } catch {
+      // Ignore persistence failures and keep in-memory state.
+    }
+  }, [awarenessHistory]);
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(STORAGE_KEYS.awarenessHolidays, JSON.stringify(awarenessHolidays));
+    } catch {
+      // Ignore persistence failures and keep in-memory state.
+    }
+  }, [awarenessHolidays]);
+
+  useEffect(() => {
+    setEventNow(Date.now());
+
     const timer = window.setInterval(() => {
       setEventNow(Date.now());
     }, 1000 * 15);
@@ -867,8 +918,22 @@ export function AppProviders({ children }: { children: ReactNode }) {
     setAwarenessQuestions(normalizeAwarenessQuestions(questions));
   }, []);
 
-  const markAwarenessDone = useCallback(() => {
-    setAwarenessDoneDate(todayKey());
+  const updateAwarenessHolidays = useCallback((holidays: AwarenessHoliday[]) => {
+    setAwarenessHolidays(
+      holidays
+        .filter((holiday) => holiday.date && holiday.name.trim())
+        .map((holiday) => ({ date: holiday.date, name: holiday.name.trim() }))
+        .sort((a, b) => a.date.localeCompare(b.date)),
+    );
+  }, []);
+
+  const markAwarenessDone = useCallback((completion: Omit<AwarenessCompletion, "date" | "completedAt">) => {
+    const date = todayKey();
+    setAwarenessDoneDate(date);
+    setAwarenessHistory((current) => [
+      ...current.filter((item) => item.date !== date),
+      { ...completion, date, completedAt: new Date().toISOString() },
+    ]);
   }, []);
 
   const redeemPoints = useCallback((points: number) => {
@@ -900,6 +965,9 @@ export function AppProviders({ children }: { children: ReactNode }) {
     rewardsCatalog,
     awarenessQuestions,
     awarenessDoneToday: awarenessDoneDate === todayKey(),
+    awarenessHistory,
+    awarenessHolidays,
+    awarenessRequiredToday: ![0, 6].includes(new Date().getDay()) && !awarenessHolidays.some((holiday) => holiday.date === todayKey()),
     isEventLive: isSafetyCultureEventLive(safetyCultureEvent, eventNow),
     eventNow,
   };
@@ -922,6 +990,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
     updatePersonalRankings,
     updateRewardsCatalog,
     updateAwarenessQuestions,
+    updateAwarenessHolidays,
     markAwarenessDone,
     redeemPoints,
   };

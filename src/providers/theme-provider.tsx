@@ -90,11 +90,11 @@ function getThemedColor(theme: AppTheme, color?: string) {
 }
 
 export function AppThemeProvider({ children }: { children: ReactNode }) {
-  const [theme, setTheme] = useState<AppTheme>("tiger");
+  const [theme, setTheme] = useState<AppTheme>("wangjai");
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    setTheme(document.documentElement.dataset.theme === "wangjai" ? "wangjai" : "tiger");
+    setTheme(document.documentElement.dataset.theme === "tiger" ? "tiger" : "wangjai");
     setReady(true);
   }, []);
 

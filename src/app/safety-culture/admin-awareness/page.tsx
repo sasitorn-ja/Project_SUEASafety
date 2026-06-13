@@ -1,13 +1,17 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { type ChangeEvent, useMemo, useState } from "react";
 import {
   ArrowLeft,
+  CalendarOff,
   CheckCircle2,
   CircleSlash,
+  Download,
   Eye,
   EyeOff,
+  FileSpreadsheet,
+  Info,
   ListChecks,
   Pencil,
   Plus,
@@ -33,10 +37,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
-import { useAppActions, useAppState } from "@/providers/app-providers";
+import { type AwarenessHoliday, useAppActions, useAppState } from "@/providers/app-providers";
 import {
   createDefaultAwarenessQuestions,
-  parseAwarenessBulk,
   type SafetyAwarenessQuestion,
 } from "@/lib/safety-awareness";
 
@@ -91,15 +94,18 @@ function SectionCard({
 }
 
 export default function AdminAwarenessPage() {
-  const { awarenessQuestions } = useAppState();
-  const { updateAwarenessQuestions } = useAppActions();
+  const { awarenessQuestions, awarenessHolidays } = useAppState();
+  const { updateAwarenessQuestions, updateAwarenessHolidays } = useAppActions();
 
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [editor, setEditor] = useState<EditorState | null>(null);
   const [importOpen, setImportOpen] = useState(false);
-  const [importText, setImportText] = useState("");
   const [importReplace, setImportReplace] = useState(false);
+  const [importQuestions, setImportQuestions] = useState<SafetyAwarenessQuestion[]>([]);
+  const [importErrors, setImportErrors] = useState<string[]>([]);
+  const [holidayDate, setHolidayDate] = useState("");
+  const [holidayName, setHolidayName] = useState("");
 
   const categories = useMemo(() => {
     const set = new Set<string>();
@@ -165,12 +171,102 @@ export default function AdminAwarenessPage() {
   };
 
   const runImport = () => {
-    const parsed = parseAwarenessBulk(importText, "sa-import");
-    if (parsed.length === 0) return;
-    updateAwarenessQuestions(importReplace ? parsed : [...awarenessQuestions, ...parsed]);
-    setImportText("");
+    if (importQuestions.length === 0) return;
+    updateAwarenessQuestions(importReplace ? importQuestions : [...awarenessQuestions, ...importQuestions]);
+    setImportQuestions([]);
+    setImportErrors([]);
     setImportReplace(false);
     setImportOpen(false);
+  };
+
+  const downloadTemplate = async () => {
+    const XLSX = await import("xlsx");
+    const workbook = XLSX.utils.book_new();
+    const questions = XLSX.utils.aoa_to_sheet([
+      ["category", "question", "answer", "explanation", "enabled"],
+      ["กฎจราจรและการควบคุมความเร็ว", "เมื่อเลี้ยวเข้าทางร่วม ทางแยก หรือโค้งหักศอก ต้องใช้ความเร็วไม่เกิน 20 กม./ชม.", "ถูก", "เป็นข้อกำหนดความเร็วในการเลี้ยว", "ใช่"],
+      ["การเตรียมความพร้อมและ KYT", "หากหัวหน้าโรงงานไม่ว่าง จบส. ไม่จำเป็นต้องทำ KYT", "ผิด", "ต้องทำ KYT ทุกครั้งก่อนเริ่มงาน", "ใช่"],
+    ]);
+    const guide = XLSX.utils.aoa_to_sheet([
+      ["แนวทางการกรอกแบบฟอร์มคำถาม Safety Awareness"],
+      ["คอลัมน์", "วิธีกรอก", "บังคับ"],
+      ["category", "ชื่อหมวดหมู่ของคำถาม", "ใช่"],
+      ["question", "ข้อความคำถามแบบถูก/ผิด 1 ข้อต่อ 1 แถว", "ใช่"],
+      ["answer", "กรอกเฉพาะ ถูก หรือ ผิด", "ใช่"],
+      ["explanation", "คำอธิบายเฉลยหลังผู้ใช้ตอบ", "ไม่บังคับ"],
+      ["enabled", "กรอก ใช่ เพื่อเปิดใช้งาน หรือ ไม่ เพื่อปิดใช้งาน", "ใช่"],
+      [],
+      ["ข้อควรระวัง"],
+      ["ห้ามเปลี่ยนชื่อหัวคอลัมน์ในชีต Questions"],
+      ["ไม่ควรเว้น category, question, answer หรือ enabled"],
+      ["ระบบจะข้ามแถวที่ว่าง และแจ้งแถวที่ข้อมูลไม่ถูกต้องก่อนนำเข้า"],
+    ]);
+    questions["!cols"] = [{ wch: 34 }, { wch: 80 }, { wch: 12 }, { wch: 60 }, { wch: 12 }];
+    guide["!cols"] = [{ wch: 34 }, { wch: 80 }, { wch: 16 }];
+    XLSX.utils.book_append_sheet(workbook, questions, "Questions");
+    XLSX.utils.book_append_sheet(workbook, guide, "Guide");
+    XLSX.writeFile(workbook, "Safety-Awareness-Question-Template.xlsx");
+  };
+
+  const readXlsx = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) return;
+
+    try {
+      const XLSX = await import("xlsx");
+      const workbook = XLSX.read(await file.arrayBuffer(), { type: "array" });
+      const sheet = workbook.Sheets.Questions ?? workbook.Sheets[workbook.SheetNames[0]];
+      const rows = XLSX.utils.sheet_to_json<Record<string, unknown>>(sheet, { defval: "" });
+      const parsed: SafetyAwarenessQuestion[] = [];
+      const errors: string[] = [];
+
+      rows.forEach((row, index) => {
+        const rowNumber = index + 2;
+        const category = String(row.category ?? "").trim();
+        const text = String(row.question ?? "").trim();
+        const answerText = String(row.answer ?? "").trim().toLowerCase();
+        const enabledText = String(row.enabled ?? "").trim().toLowerCase();
+        const note = String(row.explanation ?? "").trim();
+        const answer = answerText === "ถูก" ? true : answerText === "ผิด" ? false : null;
+        const enabled = ["ใช่", "yes", "true", "1"].includes(enabledText)
+          ? true
+          : ["ไม่", "ไม่ใช่", "no", "false", "0"].includes(enabledText)
+            ? false
+            : null;
+
+        if (!category && !text && !answerText && !enabledText) return;
+        if (!category || !text || answer === null || enabled === null) {
+          errors.push(`แถว ${rowNumber}: ต้องกรอก category, question, answer (ถูก/ผิด) และ enabled (ใช่/ไม่) ให้ถูกต้อง`);
+          return;
+        }
+        parsed.push({
+          id: `sa-xlsx-${Date.now().toString(36)}-${index + 1}`,
+          category,
+          text,
+          answer,
+          note: note || undefined,
+          enabled,
+        });
+      });
+
+      setImportQuestions(parsed);
+      setImportErrors(errors);
+    } catch {
+      setImportQuestions([]);
+      setImportErrors(["ไม่สามารถอ่านไฟล์ได้ กรุณาใช้ไฟล์ .xlsx จากแบบฟอร์มตัวอย่าง"]);
+    }
+  };
+
+  const addHoliday = () => {
+    if (!holidayDate || !holidayName.trim()) return;
+    const next: AwarenessHoliday[] = [
+      ...awarenessHolidays.filter((holiday) => holiday.date !== holidayDate),
+      { date: holidayDate, name: holidayName.trim() },
+    ];
+    updateAwarenessHolidays(next);
+    setHolidayDate("");
+    setHolidayName("");
   };
 
   const resetToDefault = () => {
@@ -186,7 +282,7 @@ export default function AdminAwarenessPage() {
             Settings <span className="text-[var(--c-ffb000)]">Safety Awareness</span>
           </>
         }
-        description="จัดการคลังคำถาม Safety Awareness ที่ใช้สุ่มในป็อปอัพประจำวัน — เพิ่ม/แก้/ลบ เปิด-ปิด และนำเข้าแบบวางข้อความ"
+        description="จัดการวันทำงานที่นับ KPI และคลังคำถาม Safety Awareness — เพิ่ม/แก้/ลบ เปิด-ปิด และนำเข้าจาก XLSX"
         mascotSrc="/images/mascots/gallery/line-walk-3.png"
         mascotAlt="SUEA Mascot"
         actions={
@@ -210,6 +306,84 @@ export default function AdminAwarenessPage() {
 
       <div className="mt-4">
         <SectionCard
+          title="วันที่ไม่นับ Safety Awareness KPI"
+          description="วันเสาร์และวันอาทิตย์ไม่นับอัตโนมัติ เพิ่มวันหยุดบริษัทหรือวันหยุดพิเศษที่ตรงกับวันทำงานได้ที่นี่"
+          icon={<CalendarOff className="h-6 w-6" strokeWidth={2.2} />}
+        >
+          <div className="rounded-xl border border-[#cfe3f4] bg-[#f1f8fe] px-3.5 py-3 text-[12.5px] font-bold text-[#24567f]">
+            <div className="flex items-center gap-2 font-black">
+              <Info className="h-4 w-4 flex-shrink-0" />
+              ระบบไม่นับวันเสาร์และวันอาทิตย์ทุกสัปดาห์
+            </div>
+            <p className="mt-1 pl-6">
+              วันที่เพิ่มด้านล่างจะไม่แสดงป็อปอัพคำถาม และไม่ถูกนำไปคิดเปอร์เซ็นต์ KPI บนหน้า Home
+            </p>
+          </div>
+
+          <div className="mt-3 grid gap-2 md:grid-cols-[190px_1fr_auto]">
+            <Input
+              type="date"
+              value={holidayDate}
+              onChange={(event) => setHolidayDate(event.target.value)}
+              className="h-10 rounded-xl border-[var(--c-d7c5a7)] bg-[var(--c-fffdf8)] text-[13px] font-bold"
+            />
+            <Input
+              value={holidayName}
+              onChange={(event) => setHolidayName(event.target.value)}
+              onKeyDown={(event) => event.key === "Enter" && addHoliday()}
+              placeholder="ชื่อวันหยุด เช่น วันหยุดบริษัทประจำปี"
+              className="h-10 rounded-xl border-[var(--c-d7c5a7)] bg-[var(--c-fffdf8)] text-[13px] font-bold"
+            />
+            <Button
+              onClick={addHoliday}
+              disabled={!holidayDate || !holidayName.trim()}
+              className="h-10 rounded-xl bg-[var(--c-5c3214)] px-4 text-[12.5px] font-black text-white hover:bg-[var(--c-4a280f)] disabled:opacity-50"
+            >
+              <Plus className="h-4 w-4" /> เพิ่มวันไม่นับ
+            </Button>
+          </div>
+
+          <div className="mt-3">
+            {awarenessHolidays.length === 0 ? (
+              <p className="rounded-xl border border-dashed border-[var(--c-d7c5a7)] bg-[var(--c-fffdf8)] px-4 py-4 text-center text-[12.5px] font-bold text-[var(--c-6d5a46)]">
+                ยังไม่มีวันหยุดเพิ่มเติม ระบบไม่นับเฉพาะวันเสาร์และวันอาทิตย์
+              </p>
+            ) : (
+              <div className="grid gap-2 md:grid-cols-2">
+                {[...awarenessHolidays]
+                  .sort((a, b) => a.date.localeCompare(b.date))
+                  .map((holiday) => (
+                    <div
+                      key={holiday.date}
+                      className="flex items-center gap-3 rounded-xl border border-[var(--c-e6dcc6)] bg-[var(--c-fffdf8)] px-3 py-2.5"
+                    >
+                      <CalendarOff className="h-4 w-4 flex-shrink-0 text-[#b3271a]" />
+                      <div className="min-w-0 flex-1">
+                        <p className="text-[12.5px] font-black text-[var(--c-3b1d07)]">{holiday.name}</p>
+                        <p className="text-[11.5px] font-bold text-[var(--c-6d5a46)]">{holiday.date}</p>
+                      </div>
+                      <button
+                        type="button"
+                        title="ลบวันไม่นับ"
+                        onClick={() =>
+                          updateAwarenessHolidays(
+                            awarenessHolidays.filter((item) => item.date !== holiday.date),
+                          )
+                        }
+                        className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg border border-[#eccdc6] bg-white text-[#b3271a] hover:bg-[#fbe3df]"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </div>
+                  ))}
+              </div>
+            )}
+          </div>
+        </SectionCard>
+      </div>
+
+      <div className="mt-4">
+        <SectionCard
           title="คลังคำถาม"
           description="ป็อปอัพจะสุ่ม 3 ข้อจากคำถามที่ 'เปิดใช้งาน' เท่านั้น"
           icon={<ListChecks className="h-6 w-6" strokeWidth={2.2} />}
@@ -219,7 +393,7 @@ export default function AdminAwarenessPage() {
                 onClick={() => setImportOpen(true)}
                 className="h-9 rounded-xl border border-[var(--c-d7c5a7)] bg-[var(--c-fff8eb)] px-3.5 text-[12.5px] font-black text-[var(--c-5c3214)] hover:bg-[var(--c-fff2d8)]"
               >
-                <Upload className="h-4 w-4" /> นำเข้า
+                <FileSpreadsheet className="h-4 w-4" /> นำเข้า XLSX
               </Button>
               <Button
                 onClick={() => setEditor({ ...EMPTY_EDITOR })}
@@ -475,23 +649,71 @@ export default function AdminAwarenessPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Bulk import dialog */}
-      <Dialog open={importOpen} onOpenChange={setImportOpen}>
-        <DialogContent className="font-sarabun sm:max-w-[560px]">
+      {/* XLSX import dialog */}
+      <Dialog
+        open={importOpen}
+        onOpenChange={(open) => {
+          setImportOpen(open);
+          if (!open) {
+            setImportQuestions([]);
+            setImportErrors([]);
+          }
+        }}
+      >
+        <DialogContent className="max-h-[90vh] overflow-y-auto font-sarabun sm:max-w-[640px]">
           <DialogHeader>
-            <DialogTitle className="text-[var(--c-3b1d07)]">นำเข้าคำถาม (วางข้อความ)</DialogTitle>
+            <DialogTitle className="flex items-center gap-2 text-[var(--c-3b1d07)]">
+              <FileSpreadsheet className="h-5 w-5" /> นำเข้าคำถามจาก XLSX
+            </DialogTitle>
             <DialogDescription>
-              วาง 1 คำถามต่อ 1 บรรทัด ลงท้ายด้วย (ถูก) หรือ (ผิด) — ใส่คำอธิบายได้เป็น (ผิด - คำอธิบาย)
-              และขึ้นบรรทัดที่ขึ้นต้นด้วย “หมวด” เพื่อกำหนดหมวดหมู่
+              ดาวน์โหลดแบบฟอร์ม กรอกคำถามในชีต Questions แล้วนำไฟล์กลับเข้าระบบ
             </DialogDescription>
           </DialogHeader>
 
-          <Textarea
-            value={importText}
-            onChange={(e) => setImportText(e.target.value)}
-            placeholder={"หมวดที่ 1: การเตรียมความพร้อม\nจบส. ต้องตรวจวัดแอลกอฮอล์ทุกวันก่อนปฏิบัติงาน (ถูก)\nการสวมหมวกเซฟตี้จำเป็นเฉพาะตอนเทคอนกรีต (ผิด - ต้องสวมทุกครั้งที่ออกนอกรถ)"}
-            className="min-h-[180px] rounded-xl border-[var(--c-d7c5a7)] text-[13px] font-bold"
-          />
+          <div className="rounded-xl border border-[#cfe3f4] bg-[#f1f8fe] p-3.5 text-[12px] font-bold text-[#24567f]">
+            <p className="flex items-center gap-2 text-[12.5px] font-black">
+              <Info className="h-4 w-4" /> แนวทางการกรอกที่ถูกต้อง
+            </p>
+            <div className="mt-2 grid gap-1 md:grid-cols-2">
+              <p><b>category</b>: ชื่อหมวดหมู่</p>
+              <p><b>question</b>: คำถามถูก/ผิด 1 ข้อต่อแถว</p>
+              <p><b>answer</b>: กรอกเฉพาะ “ถูก” หรือ “ผิด”</p>
+              <p><b>explanation</b>: คำอธิบายเฉลย (ไม่บังคับ)</p>
+              <p><b>enabled</b>: กรอก “ใช่” หรือ “ไม่”</p>
+            </div>
+            <p className="mt-2 text-[#b3271a]">ห้ามเปลี่ยนชื่อหัวคอลัมน์ในชีต Questions</p>
+          </div>
+
+          <Button
+            onClick={downloadTemplate}
+            className="h-10 w-full rounded-xl border border-[var(--c-d7c5a7)] bg-[var(--c-fff8eb)] px-4 text-[12.5px] font-black text-[var(--c-5c3214)] hover:bg-[var(--c-fff2d8)]"
+          >
+            <Download className="h-4 w-4" /> ดาวน์โหลดแบบฟอร์ม XLSX พร้อมตัวอย่างและคู่มือ
+          </Button>
+
+          <label className="flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-[var(--c-d7c5a7)] bg-[var(--c-fffdf8)] px-4 py-6 text-center hover:bg-[var(--c-fff8eb)]">
+            <Upload className="h-7 w-7 text-[var(--c-9a6a24)]" />
+            <span className="mt-2 text-[13px] font-black text-[var(--c-5c3214)]">
+              เลือกไฟล์คำถาม .xlsx
+            </span>
+            <span className="text-[11.5px] font-bold text-[var(--c-6d5a46)]">
+              ระบบจะตรวจข้อมูลแต่ละแถวก่อนนำเข้า
+            </span>
+            <input type="file" accept=".xlsx" onChange={readXlsx} className="sr-only" />
+          </label>
+
+          {(importQuestions.length > 0 || importErrors.length > 0) && (
+            <div className="rounded-xl border border-[var(--c-e6dcc6)] bg-white p-3">
+              <p className="text-[12.5px] font-black text-[var(--c-3b1d07)]">
+                ตรวจพบคำถามที่พร้อมนำเข้า {importQuestions.length} ข้อ
+              </p>
+              {importErrors.length > 0 && (
+                <div className="mt-2 max-h-[120px] overflow-y-auto rounded-lg bg-[#fff2ef] px-3 py-2 text-[11.5px] font-bold text-[#b3271a]">
+                  {importErrors.map((error) => <p key={error}>{error}</p>)}
+                </div>
+              )}
+            </div>
+          )}
 
           <label className="flex items-center gap-2">
             <input
@@ -514,10 +736,10 @@ export default function AdminAwarenessPage() {
             </Button>
             <Button
               onClick={runImport}
-              disabled={parseAwarenessBulk(importText).length === 0}
+              disabled={importQuestions.length === 0}
               className="h-9 rounded-xl bg-[var(--c-5c3214)] px-4 text-[12.5px] font-black text-white hover:bg-[var(--c-4a280f)] disabled:opacity-50"
             >
-              นำเข้า {parseAwarenessBulk(importText).length > 0 ? `(${parseAwarenessBulk(importText).length} ข้อ)` : ""}
+              นำเข้า {importQuestions.length > 0 ? `(${importQuestions.length} ข้อ)` : ""}
             </Button>
           </DialogFooter>
         </DialogContent>
