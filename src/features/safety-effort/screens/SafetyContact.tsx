@@ -94,8 +94,9 @@ export default function SafetyContact() {
       setStarted(false);
       return;
     }
-    if (window.history.length > 1) { navigate(-1); return; }
-    navigate(fromActivity ? "/activity" : "/category");
+    navigate(fromActivity ? "/checkin" : "/category", {
+      state: fromActivity ? { activity, checkin } : undefined,
+    });
   }
 
   function handleStart() {

@@ -440,6 +440,7 @@ export default function Linewalk() {
   function handleBack() {
     if (isQuestionScreen) {
       navigate("/linewalk", {
+        replace: true,
         state: {
           ...location.state,
           linewalkStarted: false,
@@ -448,8 +449,9 @@ export default function Linewalk() {
       });
       return;
     }
-    if (window.history.length > 1) { navigate(-1); return; }
-    navigate(fromActivity ? "/activity" : "/category");
+    navigate(fromActivity ? "/checkin" : "/category", {
+      state: fromActivity ? { activity, checkin } : undefined,
+    });
   }
 
   // ── Submit ─────────────────────────────────────────────────────────────────
@@ -514,6 +516,7 @@ export default function Linewalk() {
   function handlePrevQuestion() {
     if (currentQuestionIndex === 0) {
       navigate("/linewalk", {
+        replace: true,
         state: {
           ...location.state,
           linewalkStarted: false,

@@ -941,7 +941,7 @@ export default function Activity() {
   const checkin  = location.state?.checkin ?? null;
   const fromCategoryAudit = !checkin;
 
-  const [selected,         setSelected]         = useState(null);
+  const [selected,         setSelected]         = useState(location.state?.activity ?? null);
   const [customOpen,       setCustomOpen]        = useState(false);
   const [customActivities, setCustomActivities]  = useState([]);
   const [width,            setWidth]             = useState(window.innerWidth);
@@ -952,11 +952,26 @@ export default function Activity() {
     return () => window.removeEventListener("resize", fn);
   }, []);
 
+  useEffect(() => {
+    if (location.state?.activity) {
+      setSelected(location.state.activity);
+    }
+  }, [location.state?.activity]);
+
   const isMobile = width < 768;
 
   function handleBack() {
-    if (window.history.length > 1) { navigate(-1); return; }
-    navigate(fromCategoryAudit ? "/category" : "/checkin");
+    if (fromCategoryAudit) {
+      navigate("/category");
+      return;
+    }
+
+    navigate("/checkin", {
+      state: {
+        checkin,
+        activity: location.state?.activity ?? null,
+      },
+    });
   }
 
   // ฤฤ ? PATCHED: เพิ่ม fromActivity: true เพื่อบอก Linewalk ว่ามาจาก Activity flow
@@ -1191,4 +1206,3 @@ export default function Activity() {
   );
 }
 // @ts-nocheck
-

@@ -1345,7 +1345,7 @@ export default function Checkin() {
   const location = useLocation();
   const activity = location.state?.activity ?? null;
 
-  const [selected,  setSelected]  = useState(null);
+  const [selected,  setSelected]  = useState(location.state?.checkin ?? null);
   const [userPos,   setUserPos]   = useState(null);
   const [locating,  setLocating]  = useState(false);
   const [showModal, setShowModal] = useState(false);
@@ -1371,6 +1371,11 @@ export default function Checkin() {
     return () => setMapMounted(false);
   }, []);
 
+  useEffect(() => {
+    if (location.state?.checkin) {
+      setSelected(location.state.checkin);
+    }
+  }, [location.state?.checkin]);
 
   const isMobile = width < 768;
   const center   = userPos ?? DEFAULT_CENTER;
@@ -1433,11 +1438,9 @@ export default function Checkin() {
   }, [userPos, extraLocs]);
 
   function handleBack() {
-    if (typeof window !== "undefined" && window.history.length > 1) {
-      navigate(-1);
-      return;
-    }
-    navigate(activity ? "/activity" : "/category");
+    navigate(activity ? "/activity" : "/category", {
+      state: activity ? { activity } : undefined,
+    });
   }
 
   function locateUser() {
