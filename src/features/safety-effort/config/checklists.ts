@@ -5,6 +5,8 @@ export type ChecklistQuestion = {
   title: string;
   guideTitle?: string | false;
   guidelines: string[];
+  format?: "original" | "text_box";
+  image?: string;
 };
 
 export type ChecklistCollection = Record<ChecklistLocationType, ChecklistQuestion[]>;
@@ -84,6 +86,8 @@ function sanitizeQuestion(raw: any, fallbackIndex: number): ChecklistQuestion {
     guidelines: Array.isArray(raw?.guidelines)
       ? raw.guidelines.map((item: any) => String(item || "")).filter(Boolean)
       : [],
+    format: raw?.format === "text_box" ? "text_box" : "original",
+    image: raw?.image ? String(raw.image) : undefined,
   };
 }
 

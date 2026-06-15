@@ -61,7 +61,31 @@ export default function RestrictedDatePicker({
   modeLabels = { today: "ทำวันนี้", backdate: "ทำย้อนหลัง" },
 }) {
   const today = useMemo(() => startOfDay(new Date()), []);
-  const minBackdate = useMemo(() => startOfDay(addDays(today, -5)), [today]);
+  const [backdateLimit, setBackdateLimit] = useState(5);
+  const [allowedMode, setAllowedMode] = useState("all");
+  const [allowedWeekdays, setAllowedWeekdays] = useState([0, 1, 2, 3, 4, 5, 6]);
+  const [allowedDates, setAllowedDates] = useState([]);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const savedLimit = localStorage.getItem("safety_backdate_limit");
+      if (savedLimit) {
+        setBackdateLimit(parseInt(savedLimit, 10) || 5);
+      }
+      const modeVal = localStorage.getItem("safety_allowed_mode") || "all";
+      setAllowedMode(modeVal);
+      try {
+        const weekdaysStr = localStorage.getItem("safety_allowed_weekdays");
+        if (weekdaysStr) setAllowedWeekdays(JSON.parse(weekdaysStr));
+        const datesStr = localStorage.getItem("safety_allowed_dates");
+        if (datesStr) setAllowedDates(JSON.parse(datesStr));
+      } catch (e) {
+        // ignore
+      }
+    }
+  }, []);
+
+  const minBackdate = useMemo(() => startOfDay(addDays(today, -backdateLimit)), [today, backdateLimit]);
   const [mode, setMode] = useState("today");
 
   useEffect(() => {
@@ -90,7 +114,7 @@ export default function RestrictedDatePicker({
     const normalized = startOfDay(fallback);
     onChange(toInputValue(normalized));
     setViewMonth(normalized);
-  }, [mode]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [mode, minBackdate]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const monthCells = useMemo(() => buildCalendarDays(viewMonth), [viewMonth]);
   const minMonth = new Date(minBackdate.getFullYear(), minBackdate.getMonth(), 1);
@@ -104,10 +128,24 @@ export default function RestrictedDatePicker({
 
   function isAllowed(date) {
     if (!date) return false;
+    
+    let allowedByLimit = false;
     if (mode === "today") {
-      return toInputValue(date) === toInputValue(today);
+      allowedByLimit = toInputValue(date) === toInputValue(today);
+    } else {
+      allowedByLimit = date >= minBackdate && date <= today;
     }
-    return date >= minBackdate && date <= today;
+    if (!allowedByLimit) return false;
+
+    if (allowedMode === "custom") {
+      const dateDay = date.getDay(); // 0 = Sunday, 1 = Monday, etc.
+      const dateStr = toInputValue(date); // YYYY-MM-DD
+      const matchesWeekday = allowedWeekdays.includes(dateDay);
+      const matchesDate = allowedDates.includes(dateStr);
+      return matchesWeekday || matchesDate;
+    }
+
+    return true;
   }
 
   function handlePick(date) {
@@ -198,7 +236,7 @@ export default function RestrictedDatePicker({
       >
         {mode === "today"
           ? "เลือกได้เฉพาะวันที่เข้ามาทำรายการวันนี้เท่านั้น"
-          : "เลือกย้อนหลังได้ไม่เกิน 5 วัน รวมถึงวันปัจจุบัน"}
+          : `เลือกย้อนหลังได้ไม่เกิน ${backdateLimit} วัน รวมถึงวันปัจจุบัน`}
       </p>
 
       <div

@@ -61,6 +61,11 @@ const SafetyAdmin = dynamic(() => import("@/features/safety-effort/screens/Safet
   loading: () => screenLoading("หน้า Admin"),
 });
 
+const DashboardSafetyEffort = dynamic(() => import("@/features/safety-effort/screens/Dashboard Safety Effort"), {
+  ssr: false,
+  loading: () => screenLoading("หน้าแดชบอร์ดความปลอดภัย"),
+});
+
 // ─────────────────────────────────────────────────────────
 // DESIGN TOKENS — navigation-design-spec.md §2 & §10
 // ─────────────────────────────────────────────────────────
@@ -95,7 +100,7 @@ const NAV_ITEMS = [
 const SECTION_ORDER = ["SUEA SAFETY", "Operations"];
 
 // Routes that belong to the "safety-effort" nav section
-const SAFETY_EFFORT_ROUTES = ["/category", "/checkin", "/activity", "/create-post", "/linewalk", "/safety-contact", "/assessment-summary"];
+const SAFETY_EFFORT_ROUTES = ["/category", "/checkin", "/activity", "/create-post", "/linewalk", "/safety-contact", "/assessment-summary", "/dashboard-safety-effort"];
 // Routes where main content is fixed-height (no outer scroll)
 const FIXED_CONTENT_ROUTES = ["/safety-admin", "/checkin"];
 
@@ -749,6 +754,7 @@ function AppRoutes({ onScroll }) {
         <Route path="safety-contact" element={<SafetyContact />} />
         <Route path="assessment-summary" element={<AssessmentSummary />} />
         <Route path="safety-admin" element={<SafetyAdmin />} />
+        <Route path="dashboard-safety-effort" element={<DashboardSafetyEffort />} />
       </Routes>
     );
   }

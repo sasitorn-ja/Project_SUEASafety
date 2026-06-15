@@ -78,9 +78,9 @@ export default function SafetyContact() {
   };
   const fromActivity = location.state?.fromActivity ?? false;
 
-  const [date, setDate] = useState("");
-  const [text, setText] = useState("");
-  const [started, setStarted] = useState(false);
+  const [date, setDate] = useState(location.state?.linewalkData?.date ?? "");
+  const [text, setText] = useState(location.state?.linewalkData?.safetyContactText ?? "");
+  const [started, setStarted] = useState(!!location.state?.linewalkData);
   const [isMobileViewport, setIsMobileViewport] = useState(() => typeof window !== "undefined" ? window.innerWidth <= 480 : false);
 
   useEffect(() => {

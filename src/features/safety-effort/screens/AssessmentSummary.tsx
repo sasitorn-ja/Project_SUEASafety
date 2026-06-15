@@ -20,11 +20,17 @@ const T = {
   action: "#ea580c",
 };
 
+const IcoBack = () => (
+  <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+    <polyline points="15 18 9 12 15 6"/>
+  </svg>
+);
+
 function statusMeta(status) {
   if (status === "safe") return { label: "ปลอดภัย", color: T.safe, bg: "#f0fdf4", border: "#bbf7d0" };
   if (status === "unsafe_condition") return { label: "สภาพไม่ปลอดภัย", color: T.issue, bg: "#fef2f2", border: "#fecaca" };
   if (status === "unsafe_action") return { label: "พฤติกรรมไม่ปลอดภัย", color: T.action, bg: "#fff7ed", border: "#ffedd5" };
-  return { label: "ยังไม่ตอบ", color: T.foreground3, bg: "var(--c-f8f6f1)", border: "rgba(14,15,18,0.08)" };
+  return { label: "N/A", color: T.foreground3, bg: "var(--c-f8f6f1)", border: "rgba(14,15,18,0.08)" };
 }
 
 export default function AssessmentSummary() {
@@ -41,6 +47,81 @@ export default function AssessmentSummary() {
     }
   }, [linewalkData, navigate]);
 
+  const handleBack = () => {
+    if (linewalkData?.isSafetyContact) {
+      navigate("/safety-contact", {
+        state: {
+          checkin,
+          activity,
+          linewalkData,
+          fromActivity: true,
+        },
+      });
+    } else {
+      navigate("/linewalk", {
+        state: {
+          checkin,
+          activity,
+          linewalkStarted: true,
+          linewalkDate: linewalkData?.date,
+          linewalkData,
+        },
+      });
+    }
+  };
+
+  const handleConfirmSave = () => {
+    if (typeof window !== "undefined") {
+      try {
+        const stored = localStorage.getItem("suea-safety-submissions-v1");
+        const submissions = stored ? JSON.parse(stored) : [];
+        
+        // Retrieve or default profile info
+        const pmsCode = localStorage.getItem("suea-safety-user-pms") || "24518";
+        const userName = localStorage.getItem("suea-safety-user-name") || "ศศิธร จรุงจรรยาพงศ์";
+        const userEmail = localStorage.getItem("suea-safety-user-email") || "SASITOJA@SCG.COM";
+        
+        const submissionDate = linewalkData?.date || new Date().toISOString().split("T")[0];
+        const dateObj = new Date(submissionDate);
+        const yearVal = isNaN(dateObj.getTime()) ? new Date().getFullYear() : dateObj.getFullYear();
+        const monthVal = isNaN(dateObj.getTime()) ? (new Date().getMonth() + 1) : (dateObj.getMonth() + 1);
+        const activityTypeVal = !!linewalkData?.isSafetyContact ? "Safety_Contact" : "Safety_Observation/Line_Walk";
+
+        const newSubmission = {
+          id: `sub-${Date.now()}`,
+          timestamp: new Date().toISOString(),
+          activityId: activity?.id || "line-walk",
+          activityLabel: activity?.label || (linewalkData?.isSafetyContact ? "Safety Contact" : "Line Walk"),
+          locType: linewalkData?.locType || "factory",
+          locationName: checkin?.name || "-",
+          locationTag: checkin?.tag || "-",
+          date: submissionDate,
+          isSafetyContact: !!linewalkData?.isSafetyContact,
+          safetyContactText: linewalkData?.safetyContactText || "",
+          answeredItems: answeredItems.map(item => ({
+            id: item.id,
+            title: item.title,
+            status: item.status,
+            note: item.note,
+            photos: item.photos
+          })),
+          // Storing the fields required for the evaluation report matching the Excel template
+          pms: pmsCode,
+          year: yearVal,
+          month: monthVal,
+          name: userName,
+          email: userEmail,
+          activityType: activityTypeVal
+        };
+        submissions.unshift(newSubmission);
+        localStorage.setItem("suea-safety-submissions-v1", JSON.stringify(submissions));
+      } catch (e) {
+        console.error("Error saving submission", e);
+      }
+    }
+    setShowSuccessPopup(true);
+  };
+
   const answeredItems = useMemo(() => {
     if (!linewalkData?.itemStates) return [];
     const cl = linewalkData.locType ? getChecklistForType(linewalkData.locType) : [];
@@ -49,6 +130,7 @@ export default function AssessmentSummary() {
       return {
         id: key,
         title: question ? question.title : "",
+        format: question?.format ?? "original",
         status: value?.status ?? null,
         note: value?.note ?? "",
         photos: value?.photos ?? [],
@@ -79,6 +161,35 @@ export default function AssessmentSummary() {
         fontFamily: "'Prompt','Sarabun',sans-serif",
       }}
     >
+      <style>{`
+        .as-back-btn {
+          width: 32px;
+          height: 32px;
+          border-radius: 10px;
+          background: rgba(255, 255, 255, 0.08);
+          border: 1px solid rgba(255, 255, 255, 0.15);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          transition: all 0.2s;
+          flex-shrink: 0;
+          color: var(--brand-soft);
+        }
+        .as-back-btn:hover {
+          background: rgba(255, 255, 255, 0.18);
+          border-color: var(--brand-accent);
+          transform: translateX(-2px);
+        }
+        .as-bottom-back-btn:hover {
+          background: #fbfbfa !important;
+          border-color: rgba(14,15,18,0.18) !important;
+          transform: translateY(-1px);
+        }
+        .as-bottom-back-btn:active {
+          transform: scale(0.98);
+        }
+      `}</style>
       <div style={{ maxWidth: 860, margin: "0 auto", display: "grid", gap: 16 }}>
         <section
           style={{
@@ -90,16 +201,22 @@ export default function AssessmentSummary() {
           }}
         >
           <div style={{ padding: "22px 20px 26px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16 }}>
-            <div>
-              <div style={{ display: "inline-flex", alignItems: "center", padding: "4px 10px", borderRadius: 999, background: "color-mix(in srgb, var(--brand-accent) 18%, transparent)", color: "var(--brand-accent)", fontSize: 11, fontWeight: 800, textTransform: "uppercase" }}>
-                {linewalkData?.isSafetyContact ? "Safety Contact Complete" : "Assessment Complete"}
+            <div style={{ display: "flex", alignItems: "center", gap: 16, minWidth: 0, flex: 1 }}>
+              <button type="button" className="as-back-btn" onClick={handleBack} aria-label="ย้อนกลับ">
+                <IcoBack />
+              </button>
+              <div style={{ width: 1, height: 52, background: "rgba(255,255,255,0.15)", flexShrink: 0 }} />
+              <div style={{ minWidth: 0 }}>
+                <div style={{ display: "inline-flex", alignItems: "center", padding: "4px 10px", borderRadius: 999, background: "color-mix(in srgb, var(--brand-accent) 18%, transparent)", color: "var(--brand-accent)", fontSize: 11, fontWeight: 800, textTransform: "uppercase" }}>
+                  {linewalkData?.isSafetyContact ? "Safety Contact Complete" : "Assessment Complete"}
+                </div>
+                <h1 style={{ margin: "12px 0 6px", fontSize: 28, lineHeight: 1.15, fontWeight: 900 }}>
+                  {linewalkData?.isSafetyContact ? "สรุปผลการทำ Safety Contact" : "สรุปผลการทำแบบประเมิน"}
+                </h1>
+                <p style={{ margin: 0, color: "rgba(255,255,255,0.76)", fontSize: 14, fontWeight: 600 }}>
+                  {linewalkData?.isSafetyContact ? "ตรวจสอบข้อมูลที่บันทึกไว้ก่อนทำการส่งข้อมูล" : "ตรวจสอบข้อมูลที่ทำไว้ก่อนทำการบันทึกข้อมูล"}
+                </p>
               </div>
-              <h1 style={{ margin: "12px 0 6px", fontSize: 28, lineHeight: 1.15, fontWeight: 900 }}>
-                {linewalkData?.isSafetyContact ? "สรุปผลการทำ Safety Contact" : "สรุปผลการทำแบบประเมิน"}
-              </h1>
-              <p style={{ margin: 0, color: "rgba(255,255,255,0.76)", fontSize: 14, fontWeight: 600 }}>
-                {linewalkData?.isSafetyContact ? "ตรวจสอบข้อมูลที่บันทึกไว้ก่อนทำการส่งข้อมูล" : "ตรวจสอบข้อมูลที่ทำไว้ก่อนทำการบันทึกข้อมูล"}
-              </p>
             </div>
             <TigerMascot action="happy" size="104px" animation="float" />
           </div>
@@ -195,7 +312,10 @@ export default function AssessmentSummary() {
             <div style={{ fontSize: 18, fontWeight: 900, color: T.brown }}>ตอบอะไรไปบ้าง</div>
             <div style={{ display: "grid", gap: 10 }}>
               {answeredItems.map((item, index) => {
-                const meta = statusMeta(item.status);
+                const isTextBox = item.format === "text_box";
+                const meta = (isTextBox && item.status === "text")
+                  ? { label: "ตอบแล้ว", color: T.brown, bg: T.brownSoft, border: T.gold }
+                  : statusMeta(item.status);
                 return (
                   <div
                     key={item.id}
@@ -221,7 +341,7 @@ export default function AssessmentSummary() {
                     </div>
                     {item.note && (
                       <div style={{ fontSize: 12.5, fontWeight: 600, color: T.foreground2 }}>
-                        หมายเหตุ: {item.note}
+                        {isTextBox ? "คำตอบ: " : "หมายเหตุ: "}{item.note}
                       </div>
                     )}
                     {!!item.photos.length && (
@@ -236,10 +356,31 @@ export default function AssessmentSummary() {
           </section>
         )}
 
-        <div style={{ display: "flex", justifyContent: "center" }}>
+        <div style={{ display: "flex", justifyContent: "center", gap: 12 }}>
           <button
             type="button"
-            onClick={() => setShowSuccessPopup(true)}
+            onClick={handleBack}
+            className="as-bottom-back-btn"
+            style={{
+              minWidth: 120,
+              height: 50,
+              border: `1.5px solid ${T.border}`,
+              borderRadius: 14,
+              background: "#fff",
+              color: T.foreground2,
+              fontFamily: "inherit",
+              fontSize: 15,
+              fontWeight: 800,
+              cursor: "pointer",
+              boxShadow: "0 4px 12px rgba(0,0,0,0.03)",
+              transition: "all 0.2s",
+            }}
+          >
+            ย้อนกลับ
+          </button>
+          <button
+            type="button"
+            onClick={handleConfirmSave}
             style={{
               minWidth: 220,
               height: 50,
