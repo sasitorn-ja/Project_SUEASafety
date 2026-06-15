@@ -52,15 +52,46 @@ type RoutesProps = {
 };
 
 const RouterContext = createContext<RouterContextValue | null>(null);
+const PENDING_NAVIGATION_KEY = "suea-safety-pending-navigation";
+
+function readPendingNavigation(): LegacyLocation | null {
+  if (typeof window === "undefined") return null;
+
+  try {
+    const raw = window.sessionStorage.getItem(PENDING_NAVIGATION_KEY);
+    if (!raw) return null;
+    return JSON.parse(raw) as LegacyLocation;
+  } catch {
+    return null;
+  }
+}
+
+function storePendingNavigation(location: LegacyLocation | null) {
+  if (typeof window === "undefined") return;
+
+  try {
+    if (location) {
+      window.sessionStorage.setItem(PENDING_NAVIGATION_KEY, JSON.stringify(location));
+    } else {
+      window.sessionStorage.removeItem(PENDING_NAVIGATION_KEY);
+    }
+  } catch {
+    // Navigation still works without session storage; only transient state may be unavailable.
+  }
+}
 
 function readLocation(): LegacyLocation {
   if (typeof window === "undefined") {
     return { pathname: "/", state: null };
   }
 
+  const pathname = window.location.pathname || "/";
+  const pending = readPendingNavigation();
+
   return {
-    pathname: window.location.pathname || "/",
-    state: window.history.state?.__legacyState ?? null,
+    pathname,
+    state: window.history.state?.__legacyState
+      ?? (pending?.pathname === pathname ? pending.state : null),
   };
 }
 
@@ -89,10 +120,11 @@ export function BrowserRouter({ children }: BrowserRouterProps) {
   useEffect(() => {
     setLocation((current) => {
       const pathname = nextPathname || window.location.pathname || "/";
-      const pending = pendingNavigation.current;
+      const pending = pendingNavigation.current ?? readPendingNavigation();
 
       if (pending?.pathname === pathname) {
         pendingNavigation.current = null;
+        storePendingNavigation(null);
         window.history.replaceState(
           { ...(window.history.state ?? {}), __legacyState: pending.state },
           "",
@@ -138,6 +170,7 @@ export function BrowserRouter({ children }: BrowserRouterProps) {
       }
 
       pendingNavigation.current = nextLocation;
+      storePendingNavigation(nextLocation);
 
       if (options.replace) {
         router.replace(nextPath, { scroll: false });
