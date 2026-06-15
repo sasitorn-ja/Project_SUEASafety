@@ -8,6 +8,7 @@ import {
   CheckCircle2,
   Clock3,
   FileImage,
+  GripVertical,
   Megaphone,
   Percent,
   Plus,
@@ -325,6 +326,8 @@ export default function AdminEventPage() {
   const [openTimePicker, setOpenTimePicker] = useState<"start" | "end" | null>(null);
   const [activitySaveLabel, setActivitySaveLabel] = useState<"idle" | "saved">("idle");
   const [draftFeedEvents, setDraftFeedEvents] = useState<SafetyCultureFeedEvent[]>(feedEvents);
+  const [draggingFeedEventId, setDraggingFeedEventId] = useState<string | null>(null);
+  const [dragOverFeedEventId, setDragOverFeedEventId] = useState<string | null>(null);
   const [editingFeedEventId, setEditingFeedEventId] = useState<string | null>(feedEvents[0]?.id ?? null);
   const [feedModalEventId, setFeedModalEventId] = useState<string | null>(null);
   const [feedModalDraft, setFeedModalDraft] = useState<SafetyCultureFeedEvent | null>(null);
@@ -580,6 +583,41 @@ export default function AdminEventPage() {
   const handleSaveFeedEvents = () => {
     updateFeedEvents(draftFeedEvents);
     setActivitySaveLabel("saved");
+  };
+
+  const reorderFeedEvents = (sourceId: string, targetId: string) => {
+    if (sourceId === targetId) return;
+
+    const sourceIndex = draftFeedEvents.findIndex((event) => event.id === sourceId);
+    const targetIndex = draftFeedEvents.findIndex((event) => event.id === targetId);
+    if (sourceIndex < 0 || targetIndex < 0) return;
+
+    setDraftFeedEvents((current) => {
+      const nextEvents = [...current];
+      const [movedEvent] = nextEvents.splice(sourceIndex, 1);
+      nextEvents.splice(targetIndex, 0, movedEvent);
+      return nextEvents;
+    });
+    setEditingFeedEventId(sourceId);
+    setActivitySaveLabel("idle");
+  };
+
+  const handleFeedEventDragStart = (eventId: string) => {
+    setDraggingFeedEventId(eventId);
+    setDragOverFeedEventId(eventId);
+    setActivitySaveLabel("idle");
+  };
+
+  const handleFeedEventDrop = (targetEventId: string) => {
+    if (!draggingFeedEventId) return;
+    reorderFeedEvents(draggingFeedEventId, targetEventId);
+    setDraggingFeedEventId(null);
+    setDragOverFeedEventId(null);
+  };
+
+  const handleFeedEventDragEnd = () => {
+    setDraggingFeedEventId(null);
+    setDragOverFeedEventId(null);
   };
 
   const handleFeedImageChange = async (file: File | undefined) => {
@@ -1371,21 +1409,46 @@ export default function AdminEventPage() {
                       <div className="text-right">Actions</div>
                     </div>
 
-                    <div className="divide-y divide-[var(--c-eee2cb)]">
+                      <div className="divide-y divide-[var(--c-eee2cb)]">
                       {draftFeedEvents.map((activity, index) => {
                         const statusMeta = getFeedEventStatusMeta(activity.status);
                         const active = activity.id === editingFeedEventId;
                         const participantCount = getFeedEventParticipantCount(activity.id, index);
+                        const isDragging = draggingFeedEventId === activity.id;
+                        const isDropTarget = dragOverFeedEventId === activity.id && draggingFeedEventId !== activity.id;
 
                         return (
                           <div
                             key={activity.id}
+                            draggable
+                            onDragStart={(event) => {
+                              event.dataTransfer.effectAllowed = "move";
+                              event.dataTransfer.setData("text/plain", activity.id);
+                              handleFeedEventDragStart(activity.id);
+                            }}
+                            onDragOver={(event) => {
+                              event.preventDefault();
+                              if (draggingFeedEventId && draggingFeedEventId !== activity.id) {
+                                event.dataTransfer.dropEffect = "move";
+                                setDragOverFeedEventId(activity.id);
+                              }
+                            }}
+                            onDrop={(event) => {
+                              event.preventDefault();
+                              handleFeedEventDrop(activity.id);
+                            }}
+                            onDragEnd={handleFeedEventDragEnd}
                             className={cn(
-                              "grid grid-cols-[minmax(260px,1.6fr)_110px_180px_120px_120px_96px] gap-3 px-5 py-4 transition-colors",
-                              active ? "bg-[var(--c-fff4e3)]" : "bg-white hover:bg-[var(--c-fffaf2)]"
+                              "grid grid-cols-[minmax(260px,1.6fr)_110px_180px_120px_120px_96px] gap-3 px-5 py-4 transition-all",
+                              active ? "bg-[var(--c-fff4e3)]" : "bg-white hover:bg-[var(--c-fffaf2)]",
+                              isDragging ? "scale-[0.995] opacity-60" : "",
+                              isDropTarget ? "ring-2 ring-[var(--c-5c3214)] ring-inset" : ""
                             )}
                           >
                             <button type="button" onClick={() => setEditingFeedEventId(activity.id)} className="flex min-w-0 items-start gap-3 text-left">
+                              <div className="flex h-[54px] w-[22px] flex-shrink-0 items-center justify-center text-[var(--c-5c3214)]">
+                                <GripVertical className="h-4 w-4" strokeWidth={2.3} />
+                              </div>
                               <div className="relative h-[54px] w-[54px] flex-shrink-0 overflow-hidden rounded-[12px] border border-[var(--c-eadcc7)] bg-white">
                                 {activity.imageSrc ? (
                                   <img src={activity.imageSrc} alt={activity.title} className="h-full w-full object-cover" />
@@ -1450,12 +1513,32 @@ export default function AdminEventPage() {
                     {draftFeedEvents.map((activity, index) => {
                       const statusMeta = getFeedEventStatusMeta(activity.status);
                       const active = activity.id === editingFeedEventId;
+                      const isDragging = draggingFeedEventId === activity.id;
+                      const isDropTarget = dragOverFeedEventId === activity.id && draggingFeedEventId !== activity.id;
 
                       return (
                         <div
                           key={activity.id}
                           role="button"
                           tabIndex={0}
+                          draggable
+                          onDragStart={(event) => {
+                            event.dataTransfer.effectAllowed = "move";
+                            event.dataTransfer.setData("text/plain", activity.id);
+                            handleFeedEventDragStart(activity.id);
+                          }}
+                          onDragOver={(event) => {
+                            event.preventDefault();
+                            if (draggingFeedEventId && draggingFeedEventId !== activity.id) {
+                              event.dataTransfer.dropEffect = "move";
+                              setDragOverFeedEventId(activity.id);
+                            }
+                          }}
+                          onDrop={(event) => {
+                            event.preventDefault();
+                            handleFeedEventDrop(activity.id);
+                          }}
+                          onDragEnd={handleFeedEventDragEnd}
                           onClick={() => setEditingFeedEventId(activity.id)}
                           onKeyDown={(event) => {
                             if (event.key === "Enter" || event.key === " ") {
@@ -1467,10 +1550,15 @@ export default function AdminEventPage() {
                             "rounded-[18px] border p-3 text-left transition-all",
                             active
                               ? "border-[var(--c-5c3214)] bg-[var(--c-fff6ea)] shadow-[0_10px_18px_rgba(62,36,13,0.08)]"
-                              : "border-[var(--c-e3d0ae)] bg-white"
+                              : "border-[var(--c-e3d0ae)] bg-white",
+                            isDragging ? "scale-[0.99] opacity-60" : "",
+                            isDropTarget ? "ring-2 ring-[var(--c-5c3214)]" : ""
                           )}
                         >
                           <div className="flex items-start gap-3">
+                            <div className="flex h-[68px] w-[24px] flex-shrink-0 items-center justify-center text-[var(--c-5c3214)]">
+                              <GripVertical className="h-4 w-4" strokeWidth={2.3} />
+                            </div>
                             <div className="relative h-[68px] w-[68px] flex-shrink-0 overflow-hidden rounded-[14px] border border-[var(--c-eadcc7)] bg-white">
                               {activity.imageSrc ? (
                                 <img src={activity.imageSrc} alt={activity.title} className="h-full w-full object-cover" />

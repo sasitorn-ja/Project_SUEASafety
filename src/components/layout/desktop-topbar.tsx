@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Home, LayoutDashboard, ShieldCheck, UsersRound, UserRound, Bell, Menu, Heart, X, Trophy, Gift, Settings2, ClipboardCheck } from "lucide-react";
+import { Bell, ChevronDown, ClipboardCheck, FileText, Gift, Heart, Home, LayoutDashboard, Menu, Settings2, ShieldCheck, Trophy, UserRound, UsersRound, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { isExactNavActive, isMainNavActive } from "@/lib/navigation";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -78,6 +78,14 @@ const SAFETY_EFFORT_ITEMS = [
   },
 ] as const;
 
+const PROFILE_ITEMS = [
+  {
+    label: "กิจกรรมของผู้ใช้งาน",
+    href: "/profile/activity-history",
+    icon: FileText,
+  },
+] as const;
+
 const ENABLED_HREFS = new Set(["/", "/dashboard", "/category", "/were-ok", "/work-permit", "/safety-culture", "/notifications"]);
 
 export function DesktopTopbar() {
@@ -85,7 +93,7 @@ export function DesktopTopbar() {
   const pathname = usePathname() ?? "";
   const [open, setOpen] = useState(false);
   const isWangjai = theme === "wangjai";
-  const [desktopMenu, setDesktopMenu] = useState<"safety-effort" | "safety-culture" | null>(null);
+  const [desktopMenu, setDesktopMenu] = useState<"safety-effort" | "safety-culture" | "profile" | null>(null);
 
   const isActive = (href: string) => isMainNavActive(pathname, href);
 
@@ -107,13 +115,7 @@ export function DesktopTopbar() {
       <div className="desktop-topbar-inner mx-auto flex h-full w-full max-w-[1540px] items-center justify-between gap-[22px] px-6 xl:px-12">
         <NavTo href="/" className="desktop-brand flex min-w-[270px] items-center gap-3">
           <div className="desktop-brand-logo flex h-[46px] w-[46px] flex-shrink-0 items-center justify-center overflow-hidden rounded-md">
-            <Image
-              src={mascot("logo")}
-              alt="SUEA Safety Logo"
-              width={46}
-              height={46}
-              className="h-full w-full object-contain"
-            />
+            <Image src={mascot("logo")} alt="SUEA Safety Logo" width={46} height={46} className="h-full w-full object-contain" />
           </div>
           <div className="desktop-brand-copy overflow-hidden">
             <div className="desktop-brand-title whitespace-nowrap text-2xl font-extrabold leading-none tracking-normal text-white">
@@ -160,9 +162,7 @@ export function DesktopTopbar() {
                       onClick={() => enabled && setOpen(false)}
                       className={cn(
                         "flex min-h-11 items-center gap-2.5 rounded-lg px-3 text-sm font-bold transition-colors",
-                        active && enabled
-                          ? "bg-[var(--brand-accent)] text-[var(--brand-nav)]"
-                          : "bg-white/[0.08] text-white/[0.82] hover:bg-white/10",
+                        active && enabled ? "bg-[var(--brand-accent)] text-[var(--brand-nav)]" : "bg-white/[0.08] text-white/[0.82] hover:bg-white/10",
                         !enabled && "cursor-not-allowed opacity-[0.58]"
                       )}
                     >
@@ -181,7 +181,6 @@ export function DesktopTopbar() {
                 <div className="grid grid-cols-1 gap-1.5 md:grid-cols-2">
                   {SAFETY_CULTURE_ITEMS.map((item) => {
                     const Icon = item.icon;
-
                     return (
                       <NavTo
                         key={item.href}
@@ -208,7 +207,6 @@ export function DesktopTopbar() {
                 <div className="grid grid-cols-1 gap-1.5 md:grid-cols-2">
                   {SAFETY_EFFORT_ITEMS.map((item) => {
                     const Icon = item.icon;
-
                     return (
                       <NavTo
                         key={item.href}
@@ -251,9 +249,7 @@ export function DesktopTopbar() {
                     href={item.href}
                     className={cn(
                       "desktop-nav-item inline-flex h-11 items-center justify-center gap-2 rounded-full px-4 text-sm font-bold whitespace-nowrap transition-all",
-                      active
-                        ? "bg-[var(--brand-nav-active)] text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.18),0_8px_18px_rgba(0,0,0,0.18)]"
-                        : "bg-transparent text-white/[0.82] hover:bg-white/10 hover:text-white"
+                      active ? "bg-[var(--brand-nav-active)] text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.18),0_8px_18px_rgba(0,0,0,0.18)]" : "bg-transparent text-white/[0.82] hover:bg-white/10 hover:text-white"
                     )}
                   >
                     <Icon className="h-[17px] w-[17px]" strokeWidth={2.35} />
@@ -301,9 +297,7 @@ export function DesktopTopbar() {
                 href={enabled ? item.href : "#"}
                 className={cn(
                   "desktop-nav-item inline-flex h-11 items-center justify-center gap-2 rounded-full px-4 text-sm font-bold whitespace-nowrap transition-all",
-                  active && enabled
-                    ? "bg-[var(--brand-nav-active)] text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.18),0_8px_18px_rgba(0,0,0,0.18)]"
-                    : "bg-transparent text-white/[0.82] hover:bg-white/10",
+                  active && enabled ? "bg-[var(--brand-nav-active)] text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.18),0_8px_18px_rgba(0,0,0,0.18)]" : "bg-transparent text-white/[0.82] hover:bg-white/10",
                   !enabled && "cursor-not-allowed opacity-[0.62] hover:bg-transparent"
                 )}
                 style={{ transition: "background 0.18s ease, color 0.18s ease, transform 0.18s ease" }}
@@ -333,18 +327,58 @@ export function DesktopTopbar() {
               3
             </span>
           </button>
-          <NavTo
-            href="/profile"
-            aria-label="โปรไฟล์ของฉัน"
-            title="โปรไฟล์ของฉัน"
-            className={cn(
-              "login-btn-compact inline-flex h-11 cursor-pointer items-center gap-2.5 rounded-xl bg-[var(--brand-accent)] px-[18px] text-sm font-extrabold text-white",
-              "shadow-[0_8px_18px_rgba(var(--brand-accent-rgb),0.22)] transition-colors hover:bg-[var(--brand-accent)]"
-            )}
+
+          <div
+            className="relative"
+            onMouseEnter={() => setDesktopMenu("profile")}
+            onMouseLeave={() => setDesktopMenu((current) => (current === "profile" ? null : current))}
+            onFocus={() => setDesktopMenu("profile")}
           >
-            <span className="login-text-visible">โปรไฟล์ของฉัน</span>
-            <UserRound className="h-[18px] w-[18px]" strokeWidth={2.5} />
-          </NavTo>
+            <NavTo
+              href="/profile"
+              aria-label="โปรไฟล์ของฉัน"
+              title="โปรไฟล์ของฉัน"
+              className={cn(
+                "login-btn-compact inline-flex h-11 cursor-pointer items-center gap-2 rounded-xl bg-[var(--brand-accent)] px-[18px] text-sm font-extrabold text-white",
+                "shadow-[0_8px_18px_rgba(var(--brand-accent-rgb),0.22)] transition-colors hover:bg-[var(--brand-accent)]"
+              )}
+            >
+              <span className="login-text-visible">โปรไฟล์ของฉัน</span>
+              <ChevronDown className={cn("h-4 w-4 transition-transform duration-150", desktopMenu === "profile" && "rotate-180")} strokeWidth={2.6} />
+              <UserRound className="h-[18px] w-[18px]" strokeWidth={2.5} />
+            </NavTo>
+
+            <div
+              className={cn(
+                "absolute right-0 top-full z-50 min-w-full pt-2 transition-all duration-150",
+                desktopMenu === "profile" ? "visible translate-y-0 opacity-100" : "invisible -translate-y-1 opacity-0"
+              )}
+            >
+              <div className="rounded-xl border border-white/[0.14] bg-[rgba(var(--brand-nav-rgb),0.96)] p-1.5 text-white shadow-[0_18px_44px_var(--brand-shadow)] backdrop-blur-xl">
+                {PROFILE_ITEMS.map((item) => {
+                  const Icon = item.icon;
+
+                  return (
+                    <NavTo
+                      key={item.href}
+                      href={item.href}
+                      className={cn(
+                        "flex items-center gap-2 rounded-lg p-2 text-white transition-colors hover:bg-white/10 focus:bg-white/10 focus:outline-none",
+                        isExactNavActive(pathname, item.href) && "bg-white/10"
+                      )}
+                    >
+                      <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full border border-white/10 bg-[rgba(var(--brand-accent-rgb),0.18)] text-[var(--brand-hero-label)]">
+                        <Icon className="h-[17px] w-[17px]" strokeWidth={2.35} />
+                      </span>
+                      <span className="min-w-0">
+                        <span className="block whitespace-nowrap text-[11.5px] font-extrabold leading-[15px] text-white">{item.label}</span>
+                      </span>
+                    </NavTo>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </header>

@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { SafetyCultureHero } from "@/components/safety-culture/safety-culture-hero";
 import { SafetyCultureTabs } from "@/components/safety-culture/safety-culture-tabs";
 import { SafetyCulturePageHeader } from "@/components/safety-culture/safety-culture-page-header";
@@ -9,14 +9,58 @@ import { Card } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useAppActions, useAppState } from "@/providers/app-providers";
 import { cn } from "@/lib/utils";
-import { REWARD_TAGS } from "@/lib/safety-culture";
 import { useAppTheme } from "@/providers/theme-provider";
+
+function formatRewardDateTime(value?: string | null) {
+  if (!value) return null;
+
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return null;
+
+  return new Intl.DateTimeFormat("th-TH", {
+    dateStyle: "medium",
+    timeStyle: "short",
+  }).format(parsed);
+}
+
+function getRewardAvailability(reward: {
+  redeemStartAt?: string | null;
+  redeemEndAt?: string | null;
+  stockMode?: "limited" | "unlimited";
+  stockTotal?: number | null;
+  stockRemaining?: number | null;
+}) {
+  const now = Date.now();
+  const startAt = reward.redeemStartAt ? Date.parse(reward.redeemStartAt) : NaN;
+  const endAt = reward.redeemEndAt ? Date.parse(reward.redeemEndAt) : NaN;
+  const hasStarted = Number.isNaN(startAt) || startAt <= now;
+  const hasEnded = !Number.isNaN(endAt) && endAt < now;
+  const remaining = Math.max(0, Number(reward.stockRemaining) || 0);
+  const inStock = reward.stockMode !== "limited" || remaining > 0;
+
+  return {
+    hasStarted,
+    hasEnded,
+    inStock,
+    remaining,
+  };
+}
+
+function getRewardScheduleText(reward: { redeemStartAt?: string | null; redeemEndAt?: string | null }) {
+  const startLabel = formatRewardDateTime(reward.redeemStartAt);
+  const endLabel = formatRewardDateTime(reward.redeemEndAt);
+
+  if (startLabel && endLabel) return `${startLabel} - ${endLabel}`;
+  if (startLabel) return `เริ่มแลก ${startLabel}`;
+  if (endLabel) return `แลกได้ถึง ${endLabel}`;
+  return "แลกได้ตลอดเวลา";
+}
 
 export default function RewardsPage() {
   const { themedImage, mascot } = useAppTheme();
-  const { currentUserPoints, rewardsCatalog } = useAppState();
+  const { currentUserPoints, rewardsCatalog, rewardCategories } = useAppState();
   const { redeemPoints } = useAppActions();
-  const [filter, setFilter] = useState("ทั้งหมด");
+  const [filter, setFilter] = useState("all");
   const [redeeming, setRedeeming] = useState<(typeof rewardsCatalog)[number] | null>(null);
   const [result, setResult] = useState<{ type: "success" | "error"; title: string; desc: string } | null>(null);
 
@@ -24,7 +68,60 @@ export default function RewardsPage() {
     animationDelay: `${delay}s`,
   });
 
+  const rewardFilters = useMemo(() => {
+    const categoriesInUse = new Set(rewardsCatalog.map((reward) => reward.category));
+    const fallbackCategories = rewardsCatalog
+      .filter((reward) => !rewardCategories.some((category) => category.value === reward.category))
+      .map((reward) => ({
+        value: reward.category,
+        label: reward.category,
+      }));
+
+    return [
+      { value: "all", label: "ทั้งหมด" },
+      ...rewardCategories
+        .filter((category) => categoriesInUse.has(category.value))
+        .map((category) => ({ value: category.value, label: category.label })),
+      ...fallbackCategories,
+    ].filter((item, index, array) => array.findIndex((candidate) => candidate.value === item.value) === index);
+  }, [rewardCategories, rewardsCatalog]);
+
+  useEffect(() => {
+    if (filter === "all") return;
+    if (rewardFilters.some((item) => item.value === filter)) return;
+    setFilter("all");
+  }, [filter, rewardFilters]);
+
   const handleRedeem = (item: (typeof rewardsCatalog)[number]) => {
+    const availability = getRewardAvailability(item);
+
+    if (!availability.hasStarted) {
+      setResult({
+        type: "error",
+        title: "ยังไม่ถึงเวลาแลก",
+        desc: `รางวัลนี้จะเริ่มแลกได้ ${getRewardScheduleText(item)}`,
+      });
+      return;
+    }
+
+    if (availability.hasEnded) {
+      setResult({
+        type: "error",
+        title: "หมดเวลาแลกแล้ว",
+        desc: `รางวัลนี้ปิดการแลกแล้ว (${getRewardScheduleText(item)})`,
+      });
+      return;
+    }
+
+    if (!availability.inStock) {
+      setResult({
+        type: "error",
+        title: "สินค้าหมดแล้ว",
+        desc: `รางวัล "${item.name}" หมดสต็อกแล้ว กรุณาเลือกรางวัลอื่น`,
+      });
+      return;
+    }
+
     if (currentUserPoints < item.points) {
       setResult({
         type: "error",
@@ -40,13 +137,25 @@ export default function RewardsPage() {
   const confirmRedeem = () => {
     if (!redeeming) return;
 
-    const success = redeemPoints(redeeming.points);
-    if (!success) {
+    const redeemResult = redeemPoints(redeeming.id, redeeming.points);
+    if (!redeemResult.ok) {
       setRedeeming(null);
       setResult({
         type: "error",
-        title: "คะแนนยังไม่พอ",
-        desc: "คะแนนอาจถูกใช้ไปแล้ว กรุณาลองใหม่",
+        title:
+          redeemResult.reason === "out-of-stock"
+            ? "สินค้าหมดแล้ว"
+            : redeemResult.reason === "not-started"
+              ? "ยังไม่ถึงเวลาแลก"
+              : redeemResult.reason === "expired"
+                ? "หมดเวลาแลกแล้ว"
+                : "คะแนนยังไม่พอ",
+        desc:
+          redeemResult.reason === "out-of-stock"
+            ? `รางวัล "${redeeming.name}" หมดสต็อกแล้ว`
+            : redeemResult.reason === "not-started" || redeemResult.reason === "expired"
+              ? getRewardScheduleText(redeeming)
+              : "คะแนนอาจถูกใช้ไปแล้ว กรุณาลองใหม่",
       });
       return;
     }
@@ -59,20 +168,7 @@ export default function RewardsPage() {
     });
   };
 
-  const filtered =
-    filter === "ทั้งหมด"
-      ? rewardsCatalog
-      : rewardsCatalog.filter((reward) =>
-          filter === "บัตรของขวัญ"
-            ? reward.category === "voucher"
-            : filter === "สินค้า"
-              ? reward.category === "merch"
-              : filter === "PPE"
-                ? reward.category === "ppe"
-                : filter === "ของขวัญทีม"
-                  ? reward.category === "team"
-                  : true
-        );
+  const filtered = filter === "all" ? rewardsCatalog : rewardsCatalog.filter((reward) => reward.category === filter);
 
   return (
     <>
@@ -101,7 +197,7 @@ export default function RewardsPage() {
             title="ร้านแลกของรางวัล"
             rightSlot={
               <div className="flex items-center gap-1.5 rounded-xl border-2 border-[var(--brand-accent)] bg-[var(--brand-soft)] px-3.5 py-1.5 text-[13.5px] font-black text-[var(--brand-text)] shadow-[0_2px_6px_rgba(var(--brand-accent-rgb),0.12)]">
-                <span>🪙</span>
+                <span>🎁</span>
                 <span>{currentUserPoints.toLocaleString()} แต้ม</span>
               </div>
             }
@@ -109,25 +205,35 @@ export default function RewardsPage() {
         </div>
 
         <div className="scrollbar-hide mb-4 flex gap-2 overflow-x-auto py-2 anim-fade" style={animStyle(0.12)}>
-          {REWARD_TAGS.map((tag) => (
+          {rewardFilters.map((tag) => (
             <button
-              key={tag}
-              onClick={() => setFilter(tag)}
+              key={tag.value}
+              onClick={() => setFilter(tag.value)}
               className={cn(
                 "flex-shrink-0 whitespace-nowrap rounded-full border-[1.5px] px-4 py-2 text-[13.5px] font-bold transition-all",
-                filter === tag
+                filter === tag.value
                   ? "border-[var(--brand-text)] bg-[var(--brand-text)] text-white shadow-[0_4px_10px_rgba(0,0,0,0.08)]"
                   : "border-[var(--border)] bg-white text-[var(--brand-text)] hover:border-[var(--brand-accent)] hover:bg-[var(--brand-soft)]"
               )}
             >
-              {tag}
+              {tag.label}
             </button>
           ))}
         </div>
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           {filtered.map((reward, idx) => {
+            const availability = getRewardAvailability(reward);
             const locked = currentUserPoints < reward.points;
+            const disabledReason = !availability.hasStarted
+              ? "ยังไม่ถึงเวลา"
+              : availability.hasEnded
+                ? "หมดเขตแลก"
+                : !availability.inStock
+                  ? "ของหมด"
+                  : locked
+                    ? "ยังไม่พอ"
+                    : null;
 
             return (
               <Card
@@ -143,19 +249,9 @@ export default function RewardsPage() {
 
                 <div className="relative flex aspect-[4/3] w-full items-center justify-center overflow-hidden rounded-[14px] border-[1.5px] border-[var(--border)] bg-[var(--brand-image-placeholder)]">
                   {reward.imageSrc ? (
-                    <Image
-                      src={themedImage(reward.imageSrc)}
-                      alt={reward.name}
-                      fill
-                      className="object-cover"
-                    />
+                    <Image src={themedImage(reward.imageSrc)} alt={reward.name} fill className="object-cover" />
                   ) : reward.isHot ? (
-                    <Image
-                      src={mascot("salute")}
-                      alt="SUEA reward"
-                      fill
-                      className="object-cover"
-                    />
+                    <Image src={mascot("salute")} alt="SUEA reward" fill className="object-cover" />
                   ) : (
                     <span className="text-[13px] font-extrabold lowercase text-[var(--brand-muted-text)]">{reward.imageText}</span>
                   )}
@@ -166,14 +262,24 @@ export default function RewardsPage() {
                   <p className="line-clamp-2 text-[12.5px] font-bold leading-relaxed text-[var(--brand-muted-text)]">
                     {reward.description}
                   </p>
+                  <div className="flex flex-wrap gap-1.5 pt-1">
+                    <span className="rounded-full bg-[var(--brand-soft)] px-2.5 py-1 text-[11px] font-black text-[var(--brand-text)]">
+                      {reward.stockMode === "limited"
+                        ? `คงเหลือ ${availability.remaining}${reward.stockTotal ? ` / ${reward.stockTotal}` : ""}`
+                        : "ไม่จำกัดจำนวน"}
+                    </span>
+                    <span className="rounded-full border border-[var(--border)] bg-white px-2.5 py-1 text-[11px] font-black text-[var(--brand-muted-text)]">
+                      {getRewardScheduleText(reward)}
+                    </span>
+                  </div>
                   <span className="pt-1 text-[12.5px] font-extrabold text-[var(--brand-accent-strong)]">
                     {reward.points.toLocaleString()} <span className="ml-0.5 text-[10px] font-bold text-muted-foreground">POINTS</span>
                   </span>
                 </div>
 
-                {locked ? (
+                {disabledReason ? (
                   <button disabled className="w-full cursor-not-allowed rounded-xl border-[1.5px] border-[var(--border)] bg-[var(--secondary)] py-2.5 text-center text-[13px] font-[850] text-[var(--c-a39e92)]">
-                    ยังไม่พอ
+                    {disabledReason}
                   </button>
                 ) : (
                   <button
@@ -210,6 +316,12 @@ export default function RewardsPage() {
             <br />
             <strong>&quot;{redeeming?.name}&quot;</strong> ใช่หรือไม่?
           </p>
+          {redeeming ? (
+            <div className="rounded-[14px] border border-[var(--border)] bg-white/80 px-3 py-2 text-left text-[12px] font-bold text-[#6f665b]">
+              <div>{redeeming.stockMode === "limited" ? `คงเหลือ ${Math.max(0, Number(redeeming.stockRemaining) || 0)} ชิ้น` : "ไม่จำกัดจำนวน"}</div>
+              <div className="mt-1">{getRewardScheduleText(redeeming)}</div>
+            </div>
+          ) : null}
           <div className="flex flex-col gap-2.5">
             <button onClick={confirmRedeem} className="w-full rounded-xl bg-[#1A1A1A] py-3 text-center text-[13px] font-[850] text-white transition-all hover:bg-[var(--brand-accent)] hover:text-[#1A1A1A]">
               ยืนยันการแลก

@@ -1,7 +1,14 @@
 "use client";
 
 import React, { createContext, useContext, useState, useCallback, ReactNode, useEffect } from "react";
-import { PERSONAL_RANKINGS, REWARDS_LIST, TEAM_STANDINGS, type RewardItem } from "@/lib/safety-culture";
+import {
+  DEFAULT_REWARD_CATEGORIES,
+  PERSONAL_RANKINGS,
+  REWARDS_LIST,
+  TEAM_STANDINGS,
+  type RewardCategoryConfig,
+  type RewardItem,
+} from "@/lib/safety-culture";
 import {
   type SafetyAwarenessQuestion,
   createDefaultAwarenessQuestions,
@@ -73,6 +80,20 @@ export type Post = {
   imageData?: string | null;
 };
 
+export type SafetyCultureUserActivityType = "post" | "reaction" | "comment";
+
+export type SafetyCultureUserActivity = {
+  id: string;
+  type: SafetyCultureUserActivityType;
+  occurredAt: number;
+  postId: number;
+  postAuthor: string;
+  postCategory: string;
+  postPreview: string;
+  pointsDelta: number;
+  commentText?: string;
+};
+
 export type NotificationType = {
   message: string;
   type: "sos" | "info" | "success";
@@ -142,6 +163,16 @@ export type LeaderboardPerson = {
 };
 
 export type RewardCatalogItem = RewardItem;
+export type RewardCategory = RewardCategoryConfig;
+export type RewardRedemptionRecord = {
+  id: string;
+  rewardId: number;
+  rewardName: string;
+  rewardCategory: string;
+  pointsSpent: number;
+  redeemedAt: string;
+  redeemedBy: string;
+};
 
 export type AwarenessCompletion = {
   date: string;
@@ -164,6 +195,7 @@ type AppState = {
   queueConfirmed: boolean;
   sosData: SosData;
   posts: Post[];
+  userActivityHistory: SafetyCultureUserActivity[];
   notification: NotificationType;
   currentUserPoints: number;
   safetyCultureEvent: SafetyCultureEventConfig;
@@ -171,6 +203,8 @@ type AppState = {
   teamStandings: LeaderboardTeam[];
   personalRankings: LeaderboardPerson[];
   rewardsCatalog: RewardCatalogItem[];
+  rewardCategories: RewardCategory[];
+  rewardRedemptions: RewardRedemptionRecord[];
   awarenessQuestions: SafetyAwarenessQuestion[];
   /** true once the user has completed today's Safety Awareness popup. */
   awarenessDoneToday: boolean;
@@ -198,11 +232,18 @@ type AppActions = {
   updateTeamStandings: (teams: LeaderboardTeam[]) => void;
   updatePersonalRankings: (rankings: LeaderboardPerson[]) => void;
   updateRewardsCatalog: (rewards: RewardCatalogItem[]) => void;
+  updateRewardCategories: (categories: RewardCategory[]) => void;
   updateAwarenessQuestions: (questions: SafetyAwarenessQuestion[]) => void;
   updateAwarenessHolidays: (holidays: AwarenessHoliday[]) => void;
   /** Mark today's Safety Awareness popup as completed. */
   markAwarenessDone: (completion: Omit<AwarenessCompletion, "date" | "completedAt">) => void;
-  redeemPoints: (points: number) => boolean;
+  redeemPoints: (
+    rewardId: number,
+    points: number
+  ) => {
+    ok: boolean;
+    reason?: "not-found" | "insufficient-points" | "not-started" | "expired" | "out-of-stock";
+  };
 };
 
 const AppStateContext = createContext<AppState | undefined>(undefined);
@@ -279,13 +320,62 @@ const STORAGE_KEYS = {
   teamStandings: "safety-hub:safety-culture-team-standings",
   personalRankings: "safety-hub:safety-culture-personal-rankings",
   rewardsCatalog: "safety-hub:safety-culture-rewards-catalog",
+  rewardCategories: "safety-hub:safety-culture-reward-categories",
+  rewardRedemptions: "safety-hub:safety-culture-reward-redemptions",
   awarenessQuestions: "safety-hub:safety-awareness-questions",
   awarenessDoneDate: "safety-hub:safety-awareness-done-date",
   awarenessHistory: "safety-hub:safety-awareness-history",
   awarenessHolidays: "safety-hub:safety-awareness-holidays",
+  userActivityHistory: "safety-hub:safety-culture-user-activity-history",
 } as const;
 
 const INITIAL_CURRENT_USER_POINTS = 254;
+
+function getDefaultCurrentUserName() {
+  const activeRankingName = PERSONAL_RANKINGS.find((person) => person.active)?.name;
+  if (activeRankingName) {
+    return activeRankingName.replace(/\s*\(.+?\)\s*$/, "").trim();
+  }
+
+  const currentPostAuthor = INITIAL_POSTS.find((post) => post.isYou)?.author;
+  return currentPostAuthor || "Current User";
+}
+
+const DEFAULT_CURRENT_USER_NAME = getDefaultCurrentUserName();
+
+const INITIAL_USER_ACTIVITY_HISTORY: SafetyCultureUserActivity[] = [
+  {
+    id: "activity-post-seed-1",
+    type: "post",
+    occurredAt: new Date("2026-06-15T08:40:00+07:00").getTime(),
+    postId: 2,
+    postAuthor: "Chaiwat T.",
+    postCategory: "PPE",
+    postPreview: "ตรวจ PPE ก่อนเข้ากะ พบหมวกแตก 1 ใบและแจ้ง store เปลี่ยนทันที",
+    pointsDelta: 12,
+  },
+  {
+    id: "activity-reaction-seed-1",
+    type: "reaction",
+    occurredAt: new Date("2026-06-15T09:05:00+07:00").getTime(),
+    postId: 1,
+    postAuthor: "Nattaya K.",
+    postCategory: "Line Walk",
+    postPreview: "ทีม OBK-C2 ใช้ cable tray ใหม่แทนสายไฟพาดพื้น",
+    pointsDelta: 1,
+  },
+  {
+    id: "activity-comment-seed-1",
+    type: "comment",
+    occurredAt: new Date("2026-06-15T10:15:00+07:00").getTime(),
+    postId: 3,
+    postAuthor: "Arisara P.",
+    postCategory: "5S",
+    postPreview: "จัดเก็บพื้นที่กองเศษวัสดุหน้างานเรียบร้อย เพิ่มทางเดินปลอดภัยกว้างขึ้น",
+    pointsDelta: 1,
+    commentText: "ตัวอย่างดีมาก เดี๋ยวทีมเราจะนำไปใช้ต่อ",
+  },
+];
 
 const DEFAULT_SAFETY_CULTURE_EVENT: SafetyCultureEventConfig = {
   eventName: "Happy Hour Bonus",
@@ -562,21 +652,182 @@ function createDefaultPersonalRankings(): LeaderboardPerson[] {
   );
 }
 
-function normalizeRewardsCatalog(rewards: RewardCatalogItem[]) {
-  return rewards.map((reward, index) => ({
-    id: Math.max(1, Number(reward.id) || index + 1),
-    name: reward.name || `Reward ${index + 1}`,
-    category: reward.category || "merch",
-    description: reward.description || "Reward description",
-    imageText: reward.imageText || "// merch",
-    imageSrc: reward.imageSrc ?? null,
-    points: Math.max(0, Number(reward.points) || 0),
-    isHot: Boolean(reward.isHot),
-  }));
+function normalizeRewardsCatalog(rewards: RewardCatalogItem[]): RewardCatalogItem[] {
+  return rewards.map((reward, index) => {
+    const stockMode: RewardCatalogItem["stockMode"] = reward.stockMode === "limited" ? "limited" : "unlimited";
+    const stockTotal = stockMode === "limited" ? Math.max(0, Number(reward.stockTotal) || 0) : null;
+    const stockRemaining =
+      stockMode === "limited"
+        ? Math.max(0, Math.min(stockTotal ?? 0, Number(reward.stockRemaining) || stockTotal || 0))
+        : null;
+
+    return {
+      id: Math.max(1, Number(reward.id) || index + 1),
+      name: reward.name || `Reward ${index + 1}`,
+      category: reward.category || "merch",
+      description: reward.description || "Reward description",
+      imageText: reward.imageText || "// merch",
+      imageSrc: reward.imageSrc ?? null,
+      points: Math.max(0, Number(reward.points) || 0),
+      isHot: Boolean(reward.isHot),
+      redeemStartAt: reward.redeemStartAt || null,
+      redeemEndAt: reward.redeemEndAt || null,
+      stockMode,
+      stockTotal,
+      stockRemaining,
+    };
+  });
+}
+
+function getRewardAvailabilityState(reward: RewardCatalogItem, now = Date.now()) {
+  const startAt = reward.redeemStartAt ? Date.parse(reward.redeemStartAt) : NaN;
+  const endAt = reward.redeemEndAt ? Date.parse(reward.redeemEndAt) : NaN;
+  const hasStarted = Number.isNaN(startAt) || startAt <= now;
+  const hasEnded = !Number.isNaN(endAt) && endAt < now;
+  const inStock =
+    reward.stockMode !== "limited" ||
+    Math.max(0, Number(reward.stockRemaining) || 0) > 0;
+
+  return {
+    hasStarted,
+    hasEnded,
+    inStock,
+  };
 }
 
 function createDefaultRewardsCatalog() {
   return normalizeRewardsCatalog(REWARDS_LIST.map((reward) => ({ ...reward })));
+}
+
+function normalizeRewardCategories(categories: RewardCategory[]) {
+  const seen = new Set<string>();
+  const normalizedDefaults = DEFAULT_REWARD_CATEGORIES.map((category) => ({
+    ...category,
+    value: category.value.trim().toLowerCase(),
+  }));
+  const fallbackHint = "หมวดหมู่ที่สร้างเพิ่มโดยผู้ดูแล";
+
+  const normalized = categories
+    .map((category) => {
+      const rawValue = (category.value || category.label || "")
+        .trim()
+        .toLowerCase()
+        .replace(/[^a-z0-9-\u0E00-\u0E7F]+/g, "-")
+        .replace(/^-+|-+$/g, "");
+      const matchedDefault = normalizedDefaults.find((item) => item.value === rawValue);
+      const rawLabel = category.label?.trim();
+      const rawHint = category.hint?.trim();
+
+      return {
+        value: rawValue,
+        label:
+          rawLabel && rawLabel !== "New Category"
+            ? rawLabel
+            : matchedDefault?.label || "New Category",
+        hint:
+          rawHint && rawHint !== fallbackHint
+            ? rawHint
+            : matchedDefault?.hint || fallbackHint,
+        icon: category.icon || matchedDefault?.icon || "gift",
+      };
+    })
+    .filter((category) => {
+      if (!category.value || seen.has(category.value)) return false;
+      seen.add(category.value);
+      return true;
+    });
+
+  normalizedDefaults.forEach((category) => {
+    if (seen.has(category.value)) return;
+    normalized.push(category);
+    seen.add(category.value);
+  });
+
+  return normalized;
+}
+
+function createDefaultRewardCategories() {
+  return normalizeRewardCategories(DEFAULT_REWARD_CATEGORIES.map((category) => ({ ...category })));
+}
+
+function normalizeRewardRedemptions(records: RewardRedemptionRecord[]): RewardRedemptionRecord[] {
+  return records
+    .map((record, index) => ({
+      id: record.id || `reward-redemption-${index + 1}`,
+      rewardId: Math.max(1, Number(record.rewardId) || 1),
+      rewardName: record.rewardName || `Reward ${index + 1}`,
+      rewardCategory: record.rewardCategory || "merch",
+      pointsSpent: Math.max(0, Number(record.pointsSpent) || 0),
+      redeemedAt: record.redeemedAt || new Date().toISOString(),
+      redeemedBy: record.redeemedBy?.trim() || DEFAULT_CURRENT_USER_NAME,
+    }))
+    .sort((left, right) => right.redeemedAt.localeCompare(left.redeemedAt));
+}
+
+function createDefaultRewardRedemptions() {
+  return normalizeRewardRedemptions([
+    {
+      id: "reward-redemption-seed-1",
+      rewardId: 5,
+      rewardName: "ตั๋วหนัง SF - 1 ที่นั่ง",
+      rewardCategory: "voucher",
+      pointsSpent: 350,
+      redeemedAt: "2026-06-15T13:42:00.000Z",
+      redeemedBy: "Chaiwat T.",
+    },
+    {
+      id: "reward-redemption-seed-2",
+      rewardId: 2,
+      rewardName: "ผ้าขนหนู Safety",
+      rewardCategory: "merch",
+      pointsSpent: 320,
+      redeemedAt: "2026-06-15T11:18:00.000Z",
+      redeemedBy: "Nattaya K.",
+    },
+    {
+      id: "reward-redemption-seed-3",
+      rewardId: 1,
+      rewardName: "บัตร Tesco Lotus",
+      rewardCategory: "voucher",
+      pointsSpent: 500,
+      redeemedAt: "2026-06-14T09:27:00.000Z",
+      redeemedBy: "Anand T.",
+    },
+    {
+      id: "reward-redemption-seed-4",
+      rewardId: 4,
+      rewardName: "เสื้อ Safety Cup",
+      rewardCategory: "merch",
+      pointsSpent: 850,
+      redeemedAt: "2026-06-13T15:05:00.000Z",
+      redeemedBy: "Arisara P.",
+    },
+    {
+      id: "reward-redemption-seed-5",
+      rewardId: 3,
+      rewardName: "หมวกกันน็อก premium",
+      rewardCategory: "ppe",
+      pointsSpent: 1200,
+      redeemedAt: "2026-06-12T07:54:00.000Z",
+      redeemedBy: "Surachai J.",
+    },
+  ]);
+}
+
+function mergeRewardRedemptionsWithSeed(records: RewardRedemptionRecord[]) {
+  const normalizedCurrent = normalizeRewardRedemptions(records);
+  const seedRecords = createDefaultRewardRedemptions();
+  const redeemerSet = new Set(normalizedCurrent.map((item) => item.redeemedBy.trim().toLowerCase()));
+  const merged = [...normalizedCurrent];
+
+  for (const seed of seedRecords) {
+    if (redeemerSet.has(seed.redeemedBy.trim().toLowerCase())) continue;
+    merged.push(seed);
+    redeemerSet.add(seed.redeemedBy.trim().toLowerCase());
+    if (redeemerSet.size >= 5) break;
+  }
+
+  return normalizeRewardRedemptions(merged);
 }
 
 function normalizeFeedEvents(events: SafetyCultureFeedEvent[]): SafetyCultureFeedEvent[] {
@@ -604,6 +855,24 @@ function createDefaultFeedEvents() {
   return normalizeFeedEvents(DEFAULT_FEED_EVENTS);
 }
 
+function normalizeUserActivityHistory(history: SafetyCultureUserActivity[]) {
+  return history
+    .filter((item) => item && item.id && item.type && Number.isFinite(item.occurredAt) && Number.isFinite(item.postId))
+    .map((item) => ({
+      ...item,
+      postAuthor: item.postAuthor || "Unknown author",
+      postCategory: item.postCategory || "General",
+      postPreview: item.postPreview || "ไม่มีรายละเอียดโพสต์",
+      pointsDelta: Number(item.pointsDelta) || 0,
+      commentText: item.commentText?.trim() || undefined,
+    }))
+    .sort((a, b) => b.occurredAt - a.occurredAt);
+}
+
+function createDefaultUserActivityHistory() {
+  return normalizeUserActivityHistory(INITIAL_USER_ACTIVITY_HISTORY);
+}
+
 export function AppProviders({ children }: { children: ReactNode }) {
   const [completedSteps, setCompletedSteps] = useState<number[]>([]);
   const [healthData, setHealthData] = useState<HealthData>(null);
@@ -612,6 +881,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
   const [queueConfirmed, setQueueConfirmed] = useState(false);
   const [sosData, setSosData] = useState<SosData>(null);
   const [posts, setPosts] = useState<Post[]>(INITIAL_POSTS);
+  const [userActivityHistory, setUserActivityHistory] = useState<SafetyCultureUserActivity[]>(() => createDefaultUserActivityHistory());
   const [notification, setNotification] = useState<NotificationType>(null);
   const [currentUserPoints, setCurrentUserPoints] = useState(INITIAL_CURRENT_USER_POINTS);
   const [safetyCultureEvent, setSafetyCultureEvent] = useState<SafetyCultureEventConfig>(() => createDefaultSafetyCultureEvent());
@@ -619,6 +889,8 @@ export function AppProviders({ children }: { children: ReactNode }) {
   const [teamStandings, setTeamStandings] = useState<LeaderboardTeam[]>(() => createDefaultTeamStandings());
   const [personalRankings, setPersonalRankings] = useState<LeaderboardPerson[]>(() => createDefaultPersonalRankings());
   const [rewardsCatalog, setRewardsCatalog] = useState<RewardCatalogItem[]>(() => createDefaultRewardsCatalog());
+  const [rewardCategories, setRewardCategories] = useState<RewardCategory[]>(() => createDefaultRewardCategories());
+  const [rewardRedemptions, setRewardRedemptions] = useState<RewardRedemptionRecord[]>(() => createDefaultRewardRedemptions());
   const [awarenessQuestions, setAwarenessQuestions] = useState<SafetyAwarenessQuestion[]>(() => createDefaultAwarenessQuestions());
   const [awarenessDoneDate, setAwarenessDoneDate] = useState<string>("");
   const [awarenessHistory, setAwarenessHistory] = useState<AwarenessCompletion[]>([]);
@@ -634,6 +906,9 @@ export function AppProviders({ children }: { children: ReactNode }) {
       const storedTeamStandings = window.localStorage.getItem(STORAGE_KEYS.teamStandings);
       const storedPersonalRankings = window.localStorage.getItem(STORAGE_KEYS.personalRankings);
       const storedRewardsCatalog = window.localStorage.getItem(STORAGE_KEYS.rewardsCatalog);
+      const storedRewardCategories = window.localStorage.getItem(STORAGE_KEYS.rewardCategories);
+      const storedRewardRedemptions = window.localStorage.getItem(STORAGE_KEYS.rewardRedemptions);
+      const storedUserActivityHistory = window.localStorage.getItem(STORAGE_KEYS.userActivityHistory);
 
       if (storedPosts) {
         const parsedPosts = JSON.parse(storedPosts) as Post[];
@@ -679,6 +954,27 @@ export function AppProviders({ children }: { children: ReactNode }) {
         const parsedRewards = JSON.parse(storedRewardsCatalog) as RewardCatalogItem[];
         if (Array.isArray(parsedRewards) && parsedRewards.length > 0) {
           setRewardsCatalog(normalizeRewardsCatalog(parsedRewards));
+        }
+      }
+
+      if (storedRewardCategories) {
+        const parsedCategories = JSON.parse(storedRewardCategories) as RewardCategory[];
+        if (Array.isArray(parsedCategories) && parsedCategories.length > 0) {
+          setRewardCategories(normalizeRewardCategories(parsedCategories));
+        }
+      }
+
+      if (storedRewardRedemptions) {
+        const parsedRedemptions = JSON.parse(storedRewardRedemptions) as RewardRedemptionRecord[];
+        if (Array.isArray(parsedRedemptions) && parsedRedemptions.length > 0) {
+          setRewardRedemptions(mergeRewardRedemptionsWithSeed(parsedRedemptions));
+        }
+      }
+
+      if (storedUserActivityHistory) {
+        const parsedHistory = JSON.parse(storedUserActivityHistory) as SafetyCultureUserActivity[];
+        if (Array.isArray(parsedHistory) && parsedHistory.length > 0) {
+          setUserActivityHistory(normalizeUserActivityHistory(parsedHistory));
         }
       }
     } catch {
@@ -741,6 +1037,30 @@ export function AppProviders({ children }: { children: ReactNode }) {
       // Ignore persistence failures and keep in-memory state.
     }
   }, [rewardsCatalog]);
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(STORAGE_KEYS.rewardCategories, JSON.stringify(rewardCategories));
+    } catch {
+      // Ignore persistence failures and keep in-memory state.
+    }
+  }, [rewardCategories]);
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(STORAGE_KEYS.rewardRedemptions, JSON.stringify(rewardRedemptions));
+    } catch {
+      // Ignore persistence failures and keep in-memory state.
+    }
+  }, [rewardRedemptions]);
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(STORAGE_KEYS.userActivityHistory, JSON.stringify(userActivityHistory));
+    } catch {
+      // Ignore persistence failures and keep in-memory state.
+    }
+  }, [userActivityHistory]);
 
   // Load Safety Awareness question bank + today's completion flag.
   useEffect(() => {
@@ -840,13 +1160,31 @@ export function AppProviders({ children }: { children: ReactNode }) {
   const addPost = useCallback((post: Post) => {
     const awardedPoints = calculateAwardedPoints(post.points || 0, "approved-post", safetyCultureEvent);
     const pointsDelta = Math.max(0, awardedPoints);
+    const occurredAt = post.createdAt || Date.now();
 
     setPosts((prev) => [{ ...post, points: awardedPoints }, ...prev]);
+    setUserActivityHistory((current) =>
+      normalizeUserActivityHistory([
+        {
+          id: `activity-post-${post.id}-${occurredAt}`,
+          type: "post",
+          occurredAt,
+          postId: post.id,
+          postAuthor: post.author,
+          postCategory: post.category,
+          postPreview: post.body,
+          pointsDelta,
+        },
+        ...current,
+      ])
+    );
     setCurrentUserPoints((prev) => prev + pointsDelta);
   }, [safetyCultureEvent]);
 
   const toggleLike = useCallback((postId: number) => {
     let currentDelta = 0;
+    let likedPost: Post | null = null;
+    const occurredAt = Date.now();
 
     setPosts((prev) =>
       prev.map((p) => {
@@ -854,6 +1192,9 @@ export function AppProviders({ children }: { children: ReactNode }) {
         const isAdding = !p.hasLiked;
         const awarded = calculateAwardedPoints(1, "reaction", safetyCultureEvent);
         currentDelta = isAdding ? awarded : -awarded;
+        if (isAdding) {
+          likedPost = p;
+        }
 
         return {
           ...p,
@@ -864,6 +1205,24 @@ export function AppProviders({ children }: { children: ReactNode }) {
       })
     );
 
+    if (likedPost) {
+      setUserActivityHistory((current) =>
+        normalizeUserActivityHistory([
+          {
+            id: `activity-reaction-${postId}-${occurredAt}`,
+            type: "reaction",
+            occurredAt,
+            postId: likedPost.id,
+            postAuthor: likedPost.author,
+            postCategory: likedPost.category,
+            postPreview: likedPost.body,
+            pointsDelta: Math.max(0, currentDelta),
+          },
+          ...current,
+        ])
+      );
+    }
+
     if (currentDelta !== 0) {
       setCurrentUserPoints((prev) => Math.max(0, prev + currentDelta));
     }
@@ -871,10 +1230,13 @@ export function AppProviders({ children }: { children: ReactNode }) {
 
   const addComment = useCallback((postId: number, text: string) => {
     const awardedPoints = calculateAwardedPoints(1, "comment", safetyCultureEvent);
+    const occurredAt = Date.now();
+    let targetPost: Post | null = null;
 
     setPosts((prev) =>
       prev.map((p) => {
         if (p.id !== postId) return p;
+        targetPost = p;
         const currentComments = Array.isArray(p.comments) ? p.comments : [];
         return {
           ...p,
@@ -891,6 +1253,24 @@ export function AppProviders({ children }: { children: ReactNode }) {
         };
       })
     );
+    if (targetPost) {
+      setUserActivityHistory((current) =>
+        normalizeUserActivityHistory([
+          {
+            id: `activity-comment-${postId}-${occurredAt}`,
+            type: "comment",
+            occurredAt,
+            postId: targetPost.id,
+            postAuthor: targetPost.author,
+            postCategory: targetPost.category,
+            postPreview: targetPost.body,
+            pointsDelta: awardedPoints,
+            commentText: text,
+          },
+          ...current,
+        ])
+      );
+    }
     setCurrentUserPoints((prev) => prev + awardedPoints);
   }, [safetyCultureEvent]);
 
@@ -912,6 +1292,10 @@ export function AppProviders({ children }: { children: ReactNode }) {
 
   const updateRewardsCatalog = useCallback((rewards: RewardCatalogItem[]) => {
     setRewardsCatalog(normalizeRewardsCatalog(rewards));
+  }, []);
+
+  const updateRewardCategories = useCallback((categories: RewardCategory[]) => {
+    setRewardCategories(normalizeRewardCategories(categories));
   }, []);
 
   const updateAwarenessQuestions = useCallback((questions: SafetyAwarenessQuestion[]) => {
@@ -936,17 +1320,61 @@ export function AppProviders({ children }: { children: ReactNode }) {
     ]);
   }, []);
 
-  const redeemPoints = useCallback((points: number) => {
-    let redeemed = false;
+  const redeemPoints = useCallback(
+    (rewardId: number, points: number) => {
+      const reward = rewardsCatalog.find((item) => item.id === rewardId);
+      if (!reward) {
+        return { ok: false as const, reason: "not-found" as const };
+      }
 
-    setCurrentUserPoints((prev) => {
-      if (prev < points) return prev;
-      redeemed = true;
-      return prev - points;
-    });
+      if (currentUserPoints < points) {
+        return { ok: false as const, reason: "insufficient-points" as const };
+      }
 
-    return redeemed;
-  }, []);
+      const availability = getRewardAvailabilityState(reward);
+      if (!availability.hasStarted) {
+        return { ok: false as const, reason: "not-started" as const };
+      }
+
+      if (availability.hasEnded) {
+        return { ok: false as const, reason: "expired" as const };
+      }
+
+      if (!availability.inStock) {
+        return { ok: false as const, reason: "out-of-stock" as const };
+      }
+
+      setCurrentUserPoints((prev) => prev - points);
+      setRewardRedemptions((current) =>
+        normalizeRewardRedemptions([
+          {
+            id: `reward-redemption-${Date.now()}-${rewardId}`,
+            rewardId: reward.id,
+            rewardName: reward.name,
+            rewardCategory: reward.category,
+            pointsSpent: points,
+            redeemedAt: new Date().toISOString(),
+            redeemedBy: DEFAULT_CURRENT_USER_NAME,
+          },
+          ...current,
+        ])
+      );
+      setRewardsCatalog((current) =>
+        normalizeRewardsCatalog(
+          current.map((item) => {
+            if (item.id !== rewardId || item.stockMode !== "limited") return item;
+            return {
+              ...item,
+              stockRemaining: Math.max(0, (item.stockRemaining ?? item.stockTotal ?? 0) - 1),
+            };
+          })
+        )
+      );
+
+      return { ok: true as const };
+    },
+    [currentUserPoints, rewardsCatalog]
+  );
 
   const awarenessNow = new Date(eventNow);
   const awarenessBangkokDay = new Date(awarenessNow.getTime() + 7 * 60 * 60 * 1000).getUTCDay();
@@ -960,6 +1388,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
     queueConfirmed,
     sosData,
     posts,
+    userActivityHistory,
     notification,
     currentUserPoints,
     safetyCultureEvent,
@@ -967,6 +1396,8 @@ export function AppProviders({ children }: { children: ReactNode }) {
     teamStandings,
     personalRankings,
     rewardsCatalog,
+    rewardCategories,
+    rewardRedemptions,
     awarenessQuestions,
     awarenessDoneToday: awarenessDoneDate === awarenessTodayKey,
     awarenessHistory,
@@ -993,6 +1424,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
     updateTeamStandings,
     updatePersonalRankings,
     updateRewardsCatalog,
+    updateRewardCategories,
     updateAwarenessQuestions,
     updateAwarenessHolidays,
     markAwarenessDone,

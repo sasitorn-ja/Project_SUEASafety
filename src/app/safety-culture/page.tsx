@@ -166,7 +166,12 @@ export default function Page() {
   const [commentDrafts, setCommentDrafts] = useState<Record<number, string>>({});
   const [expandedComments, setExpandedComments] = useState<Record<number, boolean>>({});
   const [activePhotoByPost, setActivePhotoByPost] = useState<Record<number, number>>({});
-  const [expandedPhoto, setExpandedPhoto] = useState<{ src: string; alt: string; postAuthor: string; index: number; total: number } | null>(null);
+  const [expandedPhoto, setExpandedPhoto] = useState<{
+    photos: Array<{ id: string; dataUrl: string; type: string }>;
+    alt: string;
+    postAuthor: string;
+    index: number;
+  } | null>(null);
   const [expandedActivity, setExpandedActivity] = useState<SafetyCultureFeedEvent | null>(null);
   const [mobileActivityStartIndex, setMobileActivityStartIndex] = useState(0);
   const [desktopActivityStartIndex, setDesktopActivityStartIndex] = useState(0);
@@ -190,6 +195,30 @@ export default function Page() {
     return post.imageData ? [{ id: `${post.id}-legacy`, dataUrl: post.imageData, type: "legacy" }] : [];
   }, []);
 
+  const showExpandedPhotoAt = useCallback(
+    (post: Post, index: number) => {
+      const postPhotos = getPostPhotos(post);
+      if (postPhotos.length === 0) return;
+
+      const boundedIndex = Math.max(0, Math.min(index, postPhotos.length - 1));
+      setExpandedPhoto({
+        photos: postPhotos,
+        alt: `Attached post scene by ${post.author}`,
+        postAuthor: post.author,
+        index: boundedIndex,
+      });
+    },
+    [getPostPhotos]
+  );
+
+  const goToExpandedPhoto = useCallback((direction: -1 | 1) => {
+    setExpandedPhoto((current) => {
+      if (!current || current.photos.length <= 1) return current;
+      const nextIndex = (current.index + direction + current.photos.length) % current.photos.length;
+      return { ...current, index: nextIndex };
+    });
+  }, []);
+
   useEffect(() => {
     if (!expandedPhoto && !expandedActivity) return;
 
@@ -197,12 +226,21 @@ export default function Page() {
       if (event.key === "Escape") {
         setExpandedPhoto(null);
         setExpandedActivity(null);
+        return;
+      }
+
+      if (expandedPhoto && expandedPhoto.photos.length > 1) {
+        if (event.key === "ArrowLeft") {
+          goToExpandedPhoto(-1);
+        } else if (event.key === "ArrowRight") {
+          goToExpandedPhoto(1);
+        }
       }
     };
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [expandedActivity, expandedPhoto]);
+  }, [expandedActivity, expandedPhoto, goToExpandedPhoto]);
 
 
   const handleCommentSubmit = (postId: number) => {
@@ -614,15 +652,7 @@ export default function Page() {
                           <>
                             <button
                               type="button"
-                              onClick={() =>
-                                setExpandedPhoto({
-                                  src: activePhoto.dataUrl,
-                                  alt: `Attached post scene by ${post.author}`,
-                                  postAuthor: post.author,
-                                  index: activePhotoIndex,
-                                  total: postPhotos.length,
-                                })
-                              }
+                              onClick={() => showExpandedPhotoAt(post, activePhotoIndex)}
                               className="absolute inset-0 z-0 cursor-zoom-in"
                               aria-label="ดูรูปภาพเต็ม"
                             >
@@ -820,7 +850,7 @@ export default function Page() {
               <div className="min-w-0">
                 <div className="truncate text-[15px] font-extrabold">{expandedPhoto.postAuthor}</div>
                 <div className="text-[12px] font-bold text-white/70">
-                  {expandedPhoto.total > 1 ? `รูปที่ ${expandedPhoto.index + 1} จาก ${expandedPhoto.total}` : "ภาพเต็ม"}
+                  {expandedPhoto.photos.length > 1 ? `รูปที่ ${expandedPhoto.index + 1} จาก ${expandedPhoto.photos.length}` : "ภาพเต็ม"}
                 </div>
               </div>
               <button
@@ -833,12 +863,32 @@ export default function Page() {
               </button>
             </div>
 
-            <div className="flex max-h-[calc(92vh-56px)] max-w-full items-center justify-center overflow-hidden rounded-[24px] border border-white/10 bg-[rgba(255,255,255,0.04)] shadow-[0_20px_50px_rgba(0,0,0,0.35)]">
+            <div className="relative flex max-h-[calc(92vh-56px)] max-w-full items-center justify-center overflow-hidden rounded-[24px] border border-white/10 bg-[rgba(255,255,255,0.04)] shadow-[0_20px_50px_rgba(0,0,0,0.35)]">
+              {expandedPhoto.photos.length > 1 ? (
+                <button
+                  type="button"
+                  onClick={() => goToExpandedPhoto(-1)}
+                  className="absolute top-1/2 left-3 z-10 inline-flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-white/18 bg-white/10 text-white transition-all duration-200 hover:-translate-x-0.5 hover:bg-white/16"
+                  aria-label="ดูรูปก่อนหน้า"
+                >
+                  <ChevronLeft className="h-5 w-5" strokeWidth={2.4} />
+                </button>
+              ) : null}
               <img
-                src={expandedPhoto.src}
+                src={expandedPhoto.photos[expandedPhoto.index]?.dataUrl}
                 alt={expandedPhoto.alt}
                 className="block max-h-[78vh] max-w-full object-contain"
               />
+              {expandedPhoto.photos.length > 1 ? (
+                <button
+                  type="button"
+                  onClick={() => goToExpandedPhoto(1)}
+                  className="absolute top-1/2 right-3 z-10 inline-flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-white/18 bg-white/10 text-white transition-all duration-200 hover:translate-x-0.5 hover:bg-white/16"
+                  aria-label="ดูรูปถัดไป"
+                >
+                  <ChevronRight className="h-5 w-5" strokeWidth={2.4} />
+                </button>
+              ) : null}
             </div>
           </div>
         </div>

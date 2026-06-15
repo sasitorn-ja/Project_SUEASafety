@@ -24,16 +24,37 @@ export type PersonalRanking = {
   active?: boolean;
 };
 
+export type RewardCategoryIcon = "ticket" | "gift" | "shield" | "users" | "heart" | "wrench" | "sparkles" | "shopping";
+
+export type RewardCategoryConfig = {
+  value: string;
+  label: string;
+  hint: string;
+  icon: RewardCategoryIcon;
+};
+
 export type RewardItem = {
   id: number;
   name: string;
-  category: "voucher" | "merch" | "ppe" | "team";
+  category: string;
   description: string;
   imageText: string;
   imageSrc?: string | null;
   points: number;
   isHot?: boolean;
+  redeemStartAt?: string | null;
+  redeemEndAt?: string | null;
+  stockMode?: "limited" | "unlimited";
+  stockTotal?: number | null;
+  stockRemaining?: number | null;
 };
+
+export const DEFAULT_REWARD_CATEGORIES: RewardCategoryConfig[] = [
+  { value: "voucher", label: "บัตรของขวัญ", hint: "e-voucher, cinema, shopping", icon: "ticket" },
+  { value: "merch", label: "สินค้า", hint: "merchandise และของพรีเมียม", icon: "gift" },
+  { value: "ppe", label: "PPE", hint: "อุปกรณ์เซฟตี้และของใช้หน้างาน", icon: "shield" },
+  { value: "team", label: "ของรางวัลทีม", hint: "รางวัลสำหรับทีมและกิจกรรมร่วมกัน", icon: "users" },
+] as const;
 
 export const TEAM_STANDINGS: TeamStanding[] = [
   { rank: 1, name: "Other", members: 126, color: "#6FC24D", points: 84200, percent: 100 },
