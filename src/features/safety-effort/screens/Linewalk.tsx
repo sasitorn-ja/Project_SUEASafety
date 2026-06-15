@@ -323,24 +323,24 @@ export default function Linewalk() {
   };
 
   // ── Step 1 fields ──
-  const [date, setDate]   = useState(location.state?.linewalkDate ?? "");
-  const [dept, setDept]   = useState("");
-  const [level, setLevel] = useState("");
+  const [date, setDate]   = useState(location.state?.linewalkDate ?? location.state?.linewalkData?.date ?? "");
+  const [dept, setDept]   = useState(location.state?.linewalkData?.dept ?? "");
+  const [level, setLevel] = useState(location.state?.linewalkData?.level ?? "");
 
   // ── Step 2: Tab ──
-  const [activeTab, setActiveTab]           = useState(activity?.id === "safety-contact" ? "safety_contact" : "linewalk");
-  const [safetyContactText, setSafetyContactText] = useState("");
+  const [activeTab, setActiveTab]           = useState(location.state?.linewalkData?.activeTab ?? (activity?.id === "safety-contact" ? "safety_contact" : "linewalk"));
+  const [safetyContactText, setSafetyContactText] = useState(location.state?.linewalkData?.safetyContactText ?? "");
 
   // ── Step 3: Location ──
   const [locType, setLocType] = useState(() => normalizeChecklistType(location.state?.checkin?.type));
 
   // ── Step 4: Metadata ──
-  const [company, setCompany]   = useState("");
-  const [region, setRegion]     = useState("");
-  const [division, setDivision] = useState("");
-  const [factory, setFactory]   = useState("");
-  const [office, setOffice]     = useState("");
-  const [siteName, setSiteName] = useState("");
+  const [company, setCompany]   = useState(location.state?.linewalkData?.company ?? "");
+  const [region, setRegion]     = useState(location.state?.linewalkData?.region ?? "");
+  const [division, setDivision] = useState(location.state?.linewalkData?.division ?? "");
+  const [factory, setFactory]   = useState(location.state?.linewalkData?.factory ?? "");
+  const [office, setOffice]     = useState(location.state?.linewalkData?.office ?? "");
+  const [siteName, setSiteName] = useState(location.state?.linewalkData?.siteName ?? "");
 
   // ── Checklist ──
   const [checklist,     setChecklist]     = useState([]);
@@ -370,7 +370,12 @@ export default function Linewalk() {
     setLocType(normalizeChecklistType(checkin?.type));
   }, [checkin?.type]);
 
+  const isFirstRender = useRef(true);
   useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
     setCompany(""); setRegion(""); setDivision(""); setFactory("");
     setOffice(""); setSiteName("");
   }, [locType]);
@@ -379,7 +384,7 @@ export default function Linewalk() {
     if (!locType) return;
     const cl = locType === "สำนักงาน" ? OFFICE_CHECKLIST : locType === "Site งาน" ? SITE_CHECKLIST : FACTORY_CHECKLIST;
     setChecklist(cl);
-    setItemStates(cl.reduce((acc, c) => { acc[c.id] = { status:null, note:"", photos:[] }; return acc; }, {}));
+    setItemStates(location.state?.linewalkData?.itemStates ?? cl.reduce((acc, c) => { acc[c.id] = { status:null, note:"", photos:[] }; return acc; }, {}));
     setActiveSection(-1);
   }, [locType]);
 
@@ -387,13 +392,13 @@ export default function Linewalk() {
     if (!locType) return;
     const cl = getChecklistForType(locType);
     setChecklist(cl);
-    setItemStates(createInitialItemStates(cl));
+    setItemStates(location.state?.linewalkData?.itemStates ?? createInitialItemStates(cl));
     setActiveSection(-1);
   }, [locType]);
 
   const totalItems      = checklist.length;
   const answeredCount   = Object.values(itemStates).filter(i => i.status !== null).length;
-  const checklistComplete      = totalItems > 0 && answeredCount === totalItems;
+  const checklistComplete      = totalItems > 0;
   const safetyContactComplete  = safetyContactText.trim().length > 0;
 
   const linewalkComplete = isSafetyContactFlow
@@ -1038,6 +1043,23 @@ export default function Linewalk() {
                     <ul style={{ margin:"0 0 2px", paddingLeft:isMobileQuestionScreen ? 15 : (isQuestionScreen ? 16 : 18), fontSize:isMobileQuestionScreen ? "10.5px" : (isQuestionScreen ? "12px" : "12.5px"), color:T.foreground2, lineHeight:isMobileQuestionScreen ? 1.32 : (isQuestionScreen ? 1.42 : 1.7) }}>
                       {currentItem.guidelines.map((g, gi) => <li key={gi} style={{ marginBottom:2 }}>{g}</li>)}
                     </ul>
+
+                    {currentItem.image && (
+                      <div style={{
+                        width: "100%",
+                        maxHeight: 180,
+                        borderRadius: 12,
+                        overflow: "hidden",
+                        border: "1px solid rgba(82,52,24,0.08)",
+                        background: "#fff",
+                        display: "flex",
+                        justifyContent: "center",
+                        marginTop: 8,
+                        marginBottom: 4,
+                      }}>
+                        <img src={currentItem.image} alt="Question Reference" style={{ maxWidth: "100%", maxHeight: 180, objectFit: "contain" }} />
+                      </div>
+                    )}
                   </div>
 
                   {/* Right Column: Choices and Inputs */}
@@ -1049,107 +1071,86 @@ export default function Linewalk() {
                     justifyContent: "center",
                     marginTop: (isMobileQuestionScreen || isMobileViewport) ? 12 : 0
                   }}>
-                    <div style={{ display:"grid", gap:isMobileQuestionScreen ? 7 : (isQuestionScreen ? 6 : 10), marginTop:0 }}>
-                      {[
-                        { key:"safe", label:"ปลอดภัย", sub:"ข้อความนี้ถูกต้อง", border:"#22c55e", bg:"#f0fdf4", color:"#15803d", icon:"✓" },
-                        { key:"unsafe_condition", label:"สภาพไม่ปลอดภัย", sub:"พบสภาพแวดล้อมที่ต้องแก้ไข", border:"#ef4444", bg:"#fef2f2", color:"#b91c1c", icon:"!" },
-                        { key:"unsafe_action", label:"พฤติกรรมไม่ปลอดภัย", sub:"พบพฤติกรรมเสี่ยงระหว่างทำงาน", border:"#f97316", bg:"#fff7ed", color:"#c2410c", icon:"×" },
-                      ].map((choice) => {
-                        const selected = currentState.status === choice.key;
-                        const themedChoice = choice;
-                        return (
-                          <button
-                            key={choice.key}
-                            type="button"
-                            onClick={() => handleStatusChange(currentItem.id, choice.key)}
+                    {currentItem.format === "text_box" ? (
+                      <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                          <span style={{ fontSize: 11, color: T.foreground3, fontWeight: 700, fontFamily: "'Prompt',sans-serif" }}>
+                            ระบุคำตอบข้อความ
+                          </span>
+                          <textarea
+                            className="lw-note-box"
                             style={{
-                              width:"100%",
-                              borderRadius:isMobileQuestionScreen ? 16 : 14,
-                              border:`3px solid ${themedChoice.border}`,
-                              background:selected ? themedChoice.bg : "#fff",
-                              padding:isMobileQuestionScreen ? "10px 12px" : (isQuestionScreen ? "8px 14px" : "16px 18px"),
-                              display:"flex",
-                              alignItems:"center",
-                              justifyContent:"space-between",
-                              gap:isMobileQuestionScreen ? 8 : (isQuestionScreen ? 10 : 12),
-                              cursor:"pointer",
-                              textAlign:"left",
+                              width: "100%",
+                              minHeight: 120,
+                              borderRadius: 12,
+                              border: "1px solid rgba(14,15,18,0.15)",
+                              padding: "12px 14px",
+                              fontFamily: "inherit",
+                              fontSize: 13.5,
+                              color: T.foreground,
+                              outline: "none",
+                              background: "#fcfcfb",
+                              transition: "all 0.2s",
+                              resize: "none",
                             }}
-                          >
-                            <div style={{ display:"flex", alignItems:"center", gap:isMobileQuestionScreen ? 8 : (isQuestionScreen ? 10 : 14), minWidth:0 }}>
-                              <div style={{ width:isMobileQuestionScreen ? 28 : (isQuestionScreen ? 30 : 34), height:isMobileQuestionScreen ? 28 : (isQuestionScreen ? 30 : 34), borderRadius:10, background:selected ? themedChoice.border : "rgba(14,15,18,0.06)", color:selected ? "#fff" : themedChoice.color, display:"flex", alignItems:"center", justifyContent:"center", fontWeight:900, fontSize:isMobileQuestionScreen ? 16 : (isQuestionScreen ? 18 : 22), flexShrink:0 }}>
-                                {themedChoice.icon}
-                              </div>
-                              <div style={{ minWidth:0 }}>
-                                <div style={{ fontFamily:"'Prompt',sans-serif", fontSize:isMobileQuestionScreen ? 14 : (isQuestionScreen ? 15.5 : 17), fontWeight:900, color:themedChoice.color }}>
-                                  {choice.label}
-                                </div>
-                                <div style={{ fontFamily:"'Prompt',sans-serif", fontSize:isMobileQuestionScreen ? 10 : (isQuestionScreen ? 11 : 12), fontWeight:600, color:T.foreground3 }}>
-                                  {choice.sub}
-                                </div>
-                              </div>
-                            </div>
-                            <div style={{ width:isMobileQuestionScreen ? 22 : (isQuestionScreen ? 24 : 28), height:isMobileQuestionScreen ? 22 : (isQuestionScreen ? 24 : 28), borderRadius:"50%", border:`3px solid ${selected ? themedChoice.border : "rgba(14,15,18,0.16)"}`, background:selected ? themedChoice.border : "#fff", flexShrink:0 }} />
-                          </button>
-                        );
-                      })}
-                    </div>
+                            value={currentState.note}
+                            placeholder="กรอกคำตอบของคุณสำหรับข้อนี้..."
+                            onChange={e => {
+                              const val = e.target.value;
+                              setItemStates(p => ({
+                                ...p,
+                                [currentItem.id]: {
+                                  ...p[currentItem.id],
+                                  note: val,
+                                  status: val.trim() ? "text" : null
+                                }
+                              }));
+                            }}
+                            onFocus={e => {
+                              e.currentTarget.style.borderColor = "var(--brand-accent)";
+                              e.currentTarget.style.boxShadow = "0 0 0 3px var(--brand-soft)";
+                              e.currentTarget.style.background = "#fff";
+                            }}
+                            onBlur={e => {
+                              e.currentTarget.style.borderColor = "rgba(14,15,18,0.15)";
+                              e.currentTarget.style.boxShadow = "none";
+                              e.currentTarget.style.background = "#fcfcfb";
+                            }}
+                          />
+                        </div>
 
-                    {currentState.status !== null && (
-                      <div style={{
-                        display: "flex",
-                        flexDirection: "column",
-                        gap: 12,
-                        marginTop: 4
-                      }}>
-                        {/* Note Box: Show only when status is unsafe_condition or unsafe_action */}
-                        {(currentState.status === "unsafe_condition" || currentState.status === "unsafe_action") && (
-                          <div style={{ display:"flex", flexDirection:"column", gap:6 }}>
-                            <span style={{ fontSize:11, color:T.foreground3, fontWeight:700, fontFamily:"'Prompt',sans-serif" }}>
-                              หมายเหตุ / รายละเอียดเพิ่มเติม
-                            </span>
-                            <textarea
-                              className="lw-note-box"
-                              style={{ minHeight: 50, height: 50, resize: "none" }}
-                              value={currentState.note}
-                              placeholder="กรอกรายละเอียดเพิ่มเติม..."
-                              onChange={e => handleNoteChange(currentItem.id, e.target.value)}
-                            />
-                          </div>
-                        )}
-
-                        {/* Photo Upload: Show when status is safe, unsafe_condition, or unsafe_action */}
-                        <div style={{ display:"flex", flexDirection:"column", gap:6 }}>
-                          <span style={{ fontFamily:"'Prompt',sans-serif", fontSize:isMobileQuestionScreen ? "10.5px" : "11.5px", fontWeight:800, color:T.foreground3, textTransform:"uppercase" }}>
+                        {/* Photo Upload: Show always for text box format */}
+                        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                          <span style={{ fontFamily: "'Prompt',sans-serif", fontSize: isMobileQuestionScreen ? "10.5px" : "11.5px", fontWeight: 800, color: T.foreground3, textTransform: "uppercase" }}>
                             แนบรูปภาพ ({currentState.photos.length} / 5 รูป)
                           </span>
-                          <div style={{ display:"flex", flexWrap:"wrap", gap:isMobileQuestionScreen ? 6 : 8, alignItems:"center" }}>
+                          <div style={{ display: "flex", flexWrap: "wrap", gap: isMobileQuestionScreen ? 6 : 8, alignItems: "center" }}>
                             {currentState.photos.length < 5 && (
-                              <label className="lw-upload-trigger" style={isMobileQuestionScreen ? { height:40, padding:"0 12px", borderColor:"rgba(95,64,37,0.22)", background:"var(--c-fff8ee)", color:"var(--brand-text)", fontSize:11.5, margin:0 } : { height:40, padding:"0 16px", borderRadius:8, margin:0 }}>
+                              <label className="lw-upload-trigger" style={isMobileQuestionScreen ? { height: 40, padding: "0 12px", borderColor: "rgba(95,64,37,0.22)", background: "var(--c-fff8ee)", color: "var(--brand-text)", fontSize: 11.5, margin: 0 } : { height: 40, padding: "0 16px", borderRadius: 8, margin: 0 }}>
                                 <IcoUpload /> Upload รูปภาพ
-                                <input type="file" accept="image/*" style={{ display:"none" }} onChange={e => handlePhotoUpload(currentItem.id, e)} />
+                                <input type="file" accept="image/*" style={{ display: "none" }} onChange={e => handlePhotoUpload(currentItem.id, e)} />
                               </label>
                             )}
                             {currentState.photos.map((url, pi) => (
-                              <div key={pi} style={{ width:40, height:40, borderRadius:8, position:"relative", overflow:"hidden", border:"1px solid rgba(14,15,18,0.08)" }}>
-                                <img src={url} alt="" style={{ width:"100%", height:"100%", objectFit:"cover" }} />
+                              <div key={pi} style={{ width: 40, height: 40, borderRadius: 8, position: "relative", overflow: "hidden", border: "1px solid rgba(14,15,18,0.08)" }}>
+                                <img src={url} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                                 <button
                                   type="button"
                                   onClick={() => handleDeletePhoto(currentItem.id, pi)}
                                   style={{
-                                    position:"absolute",
-                                    top:1,
-                                    right:1,
-                                    width:14,
-                                    height:14,
-                                    borderRadius:"50%",
-                                    background:"rgba(0,0,0,0.6)",
-                                    color:"#fff",
-                                    border:"none",
-                                    display:"flex",
-                                    alignItems:"center",
-                                    justifyContent:"center",
-                                    cursor:"pointer",
+                                    position: "absolute",
+                                    top: 1,
+                                    right: 1,
+                                    width: 14,
+                                    height: 14,
+                                    borderRadius: "50%",
+                                    background: "rgba(0,0,0,0.6)",
+                                    color: "#fff",
+                                    border: "none",
+                                    display: "flex",
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                    cursor: "pointer",
                                   }}
                                 >
                                   <IcoX />
@@ -1159,6 +1160,120 @@ export default function Linewalk() {
                           </div>
                         </div>
                       </div>
+                    ) : (
+                      <>
+                        <div style={{ display: "grid", gap: isMobileQuestionScreen ? 7 : (isQuestionScreen ? 6 : 10), marginTop: 0 }}>
+                          {[
+                            { key: "safe", label: "ปลอดภัย", sub: "ข้อความนี้ถูกต้อง", border: "#22c55e", bg: "#f0fdf4", color: "#15803d", icon: "✓" },
+                            { key: "unsafe_condition", label: "สภาพไม่ปลอดภัย", sub: "พบสภาพแวดล้อมที่ต้องแก้ไข", border: "#ef4444", bg: "#fef2f2", color: "#b91c1c", icon: "!" },
+                            { key: "unsafe_action", label: "พฤติกรรมไม่ปลอดภัย", sub: "พบพฤติกรรมเสี่ยงระหว่างทำงาน", border: "#f97316", bg: "#fff7ed", color: "#c2410c", icon: "×" },
+                          ].map((choice) => {
+                            const selected = currentState.status === choice.key;
+                            const themedChoice = choice;
+                            return (
+                              <button
+                                key={choice.key}
+                                type="button"
+                                onClick={() => handleStatusChange(currentItem.id, choice.key)}
+                                style={{
+                                  width: "100%",
+                                  borderRadius: isMobileQuestionScreen ? 16 : 14,
+                                  border: `3px solid ${themedChoice.border}`,
+                                  background: selected ? themedChoice.bg : "#fff",
+                                  padding: isMobileQuestionScreen ? "10px 12px" : (isQuestionScreen ? "8px 14px" : "16px 18px"),
+                                  display: "flex",
+                                  alignItems: "center",
+                                  justifyContent: "space-between",
+                                  gap: isMobileQuestionScreen ? 8 : (isQuestionScreen ? 10 : 12),
+                                  cursor: "pointer",
+                                  textAlign: "left",
+                                }}
+                              >
+                                <div style={{ display: "flex", alignItems: "center", gap: isMobileQuestionScreen ? 8 : (isQuestionScreen ? 10 : 14), minWidth: 0 }}>
+                                  <div style={{ width: isMobileQuestionScreen ? 28 : (isQuestionScreen ? 30 : 34), height: isMobileQuestionScreen ? 28 : (isQuestionScreen ? 30 : 34), borderRadius: 10, background: selected ? themedChoice.border : "rgba(14,15,18,0.06)", color: selected ? "#fff" : themedChoice.color, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 900, fontSize: isMobileQuestionScreen ? 16 : (isQuestionScreen ? 18 : 22), flexShrink: 0 }}>
+                                    {themedChoice.icon}
+                                  </div>
+                                  <div style={{ minWidth: 0 }}>
+                                    <div style={{ fontFamily: "'Prompt',sans-serif", fontSize: isMobileQuestionScreen ? 14 : (isQuestionScreen ? 15.5 : 17), fontWeight: 900, color: themedChoice.color }}>
+                                      {choice.label}
+                                    </div>
+                                    <div style={{ fontFamily: "'Prompt',sans-serif", fontSize: isMobileQuestionScreen ? 10 : (isQuestionScreen ? 11 : 12), fontWeight: 600, color: T.foreground3 }}>
+                                      {choice.sub}
+                                    </div>
+                                  </div>
+                                </div>
+                                <div style={{ width: isMobileQuestionScreen ? 22 : (isQuestionScreen ? 24 : 28), height: isMobileQuestionScreen ? 22 : (isQuestionScreen ? 24 : 28), borderRadius: "50%", border: `3px solid ${selected ? themedChoice.border : "rgba(14,15,18,0.16)"}`, background: selected ? themedChoice.border : "#fff", flexShrink: 0 }} />
+                              </button>
+                            );
+                          })}
+                        </div>
+
+                        {currentState.status !== null && (
+                          <div style={{
+                            display: "flex",
+                            flexDirection: "column",
+                            gap: 12,
+                            marginTop: 4
+                          }}>
+                            {/* Note Box: Show when status is safe, unsafe_condition, or unsafe_action */}
+                            {(currentState.status === "safe" || currentState.status === "unsafe_condition" || currentState.status === "unsafe_action") && (
+                              <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                                <span style={{ fontSize: 11, color: T.foreground3, fontWeight: 700, fontFamily: "'Prompt',sans-serif" }}>
+                                  หมายเหตุ / รายละเอียดเพิ่มเติม
+                                </span>
+                                <textarea
+                                  className="lw-note-box"
+                                  style={{ minHeight: 50, height: 50, resize: "none" }}
+                                  value={currentState.note}
+                                  placeholder="กรอกรายละเอียดเพิ่มเติม..."
+                                  onChange={e => handleNoteChange(currentItem.id, e.target.value)}
+                                />
+                              </div>
+                            )}
+
+                            {/* Photo Upload: Show when status is safe, unsafe_condition, or unsafe_action */}
+                            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                              <span style={{ fontFamily: "'Prompt',sans-serif", fontSize: isMobileQuestionScreen ? "10.5px" : "11.5px", fontWeight: 800, color: T.foreground3, textTransform: "uppercase" }}>
+                                แนบรูปภาพ ({currentState.photos.length} / 5 รูป)
+                              </span>
+                              <div style={{ display: "flex", flexWrap: "wrap", gap: isMobileQuestionScreen ? 6 : 8, alignItems: "center" }}>
+                                {currentState.photos.length < 5 && (
+                                  <label className="lw-upload-trigger" style={isMobileQuestionScreen ? { height: 40, padding: "0 12px", borderColor: "rgba(95,64,37,0.22)", background: "var(--c-fff8ee)", color: "var(--brand-text)", fontSize: 11.5, margin: 0 } : { height: 40, padding: "0 16px", borderRadius: 8, margin: 0 }}>
+                                    <IcoUpload /> Upload รูปภาพ
+                                    <input type="file" accept="image/*" style={{ display: "none" }} onChange={e => handlePhotoUpload(currentItem.id, e)} />
+                                  </label>
+                                )}
+                                {currentState.photos.map((url, pi) => (
+                                  <div key={pi} style={{ width: 40, height: 40, borderRadius: 8, position: "relative", overflow: "hidden", border: "1px solid rgba(14,15,18,0.08)" }}>
+                                    <img src={url} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                                    <button
+                                      type="button"
+                                      onClick={() => handleDeletePhoto(currentItem.id, pi)}
+                                      style={{
+                                        position: "absolute",
+                                        top: 1,
+                                        right: 1,
+                                        width: 14,
+                                        height: 14,
+                                        borderRadius: "50%",
+                                        background: "rgba(0,0,0,0.6)",
+                                        color: "#fff",
+                                        border: "none",
+                                        display: "flex",
+                                        alignItems: "center",
+                                        justifyContent: "center",
+                                        cursor: "pointer",
+                                      }}
+                                    >
+                                      <IcoX />
+                                    </button>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </>
                     )}
                   </div>
                 </div>

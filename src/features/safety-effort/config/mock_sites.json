@@ -1,0 +1,46 @@
+[
+  {
+    "id": 1,
+    "projectCode": "STE-PT-03",
+    "projectName": "Site พญาไท",
+    "customer": "Sansiri PLC",
+    "contractor": "Italian-Thai Development",
+    "stage": "Piling Phase (งานตอกเสาเข็ม)",
+    "status": "ACTIVE",
+    "lat": 13.7592,
+    "lng": 100.5348
+  },
+  {
+    "id": 2,
+    "projectCode": "STE-RC-01",
+    "projectName": "Site รัชดา",
+    "customer": "AP Thailand",
+    "contractor": "CH. Karnchang",
+    "stage": "Structural Phase (งานโครงสร้าง)",
+    "status": "ACTIVE",
+    "lat": 13.7762,
+    "lng": 100.5741
+  },
+  {
+    "id": 3,
+    "projectCode": "STE-SK-05",
+    "projectName": "Site สุขุมวิท",
+    "customer": "Land & Houses",
+    "contractor": "Sino-Thai Engineering",
+    "stage": "Finishing Phase (งานตกแต่ง)",
+    "status": "ACTIVE",
+    "lat": 13.7367,
+    "lng": 100.5604
+  },
+  {
+    "id": 4,
+    "projectCode": "STE-BS-02",
+    "projectName": "Site บางซื่อ",
+    "customer": "SRT (การรถไฟฯ)",
+    "contractor": "Unique Engineering",
+    "stage": "Completed (เสร็จสิ้น)",
+    "status": "COMPLETED",
+    "lat": 13.8042,
+    "lng": 100.5401
+  }
+]
