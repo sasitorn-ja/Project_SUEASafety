@@ -1462,6 +1462,11 @@ export default function Checkin() {
   const mapCenter = [center.lat, center.lng];
   const fitPoints = allLocations.filter(l => l.lat && l.lng).map(l => [l.lat, l.lng]);
   const mapInstanceKey = isMobile ? "mobile" : "desktop";
+  const nextPath = activity?.id === "safety-contact"
+    ? "/safety-contact"
+    : activity
+      ? "/linewalk"
+      : "/activity";
 
   // ── Custom Stepper Progress Indicator (compact size)
   const StepPips = ({ current = 2, total = 4 }) => (
@@ -1554,7 +1559,7 @@ export default function Checkin() {
         className={`ci-cta ${selected ? "ready" : "disabled"}`}
         disabled={!selected}
         onClick={() =>
-          selected && navigate(activity ? "/linewalk" : "/activity", {
+          selected && navigate(nextPath, {
             state: {
               checkin: {
                 id:   selected.id,
@@ -1823,4 +1828,3 @@ export default function Checkin() {
   );
 }
 // @ts-nocheck
-
