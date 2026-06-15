@@ -247,11 +247,12 @@ export function createDefaultAwarenessQuestions(): SafetyAwarenessQuestion[] {
   return normalizeAwarenessQuestions(parsed);
 }
 
-/** Today's local date key (YYYY-MM-DD) used to gate "first time each day". */
+/** Today's Bangkok date key (YYYY-MM-DD) used to gate "first time each day". */
 export function todayKey(now = new Date()): string {
-  const y = now.getFullYear();
-  const m = String(now.getMonth() + 1).padStart(2, "0");
-  const d = String(now.getDate()).padStart(2, "0");
+  const bangkok = new Date(now.getTime() + 7 * 60 * 60 * 1000);
+  const y = bangkok.getUTCFullYear();
+  const m = String(bangkok.getUTCMonth() + 1).padStart(2, "0");
+  const d = String(bangkok.getUTCDate()).padStart(2, "0");
   return `${y}-${m}-${d}`;
 }
 

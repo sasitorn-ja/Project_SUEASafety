@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, ShieldCheck, HeartPulse, ClipboardCheck, UsersRound, Settings2 } from "lucide-react";
+import { Home, LayoutDashboard, ShieldCheck, HeartPulse, ClipboardCheck, UsersRound } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { isMainNavActive } from "@/lib/navigation";
 
@@ -11,15 +11,15 @@ function NavTo(props: any) {
 }
 
 const NAV_ITEMS = [
-  { id: "dashboard", label: "Home", icon: Home, href: "/" },
+  { id: "home", label: "Home", icon: Home, href: "/" },
+  { id: "dashboard", label: "Dashboard", icon: LayoutDashboard, href: "/dashboard" },
   { id: "safety-effort", label: "Safety Effort", icon: ShieldCheck, href: "/category" },
   { id: "were-ok", label: "We're OK", icon: HeartPulse, href: "/were-ok" },
   { id: "work-permit", label: "Work Permit", icon: ClipboardCheck, href: "/work-permit" },
   { id: "safety-culture", label: "Safety Culture", icon: UsersRound, href: "/safety-culture" },
-  { id: "admin", label: "Admin", icon: Settings2, href: "/safety-admin" },
 ];
 
-const ENABLED_HREFS = new Set(["/", "/category", "/were-ok", "/work-permit", "/safety-culture", "/safety-admin"]);
+const ENABLED_HREFS = new Set(["/", "/dashboard", "/category", "/were-ok", "/work-permit", "/safety-culture"]);
 
 export function MobileBottomNav({ hidden = false }: { hidden?: boolean }) {
   const pathname = usePathname() ?? "";

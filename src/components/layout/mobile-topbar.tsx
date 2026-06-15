@@ -12,6 +12,7 @@ import {
   Heart,
   HeartPulse,
   Home,
+  LayoutDashboard,
   Menu,
   Settings2,
   ShieldCheck,
@@ -33,14 +34,14 @@ const CULTURE_ITEMS = [
   { label: "Feed", icon: Heart, href: "/safety-culture" },
   { label: "Leaderboard", icon: Trophy, href: "/safety-culture/leaderboard" },
   { label: "Rewards", icon: Gift, href: "/safety-culture/rewards" },
-];
-
-const ADMIN_ITEMS = [
-  { label: "Settings Safety Effort", icon: ShieldCheck, href: "/safety-admin" },
   { label: "Settings Edit Event", icon: Settings2, href: "/safety-culture/admin-event" },
   { label: "Settings Edit Leaderboard", icon: Trophy, href: "/safety-culture/admin-leaderboard" },
   { label: "Settings Edit Reward", icon: Gift, href: "/safety-culture/admin-reward" },
   { label: "Settings Safety Awareness", icon: ShieldCheck, href: "/safety-culture/admin-awareness" },
+];
+
+const SAFETY_EFFORT_ITEMS = [
+  { label: "Settings Safety Effort", icon: Settings2, href: "/safety-admin" },
 ];
 
 type NavNode = {
@@ -52,17 +53,18 @@ type NavNode = {
 };
 
 const NAV_TREE: NavNode[] = [
-  { id: "dashboard", label: "Home", icon: Home, href: "/" },
-  { id: "safety-effort", label: "Safety Effort", icon: ShieldCheck, href: "/category" },
+  { id: "home", label: "Home", icon: Home, href: "/" },
+  { id: "dashboard", label: "Dashboard", icon: LayoutDashboard, href: "/dashboard" },
+  { id: "safety-effort", label: "Safety Effort", icon: ShieldCheck, href: "/category", children: SAFETY_EFFORT_ITEMS },
   { id: "were-ok", label: "We're OK", icon: HeartPulse, href: "/were-ok" },
   { id: "work-permit", label: "Work Permit", icon: ClipboardCheck, href: "/work-permit" },
   { id: "safety-culture", label: "Safety Culture", icon: UsersRound, href: "/safety-culture", children: CULTURE_ITEMS },
-  { id: "admin", label: "Admin", icon: Settings2, children: ADMIN_ITEMS },
 ];
 
 const ENABLED_HREFS = new Set([
   "/category",
   "/",
+  "/dashboard",
   "/were-ok",
   "/work-permit",
   "/safety-culture",
@@ -81,10 +83,9 @@ export function MobileTopbar({ hidden = false }: { hidden?: boolean }) {
   const isActive = (href: string) => isMainNavActive(pathname, href);
 
   const cultureActive = CULTURE_ITEMS.some((item) => isExactNavActive(pathname, item.href));
-  const adminActive = pathname === "/safety-admin" || pathname.startsWith("/safety-culture/admin-");
   const [openSections, setOpenSections] = useState<Record<string, boolean>>(() => ({
     "safety-culture": cultureActive,
-    admin: adminActive,
+    "safety-effort": pathname === "/safety-admin",
   }));
   const toggleSection = (id: string) =>
     setOpenSections((current) => ({ ...current, [id]: !current[id] }));
@@ -185,7 +186,7 @@ export function MobileTopbar({ hidden = false }: { hidden?: boolean }) {
                 // Parent with a nested sub-menu → expandable accordion.
                 if (item.children) {
                   const isOpen = !!openSections[item.id];
-                  const sectionActive = item.id === "admin" ? adminActive : cultureActive;
+                  const sectionActive = item.id === "safety-effort" ? pathname === "/safety-admin" || pathname === "/category" : cultureActive;
 
                   return (
                     <div key={item.id}>

@@ -948,6 +948,10 @@ export function AppProviders({ children }: { children: ReactNode }) {
     return redeemed;
   }, []);
 
+  const awarenessNow = new Date(eventNow);
+  const awarenessBangkokDay = new Date(awarenessNow.getTime() + 7 * 60 * 60 * 1000).getUTCDay();
+  const awarenessTodayKey = todayKey(awarenessNow);
+
   const state: AppState = {
     completedSteps,
     healthData,
@@ -964,10 +968,10 @@ export function AppProviders({ children }: { children: ReactNode }) {
     personalRankings,
     rewardsCatalog,
     awarenessQuestions,
-    awarenessDoneToday: awarenessDoneDate === todayKey(),
+    awarenessDoneToday: awarenessDoneDate === awarenessTodayKey,
     awarenessHistory,
     awarenessHolidays,
-    awarenessRequiredToday: ![0, 6].includes(new Date().getDay()) && !awarenessHolidays.some((holiday) => holiday.date === todayKey()),
+    awarenessRequiredToday: ![0, 6].includes(awarenessBangkokDay) && !awarenessHolidays.some((holiday) => holiday.date === awarenessTodayKey),
     isEventLive: isSafetyCultureEventLive(safetyCultureEvent, eventNow),
     eventNow,
   };

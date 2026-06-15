@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Home, ShieldCheck, UsersRound, UserRound, Bell, Menu, Heart, X, Trophy, Gift, Settings2, ClipboardCheck } from "lucide-react";
+import { Home, LayoutDashboard, ShieldCheck, UsersRound, UserRound, Bell, Menu, Heart, X, Trophy, Gift, Settings2, ClipboardCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { isExactNavActive, isMainNavActive } from "@/lib/navigation";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -16,7 +16,8 @@ function NavTo(props: any) {
 }
 
 const NAV_ITEMS = [
-  { id: "dashboard", label: "Home", icon: Home, href: "/" },
+  { id: "home", label: "Home", icon: Home, href: "/" },
+  { id: "dashboard", label: "Dashboard", icon: LayoutDashboard, href: "/dashboard" },
   { id: "safety-effort", label: "Safety Effort", icon: ShieldCheck, href: "/category" },
   { id: "were-ok", label: "We're OK", icon: UsersRound, href: "/were-ok" },
   { id: "work-permit", label: "Work Permit", icon: ClipboardCheck, href: "/work-permit" },
@@ -41,15 +42,6 @@ const SAFETY_CULTURE_ITEMS = [
     href: "/safety-culture/rewards",
     icon: Gift,
     description: "Review points and available redemption rewards",
-  },
-];
-
-const ADMIN_ITEMS = [
-  {
-    label: "Settings Safety Effort",
-    href: "/safety-admin",
-    icon: ShieldCheck,
-    description: "จัดการ Safety Effort และตรวจประเมินความปลอดภัย",
   },
   {
     label: "Settings Edit Event",
@@ -77,14 +69,23 @@ const ADMIN_ITEMS = [
   },
 ] as const;
 
-const ENABLED_HREFS = new Set(["/", "/category", "/were-ok", "/work-permit", "/safety-culture", "/notifications"]);
+const SAFETY_EFFORT_ITEMS = [
+  {
+    label: "Settings Safety Effort",
+    href: "/safety-admin",
+    icon: Settings2,
+    description: "จัดการแบบประเมินและรายการตรวจ Safety Effort",
+  },
+] as const;
+
+const ENABLED_HREFS = new Set(["/", "/dashboard", "/category", "/were-ok", "/work-permit", "/safety-culture", "/notifications"]);
 
 export function DesktopTopbar() {
   const { mascot, theme } = useAppTheme();
   const pathname = usePathname() ?? "";
   const [open, setOpen] = useState(false);
   const isWangjai = theme === "wangjai";
-  const [desktopMenu, setDesktopMenu] = useState<"safety-culture" | "admin" | null>(null);
+  const [desktopMenu, setDesktopMenu] = useState<"safety-effort" | "safety-culture" | null>(null);
 
   const isActive = (href: string) => isMainNavActive(pathname, href);
 
@@ -202,10 +203,10 @@ export function DesktopTopbar() {
               <div className="rounded-2xl border border-white/10 bg-white/[0.06] p-2.5">
                 <div className="mb-2 flex items-center gap-2 px-1.5 text-[10px] font-extrabold uppercase tracking-[0.18em] text-[var(--brand-hero-label)]">
                   <Settings2 className="h-3.5 w-3.5" strokeWidth={2.3} />
-                  <span>Admin</span>
+                  <span>Safety Effort Settings</span>
                 </div>
                 <div className="grid grid-cols-1 gap-1.5 md:grid-cols-2">
-                  {ADMIN_ITEMS.map((item) => {
+                  {SAFETY_EFFORT_ITEMS.map((item) => {
                     const Icon = item.icon;
 
                     return (
@@ -235,113 +236,59 @@ export function DesktopTopbar() {
             const active = isActive(item.href);
             const enabled = ENABLED_HREFS.has(item.href);
 
-            if (item.id === "safety-culture") {
+            if (item.id === "safety-effort" || item.id === "safety-culture") {
+              const menuId = item.id as "safety-effort" | "safety-culture";
+              const submenuItems = item.id === "safety-effort" ? SAFETY_EFFORT_ITEMS : SAFETY_CULTURE_ITEMS;
               return (
                 <div
                   key={item.id}
-                  className="flex items-center gap-2"
+                  className="relative"
+                  onMouseEnter={() => setDesktopMenu(menuId)}
                   onMouseLeave={() => setDesktopMenu(null)}
+                  onFocus={() => setDesktopMenu(menuId)}
                 >
-                  <div
-                    className="relative"
-                    onMouseEnter={() => setDesktopMenu("safety-culture")}
-                    onFocus={() => setDesktopMenu("safety-culture")}
+                  <NavTo
+                    href={item.href}
+                    className={cn(
+                      "desktop-nav-item inline-flex h-11 items-center justify-center gap-2 rounded-full px-4 text-sm font-bold whitespace-nowrap transition-all",
+                      active
+                        ? "bg-[var(--brand-nav-active)] text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.18),0_8px_18px_rgba(0,0,0,0.18)]"
+                        : "bg-transparent text-white/[0.82] hover:bg-white/10 hover:text-white"
+                    )}
                   >
-                    <NavTo
-                      href={item.href}
-                      className={cn(
-                        "desktop-nav-item inline-flex h-11 items-center justify-center gap-2 rounded-full px-4 text-sm font-bold whitespace-nowrap transition-all",
-                        active
-                          ? "bg-[var(--brand-nav-active)] text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.18),0_8px_18px_rgba(0,0,0,0.18)]"
-                          : "bg-transparent text-white/[0.82] hover:bg-white/10 hover:text-white"
-                      )}
-                    >
-                      <Icon className="h-[17px] w-[17px]" strokeWidth={2.35} />
-                      <span className="desktop-nav-label">{item.label}</span>
-                    </NavTo>
-
-                    <div
-                      className={cn(
-                        "absolute left-1/2 top-full z-50 w-[290px] -translate-x-1/2 pt-2 transition-all duration-150",
-                        desktopMenu === "safety-culture" ? "visible opacity-100" : "invisible opacity-0"
-                      )}
-                    >
-                      <div className="rounded-xl border border-white/[0.14] bg-[rgba(var(--brand-nav-rgb),0.88)] p-1.5 text-white shadow-[0_18px_44px_var(--brand-shadow)] backdrop-blur-xl">
-                        {SAFETY_CULTURE_ITEMS.map((subitem) => {
-                          const SubIcon = subitem.icon;
-
-                          return (
-                            <NavTo
-                              key={subitem.href}
-                              href={subitem.href}
-                              className={cn(
-                                "flex items-center gap-2.5 rounded-lg p-2 text-white transition-colors hover:bg-white/10 focus:bg-white/10 focus:outline-none",
-                                isExactNavActive(pathname, subitem.href) && "bg-white/10"
-                              )}
-                            >
-                              <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full border border-white/10 bg-[rgba(var(--brand-accent-rgb),0.18)] text-[var(--brand-hero-label)]">
-                                <SubIcon className="h-[17px] w-[17px]" strokeWidth={2.35} />
-                              </span>
-                              <span className="min-w-0">
-                                <span className="block text-[12.5px] font-extrabold leading-[16px] text-white">{subitem.label}</span>
-                                <span className="mt-0.5 block text-[10.5px] font-semibold leading-[14px] text-white/[0.68]">{subitem.description}</span>
-                              </span>
-                            </NavTo>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  </div>
+                    <Icon className="h-[17px] w-[17px]" strokeWidth={2.35} />
+                    <span className="desktop-nav-label">{item.label}</span>
+                  </NavTo>
 
                   <div
-                    className="relative"
-                    onMouseEnter={() => setDesktopMenu("admin")}
-                    onFocus={() => setDesktopMenu("admin")}
+                    className={cn(
+                      "absolute left-1/2 top-full z-50 w-[320px] -translate-x-1/2 pt-2 transition-all duration-150",
+                      desktopMenu === menuId ? "visible translate-y-0 opacity-100" : "invisible -translate-y-1 opacity-0"
+                    )}
                   >
-                    <button
-                      type="button"
-                      onClick={() => setDesktopMenu("admin")}
-                      className={cn(
-                        "desktop-nav-item inline-flex h-11 items-center justify-center gap-2 rounded-full px-4 text-sm font-bold whitespace-nowrap transition-all",
-                        pathname === "/safety-admin" || pathname.startsWith("/safety-culture/admin-")
-                          ? "bg-[var(--brand-nav-active)] text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.18),0_8px_18px_rgba(0,0,0,0.18)]"
-                          : "bg-transparent text-white/[0.82] hover:bg-white/10 hover:text-white"
-                      )}
-                    >
-                      <Settings2 className="h-[17px] w-[17px]" strokeWidth={2.35} />
-                      <span className="desktop-nav-label">Admin</span>
-                    </button>
+                    <div className="max-h-[calc(100vh-var(--topbar-h)-24px)] overflow-y-auto rounded-xl border border-white/[0.14] bg-[rgba(var(--brand-nav-rgb),0.96)] p-1.5 text-white shadow-[0_18px_44px_var(--brand-shadow)] backdrop-blur-xl">
+                      {submenuItems.map((subitem) => {
+                        const SubIcon = subitem.icon;
 
-                    <div
-                      className={cn(
-                        "absolute left-1/2 top-full z-50 w-[290px] -translate-x-1/2 pt-2 transition-all duration-150",
-                        desktopMenu === "admin" ? "visible opacity-100" : "invisible opacity-0"
-                      )}
-                    >
-                      <div className="rounded-xl border border-white/[0.14] bg-[rgba(var(--brand-nav-rgb),0.88)] p-1.5 text-white shadow-[0_18px_44px_var(--brand-shadow)] backdrop-blur-xl">
-                        {ADMIN_ITEMS.map((subitem) => {
-                          const SubIcon = subitem.icon;
-
-                          return (
-                            <NavTo
-                              key={subitem.href}
-                              href={subitem.href}
-                              className={cn(
-                                "flex items-center gap-2.5 rounded-lg p-2 text-white transition-colors hover:bg-white/10 focus:bg-white/10 focus:outline-none",
-                                isExactNavActive(pathname, subitem.href) && "bg-white/10"
-                              )}
-                            >
-                              <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full border border-white/10 bg-[rgba(var(--brand-accent-rgb),0.18)] text-[var(--brand-hero-label)]">
-                                <SubIcon className="h-[17px] w-[17px]" strokeWidth={2.35} />
-                              </span>
-                              <span className="min-w-0">
-                                <span className="block text-[12.5px] font-extrabold leading-[16px] text-white">{subitem.label}</span>
-                                <span className="mt-0.5 block text-[10.5px] font-semibold leading-[14px] text-white/[0.68]">{subitem.description}</span>
-                              </span>
-                            </NavTo>
-                          );
-                        })}
-                      </div>
+                        return (
+                          <NavTo
+                            key={subitem.href}
+                            href={subitem.href}
+                            className={cn(
+                              "flex items-center gap-2.5 rounded-lg p-2 text-white transition-colors hover:bg-white/10 focus:bg-white/10 focus:outline-none",
+                              isExactNavActive(pathname, subitem.href) && "bg-white/10"
+                            )}
+                          >
+                            <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full border border-white/10 bg-[rgba(var(--brand-accent-rgb),0.18)] text-[var(--brand-hero-label)]">
+                              <SubIcon className="h-[17px] w-[17px]" strokeWidth={2.35} />
+                            </span>
+                            <span className="min-w-0">
+                              <span className="block text-[12.5px] font-extrabold leading-[16px] text-white">{subitem.label}</span>
+                              <span className="mt-0.5 block text-[10.5px] font-semibold leading-[14px] text-white/[0.68]">{subitem.description}</span>
+                            </span>
+                          </NavTo>
+                        );
+                      })}
                     </div>
                   </div>
                 </div>

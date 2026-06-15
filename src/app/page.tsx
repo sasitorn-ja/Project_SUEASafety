@@ -22,6 +22,20 @@ import { Card } from "@/components/ui/card";
 import { useAppState, getSafetyCultureEventPhase } from "@/providers/app-providers";
 import { useAppTheme } from "@/providers/theme-provider";
 
+const THAI_WEEKDAYS_SHORT = ["อา.", "จ.", "อ.", "พ.", "พฤ.", "ศ.", "ส."];
+const THAI_MONTHS_SHORT = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.ค.", "มิ.ย.", "ก.ค.", "ส.ค.", "ก.ย.", "ต.ค.", "พ.ย.", "ธ.ค."];
+const BANGKOK_OFFSET_MS = 7 * 60 * 60 * 1000;
+
+function bangkokDate(timestamp: number) {
+  return new Date(timestamp + BANGKOK_OFFSET_MS);
+}
+
+function formatThaiDate(date: Date, includeYear = false) {
+  const day = date.getUTCDate();
+  const month = THAI_MONTHS_SHORT[date.getUTCMonth()];
+  return includeYear ? `${day} ${month} ${date.getUTCFullYear() + 543}` : `${String(day).padStart(2, "0")} ${month}`;
+}
+
 export default function HomePage() {
   const { mascot } = useAppTheme();
   const {
@@ -54,13 +68,13 @@ export default function HomePage() {
 
   // อีเวนต์ที่กำลังจัด
   const eventPhase = getSafetyCultureEventPhase(safetyCultureEvent, eventNow);
-  const startAt = new Date(`${safetyCultureEvent.startDate}T${safetyCultureEvent.startTime}`);
-  const endAt = new Date(`${safetyCultureEvent.endDate}T${safetyCultureEvent.endTime}`);
+  const startAt = new Date(`${safetyCultureEvent.startDate}T${safetyCultureEvent.startTime}+07:00`);
+  const endAt = new Date(`${safetyCultureEvent.endDate}T${safetyCultureEvent.endTime}+07:00`);
   const eventBonusLabel =
     safetyCultureEvent.bonusMode === "multiplier"
       ? `x${safetyCultureEvent.multiplier}`
       : `+${safetyCultureEvent.fixedPoints} pts`;
-  const timeRangeLabel = `${startAt.toLocaleDateString("th-TH", { day: "2-digit", month: "short" })} ${safetyCultureEvent.startTime} - ${endAt.toLocaleDateString("th-TH", { day: "2-digit", month: "short" })} ${safetyCultureEvent.endTime}`;
+  const timeRangeLabel = `${formatThaiDate(bangkokDate(startAt.getTime()))} ${safetyCultureEvent.startTime} - ${formatThaiDate(bangkokDate(endAt.getTime()))} ${safetyCultureEvent.endTime}`;
 
   const isLive = eventPhase === "live";
   let eventStatusLabel = "Draft";
@@ -79,14 +93,14 @@ export default function HomePage() {
     countdownLabel = "กิจกรรมถูกหยุดชั่วคราว";
   }
   const showEvent = eventPhase !== "draft";
-  const today = new Date();
-  const todayDateKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+  const today = bangkokDate(eventNow);
+  const todayDateKey = `${today.getUTCFullYear()}-${String(today.getUTCMonth() + 1).padStart(2, "0")}-${String(today.getUTCDate()).padStart(2, "0")}`;
   const awarenessDays = Array.from({ length: 14 }, (_, index) => {
     const date = new Date(today);
-    date.setDate(today.getDate() - (13 - index));
-    const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+    date.setUTCDate(today.getUTCDate() - (13 - index));
+    const key = `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, "0")}-${String(date.getUTCDate()).padStart(2, "0")}`;
     const holiday = awarenessHolidays.find((item) => item.date === key);
-    const excludedReason = [0, 6].includes(date.getDay()) ? "วันหยุดสุดสัปดาห์" : holiday?.name;
+    const excludedReason = [0, 6].includes(date.getUTCDay()) ? "วันหยุดสุดสัปดาห์" : holiday?.name;
     return { key, date, completion: awarenessHistory.find((item) => item.date === key), excludedReason };
   });
   const awarenessCountedDays = awarenessDays.filter((item) => !item.excludedReason);
@@ -301,7 +315,7 @@ export default function HomePage() {
                 return (
                   <div
                     key={key}
-                    title={`${date.toLocaleDateString("th-TH", { day: "numeric", month: "short", year: "numeric" })}: ${status === "excluded" ? `ไม่นับ KPI (${excludedReason})` : status === "done" ? "ทำแล้ว" : status === "pending" ? "รอดำเนินการ" : "ไม่ได้ทำ"}`}
+                    title={`${formatThaiDate(date, true)}: ${status === "excluded" ? `ไม่นับ KPI (${excludedReason})` : status === "done" ? "ทำแล้ว" : status === "pending" ? "รอดำเนินการ" : "ไม่ได้ทำ"}`}
                     className={`grid min-h-[58px] place-items-center rounded-xl border px-1 py-2 text-center ${
                       status === "excluded"
                         ? "border-[var(--border)] bg-[var(--secondary)] text-[var(--brand-muted-text)]"
@@ -312,8 +326,8 @@ export default function HomePage() {
                           : "border-[#f2c6bd] bg-[#fff5f2] text-[#b3271a]"
                     }`}
                   >
-                    <span className="text-[8.5px] font-extrabold opacity-65">{date.toLocaleDateString("th-TH", { weekday: "short" })}</span>
-                    <span className="text-[13px] font-black">{date.getDate()}</span>
+                    <span className="text-[8.5px] font-extrabold opacity-65">{THAI_WEEKDAYS_SHORT[date.getUTCDay()]}</span>
+                    <span className="text-[13px] font-black">{date.getUTCDate()}</span>
                     {status === "excluded" ? <span className="text-[8px] font-black">ไม่นับ</span> : status === "done" ? <CheckCircle2 className="h-3.5 w-3.5" strokeWidth={2.8} /> : status === "pending" ? <Clock3 className="h-3.5 w-3.5" strokeWidth={2.6} /> : <XCircle className="h-3.5 w-3.5" strokeWidth={2.6} />}
                   </div>
                 );
@@ -328,7 +342,7 @@ export default function HomePage() {
               {latestAwareness ? (
                 <div className="mt-2 grid gap-2 md:grid-cols-[auto_1fr] md:items-start">
                   <div className="rounded-xl bg-[var(--brand-soft)] px-3 py-2 text-[11px] font-black text-[var(--brand-text)]">
-                    {new Date(latestAwareness.completedAt).toLocaleDateString("th-TH", { day: "numeric", month: "short", year: "numeric" })}
+                    {formatThaiDate(bangkokDate(new Date(latestAwareness.completedAt).getTime()), true)}
                     {latestAwareness.total > 0 && ` · ${latestAwareness.score}/${latestAwareness.total} คะแนน`}
                   </div>
                   <div className="grid gap-1.5">
