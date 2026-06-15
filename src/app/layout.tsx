@@ -46,14 +46,6 @@ export default function RootLayout({
       suppressHydrationWarning
       className={`${notoSansThai.variable} ${sarabun.variable} h-full antialiased`}
     >
-      <head>
-        <script
-          dangerouslySetInnerHTML={{
-            __html:
-              "try{var t=localStorage.getItem('suea-safety-theme');document.documentElement.dataset.theme=t==='tiger'?'tiger':'wangjai'}catch(e){}",
-          }}
-        />
-      </head>
       <body className="min-h-full flex flex-col bg-background text-foreground font-sans">
         <AppThemeProvider>
           <TooltipProvider>

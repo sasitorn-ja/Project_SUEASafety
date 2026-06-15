@@ -20,8 +20,6 @@ export type MascotAction =
   | "smile"
   | "happy";
 
-const STORAGE_KEY = "suea-safety-theme";
-
 const TIGER_MASCOTS: Record<MascotAction, string> = {
   logo: "/images/mascots/suea-mascot-logo.png",
   big: "/images/mascots/suea-mascot-logo.png",
@@ -91,22 +89,10 @@ function getThemedColor(theme: AppTheme, color?: string) {
 
 export function AppThemeProvider({ children }: { children: ReactNode }) {
   const [theme, setTheme] = useState<AppTheme>("wangjai");
-  const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    setTheme(document.documentElement.dataset.theme === "tiger" ? "tiger" : "wangjai");
-    setReady(true);
-  }, []);
-
-  useEffect(() => {
-    if (!ready) return;
     document.documentElement.dataset.theme = theme;
-    try {
-      window.localStorage.setItem(STORAGE_KEY, theme);
-    } catch {
-      // Keep the in-memory theme when storage is unavailable.
-    }
-  }, [ready, theme]);
+  }, [theme]);
 
   const value = useMemo<ThemeContextValue>(
     () => ({
