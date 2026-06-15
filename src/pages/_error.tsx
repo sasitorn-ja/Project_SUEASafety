@@ -13,7 +13,7 @@ function ErrorPage({ statusCode }: ErrorPageProps) {
         placeItems: "center",
         padding: "24px",
         textAlign: "center",
-        fontFamily: "system-ui, sans-serif",
+        fontFamily: "Sarabun, 'TH Sarabun New', sans-serif",
         background: "var(--background)",
         color: "#0e0f12",
       }}
