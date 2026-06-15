@@ -1205,17 +1205,18 @@ export function AppProviders({ children }: { children: ReactNode }) {
       })
     );
 
-    if (likedPost) {
+    const activityPost = likedPost as Post | null;
+    if (activityPost) {
       setUserActivityHistory((current) =>
         normalizeUserActivityHistory([
           {
             id: `activity-reaction-${postId}-${occurredAt}`,
             type: "reaction",
             occurredAt,
-            postId: likedPost.id,
-            postAuthor: likedPost.author,
-            postCategory: likedPost.category,
-            postPreview: likedPost.body,
+            postId: activityPost.id,
+            postAuthor: activityPost.author,
+            postCategory: activityPost.category,
+            postPreview: activityPost.body,
             pointsDelta: Math.max(0, currentDelta),
           },
           ...current,
@@ -1253,17 +1254,18 @@ export function AppProviders({ children }: { children: ReactNode }) {
         };
       })
     );
-    if (targetPost) {
+    const activityPost = targetPost as Post | null;
+    if (activityPost) {
       setUserActivityHistory((current) =>
         normalizeUserActivityHistory([
           {
             id: `activity-comment-${postId}-${occurredAt}`,
             type: "comment",
             occurredAt,
-            postId: targetPost.id,
-            postAuthor: targetPost.author,
-            postCategory: targetPost.category,
-            postPreview: targetPost.body,
+            postId: activityPost.id,
+            postAuthor: activityPost.author,
+            postCategory: activityPost.category,
+            postPreview: activityPost.body,
             pointsDelta: awardedPoints,
             commentText: text,
           },
