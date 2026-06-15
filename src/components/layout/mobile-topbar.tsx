@@ -3,11 +3,12 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Bell,
   ChevronDown,
   ClipboardCheck,
+  FileText,
   Gift,
   Heart,
   HeartPulse,
@@ -23,6 +24,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { isExactNavActive, isMainNavActive } from "@/lib/navigation";
+import { getProfileDisplayName, getProfileInitials, MOCK_PROFILE, PROFILE_IMAGE_KEY } from "@/lib/profile";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { useAppTheme } from "@/providers/theme-provider";
 
@@ -40,9 +42,8 @@ const CULTURE_ITEMS = [
   { label: "Settings Safety Awareness", icon: ShieldCheck, href: "/safety-culture/admin-awareness" },
 ];
 
-const SAFETY_EFFORT_ITEMS = [
-  { label: "Settings Safety Effort", icon: Settings2, href: "/safety-admin" },
-];
+const SAFETY_EFFORT_ITEMS = [{ label: "Settings Safety Effort", icon: Settings2, href: "/safety-admin" }];
+const PROFILE_MENU_ITEMS = [{ label: "กิจกรรมของผู้ใช้งาน", icon: FileText, href: "/profile/activity-history" }];
 
 type NavNode = {
   id: string;
@@ -72,23 +73,38 @@ const ENABLED_HREFS = new Set([
   "/safety-culture/rewards",
   "/safety-admin",
   "/notifications",
+  "/profile",
+  "/profile/activity-history",
 ]);
 
 export function MobileTopbar({ hidden = false }: { hidden?: boolean }) {
   const { mascot, theme } = useAppTheme();
   const pathname = usePathname() ?? "";
   const [open, setOpen] = useState(false);
+  const [profileImage, setProfileImage] = useState("");
   const isWangjai = theme === "wangjai";
 
   const isActive = (href: string) => isMainNavActive(pathname, href);
-
   const cultureActive = CULTURE_ITEMS.some((item) => isExactNavActive(pathname, item.href));
+  const profileSectionActive = pathname === "/profile" || pathname.startsWith("/profile/");
+
   const [openSections, setOpenSections] = useState<Record<string, boolean>>(() => ({
     "safety-culture": cultureActive,
     "safety-effort": pathname === "/safety-admin",
+    profile: profileSectionActive,
   }));
-  const toggleSection = (id: string) =>
+
+  useEffect(() => {
+    try {
+      setProfileImage(window.localStorage.getItem(PROFILE_IMAGE_KEY) || "");
+    } catch {
+      setProfileImage("");
+    }
+  }, []);
+
+  const toggleSection = (id: string) => {
     setOpenSections((current) => ({ ...current, [id]: !current[id] }));
+  };
 
   const closeDrawer = () => setOpen(false);
   const menuLabel = open ? "ปิดเมนู" : "เปิดเมนู";
@@ -115,22 +131,12 @@ export function MobileTopbar({ hidden = false }: { hidden?: boolean }) {
             title={menuLabel}
             aria-expanded={open}
           >
-            {open ? (
-              <X className="h-[18px] w-[18px]" strokeWidth={2.45} />
-            ) : (
-              <Menu className="h-[18px] w-[18px]" strokeWidth={2.45} />
-            )}
+            {open ? <X className="h-[18px] w-[18px]" strokeWidth={2.45} /> : <Menu className="h-[18px] w-[18px]" strokeWidth={2.45} />}
           </button>
 
           <NavTo href="/" onClick={closeDrawer} className="flex min-w-0 items-center gap-[9px]">
             <div className="flex h-[30px] w-[30px] flex-shrink-0 items-center justify-center overflow-hidden">
-              <Image
-                src={mascot("logo")}
-                alt="SUEA Safety Logo"
-                width={30}
-                height={30}
-                className="h-full w-full object-contain"
-              />
+              <Image src={mascot("logo")} alt="SUEA Safety Logo" width={30} height={30} className="h-full w-full object-contain" />
             </div>
             <div className="flex min-w-0 flex-col leading-[1.1]">
               <span className="overflow-hidden text-ellipsis whitespace-nowrap text-[15px] font-extrabold tracking-normal text-white">
@@ -154,14 +160,6 @@ export function MobileTopbar({ hidden = false }: { hidden?: boolean }) {
         <div className="flex flex-shrink-0 items-center gap-2">
           <ThemeToggle compact />
           <NavTo
-            href="/profile"
-            className="relative inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-full bg-transparent text-white transition-opacity hover:opacity-70"
-            aria-label="โปรไฟล์ของฉัน"
-            title="โปรไฟล์ของฉัน"
-          >
-            <UserRound className="h-[17px] w-[17px]" strokeWidth={2.4} />
-          </NavTo>
-          <NavTo
             href="/notifications"
             className="relative inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-full bg-transparent text-white transition-opacity hover:opacity-70"
             aria-label="การแจ้งเตือน"
@@ -180,10 +178,64 @@ export function MobileTopbar({ hidden = false }: { hidden?: boolean }) {
           <button className="mobile-drawer-overlay" aria-label="ปิดเมนู" onClick={closeDrawer} />
           <aside className="mobile-drawer-aside" aria-label="เมนูหลัก">
             <div className="grid grid-cols-1 gap-2">
+              <div>
+                <div
+                  className={cn(
+                    "flex min-h-11 w-full items-stretch rounded-xl border border-white/12 bg-white/[0.14] text-white transition-colors hover:bg-white/[0.18]",
+                    profileSectionActive && "ring-1 ring-[var(--brand-accent)]"
+                  )}
+                >
+                  <NavTo href="/profile" onClick={closeDrawer} className="flex min-w-0 flex-1 items-center gap-3 px-3 py-3">
+                    <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center overflow-hidden rounded-full border border-white/20 bg-white/12">
+                      {profileImage ? (
+                        <img src={profileImage} alt={getProfileDisplayName()} className="h-full w-full object-cover" />
+                      ) : (
+                        <span className="text-[12px] font-black tracking-[0.08em] text-[var(--brand-accent)]">{getProfileInitials()}</span>
+                      )}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="truncate text-[13px] font-black">{getProfileDisplayName()}</div>
+                      <div className="truncate text-[11px] font-bold text-white/65">@{MOCK_PROFILE.username}</div>
+                    </div>
+                  </NavTo>
+                  <button
+                    type="button"
+                    onClick={() => toggleSection("profile")}
+                    aria-expanded={!!openSections.profile}
+                    aria-label="เปิดเมนูกิจกรรมของผู้ใช้งาน"
+                    className="flex w-12 flex-shrink-0 items-center justify-center text-[var(--brand-accent)]"
+                  >
+                    <ChevronDown className={cn("h-4 w-4 transition-transform duration-200", openSections.profile && "rotate-180")} strokeWidth={2.5} />
+                  </button>
+                </div>
+
+                {openSections.profile && (
+                  <div className="mt-1 ml-[18px] grid grid-cols-1 gap-1 border-l border-white/15 pl-2">
+                    {PROFILE_MENU_ITEMS.map((item) => {
+                      const Icon = item.icon;
+
+                      return (
+                        <NavTo
+                          key={item.href}
+                          href={item.href}
+                          onClick={closeDrawer}
+                          className={cn(
+                            "flex min-h-9 items-center gap-2.5 rounded-lg px-2.5 text-[11.5px] font-bold transition-colors hover:bg-white/[0.12]",
+                            isExactNavActive(pathname, item.href) ? "bg-white/[0.12] text-[var(--brand-accent)]" : "text-[var(--brand-soft)]"
+                          )}
+                        >
+                          <Icon className="h-[15px] w-[15px] flex-shrink-0 text-[var(--brand-accent)]" strokeWidth={2.35} />
+                          <span className="truncate">{item.label}</span>
+                        </NavTo>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
               {NAV_TREE.map((item) => {
                 const Icon = item.icon;
 
-                // Parent with a nested sub-menu → expandable accordion.
                 if (item.children) {
                   const isOpen = !!openSections[item.id];
                   const sectionActive = item.id === "safety-effort" ? pathname === "/safety-admin" || pathname === "/category" : cultureActive;
@@ -196,17 +248,12 @@ export function MobileTopbar({ hidden = false }: { hidden?: boolean }) {
                         aria-expanded={isOpen}
                         className={cn(
                           "flex min-h-11 w-full items-center gap-3 rounded-xl px-3 text-xs font-extrabold transition-colors",
-                          sectionActive
-                            ? "bg-white/[0.14] text-[var(--brand-accent)]"
-                            : "bg-white/10 text-[var(--brand-soft)] hover:bg-white/[0.14]"
+                          sectionActive ? "bg-white/[0.14] text-[var(--brand-accent)]" : "bg-white/10 text-[var(--brand-soft)] hover:bg-white/[0.14]"
                         )}
                       >
                         <Icon className="h-4 w-4 flex-shrink-0 text-[var(--brand-accent)]" strokeWidth={2.35} />
                         <span className="flex-1 truncate text-left">{item.label}</span>
-                        <ChevronDown
-                          className={cn("h-4 w-4 flex-shrink-0 transition-transform duration-200", isOpen && "rotate-180")}
-                          strokeWidth={2.5}
-                        />
+                        <ChevronDown className={cn("h-4 w-4 flex-shrink-0 transition-transform duration-200", isOpen && "rotate-180")} strokeWidth={2.5} />
                       </button>
 
                       {isOpen && (
@@ -221,9 +268,7 @@ export function MobileTopbar({ hidden = false }: { hidden?: boolean }) {
                                 onClick={closeDrawer}
                                 className={cn(
                                   "flex min-h-9 items-center gap-2.5 rounded-lg px-2.5 text-[11.5px] font-bold transition-colors hover:bg-white/[0.12]",
-                                  isExactNavActive(pathname, sub.href)
-                                    ? "bg-white/[0.12] text-[var(--brand-accent)]"
-                                    : "text-[var(--brand-soft)]"
+                                  isExactNavActive(pathname, sub.href) ? "bg-white/[0.12] text-[var(--brand-accent)]" : "text-[var(--brand-soft)]"
                                 )}
                               >
                                 <SubIcon className="h-[15px] w-[15px] flex-shrink-0 text-[var(--brand-accent)]" strokeWidth={2.35} />
@@ -237,7 +282,6 @@ export function MobileTopbar({ hidden = false }: { hidden?: boolean }) {
                   );
                 }
 
-                // Plain link.
                 const href = item.href ?? "#";
                 const active = isActive(href);
                 const enabled = ENABLED_HREFS.has(href);
@@ -249,17 +293,12 @@ export function MobileTopbar({ hidden = false }: { hidden?: boolean }) {
                     onClick={() => enabled && closeDrawer()}
                     className={cn(
                       "flex min-h-11 items-center gap-3 truncate rounded-xl px-3 text-xs font-extrabold transition-colors",
-                      active && enabled
-                        ? "bg-[var(--brand-accent-strong)] text-[var(--brand-nav)]"
-                        : "bg-white/10 text-[var(--brand-soft)] hover:bg-white/[0.14]",
+                      active && enabled ? "bg-[var(--brand-accent-strong)] text-[var(--brand-nav)]" : "bg-white/10 text-[var(--brand-soft)] hover:bg-white/[0.14]",
                       !enabled && "cursor-not-allowed opacity-60"
                     )}
                     aria-disabled={!enabled}
                   >
-                    <Icon
-                      className={cn("h-4 w-4 flex-shrink-0", active && enabled ? "text-[var(--brand-nav)]" : "text-[var(--brand-accent)]")}
-                      strokeWidth={2.35}
-                    />
+                    <Icon className={cn("h-4 w-4 flex-shrink-0", active && enabled ? "text-[var(--brand-nav)]" : "text-[var(--brand-accent)]")} strokeWidth={2.35} />
                     <span className="truncate">{item.label}</span>
                   </NavTo>
                 );

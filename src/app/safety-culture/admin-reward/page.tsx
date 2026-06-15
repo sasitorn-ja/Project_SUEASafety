@@ -4,19 +4,32 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
+  ArrowDown,
+  ArrowUp,
   ArrowLeft,
+  Clock3,
+  HeartPulse,
+  ChevronDown,
+  ChevronsDown,
+  ChevronsUp,
   Gift,
+  GripVertical,
+  History,
   ImagePlus,
+  ShoppingBag,
+  Search,
   Pencil,
   Plus,
   Shield,
+  Sparkles,
   Star,
   Ticket,
   Trash2,
   Users,
+  Wrench,
 } from "lucide-react";
+import { DEFAULT_REWARD_CATEGORIES, type RewardCategoryIcon } from "@/lib/safety-culture";
 import { SafetyCultureHero } from "@/components/safety-culture/safety-culture-hero";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import {
@@ -31,7 +44,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
-import { type RewardCatalogItem, useAppActions, useAppState } from "@/providers/app-providers";
+import { type RewardCatalogItem, type RewardCategory, useAppActions, useAppState } from "@/providers/app-providers";
 import { useAppTheme } from "@/providers/theme-provider";
 
 type RewardEditorState = {
@@ -44,18 +57,38 @@ type RewardEditorState = {
   imageSrc: string | null;
   points: number;
   isHot: boolean;
+  hasRedeemWindow: boolean;
+  redeemStartAt: string;
+  redeemEndAt: string;
+  stockMode: "limited" | "unlimited";
+  stockTotal: number;
+  stockRemaining: number;
 };
 
-const CATEGORY_OPTIONS: Array<{
-  value: RewardCatalogItem["category"];
+const CATEGORY_ICON_MAP: Record<RewardCategoryIcon, typeof Ticket> = {
+  ticket: Ticket,
+  gift: Gift,
+  shield: Shield,
+  users: Users,
+  heart: HeartPulse,
+  wrench: Wrench,
+  sparkles: Sparkles,
+  shopping: ShoppingBag,
+};
+
+const CATEGORY_ICON_OPTIONS: Array<{
+  value: RewardCategoryIcon;
   label: string;
-  hint: string;
-  icon: typeof Ticket;
+  description: string;
 }> = [
-  { value: "voucher", label: "บัตรของขวัญ", hint: "e-voucher, cinema, shopping", icon: Ticket },
-  { value: "merch", label: "สินค้า", hint: "merchandise และของพรีเมียม", icon: Gift },
-  { value: "ppe", label: "PPE", hint: "อุปกรณ์เซฟตี้และของใช้หน้างาน", icon: Shield },
-  { value: "team", label: "ของรางวัลทีม", hint: "รางวัลสำหรับทีมและกิจกรรมร่วมกัน", icon: Users },
+  { value: "gift", label: "ทั่วไป", description: "เหมาะกับของรางวัลทั่วไป" },
+  { value: "ticket", label: "บัตร", description: "คูปอง ตั๋ว หรือ voucher" },
+  { value: "shield", label: "ความปลอดภัย", description: "PPE อุปกรณ์เซฟตี้" },
+  { value: "users", label: "ทีม", description: "ของรางวัลแบบทีม" },
+  { value: "heart", label: "สุขภาพ", description: "wellness และสุขภาพ" },
+  { value: "wrench", label: "อุปกรณ์", description: "เครื่องมือ อะไหล่" },
+  { value: "sparkles", label: "พิเศษ", description: "limited หรือ campaign" },
+  { value: "shopping", label: "สินค้า", description: "สินค้าทั่วไปและช้อปปิง" },
 ];
 
 function SectionCard({
@@ -108,6 +141,15 @@ function createRewardEditor(reward: RewardCatalogItem): RewardEditorState {
     imageSrc: reward.imageSrc ?? null,
     points: reward.points,
     isHot: Boolean(reward.isHot),
+    hasRedeemWindow: Boolean(reward.redeemStartAt || reward.redeemEndAt),
+    redeemStartAt: reward.redeemStartAt ?? "",
+    redeemEndAt: reward.redeemEndAt ?? "",
+    stockMode: reward.stockMode === "limited" ? "limited" : "unlimited",
+    stockTotal: Math.max(0, Number(reward.stockTotal) || 0),
+    stockRemaining:
+      reward.stockMode === "limited"
+        ? Math.max(0, Number(reward.stockRemaining) || Number(reward.stockTotal) || 0)
+        : 0,
   };
 }
 
@@ -123,11 +165,119 @@ function makeRewardDraft(rewards: RewardCatalogItem[]): RewardCatalogItem {
     imageSrc: null,
     points: 100,
     isHot: false,
+    redeemStartAt: null,
+    redeemEndAt: null,
+    stockMode: "unlimited",
+    stockTotal: null,
+    stockRemaining: null,
   };
 }
 
-function getCategoryMeta(category: RewardCatalogItem["category"]) {
-  return CATEGORY_OPTIONS.find((option) => option.value === category) ?? CATEGORY_OPTIONS[1];
+function makeCategoryValue(label: string) {
+  const normalized = label.trim().toLowerCase();
+  if (!normalized) return "";
+
+  const latinSlug = normalized
+    .replace(/\s+/g, "-")
+    .replace(/[^a-z0-9-\u0E00-\u0E7F]+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-+|-+$/g, "");
+
+  if (latinSlug) return latinSlug;
+
+  return `category-${Date.now()}`;
+}
+
+function makeCategoryHint(label: string) {
+  return `หมวดหมู่ ${label.trim()} ที่สร้างเพิ่มโดยผู้ดูแล`;
+}
+
+function mergeCategoryOptions(categories: RewardCategory[], rewards: RewardCatalogItem[]): RewardCategory[] {
+  const categoryMap = new Map<string, RewardCategory>();
+
+  categories.forEach((category) => {
+    categoryMap.set(category.value, category);
+  });
+
+  rewards.forEach((reward) => {
+    if (!reward.category || categoryMap.has(reward.category)) return;
+    categoryMap.set(reward.category, {
+      value: reward.category,
+      label: reward.category,
+      hint: "Recovered from existing reward data",
+      icon: "gift",
+    });
+  });
+
+  return Array.from(categoryMap.values());
+}
+
+function normalizeCategorySearchText(value: string) {
+  return value.trim().toLowerCase();
+}
+
+function getCategoryMeta(category: RewardCatalogItem["category"], categories: RewardCategory[]) {
+  return (
+    categories.find((option) => option.value === category) ??
+    DEFAULT_REWARD_CATEGORIES.find((option) => option.value === "merch") ?? {
+      value: "merch",
+      label: "สินค้า",
+      hint: "merchandise และของพรีเมียม",
+      icon: "gift" as const,
+    }
+  );
+}
+
+function formatRewardDateTime(value?: string | null) {
+  if (!value) return null;
+
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return null;
+
+  return new Intl.DateTimeFormat("th-TH", {
+    dateStyle: "medium",
+    timeStyle: "short",
+  }).format(parsed);
+}
+
+function getRewardScheduleLabel(reward: {
+  hasRedeemWindow?: boolean;
+  redeemStartAt?: string | null;
+  redeemEndAt?: string | null;
+}) {
+  if (!reward.hasRedeemWindow || (!reward.redeemStartAt && !reward.redeemEndAt)) {
+    return "แลกได้ตลอดเวลา";
+  }
+
+  const startLabel = formatRewardDateTime(reward.redeemStartAt);
+  const endLabel = formatRewardDateTime(reward.redeemEndAt);
+
+  if (startLabel && endLabel) return `${startLabel} - ${endLabel}`;
+  if (startLabel) return `เริ่มแลก ${startLabel}`;
+  if (endLabel) return `แลกได้ถึง ${endLabel}`;
+  return "แลกได้ตลอดเวลา";
+}
+
+function getRewardStockLabel(reward: {
+  stockMode?: "limited" | "unlimited";
+  stockTotal?: number | null;
+  stockRemaining?: number | null;
+}) {
+  if (reward.stockMode !== "limited") return "ไม่จำกัดจำนวน";
+
+  const total = Math.max(0, Number(reward.stockTotal) || 0);
+  const remaining = Math.max(0, Number(reward.stockRemaining) || 0);
+  return `คงเหลือ ${remaining}/${total}`;
+}
+
+function formatRedemptionDateTime(value: string) {
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return value;
+
+  return new Intl.DateTimeFormat("th-TH", {
+    dateStyle: "medium",
+    timeStyle: "short",
+  }).format(parsed);
 }
 
 function RewardImage({
@@ -163,9 +313,11 @@ function RewardImage({
 
 function RewardPreviewPanelLegacy({
   reward,
+  categories,
   layout = "split",
 }: {
   reward: RewardEditorState;
+  categories: RewardCategory[];
   layout?: "split" | "stacked";
 }) {
   return (
@@ -180,7 +332,7 @@ function RewardPreviewPanelLegacy({
               Public Preview
             </span>
             <span className="inline-flex items-center rounded-full border border-[var(--border)] bg-[var(--brand-soft)] px-3 py-1 text-[12px] font-black text-[var(--c-6f665b)]">
-              {getCategoryMeta(reward.category).label}
+              {getCategoryMeta(reward.category, categories).label}
             </span>
             {reward.isHot ? (
               <span className="inline-flex items-center gap-1 rounded-full border border-[#f1c6c6] bg-[#fff3f3] px-3 py-1 text-[12px] font-black text-[#c03c3c]">
@@ -223,9 +375,11 @@ function RewardPreviewPanelLegacy({
 
 function RewardPreviewPanel({
   reward,
+  categories,
   layout = "split",
 }: {
   reward: RewardEditorState;
+  categories: RewardCategory[];
   layout?: "split" | "stacked";
 }) {
   const { themedImage, mascot } = useAppTheme();
@@ -259,6 +413,14 @@ function RewardPreviewPanel({
         <p className="line-clamp-2 text-[12.5px] font-bold leading-relaxed text-[#7d766b] [overflow-wrap:anywhere]">
           {reward.description}
         </p>
+        <div className="flex flex-wrap gap-1.5 pt-1">
+          <span className="rounded-full bg-[var(--brand-soft)] px-2.5 py-1 text-[11px] font-black text-[var(--brand-text)]">
+            {getRewardStockLabel(reward)}
+          </span>
+          <span className="rounded-full border border-[var(--border)] bg-white px-2.5 py-1 text-[11px] font-black text-[#8E8A81]">
+            {getRewardScheduleLabel(reward)}
+          </span>
+        </div>
         <span className="pt-1 text-[12.5px] font-extrabold text-[var(--brand-accent-strong)]">
           {reward.points.toLocaleString()} <span className="ml-0.5 text-[10px] font-bold text-muted-foreground">POINTS</span>
         </span>
@@ -303,54 +465,233 @@ function DetailCard({
   );
 }
 
+function CategorySummaryCard({
+  item,
+  isRecentlyAdded,
+  onRemove,
+}: {
+  item: RewardCategory & { count: number };
+  isRecentlyAdded: boolean;
+  onRemove: (item: RewardCategory & { count: number }) => void;
+}) {
+  const Icon = CATEGORY_ICON_MAP[item.icon];
+
+  return (
+    <div
+      className={cn(
+        "rounded-[18px] border bg-white p-4 shadow-[0_8px_18px_rgba(62,36,13,0.04)] transition-colors",
+        isRecentlyAdded ? "border-[var(--brand-accent)] bg-[var(--brand-soft)]" : "border-[var(--border)]"
+      )}
+    >
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex min-w-0 items-start gap-3">
+          <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-2xl bg-[var(--brand-soft)] text-[var(--brand-text)]">
+            <Icon className="h-4.5 w-4.5" strokeWidth={2.2} />
+          </div>
+          <div className="min-w-0">
+            <div className="truncate text-[14px] font-black text-[#1A1A1A]">{item.label}</div>
+            <div className="mt-1 line-clamp-2 text-[12px] font-bold leading-relaxed text-[#8E8A81]">{item.hint}</div>
+            {isRecentlyAdded ? (
+              <div className="mt-2 inline-flex rounded-full bg-white px-2.5 py-1 text-[11px] font-black text-[var(--brand-accent-strong)]">
+                เพิ่มล่าสุด
+              </div>
+            ) : null}
+          </div>
+        </div>
+        <button
+          type="button"
+          onClick={() => onRemove(item)}
+          className={cn(
+            "flex h-9 w-9 items-center justify-center rounded-full border transition-colors",
+            item.count > 0
+              ? "border-[var(--border)] bg-[var(--brand-soft)] text-[#b4aea3] hover:bg-white"
+              : "border-[#f1caca] bg-white text-[#ef544d] hover:bg-[#fff4f4] hover:text-[#d63b35]"
+          )}
+          aria-label={`ลบหมวด ${item.label}`}
+        >
+          <Trash2 className="h-4 w-4" strokeWidth={2.2} />
+        </button>
+      </div>
+
+      <div className="mt-4 flex items-end justify-between gap-3">
+        <div className="rounded-full bg-[var(--brand-soft)] px-3 py-1 text-[12px] font-black text-[var(--brand-text)]">
+          {item.count} items
+        </div>
+        <div className="text-[11px] font-black uppercase tracking-[0.14em] text-[var(--brand-accent-strong)]">Category</div>
+      </div>
+    </div>
+  );
+}
+
 export default function AdminRewardPage() {
-  const { rewardsCatalog } = useAppState();
-  const { updateRewardsCatalog } = useAppActions();
+  const { rewardsCatalog, rewardCategories, rewardRedemptions } = useAppState();
+  const { updateRewardsCatalog, updateRewardCategories } = useAppActions();
 
   const [draftRewards, setDraftRewards] = useState<RewardCatalogItem[]>(rewardsCatalog);
-  const [saveState, setSaveState] = useState<"idle" | "saved">("idle");
+  const [draftCategories, setDraftCategories] = useState<RewardCategory[]>(rewardCategories);
+  const [rewardSaveState, setRewardSaveState] = useState<"idle" | "saved">("idle");
+  const [categoryNotice, setCategoryNotice] = useState<string | null>(null);
+  const [recentCategoryValue, setRecentCategoryValue] = useState<string | null>(null);
   const [editingReward, setEditingReward] = useState<RewardEditorState | null>(null);
   const [deletingReward, setDeletingReward] = useState<RewardCatalogItem | null>(null);
+  const [pendingCategoryDelete, setPendingCategoryDelete] = useState<(RewardCategory & { count: number }) | null>(null);
+  const [newCategoryLabel, setNewCategoryLabel] = useState("");
+  const [newCategoryIcon, setNewCategoryIcon] = useState<RewardCategoryIcon>("gift");
+  const [isCategoryIconMenuOpen, setIsCategoryIconMenuOpen] = useState(false);
+  const [activeAdminCategory, setActiveAdminCategory] = useState("all");
+  const [categorySearch, setCategorySearch] = useState("");
+  const [categoryPickerSearch, setCategoryPickerSearch] = useState("");
+  const [pressedRewardId, setPressedRewardId] = useState<number | null>(null);
+  const [draggingRewardId, setDraggingRewardId] = useState<number | null>(null);
+  const [dragOverRewardId, setDragOverRewardId] = useState<number | null>(null);
+  const [isRedemptionLogOpen, setIsRedemptionLogOpen] = useState(false);
+  const [redemptionSearch, setRedemptionSearch] = useState("");
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
     setDraftRewards(rewardsCatalog);
   }, [rewardsCatalog]);
 
-  const totalRewards = draftRewards.length;
-  const hotRewards = useMemo(() => draftRewards.filter((reward) => reward.isHot).length, [draftRewards]);
-  const averagePoints = useMemo(() => {
-    if (draftRewards.length === 0) return 0;
-    return Math.round(draftRewards.reduce((sum, reward) => sum + reward.points, 0) / draftRewards.length);
-  }, [draftRewards]);
+  useEffect(() => {
+    setDraftCategories(rewardCategories);
+  }, [rewardCategories]);
+
+  useEffect(() => {
+    setCategoryPickerSearch("");
+  }, [editingReward?.id]);
+
+  const categoryOptions = useMemo(
+    () => mergeCategoryOptions(draftCategories, draftRewards),
+    [draftCategories, draftRewards]
+  );
 
   const categorySummary = useMemo(
     () =>
-      CATEGORY_OPTIONS.map((option) => ({
+      categoryOptions.map((option) => ({
         ...option,
         count: draftRewards.filter((reward) => reward.category === option.value).length,
       })),
+    [categoryOptions, draftRewards]
+  );
+
+  const filteredCategorySummary = useMemo(() => {
+    const keyword = normalizeCategorySearchText(categorySearch);
+    if (!keyword) return categorySummary;
+
+    return categorySummary.filter((item) => {
+      const haystack = normalizeCategorySearchText(`${item.label} ${item.hint} ${item.value}`);
+      return haystack.includes(keyword);
+    });
+  }, [categorySearch, categorySummary]);
+
+  const usedCategorySummary = useMemo(
+    () => filteredCategorySummary.filter((item) => item.count > 0),
+    [filteredCategorySummary]
+  );
+
+  const emptyCategorySummary = useMemo(
+    () => filteredCategorySummary.filter((item) => item.count === 0),
+    [filteredCategorySummary]
+  );
+
+  const pickerCategoryOptions = useMemo(() => {
+    const keyword = normalizeCategorySearchText(categoryPickerSearch);
+    const sorted = [...categorySummary].sort((left, right) => {
+      if (right.count !== left.count) return right.count - left.count;
+      return left.label.localeCompare(right.label, "th");
+    });
+
+    if (!keyword) return sorted;
+
+    return sorted.filter((item) => {
+      const haystack = normalizeCategorySearchText(`${item.label} ${item.hint} ${item.value}`);
+      return haystack.includes(keyword);
+    });
+  }, [categoryPickerSearch, categorySummary]);
+
+  const visibleRewards = useMemo(
+    () =>
+      activeAdminCategory === "all"
+        ? draftRewards
+        : draftRewards.filter((reward) => reward.category === activeAdminCategory),
+    [activeAdminCategory, draftRewards]
+  );
+
+  const rewardOrderMap = useMemo(
+    () => new Map(draftRewards.map((reward, index) => [reward.id, index])),
     [draftRewards]
   );
+
+  const filteredRewardRedemptions = useMemo(() => {
+    const keyword = normalizeCategorySearchText(redemptionSearch);
+    if (!keyword) return rewardRedemptions;
+
+    return rewardRedemptions.filter((item) => normalizeCategorySearchText(item.redeemedBy).includes(keyword));
+  }, [redemptionSearch, rewardRedemptions]);
+
+  const rewardRedemptionSummary = useMemo(() => {
+    const rewardNameMap = new Map(draftRewards.map((reward) => [reward.id, reward.name]));
+    const totalRedeemed = filteredRewardRedemptions.length;
+    const totalPointsSpent = filteredRewardRedemptions.reduce((sum, item) => sum + item.pointsSpent, 0);
+    const uniqueRedeemers = new Set(filteredRewardRedemptions.map((item) => item.redeemedBy)).size;
+    const topRewards = Array.from(
+      filteredRewardRedemptions.reduce((map, item) => {
+        const current = map.get(item.rewardId) ?? {
+          rewardId: item.rewardId,
+          rewardName: rewardNameMap.get(item.rewardId) || item.rewardName,
+          count: 0,
+        };
+        current.count += 1;
+        map.set(item.rewardId, current);
+        return map;
+      }, new Map<number, { rewardId: number; rewardName: string; count: number }>())
+    )
+      .map(([, value]) => value)
+      .sort((left, right) => right.count - left.count || left.rewardName.localeCompare(right.rewardName, "th"))
+      .slice(0, 5);
+
+    return {
+      totalRedeemed,
+      totalPointsSpent,
+      uniqueRedeemers,
+      topRewards,
+    };
+  }, [draftRewards, filteredRewardRedemptions]);
+
+  const rewardsInPendingCategory = useMemo(() => {
+    if (!pendingCategoryDelete) return [];
+    return draftRewards.filter((reward) => reward.category === pendingCategoryDelete.value);
+  }, [draftRewards, pendingCategoryDelete]);
 
   const commitRewards = (rewards: RewardCatalogItem[]) => {
     setDraftRewards(rewards);
     updateRewardsCatalog(rewards);
-    setSaveState("saved");
+    setRewardSaveState("saved");
+  };
+
+  const commitCategories = (categories: RewardCategory[]) => {
+    setDraftCategories(categories);
+    updateRewardCategories(categories);
   };
 
   const addReward = () => {
     const nextReward = makeRewardDraft(draftRewards);
+    const preferredCategory =
+      activeAdminCategory !== "all" && categoryOptions.some((category) => category.value === activeAdminCategory)
+        ? activeAdminCategory
+        : categoryOptions[0]?.value ?? "merch";
+
     setEditingReward({
       ...createRewardEditor(nextReward),
+      category: preferredCategory,
       mode: "create",
     });
-    setSaveState("idle");
+    setRewardSaveState("idle");
   };
 
   const openEditReward = (reward: RewardCatalogItem) => {
     setEditingReward(createRewardEditor(reward));
-    setSaveState("idle");
+    setRewardSaveState("idle");
   };
 
   const confirmRewardEdit = () => {
@@ -365,10 +706,21 @@ export default function AdminRewardPage() {
       imageSrc: editingReward.imageSrc,
       points: Math.max(0, Number(editingReward.points) || 0),
       isHot: editingReward.isHot,
+      redeemStartAt: editingReward.hasRedeemWindow ? editingReward.redeemStartAt || null : null,
+      redeemEndAt: editingReward.hasRedeemWindow ? editingReward.redeemEndAt || null : null,
+      stockMode: editingReward.stockMode,
+      stockTotal: editingReward.stockMode === "limited" ? Math.max(0, Number(editingReward.stockTotal) || 0) : null,
+      stockRemaining:
+        editingReward.stockMode === "limited"
+          ? Math.min(
+              Math.max(0, Number(editingReward.stockTotal) || 0),
+              Math.max(0, Number(editingReward.stockRemaining) || 0)
+            )
+          : null,
     };
 
     if (editingReward.mode === "create") {
-      commitRewards([...draftRewards, payload]);
+      commitRewards([payload, ...draftRewards]);
     } else {
       commitRewards(draftRewards.map((reward) => (reward.id === editingReward.id ? payload : reward)));
     }
@@ -386,6 +738,99 @@ export default function AdminRewardPage() {
     setEditingReward((current) => (current ? { ...current, [key]: value } : current));
   };
 
+  const updateEditingRewardStockMode = (mode: RewardEditorState["stockMode"]) => {
+    setEditingReward((current) => {
+      if (!current) return current;
+      if (mode === "unlimited") {
+        return { ...current, stockMode: mode, stockTotal: 0, stockRemaining: 0 };
+      }
+
+      const fallbackTotal = Math.max(1, current.stockTotal || current.stockRemaining || 1);
+      return {
+        ...current,
+        stockMode: mode,
+        stockTotal: fallbackTotal,
+        stockRemaining: Math.min(Math.max(0, current.stockRemaining || fallbackTotal), fallbackTotal),
+      };
+    });
+  };
+
+  const updateEditingRewardStockTotal = (value: number) => {
+    setEditingReward((current) => {
+      if (!current) return current;
+      const nextTotal = Math.max(0, value || 0);
+      return {
+        ...current,
+        stockTotal: nextTotal,
+        stockRemaining: Math.min(current.stockRemaining, nextTotal),
+      };
+    });
+  };
+
+  const updateEditingRewardStockRemaining = (value: number) => {
+    setEditingReward((current) => {
+      if (!current) return current;
+      const cap = Math.max(0, current.stockTotal || 0);
+      return {
+        ...current,
+        stockRemaining: Math.min(Math.max(0, value || 0), cap),
+      };
+    });
+  };
+
+  const addCategory = () => {
+    const label = newCategoryLabel.trim();
+    const value = makeCategoryValue(label);
+    if (!label || !value) {
+      setCategoryNotice("กรุณากรอกชื่อหมวดหมู่ก่อนเพิ่ม");
+      return;
+    }
+
+    if (categoryOptions.some((category) => category.value === value)) {
+      setCategoryNotice(`มีหมวด ${label} อยู่แล้ว`);
+      return;
+    }
+
+    commitCategories([
+      ...draftCategories,
+      {
+        value,
+        label,
+        hint: makeCategoryHint(label),
+        icon: newCategoryIcon,
+      },
+    ]);
+    setNewCategoryLabel("");
+    setNewCategoryIcon("gift");
+    setIsCategoryIconMenuOpen(false);
+    setCategorySearch("");
+    setRecentCategoryValue(value);
+    setCategoryNotice(`เพิ่มหมวด ${label} เรียบร้อยแล้ว`);
+  };
+
+  const requestRemoveCategory = (item: RewardCategory & { count: number }) => {
+    setPendingCategoryDelete(item);
+  };
+
+  const confirmRemoveCategory = () => {
+    if (!pendingCategoryDelete) return;
+
+    const { value, label } = pendingCategoryDelete;
+    const remainingRewards = draftRewards.filter((reward) => reward.category !== value);
+    commitRewards(remainingRewards);
+    commitCategories(draftCategories.filter((category) => category.value !== value));
+    if (activeAdminCategory === value) {
+      setActiveAdminCategory("all");
+    }
+    setRecentCategoryValue((current) => (current === value ? null : current));
+    setCategoryNotice(
+      pendingCategoryDelete.count > 0
+        ? `ลบหมวด ${label} และ reward ในหมวดนี้ทั้งหมดแล้ว`
+        : `ลบหมวด ${label} แล้ว`
+    );
+    setPendingCategoryDelete(null);
+  };
+
   const handleSelectImage = (file: File | undefined) => {
     if (!file) return;
 
@@ -396,6 +841,67 @@ export default function AdminRewardPage() {
       setEditingReward((current) => (current ? { ...current, imageSrc: result } : current));
     };
     reader.readAsDataURL(file);
+  };
+
+  const reorderRewards = (sourceId: number, targetId: number) => {
+    if (sourceId === targetId) return;
+
+    const sourceIndex = draftRewards.findIndex((reward) => reward.id === sourceId);
+    const targetIndex = draftRewards.findIndex((reward) => reward.id === targetId);
+
+    if (sourceIndex < 0 || targetIndex < 0) return;
+
+    const nextRewards = [...draftRewards];
+    const [movedReward] = nextRewards.splice(sourceIndex, 1);
+    nextRewards.splice(targetIndex, 0, movedReward);
+    commitRewards(nextRewards);
+  };
+
+  const moveRewardToIndex = (rewardId: number, targetIndex: number) => {
+    const sourceIndex = draftRewards.findIndex((reward) => reward.id === rewardId);
+    if (sourceIndex < 0) return;
+
+    const boundedTargetIndex = Math.max(0, Math.min(targetIndex, draftRewards.length - 1));
+    if (sourceIndex === boundedTargetIndex) return;
+
+    const nextRewards = [...draftRewards];
+    const [movedReward] = nextRewards.splice(sourceIndex, 1);
+    nextRewards.splice(boundedTargetIndex, 0, movedReward);
+    commitRewards(nextRewards);
+  };
+
+  const moveRewardByStep = (rewardId: number, step: -1 | 1) => {
+    const sourceIndex = rewardOrderMap.get(rewardId);
+    if (sourceIndex === undefined) return;
+    moveRewardToIndex(rewardId, sourceIndex + step);
+  };
+
+  const moveRewardToTop = (rewardId: number) => {
+    moveRewardToIndex(rewardId, 0);
+  };
+
+  const moveRewardToBottom = (rewardId: number) => {
+    moveRewardToIndex(rewardId, draftRewards.length - 1);
+  };
+
+  const handleRewardDragStart = (rewardId: number) => {
+    setPressedRewardId(null);
+    setDraggingRewardId(rewardId);
+    setDragOverRewardId(rewardId);
+    setRewardSaveState("idle");
+  };
+
+  const handleRewardDrop = (targetRewardId: number) => {
+    if (draggingRewardId === null) return;
+    reorderRewards(draggingRewardId, targetRewardId);
+    setDraggingRewardId(null);
+    setDragOverRewardId(null);
+  };
+
+  const handleRewardDragEnd = () => {
+    setPressedRewardId(null);
+    setDraggingRewardId(null);
+    setDragOverRewardId(null);
   };
 
   return (
@@ -423,82 +929,401 @@ export default function AdminRewardPage() {
           }
         />
 
-        <div className="mt-4">
+        <div className="mt-4 flex flex-col gap-4">
           <Card className="rounded-[18px] border border-[var(--border)] bg-[var(--brand-soft)] p-4 shadow-[0_8px_18px_var(--brand-shadow)]">
-            <div className="mb-4 flex flex-wrap gap-2">
-              <Badge className="rounded-xl border border-[var(--border)] bg-white px-3 py-2 text-[11px] font-black text-[var(--brand-text)]">
-                {totalRewards} rewards
-              </Badge>
-              <Badge className="rounded-xl border border-[var(--border)] bg-[var(--brand-soft)] px-3 py-2 text-[11px] font-black text-[var(--brand-text)]">
-                {hotRewards} hot items
-              </Badge>
-              <Badge className="rounded-xl border border-[var(--border)] bg-white px-3 py-2 text-[11px] font-black text-[var(--brand-text)]">
-                Avg {averagePoints.toLocaleString()} pts
-              </Badge>
+            <div className="rounded-[16px] border border-[var(--border)] bg-white/55 p-3">
+              <div className="mb-2 flex items-center justify-between gap-3">
+                <div className="text-[12px] font-black text-[var(--brand-text)]">สรุปหมวดหมู่ทั้งหมด</div>
+                <div className="text-[11px] font-bold text-[#8E8A81]">เลื่อนซ้าย-ขวาเพื่อดูครบ</div>
+              </div>
+              <div className="scrollbar-hide flex gap-3 overflow-x-auto pb-1">
+                {categorySummary.map((item) => {
+                  const Icon = CATEGORY_ICON_MAP[item.icon];
+                  return (
+                    <div
+                      key={item.value}
+                      className="flex min-w-[220px] flex-shrink-0 items-center justify-between gap-4 rounded-[16px] border border-[var(--border)] bg-white px-4 py-3"
+                    >
+                      <div className="flex min-w-0 items-center gap-3">
+                        <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-2xl bg-[var(--brand-soft)] text-[var(--brand-text)]">
+                          <Icon className="h-4 w-4" strokeWidth={2.2} />
+                        </div>
+                        <div className="min-w-0">
+                          <div className="truncate text-[13px] font-black text-[#1A1A1A]">{item.label}</div>
+                          <div className="text-[11px] font-bold text-[#8E8A81]">ในหมวดนี้</div>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-[20px] font-black leading-none text-[#1A1A1A]">{item.count}</div>
+                        <div className="mt-1 text-[10px] font-black uppercase tracking-[0.14em] text-[var(--brand-accent-strong)]">
+                          items
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
+          </Card>
 
-            <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
-              {categorySummary.map((item) => {
-                const Icon = item.icon;
-                return (
-                  <div
-                    key={item.value}
-                    className="flex items-center justify-between gap-4 rounded-[16px] border border-[var(--border)] bg-white px-4 py-4"
-                  >
-                    <div className="flex min-w-0 items-center gap-3">
-                      <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-2xl bg-[var(--brand-soft)] text-[var(--brand-text)]">
-                        <Icon className="h-4.5 w-4.5" strokeWidth={2.2} />
-                      </div>
-                      <div className="min-w-0">
-                        <div className="truncate text-[13px] font-black text-[#1A1A1A]">{item.label}</div>
-                        <div className="text-[12px] font-bold text-[#8E8A81]">ในหมวดนี้</div>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <div className="text-[24px] font-black leading-none text-[#1A1A1A]">{item.count}</div>
-                      <div className="mt-1 text-[11px] font-black uppercase tracking-[0.14em] text-[var(--brand-accent-strong)]">
-                        items
-                      </div>
-                    </div>
+          {rewardSaveState === "saved" ? (
+            <div className="flex items-center rounded-[16px] border border-[#bfd7c0] bg-[#f2fff2] px-3 py-2 text-[12px] font-black text-[#245336]">
+              บันทึก reward เรียบร้อยแล้ว หน้า Rewards หลักอัปเดตทันที
+            </div>
+          ) : null}
+
+          <SectionCard
+            title="Category Manager"
+            description="เพิ่มหมวดหมู่สำหรับ reward ได้เอง เพื่อให้ Admin จัดกลุ่มสินค้าได้ยืดหยุ่นขึ้น"
+            icon={<Users className="h-5 w-5" strokeWidth={2.3} />}
+          >
+            <div className="rounded-[18px] border border-dashed border-[var(--border)] bg-[var(--brand-soft)] p-4">
+              <div className="grid grid-cols-1 gap-3 md:grid-cols-[minmax(0,1fr)_auto] md:items-start">
+                <div className="relative">
+                  <div className="flex items-center gap-2 rounded-[16px] border border-[var(--border)] bg-white p-1.5">
+                    <Input
+                      value={newCategoryLabel}
+                      onChange={(event) => {
+                        setNewCategoryLabel(event.target.value);
+                        if (categoryNotice) setCategoryNotice(null);
+                      }}
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter") {
+                          event.preventDefault();
+                          addCategory();
+                        }
+                      }}
+                      placeholder="เพิ่มหมวดใหม่ เช่น อุปกรณ์กันฝน หรือ สุขภาพ"
+                      className="h-10 border-0 bg-transparent px-3 text-[14px] font-bold shadow-none focus-visible:ring-0"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setIsCategoryIconMenuOpen((current) => !current)}
+                      className="flex h-10 min-w-10 items-center justify-center gap-1 rounded-[12px] border border-[var(--border)] bg-[var(--brand-soft)] px-2 text-[var(--brand-text)] transition-colors hover:bg-white"
+                      aria-label="เลือกไอคอนหมวดหมู่"
+                    >
+                      {(() => {
+                        const SelectedIcon = CATEGORY_ICON_MAP[newCategoryIcon];
+                        return <SelectedIcon className="h-4.5 w-4.5" strokeWidth={2.2} />;
+                      })()}
+                      <ChevronDown className={cn("h-3.5 w-3.5 transition-transform", isCategoryIconMenuOpen ? "rotate-180" : "")} strokeWidth={2.2} />
+                    </button>
                   </div>
-                );
-              })}
+                  {isCategoryIconMenuOpen ? (
+                    <div className="absolute top-[calc(100%+8px)] left-0 z-20 grid w-full grid-cols-4 gap-2 rounded-[16px] border border-[var(--border)] bg-white p-3 shadow-[0_18px_36px_rgba(62,36,13,0.14)] sm:grid-cols-6 xl:grid-cols-8">
+                      {CATEGORY_ICON_OPTIONS.map((option) => {
+                        const Icon = CATEGORY_ICON_MAP[option.value];
+                        const isActive = option.value === newCategoryIcon;
+
+                        return (
+                          <button
+                            key={option.value}
+                            type="button"
+                            onClick={() => {
+                              setNewCategoryIcon(option.value);
+                              setIsCategoryIconMenuOpen(false);
+                            }}
+                            className={cn(
+                              "flex h-12 items-center justify-center rounded-[12px] border transition-colors",
+                              isActive
+                                ? "border-[var(--brand-accent)] bg-[var(--brand-soft)] text-[var(--brand-text)]"
+                                : "border-[var(--border)] bg-white text-[#8E8A81] hover:bg-[var(--brand-soft)]"
+                            )}
+                            aria-label={`เลือกไอคอน ${option.label}`}
+                            title={option.label}
+                          >
+                            <Icon className="h-4.5 w-4.5" strokeWidth={2.2} />
+                          </button>
+                        );
+                      })}
+                    </div>
+                  ) : null}
+                </div>
+                <Button
+                  type="button"
+                  onClick={addCategory}
+                  className="h-12 rounded-[16px] bg-[var(--brand-accent-strong)] px-5 text-[13px] font-black text-white hover:bg-[var(--brand-accent)]"
+                >
+                  เพิ่มหมวด
+                </Button>
+              </div>
+              <div className="mt-3 text-[12px] font-bold text-[#8E8A81]">
+                หากลบหมวดที่มี reward อยู่ ระบบจะยังไม่ยอมลบ เพื่อป้องกัน reward หลุดหมวด
+              </div>
+              {categoryNotice ? (
+                <div className="mt-3 rounded-[14px] border border-[var(--border)] bg-white px-3 py-2 text-[12px] font-black text-[var(--brand-text)]">
+                  {categoryNotice}
+                </div>
+              ) : null}
             </div>
 
-            {saveState === "saved" ? (
-              <div className="mt-4 flex items-center rounded-[16px] border border-[#bfd7c0] bg-[#f2fff2] px-3 py-2 text-[12px] font-black text-[#245336]">
-                บันทึกเรียบร้อยแล้ว หน้า Rewards หลักอัปเดตทันที
+            <div className="mt-4 flex flex-col gap-3 rounded-[18px] border border-[var(--border)] bg-[var(--brand-soft)] p-3">
+              <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+                <div className="flex flex-wrap gap-2">
+                  <div className="rounded-full bg-white px-3 py-1.5 text-[12px] font-black text-[var(--brand-text)]">
+                    ใช้งานอยู่ {usedCategorySummary.length} หมวด
+                  </div>
+                  <div className="rounded-full bg-white px-3 py-1.5 text-[12px] font-black text-[#8E8A81]">
+                    ยังไม่มี reward {emptyCategorySummary.length} หมวด
+                  </div>
+                </div>
+                <div className="relative w-full lg:max-w-[340px]">
+                  <Search className="pointer-events-none absolute top-1/2 left-4 h-4 w-4 -translate-y-1/2 text-[#8E8A81]" />
+                  <Input
+                    value={categorySearch}
+                    onChange={(event) => setCategorySearch(event.target.value)}
+                    placeholder="ค้นหาหมวดหมู่"
+                    className="h-11 rounded-[14px] border-[var(--border)] bg-white pr-4 pl-10 text-[13px] font-bold"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {usedCategorySummary.length > 0 ? (
+              <div className="mt-4">
+                <div className="mb-3 flex items-center justify-between gap-3">
+                  <div className="text-[13px] font-black text-[var(--brand-text)]">หมวดที่กำลังใช้งาน</div>
+                  <div className="text-[11px] font-bold text-[#8E8A81]">เลื่อนซ้าย-ขวาเพื่อจัดการเร็วขึ้น</div>
+                </div>
+                <div className="scrollbar-hide flex gap-3 overflow-x-auto pb-2">
+                  {usedCategorySummary.map((item) => (
+                    <div key={item.value} className="min-w-[310px] flex-shrink-0 sm:min-w-[340px]">
+                      <CategorySummaryCard
+                        item={item}
+                        isRecentlyAdded={recentCategoryValue === item.value}
+                        onRemove={requestRemoveCategory}
+                      />
+                    </div>
+                  ))}
+                </div>
               </div>
             ) : null}
-          </Card>
-        </div>
 
-        <div className="mt-4 flex flex-col gap-4">
+            {emptyCategorySummary.length > 0 ? (
+              <div className="mt-4">
+                <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                  <div className="text-[13px] font-black text-[var(--brand-text)]">หมวดที่ยังไม่มี reward</div>
+                </div>
+                <div className="scrollbar-hide flex gap-3 overflow-x-auto pb-2">
+                  {emptyCategorySummary.map((item) => (
+                    <div key={item.value} className="min-w-[310px] flex-shrink-0 sm:min-w-[340px]">
+                      <CategorySummaryCard
+                        item={item}
+                        isRecentlyAdded={recentCategoryValue === item.value}
+                        onRemove={requestRemoveCategory}
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+
+            {filteredCategorySummary.length === 0 ? (
+              <div className="mt-4 rounded-[18px] border border-dashed border-[var(--border)] bg-white px-5 py-8 text-center">
+                <div className="text-[16px] font-black text-[#1A1A1A]">ไม่พบหมวดหมู่ที่ค้นหา</div>
+                <div className="mt-2 text-[13px] font-bold text-[#8E8A81]">ลองค้นหาด้วยชื่อหมวด หรือคำอธิบายอื่น</div>
+              </div>
+            ) : null}
+          </SectionCard>
+
           <SectionCard
             title="Reward Catalog Studio"
             description="จัดการ rewards ผ่าน card-based layout เห็นภาพและบริบทของแต่ละรายการได้ทันที"
             icon={<Gift className="h-5 w-5" strokeWidth={2.3} />}
             actions={
-              <Button
-                onClick={addReward}
-                className="h-11 rounded-xl bg-[var(--brand-accent-strong)] px-5 text-[13px] font-black text-white hover:bg-[var(--brand-accent)]"
-              >
-                <Plus className="mr-1.5 h-4 w-4" />
-                New Reward
-              </Button>
+              <div className="flex flex-wrap items-center gap-2">
+                <div className="rounded-full border border-[var(--border)] bg-white px-3 py-2 text-[11px] font-black text-[#8E8A81]">
+                  ลากการ์ดเพื่อจัดลำดับหน้า Rewards
+                </div>
+                <Button
+                  onClick={addReward}
+                  className="h-11 rounded-xl bg-[var(--brand-accent-strong)] px-5 text-[13px] font-black text-white hover:bg-[var(--brand-accent)]"
+                >
+                  <Plus className="mr-1.5 h-4 w-4" />
+                  New Reward
+                </Button>
+              </div>
             }
           >
+            <div className="mb-4 rounded-[18px] border border-[var(--border)] bg-[var(--brand-soft)] p-3.5">
+              <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+                <div className="flex flex-wrap gap-2">
+                  <div className="rounded-full bg-white px-3 py-2 text-[12px] font-black text-[var(--brand-text)]">
+                    แลกแล้ว {rewardRedemptionSummary.totalRedeemed} รายการ
+                  </div>
+                  <div className="rounded-full bg-white px-3 py-2 text-[12px] font-black text-[#8E8A81]">
+                    ผู้แลก {rewardRedemptionSummary.uniqueRedeemers} คน
+                  </div>
+                  <div className="rounded-full bg-white px-3 py-2 text-[12px] font-black text-[#8E8A81]">
+                    ใช้ไป {rewardRedemptionSummary.totalPointsSpent.toLocaleString()} pts
+                  </div>
+                </div>
+
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setIsRedemptionLogOpen(true)}
+                  className="h-11 rounded-[16px] border-[var(--brand-accent)] bg-white px-4 text-[13px] font-black text-[var(--brand-text)] shadow-[0_8px_18px_rgba(var(--brand-accent-rgb),0.14)] hover:bg-[var(--brand-surface)]"
+                >
+                  <History className="mr-1.5 h-4 w-4" />
+                  ดูประวัติการแลก
+                </Button>
+              </div>
+            </div>
+
+            <div className="mb-4 flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={() => setActiveAdminCategory("all")}
+                className={cn(
+                  "rounded-full border px-4 py-2 text-[12px] font-black transition-colors",
+                  activeAdminCategory === "all"
+                    ? "border-[var(--brand-accent)] bg-[var(--brand-soft)] text-[var(--brand-text)]"
+                    : "border-[var(--border)] bg-white text-[#8E8A81] hover:bg-[var(--brand-soft)]"
+                )}
+              >
+                ทุกหมวด
+              </button>
+              {categoryOptions.map((category) => (
+                <button
+                  key={category.value}
+                  type="button"
+                  onClick={() => setActiveAdminCategory(category.value)}
+                  className={cn(
+                    "rounded-full border px-4 py-2 text-[12px] font-black transition-colors",
+                    activeAdminCategory === category.value
+                      ? "border-[var(--brand-accent)] bg-[var(--brand-soft)] text-[var(--brand-text)]"
+                      : "border-[var(--border)] bg-white text-[#8E8A81] hover:bg-[var(--brand-soft)]"
+                  )}
+                >
+                  {category.label}
+                </button>
+              ))}
+            </div>
+
+            {visibleRewards.length === 0 ? (
+              <div className="rounded-[18px] border border-dashed border-[var(--border)] bg-[var(--brand-soft)] px-5 py-8 text-center">
+                <div className="text-[18px] font-black text-[#1A1A1A]">
+                  {activeAdminCategory === "all"
+                    ? "ยังไม่มี reward ในระบบ"
+                    : `ยังไม่มี reward ในหมวด ${getCategoryMeta(activeAdminCategory, categoryOptions).label}`}
+                </div>
+                <div className="mt-2 text-[13px] font-bold text-[#8E8A81]">
+                  กด New Reward เพื่อสร้างรายการแรกในหมวดนี้ได้ทันที
+                </div>
+              </div>
+            ) : null}
+
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-              {draftRewards.map((reward) => {
-                const category = getCategoryMeta(reward.category);
-                const CategoryIcon = category.icon;
+              {visibleRewards.map((reward) => {
+                const category = getCategoryMeta(reward.category, categoryOptions);
+                const CategoryIcon = CATEGORY_ICON_MAP[category.icon];
+                const rewardIndex = rewardOrderMap.get(reward.id) ?? 0;
+                const isFirstReward = rewardIndex === 0;
+                const isLastReward = rewardIndex === draftRewards.length - 1;
+                const isPressed = pressedRewardId === reward.id;
+                const isDragging = draggingRewardId === reward.id;
+                const isDropTarget = dragOverRewardId === reward.id && draggingRewardId !== reward.id;
 
                 return (
                   <Card
                     key={reward.id}
-                    className="overflow-hidden rounded-[18px] border border-[var(--border)] bg-white p-0 shadow-[0_8px_18px_rgba(62,36,13,0.05)] transition-transform hover:-translate-y-1"
+                    draggable
+                    onMouseDown={() => setPressedRewardId(reward.id)}
+                    onMouseUp={() => setPressedRewardId((current) => (current === reward.id ? null : current))}
+                    onMouseLeave={() => setPressedRewardId((current) => (current === reward.id ? null : current))}
+                    onTouchStart={() => setPressedRewardId(reward.id)}
+                    onTouchEnd={() => setPressedRewardId((current) => (current === reward.id ? null : current))}
+                    onDragStart={(event) => {
+                      event.dataTransfer.effectAllowed = "move";
+                      event.dataTransfer.setData("text/plain", String(reward.id));
+                      handleRewardDragStart(reward.id);
+                    }}
+                    onDragOver={(event) => {
+                      event.preventDefault();
+                      if (draggingRewardId !== null && draggingRewardId !== reward.id) {
+                        event.dataTransfer.dropEffect = "move";
+                        setDragOverRewardId(reward.id);
+                      }
+                    }}
+                    onDrop={(event) => {
+                      event.preventDefault();
+                      handleRewardDrop(reward.id);
+                    }}
+                    onDragEnd={handleRewardDragEnd}
+                    className={cn(
+                      "overflow-hidden rounded-[18px] border bg-white p-0 shadow-[0_8px_18px_rgba(62,36,13,0.05)] transition-all duration-200 ease-out",
+                      isDragging
+                        ? "z-20 scale-[0.985] border-[var(--brand-accent)] opacity-60 shadow-[0_22px_40px_rgba(62,36,13,0.18)]"
+                        : isPressed
+                          ? "z-10 -translate-y-1 scale-[1.015] border-[var(--brand-accent)] shadow-[0_18px_36px_rgba(62,36,13,0.14)]"
+                          : "border-[var(--border)] hover:-translate-y-1",
+                      isDropTarget ? "ring-2 ring-[var(--brand-accent)] ring-offset-2" : ""
+                    )}
                   >
                     <div className="p-4">
+                      <div className="mb-3 flex items-center justify-between gap-3">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <div
+                            className={cn(
+                              "inline-flex items-center gap-2 rounded-full border px-3 py-1 text-[11px] font-black transition-all duration-200",
+                              isDragging
+                                ? "border-[var(--brand-accent)] bg-[var(--brand-accent)] text-white shadow-[0_10px_20px_rgba(var(--brand-accent-rgb),0.28)]"
+                                : isPressed
+                                  ? "border-[var(--brand-accent)] bg-[var(--brand-soft)] text-[var(--brand-text)] shadow-[0_8px_18px_rgba(var(--brand-accent-rgb),0.18)]"
+                                  : "border-[var(--border)] bg-[var(--brand-soft)] text-[var(--brand-text)]"
+                            )}
+                          >
+                            <GripVertical
+                              className={cn(
+                                "h-3.5 w-3.5 transition-transform duration-200",
+                                isDragging ? "animate-pulse scale-110" : isPressed ? "animate-pulse scale-105" : ""
+                              )}
+                              strokeWidth={2.3}
+                            />
+                            ลากเพื่อเรียงลำดับ
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <button
+                              type="button"
+                              onClick={() => moveRewardToTop(reward.id)}
+                              disabled={isFirstReward}
+                              className="flex h-8 w-8 items-center justify-center rounded-full border border-[var(--border)] bg-white text-[var(--brand-text)] transition-colors hover:bg-[var(--brand-soft)] disabled:cursor-not-allowed disabled:opacity-40"
+                              aria-label={`ย้าย ${reward.name} ไปบนสุด`}
+                            >
+                              <ChevronsUp className="h-3.5 w-3.5" strokeWidth={2.2} />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => moveRewardByStep(reward.id, -1)}
+                              disabled={isFirstReward}
+                              className="flex h-8 w-8 items-center justify-center rounded-full border border-[var(--border)] bg-white text-[var(--brand-text)] transition-colors hover:bg-[var(--brand-soft)] disabled:cursor-not-allowed disabled:opacity-40"
+                              aria-label={`เลื่อน ${reward.name} ขึ้น 1 ตำแหน่ง`}
+                            >
+                              <ArrowUp className="h-3.5 w-3.5" strokeWidth={2.2} />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => moveRewardByStep(reward.id, 1)}
+                              disabled={isLastReward}
+                              className="flex h-8 w-8 items-center justify-center rounded-full border border-[var(--border)] bg-white text-[var(--brand-text)] transition-colors hover:bg-[var(--brand-soft)] disabled:cursor-not-allowed disabled:opacity-40"
+                              aria-label={`เลื่อน ${reward.name} ลง 1 ตำแหน่ง`}
+                            >
+                              <ArrowDown className="h-3.5 w-3.5" strokeWidth={2.2} />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => moveRewardToBottom(reward.id)}
+                              disabled={isLastReward}
+                              className="flex h-8 w-8 items-center justify-center rounded-full border border-[var(--border)] bg-white text-[var(--brand-text)] transition-colors hover:bg-[var(--brand-soft)] disabled:cursor-not-allowed disabled:opacity-40"
+                              aria-label={`ย้าย ${reward.name} ไปล่างสุด`}
+                            >
+                              <ChevronsDown className="h-3.5 w-3.5" strokeWidth={2.2} />
+                            </button>
+                          </div>
+                        </div>
+                        <div className="text-[11px] font-black uppercase tracking-[0.14em] text-[#8E8A81]">#{rewardIndex + 1}</div>
+                      </div>
                       <RewardImage reward={reward} />
                       <div className="mt-4 flex items-start justify-between gap-3">
                         <div className="min-w-0">
@@ -516,6 +1341,19 @@ export default function AdminRewardPage() {
                       <p className="mt-3 line-clamp-3 min-h-[60px] text-[13px] font-bold leading-relaxed text-[var(--c-6f665b)]">
                         {reward.description}
                       </p>
+
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        <div className="rounded-full bg-[var(--brand-soft)] px-3 py-1 text-[11px] font-black text-[var(--brand-text)]">
+                          {getRewardStockLabel(reward)}
+                        </div>
+                        <div className="rounded-full border border-[var(--border)] bg-white px-3 py-1 text-[11px] font-black text-[#8E8A81]">
+                          {getRewardScheduleLabel({
+                            hasRedeemWindow: Boolean(reward.redeemStartAt || reward.redeemEndAt),
+                            redeemStartAt: reward.redeemStartAt,
+                            redeemEndAt: reward.redeemEndAt,
+                          })}
+                        </div>
+                      </div>
                     </div>
 
                     <div className="flex items-center justify-between border-t border-[var(--border)] bg-[var(--brand-soft)] px-4 py-3">
@@ -547,6 +1385,120 @@ export default function AdminRewardPage() {
             </div>
           </SectionCard>
         </div>
+
+        <Dialog
+          open={isRedemptionLogOpen}
+          onOpenChange={(open) => {
+            setIsRedemptionLogOpen(open);
+            if (!open) setRedemptionSearch("");
+          }}
+        >
+          <DialogContent className="grid h-[min(88vh,860px)] w-[calc(100vw-16px)] grid-rows-[auto_minmax(0,1fr)] overflow-hidden rounded-[20px] border border-[var(--border)] bg-[var(--brand-surface)] p-0 shadow-[0_24px_50px_rgba(62,36,13,0.18)] sm:w-[calc(100vw-32px)] sm:!max-w-[1040px]">
+            <DialogHeader className="border-b border-[var(--border)] bg-[linear-gradient(180deg,var(--brand-soft)_0%,var(--brand-soft)_100%)] px-5 pt-5 pb-4 sm:px-6">
+              <DialogTitle className="flex items-center gap-3 text-[24px] font-black text-[var(--brand-text)]">
+                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white text-[var(--brand-text)]">
+                  <History className="h-5 w-5" strokeWidth={2.3} />
+                </div>
+                ประวัติการแลกรางวัล
+              </DialogTitle>
+              <DialogDescription className="text-[13px] font-bold leading-relaxed text-[#8E8A81] sm:text-[14px]">
+                ดูได้ว่าใครแลกรางวัลอะไรไปบ้าง เมื่อไร และใช้คะแนนไปเท่าไร
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="min-h-0 overflow-y-auto px-4 py-4 sm:px-6 sm:py-5">
+              <div className="rounded-[18px] border border-[var(--border)] bg-[var(--brand-soft)] p-4">
+                <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between lg:gap-6">
+                  <div className="max-w-[520px] text-[13px] font-black leading-relaxed text-[var(--brand-text)]">
+                    ค้นหาชื่อผู้ใช้งานเพื่อดูว่าเคยแลก reward อะไร เวลาไหนบ้าง
+                  </div>
+                  <div className="relative w-full lg:max-w-[360px]">
+                    <Search className="pointer-events-none absolute top-1/2 left-4 h-4 w-4 -translate-y-1/2 text-[#8E8A81]" />
+                    <Input
+                      value={redemptionSearch}
+                      onChange={(event) => setRedemptionSearch(event.target.value)}
+                      placeholder="ค้นหาชื่อผู้แลกรางวัล"
+                      className="h-11 rounded-[14px] border-[var(--border)] bg-white pr-4 pl-10 text-[13px] font-bold"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-3">
+                <div className="rounded-[18px] border border-[var(--border)] bg-white p-4">
+                  <div className="text-[12px] font-black text-[#8E8A81]">รายการที่แลกทั้งหมด</div>
+                  <div className="mt-2 text-[28px] font-black text-[#1A1A1A]">{rewardRedemptionSummary.totalRedeemed}</div>
+                </div>
+                <div className="rounded-[18px] border border-[var(--border)] bg-white p-4">
+                  <div className="text-[12px] font-black text-[#8E8A81]">ผู้แลกทั้งหมด</div>
+                  <div className="mt-2 text-[28px] font-black text-[#1A1A1A]">{rewardRedemptionSummary.uniqueRedeemers}</div>
+                </div>
+                <div className="rounded-[18px] border border-[var(--border)] bg-white p-4">
+                  <div className="text-[12px] font-black text-[#8E8A81]">คะแนนที่ถูกใช้</div>
+                  <div className="mt-2 text-[28px] font-black text-[#1A1A1A]">{rewardRedemptionSummary.totalPointsSpent.toLocaleString()}</div>
+                </div>
+              </div>
+
+              {rewardRedemptionSummary.topRewards.length > 0 ? (
+                <div className="mt-4 rounded-[18px] border border-[var(--border)] bg-[var(--brand-soft)] p-4">
+                  <div className="mb-3 text-[13px] font-black text-[var(--brand-text)]">รางวัลที่ถูกแลกบ่อย</div>
+                  <div className="flex flex-wrap gap-2">
+                    {rewardRedemptionSummary.topRewards.map((item) => (
+                      <div key={item.rewardId} className="rounded-full border border-[var(--border)] bg-white px-3 py-2 text-[12px] font-black text-[var(--brand-text)]">
+                        {item.rewardName} {item.count} ครั้ง
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
+
+              {rewardRedemptions.length === 0 ? (
+                <div className="mt-4 rounded-[18px] border border-dashed border-[var(--border)] bg-white px-5 py-10 text-center">
+                  <div className="text-[18px] font-black text-[#1A1A1A]">ยังไม่มีประวัติการแลกรางวัล</div>
+                  <div className="mt-2 text-[13px] font-bold text-[#8E8A81]">
+                    เมื่อมีคนกดแลกรางวัลจากหน้า Rewards รายการจะมาแสดงที่นี่ทันที
+                  </div>
+                </div>
+              ) : filteredRewardRedemptions.length === 0 ? (
+                <div className="mt-4 rounded-[18px] border border-dashed border-[var(--border)] bg-white px-5 py-10 text-center">
+                  <div className="text-[18px] font-black text-[#1A1A1A]">ไม่พบผู้ใช้งานที่ค้นหา</div>
+                  <div className="mt-2 text-[13px] font-bold text-[#8E8A81]">
+                    ลองค้นหาด้วยชื่อหรือชื่อย่อของผู้แลกรางวัลอีกครั้ง
+                  </div>
+                </div>
+              ) : (
+                <div className="mt-4 space-y-3">
+                  {filteredRewardRedemptions.map((record) => (
+                    <div
+                      key={record.id}
+                      className="rounded-[18px] border border-[var(--border)] bg-white p-4 shadow-[0_8px_18px_rgba(62,36,13,0.04)]"
+                    >
+                      <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+                        <div className="min-w-0">
+                          <div className="truncate text-[16px] font-black text-[#1A1A1A]">{record.rewardName}</div>
+                          <div className="mt-1 text-[13px] font-bold text-[#8E8A81]">{record.redeemedBy}</div>
+                        </div>
+                        <div className="flex flex-wrap gap-2 md:justify-end">
+                          <div className="rounded-full bg-[var(--brand-soft)] px-3 py-1 text-[12px] font-black text-[var(--brand-text)]">
+                            {record.pointsSpent.toLocaleString()} pts
+                          </div>
+                          <div className="rounded-full border border-[var(--border)] bg-white px-3 py-1 text-[12px] font-black text-[#8E8A81]">
+                            {record.rewardCategory}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="mt-3 flex items-center gap-2 text-[12px] font-bold text-[#8E8A81]">
+                        <Clock3 className="h-3.5 w-3.5 text-[var(--brand-text)]" strokeWidth={2.2} />
+                        {formatRedemptionDateTime(record.redeemedAt)}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </DialogContent>
+        </Dialog>
 
         <Dialog open={!!editingReward} onOpenChange={(open) => !open && setEditingReward(null)}>
           <DialogContent
@@ -581,7 +1533,7 @@ export default function AdminRewardPage() {
                 {editingReward.mode === "create" ? (
                   <div className="grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]">
                     <div className="space-y-5 lg:sticky lg:top-0 lg:self-start [&>*:not(:first-child)]:hidden">
-                      <RewardPreviewPanel reward={editingReward} />
+                      <RewardPreviewPanel reward={editingReward} categories={categoryOptions} />
 
                       <DetailCard title="รูปภาพรางวัล" subtitle="อัปโหลดรูปจริงหรือใช้ mockup จาก Image Text">
                         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -670,10 +1622,127 @@ export default function AdminRewardPage() {
                         </div>
                       </DetailCard>
 
+                      <DetailCard title="การแลกและสต็อก" subtitle="กำหนดช่วงเวลาแลก และจำนวนคงเหลือของรางวัลนี้">
+                        <div className="space-y-4">
+                          <div className="rounded-[18px] border border-[var(--border)] bg-[var(--brand-soft)] p-4">
+                            <label className="flex cursor-pointer items-start justify-between gap-3">
+                              <div>
+                                <div className="text-[14px] font-black text-[var(--brand-text)]">จำกัดเวลาแลก</div>
+                                <div className="mt-1 text-[12px] font-bold leading-relaxed text-[#8E8A81]">
+                                  เปิดเมื่ออยากให้ reward แลกได้เฉพาะช่วงเวลาที่กำหนด
+                                </div>
+                              </div>
+                              <input
+                                type="checkbox"
+                                checked={editingReward.hasRedeemWindow}
+                                onChange={(event) => updateEditingReward("hasRedeemWindow", event.target.checked)}
+                                className="mt-1 h-4 w-4 accent-[var(--brand-accent-strong)]"
+                              />
+                            </label>
+                            {editingReward.hasRedeemWindow ? (
+                              <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-2">
+                                <div className="flex flex-col gap-2">
+                                  <Label className="text-[12px] font-black text-[var(--brand-text)]">เริ่มแลกได้</Label>
+                                  <Input
+                                    type="datetime-local"
+                                    value={editingReward.redeemStartAt}
+                                    onChange={(event) => updateEditingReward("redeemStartAt", event.target.value)}
+                                    className="h-12 rounded-[18px] border-[var(--border)] bg-white px-4 text-[14px] font-bold"
+                                  />
+                                </div>
+                                <div className="flex flex-col gap-2">
+                                  <Label className="text-[12px] font-black text-[var(--brand-text)]">สิ้นสุดการแลก</Label>
+                                  <Input
+                                    type="datetime-local"
+                                    value={editingReward.redeemEndAt}
+                                    onChange={(event) => updateEditingReward("redeemEndAt", event.target.value)}
+                                    className="h-12 rounded-[18px] border-[var(--border)] bg-white px-4 text-[14px] font-bold"
+                                  />
+                                </div>
+                              </div>
+                            ) : null}
+                          </div>
+
+                          <div className="rounded-[18px] border border-[var(--border)] bg-[var(--brand-soft)] p-4">
+                            <div className="flex flex-wrap gap-2">
+                              <button
+                                type="button"
+                                onClick={() => updateEditingRewardStockMode("unlimited")}
+                                className={cn(
+                                  "rounded-full border px-4 py-2 text-[12px] font-black transition-colors",
+                                  editingReward.stockMode === "unlimited"
+                                    ? "border-[var(--brand-accent)] bg-white text-[var(--brand-text)]"
+                                    : "border-[var(--border)] bg-[var(--brand-soft)] text-[#8E8A81]"
+                                )}
+                              >
+                                ไม่จำกัดจำนวน
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => updateEditingRewardStockMode("limited")}
+                                className={cn(
+                                  "rounded-full border px-4 py-2 text-[12px] font-black transition-colors",
+                                  editingReward.stockMode === "limited"
+                                    ? "border-[var(--brand-accent)] bg-white text-[var(--brand-text)]"
+                                    : "border-[var(--border)] bg-[var(--brand-soft)] text-[#8E8A81]"
+                                )}
+                              >
+                                จำกัดจำนวน
+                              </button>
+                            </div>
+
+                            {editingReward.stockMode === "limited" ? (
+                              <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-2">
+                                <div className="flex flex-col gap-2">
+                                  <Label className="text-[12px] font-black text-[var(--brand-text)]">จำนวนทั้งหมด</Label>
+                                  <Input
+                                    type="number"
+                                    min="0"
+                                    value={`${editingReward.stockTotal}`}
+                                    onChange={(event) => updateEditingRewardStockTotal(Number(event.target.value))}
+                                    className="h-12 rounded-[18px] border-[var(--border)] bg-white px-4 text-[14px] font-bold"
+                                  />
+                                </div>
+                                <div className="flex flex-col gap-2">
+                                  <Label className="text-[12px] font-black text-[var(--brand-text)]">สินค้าคงเหลือ</Label>
+                                  <Input
+                                    type="number"
+                                    min="0"
+                                    max={`${editingReward.stockTotal}`}
+                                    value={`${editingReward.stockRemaining}`}
+                                    onChange={(event) => updateEditingRewardStockRemaining(Number(event.target.value))}
+                                    className="h-12 rounded-[18px] border-[var(--border)] bg-white px-4 text-[14px] font-bold"
+                                  />
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="mt-3 text-[12px] font-bold text-[#8E8A81]">
+                                หน้า Rewards จะแสดงว่า reward นี้ไม่มีการจำกัดจำนวน
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </DetailCard>
+
                       <DetailCard title="เลือกหมวดหมู่" subtitle="เลือกประเภทที่เหมาะกับ reward นี้">
-                        <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-                          {CATEGORY_OPTIONS.map((option) => {
-                            const Icon = option.icon;
+                        <div className="mb-3 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                          <div className="text-[12px] font-bold text-[#8E8A81]">
+                            แสดงหมวดที่มีการใช้งานก่อน และค้นหาหมวดได้ทันที
+                          </div>
+                          <div className="relative w-full md:max-w-[320px]">
+                            <Search className="pointer-events-none absolute top-1/2 left-4 h-4 w-4 -translate-y-1/2 text-[#8E8A81]" />
+                            <Input
+                              value={categoryPickerSearch}
+                              onChange={(event) => setCategoryPickerSearch(event.target.value)}
+                              placeholder="ค้นหาหมวดสำหรับ reward นี้"
+                              className="h-11 rounded-[14px] border-[var(--border)] bg-white pr-4 pl-10 text-[13px] font-bold"
+                            />
+                          </div>
+                        </div>
+                        <div className="max-h-[520px] overflow-y-auto pr-1">
+                          <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                          {pickerCategoryOptions.map((option) => {
+                            const Icon = CATEGORY_ICON_MAP[option.icon];
                             const isActive = option.value === editingReward.category;
 
                             return (
@@ -691,14 +1760,25 @@ export default function AdminRewardPage() {
                                 <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-2xl bg-white text-[var(--brand-text)]">
                                   <Icon className="h-4 w-4" strokeWidth={2.2} />
                                 </div>
-                                <div className="text-[15px] font-black text-[#1A1A1A]">{option.label}</div>
+                                <div className="flex items-center justify-between gap-2">
+                                  <div className="text-[15px] font-black text-[#1A1A1A]">{option.label}</div>
+                                  <div className="rounded-full bg-white px-2.5 py-1 text-[11px] font-black text-[var(--brand-text)]">
+                                    {option.count} items
+                                  </div>
+                                </div>
                                 <div className="mt-1 text-[12px] font-bold leading-relaxed text-[#8E8A81]">
                                   {option.hint}
                                 </div>
                               </button>
                             );
                           })}
+                          </div>
                         </div>
+                        {pickerCategoryOptions.length === 0 ? (
+                          <div className="mt-3 rounded-[16px] border border-dashed border-[var(--border)] bg-white px-4 py-5 text-center text-[13px] font-bold text-[#8E8A81]">
+                            ไม่พบหมวดที่ตรงกับคำค้นหา
+                          </div>
+                        ) : null}
                       </DetailCard>
 
                       <DetailCard title="Display Settings" subtitle="กำหนดว่ารางวัลนี้จะเด่นบนหน้า public หรือไม่">
@@ -728,7 +1808,7 @@ export default function AdminRewardPage() {
                 ) : (
                   <div className="grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)]">
                     <div className="space-y-5 lg:sticky lg:top-0 lg:self-start [&>*:not(:first-child)]:hidden">
-                      <RewardPreviewPanel reward={editingReward} />
+                      <RewardPreviewPanel reward={editingReward} categories={categoryOptions} />
 
                       <DetailCard title="รูปภาพรางวัล" subtitle="อัปเดตรูปหรือเคลียร์กลับเป็น mockup">
                         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -813,6 +1893,109 @@ export default function AdminRewardPage() {
                         </div>
                       </DetailCard>
 
+                      <DetailCard title="การแลกและสต็อก" subtitle="ตั้งช่วงเวลาแลก จำนวนรวม และสินค้าคงเหลือ">
+                        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+                          <div className="rounded-[18px] border border-[var(--border)] bg-[var(--brand-soft)] p-4 lg:col-span-2">
+                            <label className="flex cursor-pointer items-start justify-between gap-3">
+                              <div>
+                                <div className="text-[14px] font-black text-[var(--brand-text)]">จำกัดเวลาแลก</div>
+                                <div className="mt-1 text-[12px] font-bold leading-relaxed text-[#8E8A81]">
+                                  ถ้าปิดไว้ reward นี้จะแลกได้ตลอดเวลา
+                                </div>
+                              </div>
+                              <input
+                                type="checkbox"
+                                checked={editingReward.hasRedeemWindow}
+                                onChange={(event) => updateEditingReward("hasRedeemWindow", event.target.checked)}
+                                className="mt-1 h-4 w-4 accent-[var(--brand-accent-strong)]"
+                              />
+                            </label>
+                            {editingReward.hasRedeemWindow ? (
+                              <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-2">
+                                <div className="flex flex-col gap-2">
+                                  <Label className="text-[12px] font-black text-[var(--brand-text)]">เริ่มแลกได้</Label>
+                                  <Input
+                                    type="datetime-local"
+                                    value={editingReward.redeemStartAt}
+                                    onChange={(event) => updateEditingReward("redeemStartAt", event.target.value)}
+                                    className="h-12 rounded-[18px] border-[var(--border)] bg-white px-4 text-[14px] font-bold"
+                                  />
+                                </div>
+                                <div className="flex flex-col gap-2">
+                                  <Label className="text-[12px] font-black text-[var(--brand-text)]">สิ้นสุดการแลก</Label>
+                                  <Input
+                                    type="datetime-local"
+                                    value={editingReward.redeemEndAt}
+                                    onChange={(event) => updateEditingReward("redeemEndAt", event.target.value)}
+                                    className="h-12 rounded-[18px] border-[var(--border)] bg-white px-4 text-[14px] font-bold"
+                                  />
+                                </div>
+                              </div>
+                            ) : null}
+                          </div>
+
+                          <div className="rounded-[18px] border border-[var(--border)] bg-[var(--brand-soft)] p-4 lg:col-span-2">
+                            <div className="mb-3 text-[14px] font-black text-[var(--brand-text)]">จำนวนสินค้า</div>
+                            <div className="flex flex-wrap gap-2">
+                              <button
+                                type="button"
+                                onClick={() => updateEditingRewardStockMode("unlimited")}
+                                className={cn(
+                                  "rounded-full border px-4 py-2 text-[12px] font-black transition-colors",
+                                  editingReward.stockMode === "unlimited"
+                                    ? "border-[var(--brand-accent)] bg-white text-[var(--brand-text)]"
+                                    : "border-[var(--border)] bg-[var(--brand-soft)] text-[#8E8A81]"
+                                )}
+                              >
+                                ไม่จำกัดจำนวน
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => updateEditingRewardStockMode("limited")}
+                                className={cn(
+                                  "rounded-full border px-4 py-2 text-[12px] font-black transition-colors",
+                                  editingReward.stockMode === "limited"
+                                    ? "border-[var(--brand-accent)] bg-white text-[var(--brand-text)]"
+                                    : "border-[var(--border)] bg-[var(--brand-soft)] text-[#8E8A81]"
+                                )}
+                              >
+                                จำกัดจำนวน
+                              </button>
+                            </div>
+
+                            {editingReward.stockMode === "limited" ? (
+                              <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-2">
+                                <div className="flex flex-col gap-2">
+                                  <Label className="text-[12px] font-black text-[var(--brand-text)]">จำนวนทั้งหมด</Label>
+                                  <Input
+                                    type="number"
+                                    min="0"
+                                    value={`${editingReward.stockTotal}`}
+                                    onChange={(event) => updateEditingRewardStockTotal(Number(event.target.value))}
+                                    className="h-12 rounded-[18px] border-[var(--border)] bg-white px-4 text-[14px] font-bold"
+                                  />
+                                </div>
+                                <div className="flex flex-col gap-2">
+                                  <Label className="text-[12px] font-black text-[var(--brand-text)]">สินค้าคงเหลือ</Label>
+                                  <Input
+                                    type="number"
+                                    min="0"
+                                    max={`${editingReward.stockTotal}`}
+                                    value={`${editingReward.stockRemaining}`}
+                                    onChange={(event) => updateEditingRewardStockRemaining(Number(event.target.value))}
+                                    className="h-12 rounded-[18px] border-[var(--border)] bg-white px-4 text-[14px] font-bold"
+                                  />
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="mt-3 text-[12px] font-bold text-[#8E8A81]">
+                                reward นี้ไม่มีการจำกัดจำนวนคงเหลือ
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </DetailCard>
+
                       <DetailCard title="Display Settings" subtitle="หมวดหมู่ ข้อความสำรอง และสถานะเด่น">
                         <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
                           <div className="flex flex-col gap-2">
@@ -824,14 +2007,14 @@ export default function AdminRewardPage() {
                               }
                               className="h-12 rounded-[18px] border border-[var(--border)] bg-white px-4 text-[15px] font-bold text-[var(--foreground)] outline-none"
                             >
-                              {CATEGORY_OPTIONS.map((option) => (
+                              {categoryOptions.map((option) => (
                                 <option key={option.value} value={option.value}>
                                   {option.label}
                                 </option>
                               ))}
                             </select>
                             <div className="text-[12px] font-bold text-[#8E8A81]">
-                              {getCategoryMeta(editingReward.category).hint}
+                              {getCategoryMeta(editingReward.category, categoryOptions).hint}
                             </div>
                           </div>
 
@@ -920,7 +2103,7 @@ export default function AdminRewardPage() {
                         {deletingReward.name}
                       </div>
                       <div className="text-[12px] font-bold text-[#8E8A81]">
-                        {getCategoryMeta(deletingReward.category).label} · {deletingReward.points.toLocaleString()} points
+                        {getCategoryMeta(deletingReward.category, categoryOptions).label} · {deletingReward.points.toLocaleString()} points
                       </div>
                     </div>
                   </div>
@@ -939,6 +2122,79 @@ export default function AdminRewardPage() {
                 </Button>
                 <Button
                   onClick={confirmDeleteReward}
+                  className="h-10 rounded-full bg-[#b33a34] px-4 text-[13px] text-white hover:bg-[#982b26]"
+                >
+                  Confirm Delete
+                </Button>
+              </div>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        <Dialog open={!!pendingCategoryDelete} onOpenChange={(open) => !open && setPendingCategoryDelete(null)}>
+          <DialogContent className="max-w-[560px] overflow-hidden rounded-[18px] border border-[var(--border)] bg-[var(--brand-surface)] p-0 shadow-[0_24px_50px_rgba(62,36,13,0.18)] sm:rounded-[30px]">
+            <DialogHeader className="border-b border-[var(--border)] bg-[linear-gradient(180deg,var(--brand-soft)_0%,var(--brand-soft)_100%)] px-4 pt-4 pb-3 sm:px-6 sm:pt-6 sm:pb-5">
+              <DialogTitle className="text-[22px] font-black text-[#8a2f2b] sm:text-[26px]">
+                ยืนยันการลบหมวดหมู่
+              </DialogTitle>
+              <DialogDescription className="max-w-[460px] text-[12px] font-bold leading-relaxed text-[#8E8A81] sm:text-[14px]">
+                {pendingCategoryDelete?.count
+                  ? "หากยืนยัน จะลบข้อมูล Reward ทั้งหมดในหมู่นี้"
+                  : "หากยืนยัน ระบบจะลบหมวดหมู่นี้ออกจากตัวเลือกของ Admin ทันที"}
+              </DialogDescription>
+            </DialogHeader>
+
+            {pendingCategoryDelete ? (
+              <div className="bg-[var(--brand-surface)] px-4 py-4 sm:px-6 sm:py-6">
+                <div className="rounded-[16px] border border-[var(--border)] bg-white px-4 py-4 shadow-[0_8px_18px_rgba(62,36,13,0.04)]">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <div className="text-[17px] font-black text-[#1A1A1A]">{pendingCategoryDelete.label}</div>
+                      <div className="mt-1 text-[12px] font-bold text-[#8E8A81]">{pendingCategoryDelete.hint}</div>
+                    </div>
+                    <div className="rounded-full bg-[var(--brand-soft)] px-3 py-1 text-[12px] font-black text-[var(--brand-text)]">
+                      {pendingCategoryDelete.count} items
+                    </div>
+                  </div>
+
+                  {pendingCategoryDelete.count > 0 ? (
+                    <div className="mt-4 rounded-[14px] border border-[var(--border)] bg-[var(--brand-soft)] px-3 py-3">
+                      <div className="text-[12px] font-black text-[var(--brand-text)]">Reward ที่ยังอยู่ในหมวดนี้</div>
+                      <div className="mt-2 flex flex-col gap-2">
+                        {rewardsInPendingCategory.slice(0, 4).map((reward) => (
+                          <div key={reward.id} className="flex items-center justify-between gap-3 rounded-[12px] bg-white px-3 py-2">
+                            <div className="min-w-0">
+                              <div className="truncate text-[13px] font-black text-[#1A1A1A]">{reward.name}</div>
+                              <div className="text-[11px] font-bold text-[#8E8A81]">{reward.description}</div>
+                            </div>
+                            <div className="whitespace-nowrap text-[11px] font-black text-[var(--brand-accent-strong)]">
+                              {reward.points.toLocaleString()} pts
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                      {rewardsInPendingCategory.length > 4 ? (
+                        <div className="mt-2 text-[11px] font-bold text-[#8E8A81]">
+                          และอีก {rewardsInPendingCategory.length - 4} รายการในหมวดนี้
+                        </div>
+                      ) : null}
+                    </div>
+                  ) : null}
+                </div>
+              </div>
+            ) : null}
+
+            <DialogFooter className="mx-0 mb-0 rounded-b-[26px] border-t border-[var(--border)] bg-[var(--brand-soft)] px-5 py-4 sm:rounded-b-[30px] sm:px-6 sm:py-5">
+              <div className="flex w-full justify-end gap-2">
+                <Button
+                  variant="outline"
+                  onClick={() => setPendingCategoryDelete(null)}
+                  className="h-10 rounded-full border-[var(--border)] bg-white px-4 text-[13px] text-[var(--brand-text)] hover:bg-[var(--brand-soft)]"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={confirmRemoveCategory}
                   className="h-10 rounded-full bg-[#b33a34] px-4 text-[13px] text-white hover:bg-[#982b26]"
                 >
                   Confirm Delete

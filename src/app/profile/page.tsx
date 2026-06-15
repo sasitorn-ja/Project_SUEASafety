@@ -1,5 +1,4 @@
 "use client";
-
 import { ChangeEvent, useEffect, useRef, useState } from "react";
 import {
   BadgeCheck,
@@ -14,27 +13,12 @@ import {
   Upload,
   UserRound,
 } from "lucide-react";
+import { getProfileDisplayName, MOCK_PROFILE, PROFILE_IMAGE_KEY } from "@/lib/profile";
 
-const PROFILE_IMAGE_KEY = "suea-safety-profile-image";
 const MAX_IMAGE_SIZE = 3 * 1024 * 1024;
 
-const MOCK_PROFILE = {
-  namePrefixTh: "นางสาว",
-  firstNameTh: "ศศิธร",
-  lastNameTh: "จรุงจรรยาพงศ์",
-  namePrefixEn: "Ms.",
-  firstNameEn: "Sasitorn",
-  lastNameEn: "Jarungjanyaphong",
-  positionTh: "Developer",
-  username: "SASITOJA",
-  email: "SASITOJA@SCG.COM",
-  divisionTh: "RMC Excellence",
-  company: "CPAC",
-  workLocation: "สำนักงานใหญ่",
-};
-
 const PROFILE_FIELDS = [
-  { label: "ชื่อภาษาไทย", value: `${MOCK_PROFILE.namePrefixTh} ${MOCK_PROFILE.firstNameTh} ${MOCK_PROFILE.lastNameTh}`, icon: UserRound },
+  { label: "ชื่อภาษาไทย", value: getProfileDisplayName(), icon: UserRound },
   { label: "ชื่อภาษาอังกฤษ", value: `${MOCK_PROFILE.namePrefixEn} ${MOCK_PROFILE.firstNameEn} ${MOCK_PROFILE.lastNameEn}`, icon: UserRound },
   { label: "ตำแหน่ง", value: MOCK_PROFILE.positionTh, icon: BadgeCheck },
   { label: "หน่วยงาน", value: MOCK_PROFILE.divisionTh, icon: Building2 },
@@ -134,9 +118,7 @@ export default function ProfilePage() {
                 <ShieldCheck className="h-3.5 w-3.5" strokeWidth={2.5} />
                 SSO Profile Preview
               </div>
-              <h1 className="text-[25px] font-black leading-tight md:text-[36px]">
-                {MOCK_PROFILE.namePrefixTh} {MOCK_PROFILE.firstNameTh} {MOCK_PROFILE.lastNameTh}
-              </h1>
+              <h1 className="text-[25px] font-black leading-tight md:text-[36px]">{getProfileDisplayName()}</h1>
               <p className="mt-1.5 text-[13px] font-bold text-white/72 md:text-[15px]">
                 {MOCK_PROFILE.positionTh} · {MOCK_PROFILE.divisionTh}
               </p>
@@ -193,7 +175,9 @@ export default function ProfilePage() {
             <div>
               <p className="text-[11px] font-extrabold uppercase tracking-[0.14em] text-[var(--brand-text)]">Personal information</p>
               <h2 className="mt-1 text-[20px] font-black text-foreground">ข้อมูลจากระบบ SSO</h2>
-              <p className="mt-1 text-[11.5px] font-bold text-[var(--muted-foreground)]">ตัวอย่างข้อมูลสำหรับเตรียมเชื่อมต่อ ข้อมูลส่วนนี้จะแก้ไขจากระบบต้นทาง</p>
+              <p className="mt-1 text-[11.5px] font-bold text-[var(--muted-foreground)]">
+                ตัวอย่างข้อมูลสำหรับเตรียมเชื่อมต่อ ข้อมูลส่วนนี้จะแก้ไขจากระบบต้นทาง
+              </p>
             </div>
             <span className="inline-flex items-center gap-1.5 rounded-full bg-[var(--brand-soft)] px-3 py-1.5 text-[10.5px] font-black text-[var(--brand-text)]">
               <ShieldCheck className="h-3.5 w-3.5" strokeWidth={2.5} />
