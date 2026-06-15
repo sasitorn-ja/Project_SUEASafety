@@ -18,7 +18,11 @@ export type MascotAction =
   | "whistle"
   | "running"
   | "smile"
-  | "happy";
+  | "happy"
+  | "idea"
+  | "cheer"
+  | "welcome"
+  | "firstaid";
 
 const TIGER_MASCOTS: Record<MascotAction, string> = {
   logo: "/images/mascots/suea-mascot-logo.png",
@@ -36,24 +40,32 @@ const TIGER_MASCOTS: Record<MascotAction, string> = {
   running: "/images/mascots/suea-mascot-logo.png",
   smile: "/images/mascots/suea-mascot-logo.png",
   happy: "/images/mascots/suea-thumbs-up.png",
+  idea: "/images/mascots/suea-mascot-logo.png",
+  cheer: "/images/mascots/suea-thumbs-up.png",
+  welcome: "/images/mascots/suea-mascot-logo.png",
+  firstaid: "/images/mascots/suea-shield.png",
 };
 
 const WANGJAI_MASCOTS: Record<MascotAction, string> = {
-  logo: "/images/mascots/nong-wangjai/transparent/logo-head-v5.png",
-  big: "/images/mascots/nong-wangjai/transparent/salute.png",
-  "thumbs-up": "/images/mascots/nong-wangjai/transparent/happy.png",
+  logo: "/images/mascots/nong-wangjai/transparent/logo-radio.png",
+  big: "/images/mascots/nong-wangjai/transparent/8.png",
+  "thumbs-up": "/images/mascots/nong-wangjai/transparent/thumbsup-cool.png",
   salute: "/images/mascots/nong-wangjai/transparent/salute.png",
   radio: "/images/mascots/nong-wangjai/transparent/radio.png",
   stop: "/images/mascots/nong-wangjai/transparent/stop.png",
   danger: "/images/mascots/nong-wangjai/transparent/stop.png",
-  shield: "/images/mascots/nong-wangjai/transparent/stop.png",
+  shield: "/images/mascots/nong-wangjai/transparent/firstaid.png",
   clipboard: "/images/mascots/nong-wangjai/transparent/clipboard.png",
   flashlight: "/images/mascots/nong-wangjai/transparent/flashlight.png",
   announce: "/images/mascots/nong-wangjai/transparent/announce.png",
-  whistle: "/images/mascots/nong-wangjai/transparent/announce.png",
+  whistle: "/images/mascots/nong-wangjai/transparent/megaphone.png",
   running: "/images/mascots/nong-wangjai/transparent/running.png",
-  smile: "/images/mascots/nong-wangjai/transparent/happy.png",
+  smile: "/images/mascots/nong-wangjai/transparent/cheer.png",
   happy: "/images/mascots/nong-wangjai/transparent/happy.png",
+  idea: "/images/mascots/nong-wangjai/transparent/idea.png",
+  cheer: "/images/mascots/nong-wangjai/transparent/cheer.png",
+  welcome: "/images/mascots/nong-wangjai/transparent/welcome.png",
+  firstaid: "/images/mascots/nong-wangjai/transparent/firstaid.png",
 };
 
 type ThemeContextValue = {
@@ -75,7 +87,9 @@ function getThemedImage(theme: AppTheme, src: string) {
   if (theme !== "wangjai" || !src.startsWith("/images/mascots/")) return src;
   if (src.includes("reward") || src.includes("thumb")) return getMascot(theme, "happy");
   if (src.includes("ppe")) return getMascot(theme, "salute");
-  if (src.includes("line-walk") || src.includes("five-s")) return getMascot(theme, "clipboard");
+  if (src.includes("line-walk")) return getMascot(theme, "clipboard");
+  if (src.includes("five-s")) return getMascot(theme, "flashlight");
+  if (src.includes("shield")) return getMascot(theme, "stop");
   return getMascot(theme, "big");
 }
 

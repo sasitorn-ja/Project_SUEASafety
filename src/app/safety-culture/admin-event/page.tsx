@@ -685,6 +685,7 @@ export default function AdminEventPage() {
           description="ตั้งค่าอีเว้น ดูตัวอย่างผลทันที และกด Publish ได้อย่างมั่นใจ"
           mascotSrc="/images/mascots/suea-mascot.png"
           mascotAlt="SUEA Admin Mascot"
+          mascotAction="announce"
           actions={
             <div className="mt-[12px] flex flex-wrap gap-2">
               <Link href="/safety-culture">

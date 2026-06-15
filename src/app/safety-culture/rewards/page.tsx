@@ -184,6 +184,7 @@ export default function RewardsPage() {
             description="คะแนน Safety ของคุณเปลี่ยนเป็นรางวัลได้ พี่ SUEA คอยเชียร์ให้เก็บแต้มต่อทุกวัน"
             mascotSrc={mascot("happy")}
             mascotAlt="SUEA Mascot"
+            mascotAction="happy"
           />
         </div>
 

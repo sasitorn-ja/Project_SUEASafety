@@ -271,6 +271,29 @@ body * {
   transform: translateY(calc(100% + env(safe-area-inset-bottom)));
 }
 
+@keyframes safety-assistant-float {
+  0%, 100% {
+    transform: translateY(0) rotate(-1deg);
+  }
+  50% {
+    transform: translateY(-7px) rotate(1deg);
+  }
+}
+
+.floating-safety-assistant-image {
+  animation: safety-assistant-float 3.8s ease-in-out infinite;
+}
+
+.floating-safety-assistant-trigger:hover .floating-safety-assistant-image {
+  animation-duration: 1.8s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .floating-safety-assistant-image {
+    animation: none;
+  }
+}
+
 .desktop-compact-menu-sheet {
   top: var(--topbar-h) !important;
   border-top: 1px solid rgba(255, 255, 255, 0.1) !important;
@@ -303,6 +326,10 @@ body * {
     width: 44px !important;
     justify-content: center !important;
     padding: 0 !important;
+  }
+
+  .login-btn-compact .profile-chevron {
+    display: none !important;
   }
 }
 

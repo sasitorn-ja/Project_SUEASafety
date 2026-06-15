@@ -1063,7 +1063,7 @@ export default function Activity() {
             </div>
           </div>
 
-          <img className="ac-hdr-mascot-compact" src={mascot("big")} alt={theme === "wangjai" ? "น้องวางใจ Safety mascot" : "SUEA tiger mascot"} />
+          <img className="ac-hdr-mascot-compact" src={mascot("cheer")} alt={theme === "wangjai" ? "น้องวางใจ Safety mascot" : "SUEA tiger mascot"} />
         </div>
       </div>
       <div

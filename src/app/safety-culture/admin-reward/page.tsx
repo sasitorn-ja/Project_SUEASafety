@@ -917,6 +917,7 @@ export default function AdminRewardPage() {
           description="ออกแบบ reward catalog, รูปภาพ, รายละเอียด และราคา ให้หน้า Rewards ใช้งานง่ายและดูดีขึ้นจากที่เดียว"
           mascotSrc="/images/mascots/suea-mascot.png"
           mascotAlt="SUEA Admin Mascot"
+          mascotAction="happy"
           actions={
             <div className="mt-[12px] flex flex-wrap gap-2">
               <Link href="/safety-culture/rewards">

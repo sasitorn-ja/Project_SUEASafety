@@ -13,7 +13,7 @@ import {
   Upload,
   UserRound,
 } from "lucide-react";
-import { getProfileDisplayName, MOCK_PROFILE, PROFILE_IMAGE_KEY } from "@/lib/profile";
+import { getProfileDisplayName, MOCK_PROFILE, notifyProfileImageUpdated, PROFILE_IMAGE_KEY } from "@/lib/profile";
 
 const MAX_IMAGE_SIZE = 3 * 1024 * 1024;
 
@@ -68,6 +68,7 @@ export default function ProfilePage() {
       setImageError("");
       try {
         window.localStorage.setItem(PROFILE_IMAGE_KEY, result);
+        notifyProfileImageUpdated();
       } catch {
         setImageError("แสดงรูปได้ชั่วคราว แต่ browser ไม่สามารถบันทึกรูปนี้ไว้ได้");
       }
@@ -80,6 +81,7 @@ export default function ProfilePage() {
     setImageError("");
     try {
       window.localStorage.removeItem(PROFILE_IMAGE_KEY);
+      notifyProfileImageUpdated();
     } catch {
       // Keep the UI responsive even if storage is unavailable.
     }

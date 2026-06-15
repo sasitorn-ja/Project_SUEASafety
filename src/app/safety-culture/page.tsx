@@ -343,6 +343,7 @@ export default function Page() {
             description="พื้นที่แชร์เรื่องความปลอดภัยของทีม อ่านง่าย อบอุ่น และช่วยกันต่อยอดพฤติกรรมปลอดภัยในทุกวัน"
             mascotSrc="/images/mascots/gallery/line-walk-3.png"
             mascotAlt="SUEA Mascot"
+            mascotAction="announce"
           />
         </div>
 

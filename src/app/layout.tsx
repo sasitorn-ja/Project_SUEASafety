@@ -15,12 +15,12 @@ const sarabun = Sarabun({
 });
 
 export const metadata: Metadata = {
-  title: "SUEA Safety",
-  description: "SUEA Safety — Safety Effort, We're OK & Safety Culture",
+  title: "CPAC Safety",
+  description: "CPAC Safety — Safety Effort & Safety Culture",
   icons: {
-    icon: "/images/branding/logo.png",
-    shortcut: "/images/branding/logo.png",
-    apple: "/images/branding/logo.png",
+    icon: "/images/mascots/nong-wangjai/transparent/logo-head-v5.png",
+    shortcut: "/images/mascots/nong-wangjai/transparent/logo-head-v5.png",
+    apple: "/images/mascots/nong-wangjai/transparent/logo-head-v5.png",
   },
 };
 

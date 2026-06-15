@@ -1531,7 +1531,7 @@ export default function Checkin() {
             </div>
           </div>
 
-          <img className="ci-hdr-mascot-compact" src={mascot("big")} alt={theme === "wangjai" ? "น้องวางใจ Safety mascot" : "SUEA tiger mascot"} />
+          <img className="ci-hdr-mascot-compact" src={mascot("idea")} alt={theme === "wangjai" ? "น้องวางใจ Safety mascot" : "SUEA tiger mascot"} />
         </div>
       </div>
       <div

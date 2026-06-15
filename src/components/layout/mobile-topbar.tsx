@@ -7,15 +7,12 @@ import { useEffect, useState } from "react";
 import {
   Bell,
   ChevronDown,
-  ClipboardCheck,
   FileText,
   Gift,
   Heart,
-  HeartPulse,
   Home,
   LayoutDashboard,
   Menu,
-  Settings2,
   ShieldCheck,
   Trophy,
   UserRound,
@@ -24,9 +21,17 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { isExactNavActive, isMainNavActive } from "@/lib/navigation";
-import { getProfileDisplayName, getProfileInitials, MOCK_PROFILE, PROFILE_IMAGE_KEY } from "@/lib/profile";
+import { getProfileDisplayName, getProfileInitials, MOCK_PROFILE, PROFILE_IMAGE_KEY, PROFILE_IMAGE_UPDATED_EVENT } from "@/lib/profile";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { useAppTheme } from "@/providers/theme-provider";
+import {
+  MENU_STORAGE_KEY,
+  MENU_UPDATED_EVENT,
+  type MenuNode,
+  findAdminMenu,
+  getMenuIcon,
+  loadMenu,
+} from "@/lib/menu-config";
 
 function NavTo(props: any) {
   return <Link prefetch={false} {...props} />;
@@ -36,13 +41,8 @@ const CULTURE_ITEMS = [
   { label: "Feed", icon: Heart, href: "/safety-culture" },
   { label: "Leaderboard", icon: Trophy, href: "/safety-culture/leaderboard" },
   { label: "Rewards", icon: Gift, href: "/safety-culture/rewards" },
-  { label: "Settings Edit Event", icon: Settings2, href: "/safety-culture/admin-event" },
-  { label: "Settings Edit Leaderboard", icon: Trophy, href: "/safety-culture/admin-leaderboard" },
-  { label: "Settings Edit Reward", icon: Gift, href: "/safety-culture/admin-reward" },
-  { label: "Settings Safety Awareness", icon: ShieldCheck, href: "/safety-culture/admin-awareness" },
 ];
 
-const SAFETY_EFFORT_ITEMS = [{ label: "Settings Safety Effort", icon: Settings2, href: "/safety-admin" }];
 const PROFILE_MENU_ITEMS = [{ label: "กิจกรรมของผู้ใช้งาน", icon: FileText, href: "/profile/activity-history" }];
 
 type NavNode = {
@@ -56,10 +56,9 @@ type NavNode = {
 const NAV_TREE: NavNode[] = [
   { id: "home", label: "Home", icon: Home, href: "/" },
   { id: "dashboard", label: "Dashboard", icon: LayoutDashboard, href: "/dashboard" },
-  { id: "safety-effort", label: "Safety Effort", icon: ShieldCheck, href: "/category", children: SAFETY_EFFORT_ITEMS },
-  { id: "were-ok", label: "We're OK", icon: HeartPulse, href: "/were-ok" },
-  { id: "work-permit", label: "Work Permit", icon: ClipboardCheck, href: "/work-permit" },
+  { id: "safety-effort", label: "Safety Effort", icon: ShieldCheck, href: "/category" },
   { id: "safety-culture", label: "Safety Culture", icon: UsersRound, href: "/safety-culture", children: CULTURE_ITEMS },
+  { id: "admin", label: "Admin", icon: UserRound },
 ];
 
 const ENABLED_HREFS = new Set([
@@ -77,30 +76,141 @@ const ENABLED_HREFS = new Set([
   "/profile/activity-history",
 ]);
 
+function MobileConfiguredNode({
+  node,
+  pathname,
+  openSections,
+  toggleSection,
+  closeDrawer,
+}: {
+  node: MenuNode;
+  pathname: string;
+  openSections: Record<string, boolean>;
+  toggleSection: (id: string) => void;
+  closeDrawer: () => void;
+}) {
+  const Icon = getMenuIcon(node.icon);
+  const children = node.children.filter((child) => child.enabled);
+  const isOpen = !!openSections[node.id];
+  const active = !!node.href && isExactNavActive(pathname, node.href);
+
+  if (children.length === 0) {
+    const content = (
+      <>
+        {Icon && <Icon className="h-[14px] w-[14px] flex-shrink-0 text-[var(--brand-accent)]" strokeWidth={2.35} />}
+        <span className="truncate">{node.label}</span>
+      </>
+    );
+    if (!node.href) {
+      return <div className="flex min-h-9 items-center gap-2.5 rounded-lg px-2.5 text-[11px] font-bold text-[var(--brand-soft)]">{content}</div>;
+    }
+    return (
+      <NavTo
+        href={node.href}
+        onClick={closeDrawer}
+        className={cn(
+          "flex min-h-9 items-center gap-2.5 rounded-lg px-2.5 text-[11px] font-bold hover:bg-white/[0.12]",
+          active ? "bg-white/[0.12] text-[var(--brand-accent)]" : "text-[var(--brand-soft)]"
+        )}
+      >
+        {content}
+      </NavTo>
+    );
+  }
+
+  return (
+    <div>
+      <div className={cn("flex min-h-9 items-stretch rounded-lg", active && "bg-white/[0.08]")}>
+        {node.href ? (
+          <NavTo href={node.href} onClick={closeDrawer} className="flex min-w-0 flex-1 items-center gap-2.5 rounded-lg px-2.5 text-[11.5px] font-extrabold text-[var(--brand-accent)] hover:bg-white/[0.12]">
+            {Icon && <Icon className="h-[15px] w-[15px] flex-shrink-0" strokeWidth={2.35} />}
+            <span className="truncate">{node.label}</span>
+          </NavTo>
+        ) : (
+          <div className="flex min-w-0 flex-1 items-center gap-2.5 rounded-lg px-2.5 text-[11.5px] font-extrabold text-[var(--brand-accent)]">
+            {Icon && <Icon className="h-[15px] w-[15px] flex-shrink-0" strokeWidth={2.35} />}
+            <span className="truncate">{node.label}</span>
+          </div>
+        )}
+        <button type="button" onClick={() => toggleSection(node.id)} aria-expanded={isOpen} className="flex w-10 items-center justify-center rounded-r-lg text-[var(--brand-accent)] outline-none hover:bg-white/[0.08] focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--brand-accent)]">
+          <ChevronDown className={cn("h-3.5 w-3.5 transition-transform duration-200", isOpen && "rotate-180")} strokeWidth={2.5} />
+        </button>
+      </div>
+      {isOpen && (
+        <div className="mt-1 ml-[18px] grid grid-cols-1 gap-1 border-l border-white/15 pl-2">
+          {children.map((child) => (
+            <MobileConfiguredNode
+              key={child.id}
+              node={child}
+              pathname={pathname}
+              openSections={openSections}
+              toggleSection={toggleSection}
+              closeDrawer={closeDrawer}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function MobileTopbar({ hidden = false }: { hidden?: boolean }) {
   const { mascot, theme } = useAppTheme();
   const pathname = usePathname() ?? "";
   const [open, setOpen] = useState(false);
   const [profileImage, setProfileImage] = useState("");
+  const [configuredMenu, setConfiguredMenu] = useState<MenuNode[]>([]);
   const isWangjai = theme === "wangjai";
 
   const isActive = (href: string) => isMainNavActive(pathname, href);
   const cultureActive = CULTURE_ITEMS.some((item) => isExactNavActive(pathname, item.href));
+  const adminActive = pathname === "/safety-admin" || pathname.startsWith("/safety-culture/admin-");
   const profileSectionActive = pathname === "/profile" || pathname.startsWith("/profile/");
 
   const [openSections, setOpenSections] = useState<Record<string, boolean>>(() => ({
     "safety-culture": cultureActive,
-    "safety-effort": pathname === "/safety-admin",
+    admin: adminActive,
+    "admin-safety-effort": pathname === "/safety-admin",
+    "admin-safety-culture": pathname.startsWith("/safety-culture/admin-"),
     profile: profileSectionActive,
   }));
 
   useEffect(() => {
-    try {
-      setProfileImage(window.localStorage.getItem(PROFILE_IMAGE_KEY) || "");
-    } catch {
-      setProfileImage("");
-    }
+    const refreshProfileImage = () => {
+      try {
+        setProfileImage(window.localStorage.getItem(PROFILE_IMAGE_KEY) || "");
+      } catch {
+        setProfileImage("");
+      }
+    };
+    const handleStorage = (event: StorageEvent) => {
+      if (!event.key || event.key === PROFILE_IMAGE_KEY) refreshProfileImage();
+    };
+    refreshProfileImage();
+    window.addEventListener(PROFILE_IMAGE_UPDATED_EVENT, refreshProfileImage);
+    window.addEventListener("storage", handleStorage);
+    return () => {
+      window.removeEventListener(PROFILE_IMAGE_UPDATED_EVENT, refreshProfileImage);
+      window.removeEventListener("storage", handleStorage);
+    };
   }, []);
+
+  useEffect(() => {
+    const refreshMenu = () => setConfiguredMenu(loadMenu());
+    const handleStorage = (event: StorageEvent) => {
+      if (!event.key || event.key === MENU_STORAGE_KEY) refreshMenu();
+    };
+    refreshMenu();
+    window.addEventListener(MENU_UPDATED_EVENT, refreshMenu);
+    window.addEventListener("storage", handleStorage);
+    return () => {
+      window.removeEventListener(MENU_UPDATED_EVENT, refreshMenu);
+      window.removeEventListener("storage", handleStorage);
+    };
+  }, []);
+
+  const configuredAdmin = findAdminMenu(configuredMenu);
+  const adminSections = configuredAdmin?.children.filter((node) => node.enabled) ?? [];
 
   const toggleSection = (id: string) => {
     setOpenSections((current) => ({ ...current, [id]: !current[id] }));
@@ -146,7 +256,7 @@ export function MobileTopbar({ hidden = false }: { hidden?: boolean }) {
                   </>
                 ) : (
                   <>
-                    <strong className="text-[var(--brand-accent)]">SUEA</strong> Safety
+                    <strong className="text-[var(--brand-accent)]">น้อง</strong>วางใจ
                   </>
                 )}
               </span>
@@ -203,7 +313,7 @@ export function MobileTopbar({ hidden = false }: { hidden?: boolean }) {
                     onClick={() => toggleSection("profile")}
                     aria-expanded={!!openSections.profile}
                     aria-label="เปิดเมนูกิจกรรมของผู้ใช้งาน"
-                    className="flex w-12 flex-shrink-0 items-center justify-center text-[var(--brand-accent)]"
+                    className="flex w-12 flex-shrink-0 items-center justify-center rounded-r-xl text-[var(--brand-accent)] outline-none transition-colors hover:bg-white/[0.08] focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--brand-accent)]"
                   >
                     <ChevronDown className={cn("h-4 w-4 transition-transform duration-200", openSections.profile && "rotate-180")} strokeWidth={2.5} />
                   </button>
@@ -236,9 +346,49 @@ export function MobileTopbar({ hidden = false }: { hidden?: boolean }) {
               {NAV_TREE.map((item) => {
                 const Icon = item.icon;
 
+                if (item.id === "admin") {
+                  const isOpen = !!openSections.admin;
+
+                  return (
+                    <div key={item.id}>
+                      <button
+                        type="button"
+                        onClick={() => toggleSection("admin")}
+                        aria-expanded={isOpen}
+                        className={cn(
+                          "flex min-h-11 w-full items-center gap-3 rounded-xl px-3 text-xs font-extrabold outline-none transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--brand-accent)]",
+                          adminActive ? "bg-white/[0.14] text-[var(--brand-accent)]" : "bg-white/10 text-[var(--brand-soft)] hover:bg-white/[0.14]"
+                        )}
+                      >
+                        <Icon className="h-4 w-4 flex-shrink-0 text-[var(--brand-accent)]" strokeWidth={2.35} />
+                        <span className="flex-1 truncate text-left">{item.label}</span>
+                        <ChevronDown className={cn("h-4 w-4 flex-shrink-0 transition-transform duration-200", isOpen && "rotate-180")} strokeWidth={2.5} />
+                      </button>
+
+                      {isOpen && (
+                        <div className="mt-1 ml-[18px] grid grid-cols-1 gap-1 border-l border-white/15 pl-2">
+                          {adminSections.map((section) => (
+                            <MobileConfiguredNode
+                              key={section.id}
+                              node={section}
+                              pathname={pathname}
+                              openSections={openSections}
+                              toggleSection={toggleSection}
+                              closeDrawer={closeDrawer}
+                            />
+                          ))}
+                          {adminSections.length === 0 && (
+                            <div className="px-2.5 py-3 text-[11px] font-bold text-white/55">ยังไม่มีเมนูย่อย Admin</div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  );
+                }
+
                 if (item.children) {
                   const isOpen = !!openSections[item.id];
-                  const sectionActive = item.id === "safety-effort" ? pathname === "/safety-admin" || pathname === "/category" : cultureActive;
+                  const sectionActive = cultureActive;
 
                   return (
                     <div key={item.id}>
@@ -247,7 +397,7 @@ export function MobileTopbar({ hidden = false }: { hidden?: boolean }) {
                         onClick={() => toggleSection(item.id)}
                         aria-expanded={isOpen}
                         className={cn(
-                          "flex min-h-11 w-full items-center gap-3 rounded-xl px-3 text-xs font-extrabold transition-colors",
+                          "flex min-h-11 w-full items-center gap-3 rounded-xl px-3 text-xs font-extrabold outline-none transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--brand-accent)]",
                           sectionActive ? "bg-white/[0.14] text-[var(--brand-accent)]" : "bg-white/10 text-[var(--brand-soft)] hover:bg-white/[0.14]"
                         )}
                       >

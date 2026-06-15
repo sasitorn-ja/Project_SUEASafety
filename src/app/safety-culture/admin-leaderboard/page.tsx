@@ -217,6 +217,7 @@ export default function AdminLeaderboardPage() {
           description="โฟกัสเฉพาะการจัดการทีมและคะแนนให้พร้อมใช้งานจริง โดยแก้ผ่าน modal แล้วค่อย confirm ก่อนบันทึก"
           mascotSrc="/images/mascots/suea-mascot.png"
           mascotAlt="SUEA Admin Mascot"
+          mascotAction="clipboard"
           actions={
             <div className="mt-[12px] flex flex-wrap gap-2">
               <Link href="/safety-culture/leaderboard">

@@ -4,7 +4,7 @@ import Image from "next/image";
 import type { ReactNode } from "react";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-import { useAppTheme } from "@/providers/theme-provider";
+import { type MascotAction, useAppTheme } from "@/providers/theme-provider";
 
 type SafetyCultureHeroProps = {
   eyebrow: string;
@@ -12,6 +12,7 @@ type SafetyCultureHeroProps = {
   description: string;
   mascotSrc: string;
   mascotAlt: string;
+  mascotAction?: MascotAction;
   actions?: ReactNode;
 };
 
@@ -21,11 +22,12 @@ export function SafetyCultureHero({
   description,
   mascotSrc,
   mascotAlt,
+  mascotAction = "happy",
   actions,
 }: SafetyCultureHeroProps) {
   const hasActions = !!actions;
   const { theme, mascot } = useAppTheme();
-  const themedMascotSrc = theme === "wangjai" ? mascot("happy") : mascotSrc;
+  const themedMascotSrc = theme === "wangjai" ? mascot(mascotAction) : mascotSrc;
 
   return (
     <Card className="relative overflow-hidden rounded-[18px] border-[2px] border-[var(--brand-accent)] bg-[linear-gradient(135deg,var(--brand-hero-start)_0%,var(--brand-nav)_50%,var(--brand-hero-end)_100%)] shadow-[0_12px_28px_var(--brand-shadow)] font-sarabun">

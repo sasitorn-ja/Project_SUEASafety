@@ -217,6 +217,7 @@ export default function PostSocialPage() {
             description="เล่าเหตุการณ์ดี ๆ หรือจุดเสี่ยงให้เพื่อนร่วมทีมเห็นได้เร็วขึ้น"
             mascotSrc="/images/mascots/suea-mascot.png"
             mascotAlt="SUEA Mascot"
+            mascotAction="clipboard"
           />
         </div>
 

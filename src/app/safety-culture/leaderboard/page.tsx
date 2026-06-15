@@ -37,6 +37,7 @@ export default function LeaderboardPage() {
             description="พี่ SUEA ช่วยสรุปคะแนน Safety ให้เห็นภาพเร็วขึ้น ทั้งคะแนนทีมและอันดับในทีมของคุณ โดยข้อมูลจะอัปเดตตามที่แอดมินจัดการล่าสุด"
             mascotSrc="/images/mascots/suea-mascot.png"
             mascotAlt="SUEA Mascot"
+            mascotAction="salute"
           />
         </div>
 
