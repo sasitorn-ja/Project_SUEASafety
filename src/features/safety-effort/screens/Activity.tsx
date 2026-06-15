@@ -51,6 +51,14 @@ const BASE_ACTIVITIES = [
   },
 ];
 
+function restoreActivity(activity) {
+  if (!activity) return null;
+  return BASE_ACTIVITIES.find((item) => item.id === activity.id) ?? {
+    ...activity,
+    icon: activity.icon ?? IcoShield,
+  };
+}
+
 const ADD_MORE = {
   id: "other",
   label: "อื่น ๆ",
@@ -941,7 +949,7 @@ export default function Activity() {
   const checkin  = location.state?.checkin ?? null;
   const fromCategoryAudit = !checkin;
 
-  const [selected,         setSelected]         = useState(location.state?.activity ?? null);
+  const [selected,         setSelected]         = useState(() => restoreActivity(location.state?.activity));
   const [customOpen,       setCustomOpen]        = useState(false);
   const [customActivities, setCustomActivities]  = useState([]);
   const [width,            setWidth]             = useState(window.innerWidth);
@@ -954,7 +962,7 @@ export default function Activity() {
 
   useEffect(() => {
     if (location.state?.activity) {
-      setSelected(location.state.activity);
+      setSelected(restoreActivity(location.state.activity));
     }
   }, [location.state?.activity]);
 
@@ -1111,7 +1119,7 @@ export default function Activity() {
             flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center",
             boxShadow: "0 3px 10px rgba(var(--brand-accent-rgb),0.3)", alignContent: "center"
           }}>
-            {(() => { const Icon = selected.icon; return <Icon />; })()}
+            {(() => { const Icon = selected.icon ?? IcoShield; return <Icon />; })()}
           </div>
           <div style={{ minWidth: 0, flex: 1 }}>
             <p style={{
