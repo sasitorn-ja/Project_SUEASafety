@@ -66,6 +66,11 @@ const DashboardSafetyEffort = dynamic(() => import("@/features/safety-effort/scr
   loading: () => screenLoading("หน้าแดชบอร์ดความปลอดภัย"),
 });
 
+const Login = dynamic(() => import("@/features/safety-effort/screens/Login"), {
+  ssr: false,
+  loading: () => screenLoading("หน้าเข้าสู่ระบบ"),
+});
+
 // ─────────────────────────────────────────────────────────
 // DESIGN TOKENS — navigation-design-spec.md §2 & §10
 // ─────────────────────────────────────────────────────────
@@ -597,6 +602,7 @@ function DesktopNavbar({ activeId, onNav, navVisible }) {
 
         {/* CTA Login Button */}
         <button
+          onClick={() => navigate("/login")}
           style={{
             display: "inline-flex",
             alignItems: "center",
@@ -755,6 +761,7 @@ function AppRoutes({ onScroll }) {
         <Route path="assessment-summary" element={<AssessmentSummary />} />
         <Route path="safety-admin" element={<SafetyAdmin />} />
         <Route path="dashboard-safety-effort" element={<DashboardSafetyEffort />} />
+        <Route path="login" element={<Login />} />
       </Routes>
     );
   }
@@ -783,6 +790,7 @@ export default function App() {
     lastScrollY.current = 0;
   }, [pathname]);
 
+  const isLoginPage             = pathname === "/login";
   const isMobile                = width < 768;
   const activeId                = getActiveId(pathname);
   const isLinewalkQuestionScreen = pathname === "/linewalk" && !!location.state?.linewalkStarted;
@@ -811,12 +819,14 @@ export default function App() {
             onScroll={handleScroll}
               style={{
                 position: "absolute", inset: 0,
-                paddingTop: 48,
-                paddingBottom: isLinewalkQuestionScreen
-                  ? "env(safe-area-inset-bottom)"
-                  : (pathname === "/checkin"
-                      ? "calc(76px + env(safe-area-inset-bottom))"
-                      : "calc(112px + env(safe-area-inset-bottom))"),
+                paddingTop: isLoginPage ? 0 : 48,
+                paddingBottom: isLoginPage
+                  ? 0
+                  : (isLinewalkQuestionScreen
+                      ? "env(safe-area-inset-bottom)"
+                      : (pathname === "/checkin"
+                          ? "calc(76px + env(safe-area-inset-bottom))"
+                          : "calc(112px + env(safe-area-inset-bottom))")),
                 overflow: isFixedContent ? "hidden" : "auto",
                 minWidth: 0,
               }}
@@ -835,7 +845,7 @@ export default function App() {
       <div style={{ height: "100vh", overflow: "hidden", background: T.background, fontFamily: "'Prompt','Sarabun',sans-serif", color: T.foreground }}>
         <div style={{
           position: "absolute", inset: 0,
-          paddingTop: 68,
+          paddingTop: isLoginPage ? 0 : 68,
           display: "flex", flexDirection: "column",
         }}>
           <main

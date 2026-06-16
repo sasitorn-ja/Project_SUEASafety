@@ -1004,6 +1004,22 @@ export default function SafetyAdmin() {
     return "all";
   });
   const [allowedWeekdays, setAllowedWeekdays] = useState(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const stored = localStorage.getItem("safety_allowed_weekdays");
+        if (stored) return JSON.parse(stored);
+      } catch (e) { }
+    }
+    return [0, 1, 2, 3, 4, 5, 6];
+  });
+  const [allowedDates, setAllowedDates] = useState(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const stored = localStorage.getItem("safety_allowed_dates");
+        if (stored) return JSON.parse(stored);
+      } catch (e) { }
+    }
+    return [];
   });
   const [newAllowedDate, setNewAllowedDate] = useState("");
   const [lastSavedAt, setLastSavedAt] = useState("");
@@ -1617,10 +1633,10 @@ export default function SafetyAdmin() {
               display: "flex",
               flexDirection: "column",
               gap: 16,
-              background: "rgba(255,255,255,0.78)",
+              background: T.card,
               border: `1px solid ${T.line}`,
               borderRadius: 24,
-              padding: isMobile ? 12 : 20,
+              padding: isMobile ? 12 : 16,
               boxShadow: T.shadow,
               minHeight: isMobile ? undefined : 0,
               overflow: "hidden"
@@ -1635,7 +1651,7 @@ export default function SafetyAdmin() {
                 justifyContent: "space-between",
                 gap: 12,
                 borderBottom: `1px solid ${T.line}`,
-                paddingBottom: 16,
+                paddingBottom: 12,
                 flexShrink: 0
               }}
             >
@@ -1721,7 +1737,7 @@ export default function SafetyAdmin() {
             </div>
 
             {/* List / Table Area */}
-            <div style={{ flex: 1, overflowY: "auto", minHeight: 0 }}>
+            <div style={{ flex: 1, overflow: "auto", minHeight: 0 }}>
               {/* Filtered items */}
               {(() => {
                 const filtered = submissions.filter(item => {
@@ -1740,31 +1756,134 @@ export default function SafetyAdmin() {
                   );
                 }
 
+                if (!isMobile) {
+                  return (
+                    <div style={{ overflowX: "auto", border: `1px solid ${T.line}`, borderRadius: 12 }}>
+                      <table style={{ width: "100%", borderCollapse: "collapse", background: "#fff", textAlign: "left", fontSize: "13.5px" }}>
+                        <thead>
+                          <tr style={{ background: "color-mix(in srgb, var(--brand-accent) 8%, transparent)", borderBottom: `2px solid ${T.line}` }}>
+                            <th style={{ padding: "10px 16px", fontWeight: 800, color: T.sub, width: 140 }}>วันที่ทำรายการ</th>
+                            <th style={{ padding: "10px 16px", fontWeight: 800, color: T.sub, width: 130 }}>กิจกรรม</th>
+                            <th style={{ padding: "10px 16px", fontWeight: 800, color: T.sub, width: 220 }}>สถานที่ตรวจ</th>
+                            <th style={{ padding: "10px 16px", fontWeight: 800, color: T.sub, width: 120 }}>ประเภทสถานที่</th>
+                            <th style={{ padding: "10px 16px", fontWeight: 800, color: T.sub }}>ผลประเมิน / รายละเอียด</th>
+                            <th style={{ padding: "10px 16px", fontWeight: 800, color: T.sub, width: 100, textAlign: "center" }}>จัดการ</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {filtered.map((item, idx) => {
+                            const dateObj = new Date(item.timestamp);
+                            const displayDate = item.date;
+                            const displayTime = dateObj.toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit" }) + " น.";
+                            const isContact = item.isSafetyContact;
+
+                            let summaryText = "";
+                            if (isContact) {
+                              summaryText = item.safetyContactText.length > 70 
+                                ? item.safetyContactText.substring(0, 70) + "..." 
+                                : item.safetyContactText;
+                            } else {
+                              const counts = item.answeredItems.reduce((acc, current) => {
+                                if (current.status === "safe") acc.safe += 1;
+                                else if (current.status === "unsafe_condition") acc.unsafeCond += 1;
+                                else if (current.status === "unsafe_action") acc.unsafeAct += 1;
+                                return acc;
+                              }, { safe: 0, unsafeCond: 0, unsafeAct: 0 });
+                              
+                              summaryText = `ปลอดภัย: ${counts.safe} | ไม่ปลอดภัย: ${counts.unsafeCond + counts.unsafeAct}`;
+                            }
+
+                            return (
+                              <tr
+                                key={item.id}
+                                style={{
+                                  borderBottom: idx < filtered.length - 1 ? `1px solid ${T.line}` : "none",
+                                  transition: "background 0.15s"
+                                }}
+                                className="hover:bg-black/[0.015] transition-colors"
+                              >
+                                <td style={{ padding: "8px 16px" }}>
+                                  <span style={{ fontWeight: 700 }}>{displayDate}</span>
+                                  <div style={{ fontSize: 11, color: T.sub }}>{displayTime}</div>
+                                </td>
+                                <td style={{ padding: "8px 16px" }}>
+                                  <span style={{
+                                    fontSize: "11px",
+                                    fontWeight: 800,
+                                    color: isContact ? "#7c2d12" : "#14532d",
+                                    background: isContact ? "#ffedd5" : "#dcfce7",
+                                    padding: "3px 8px",
+                                    borderRadius: 999
+                                  }}>
+                                    {item.activityLabel}
+                                  </span>
+                                </td>
+                                <td style={{ padding: "8px 16px" }}>
+                                  <div style={{ fontWeight: 700 }}>{item.locationName}</div>
+                                  <div style={{ fontSize: 11, color: T.sub }}>{item.locationTag}</div>
+                                </td>
+                                <td style={{ padding: "8px 16px" }}>
+                                  {LOCATION_TYPE_LABELS[item.locType] || item.locType}
+                                </td>
+                                <td style={{ padding: "8px 16px" }}>
+                                  <div style={{
+                                    color: isContact ? T.ink : (summaryText.includes("ไม่ปลอดภัย: 0") ? T.ok : T.danger),
+                                    fontWeight: isContact ? 500 : 700
+                                  }}>
+                                    {summaryText}
+                                  </div>
+                                </td>
+                                <td style={{ padding: "8px 16px" }}>
+                                  <div style={{ display: "flex", justifyContent: "center", gap: 6 }}>
+                                    <button
+                                      type="button"
+                                      onClick={() => setSelectedSub(item)}
+                                      style={{
+                                        ...buttonGhostStyle,
+                                        width: 30,
+                                        height: 30,
+                                        borderRadius: 6,
+                                        padding: 0,
+                                        display: "grid",
+                                        placeItems: "center"
+                                      }}
+                                      title="ดูรายละเอียด"
+                                    >
+                                      <Eye size={13} />
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        if (window.confirm("คุณต้องการลบรายงานฉบับนี้ใช่หรือไม่?")) {
+                                          handleDeleteSubmission(item.id);
+                                        }
+                                      }}
+                                      style={{
+                                        ...buttonDangerStyle,
+                                        width: 30,
+                                        height: 30,
+                                        borderRadius: 6,
+                                        padding: 0,
+                                        display: "grid",
+                                        placeItems: "center"
+                                      }}
+                                      title="ลบ"
+                                    >
+                                      <Trash2 size={13} />
+                                    </button>
+                                  </div>
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  );
+                }
+
                 return (
                   <div style={{ display: "grid", gap: 10 }}>
-                    {/* Header Row on Desktop */}
-                    {!isMobile && (
-                      <div
-                        style={{
-                          display: "grid",
-                          gridTemplateColumns: "130px 120px 180px 100px 1fr 100px",
-                          gap: 12,
-                          padding: "8px 16px",
-                          fontWeight: 800,
-                          fontSize: 12.5,
-                          color: T.sub,
-                          borderBottom: `2px solid ${T.line}`
-                        }}
-                      >
-                        <div>วันที่ทำรายการ</div>
-                        <div>กิจกรรม</div>
-                        <div>สถานที่ตรวจ</div>
-                        <div>ประเภทสถานที่</div>
-                        <div>ผลประเมิน / รายละเอียด</div>
-                        <div style={{ textAlign: "right" }}>การจัดการ</div>
-                      </div>
-                    )}
-
                     {filtered.map(item => {
                       const dateObj = new Date(item.timestamp);
                       const displayDate = item.date;
@@ -1791,149 +1910,77 @@ export default function SafetyAdmin() {
                         <div
                           key={item.id}
                           style={{
-                            display: isMobile ? "flex" : "grid",
-                            flexDirection: isMobile ? "column" : undefined,
-                            gridTemplateColumns: isMobile ? undefined : "130px 120px 180px 100px 1fr 100px",
-                            gap: isMobile ? 8 : 12,
-                            alignItems: isMobile ? "flex-start" : "center",
+                            display: "flex",
+                            flexDirection: "column",
+                            gap: 8,
                             background: "#fff",
                             border: `1px solid ${T.line}`,
                             borderRadius: 14,
                             padding: "12px 16px",
-                            fontSize: 13.5,
-                            transition: "all 0.15s ease"
+                            fontSize: 13.5
                           }}
                         >
-                          {isMobile ? (
-                            <>
-                              <div style={{ display: "flex", justifyContent: "space-between", width: "100%", borderBottom: `1px solid ${T.line}`, paddingBottom: 6 }}>
-                                <span style={{ fontWeight: 800, color: T.accentDeep }}>{displayDate} <span style={{ fontSize: 11, color: T.sub }}>{displayTime}</span></span>
-                                <span style={{
-                                  fontSize: 11,
-                                  fontWeight: 800,
-                                  color: isContact ? "#7c2d12" : "#14532d",
-                                  background: isContact ? "#ffedd5" : "#dcfce7",
-                                  padding: "2px 8px",
-                                  borderRadius: 6
-                                }}>
-                                  {item.activityLabel}
-                                </span>
-                              </div>
-                              <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-                                <div><strong style={{ color: T.sub }}>สถานที่:</strong> {item.locationName} <span style={{ fontSize: 11, color: T.sub }}>({item.locationTag})</span></div>
-                                <div><strong style={{ color: T.sub }}>ประเภท:</strong> {LOCATION_TYPE_LABELS[item.locType] || item.locType}</div>
-                                <div style={{ marginTop: 4, background: "#fcfcfb", padding: "6px 10px", borderRadius: 8, width: "100%", border: `1px solid ${T.line}` }}>
-                                  <strong style={{ color: T.sub, display: "block", fontSize: 11 }}>{isContact ? "ข้อความสื่อสาร:" : "ผลการตรวจ:"}</strong>
-                                  <span style={{ fontSize: 13, color: T.ink }}>{summaryText}</span>
-                                </div>
-                              </div>
-                              <div style={{ display: "flex", gap: 10, width: "100%", justifyContent: "flex-end", marginTop: 8, paddingTop: 8, borderTop: `1px solid ${T.line}` }}>
-                                <button
-                                  type="button"
-                                  onClick={() => setSelectedSub(item)}
-                                  style={{
-                                    ...buttonGhostStyle,
-                                    height: 30,
-                                    borderRadius: 6,
-                                    fontSize: 12,
-                                    padding: "0 10px",
-                                    display: "flex",
-                                    alignItems: "center",
-                                    gap: 4
-                                  }}
-                                >
-                                  <Eye size={12} />
-                                  <span>ดูรายละเอียด</span>
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    if (window.confirm("คุณต้องการลบรายงานฉบับนี้ใช่หรือไม่?")) {
-                                      handleDeleteSubmission(item.id);
-                                    }
-                                  }}
-                                  style={{
-                                    ...buttonDangerStyle,
-                                    height: 30,
-                                    borderRadius: 6,
-                                    fontSize: 12,
-                                    padding: "0 10px",
-                                    display: "flex",
-                                    alignItems: "center",
-                                    gap: 4
-                                  }}
-                                >
-                                  <Trash2 size={12} />
-                                  <span>ลบ</span>
-                                </button>
-                              </div>
-                            </>
-                          ) : (
-                            <>
-                              <div>
-                                <span style={{ fontWeight: 700 }}>{displayDate}</span>
-                                <div style={{ fontSize: 11, color: T.sub }}>{displayTime}</div>
-                              </div>
-                              <div>
-                                <span style={{
-                                  fontSize: 11.5,
-                                  fontWeight: 800,
-                                  color: isContact ? "#7c2d12" : "#14532d",
-                                  background: isContact ? "#ffedd5" : "#dcfce7",
-                                  padding: "3px 8px",
-                                  borderRadius: 6
-                                }}>
-                                  {item.activityLabel}
-                                </span>
-                              </div>
-                              <div>
-                                <div style={{ fontWeight: 700 }}>{item.locationName}</div>
-                                <div style={{ fontSize: 11, color: T.sub }}>{item.locationTag}</div>
-                              </div>
-                              <div>{LOCATION_TYPE_LABELS[item.locType] || item.locType}</div>
-                              <div style={{ color: isContact ? T.ink : (summaryText.includes("ไม่ปลอดภัย: 0") ? T.ok : T.danger), fontWeight: isContact ? 500 : 700 }}>
-                                {summaryText}
-                              </div>
-                              <div style={{ display: "flex", justifyContent: "flex-end", gap: 6 }}>
-                                <button
-                                  type="button"
-                                  onClick={() => setSelectedSub(item)}
-                                  style={{
-                                    ...buttonGhostStyle,
-                                    width: 32,
-                                    height: 32,
-                                    borderRadius: 8,
-                                    padding: 0,
-                                    display: "grid",
-                                    placeItems: "center"
-                                  }}
-                                  title="ดูรายละเอียด"
-                                >
-                                  <Eye size={14} />
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    if (window.confirm("คุณต้องการลบรายงานฉบับนี้ใช่หรือไม่?")) {
-                                      handleDeleteSubmission(item.id);
-                                    }
-                                  }}
-                                  style={{
-                                    ...buttonDangerStyle,
-                                    width: 32,
-                                    height: 32,
-                                    borderRadius: 8,
-                                    padding: 0,
-                                    display: "grid",
-                                    placeItems: "center"
-                                  }}
-                                  title="ลบ"
-                                >
-                                  <Trash2 size={14} />
-                                </button>
-                              </div>
-                            </>
-                          )}
+                          <div style={{ display: "flex", justifyContent: "space-between", width: "100%", borderBottom: `1px solid ${T.line}`, paddingBottom: 6 }}>
+                            <span style={{ fontWeight: 800, color: T.accentDeep }}>{displayDate} <span style={{ fontSize: 11, color: T.sub }}>{displayTime}</span></span>
+                            <span style={{
+                              fontSize: 11,
+                              fontWeight: 800,
+                              color: isContact ? "#7c2d12" : "#14532d",
+                              background: isContact ? "#ffedd5" : "#dcfce7",
+                              padding: "2px 8px",
+                              borderRadius: 6
+                            }}>
+                              {item.activityLabel}
+                            </span>
+                          </div>
+                          <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                            <div><strong style={{ color: T.sub }}>สถานที่:</strong> {item.locationName} <span style={{ fontSize: 11, color: T.sub }}>({item.locationTag})</span></div>
+                            <div><strong style={{ color: T.sub }}>ประเภท:</strong> {LOCATION_TYPE_LABELS[item.locType] || item.locType}</div>
+                            <div style={{ marginTop: 4, background: "#fcfcfb", padding: "6px 10px", borderRadius: 8, width: "100%", border: `1px solid ${T.line}` }}>
+                              <strong style={{ color: T.sub, display: "block", fontSize: 11 }}>{isContact ? "ข้อความสื่อสาร:" : "ผลการตรวจ:"}</strong>
+                              <span style={{ fontSize: 13, color: T.ink }}>{summaryText}</span>
+                            </div>
+                          </div>
+                          <div style={{ display: "flex", gap: 10, width: "100%", justifyContent: "flex-end", marginTop: 8, paddingTop: 8, borderTop: `1px solid ${T.line}` }}>
+                            <button
+                              type="button"
+                              onClick={() => setSelectedSub(item)}
+                              style={{
+                                ...buttonGhostStyle,
+                                height: 30,
+                                borderRadius: 6,
+                                fontSize: 12,
+                                padding: "0 10px",
+                                display: "flex",
+                                alignItems: "center",
+                                gap: 4
+                              }}
+                            >
+                              <Eye size={12} />
+                              <span>ดูรายละเอียด</span>
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                if (window.confirm("คุณต้องการลบรายงานฉบับนี้ใช่หรือไม่?")) {
+                                  handleDeleteSubmission(item.id);
+                                }
+                              }}
+                              style={{
+                                ...buttonDangerStyle,
+                                height: 30,
+                                borderRadius: 6,
+                                fontSize: 12,
+                                padding: "0 10px",
+                                display: "flex",
+                                alignItems: "center",
+                                gap: 4
+                              }}
+                            >
+                              <Trash2 size={12} />
+                              <span>ลบ</span>
+                            </button>
+                          </div>
                         </div>
                       );
                     })}
@@ -1949,10 +1996,10 @@ export default function SafetyAdmin() {
               display: "flex",
               flexDirection: "column",
               gap: 16,
-              background: "rgba(255,255,255,0.78)",
+              background: T.card,
               border: `1px solid ${T.line}`,
               borderRadius: 24,
-              padding: isMobile ? 12 : 20,
+              padding: isMobile ? 12 : 16,
               boxShadow: T.shadow,
               minHeight: isMobile ? undefined : 0,
               overflow: "hidden"
@@ -1966,11 +2013,11 @@ export default function SafetyAdmin() {
                 justifyContent: "space-between",
                 gap: 12,
                 borderBottom: `1px solid ${T.line}`,
-                paddingBottom: 16,
+                paddingBottom: 12,
                 flexShrink: 0
               }}
             >
-              <div style={{ display: "grid", gap: 6 }}>
+              <div style={{ display: "grid", gap: 4 }}>
                 <div style={{ fontSize: 18, fontWeight: 900, color: T.accentDeep }}>รายงานแบบประเมิน</div>
                 <div style={{ fontSize: 13, color: T.sub }}>
                   รวมข้อมูลจาก mock records, รายการที่บันทึกในระบบ, และไฟล์ Excel ที่อัปโหลดชั่วคราว
@@ -2012,64 +2059,6 @@ export default function SafetyAdmin() {
                   <span>ดาวน์โหลดรายงาน (Excel)</span>
                 </button>
               </div>
-            </div>
-
-            <div style={{ border: `1px solid ${T.line}`, borderRadius: 18, background: "#fffdf8", overflow: "hidden", flexShrink: 0 }}>
-              <button
-                type="button"
-                onClick={() => setShowSenderSettings((prev) => !prev)}
-                style={{
-                  width: "100%",
-                  border: "none",
-                  background: "transparent",
-                  padding: "14px 16px",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  cursor: "pointer",
-                  fontFamily: "inherit",
-                  color: T.ink
-                }}
-              >
-                <span style={{ display: "inline-flex", alignItems: "center", gap: 8, fontSize: 14, fontWeight: 800 }}>
-                  <Settings size={16} />
-                  <span>ตั้งค่าข้อมูลผู้ส่งรายงาน</span>
-                </span>
-                {showSenderSettings ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-              </button>
-              {showSenderSettings ? (
-                <div style={{ borderTop: `1px solid ${T.line}`, padding: 16, display: "grid", gap: 12 }}>
-                  <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(3, minmax(0, 1fr))", gap: 12 }}>
-                    <label style={fieldStyle}>
-                      <span style={fieldLabelStyle}>PMS</span>
-                      <input
-                        value={senderProfile.pms}
-                        onChange={(event) => handleSenderProfileChange("pms", event.target.value)}
-                        style={{ ...inputStyle, minHeight: 40, borderRadius: 10, fontSize: 13 }}
-                      />
-                    </label>
-                    <label style={fieldStyle}>
-                      <span style={fieldLabelStyle}>ชื่อ - นามสกุล</span>
-                      <input
-                        value={senderProfile.name}
-                        onChange={(event) => handleSenderProfileChange("name", event.target.value)}
-                        style={{ ...inputStyle, minHeight: 40, borderRadius: 10, fontSize: 13 }}
-                      />
-                    </label>
-                    <label style={fieldStyle}>
-                      <span style={fieldLabelStyle}>E-mail</span>
-                      <input
-                        value={senderProfile.email}
-                        onChange={(event) => handleSenderProfileChange("email", event.target.value)}
-                        style={{ ...inputStyle, minHeight: 40, borderRadius: 10, fontSize: 13 }}
-                      />
-                    </label>
-                  </div>
-                  <div style={{ fontSize: 12.5, color: T.sub }}>
-                    ค่านี้จะถูกใช้เป็นข้อมูลผู้ส่งเมื่อมีการบันทึก Line Walk หรือ Safety Contact ครั้งถัดไป
-                  </div>
-                </div>
-              ) : null}
             </div>
 
             <div
@@ -2131,39 +2120,99 @@ export default function SafetyAdmin() {
                 <div style={{ border: `1px dashed ${T.lineStrong}`, borderRadius: 18, padding: 32, textAlign: "center", color: T.sub, fontSize: 14 }}>
                   ไม่พบข้อมูลรายงานแบบประเมินตามเงื่อนไขที่เลือก
                 </div>
+              ) : !isMobile ? (
+                <div style={{ overflowX: "auto", border: `1px solid ${T.line}`, borderRadius: 12 }}>
+                  <table style={{ width: "100%", borderCollapse: "collapse", background: "#fff", textAlign: "left", fontSize: "13.5px" }}>
+                    <thead>
+                      <tr style={{ background: "color-mix(in srgb, var(--brand-accent) 8%, transparent)", borderBottom: `2px solid ${T.line}` }}>
+                        <th style={{ padding: "10px 16px", fontWeight: 800, color: T.sub, width: 110 }}>PMS</th>
+                        <th style={{ padding: "10px 16px", fontWeight: 800, color: T.sub, width: 80 }}>Year</th>
+                        <th style={{ padding: "10px 16px", fontWeight: 800, color: T.sub, width: 100 }}>เดือน</th>
+                        <th style={{ padding: "10px 16px", fontWeight: 800, color: T.sub, width: "22%" }}>Name</th>
+                        <th style={{ padding: "10px 16px", fontWeight: 800, color: T.sub }}>E-mail</th>
+                        <th style={{ padding: "10px 16px", fontWeight: 800, color: T.sub, width: 180 }}>กิจกรรม</th>
+                        <th style={{ padding: "10px 16px", fontWeight: 800, color: T.sub, width: 100, textAlign: "center" }}>จัดการ</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filteredReportRecords.map((item, idx) => (
+                        <tr
+                          key={item.id}
+                          style={{
+                            borderBottom: idx < filteredReportRecords.length - 1 ? `1px solid ${T.line}` : "none",
+                            transition: "background 0.15s"
+                          }}
+                          className="hover:bg-black/[0.015] transition-colors"
+                        >
+                          <td style={{ padding: "8px 16px", fontWeight: 700 }}>{item.pms || "-"}</td>
+                          <td style={{ padding: "8px 16px" }}>{item.year}</td>
+                          <td style={{ padding: "8px 16px" }}>{monthLabel(item.month)}</td>
+                          <td style={{ padding: "8px 16px", fontWeight: 700 }}>{item.name || "-"}</td>
+                          <td style={{ padding: "8px 16px" }}>{item.email || "-"}</td>
+                          <td style={{ padding: "8px 16px" }}>
+                            <span
+                              style={{
+                                fontSize: "11px",
+                                fontWeight: 800,
+                                color: item.activityType === "Safety_Contact" ? "#7c2d12" : "#14532d",
+                                background: item.activityType === "Safety_Contact" ? "#ffedd5" : "#dcfce7",
+                                padding: "3px 8px",
+                                borderRadius: 999
+                              }}
+                            >
+                              {item.activityType}
+                            </span>
+                          </td>
+                          <td style={{ padding: "8px 16px" }}>
+                            <div style={{ display: "flex", justifyContent: "center", gap: 6 }}>
+                              <button
+                                type="button"
+                                onClick={() => handleOpenEditReport(item)}
+                                style={{
+                                  ...buttonGhostStyle,
+                                  width: 30,
+                                  height: 30,
+                                  borderRadius: 6,
+                                  padding: 0,
+                                  display: "grid",
+                                  placeItems: "center"
+                                }}
+                                title="แก้ไข"
+                              >
+                                <Pencil size={13} />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleDeleteReportRecord(item)}
+                                style={{
+                                  ...buttonDangerStyle,
+                                  width: 30,
+                                  height: 30,
+                                  borderRadius: 6,
+                                  padding: 0,
+                                  display: "grid",
+                                  placeItems: "center"
+                                }}
+                                title="ลบ"
+                              >
+                                <Trash2 size={13} />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               ) : (
                 <div style={{ display: "grid", gap: 10 }}>
-                  {!isMobile ? (
-                    <div
-                      style={{
-                        display: "grid",
-                        gridTemplateColumns: "120px 90px 110px minmax(180px,1fr) minmax(220px,1fr) 180px 112px",
-                        gap: 12,
-                        padding: "8px 16px",
-                        fontWeight: 800,
-                        fontSize: 12.5,
-                        color: T.sub,
-                        borderBottom: `2px solid ${T.line}`
-                      }}
-                    >
-                      <div>PMS</div>
-                      <div>Year</div>
-                      <div>เดือน</div>
-                      <div>Name</div>
-                      <div>E-mail</div>
-                      <div>กิจกรรม</div>
-                      <div style={{ textAlign: "center" }}>จัดการ</div>
-                    </div>
-                  ) : null}
-
                   {filteredReportRecords.map((item) => (
                     <div
                       key={item.id}
                       style={{
-                        display: "grid",
-                        gridTemplateColumns: isMobile ? "1fr" : "120px 90px 110px minmax(180px,1fr) minmax(220px,1fr) 180px 112px",
-                        gap: 12,
-                        alignItems: "center",
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: 8,
                         background: "#fff",
                         border: `1px solid ${T.line}`,
                         borderRadius: 14,
@@ -2171,113 +2220,53 @@ export default function SafetyAdmin() {
                         fontSize: 13.5
                       }}
                     >
-                      {isMobile ? (
-                        <>
-                          <div style={{ display: "flex", justifyContent: "space-between", gap: 12, borderBottom: `1px solid ${T.line}`, paddingBottom: 8 }}>
-                            <div style={{ fontWeight: 900, color: T.accentDeep }}>{item.name || "-"}</div>
-                            <div style={{ fontSize: 11.5, color: T.sub }}>{item.pms || "-"}</div>
-                          </div>
-                          <div style={{ display: "grid", gap: 4 }}>
-                            <div><strong style={{ color: T.sub }}>ปี:</strong> {item.year}</div>
-                            <div><strong style={{ color: T.sub }}>เดือน:</strong> {monthLabel(item.month)}</div>
-                            <div><strong style={{ color: T.sub }}>E-mail:</strong> {item.email || "-"}</div>
-                            <div><strong style={{ color: T.sub }}>กิจกรรม:</strong> {item.activityType}</div>
-                            <div><strong style={{ color: T.sub }}>ที่มา:</strong> {item.source === "submission" ? "รายการที่บันทึก" : item.source === "upload" ? "ไฟล์อัปโหลด" : "mock records"}</div>
-                          </div>
-                          <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 4 }}>
-                            <button
-                              type="button"
-                              onClick={() => handleOpenEditReport(item)}
-                              style={{
-                                ...buttonGhostStyle,
-                                height: 32,
-                                borderRadius: 8,
-                                fontSize: 12,
-                                padding: "0 12px",
-                                display: "inline-flex",
-                                alignItems: "center",
-                                gap: 6
-                              }}
-                            >
-                              <Pencil size={12} />
-                              <span>แก้ไข</span>
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => handleDeleteReportRecord(item)}
-                              style={{
-                                ...buttonDangerStyle,
-                                height: 32,
-                                borderRadius: 8,
-                                fontSize: 12,
-                                padding: "0 12px",
-                                display: "inline-flex",
-                                alignItems: "center",
-                                gap: 6
-                              }}
-                            >
-                              <Trash2 size={12} />
-                              <span>ลบ</span>
-                            </button>
-                          </div>
-                        </>
-                      ) : (
-                        <>
-                          <div style={{ fontWeight: 800 }}>{item.pms || "-"}</div>
-                          <div>{item.year}</div>
-                          <div>{monthLabel(item.month)}</div>
-                          <div style={{ fontWeight: 700 }}>{item.name || "-"}</div>
-                          <div>{item.email || "-"}</div>
-                          <div>
-                            <span
-                              style={{
-                                fontSize: 11.5,
-                                fontWeight: 800,
-                                color: item.activityType === "Safety_Contact" ? "#7c2d12" : "#14532d",
-                                background: item.activityType === "Safety_Contact" ? "#ffedd5" : "#dcfce7",
-                                padding: "4px 8px",
-                                borderRadius: 999
-                              }}
-                            >
-                              {item.activityType}
-                            </span>
-                          </div>
-                          <div style={{ display: "flex", justifyContent: "center", gap: 6 }}>
-                            <button
-                              type="button"
-                              onClick={() => handleOpenEditReport(item)}
-                              style={{
-                                ...buttonGhostStyle,
-                                width: 44,
-                                height: 34,
-                                borderRadius: 8,
-                                padding: 0,
-                                display: "grid",
-                                placeItems: "center"
-                              }}
-                              title="แก้ไข"
-                            >
-                              <Pencil size={14} />
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => handleDeleteReportRecord(item)}
-                              style={{
-                                ...buttonDangerStyle,
-                                width: 44,
-                                height: 34,
-                                borderRadius: 8,
-                                padding: 0,
-                                display: "grid",
-                                placeItems: "center"
-                              }}
-                              title="ลบ"
-                            >
-                              <Trash2 size={14} />
-                            </button>
-                          </div>
-                        </>
-                      )}
+                      <div style={{ display: "flex", justifyContent: "space-between", gap: 12, borderBottom: `1px solid ${T.line}`, paddingBottom: 8 }}>
+                        <div style={{ fontWeight: 900, color: T.accentDeep }}>{item.name || "-"}</div>
+                        <div style={{ fontSize: 11.5, color: T.sub }}>{item.pms || "-"}</div>
+                      </div>
+                      <div style={{ display: "grid", gap: 4 }}>
+                        <div><strong style={{ color: T.sub }}>ปี:</strong> {item.year}</div>
+                        <div><strong style={{ color: T.sub }}>เดือน:</strong> {monthLabel(item.month)}</div>
+                        <div><strong style={{ color: T.sub }}>E-mail:</strong> {item.email || "-"}</div>
+                        <div><strong style={{ color: T.sub }}>กิจกรรม:</strong> {item.activityType}</div>
+                        <div><strong style={{ color: T.sub }}>ที่มา:</strong> {item.source === "submission" ? "รายการที่บันทึก" : item.source === "upload" ? "ไฟล์อัปโหลด" : "mock records"}</div>
+                      </div>
+                      <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 4, paddingTop: 8, borderTop: `1px solid ${T.line}` }}>
+                        <button
+                          type="button"
+                          onClick={() => handleOpenEditReport(item)}
+                          style={{
+                            ...buttonGhostStyle,
+                            height: 32,
+                            borderRadius: 8,
+                            fontSize: 12,
+                            padding: "0 12px",
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: 6
+                          }}
+                        >
+                          <Pencil size={12} />
+                          <span>แก้ไข</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteReportRecord(item)}
+                          style={{
+                            ...buttonDangerStyle,
+                            height: 32,
+                            borderRadius: 8,
+                            fontSize: 12,
+                            padding: "0 12px",
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: 6
+                          }}
+                        >
+                          <Trash2 size={12} />
+                          <span>ลบ</span>
+                        </button>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -2291,100 +2280,76 @@ export default function SafetyAdmin() {
               display: "flex",
               flexDirection: "column",
               gap: 16,
-              background: "rgba(255,255,255,0.78)",
+              background: T.card,
               border: `1px solid ${T.line}`,
               borderRadius: 24,
-              padding: isMobile ? 12 : 20,
+              padding: isMobile ? 12 : 16,
               boxShadow: T.shadow,
               minHeight: isMobile ? undefined : 0,
               overflow: "hidden"
             }}
           >
-            {/* Dynamic Gradient Banner */}
+            {/* Flat Header Banner matching report layout */}
             <div
               style={{
-                background: selectedType === "factory" 
-                  ? "linear-gradient(90deg, #3f2bef 0%, #a22cf5 100%)"
-                  : selectedType === "office"
-                  ? "linear-gradient(90deg, #0ea5e9 0%, #2563eb 100%)"
-                  : "linear-gradient(90deg, #f59e0b 0%, #d97706 100%)",
-                borderRadius: 18,
-                padding: "16px 24px",
                 display: "flex",
-                flexDirection: isMobile ? "column" : "row",
+                flexWrap: "wrap",
+                alignItems: "center",
                 justifyContent: "space-between",
-                alignItems: isMobile ? "stretch" : "center",
                 gap: 12,
-                boxShadow: selectedType === "factory"
-                  ? "0 8px 20px rgba(63, 43, 239, 0.15)"
-                  : selectedType === "office"
-                  ? "0 8px 20px rgba(14, 165, 233, 0.15)"
-                  : "0 8px 20px rgba(245, 158, 11, 0.15)",
-                color: "#ffffff"
+                borderBottom: `1px solid ${T.line}`,
+                paddingBottom: 12,
+                flexShrink: 0
               }}
             >
               <div style={{ display: "grid", gap: 4 }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                  <span style={{ fontSize: 22 }}>
-                    {selectedType === "factory" ? "🏭" : selectedType === "office" ? "🏢" : "🚧"}
-                  </span>
-                  <h1 style={{ fontSize: 20, fontWeight: 800, margin: 0, letterSpacing: "-0.01em" }}>
-                    {selectedType === "factory" ? "Plant Management System" : selectedType === "office" ? "Office Management System" : "Site Management System"}
-                  </h1>
+                <div style={{ fontSize: 18, fontWeight: 900, color: T.accentDeep }}>
+                  {selectedType === "factory" ? "จัดการข้อมูลโรงงาน" : selectedType === "office" ? "จัดการข้อมูลสำนักงาน" : "จัดการข้อมูลไซต์งาน"}
                 </div>
-                <p style={{ fontSize: 13, margin: 0, opacity: 0.85, fontWeight: 500 }}>
+                <div style={{ fontSize: 13, color: T.sub }}>
                   {selectedType === "factory" 
-                    ? "Manage company plants, divisions, and organizational structure" 
+                    ? "จัดการโครงสร้างแผนก โรงงาน และแผนการจัดการของบริษัท" 
                     : selectedType === "office"
-                    ? "Manage company offices, floors, zones, and locations"
-                    : "Manage construction sites, projects, contractors, and stages"}
-                </p>
+                    ? "จัดการสำนักงาน พื้นที่ ชั้น และโซนทำงาน"
+                    : "จัดการโครงการก่อสร้าง ลูกค้า ผู้รับเหมา และขั้นตอนงาน"}
+                </div>
               </div>
 
-              <div style={{ display: "flex", gap: 10, alignSelf: isMobile ? "flex-end" : "center" }}>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
                 <label
                   style={{
+                    ...buttonGhostStyle,
                     height: 38,
                     borderRadius: 10,
                     fontSize: 12.5,
-                    padding: "0 16px",
-                    background: "rgba(255, 255, 255, 0.18)",
-                    border: "1px solid rgba(255, 255, 255, 0.25)",
-                    color: "#ffffff",
+                    padding: "0 14px",
                     display: "inline-flex",
                     alignItems: "center",
                     gap: 6,
-                    fontWeight: 700,
-                    cursor: "pointer",
-                    transition: "all 0.2s"
+                    cursor: "pointer"
                   }}
                 >
                   <Upload size={14} />
-                  <span>Import</span>
+                  <span>นำเข้าข้อมูล (Excel)</span>
                   <input type="file" accept=".xlsx,.xls" onChange={handleImportPlantsFile} style={{ display: "none" }} />
                 </label>
                 <button
                   type="button"
                   onClick={handleAddPlant}
                   style={{
+                    ...buttonPrimaryStyle,
                     height: 38,
                     borderRadius: 10,
                     fontSize: 12.5,
-                    padding: "0 16px",
-                    background: "#ffffff",
-                    border: "none",
-                    color: selectedType === "factory" ? "#3f2bef" : selectedType === "office" ? "#0284c7" : "#b45309",
+                    padding: "0 14px",
+                    boxShadow: "none",
                     display: "inline-flex",
                     alignItems: "center",
-                    gap: 6,
-                    fontWeight: 800,
-                    cursor: "pointer",
-                    boxShadow: "0 4px 10px rgba(0,0,0,0.1)",
-                    transition: "all 0.2s"
+                    gap: 6
                   }}
                 >
                   <span>
-                    {selectedType === "factory" ? "+ Add Plant" : selectedType === "office" ? "+ Add Office" : "+ Add Site"}
+                    {selectedType === "factory" ? "+ เพิ่มโรงงาน" : selectedType === "office" ? "+ เพิ่มสำนักงาน" : "+ เพิ่มไซต์งาน"}
                   </span>
                 </button>
               </div>
@@ -2398,18 +2363,16 @@ export default function SafetyAdmin() {
                 alignItems: "center",
                 justifyContent: "space-between",
                 gap: 12,
-                borderBottom: `1px solid ${T.line}`,
-                paddingBottom: 12,
                 flexShrink: 0
               }}
             >
-              <div style={{ fontSize: 16, fontWeight: 800, color: T.accentDeep }}>
-                {selectedType === "factory" ? "Plant Records" : selectedType === "office" ? "Office Records" : "Site Records"} ({filteredPlants.length})
+              <div style={{ fontSize: 14, fontWeight: 800, color: T.sub }}>
+                รายการทั้งหมด ({filteredPlants.length})
               </div>
               <div style={{ position: "relative", width: isMobile ? "100%" : 300 }}>
                 <input
                   type="text"
-                  placeholder={selectedType === "factory" ? "Search plants, divisions..." : selectedType === "office" ? "Search offices, floors..." : "Search sites, contractors..."}
+                  placeholder={selectedType === "factory" ? "ค้นหาโรงงาน แผนก..." : selectedType === "office" ? "ค้นหาสำนักงาน ชั้น..." : "ค้นหาไซต์งาน ผู้รับเหมา..."}
                   value={plantSearchQuery}
                   onChange={(e) => {
                     setPlantSearchQuery(e.target.value);
@@ -2428,247 +2391,249 @@ export default function SafetyAdmin() {
             </div>
 
             {/* Dynamic Table Area */}
-            <div style={{ flex: 1, overflowX: "auto", overflowY: "auto", minHeight: 0 }}>
+            <div style={{ flex: 1, overflow: "auto", minHeight: 0 }}>
               {paginatedPlants.length === 0 ? (
                 <div style={{ border: `1px dashed ${T.lineStrong}`, borderRadius: 18, padding: 32, textAlign: "center", color: T.sub, fontSize: 14 }}>
                   {selectedType === "factory" ? "ไม่พบข้อมูลโรงงานตามเงื่อนไขที่ค้นหา" : selectedType === "office" ? "ไม่พบข้อมูลสำนักงานตามเงื่อนไขที่ค้นหา" : "ไม่พบข้อมูลไซต์งานตามเงื่อนไขที่ค้นหา"}
                 </div>
               ) : (
-                <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13, textAlign: "left", minWidth: 800 }}>
-                  <thead>
-                    <tr style={{ borderBottom: `2px solid ${T.line}`, color: T.sub, fontWeight: 800 }}>
-                      <th style={{ padding: "10px 8px", width: 50, textAlign: "center" }}>ID</th>
-                      {selectedType === "factory" ? (
-                        <>
-                          <th style={{ padding: "10px 8px" }}>Company</th>
-                          <th style={{ padding: "10px 8px" }}>Division</th>
-                          <th style={{ padding: "10px 8px" }}>Department</th>
-                          <th style={{ padding: "10px 8px" }}>Section</th>
-                          <th style={{ padding: "10px 8px" }}>Plant</th>
-                        </>
-                      ) : selectedType === "office" ? (
-                        <>
-                          <th style={{ padding: "10px 8px" }}>Company</th>
-                          <th style={{ padding: "10px 8px" }}>Division</th>
-                          <th style={{ padding: "10px 8px" }}>Department</th>
-                          <th style={{ padding: "10px 8px" }}>Office Name</th>
-                          <th style={{ padding: "10px 8px" }}>Floor/Zone</th>
-                        </>
-                      ) : (
-                        <>
-                          <th style={{ padding: "10px 8px" }}>Project/Site Name</th>
-                          <th style={{ padding: "10px 8px" }}>Customer</th>
-                          <th style={{ padding: "10px 8px" }}>Contractor</th>
-                          <th style={{ padding: "10px 8px" }}>Stage/Phase</th>
-                        </>
-                      )}
-                      <th style={{ padding: "10px 8px", width: 80 }}>Status</th>
-                      <th style={{ padding: "10px 8px", width: 120 }}>Location</th>
-                      <th style={{ padding: "10px 8px", width: 100, textAlign: "center" }}>Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {paginatedPlants.map((plant) => (
-                      <tr
-                        key={plant.id}
-                        style={{
-                          borderBottom: `1px solid ${T.line}`,
-                          background: "#ffffff",
-                          transition: "background 0.2s"
-                        }}
-                      >
-                        {/* ID */}
-                        <td style={{ padding: "12px 8px", textAlign: "center", fontWeight: 700, color: T.sub }}>
-                          {plant.id}
-                        </td>
+                <div style={{ overflowX: "auto", border: `1px solid ${T.line}`, borderRadius: 12 }}>
+                  <table style={{ width: "100%", borderCollapse: "collapse", background: "#fff", textAlign: "left", fontSize: "13px" }}>
+                    <thead>
+                      <tr style={{ background: "color-mix(in srgb, var(--brand-accent) 8%, transparent)", borderBottom: `2px solid ${T.line}` }}>
+                        <th style={{ padding: "10px 16px", fontWeight: 800, color: T.sub, width: 60, textAlign: "center" }}>ID</th>
                         {selectedType === "factory" ? (
                           <>
-                            {/* Company */}
-                            <td style={{ padding: "12px 8px" }}>
-                              <div style={{ fontWeight: 800, color: T.ink }}>{plant.companyCode}</div>
-                              <div style={{ fontSize: 11.5, color: T.sub }}>{plant.companyName}</div>
-                            </td>
-                            {/* Division */}
-                            <td style={{ padding: "12px 8px" }}>
-                              {plant.divisionName ? (
-                                <>
-                                  <div style={{ fontWeight: 800, color: "var(--brand-text)" }}>{plant.divisionName}</div>
-                                  <div style={{ fontSize: 11.5, color: T.sub }}>Code: {plant.divisionCode}</div>
-                                </>
-                              ) : (
-                                <span style={{ fontSize: 11.5, color: T.sub }}>Code: {plant.divisionCode || "[NULL]"}</span>
-                              )}
-                            </td>
-                            {/* Department */}
-                            <td style={{ padding: "12px 8px" }}>
-                              {plant.deptName ? (
-                                <>
-                                  <div style={{ fontWeight: 800 }}>{plant.deptName}</div>
-                                  <div style={{ fontSize: 11.5, color: T.sub }}>{plant.deptCode}</div>
-                                </>
-                              ) : (
-                                <span style={{ color: T.sub, fontSize: 12 }}>{plant.deptCode || "[NULL]"}</span>
-                              )}
-                            </td>
-                            {/* Section */}
-                            <td style={{ padding: "12px 8px" }}>
-                              {plant.secName ? (
-                                <>
-                                  <div style={{ fontWeight: 800 }}>{plant.secName}</div>
-                                  <div style={{ fontSize: 11.5, color: T.sub }}>{plant.secCode}</div>
-                                </>
-                              ) : (
-                                <span style={{ color: T.sub, fontSize: 12 }}>{plant.secCode || "[NULL]"}</span>
-                              )}
-                            </td>
-                            {/* Plant */}
-                            <td style={{ padding: "12px 8px" }}>
-                              <div style={{ fontWeight: 800, color: T.ok }}>{plant.plantName}</div>
-                              <div style={{ fontSize: 11.5, color: T.sub }}>Code: {plant.plantCode}</div>
-                            </td>
+                            <th style={{ padding: "10px 16px", fontWeight: 800, color: T.sub }}>Company</th>
+                            <th style={{ padding: "10px 16px", fontWeight: 800, color: T.sub }}>Division</th>
+                            <th style={{ padding: "10px 16px", fontWeight: 800, color: T.sub }}>Department</th>
+                            <th style={{ padding: "10px 16px", fontWeight: 800, color: T.sub }}>Section</th>
+                            <th style={{ padding: "10px 16px", fontWeight: 800, color: T.sub }}>Plant</th>
                           </>
                         ) : selectedType === "office" ? (
                           <>
-                            {/* Company */}
-                            <td style={{ padding: "12px 8px" }}>
-                              <div style={{ fontWeight: 800, color: T.ink }}>{plant.companyCode}</div>
-                              <div style={{ fontSize: 11.5, color: T.sub }}>{plant.companyName}</div>
-                            </td>
-                            {/* Division */}
-                            <td style={{ padding: "12px 8px" }}>
-                              {plant.divisionName ? (
-                                <>
-                                  <div style={{ fontWeight: 800, color: "var(--brand-text)" }}>{plant.divisionName}</div>
-                                  <div style={{ fontSize: 11.5, color: T.sub }}>Code: {plant.divisionCode}</div>
-                                </>
-                              ) : (
-                                <span style={{ fontSize: 11.5, color: T.sub }}>Code: {plant.divisionCode || "[NULL]"}</span>
-                              )}
-                            </td>
-                            {/* Department */}
-                            <td style={{ padding: "12px 8px" }}>
-                              {plant.deptName ? (
-                                <>
-                                  <div style={{ fontWeight: 800 }}>{plant.deptName}</div>
-                                  <div style={{ fontSize: 11.5, color: T.sub }}>{plant.deptCode}</div>
-                                </>
-                              ) : (
-                                <span style={{ color: T.sub, fontSize: 12 }}>{plant.deptCode || "[NULL]"}</span>
-                              )}
-                            </td>
-                            {/* Office Name */}
-                            <td style={{ padding: "12px 8px" }}>
-                              <div style={{ fontWeight: 800, color: T.ok }}>{plant.officeName}</div>
-                              <div style={{ fontSize: 11.5, color: T.sub }}>Code: {plant.officeCode}</div>
-                            </td>
-                            {/* Floor/Zone */}
-                            <td style={{ padding: "12px 8px", fontWeight: 700 }}>
-                              {plant.floor || "-"}
-                            </td>
+                            <th style={{ padding: "10px 16px", fontWeight: 800, color: T.sub }}>Company</th>
+                            <th style={{ padding: "10px 16px", fontWeight: 800, color: T.sub }}>Division</th>
+                            <th style={{ padding: "10px 16px", fontWeight: 800, color: T.sub }}>Department</th>
+                            <th style={{ padding: "10px 16px", fontWeight: 800, color: T.sub }}>Office Name</th>
+                            <th style={{ padding: "10px 16px", fontWeight: 800, color: T.sub }}>Floor/Zone</th>
                           </>
                         ) : (
                           <>
-                            {/* Project/Site Name */}
-                            <td style={{ padding: "12px 8px" }}>
-                              <div style={{ fontWeight: 800, color: T.ok }}>{plant.projectName}</div>
-                              <div style={{ fontSize: 11.5, color: T.sub }}>Code: {plant.projectCode}</div>
-                            </td>
-                            {/* Customer */}
-                            <td style={{ padding: "12px 8px", fontWeight: 700 }}>
-                              {plant.customer || "-"}
-                            </td>
-                            {/* Contractor */}
-                            <td style={{ padding: "12px 8px", fontWeight: 700 }}>
-                              {plant.contractor || "-"}
-                            </td>
-                            {/* Stage/Phase */}
-                            <td style={{ padding: "12px 8px" }}>
-                              <span
-                                style={{
-                                  fontSize: 11.5,
-                                  fontWeight: 800,
-                                  color: "#7c2d12",
-                                  background: "#ffedd5",
-                                  padding: "3px 8px",
-                                  borderRadius: 6
-                                }}
-                              >
-                                {plant.stage || "-"}
-                              </span>
-                            </td>
+                            <th style={{ padding: "10px 16px", fontWeight: 800, color: T.sub }}>Project/Site Name</th>
+                            <th style={{ padding: "10px 16px", fontWeight: 800, color: T.sub }}>Customer</th>
+                            <th style={{ padding: "10px 16px", fontWeight: 800, color: T.sub }}>Contractor</th>
+                            <th style={{ padding: "10px 16px", fontWeight: 800, color: T.sub }}>Stage/Phase</th>
                           </>
                         )}
-                        {/* Status */}
-                        <td style={{ padding: "12px 8px" }}>
-                          <span
-                            style={{
-                              fontSize: 10.5,
-                              fontWeight: 800,
-                              color: T.ink,
-                              background: "#f3f4f6",
-                              border: `1px solid ${T.lineStrong}`,
-                              padding: "2px 6px",
-                              borderRadius: 4,
-                              display: "inline-block"
-                            }}
-                          >
-                            {plant.status}
-                          </span>
-                        </td>
-                        {/* Location */}
-                        <td style={{ padding: "12px 8px" }}>
-                          {plant.lat !== null && plant.lng !== null ? (
-                            <div style={{ display: "flex", alignItems: "center", gap: 4, color: T.danger }}>
-                              <MapPin size={13} style={{ flexShrink: 0 }} />
-                              <span style={{ fontSize: 11, color: T.ink, lineHeight: 1.2 }}>
-                                {plant.lat.toFixed(6)}<br />{plant.lng.toFixed(6)}
-                              </span>
-                            </div>
-                          ) : (
-                            <span style={{ fontSize: 11, color: T.sub }}>No location</span>
-                          )}
-                        </td>
-                        {/* Actions */}
-                        <td style={{ padding: "12px 8px", textAlign: "center" }}>
-                          <div style={{ display: "flex", justifyContent: "center", gap: 6 }}>
-                            <button
-                              type="button"
-                              onClick={() => handleEditPlant(plant)}
-                              style={{
-                                ...buttonGhostStyle,
-                                width: 32,
-                                height: 32,
-                                borderRadius: 8,
-                                padding: 0,
-                                display: "grid",
-                                placeItems: "center"
-                              }}
-                              title="แก้ไข"
-                            >
-                              <Pencil size={13} />
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => handleDeletePlant(plant.id)}
-                              style={{
-                                ...buttonDangerStyle,
-                                width: 32,
-                                height: 32,
-                                borderRadius: 8,
-                                padding: 0,
-                                display: "grid",
-                                placeItems: "center"
-                              }}
-                              title="ลบ"
-                            >
-                              <Trash2 size={13} />
-                            </button>
-                          </div>
-                        </td>
+                        <th style={{ padding: "10px 16px", fontWeight: 800, color: T.sub, width: 80 }}>Status</th>
+                        <th style={{ padding: "10px 16px", fontWeight: 800, color: T.sub, width: 140 }}>Location</th>
+                        <th style={{ padding: "10px 16px", fontWeight: 800, color: T.sub, width: 100, textAlign: "center" }}>Actions</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody>
+                      {paginatedPlants.map((plant, idx) => (
+                        <tr
+                          key={plant.id}
+                          style={{
+                            borderBottom: idx < paginatedPlants.length - 1 ? `1px solid ${T.line}` : "none",
+                            transition: "background 0.2s"
+                          }}
+                          className="hover:bg-black/[0.015] transition-colors"
+                        >
+                          {/* ID */}
+                          <td style={{ padding: "8px 16px", textAlign: "center", fontWeight: 700, color: T.sub }}>
+                            {plant.id}
+                          </td>
+                          {selectedType === "factory" ? (
+                            <>
+                              {/* Company */}
+                              <td style={{ padding: "8px 16px" }}>
+                                <div style={{ fontWeight: 800, color: T.ink }}>{plant.companyCode}</div>
+                                <div style={{ fontSize: 11.5, color: T.sub }}>{plant.companyName}</div>
+                              </td>
+                              {/* Division */}
+                              <td style={{ padding: "8px 16px" }}>
+                                {plant.divisionName ? (
+                                  <>
+                                    <div style={{ fontWeight: 800, color: "var(--brand-text)" }}>{plant.divisionName}</div>
+                                    <div style={{ fontSize: 11.5, color: T.sub }}>Code: {plant.divisionCode}</div>
+                                  </>
+                                ) : (
+                                  <span style={{ fontSize: 11.5, color: T.sub }}>Code: {plant.divisionCode || "[NULL]"}</span>
+                                )}
+                              </td>
+                              {/* Department */}
+                              <td style={{ padding: "8px 16px" }}>
+                                {plant.deptName ? (
+                                  <>
+                                    <div style={{ fontWeight: 800 }}>{plant.deptName}</div>
+                                    <div style={{ fontSize: 11.5, color: T.sub }}>{plant.deptCode}</div>
+                                  </>
+                                ) : (
+                                  <span style={{ color: T.sub, fontSize: 12 }}>{plant.deptCode || "[NULL]"}</span>
+                                )}
+                              </td>
+                              {/* Section */}
+                              <td style={{ padding: "8px 16px" }}>
+                                {plant.secName ? (
+                                  <>
+                                    <div style={{ fontWeight: 800 }}>{plant.secName}</div>
+                                    <div style={{ fontSize: 11.5, color: T.sub }}>{plant.secCode}</div>
+                                  </>
+                                ) : (
+                                  <span style={{ color: T.sub, fontSize: 12 }}>{plant.secCode || "[NULL]"}</span>
+                                )}
+                              </td>
+                              {/* Plant */}
+                              <td style={{ padding: "8px 16px" }}>
+                                <div style={{ fontWeight: 800, color: T.ok }}>{plant.plantName}</div>
+                                <div style={{ fontSize: 11.5, color: T.sub }}>Code: {plant.plantCode}</div>
+                              </td>
+                            </>
+                          ) : selectedType === "office" ? (
+                            <>
+                              {/* Company */}
+                              <td style={{ padding: "8px 16px" }}>
+                                <div style={{ fontWeight: 800, color: T.ink }}>{plant.companyCode}</div>
+                                <div style={{ fontSize: 11.5, color: T.sub }}>{plant.companyName}</div>
+                              </td>
+                              {/* Division */}
+                              <td style={{ padding: "8px 16px" }}>
+                                {plant.divisionName ? (
+                                  <>
+                                    <div style={{ fontWeight: 800, color: "var(--brand-text)" }}>{plant.divisionName}</div>
+                                    <div style={{ fontSize: 11.5, color: T.sub }}>Code: {plant.divisionCode}</div>
+                                  </>
+                                ) : (
+                                  <span style={{ fontSize: 11.5, color: T.sub }}>Code: {plant.divisionCode || "[NULL]"}</span>
+                                )}
+                              </td>
+                              {/* Department */}
+                              <td style={{ padding: "8px 16px" }}>
+                                {plant.deptName ? (
+                                  <>
+                                    <div style={{ fontWeight: 800 }}>{plant.deptName}</div>
+                                    <div style={{ fontSize: 11.5, color: T.sub }}>{plant.deptCode}</div>
+                                  </>
+                                ) : (
+                                  <span style={{ color: T.sub, fontSize: 12 }}>{plant.deptCode || "[NULL]"}</span>
+                                )}
+                              </td>
+                              {/* Office Name */}
+                              <td style={{ padding: "8px 16px" }}>
+                                <div style={{ fontWeight: 800, color: T.ok }}>{plant.officeName}</div>
+                                <div style={{ fontSize: 11.5, color: T.sub }}>Code: {plant.officeCode}</div>
+                              </td>
+                              {/* Floor/Zone */}
+                              <td style={{ padding: "8px 16px", fontWeight: 700 }}>
+                                {plant.floor || "-"}
+                              </td>
+                            </>
+                          ) : (
+                            <>
+                              {/* Project/Site Name */}
+                              <td style={{ padding: "8px 16px" }}>
+                                <div style={{ fontWeight: 800, color: T.ok }}>{plant.projectName}</div>
+                                <div style={{ fontSize: 11.5, color: T.sub }}>Code: {plant.projectCode}</div>
+                              </td>
+                              {/* Customer */}
+                              <td style={{ padding: "8px 16px", fontWeight: 700 }}>
+                                {plant.customer || "-"}
+                              </td>
+                              {/* Contractor */}
+                              <td style={{ padding: "8px 16px", fontWeight: 700 }}>
+                                {plant.contractor || "-"}
+                              </td>
+                              {/* Stage/Phase */}
+                              <td style={{ padding: "8px 16px" }}>
+                                <span
+                                  style={{
+                                    fontSize: 11.5,
+                                    fontWeight: 800,
+                                    color: "#7c2d12",
+                                    background: "#ffedd5",
+                                    padding: "3px 8px",
+                                    borderRadius: 6
+                                  }}
+                                >
+                                  {plant.stage || "-"}
+                                </span>
+                              </td>
+                            </>
+                          )}
+                          {/* Status */}
+                          <td style={{ padding: "8px 16px" }}>
+                            <span
+                              style={{
+                                fontSize: 10.5,
+                                fontWeight: 800,
+                                color: T.ink,
+                                background: "#f3f4f6",
+                                border: `1px solid ${T.lineStrong}`,
+                                padding: "2px 6px",
+                                borderRadius: 4,
+                                display: "inline-block"
+                              }}
+                            >
+                              {plant.status}
+                            </span>
+                          </td>
+                          {/* Location */}
+                          <td style={{ padding: "8px 16px" }}>
+                            {plant.lat !== null && plant.lng !== null ? (
+                              <div style={{ display: "flex", alignItems: "center", gap: 4, color: T.danger }}>
+                                <MapPin size={13} style={{ flexShrink: 0 }} />
+                                <span style={{ fontSize: 11, color: T.ink, lineHeight: 1.2 }}>
+                                  {plant.lat.toFixed(6)}<br />{plant.lng.toFixed(6)}
+                                </span>
+                              </div>
+                            ) : (
+                              <span style={{ fontSize: 11, color: T.sub }}>No location</span>
+                            )}
+                          </td>
+                          {/* Actions */}
+                          <td style={{ padding: "8px 16px", textAlign: "center" }}>
+                            <div style={{ display: "flex", justifyContent: "center", gap: 6 }}>
+                              <button
+                                type="button"
+                                onClick={() => handleEditPlant(plant)}
+                                style={{
+                                  ...buttonGhostStyle,
+                                  width: 32,
+                                  height: 32,
+                                  borderRadius: 8,
+                                  padding: 0,
+                                  display: "grid",
+                                  placeItems: "center"
+                                }}
+                                title="แก้ไข"
+                              >
+                                <Pencil size={13} />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleDeletePlant(plant.id)}
+                                style={{
+                                  ...buttonDangerStyle,
+                                  width: 32,
+                                  height: 32,
+                                  borderRadius: 8,
+                                  padding: 0,
+                                  display: "grid",
+                                  placeItems: "center"
+                                }}
+                                title="ลบ"
+                              >
+                                <Trash2 size={13} />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               )}
             </div>
 
@@ -2802,7 +2767,7 @@ export default function SafetyAdmin() {
           {(!isMobile || mobileActiveView === "list") && (
             <aside
             style={{
-              background: "rgba(255,255,255,0.78)",
+              background: T.card,
               border: `1px solid ${T.line}`,
               borderRadius: 24,
               padding: 16,
@@ -2973,7 +2938,7 @@ export default function SafetyAdmin() {
                 {/* Question Details Editor Card */}
                 <div
                   style={{
-                    background: "rgba(255,255,255,0.92)",
+                    background: T.card,
                     border: `1px solid ${T.line}`,
                     borderRadius: 24,
                     padding: 16,
@@ -3070,7 +3035,7 @@ export default function SafetyAdmin() {
                 {/* Guidelines Editor & Live Preview Card */}
                 <div
                   style={{
-                    background: "rgba(255,255,255,0.92)",
+                    background: T.card,
                     border: `1px solid ${T.line}`,
                     borderRadius: 24,
                     padding: 16,

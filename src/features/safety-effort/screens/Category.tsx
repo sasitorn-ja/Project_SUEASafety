@@ -570,36 +570,6 @@ export default function Category() {
                     ต่ำมาก
                   </span>
                 </div>
-
-                <button
-                  type="button"
-                  onClick={() => navigate("/dashboard-safety-effort")}
-                  style={{
-                    width: "100%",
-                    marginTop: 6,
-                    padding: "10px 14px",
-                    borderRadius: 10,
-                    border: `1px solid ${T.primary}`,
-                    background: "transparent",
-                    color: T.foreground,
-                    fontWeight: 700,
-                    fontSize: 13,
-                    cursor: "pointer",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    gap: 6,
-                    transition: "all 0.2s ease",
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.background = T.primarySoft;
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background = "transparent";
-                  }}
-                >
-                  ดูแดชบอร์ดกราฟแบบละเอียด →
-                </button>
               </div>
             </div>
 

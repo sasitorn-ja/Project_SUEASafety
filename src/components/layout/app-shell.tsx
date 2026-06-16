@@ -80,6 +80,10 @@ export function AppShell({ children }: { children: ReactNode }) {
     };
   }, [pathname]);
 
+  if (pathname === "/login") {
+    return <main className="min-h-screen w-full bg-background">{children}</main>;
+  }
+
   return (
     <div className="min-h-screen bg-background">
       {notification && (

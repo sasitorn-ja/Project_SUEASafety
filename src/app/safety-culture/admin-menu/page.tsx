@@ -7,7 +7,6 @@ import {
   ChevronDown,
   ChevronRight,
   ChevronUp,
-  ChevronDown as ChevronDownIcon,
   Download,
   Eye,
   EyeOff,
@@ -94,7 +93,7 @@ function IconPicker({
         className="flex h-9 items-center gap-1.5 rounded-lg border border-[var(--c-d7c5a7)] bg-white px-2.5 text-[12.5px] font-bold text-[var(--c-5c3214)] hover:bg-[var(--c-fff6d6)]"
       >
         {Selected ? <Selected className="h-4 w-4 text-[var(--c-8b5a12)]" /> : <span className="text-[var(--c-a98a5b)]">— ไม่มี —</span>}
-        <ChevronDownIcon className="h-3.5 w-3.5" />
+        <ChevronDown className="h-3.5 w-3.5" />
       </button>
       {open && (
         <div className="absolute left-0 top-full z-30 mt-1 w-[228px] rounded-xl border border-[var(--c-d7c5a7)] bg-white p-2 shadow-[0_12px_28px_rgba(62,36,13,0.16)]">
