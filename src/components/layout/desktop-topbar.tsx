@@ -4,9 +4,10 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Bell, ChevronDown, FileText, Gift, Heart, Home, LayoutDashboard, Menu, ShieldCheck, Trophy, UserRound, X } from "lucide-react";
+import { Bell, ChevronDown, FileText, Gift, Heart, Home, LayoutDashboard, LogOut, Menu, ShieldCheck, Trophy, UserRound, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { isExactNavActive, isMainNavActive } from "@/lib/navigation";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { useAppTheme } from "@/providers/theme-provider";
 import { getProfileDisplayName, PROFILE_IMAGE_KEY, PROFILE_IMAGE_UPDATED_EVENT } from "@/lib/profile";
@@ -30,6 +31,15 @@ const NAV_ITEMS = [
   { id: "safety-culture", label: "Safety Culture", icon: Heart, href: "/safety-culture" },
   { id: "admin", label: "Admin", icon: UserRound, href: "/safety-admin" },
 ];
+
+const DASHBOARD_ITEMS = [
+  {
+    label: "Safety Effort Dashboard",
+    href: "/dashboard-safety-effort",
+    icon: ShieldCheck,
+    description: "รายงานสรุปผลและสถิติด้านความปลอดภัย",
+  },
+] as const;
 
 const SAFETY_CULTURE_ITEMS = [
   {
@@ -58,9 +68,14 @@ const PROFILE_ITEMS = [
     href: "/profile/activity-history",
     icon: FileText,
   },
+  {
+    label: "ออกจากระบบ",
+    href: "/login",
+    icon: LogOut,
+  },
 ] as const;
 
-const ENABLED_HREFS = new Set(["/", "/dashboard", "/category", "/were-ok", "/work-permit", "/safety-culture", "/safety-admin", "/notifications"]);
+const ENABLED_HREFS = new Set(["/", "/dashboard", "/category", "/were-ok", "/work-permit", "/safety-culture", "/safety-admin", "/notifications", "/login", "/dashboard-safety-effort"]);
 
 function ConfiguredMenuLink({
   node,
@@ -102,52 +117,23 @@ function ConfiguredMenuLink({
   );
 }
 
-function AdminFlyoutSection({
-  section,
-  pathname,
-  open,
-  onOpen,
-}: {
-  section: MenuNode;
-  pathname: string;
-  open: boolean;
-  onOpen: () => void;
-}) {
+function AdminFlyoutSection({ section, pathname }: { section: MenuNode; pathname: string }) {
   const children = section.children.filter((node) => node.enabled);
-  const Icon = getMenuIcon(section.icon);
-  const hasChildren = children.length > 0;
-
-  if (!hasChildren) {
-    return <ConfiguredMenuLink node={section} pathname={pathname} compact />;
-  }
 
   return (
-    <div className="relative" onMouseEnter={onOpen}>
-      <button
-        type="button"
-        onPointerDown={onOpen}
-        onClick={onOpen}
-        className={cn(
-          "flex w-full items-center rounded-lg hover:bg-white/10",
-          open && "bg-white/10"
-        )}
-        aria-expanded={open}
-      >
-        <span className="flex min-w-0 flex-1 items-center gap-2 rounded-md px-2.5 py-1.5 text-white">
-          {Icon && <Icon className="h-3.5 w-3.5 flex-shrink-0 text-[var(--brand-accent)]" strokeWidth={2.35} />}
-          <span className="min-w-0">
-            <span className="block text-[11px] font-extrabold text-white">{section.label}</span>
-          </span>
-        </span>
-        <ChevronDown className={cn("mr-1.5 h-3 w-3 -rotate-90 text-white/70", open && "text-[var(--brand-accent)]")} strokeWidth={2.5} />
-      </button>
-
-      {open && (
-        <div className="absolute left-full top-0 z-50 w-[245px] -translate-x-1 pl-1.5 opacity-100 transition-all duration-150">
+    <div className="group/admin-section relative">
+      <div className="flex items-center rounded-lg hover:bg-white/10">
+        <div className="min-w-0 flex-1">
+          <ConfiguredMenuLink node={section} pathname={pathname} compact />
+        </div>
+        {children.length > 0 && <ChevronDown className="mr-1.5 h-3 w-3 -rotate-90 text-white/70" strokeWidth={2.5} />}
+      </div>
+      {children.length > 0 && (
+        <div className="invisible absolute left-full top-0 z-50 w-[245px] -translate-x-1 pl-1.5 opacity-0 transition-all duration-150 group-hover/admin-section:visible group-hover/admin-section:translate-x-0 group-hover/admin-section:opacity-100">
           <div className="max-h-[calc(100vh-var(--topbar-h)-24px)] overflow-y-auto rounded-lg border border-white/[0.14] bg-[rgba(var(--brand-nav-rgb),0.98)] p-1 shadow-[0_14px_32px_var(--brand-shadow)] backdrop-blur-xl">
-          {children.map((child) => (
+            {children.map((child) => (
               <ConfiguredMenuLink key={child.id} node={child} pathname={pathname} />
-          ))}
+            ))}
           </div>
         </div>
       )}
@@ -162,25 +148,13 @@ export function DesktopTopbar() {
   const [configuredMenu, setConfiguredMenu] = useState<MenuNode[]>([]);
   const [profileImage, setProfileImage] = useState("");
   const isWangjai = theme === "wangjai";
-  const [desktopMenu, setDesktopMenu] = useState<"safety-culture" | "admin" | "profile" | null>(null);
-  const [openAdminSection, setOpenAdminSection] = useState<string | null>(null);
+  const [desktopMenu, setDesktopMenu] = useState<"dashboard" | "safety-culture" | "admin" | "profile" | null>(null);
 
   const isActive = (href: string) => isMainNavActive(pathname, href);
 
   useEffect(() => {
     setDesktopMenu(null);
-    setOpenAdminSection(null);
-    setOpen(false);
   }, [pathname]);
-
-  useEffect(() => {
-    if (!open) return;
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setOpen(false);
-    };
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, [open]);
 
   useEffect(() => {
     const refreshMenu = () => setConfiguredMenu(loadMenu());
@@ -218,7 +192,6 @@ export function DesktopTopbar() {
 
   const configuredAdmin = findAdminMenu(configuredMenu);
   const adminSections = configuredAdmin?.children.filter((node) => node.enabled) ?? [];
-  const firstAdminSectionId = adminSections[0]?.id ?? null;
 
   return (
     <header
@@ -254,10 +227,8 @@ export function DesktopTopbar() {
           </div>
         </NavTo>
 
-        <div className="desktop-compact-menu-wrap">
-          <button
-            type="button"
-            onClick={() => setOpen((current) => !current)}
+        <Sheet open={open} onOpenChange={setOpen}>
+          <SheetTrigger
             className={cn(
               "compact-toggle-visible hidden h-11 w-11 flex-shrink-0 items-center justify-center rounded-full",
               "border border-white/[0.12] bg-white/[0.08] text-white",
@@ -265,94 +236,110 @@ export function DesktopTopbar() {
             )}
             aria-label={open ? "ปิดเมนู" : "เปิดเมนู"}
             title={open ? "ปิดเมนู" : "เปิดเมนู"}
-            aria-expanded={open}
           >
             {open ? <X className="h-5 w-5" strokeWidth={2.35} /> : <Menu className="h-5 w-5" strokeWidth={2.35} />}
-          </button>
+          </SheetTrigger>
+          <SheetContent side="top" showCloseButton={false} className="desktop-compact-menu-sheet">
+            <div className="flex flex-col gap-3">
+              <div className="desktop-compact-grid">
+                {NAV_ITEMS.map((item) => {
+                  const Icon = item.icon;
+                  const active = isActive(item.href);
+                  const enabled = ENABLED_HREFS.has(item.href);
 
-          {open && (
-            <div className="desktop-compact-menu-layer" role="presentation">
-              <button type="button" className="desktop-compact-menu-overlay" aria-label="ปิดเมนู" onClick={() => setOpen(false)} />
-              <div className="desktop-compact-menu-sheet" role="menu" aria-label="เมนูหลัก">
-                <div className="flex flex-col gap-3">
-                  <div className="desktop-compact-grid">
-                    {NAV_ITEMS.map((item) => {
-                      const Icon = item.icon;
-                      const active = isActive(item.href);
-                      const enabled = ENABLED_HREFS.has(item.href);
+                  return (
+                    <NavTo
+                      key={item.id}
+                      href={enabled ? item.href : "#"}
+                      onClick={() => enabled && setOpen(false)}
+                      className={cn(
+                        "flex min-h-11 items-center gap-2.5 rounded-lg px-3 text-sm font-bold transition-colors",
+                        active && enabled ? "bg-[var(--brand-accent)] text-[var(--brand-nav)]" : "bg-white/[0.08] text-white/[0.82] hover:bg-white/10",
+                        !enabled && "cursor-not-allowed opacity-[0.58]"
+                      )}
+                    >
+                      <Icon className="h-[17px] w-[17px]" />
+                      {item.label}
+                    </NavTo>
+                  );
+                })}
+              </div>
 
-                      return (
-                        <NavTo
-                          key={item.id}
-                          href={enabled ? item.href : "#"}
-                          onClick={() => enabled && setOpen(false)}
-                          className={cn(
-                            "flex min-h-11 items-center gap-2.5 rounded-lg px-3 text-sm font-bold transition-colors",
-                            active && enabled ? "bg-[var(--brand-accent)] text-[var(--brand-nav)]" : "bg-white/[0.08] text-white/[0.82] hover:bg-white/10",
-                            !enabled && "cursor-not-allowed opacity-[0.58]"
-                          )}
-                        >
-                          <Icon className="h-[17px] w-[17px]" />
-                          {item.label}
-                        </NavTo>
-                      );
-                    })}
-                  </div>
+              <div className="rounded-2xl border border-white/10 bg-white/[0.06] p-2.5">
+                <div className="mb-2 flex items-center gap-2 px-1.5 text-[10px] font-extrabold uppercase tracking-[0.18em] text-[var(--brand-hero-label)]">
+                  <LayoutDashboard className="h-3.5 w-3.5" strokeWidth={2.3} />
+                  <span>Dashboard</span>
+                </div>
+                <div className="grid grid-cols-1 gap-1.5 md:grid-cols-2">
+                  {DASHBOARD_ITEMS.map((item) => {
+                    const Icon = item.icon;
+                    return (
+                      <NavTo
+                        key={item.href}
+                        href={item.href}
+                        onClick={() => setOpen(false)}
+                        className={cn(
+                          "flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-bold transition-colors hover:bg-white/10",
+                          isExactNavActive(pathname, item.href) ? "bg-white/10 text-[var(--brand-accent)]" : "text-white/[0.86]"
+                        )}
+                      >
+                        <Icon className="h-[17px] w-[17px] text-[var(--brand-accent)]" strokeWidth={2.3} />
+                        {item.label}
+                      </NavTo>
+                    );
+                  })}
+                </div>
+              </div>
 
-                  <div className="rounded-2xl border border-white/10 bg-white/[0.06] p-2.5">
-                    <div className="mb-2 flex items-center gap-2 px-1.5 text-[10px] font-extrabold uppercase tracking-[0.18em] text-[var(--brand-hero-label)]">
-                      <ShieldCheck className="h-3.5 w-3.5" strokeWidth={2.3} />
-                      <span>Safety Culture</span>
-                    </div>
-                    <div className="grid grid-cols-1 gap-1.5 md:grid-cols-2">
-                      {SAFETY_CULTURE_ITEMS.map((item) => {
-                        const Icon = item.icon;
-                        return (
-                          <NavTo
-                            key={item.href}
-                            href={item.href}
-                            onClick={() => setOpen(false)}
-                            className={cn(
-                              "flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-bold transition-colors hover:bg-white/10",
-                              isExactNavActive(pathname, item.href) ? "bg-white/10 text-[var(--brand-accent)]" : "text-white/[0.86]"
-                            )}
-                          >
-                            <Icon className="h-[17px] w-[17px] text-[var(--brand-accent)]" strokeWidth={2.3} />
-                            {item.label}
-                          </NavTo>
-                        );
-                      })}
-                    </div>
-                  </div>
+              <div className="rounded-2xl border border-white/10 bg-white/[0.06] p-2.5">
+                <div className="mb-2 flex items-center gap-2 px-1.5 text-[10px] font-extrabold uppercase tracking-[0.18em] text-[var(--brand-hero-label)]">
+                  <Heart className="h-3.5 w-3.5" strokeWidth={2.3} />
+                  <span>Safety Culture</span>
+                </div>
+                <div className="grid grid-cols-1 gap-1.5 md:grid-cols-2">
+                  {SAFETY_CULTURE_ITEMS.map((item) => {
+                    const Icon = item.icon;
+                    return (
+                      <NavTo
+                        key={item.href}
+                        href={item.href}
+                        onClick={() => setOpen(false)}
+                        className={cn(
+                          "flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-bold transition-colors hover:bg-white/10",
+                          isExactNavActive(pathname, item.href) ? "bg-white/10 text-[var(--brand-accent)]" : "text-white/[0.86]"
+                        )}
+                      >
+                        <Icon className="h-[17px] w-[17px] text-[var(--brand-accent)]" strokeWidth={2.3} />
+                        {item.label}
+                      </NavTo>
+                    );
+                  })}
+                </div>
+              </div>
 
-                  <div className="rounded-2xl border border-white/10 bg-white/[0.06] p-2.5">
-                    <div className="mb-2 flex items-center gap-2 px-1.5 text-[10px] font-extrabold uppercase tracking-[0.18em] text-[var(--brand-hero-label)]">
-                      <UserRound className="h-3.5 w-3.5" strokeWidth={2.3} />
-                      <span>Admin</span>
-                    </div>
-                    <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
-                      {adminSections.map((section) => (
-                        <div key={section.id} className="rounded-xl border border-white/10 bg-white/[0.04] p-1.5">
-                          <ConfiguredMenuLink node={section} pathname={pathname} onClick={() => setOpen(false)} compact />
-                          {section.children.filter((node) => node.enabled).length > 0 && (
-                            <div className="ml-3 border-l border-white/15 pl-2">
-                              {section.children.filter((node) => node.enabled).map((child) => (
-                                <ConfiguredMenuLink key={child.id} node={child} pathname={pathname} onClick={() => setOpen(false)} compact />
-                              ))}
-                            </div>
-                          )}
+              <div className="rounded-2xl border border-white/10 bg-white/[0.06] p-2.5">
+                <div className="mb-2 flex items-center gap-2 px-1.5 text-[10px] font-extrabold uppercase tracking-[0.18em] text-[var(--brand-hero-label)]">
+                  <UserRound className="h-3.5 w-3.5" strokeWidth={2.3} />
+                  <span>Admin</span>
+                </div>
+                <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
+                  {adminSections.map((section) => (
+                    <div key={section.id} className="rounded-xl border border-white/10 bg-white/[0.04] p-1.5">
+                      <ConfiguredMenuLink node={section} pathname={pathname} onClick={() => setOpen(false)} compact />
+                      {section.children.filter((node) => node.enabled).length > 0 && (
+                        <div className="ml-3 border-l border-white/15 pl-2">
+                          {section.children.filter((node) => node.enabled).map((child) => (
+                            <ConfiguredMenuLink key={child.id} node={child} pathname={pathname} onClick={() => setOpen(false)} compact />
+                          ))}
                         </div>
-                      ))}
-                      {adminSections.length === 0 && (
-                        <div className="rounded-xl border border-white/10 bg-white/[0.04] px-3 py-4 text-center text-xs font-bold text-white/60">ยังไม่มีเมนูย่อย Admin</div>
                       )}
                     </div>
-                  </div>
+                  ))}
                 </div>
               </div>
             </div>
-          )}
-        </div>
+          </SheetContent>
+        </Sheet>
 
         <nav className="desktop-nav-visible flex min-w-0 flex-1 items-center justify-center gap-2" aria-label="Main navigation">
           {NAV_ITEMS.map((item) => {
@@ -362,58 +349,77 @@ export function DesktopTopbar() {
 
             if (item.id === "admin") {
               return (
-                <div
-                  key={item.id}
-                  className="relative"
-                  onMouseEnter={() => {
-                    setDesktopMenu("admin");
-                    setOpenAdminSection((current) => current ?? firstAdminSectionId);
-                  }}
-                  onMouseLeave={() => {
-                    setDesktopMenu(null);
-                    setOpenAdminSection(null);
-                  }}
-                  onFocus={() => {
-                    setDesktopMenu("admin");
-                    setOpenAdminSection((current) => current ?? firstAdminSectionId);
-                  }}
-                >
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (desktopMenu === "admin") {
-                        setDesktopMenu(null);
-                        setOpenAdminSection(null);
-                      } else {
-                        setDesktopMenu("admin");
-                        setOpenAdminSection(firstAdminSectionId);
-                      }
-                    }}
-                    className={cn(
-                      "desktop-nav-item inline-flex h-11 cursor-pointer items-center justify-center gap-2 rounded-full border-0 px-4 text-sm font-bold whitespace-nowrap transition-all",
-                      active ? "bg-[var(--brand-nav-active)] text-white" : "bg-transparent text-white/[0.82] hover:bg-white/10 hover:text-white"
-                    )}
-                    aria-expanded={desktopMenu === "admin"}
-                    aria-haspopup="menu"
-                  >
+                <div key={item.id} className="relative" onMouseEnter={() => setDesktopMenu("admin")} onMouseLeave={() => setDesktopMenu(null)} onFocus={() => setDesktopMenu("admin")}>
+                  <NavTo href={item.href} className={cn("desktop-nav-item inline-flex h-11 items-center justify-center gap-2 rounded-full px-4 text-sm font-bold whitespace-nowrap transition-all", active ? "bg-[var(--brand-nav-active)] text-white" : "bg-transparent text-white/[0.82] hover:bg-white/10 hover:text-white")}>
                     <Icon className="h-[17px] w-[17px]" strokeWidth={2.35} />
                     <span className="desktop-nav-label">{item.label}</span>
                     <ChevronDown className={cn("h-3.5 w-3.5 transition-transform", desktopMenu === "admin" && "rotate-180")} />
-                  </button>
+                  </NavTo>
                   <div className={cn("absolute right-[-64px] top-full z-50 w-[220px] pt-1.5 transition-all duration-150", desktopMenu === "admin" ? "visible translate-y-0 opacity-100" : "invisible -translate-y-1 opacity-0")}>
                     <div className="overflow-visible rounded-lg border border-white/[0.14] bg-[rgba(var(--brand-nav-rgb),0.96)] p-1 text-white shadow-[0_14px_32px_var(--brand-shadow)] backdrop-blur-xl">
                       {adminSections.map((section) => (
-                        <AdminFlyoutSection
-                          key={section.id}
-                          section={section}
-                          pathname={pathname}
-                          open={openAdminSection === section.id}
-                          onOpen={() => setOpenAdminSection(section.id)}
-                        />
+                        <AdminFlyoutSection key={section.id} section={section} pathname={pathname} />
                       ))}
                       {adminSections.length === 0 && (
                         <div className="px-3 py-4 text-center text-xs font-bold text-white/60">ยังไม่มีเมนูย่อย Admin</div>
                       )}
+                    </div>
+                  </div>
+                </div>
+              );
+            }
+
+            if (item.id === "dashboard") {
+              const menuId = "dashboard";
+              const submenuItems = DASHBOARD_ITEMS;
+              return (
+                <div
+                  key={item.id}
+                  className="relative"
+                  onMouseEnter={() => setDesktopMenu(menuId)}
+                  onMouseLeave={() => setDesktopMenu(null)}
+                  onFocus={() => setDesktopMenu(menuId)}
+                >
+                  <NavTo
+                    href={item.href}
+                    className={cn(
+                      "desktop-nav-item inline-flex h-11 items-center justify-center gap-2 rounded-full px-4 text-sm font-bold whitespace-nowrap transition-all",
+                      active ? "bg-[var(--brand-nav-active)] text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.18),0_8px_18px_rgba(0,0,0,0.18)]" : "bg-transparent text-white/[0.82] hover:bg-white/10 hover:text-white"
+                    )}
+                  >
+                    <Icon className="h-[17px] w-[17px]" strokeWidth={2.35} />
+                    <span className="desktop-nav-label">{item.label}</span>
+                  </NavTo>
+
+                  <div
+                    className={cn(
+                      "absolute left-1/2 top-full z-50 w-[320px] -translate-x-1/2 pt-2 transition-all duration-150",
+                      desktopMenu === menuId ? "visible translate-y-0 opacity-100" : "invisible -translate-y-1 opacity-0"
+                    )}
+                  >
+                    <div className="max-h-[calc(100vh-var(--topbar-h)-24px)] overflow-y-auto rounded-xl border border-white/[0.14] bg-[rgba(var(--brand-nav-rgb),0.96)] p-1.5 text-white shadow-[0_18px_44px_var(--brand-shadow)] backdrop-blur-xl">
+                      {submenuItems.map((subitem) => {
+                        const SubIcon = subitem.icon;
+
+                        return (
+                          <NavTo
+                            key={subitem.href}
+                            href={subitem.href}
+                            className={cn(
+                              "flex items-center gap-2.5 rounded-lg p-2 text-white transition-colors hover:bg-white/10 focus:bg-white/10 focus:outline-none",
+                              isExactNavActive(pathname, subitem.href) && "bg-white/10"
+                            )}
+                          >
+                            <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full border border-white/10 bg-[rgba(var(--brand-accent-rgb),0.18)] text-[var(--brand-hero-label)]">
+                              <SubIcon className="h-[17px] w-[17px]" strokeWidth={2.35} />
+                            </span>
+                            <span className="min-w-0">
+                              <span className="block text-[12.5px] font-extrabold leading-[16px] text-white">{subitem.label}</span>
+                              <span className="mt-0.5 block text-[10.5px] font-semibold leading-[14px] text-white/[0.68]">{subitem.description}</span>
+                            </span>
+                          </NavTo>
+                        );
+                      })}
                     </div>
                   </div>
                 </div>

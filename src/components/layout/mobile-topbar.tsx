@@ -12,6 +12,7 @@ import {
   Heart,
   Home,
   LayoutDashboard,
+  LogOut,
   Menu,
   ShieldCheck,
   Trophy,
@@ -37,13 +38,20 @@ function NavTo(props: any) {
   return <Link prefetch={false} {...props} />;
 }
 
+const DASHBOARD_ITEMS = [
+  { label: "Safety Effort Dashboard", icon: ShieldCheck, href: "/dashboard-safety-effort" },
+];
+
 const CULTURE_ITEMS = [
   { label: "Feed", icon: Heart, href: "/safety-culture" },
   { label: "Leaderboard", icon: Trophy, href: "/safety-culture/leaderboard" },
   { label: "Rewards", icon: Gift, href: "/safety-culture/rewards" },
 ];
 
-const PROFILE_MENU_ITEMS = [{ label: "กิจกรรมของผู้ใช้งาน", icon: FileText, href: "/profile/activity-history" }];
+const PROFILE_MENU_ITEMS = [
+  { label: "กิจกรรมของผู้ใช้งาน", icon: FileText, href: "/profile/activity-history" },
+  { label: "ออกจากระบบ", icon: LogOut, href: "/login" }
+];
 
 type NavNode = {
   id: string;
@@ -55,7 +63,7 @@ type NavNode = {
 
 const NAV_TREE: NavNode[] = [
   { id: "home", label: "Home", icon: Home, href: "/" },
-  { id: "dashboard", label: "Dashboard", icon: LayoutDashboard, href: "/dashboard" },
+  { id: "dashboard", label: "Dashboard", icon: LayoutDashboard, href: "/dashboard", children: DASHBOARD_ITEMS },
   { id: "safety-effort", label: "Safety Effort", icon: ShieldCheck, href: "/category" },
   { id: "safety-culture", label: "Safety Culture", icon: UsersRound, href: "/safety-culture", children: CULTURE_ITEMS },
   { id: "admin", label: "Admin", icon: UserRound },
@@ -74,6 +82,8 @@ const ENABLED_HREFS = new Set([
   "/notifications",
   "/profile",
   "/profile/activity-history",
+  "/login",
+  "/dashboard-safety-effort",
 ]);
 
 function MobileConfiguredNode({
@@ -163,11 +173,13 @@ export function MobileTopbar({ hidden = false }: { hidden?: boolean }) {
   const isWangjai = theme === "wangjai";
 
   const isActive = (href: string) => isMainNavActive(pathname, href);
+  const dashboardActive = pathname === "/dashboard" || DASHBOARD_ITEMS.some((item) => isExactNavActive(pathname, item.href));
   const cultureActive = CULTURE_ITEMS.some((item) => isExactNavActive(pathname, item.href));
   const adminActive = pathname === "/safety-admin" || pathname.startsWith("/safety-culture/admin-");
   const profileSectionActive = pathname === "/profile" || pathname.startsWith("/profile/");
 
   const [openSections, setOpenSections] = useState<Record<string, boolean>>(() => ({
+    "dashboard": dashboardActive,
     "safety-culture": cultureActive,
     admin: adminActive,
     "admin-safety-effort": pathname === "/safety-admin",
@@ -388,7 +400,7 @@ export function MobileTopbar({ hidden = false }: { hidden?: boolean }) {
 
                 if (item.children) {
                   const isOpen = !!openSections[item.id];
-                  const sectionActive = cultureActive;
+                  const sectionActive = item.id === "safety-culture" ? cultureActive : item.id === "dashboard" ? dashboardActive : false;
 
                   return (
                     <div key={item.id}>
