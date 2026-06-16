@@ -884,7 +884,11 @@ export function AppProviders({ children }: { children: ReactNode }) {
   const [userActivityHistory, setUserActivityHistory] = useState<SafetyCultureUserActivity[]>(() => createDefaultUserActivityHistory());
   const [notification, setNotification] = useState<NotificationType>(null);
   const [currentUserPoints, setCurrentUserPoints] = useState(INITIAL_CURRENT_USER_POINTS);
-  const [safetyCultureEvent, setSafetyCultureEvent] = useState<SafetyCultureEventConfig>(() => createDefaultSafetyCultureEvent());
+  // NOTE: Must be a deterministic, static seed (no `new Date()`), otherwise the
+  // server (UTC) and client (local TZ) compute different dates and React throws
+  // a hydration mismatch (#418). The today-based default is applied on the
+  // client inside the load effect below.
+  const [safetyCultureEvent, setSafetyCultureEvent] = useState<SafetyCultureEventConfig>(DEFAULT_SAFETY_CULTURE_EVENT);
   const [feedEvents, setFeedEvents] = useState<SafetyCultureFeedEvent[]>(() => createDefaultFeedEvents());
   const [teamStandings, setTeamStandings] = useState<LeaderboardTeam[]>(() => createDefaultTeamStandings());
   const [personalRankings, setPersonalRankings] = useState<LeaderboardPerson[]>(() => createDefaultPersonalRankings());
@@ -920,6 +924,10 @@ export function AppProviders({ children }: { children: ReactNode }) {
       if (storedEvent) {
         const parsedEvent = JSON.parse(storedEvent) as Partial<SafetyCultureEventConfig>;
         setSafetyCultureEvent(normalizeStoredSafetyCultureEvent(parsedEvent));
+      } else {
+        // No persisted event: apply the today-based default on the client only
+        // (the initial render uses a static seed to stay hydration-safe).
+        setSafetyCultureEvent(createDefaultSafetyCultureEvent());
       }
 
       if (storedFeedEvents) {

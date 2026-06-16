@@ -407,12 +407,15 @@ export function DesktopTopbar() {
 
         <div className="desktop-actions flex flex-shrink-0 items-center gap-1.5">
           <ThemeToggle />
-          <button
+          <NavTo
+            href="/notifications"
             className={cn(
               "relative flex h-11 w-11 flex-shrink-0 cursor-pointer items-center justify-center rounded-full",
-              "bg-transparent text-white transition-opacity hover:opacity-70"
+              "bg-transparent text-white transition-opacity hover:opacity-70",
+              isExactNavActive(pathname, "/notifications") && "bg-white/10"
             )}
-            aria-label="Notifications"
+            aria-label="การแจ้งเตือน"
+            title="การแจ้งเตือน"
           >
             <Bell className="h-5 w-5" strokeWidth={2.3} />
             <span
@@ -421,7 +424,7 @@ export function DesktopTopbar() {
             >
               3
             </span>
-          </button>
+          </NavTo>
 
           <div
             className="relative"
