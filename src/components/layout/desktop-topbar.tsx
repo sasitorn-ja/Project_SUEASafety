@@ -102,23 +102,52 @@ function ConfiguredMenuLink({
   );
 }
 
-function AdminFlyoutSection({ section, pathname }: { section: MenuNode; pathname: string }) {
+function AdminFlyoutSection({
+  section,
+  pathname,
+  open,
+  onOpen,
+}: {
+  section: MenuNode;
+  pathname: string;
+  open: boolean;
+  onOpen: () => void;
+}) {
   const children = section.children.filter((node) => node.enabled);
+  const Icon = getMenuIcon(section.icon);
+  const hasChildren = children.length > 0;
+
+  if (!hasChildren) {
+    return <ConfiguredMenuLink node={section} pathname={pathname} compact />;
+  }
 
   return (
-    <div className="group/admin-section relative">
-      <div className="flex items-center rounded-lg hover:bg-white/10">
-        <div className="min-w-0 flex-1">
-          <ConfiguredMenuLink node={section} pathname={pathname} compact />
-        </div>
-        {children.length > 0 && <ChevronDown className="mr-1.5 h-3 w-3 -rotate-90 text-white/70" strokeWidth={2.5} />}
-      </div>
-      {children.length > 0 && (
-        <div className="invisible absolute left-full top-0 z-50 w-[245px] -translate-x-1 pl-1.5 opacity-0 transition-all duration-150 group-hover/admin-section:visible group-hover/admin-section:translate-x-0 group-hover/admin-section:opacity-100">
+    <div className="relative" onMouseEnter={onOpen}>
+      <button
+        type="button"
+        onPointerDown={onOpen}
+        onClick={onOpen}
+        className={cn(
+          "flex w-full items-center rounded-lg hover:bg-white/10",
+          open && "bg-white/10"
+        )}
+        aria-expanded={open}
+      >
+        <span className="flex min-w-0 flex-1 items-center gap-2 rounded-md px-2.5 py-1.5 text-white">
+          {Icon && <Icon className="h-3.5 w-3.5 flex-shrink-0 text-[var(--brand-accent)]" strokeWidth={2.35} />}
+          <span className="min-w-0">
+            <span className="block text-[11px] font-extrabold text-white">{section.label}</span>
+          </span>
+        </span>
+        <ChevronDown className={cn("mr-1.5 h-3 w-3 -rotate-90 text-white/70", open && "text-[var(--brand-accent)]")} strokeWidth={2.5} />
+      </button>
+
+      {open && (
+        <div className="absolute left-full top-0 z-50 w-[245px] -translate-x-1 pl-1.5 opacity-100 transition-all duration-150">
           <div className="max-h-[calc(100vh-var(--topbar-h)-24px)] overflow-y-auto rounded-lg border border-white/[0.14] bg-[rgba(var(--brand-nav-rgb),0.98)] p-1 shadow-[0_14px_32px_var(--brand-shadow)] backdrop-blur-xl">
-            {children.map((child) => (
+          {children.map((child) => (
               <ConfiguredMenuLink key={child.id} node={child} pathname={pathname} />
-            ))}
+          ))}
           </div>
         </div>
       )}
@@ -134,11 +163,13 @@ export function DesktopTopbar() {
   const [profileImage, setProfileImage] = useState("");
   const isWangjai = theme === "wangjai";
   const [desktopMenu, setDesktopMenu] = useState<"safety-culture" | "admin" | "profile" | null>(null);
+  const [openAdminSection, setOpenAdminSection] = useState<string | null>(null);
 
   const isActive = (href: string) => isMainNavActive(pathname, href);
 
   useEffect(() => {
     setDesktopMenu(null);
+    setOpenAdminSection(null);
     setOpen(false);
   }, [pathname]);
 
@@ -187,6 +218,7 @@ export function DesktopTopbar() {
 
   const configuredAdmin = findAdminMenu(configuredMenu);
   const adminSections = configuredAdmin?.children.filter((node) => node.enabled) ?? [];
+  const firstAdminSectionId = adminSections[0]?.id ?? null;
 
   return (
     <header
@@ -330,16 +362,54 @@ export function DesktopTopbar() {
 
             if (item.id === "admin") {
               return (
-                <div key={item.id} className="relative" onMouseEnter={() => setDesktopMenu("admin")} onMouseLeave={() => setDesktopMenu(null)} onFocus={() => setDesktopMenu("admin")}>
-                  <NavTo href={item.href} className={cn("desktop-nav-item inline-flex h-11 items-center justify-center gap-2 rounded-full px-4 text-sm font-bold whitespace-nowrap transition-all", active ? "bg-[var(--brand-nav-active)] text-white" : "bg-transparent text-white/[0.82] hover:bg-white/10 hover:text-white")}>
+                <div
+                  key={item.id}
+                  className="relative"
+                  onMouseEnter={() => {
+                    setDesktopMenu("admin");
+                    setOpenAdminSection((current) => current ?? firstAdminSectionId);
+                  }}
+                  onMouseLeave={() => {
+                    setDesktopMenu(null);
+                    setOpenAdminSection(null);
+                  }}
+                  onFocus={() => {
+                    setDesktopMenu("admin");
+                    setOpenAdminSection((current) => current ?? firstAdminSectionId);
+                  }}
+                >
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (desktopMenu === "admin") {
+                        setDesktopMenu(null);
+                        setOpenAdminSection(null);
+                      } else {
+                        setDesktopMenu("admin");
+                        setOpenAdminSection(firstAdminSectionId);
+                      }
+                    }}
+                    className={cn(
+                      "desktop-nav-item inline-flex h-11 cursor-pointer items-center justify-center gap-2 rounded-full border-0 px-4 text-sm font-bold whitespace-nowrap transition-all",
+                      active ? "bg-[var(--brand-nav-active)] text-white" : "bg-transparent text-white/[0.82] hover:bg-white/10 hover:text-white"
+                    )}
+                    aria-expanded={desktopMenu === "admin"}
+                    aria-haspopup="menu"
+                  >
                     <Icon className="h-[17px] w-[17px]" strokeWidth={2.35} />
                     <span className="desktop-nav-label">{item.label}</span>
                     <ChevronDown className={cn("h-3.5 w-3.5 transition-transform", desktopMenu === "admin" && "rotate-180")} />
-                  </NavTo>
+                  </button>
                   <div className={cn("absolute right-[-64px] top-full z-50 w-[220px] pt-1.5 transition-all duration-150", desktopMenu === "admin" ? "visible translate-y-0 opacity-100" : "invisible -translate-y-1 opacity-0")}>
                     <div className="overflow-visible rounded-lg border border-white/[0.14] bg-[rgba(var(--brand-nav-rgb),0.96)] p-1 text-white shadow-[0_14px_32px_var(--brand-shadow)] backdrop-blur-xl">
                       {adminSections.map((section) => (
-                        <AdminFlyoutSection key={section.id} section={section} pathname={pathname} />
+                        <AdminFlyoutSection
+                          key={section.id}
+                          section={section}
+                          pathname={pathname}
+                          open={openAdminSection === section.id}
+                          onOpen={() => setOpenAdminSection(section.id)}
+                        />
                       ))}
                       {adminSections.length === 0 && (
                         <div className="px-3 py-4 text-center text-xs font-bold text-white/60">ยังไม่มีเมนูย่อย Admin</div>

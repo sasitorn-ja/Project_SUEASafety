@@ -419,8 +419,20 @@ body * {
 }
 
 @media (max-width: 1099px) and (min-width: 768px) {
+  .desktop-topbar-inner {
+    justify-content: flex-start !important;
+  }
+
   .compact-toggle-visible {
     display: inline-flex !important;
+  }
+
+  .desktop-compact-menu-wrap {
+    margin-left: 8px !important;
+  }
+
+  .desktop-actions {
+    margin-left: auto !important;
   }
 
   .desktop-nav-visible {
