@@ -155,6 +155,12 @@ export function getDefaultMenu(): MenuNode[] {
           icon: "Heart",
           children: [
             n({
+              label: "Manage Menu",
+              href: "/safety-culture/admin-menu",
+              icon: "Settings2",
+              description: "จัดการโครงสร้างเมนูหลักและเมนูย่อย",
+            }),
+            n({
               label: "Edit Event",
               href: "/safety-culture/admin-event",
               icon: "Settings2",
@@ -187,7 +193,7 @@ export function getDefaultMenu(): MenuNode[] {
 
 function normalizeNode(raw: any): MenuNode | null {
   if (!raw || typeof raw !== "object") return null;
-  if (["/safety-culture/admin-menu", "/were-ok", "/work-permit"].includes(raw.href)) return null;
+  if (["/were-ok", "/work-permit"].includes(raw.href)) return null;
   const children = Array.isArray(raw.children)
     ? (raw.children.map(normalizeNode).filter(Boolean) as MenuNode[])
     : [];
@@ -205,7 +211,44 @@ function normalizeNode(raw: any): MenuNode | null {
 export function normalizeMenu(raw: any): MenuNode[] | null {
   if (!Array.isArray(raw)) return null;
   const result = raw.map(normalizeNode).filter(Boolean) as MenuNode[];
-  return result;
+  return ensureAdminMenuManager(result);
+}
+
+function hasHref(menu: MenuNode[], href: string): boolean {
+  return menu.some((node) => node.href === href || hasHref(node.children, href));
+}
+
+function ensureAdminMenuManager(menu: MenuNode[]): MenuNode[] {
+  if (hasHref(menu, "/safety-culture/admin-menu")) return menu;
+
+  return menu.map((node) => {
+    const isAdmin = node.href === "/safety-admin" || node.label.trim().toLowerCase() === "admin";
+    if (!isAdmin) return node;
+
+    return {
+      ...node,
+      children: node.children.map((section) => {
+        const isSafetyCulture =
+          section.href === "/safety-culture" ||
+          section.label.trim().toLowerCase() === "safety culture";
+
+        if (!isSafetyCulture) return section;
+
+        return {
+          ...section,
+          children: [
+            createMenuNode({
+              label: "Manage Menu",
+              href: "/safety-culture/admin-menu",
+              icon: "Settings2",
+              description: "จัดการโครงสร้างเมนูหลักและเมนูย่อย",
+            }),
+            ...section.children,
+          ],
+        };
+      }),
+    };
+  });
 }
 
 export function loadMenu(): MenuNode[] {

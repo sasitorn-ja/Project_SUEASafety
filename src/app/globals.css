@@ -294,13 +294,40 @@ body * {
   }
 }
 
+.desktop-compact-menu-wrap {
+  flex-shrink: 0;
+}
+
+.desktop-compact-menu-layer {
+  position: fixed;
+  inset-inline: 0;
+  top: var(--topbar-h);
+  bottom: 0;
+  z-index: 45;
+}
+
+.desktop-compact-menu-overlay {
+  position: absolute;
+  inset: 0;
+  cursor: pointer;
+  background: rgba(0, 0, 0, 0.12);
+  backdrop-filter: blur(2px);
+}
+
 .desktop-compact-menu-sheet {
-  top: var(--topbar-h) !important;
-  border-top: 1px solid rgba(255, 255, 255, 0.1) !important;
-  border-bottom: none !important;
-  background: rgba(var(--brand-nav-rgb), 0.98) !important;
-  padding: 16px 24px !important;
-  box-shadow: 0 18px 36px rgba(38, 18, 3, 0.24) !important;
+  position: fixed;
+  inset-inline: 0;
+  top: var(--topbar-h);
+  z-index: 55;
+  max-height: calc(100vh - var(--topbar-h));
+  overflow-y: auto;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  border-bottom: none;
+  background: rgba(var(--brand-nav-rgb), 0.98);
+  padding: 16px 24px;
+  box-shadow: 0 18px 36px rgba(38, 18, 3, 0.24);
+  animation: compactMenuDrop 160ms ease-out both;
+  backdrop-filter: blur(16px);
 }
 
 .desktop-compact-menu-sheet .desktop-compact-grid {
@@ -314,6 +341,18 @@ body * {
 @media (min-width: 1100px) {
   .desktop-compact-menu-sheet .desktop-compact-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@keyframes compactMenuDrop {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 
@@ -380,6 +419,14 @@ body * {
 }
 
 @media (max-width: 1099px) and (min-width: 768px) {
+  .compact-toggle-visible {
+    display: inline-flex !important;
+  }
+
+  .desktop-nav-visible {
+    display: none !important;
+  }
+
   .desktop-brand {
     min-width: 46px !important;
   }

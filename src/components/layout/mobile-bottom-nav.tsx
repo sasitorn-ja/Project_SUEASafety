@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, LayoutDashboard, ShieldCheck, HeartPulse, ClipboardCheck, UsersRound } from "lucide-react";
+import { Home, LayoutDashboard, ShieldCheck, UsersRound } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { isMainNavActive } from "@/lib/navigation";
 
@@ -14,12 +14,10 @@ const NAV_ITEMS = [
   { id: "home", label: "Home", icon: Home, href: "/" },
   { id: "dashboard", label: "Dashboard", icon: LayoutDashboard, href: "/dashboard" },
   { id: "safety-effort", label: "Safety Effort", icon: ShieldCheck, href: "/category" },
-  { id: "were-ok", label: "We're OK", icon: HeartPulse, href: "/were-ok" },
-  { id: "work-permit", label: "Work Permit", icon: ClipboardCheck, href: "/work-permit" },
   { id: "safety-culture", label: "Safety Culture", icon: UsersRound, href: "/safety-culture" },
 ];
 
-const ENABLED_HREFS = new Set(["/", "/dashboard", "/category", "/were-ok", "/work-permit", "/safety-culture"]);
+const ENABLED_HREFS = new Set(["/", "/dashboard", "/category", "/safety-culture"]);
 
 export function MobileBottomNav({ hidden = false }: { hidden?: boolean }) {
   const pathname = usePathname() ?? "";
@@ -42,7 +40,7 @@ export function MobileBottomNav({ hidden = false }: { hidden?: boolean }) {
       }}
       aria-label="เมนูหลักบนมือถือ"
     >
-      <div className="grid h-[60px] w-full grid-cols-6 px-1 pt-[5px]">
+      <div className="grid h-[60px] w-full grid-cols-4 px-1 pt-[5px]">
         {NAV_ITEMS.map((item) => {
           const Icon = item.icon;
           const active = isActive(item.href);

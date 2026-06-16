@@ -7,7 +7,6 @@ import { useEffect, useState } from "react";
 import { Bell, ChevronDown, FileText, Gift, Heart, Home, LayoutDashboard, Menu, ShieldCheck, Trophy, UserRound, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { isExactNavActive, isMainNavActive } from "@/lib/navigation";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { useAppTheme } from "@/providers/theme-provider";
 import { getProfileDisplayName, PROFILE_IMAGE_KEY, PROFILE_IMAGE_UPDATED_EVENT } from "@/lib/profile";
@@ -140,7 +139,17 @@ export function DesktopTopbar() {
 
   useEffect(() => {
     setDesktopMenu(null);
+    setOpen(false);
   }, [pathname]);
+
+  useEffect(() => {
+    if (!open) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setOpen(false);
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [open]);
 
   useEffect(() => {
     const refreshMenu = () => setConfiguredMenu(loadMenu());
@@ -213,8 +222,10 @@ export function DesktopTopbar() {
           </div>
         </NavTo>
 
-        <Sheet open={open} onOpenChange={setOpen}>
-          <SheetTrigger
+        <div className="desktop-compact-menu-wrap">
+          <button
+            type="button"
+            onClick={() => setOpen((current) => !current)}
             className={cn(
               "compact-toggle-visible hidden h-11 w-11 flex-shrink-0 items-center justify-center rounded-full",
               "border border-white/[0.12] bg-white/[0.08] text-white",
@@ -222,84 +233,94 @@ export function DesktopTopbar() {
             )}
             aria-label={open ? "ปิดเมนู" : "เปิดเมนู"}
             title={open ? "ปิดเมนู" : "เปิดเมนู"}
+            aria-expanded={open}
           >
             {open ? <X className="h-5 w-5" strokeWidth={2.35} /> : <Menu className="h-5 w-5" strokeWidth={2.35} />}
-          </SheetTrigger>
-          <SheetContent side="top" showCloseButton={false} className="desktop-compact-menu-sheet">
-            <div className="flex flex-col gap-3">
-              <div className="desktop-compact-grid">
-                {NAV_ITEMS.map((item) => {
-                  const Icon = item.icon;
-                  const active = isActive(item.href);
-                  const enabled = ENABLED_HREFS.has(item.href);
+          </button>
 
-                  return (
-                    <NavTo
-                      key={item.id}
-                      href={enabled ? item.href : "#"}
-                      onClick={() => enabled && setOpen(false)}
-                      className={cn(
-                        "flex min-h-11 items-center gap-2.5 rounded-lg px-3 text-sm font-bold transition-colors",
-                        active && enabled ? "bg-[var(--brand-accent)] text-[var(--brand-nav)]" : "bg-white/[0.08] text-white/[0.82] hover:bg-white/10",
-                        !enabled && "cursor-not-allowed opacity-[0.58]"
-                      )}
-                    >
-                      <Icon className="h-[17px] w-[17px]" />
-                      {item.label}
-                    </NavTo>
-                  );
-                })}
-              </div>
+          {open && (
+            <div className="desktop-compact-menu-layer" role="presentation">
+              <button type="button" className="desktop-compact-menu-overlay" aria-label="ปิดเมนู" onClick={() => setOpen(false)} />
+              <div className="desktop-compact-menu-sheet" role="menu" aria-label="เมนูหลัก">
+                <div className="flex flex-col gap-3">
+                  <div className="desktop-compact-grid">
+                    {NAV_ITEMS.map((item) => {
+                      const Icon = item.icon;
+                      const active = isActive(item.href);
+                      const enabled = ENABLED_HREFS.has(item.href);
 
-              <div className="rounded-2xl border border-white/10 bg-white/[0.06] p-2.5">
-                <div className="mb-2 flex items-center gap-2 px-1.5 text-[10px] font-extrabold uppercase tracking-[0.18em] text-[var(--brand-hero-label)]">
-                  <ShieldCheck className="h-3.5 w-3.5" strokeWidth={2.3} />
-                  <span>Safety Culture</span>
-                </div>
-                <div className="grid grid-cols-1 gap-1.5 md:grid-cols-2">
-                  {SAFETY_CULTURE_ITEMS.map((item) => {
-                    const Icon = item.icon;
-                    return (
-                      <NavTo
-                        key={item.href}
-                        href={item.href}
-                        onClick={() => setOpen(false)}
-                        className={cn(
-                          "flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-bold transition-colors hover:bg-white/10",
-                          isExactNavActive(pathname, item.href) ? "bg-white/10 text-[var(--brand-accent)]" : "text-white/[0.86]"
-                        )}
-                      >
-                        <Icon className="h-[17px] w-[17px] text-[var(--brand-accent)]" strokeWidth={2.3} />
-                        {item.label}
-                      </NavTo>
-                    );
-                  })}
-                </div>
-              </div>
+                      return (
+                        <NavTo
+                          key={item.id}
+                          href={enabled ? item.href : "#"}
+                          onClick={() => enabled && setOpen(false)}
+                          className={cn(
+                            "flex min-h-11 items-center gap-2.5 rounded-lg px-3 text-sm font-bold transition-colors",
+                            active && enabled ? "bg-[var(--brand-accent)] text-[var(--brand-nav)]" : "bg-white/[0.08] text-white/[0.82] hover:bg-white/10",
+                            !enabled && "cursor-not-allowed opacity-[0.58]"
+                          )}
+                        >
+                          <Icon className="h-[17px] w-[17px]" />
+                          {item.label}
+                        </NavTo>
+                      );
+                    })}
+                  </div>
 
-              <div className="rounded-2xl border border-white/10 bg-white/[0.06] p-2.5">
-                <div className="mb-2 flex items-center gap-2 px-1.5 text-[10px] font-extrabold uppercase tracking-[0.18em] text-[var(--brand-hero-label)]">
-                  <UserRound className="h-3.5 w-3.5" strokeWidth={2.3} />
-                  <span>Admin</span>
-                </div>
-                <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
-                  {adminSections.map((section) => (
-                    <div key={section.id} className="rounded-xl border border-white/10 bg-white/[0.04] p-1.5">
-                      <ConfiguredMenuLink node={section} pathname={pathname} onClick={() => setOpen(false)} compact />
-                      {section.children.filter((node) => node.enabled).length > 0 && (
-                        <div className="ml-3 border-l border-white/15 pl-2">
-                          {section.children.filter((node) => node.enabled).map((child) => (
-                            <ConfiguredMenuLink key={child.id} node={child} pathname={pathname} onClick={() => setOpen(false)} compact />
-                          ))}
+                  <div className="rounded-2xl border border-white/10 bg-white/[0.06] p-2.5">
+                    <div className="mb-2 flex items-center gap-2 px-1.5 text-[10px] font-extrabold uppercase tracking-[0.18em] text-[var(--brand-hero-label)]">
+                      <ShieldCheck className="h-3.5 w-3.5" strokeWidth={2.3} />
+                      <span>Safety Culture</span>
+                    </div>
+                    <div className="grid grid-cols-1 gap-1.5 md:grid-cols-2">
+                      {SAFETY_CULTURE_ITEMS.map((item) => {
+                        const Icon = item.icon;
+                        return (
+                          <NavTo
+                            key={item.href}
+                            href={item.href}
+                            onClick={() => setOpen(false)}
+                            className={cn(
+                              "flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-bold transition-colors hover:bg-white/10",
+                              isExactNavActive(pathname, item.href) ? "bg-white/10 text-[var(--brand-accent)]" : "text-white/[0.86]"
+                            )}
+                          >
+                            <Icon className="h-[17px] w-[17px] text-[var(--brand-accent)]" strokeWidth={2.3} />
+                            {item.label}
+                          </NavTo>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  <div className="rounded-2xl border border-white/10 bg-white/[0.06] p-2.5">
+                    <div className="mb-2 flex items-center gap-2 px-1.5 text-[10px] font-extrabold uppercase tracking-[0.18em] text-[var(--brand-hero-label)]">
+                      <UserRound className="h-3.5 w-3.5" strokeWidth={2.3} />
+                      <span>Admin</span>
+                    </div>
+                    <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
+                      {adminSections.map((section) => (
+                        <div key={section.id} className="rounded-xl border border-white/10 bg-white/[0.04] p-1.5">
+                          <ConfiguredMenuLink node={section} pathname={pathname} onClick={() => setOpen(false)} compact />
+                          {section.children.filter((node) => node.enabled).length > 0 && (
+                            <div className="ml-3 border-l border-white/15 pl-2">
+                              {section.children.filter((node) => node.enabled).map((child) => (
+                                <ConfiguredMenuLink key={child.id} node={child} pathname={pathname} onClick={() => setOpen(false)} compact />
+                              ))}
+                            </div>
+                          )}
                         </div>
+                      ))}
+                      {adminSections.length === 0 && (
+                        <div className="rounded-xl border border-white/10 bg-white/[0.04] px-3 py-4 text-center text-xs font-bold text-white/60">ยังไม่มีเมนูย่อย Admin</div>
                       )}
                     </div>
-                  ))}
+                  </div>
                 </div>
               </div>
             </div>
-          </SheetContent>
-        </Sheet>
+          )}
+        </div>
 
         <nav className="desktop-nav-visible flex min-w-0 flex-1 items-center justify-center gap-2" aria-label="Main navigation">
           {NAV_ITEMS.map((item) => {
