@@ -9,7 +9,9 @@ import {
   CheckCircle2,
   ChevronRight,
   Clock3,
+  Flame,
   Gift,
+  Medal,
   ShieldCheck,
   Sparkles,
   Target,
@@ -106,13 +108,15 @@ export default function HomePage() {
   const awarenessCountedDays = awarenessDays.filter((item) => !item.excludedReason);
   const awarenessCompletedCount = awarenessCountedDays.filter((item) => item.completion).length;
   const awarenessPastDays = awarenessCountedDays.filter((item) => item.key !== todayDateKey);
+  const awarenessMissedCount = awarenessPastDays.filter((item) => !item.completion).length;
   const awarenessRate = awarenessCountedDays.length > 0 ? Math.round((awarenessCompletedCount / awarenessCountedDays.length) * 100) : 100;
   const latestAwareness = [...awarenessHistory].sort((a, b) => b.completedAt.localeCompare(a.completedAt))[0];
+  const weeklyBars = [42, 58, 50, 66, 74, 82, 78, 96];
 
   return (
-    <div className="mx-auto w-full max-w-[1100px] px-3.5 pt-2 pb-8 font-sarabun md:px-4">
+    <div className="mx-auto w-full max-w-[1500px] px-3.5 pt-2 pb-8 font-sarabun sm:px-5 lg:px-8 2xl:px-10">
       {/* ===== HERO: แดชบอร์ดคะแนน ===== */}
-      <section className="relative overflow-hidden rounded-[16px] bg-[linear-gradient(135deg,var(--brand-hero-start),var(--brand-hero-end))] px-3.5 py-3.5 text-white shadow-[0_12px_28px_var(--brand-shadow)] md:px-7 md:py-6">
+      <section className="relative overflow-hidden rounded-[16px] bg-[linear-gradient(135deg,var(--brand-hero-start),var(--brand-hero-end))] px-3.5 py-3.5 text-white shadow-[0_12px_28px_var(--brand-shadow)] md:px-7 md:py-6 xl:px-8">
         <div className="absolute inset-x-0 top-0 h-2 bg-[repeating-linear-gradient(-45deg,var(--brand-accent),var(--brand-accent)_10px,#1a1a1a_10px,#1a1a1a_20px)]" />
         <Image
           src={mascot("big")}
@@ -176,9 +180,9 @@ export default function HomePage() {
           </div>
         </div>
 
-        <div className="relative hidden gap-4 md:grid md:grid-cols-[minmax(0,1fr)_minmax(260px,330px)] md:items-center">
+        <div className="relative hidden gap-4 md:grid md:grid-cols-[minmax(220px,0.9fr)_minmax(260px,1fr)_minmax(260px,330px)] md:items-stretch xl:grid-cols-[minmax(260px,0.85fr)_minmax(380px,1.1fr)_minmax(340px,420px)] xl:gap-6">
           {/* คะแนน */}
-          <div>
+          <div className="flex flex-col justify-center">
             <p className="flex items-center gap-2 text-xs font-extrabold uppercase tracking-[0.18em] text-[var(--brand-hero-label)]">
               <Sparkles className="h-4 w-4" strokeWidth={2.4} />
               คะแนน Safety ของฉัน
@@ -209,8 +213,42 @@ export default function HomePage() {
             </div>
           </div>
 
+          <div className="flex flex-col justify-center border-white/10 md:border-l md:pl-4 xl:pl-6">
+            <div className="flex items-center justify-between gap-3">
+              <p className="text-[12px] font-extrabold uppercase tracking-[0.14em] text-[var(--brand-hero-label)]">
+                เทรนด์คะแนน 8 สัปดาห์
+              </p>
+              <span className="text-[11px] font-black text-[#8cffb0]">+18%</span>
+            </div>
+            <div className="mt-4 flex h-9 items-end gap-2">
+              {weeklyBars.map((bar, index) => (
+                <div
+                  key={index}
+                  className={`flex-1 rounded-t-sm ${index === weeklyBars.length - 1 ? "bg-[#72e58a]" : "bg-white/28"}`}
+                  style={{ height: `${bar}%` }}
+                />
+              ))}
+            </div>
+            <div className="mt-4 grid grid-cols-2 gap-2.5">
+              <div className="rounded-[10px] border border-white/20 bg-white/10 px-3 py-2">
+                <div className="flex items-center gap-1.5 text-[12px] font-black">
+                  <Medal className="h-4 w-4 text-[var(--brand-hero-label)]" strokeWidth={2.4} />
+                  {currentUserPoints.toLocaleString()}
+                </div>
+                <p className="mt-0.5 text-[10px] font-bold text-white/65">วันนี้แต้มทั้งหมด</p>
+              </div>
+              <div className="rounded-[10px] border border-white/20 bg-white/10 px-3 py-2">
+                <div className="flex items-center gap-1.5 text-[12px] font-black">
+                  <Flame className="h-4 w-4 text-[#ff9f43]" strokeWidth={2.4} />
+                  {awarenessCompletedCount}
+                </div>
+                <p className="mt-0.5 text-[10px] font-bold text-white/65">ทำต่อเนื่อง KPI</p>
+              </div>
+            </div>
+          </div>
+
           {/* ความคืบหน้าสู่รางวัล */}
-          <div className="rounded-[14px] border border-white/15 bg-white/10 p-3 backdrop-blur-[6px] md:rounded-[16px] md:p-4">
+          <div className="rounded-[14px] border border-white/15 bg-white/10 p-3 backdrop-blur-[6px] md:rounded-[16px] md:p-4 xl:p-5">
             {nextReward ? (
               <>
                 <div className="flex items-center justify-between gap-2">
@@ -261,8 +299,10 @@ export default function HomePage() {
         </div>
       </section>
 
+      <div className="mt-3 grid gap-3 lg:grid-cols-[minmax(0,1fr)_320px] xl:grid-cols-[minmax(0,1fr)_360px]">
+        <div className="min-w-0">
       {/* ===== Safety Awareness KPI ===== */}
-      <section className="mt-3 md:mt-4">
+      <section>
         <div className="mb-2 flex items-center justify-between md:mb-2.5">
           <h2 className="flex items-center gap-1.5 text-[15px] font-black text-[var(--brand-nav)] md:gap-2 md:text-[17px]">
             <ShieldCheck className="h-4 w-4 text-[var(--brand-accent-strong)] md:h-5 md:w-5" strokeWidth={2.5} />
@@ -272,7 +312,7 @@ export default function HomePage() {
         </div>
 
         <Card className="overflow-hidden rounded-[18px] border border-[var(--border)] bg-[var(--brand-surface)] p-0 shadow-[0_10px_26px_var(--brand-shadow)]">
-          <div className="grid gap-3 border-b border-[var(--border)] p-3.5 md:grid-cols-[1fr_auto] md:items-center md:p-5">
+          <div className="grid gap-3 border-b border-[var(--border)] p-3.5 md:grid-cols-[1fr_auto] md:items-center md:p-5 xl:grid-cols-[minmax(0,1fr)_360px] xl:gap-8">
             <div>
               <div className="flex flex-wrap items-center gap-2">
                 <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[var(--brand-nav)] text-[var(--brand-accent)]">
@@ -291,7 +331,7 @@ export default function HomePage() {
               </div>
             </div>
 
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-3 gap-2 xl:gap-3">
               <div className="rounded-xl bg-[var(--brand-soft)] px-3 py-2 text-center">
                 <p className="text-[18px] font-black text-[var(--brand-nav)]">{awarenessCompletedCount}</p>
                 <p className="text-[9px] font-extrabold text-[var(--brand-muted-text)]">ทำแล้ว</p>
@@ -307,8 +347,8 @@ export default function HomePage() {
             </div>
           </div>
 
-          <div className="p-3.5 md:p-5">
-            <div className="grid grid-cols-7 gap-1.5 md:gap-2">
+          <div className="p-3.5 md:p-5 xl:p-6">
+            <div className="grid grid-cols-7 gap-1.5 md:gap-2 xl:grid-cols-14 xl:gap-2.5">
               {awarenessDays.map(({ key, date, completion, excludedReason }) => {
                 const isToday = key === todayDateKey;
                 const status = excludedReason ? "excluded" : completion ? "done" : isToday ? "pending" : "missed";
@@ -316,7 +356,7 @@ export default function HomePage() {
                   <div
                     key={key}
                     title={`${formatThaiDate(date, true)}: ${status === "excluded" ? `ไม่นับ KPI (${excludedReason})` : status === "done" ? "ทำแล้ว" : status === "pending" ? "รอดำเนินการ" : "ไม่ได้ทำ"}`}
-                    className={`grid min-h-[58px] place-items-center rounded-xl border px-1 py-2 text-center ${
+                    className={`grid min-h-[58px] place-items-center rounded-xl border px-1 py-2 text-center xl:min-h-[72px] ${
                       status === "excluded"
                         ? "border-[var(--border)] bg-[var(--secondary)] text-[var(--brand-muted-text)]"
                         : status === "done"
@@ -334,14 +374,14 @@ export default function HomePage() {
               })}
             </div>
 
-            <div className="mt-4 rounded-[14px] border border-[var(--border)] bg-background/70 p-3">
+            <div className="mt-4 rounded-[14px] border border-[var(--border)] bg-background/70 p-3 xl:p-4">
               <div className="flex items-center gap-2">
                 <CalendarDays className="h-4 w-4 text-[var(--brand-accent-strong)]" strokeWidth={2.5} />
                 <p className="text-[12px] font-black text-[var(--brand-nav)]">รายการล่าสุด</p>
               </div>
               {latestAwareness ? (
-                <div className="mt-2 grid gap-2 md:grid-cols-[auto_1fr] md:items-start">
-                  <div className="rounded-xl bg-[var(--brand-soft)] px-3 py-2 text-[11px] font-black text-[var(--brand-text)]">
+                <div className="mt-2 grid gap-2 md:grid-cols-[auto_1fr] md:items-start xl:grid-cols-[220px_1fr] xl:gap-3">
+                  <div className="rounded-xl bg-[var(--brand-soft)] px-3 py-2 text-[11px] font-black text-[var(--brand-text)] xl:text-center">
                     {formatThaiDate(bangkokDate(new Date(latestAwareness.completedAt).getTime()), true)}
                     {latestAwareness.total > 0 && ` · ${latestAwareness.score}/${latestAwareness.total} คะแนน`}
                   </div>
@@ -365,81 +405,92 @@ export default function HomePage() {
           </div>
         </Card>
       </section>
-
-      {/* ===== กิจกรรม/อีเวนต์ที่กำลังจัด ===== */}
-      <section className="mt-3 md:mt-4">
-        <div className="mb-2 flex items-center justify-between md:mb-2.5">
-          <h2 className="flex items-center gap-1.5 text-[15px] font-black text-[var(--brand-nav)] md:gap-2 md:text-[17px]">
-            <Zap className="h-4 w-4 text-[var(--brand-accent-strong)] md:h-5 md:w-5" strokeWidth={2.4} />
-            กิจกรรมที่กำลังจัด
-          </h2>
-          <Link
-            href="/safety-culture"
-            className="inline-flex items-center gap-0.5 text-[11px] font-extrabold text-[var(--brand-text)]/70 hover:text-[var(--brand-accent-strong)] md:text-[13px]"
-          >
-            ดูทั้งหมด
-            <ChevronRight className="h-4 w-4" strokeWidth={2.5} />
-          </Link>
         </div>
 
-        {showEvent ? (
-          <Link href="/safety-culture" className="group block">
-            <Card className="overflow-hidden rounded-[16px] border border-[var(--border)] bg-[var(--brand-surface)] p-0 shadow-[0_8px_20px_var(--brand-shadow)] transition-all group-hover:-translate-y-0.5 group-hover:border-[var(--brand-accent)]">
-              <div className="flex items-center gap-2 p-2.5 md:flex-row md:items-center md:justify-between md:gap-3 md:p-4">
-                <div className="flex items-start gap-2.5 md:gap-3">
-                  <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-[var(--brand-nav)] text-[var(--brand-accent)] md:h-12 md:w-12 md:rounded-2xl">
-                    <Zap className="h-4.5 w-4.5 md:h-6 md:w-6" strokeWidth={2.4} />
-                  </div>
-                  <div className="min-w-0">
-                    <div className="flex flex-wrap items-center gap-1.5 md:gap-2">
-                      <span className="text-[13px] font-black text-[var(--brand-nav)] md:text-[16px]">
-                        {safetyCultureEvent.headline}
-                      </span>
-                      <span
-                        className={
-                          "rounded-full px-2 py-0.5 text-[8.5px] font-black uppercase tracking-[0.1em] md:px-2.5 md:text-[10px] md:tracking-[0.14em] " +
-                          (isLive
-                            ? "bg-[#daf5e6] text-[#19734a]"
-                            : "bg-[var(--brand-soft)] text-[var(--brand-text)]")
-                        }
-                      >
-                        {isLive && (
-                          <span className="mr-1 inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-[#19734a] align-middle" />
-                        )}
-                        {eventStatusLabel}
-                      </span>
-                    </div>
-                    <p className="mt-1 hidden text-[13px] font-bold leading-relaxed text-[var(--brand-text)]/80 md:block">
-                      {safetyCultureEvent.supportingText}
-                    </p>
-                    <p className="mt-0.5 text-[10px] font-black text-[var(--brand-accent-strong)] md:mt-1 md:text-[12px]">
-                      {countdownLabel}
-                    </p>
-                  </div>
-                </div>
-                <div className="ml-auto flex flex-shrink-0 flex-wrap items-center gap-1.5 md:ml-0 md:flex-col md:items-end md:gap-2">
-                  <span className="rounded-full bg-[var(--brand-accent)] px-2 py-0.5 text-[9px] font-black text-[var(--brand-accent-contrast)] md:px-3 md:py-1 md:text-[12.5px]">
-                    โบนัส {eventBonusLabel}
-                  </span>
-                  <span className="hidden rounded-full border border-[var(--border)] px-3 py-1 text-[12px] font-bold text-[var(--brand-text)]/75 md:inline-flex">
-                    {timeRangeLabel}
-                  </span>
-                </div>
-              </div>
-            </Card>
-          </Link>
-        ) : (
-          <Card className="rounded-[16px] border border-dashed border-[var(--border)] bg-[var(--brand-surface)] px-5 py-5 text-center">
-            <Zap className="mx-auto h-8 w-8 text-[var(--brand-muted-text)]" strokeWidth={1.8} />
-            <p className="mt-2 text-[14px] font-extrabold text-[var(--brand-text)]/70">
-              ยังไม่มีกิจกรรมในตอนนี้
+        <aside className="grid gap-3 lg:content-start">
+          <Card className="rounded-[16px] border border-[var(--border)] bg-[var(--brand-surface)] p-3.5 shadow-[0_8px_20px_var(--brand-shadow)]">
+            <div className="flex items-center justify-between gap-3">
+              <h2 className="text-[13px] font-black text-[var(--brand-nav)]">เลเวลของฉัน</h2>
+              <span className="text-[10px] font-black text-[var(--brand-accent-strong)]">Lv.4 Safety Pro</span>
+            </div>
+            <div className="mt-3 h-2 overflow-hidden rounded-full bg-[var(--secondary)]">
+              <div className="h-full rounded-full bg-[var(--brand-accent-strong)]" style={{ width: `${progress}%` }} />
+            </div>
+            <p className="mt-2 text-[10.5px] font-bold text-[var(--brand-muted-text)]">
+              อีก {remaining.toLocaleString()} แต้ม ไป Lv.5
             </p>
-            <p className="mt-0.5 text-[12.5px] font-bold text-[var(--brand-muted-text)]">
-              ติดตามกิจกรรมและโบนัสคะแนนได้ที่หน้า Safety Culture
-            </p>
+            <div className="mt-3 grid grid-cols-4 gap-2">
+              {[
+                { label: "รางวัล", value: redeemableCount, Icon: Trophy },
+                { label: "แต้ม", value: currentUserPoints, Icon: Medal },
+                { label: "สตรีค", value: awarenessCompletedCount, Icon: Flame },
+                { label: "พลาด", value: awarenessMissedCount, Icon: ShieldCheck },
+              ].map(({ label, value, Icon }) => (
+                <div key={label} className="rounded-xl border border-[var(--border)] bg-background px-2 py-2 text-center">
+                  <Icon className="mx-auto h-4 w-4 text-[var(--brand-accent-strong)]" strokeWidth={2.4} />
+                  <div className="mt-1 truncate text-[10px] font-black text-[var(--brand-nav)]">{value.toLocaleString()}</div>
+                  <div className="text-[8.5px] font-bold text-[var(--brand-muted-text)]">{label}</div>
+                </div>
+              ))}
+            </div>
           </Card>
-        )}
-      </section>
+
+          <section>
+            <div className="mb-2 flex items-center justify-between">
+              <h2 className="flex items-center gap-1.5 text-[13px] font-black text-[var(--brand-nav)]">
+                <Zap className="h-4 w-4 text-[var(--brand-accent-strong)]" strokeWidth={2.4} />
+                กิจกรรมที่กำลังจัด
+              </h2>
+              <Link
+                href="/safety-culture"
+                className="inline-flex items-center gap-0.5 text-[11px] font-extrabold text-[var(--brand-text)]/70 hover:text-[var(--brand-accent-strong)]"
+              >
+                ดูทั้งหมด
+                <ChevronRight className="h-4 w-4" strokeWidth={2.5} />
+              </Link>
+            </div>
+
+            {showEvent ? (
+              <Link href="/safety-culture" className="group block">
+                <Card className="rounded-[16px] border border-[var(--border)] bg-[var(--brand-surface)] p-3.5 shadow-[0_8px_20px_var(--brand-shadow)] transition-all group-hover:-translate-y-0.5 group-hover:border-[var(--brand-accent)]">
+                  <div className="flex items-start gap-3">
+                    <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-[var(--brand-soft)] text-[var(--brand-accent-strong)]">
+                      <Zap className="h-5 w-5" strokeWidth={2.4} />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2">
+                        <span className="truncate text-[12.5px] font-black text-[var(--brand-nav)]">
+                          {safetyCultureEvent.headline}
+                        </span>
+                        <span className="rounded-full bg-[var(--brand-accent)] px-2 py-0.5 text-[8.5px] font-black text-[var(--brand-accent-contrast)]">
+                          {eventBonusLabel}
+                        </span>
+                      </div>
+                      <p className="mt-1 line-clamp-2 text-[10.5px] font-bold leading-relaxed text-[var(--brand-text)]/75">
+                        {safetyCultureEvent.supportingText}
+                      </p>
+                      <div className="mt-2 flex flex-wrap items-center gap-2">
+                        <span className="rounded-full bg-[var(--brand-soft)] px-2 py-1 text-[9.5px] font-black text-[var(--brand-text)]">
+                          {eventStatusLabel}
+                        </span>
+                        <span className="text-[9.5px] font-black text-[var(--brand-accent-strong)]">{countdownLabel}</span>
+                      </div>
+                      <p className="mt-2 text-[9.5px] font-bold text-[var(--brand-muted-text)]">{timeRangeLabel}</p>
+                    </div>
+                  </div>
+                </Card>
+              </Link>
+            ) : (
+              <Card className="rounded-[16px] border border-dashed border-[var(--border)] bg-[var(--brand-surface)] px-5 py-5 text-center">
+                <Zap className="mx-auto h-8 w-8 text-[var(--brand-muted-text)]" strokeWidth={1.8} />
+                <p className="mt-2 text-[14px] font-extrabold text-[var(--brand-text)]/70">
+                  ยังไม่มีกิจกรรมในตอนนี้
+                </p>
+              </Card>
+            )}
+          </section>
+        </aside>
+      </div>
 
     </div>
   );
