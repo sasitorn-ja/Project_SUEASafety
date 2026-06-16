@@ -203,7 +203,7 @@ export function DesktopTopbar() {
                 </>
               ) : (
                 <>
-                  <span className="text-[var(--brand-accent)]">น้อง</span>วางใจ
+                  <span className="text-[var(--brand-accent)]">SUEA</span> Safety
                 </>
               )}
             </div>

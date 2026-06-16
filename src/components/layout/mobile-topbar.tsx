@@ -256,7 +256,7 @@ export function MobileTopbar({ hidden = false }: { hidden?: boolean }) {
                   </>
                 ) : (
                   <>
-                    <strong className="text-[var(--brand-accent)]">น้อง</strong>วางใจ
+                    <strong className="text-[var(--brand-accent)]">SUEA</strong> Safety
                   </>
                 )}
               </span>
