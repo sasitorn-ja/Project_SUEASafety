@@ -11,6 +11,7 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { useAppTheme } from "@/providers/theme-provider";
 import { getProfileDisplayName, PROFILE_IMAGE_KEY, PROFILE_IMAGE_UPDATED_EVENT } from "@/lib/profile";
+import { getSessionDisplayName, getSessionProfileImage, useSessionUser } from "@/lib/session-user";
 import {
   MENU_STORAGE_KEY,
   MENU_UPDATED_EVENT,
@@ -70,7 +71,7 @@ const PROFILE_ITEMS = [
   },
   {
     label: "ออกจากระบบ",
-    href: "/login",
+    href: "/api/auth/logout",
     icon: LogOut,
   },
 ] as const;
@@ -147,6 +148,7 @@ export function DesktopTopbar() {
   const [open, setOpen] = useState(false);
   const [configuredMenu, setConfiguredMenu] = useState<MenuNode[]>([]);
   const [profileImage, setProfileImage] = useState("");
+  const { user: sessionUser } = useSessionUser();
   const isWangjai = theme === "wangjai";
   const [desktopMenu, setDesktopMenu] = useState<"dashboard" | "safety-culture" | "admin" | "profile" | null>(null);
 
@@ -192,6 +194,8 @@ export function DesktopTopbar() {
 
   const configuredAdmin = findAdminMenu(configuredMenu);
   const adminSections = configuredAdmin?.children.filter((node) => node.enabled) ?? [];
+  const displayName = sessionUser ? getSessionDisplayName(sessionUser) : getProfileDisplayName();
+  const displayImage = getSessionProfileImage(sessionUser) || profileImage;
 
   return (
     <header
@@ -537,10 +541,10 @@ export function DesktopTopbar() {
                 "shadow-[0_8px_18px_rgba(var(--brand-accent-rgb),0.22)] transition-colors hover:bg-[var(--brand-accent)]"
               )}
             >
-              {profileImage ? (
+              {displayImage ? (
                 <img
-                  src={profileImage}
-                  alt={getProfileDisplayName()}
+                  src={displayImage}
+                  alt={displayName}
                   className="h-full w-full rounded-full border-2 border-white/75 object-cover"
                 />
               ) : (

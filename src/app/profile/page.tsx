@@ -14,19 +14,9 @@ import {
   UserRound,
 } from "lucide-react";
 import { getProfileDisplayName, MOCK_PROFILE, notifyProfileImageUpdated, PROFILE_IMAGE_KEY } from "@/lib/profile";
+import { getSessionDisplayName, getSessionEnglishName, getSessionProfileImage, useSessionUser } from "@/lib/session-user";
 
 const MAX_IMAGE_SIZE = 3 * 1024 * 1024;
-
-const PROFILE_FIELDS = [
-  { label: "ชื่อภาษาไทย", value: getProfileDisplayName(), icon: UserRound },
-  { label: "ชื่อภาษาอังกฤษ", value: `${MOCK_PROFILE.namePrefixEn} ${MOCK_PROFILE.firstNameEn} ${MOCK_PROFILE.lastNameEn}`, icon: UserRound },
-  { label: "ตำแหน่ง", value: MOCK_PROFILE.positionTh, icon: BadgeCheck },
-  { label: "หน่วยงาน", value: MOCK_PROFILE.divisionTh, icon: Building2 },
-  { label: "บริษัท", value: MOCK_PROFILE.company, icon: ShieldCheck },
-  { label: "สถานที่ทำงาน", value: MOCK_PROFILE.workLocation, icon: MapPin },
-  { label: "อีเมล", value: MOCK_PROFILE.email, icon: Mail },
-  { label: "ชื่อผู้ใช้งาน", value: MOCK_PROFILE.username, icon: UserRound },
-];
 
 const CONNECTIONS = [
   { label: "Microsoft", status: "Linked", icon: ShieldCheck },
@@ -38,6 +28,24 @@ export default function ProfilePage() {
   const inputRef = useRef<HTMLInputElement>(null);
   const [profileImage, setProfileImage] = useState("");
   const [imageError, setImageError] = useState("");
+  const { user: sessionUser } = useSessionUser();
+  const displayName = sessionUser ? getSessionDisplayName(sessionUser) : getProfileDisplayName();
+  const displayNameEn = getSessionEnglishName(sessionUser) || `${MOCK_PROFILE.namePrefixEn} ${MOCK_PROFILE.firstNameEn} ${MOCK_PROFILE.lastNameEn}`;
+  const displayPosition = sessionUser?.positionTh || sessionUser?.positionEn || MOCK_PROFILE.positionTh;
+  const displayDivision = sessionUser?.division || MOCK_PROFILE.divisionTh;
+  const displayEmail = sessionUser?.email || MOCK_PROFILE.email;
+  const displayUsername = sessionUser?.username || MOCK_PROFILE.username;
+  const displayImage = profileImage || getSessionProfileImage(sessionUser);
+  const profileFields = [
+    { label: "ชื่อภาษาไทย", value: displayName, icon: UserRound },
+    { label: "ชื่อภาษาอังกฤษ", value: displayNameEn, icon: UserRound },
+    { label: "ตำแหน่ง", value: displayPosition, icon: BadgeCheck },
+    { label: "หน่วยงาน", value: displayDivision, icon: Building2 },
+    { label: "บริษัท", value: MOCK_PROFILE.company, icon: ShieldCheck },
+    { label: "สถานที่ทำงาน", value: MOCK_PROFILE.workLocation, icon: MapPin },
+    { label: "อีเมล", value: displayEmail, icon: Mail },
+    { label: "ชื่อผู้ใช้งาน", value: displayUsername, icon: UserRound },
+  ];
 
   useEffect(() => {
     try {
@@ -100,8 +108,8 @@ export default function ProfilePage() {
                 className="group relative flex h-32 w-32 cursor-pointer items-center justify-center overflow-hidden rounded-full border-[5px] border-white/80 bg-white/12 shadow-[0_16px_34px_rgba(0,0,0,0.24)] md:h-40 md:w-40"
                 aria-label="เลือกรูปโปรไฟล์"
               >
-                {profileImage ? (
-                  <img src={profileImage} alt="รูปโปรไฟล์" className="h-full w-full object-cover" />
+                {displayImage ? (
+                  <img src={displayImage} alt="รูปโปรไฟล์" className="h-full w-full object-cover" />
                 ) : (
                   <UserRound className="h-16 w-16 text-white/75 md:h-20 md:w-20" strokeWidth={1.7} />
                 )}
@@ -120,13 +128,13 @@ export default function ProfilePage() {
                 <ShieldCheck className="h-3.5 w-3.5" strokeWidth={2.5} />
                 SSO Profile Preview
               </div>
-              <h1 className="text-[25px] font-black leading-tight md:text-[36px]">{getProfileDisplayName()}</h1>
+              <h1 className="text-[25px] font-black leading-tight md:text-[36px]">{displayName}</h1>
               <p className="mt-1.5 text-[13px] font-bold text-white/72 md:text-[15px]">
-                {MOCK_PROFILE.positionTh} · {MOCK_PROFILE.divisionTh}
+                {displayPosition} · {displayDivision}
               </p>
               <div className="mt-3 flex flex-wrap justify-center gap-2 md:justify-start">
-                <span className="rounded-full bg-white/10 px-3 py-1 text-[11px] font-extrabold text-white/85">{MOCK_PROFILE.email}</span>
-                <span className="rounded-full bg-white/10 px-3 py-1 text-[11px] font-extrabold text-white/85">@{MOCK_PROFILE.username}</span>
+                <span className="rounded-full bg-white/10 px-3 py-1 text-[11px] font-extrabold text-white/85">{displayEmail}</span>
+                <span className="rounded-full bg-white/10 px-3 py-1 text-[11px] font-extrabold text-white/85">@{displayUsername}</span>
               </div>
             </div>
 
@@ -137,7 +145,7 @@ export default function ProfilePage() {
                 className="inline-flex h-10 cursor-pointer items-center gap-2 rounded-xl bg-[var(--brand-accent)] px-4 text-[12px] font-black text-[var(--brand-accent-contrast)] shadow-lg transition-transform hover:scale-[1.02]"
               >
                 <Upload className="h-4 w-4" strokeWidth={2.5} />
-                {profileImage ? "เปลี่ยนรูป" : "เพิ่มรูปโปรไฟล์"}
+                {displayImage ? "เปลี่ยนรูป" : "เพิ่มรูปโปรไฟล์"}
               </button>
               {profileImage && (
                 <button
@@ -188,7 +196,7 @@ export default function ProfilePage() {
           </div>
 
           <div className="mt-4 grid gap-3 md:grid-cols-2">
-            {PROFILE_FIELDS.map(({ label, value, icon: Icon }) => (
+            {profileFields.map(({ label, value, icon: Icon }) => (
               <article key={label} className="flex min-w-0 items-center gap-3 rounded-[16px] border border-[var(--border)] bg-background/70 p-3.5">
                 <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-[var(--brand-soft)] text-[var(--brand-text)]">
                   <Icon className="h-[18px] w-[18px]" strokeWidth={2.35} />

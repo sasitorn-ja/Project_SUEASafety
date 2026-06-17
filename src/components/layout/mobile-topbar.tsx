@@ -23,6 +23,7 @@ import {
 import { cn } from "@/lib/utils";
 import { isExactNavActive, isMainNavActive } from "@/lib/navigation";
 import { getProfileDisplayName, getProfileInitials, MOCK_PROFILE, PROFILE_IMAGE_KEY, PROFILE_IMAGE_UPDATED_EVENT } from "@/lib/profile";
+import { getSessionDisplayName, getSessionInitials, getSessionProfileImage, useSessionUser } from "@/lib/session-user";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { useAppTheme } from "@/providers/theme-provider";
 import {
@@ -50,7 +51,7 @@ const CULTURE_ITEMS = [
 
 const PROFILE_MENU_ITEMS = [
   { label: "กิจกรรมของผู้ใช้งาน", icon: FileText, href: "/profile/activity-history" },
-  { label: "ออกจากระบบ", icon: LogOut, href: "/login" }
+  { label: "ออกจากระบบ", icon: LogOut, href: "/api/auth/logout" }
 ];
 
 type NavNode = {
@@ -169,6 +170,7 @@ export function MobileTopbar({ hidden = false }: { hidden?: boolean }) {
   const pathname = usePathname() ?? "";
   const [open, setOpen] = useState(false);
   const [profileImage, setProfileImage] = useState("");
+  const { user: sessionUser } = useSessionUser();
   const [configuredMenu, setConfiguredMenu] = useState<MenuNode[]>([]);
   const isWangjai = theme === "wangjai";
 
@@ -223,6 +225,10 @@ export function MobileTopbar({ hidden = false }: { hidden?: boolean }) {
 
   const configuredAdmin = findAdminMenu(configuredMenu);
   const adminSections = configuredAdmin?.children.filter((node) => node.enabled) ?? [];
+  const displayName = sessionUser ? getSessionDisplayName(sessionUser) : getProfileDisplayName();
+  const displayInitials = sessionUser ? getSessionInitials(sessionUser) : getProfileInitials();
+  const displayUsername = sessionUser?.username || MOCK_PROFILE.username;
+  const displayImage = getSessionProfileImage(sessionUser) || profileImage;
 
   const toggleSection = (id: string) => {
     setOpenSections((current) => ({ ...current, [id]: !current[id] }));
@@ -248,20 +254,20 @@ export function MobileTopbar({ hidden = false }: { hidden?: boolean }) {
           <button
             type="button"
             onClick={() => setOpen((current) => !current)}
-            className="inline-flex h-8 w-8 flex-shrink-0 cursor-pointer items-center justify-center rounded-full bg-transparent text-white transition-opacity hover:opacity-70"
+            className="inline-flex h-10 w-10 flex-shrink-0 cursor-pointer items-center justify-center rounded-full bg-transparent text-white transition-opacity hover:opacity-70"
             aria-label={menuLabel}
             title={menuLabel}
             aria-expanded={open}
           >
-            {open ? <X className="h-[18px] w-[18px]" strokeWidth={2.45} /> : <Menu className="h-[18px] w-[18px]" strokeWidth={2.45} />}
+            {open ? <X className="h-[23px] w-[23px]" strokeWidth={2.45} /> : <Menu className="h-[23px] w-[23px]" strokeWidth={2.45} />}
           </button>
 
           <NavTo href="/" onClick={closeDrawer} className="flex min-w-0 items-center gap-[9px]">
-            <div className="flex h-[30px] w-[30px] flex-shrink-0 items-center justify-center overflow-hidden">
-              <Image src={mascot("logo")} alt="SUEA Safety Logo" width={30} height={30} className="h-full w-full object-contain" />
+            <div className="flex h-[42px] w-[42px] flex-shrink-0 items-center justify-center overflow-hidden">
+              <Image src={mascot("logo")} alt="SUEA Safety Logo" width={42} height={42} className="h-full w-full object-contain" />
             </div>
-            <div className="flex min-w-0 flex-col leading-[1.1]">
-              <span className="overflow-hidden text-ellipsis whitespace-nowrap text-[15px] font-extrabold tracking-normal text-white">
+            <div className="flex min-w-0 flex-col leading-[1.12]">
+              <span className="overflow-hidden text-ellipsis whitespace-nowrap text-[19px] font-extrabold tracking-normal text-white">
                 {isWangjai ? (
                   <>
                     <strong className="text-[var(--brand-accent)]">CPAC</strong> Safe +
@@ -272,23 +278,23 @@ export function MobileTopbar({ hidden = false }: { hidden?: boolean }) {
                   </>
                 )}
               </span>
-              <span className="overflow-hidden text-ellipsis whitespace-nowrap text-[8px] font-bold text-white/[0.58]">
+              <span className="overflow-hidden text-ellipsis whitespace-nowrap text-[10px] font-bold text-white/[0.58]">
                 {isWangjai ? "Creating Protection And Care" : "Safety User Environment Awareness"}
               </span>
             </div>
           </NavTo>
         </div>
 
-        <div className="flex flex-shrink-0 items-center gap-2">
-          <ThemeToggle compact />
+        <div className="flex flex-shrink-0 items-center gap-2.5">
+          <ThemeToggle />
           <NavTo
             href="/notifications"
-            className="relative inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-full bg-transparent text-white transition-opacity hover:opacity-70"
+            className="relative inline-flex h-10 w-10 cursor-pointer items-center justify-center rounded-full bg-transparent text-white transition-opacity hover:opacity-70"
             aria-label="การแจ้งเตือน"
             title="การแจ้งเตือน"
           >
-            <Bell className="h-[17px] w-[17px]" strokeWidth={2.4} />
-            <span className="absolute -top-[3px] -right-0.5 flex h-[17px] w-[17px] items-center justify-center rounded-full border-[1.5px] border-[var(--brand-nav)] bg-[var(--brand-accent-strong)] text-[10px] font-extrabold text-[var(--brand-nav)]">
+            <Bell className="h-[22px] w-[22px]" strokeWidth={2.4} />
+            <span className="absolute -top-[2px] right-0 flex h-[18px] w-[18px] items-center justify-center rounded-full border-[1.5px] border-[var(--brand-nav)] bg-[var(--brand-accent-strong)] text-[10px] font-extrabold text-[var(--brand-nav)]">
               3
             </span>
           </NavTo>
@@ -309,15 +315,15 @@ export function MobileTopbar({ hidden = false }: { hidden?: boolean }) {
                 >
                   <NavTo href="/profile" onClick={closeDrawer} className="flex min-w-0 flex-1 items-center gap-3 px-3 py-3">
                     <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center overflow-hidden rounded-full border border-white/20 bg-white/12">
-                      {profileImage ? (
-                        <img src={profileImage} alt={getProfileDisplayName()} className="h-full w-full object-cover" />
+                      {displayImage ? (
+                        <img src={displayImage} alt={displayName} className="h-full w-full object-cover" />
                       ) : (
-                        <span className="text-[12px] font-black tracking-[0.08em] text-[var(--brand-accent)]">{getProfileInitials()}</span>
+                        <span className="text-[12px] font-black tracking-[0.08em] text-[var(--brand-accent)]">{displayInitials}</span>
                       )}
                     </div>
                     <div className="min-w-0 flex-1">
-                      <div className="truncate text-[13px] font-black">{getProfileDisplayName()}</div>
-                      <div className="truncate text-[11px] font-bold text-white/65">@{MOCK_PROFILE.username}</div>
+                      <div className="truncate text-[13px] font-black">{displayName}</div>
+                      <div className="truncate text-[11px] font-bold text-white/65">@{displayUsername}</div>
                     </div>
                   </NavTo>
                   <button

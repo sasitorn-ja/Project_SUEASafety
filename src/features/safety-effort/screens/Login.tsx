@@ -1,5 +1,5 @@
 // @ts-nocheck
-import React, { useEffect } from "react";
+import React, { useEffect, useMemo } from "react";
 import { useNavigate } from "@/lib/router-compat";
 import { Lock } from "lucide-react";
 
@@ -7,6 +7,10 @@ const LOGIN_SESSION_KEY = "cpac-safety-login-session";
 
 export default function Login() {
   const navigate = useNavigate();
+  const ssoError = useMemo(() => {
+    if (typeof window === "undefined") return "";
+    return new URLSearchParams(window.location.search).get("sso_error") || "";
+  }, []);
 
   useEffect(() => {
     try {
@@ -17,6 +21,10 @@ export default function Login() {
   }, []);
 
   const handleLogin = () => {
+    window.location.assign("/api/auth/login");
+  };
+
+  const handleDemoLogin = () => {
     try {
       window.sessionStorage.setItem(LOGIN_SESSION_KEY, "true");
     } catch {
@@ -148,6 +156,27 @@ export default function Login() {
                 />
                 <span>พนักงาน SCG เข้าสู่ระบบ</span>
               </button>
+              {ssoError && (
+                <div className="rounded-xl border border-red-200 bg-red-50/95 px-3 py-2 text-center text-[11px] font-bold leading-relaxed text-red-700">
+                  ไม่สามารถเชื่อมต่อ SSO ได้: {ssoError}
+                  {ssoError.startsWith("missing:") && (
+                    <div className="mt-1 text-red-600">
+                      กรุณาตั้งค่า SSO_CLIENT_ID และ SSO_CLIENT_SECRET บนเซิร์ฟเวอร์
+                    </div>
+                  )}
+                </div>
+              )}
+              {process.env.NODE_ENV !== "production" && (
+                <button
+                  type="button"
+                  onClick={handleDemoLogin}
+                  className="login-btn"
+                  style={{ background: "rgba(255,255,255,0.92)", color: "#0f172a" }}
+                >
+                  <Lock size={18} />
+                  <span>Demo login</span>
+                </button>
+              )}
             </div>
 
             {/* Shield verification text */}

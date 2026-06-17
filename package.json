@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start"
+    "start": "next start",
+    "start:standalone": "node scripts/run-with-env.cjs node .next/standalone/server.js"
   },
   "dependencies": {
     "@base-ui/react": "^1.5.0",
@@ -16,6 +17,7 @@
     "cmdk": "^1.1.1",
     "leaflet": "^1.9.4",
     "lucide-react": "^1.17.0",
+    "mysql2": "^3.22.5",
     "next": "^15.3.3",
     "next-themes": "^0.4.6",
     "react": "^18.3.1",

@@ -1,0 +1,17 @@
+services:
+  cpac-safety-plus:
+    build:
+      context: .
+    container_name: cpac-safety-plus
+    restart: unless-stopped
+    env_file:
+      - .env.production
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      HOSTNAME: 0.0.0.0
+      NODE_OPTIONS: --dns-result-order=ipv4first
+    extra_hosts:
+      - "rmc-sso.cipcloud.net:192.168.1.48"
+    ports:
+      - "127.0.0.1:3000:3000"

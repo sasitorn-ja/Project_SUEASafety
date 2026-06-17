@@ -234,7 +234,9 @@ export function FloatingSafetyAssistant() {
       try {
         const parsed = JSON.parse(storedPosition) as DragPosition;
         if (Number.isFinite(parsed.right) && Number.isFinite(parsed.bottom)) {
-          const nextPosition = clampPosition(parsed);
+          // Always re-dock to the nearest edge so a position saved on a
+          // different screen width can never end up stranded in the middle.
+          const nextPosition = snapPositionToNearestEdge(parsed);
           lastDragPositionRef.current = nextPosition;
           setPosition(nextPosition);
         }
@@ -247,7 +249,7 @@ export function FloatingSafetyAssistant() {
       setWindowWidth(window.innerWidth);
       setPosition((current) => {
         if (!current) return current;
-        const nextPosition = clampPosition(current);
+        const nextPosition = snapPositionToNearestEdge(current);
         lastDragPositionRef.current = nextPosition;
         return nextPosition;
       });
@@ -455,8 +457,8 @@ export function FloatingSafetyAssistant() {
     >
       <div
         className={cn(
-          "mb-2 flex max-h-[68vh] w-[min(calc(100vw-24px),350px)] flex-col overflow-hidden rounded-2xl border border-[var(--border)] bg-[rgba(var(--brand-nav-rgb),0.97)] text-white shadow-[0_18px_46px_var(--brand-shadow)] backdrop-blur-xl transition-all duration-200 md:max-h-[min(70vh,560px)] md:w-[352px]",
-          isDockedLeft ? "origin-bottom-left" : "origin-bottom-right",
+          "absolute bottom-[calc(100%+10px)] flex max-h-[68vh] w-[min(calc(100vw-24px),350px)] flex-col overflow-hidden rounded-2xl border border-[var(--border)] bg-[rgba(var(--brand-nav-rgb),0.97)] text-white shadow-[0_18px_46px_var(--brand-shadow)] backdrop-blur-xl transition-all duration-200 md:max-h-[min(70vh,560px)] md:w-[352px]",
+          isDockedLeft ? "left-0 origin-bottom-left" : "right-0 origin-bottom-right",
           open ? "visible translate-y-0 scale-100 opacity-100" : "invisible translate-y-2 scale-95 opacity-0"
         )}
       >

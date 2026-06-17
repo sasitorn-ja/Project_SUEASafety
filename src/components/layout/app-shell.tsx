@@ -31,6 +31,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       return;
     }
 
+    let cancelled = false;
     let loggedIn = false;
     try {
       loggedIn = window.sessionStorage.getItem(LOGIN_SESSION_KEY) === "true";
@@ -38,13 +39,37 @@ export function AppShell({ children }: { children: ReactNode }) {
       loggedIn = false;
     }
 
-    if (!loggedIn) {
-      setLoginChecked(false);
-      router.replace("/login");
+    if (loggedIn) {
+      setLoginChecked(true);
       return;
     }
 
-    setLoginChecked(true);
+    setLoginChecked(false);
+    fetch("/api/auth/session", {
+      credentials: "include",
+      cache: "no-store",
+    })
+      .then((response) => (response.ok ? response.json() : { authenticated: false }))
+      .then((session) => {
+        if (cancelled) return;
+        if (session.authenticated) {
+          try {
+            window.sessionStorage.setItem(LOGIN_SESSION_KEY, "true");
+          } catch {
+            // The cookie-backed session remains authoritative.
+          }
+          setLoginChecked(true);
+          return;
+        }
+        router.replace("/login");
+      })
+      .catch(() => {
+        if (!cancelled) router.replace("/login");
+      });
+
+    return () => {
+      cancelled = true;
+    };
   }, [pathname, router]);
 
   useEffect(() => {
