@@ -14,6 +14,7 @@ import {
   Download
 } from "lucide-react";
 import * as XLSX from "xlsx";
+import { Combobox } from "@/components/ui/combobox";
 
 // Design tokens matching system branding
 const T = {
@@ -85,14 +86,15 @@ const BASELINE_CHART3_DATA = [
 ];
 
 // Baseline Chart 4 data: Safety Line walk by Business Unit
+// safeRate = ระดับความปลอดภัยที่รายงานของแต่ละหน่วยงาน (ใช้กับ badge ในตาราง)
 const BASELINE_CHART4_DATA = [
-  { name: "CPAC Metro", safe: 1308, unsafe: 29, solved: 7 },
-  { name: "CPAC East", safe: 2629, unsafe: 30, solved: 6 },
-  { name: "CPAC West", safe: 3253, unsafe: 1, solved: 3 },
-  { name: "CPAC North", safe: 1768, unsafe: 73, solved: 6 },
-  { name: "CPAC Northeast", safe: 4465, unsafe: 219, solved: 14 },
-  { name: "RMC - South Chain", safe: 2077, unsafe: 74, solved: 7 },
-  { name: "SMART Structure", safe: 1059, unsafe: 41, solved: 0 }
+  { name: "CPAC Metro", safe: 1308, unsafe: 29, solved: 7, safeRate: 97.8 },
+  { name: "CPAC East", safe: 2629, unsafe: 30, solved: 6, safeRate: 98.9 },
+  { name: "CPAC West", safe: 3253, unsafe: 1, solved: 3, safeRate: 100.0 },
+  { name: "CPAC North", safe: 3004, unsafe: 42, solved: 15, safeRate: 95.2 },
+  { name: "CPAC Northeast", safe: 3431, unsafe: 121, solved: 28, safeRate: 91.6 },
+  { name: "CPAC RMC", safe: 1796, unsafe: 51, solved: 22, safeRate: 94.8 },
+  { name: "CPAC SMART Structure", safe: 1236, unsafe: 11, solved: 4, safeRate: 97.1 }
 ];
 
 export default function DashboardSafetyEffort() {
@@ -109,13 +111,13 @@ export default function DashboardSafetyEffort() {
   const exportToExcel = () => {
     const data = chart4Data.map(item => {
       const total = item.safe + item.unsafe;
-      const safePercent = total > 0 ? (item.safe / total) * 100 : 0;
+      const safePercent = item.safeRate ?? (total > 0 ? (item.safe / total) * 100 : 0);
       return {
         "หน่วยงาน": item.name,
         "สแกนที่ปลอดภัย (Safe)": item.safe,
         "ความไม่ปลอดภัย (Unsafe)": item.unsafe,
         "แก้ไขแล้ว (Solved)": item.solved,
-        "อัตราความปลอดภัย (%)": parseFloat(safePercent.toFixed(1))
+        "อัตราความปลอดภัย (%)": parseFloat(Number(safePercent).toFixed(1))
       };
     });
     
@@ -190,7 +192,7 @@ export default function DashboardSafetyEffort() {
     }
     
     const total = bu.safe + bu.unsafe;
-    const rate = total > 0 ? ((bu.safe / total) * 100).toFixed(1) : 0;
+    const rate = bu.safeRate ?? (total > 0 ? Number(((bu.safe / total) * 100).toFixed(1)) : 0);
     return {
       totalChecks: total,
       safeRate: rate,
@@ -878,6 +880,7 @@ export default function DashboardSafetyEffort() {
         .db-badge-green { background: #ecfdf5; color: #1f7a55; }
         .db-badge-red { background: #fef2f2; color: #d5301a; }
         .db-badge-yellow { background: #fffbeb; color: #b7791f; }
+        .db-badge-amber { background: #fff7ed; color: #c2410c; }
 
         @media (max-width: 767px) {
           .db-chart-card-header {
@@ -927,17 +930,17 @@ export default function DashboardSafetyEffort() {
 
           <div className="db-select-wrapper">
             <Filter size={15} className="db-select-icon" style={{ left: 12, right: "auto" }} />
-            <select 
-              className="db-select" 
-              value={selectedBU} 
-              onChange={(e) => setSelectedBU(e.target.value)}
-              style={{ paddingLeft: 34 }}
-            >
-              <option value="All Business Units">ทุกหน่วยงาน (All BUs)</option>
-              {chart4Data.map(bu => (
-                <option key={bu.name} value={bu.name}>{bu.name}</option>
-              ))}
-            </select>
+            <Combobox
+              value={selectedBU}
+              onValueChange={setSelectedBU}
+              aria-label="กรองหน่วยงาน"
+              searchPlaceholder="ค้นหาหน่วยงาน"
+              style={{ paddingLeft: 34, minWidth: 220 }}
+              options={[
+                { value: "All Business Units", label: "ทุกหน่วยงาน (All BUs)" },
+                ...chart4Data.map((bu) => ({ value: bu.name, label: bu.name })),
+              ]}
+            />
           </div>
         </div>
           </header>
@@ -1385,7 +1388,7 @@ export default function DashboardSafetyEffort() {
             onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
           >
             <Download size={14} strokeWidth={2.6} />
-            ดึงไฟล์ Excel
+            ดาวน์โหลด Excel
           </button>
         </div>
         <div style={{ overflowX: "auto" }}>
@@ -1402,13 +1405,16 @@ export default function DashboardSafetyEffort() {
             <tbody>
               {chart4Data.map(item => {
                 const total = item.safe + item.unsafe;
-                const safePercent = total > 0 ? (item.safe / total) * 100 : 0;
+                const safePercent = item.safeRate ?? (total > 0 ? (item.safe / total) * 100 : 0);
                 let rating = "ปลอดภัยดีมาก";
                 let ratingClass = "db-badge-green";
-                
-                if (safePercent < 95) {
-                  rating = "ควรเฝ้าระวัง";
+
+                if (safePercent < 94) {
+                  rating = "ควรปรับปรุง";
                   ratingClass = "db-badge-red";
+                } else if (safePercent < 97) {
+                  rating = "ปลอดภัยพอใช้";
+                  ratingClass = "db-badge-amber";
                 } else if (safePercent < 98) {
                   rating = "ปลอดภัยดี";
                   ratingClass = "db-badge-yellow";

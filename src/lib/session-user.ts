@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import { hasAdminAccess } from "@/lib/access-control";
 
+const LOGIN_SESSION_KEY = "cpac-safety-login-session";
+
 export type SessionUser = {
   id?: string;
   sub: string;
@@ -25,6 +27,19 @@ export type SessionUser = {
 };
 
 export { hasAdminAccess };
+
+export const DEMO_ADMIN_USER: SessionUser = {
+  sub: "demo-admin",
+  name: "Demo Admin",
+  email: "demo.admin@localhost",
+  roles: ["ADMIN"],
+  permissions: ["*"],
+  isAdmin: true,
+};
+
+export function isLocalDemoLoginHost(hostname?: string) {
+  return hostname === "localhost" || hostname === "127.0.0.1" || hostname === "::1" || hostname === "[::1]";
+}
 
 export function getSessionDisplayName(user?: SessionUser | null) {
   if (!user) return "ผู้ใช้งาน";
@@ -61,6 +76,16 @@ export function useSessionUser() {
 
   useEffect(() => {
     let cancelled = false;
+    let demoLoginAllowed = false;
+
+    try {
+      demoLoginAllowed =
+        process.env.NODE_ENV !== "production" &&
+        isLocalDemoLoginHost(window.location.hostname) &&
+        window.sessionStorage.getItem(LOGIN_SESSION_KEY) === "true";
+    } catch {
+      demoLoginAllowed = false;
+    }
 
     fetch("/api/auth/session", {
       credentials: "include",
@@ -68,10 +93,10 @@ export function useSessionUser() {
     })
       .then((response) => (response.ok ? response.json() : { user: null }))
       .then((session) => {
-        if (!cancelled) setUser(session.user || null);
+        if (!cancelled) setUser(session.user || (demoLoginAllowed ? DEMO_ADMIN_USER : null));
       })
       .catch(() => {
-        if (!cancelled) setUser(null);
+        if (!cancelled) setUser(demoLoginAllowed ? DEMO_ADMIN_USER : null);
       })
       .finally(() => {
         if (!cancelled) setLoading(false);

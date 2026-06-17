@@ -1,7 +1,7 @@
 import { cookies, headers } from "next/headers";
 import { NextRequest } from "next/server";
 import { createHash, createHmac, randomBytes, timingSafeEqual } from "crypto";
-import { dbUserToSessionUser, getSessionUserBySsoExternalId, getUserAccess, upsertSsoUser } from "@/lib/server/users";
+import { dbUserToSessionUser, getSessionUserBySsoExternalId, getUserAccess, upsertSsoUser } from "@backend/components/users/repository";
 
 export const SSO_SESSION_COOKIE = "cpac-safety-sso-session";
 export const SSO_OAUTH_COOKIE = "cpac-safety-sso-oauth";
@@ -134,7 +134,7 @@ export async function getSsoConfig(request?: NextRequest) {
     clientSecret: envValue("SSO_CLIENT_SECRET", "RMC_SSO_CLIENT_SECRET"),
     redirectUri:
       envValue("SSO_REDIRECT_URI", "RMC_SSO_REDIRECT_URI") ||
-      `${origin}/api/auth/callback/${providerSlug}`,
+      `${origin}/api/components/auth/callback/${providerSlug}`,
     postLogoutRedirectUri:
       envValue("SSO_POST_LOGOUT_REDIRECT_URI", "RMC_SSO_POST_LOGOUT_REDIRECT_URI") ||
       `${origin}/login`,
@@ -170,7 +170,7 @@ export async function getDiscoveryDocument(request?: NextRequest): Promise<Disco
   };
 
   try {
-    const response = await fetch(`${config.issuer}/api/auth/.well-known/openid-configuration`, {
+    const response = await fetch(`${config.issuer}/api/components/auth/.well-known/openid-configuration`, {
       cache: "no-store",
     });
 

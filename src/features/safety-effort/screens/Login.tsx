@@ -2,6 +2,7 @@
 import React, { useEffect, useMemo } from "react";
 import { useNavigate } from "@/lib/router-compat";
 import { Lock } from "lucide-react";
+import { isLocalDemoLoginHost } from "@/lib/session-user";
 
 const LOGIN_SESSION_KEY = "cpac-safety-login-session";
 
@@ -10,6 +11,10 @@ export default function Login() {
   const ssoError = useMemo(() => {
     if (typeof window === "undefined") return "";
     return new URLSearchParams(window.location.search).get("sso_error") || "";
+  }, []);
+  const demoLoginAvailable = useMemo(() => {
+    if (typeof window === "undefined") return false;
+    return process.env.NODE_ENV !== "production" && isLocalDemoLoginHost(window.location.hostname);
   }, []);
 
   useEffect(() => {
@@ -166,7 +171,7 @@ export default function Login() {
                   )}
                 </div>
               )}
-              {process.env.NODE_ENV !== "production" && (
+              {demoLoginAvailable && (
                 <button
                   type="button"
                   onClick={handleDemoLogin}

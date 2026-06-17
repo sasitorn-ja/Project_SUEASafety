@@ -15,6 +15,8 @@ import {
   normalizeAwarenessQuestions,
   todayKey,
 } from "@/lib/safety-awareness";
+import { getSafetyPoint } from "@/lib/point-rules";
+import { apiFetch, apiJson } from "@/lib/api-client";
 
 export type HealthData = {
   systolic?: number;
@@ -82,7 +84,7 @@ export type Post = {
   feedEventTitle?: string;
 };
 
-export type SafetyCultureUserActivityType = "post" | "reaction" | "comment" | "redeem";
+export type SafetyCultureUserActivityType = "post" | "reaction" | "comment" | "redeem" | "awareness" | "safety-effort";
 
 export type SafetyCultureUserActivity = {
   id: string;
@@ -262,6 +264,7 @@ type AppActions = {
   updateAwarenessHolidays: (holidays: AwarenessHoliday[]) => void;
   /** Mark today's Safety Awareness popup as completed. */
   markAwarenessDone: (completion: Omit<AwarenessCompletion, "date" | "completedAt">) => void;
+  awardSafetyEffortCompletion: (sourceId: string, label?: string) => void;
   redeemPoints: (
     rewardId: number,
     points: number
@@ -1273,6 +1276,36 @@ function createDefaultInboxNotifications() {
   return mergeInboxNotificationsWithSeed(INITIAL_INBOX_NOTIFICATIONS);
 }
 
+type ApiPost = {
+  id: string;
+  authorName: string;
+  content: string;
+  createdAt: string;
+  likeCount: number;
+  commentCount: number;
+  hasLiked: boolean;
+};
+
+function postFromApi(post: ApiPost): Post {
+  const idNumber = Number(post.id);
+  return {
+    id: Number.isFinite(idNumber) ? idNumber : Date.now(),
+    author: post.authorName || "Unknown user",
+    avatarBg: "var(--brand-accent)",
+    avatarColor: "#1A1A1A",
+    avatarText: (post.authorName || "U").charAt(0).toUpperCase(),
+    subtext: "Safety Culture",
+    category: "ทั่วไป",
+    body: post.content,
+    photos: [],
+    likes: Math.max(0, Number(post.likeCount) || 0),
+    comments: Math.max(0, Number(post.commentCount) || 0),
+    points: getSafetyPoint("safetyPostApproved"),
+    hasLiked: Boolean(post.hasLiked),
+    createdAt: new Date(post.createdAt).getTime() || Date.now(),
+  };
+}
+
 export function AppProviders({ children }: { children: ReactNode }) {
   const [completedSteps, setCompletedSteps] = useState<number[]>([]);
   const [healthData, setHealthData] = useState<HealthData>(null);
@@ -1495,6 +1528,35 @@ export function AppProviders({ children }: { children: ReactNode }) {
     }
   }, [inboxNotifications]);
 
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadBackendState() {
+      const [postsResult, balanceResult] = await Promise.all([
+        apiFetch<{ items: ApiPost[] }>("/api/safety-culture/posts?limit=50"),
+        apiFetch<{ balance: { balance: number } }>("/api/safety-culture/points/me"),
+      ]);
+
+      if (cancelled) return;
+
+      if (postsResult.ok && Array.isArray(postsResult.data?.items)) {
+        const backendPosts = postsResult.data.items.map(postFromApi);
+        if (backendPosts.length > 0) {
+          setPosts(mergePostsWithSeed(backendPosts));
+        }
+      }
+
+      if (balanceResult.ok && typeof balanceResult.data?.balance?.balance === "number") {
+        setCurrentUserPoints(Math.max(0, balanceResult.data.balance.balance));
+      }
+    }
+
+    void loadBackendState();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   // Load Safety Awareness question bank + today's completion flag.
   useEffect(() => {
     try {
@@ -1606,7 +1668,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
 
   const addPost = useCallback((post: Post) => {
     const linkedFeedEvent = getLinkedFeedEvent(post.feedEventId);
-    const basePoints = linkedFeedEvent ? Math.max(0, linkedFeedEvent.points || 0) : Math.max(0, post.points || 0);
+    const basePoints = getSafetyPoint("safetyPostApproved");
     const awardedPoints = linkedFeedEvent
       ? calculateFeedEventAwardedPoints(basePoints, "theme-post", linkedFeedEvent)
       : calculateAwardedPoints(basePoints, "approved-post", safetyCultureEvent);
@@ -1630,6 +1692,11 @@ export function AppProviders({ children }: { children: ReactNode }) {
       ])
     );
     setCurrentUserPoints((prev) => prev + pointsDelta);
+    void apiFetch<{ post: ApiPost }>("/api/safety-culture/posts", apiJson("POST", {
+      content: post.body,
+      category: post.category,
+      attachmentIds: post.photos.map((photo) => photo.id),
+    }));
   }, [getLinkedFeedEvent, safetyCultureEvent]);
 
   const toggleLike = useCallback((postId: number) => {
@@ -1643,8 +1710,8 @@ export function AppProviders({ children }: { children: ReactNode }) {
         const isAdding = !p.hasLiked;
         const linkedFeedEvent = getLinkedFeedEvent(p.feedEventId);
         const awarded = linkedFeedEvent
-          ? calculateFeedEventAwardedPoints(1, "reaction", linkedFeedEvent)
-          : calculateAwardedPoints(1, "reaction", safetyCultureEvent);
+          ? calculateFeedEventAwardedPoints(getSafetyPoint("reactionCreated"), "reaction", linkedFeedEvent)
+          : calculateAwardedPoints(getSafetyPoint("reactionCreated"), "reaction", safetyCultureEvent);
         currentDelta = isAdding ? awarded : -awarded;
         if (isAdding) {
           likedPost = p;
@@ -1681,6 +1748,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
     if (currentDelta !== 0) {
       setCurrentUserPoints((prev) => Math.max(0, prev + currentDelta));
     }
+    void apiFetch(`/api/safety-culture/posts/${postId}/reactions`, apiJson(currentDelta > 0 ? "POST" : "DELETE", { reactionType: "LIKE" }));
   }, [getLinkedFeedEvent, safetyCultureEvent]);
 
   const addComment = useCallback((postId: number, text: string) => {
@@ -1694,8 +1762,8 @@ export function AppProviders({ children }: { children: ReactNode }) {
         targetPost = p;
         const linkedFeedEvent = getLinkedFeedEvent(p.feedEventId);
         currentAwardedPoints = linkedFeedEvent
-          ? calculateFeedEventAwardedPoints(1, "comment", linkedFeedEvent)
-          : calculateAwardedPoints(1, "comment", safetyCultureEvent);
+          ? calculateFeedEventAwardedPoints(getSafetyPoint("commentCreated"), "comment", linkedFeedEvent)
+          : calculateAwardedPoints(getSafetyPoint("commentCreated"), "comment", safetyCultureEvent);
         const currentComments = Array.isArray(p.comments) ? p.comments : [];
         return {
           ...p,
@@ -1732,6 +1800,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
       );
     }
     setCurrentUserPoints((prev) => prev + currentAwardedPoints);
+    void apiFetch(`/api/safety-culture/posts/${postId}/comments`, apiJson("POST", { content: text }));
   }, [getLinkedFeedEvent, safetyCultureEvent]);
 
   const updateSafetyCultureEvent = useCallback((data: SafetyCultureEventConfig) => {
@@ -1798,11 +1867,57 @@ export function AppProviders({ children }: { children: ReactNode }) {
 
   const markAwarenessDone = useCallback((completion: Omit<AwarenessCompletion, "date" | "completedAt">) => {
     const date = todayKey();
+    const occurredAt = Date.now();
+    const points = getSafetyPoint("safetyAwarenessCompleted");
     setAwarenessDoneDate(date);
     setAwarenessHistory((current) => [
       ...current.filter((item) => item.date !== date),
       { ...completion, date, completedAt: new Date().toISOString() },
     ]);
+    setCurrentUserPoints((prev) => prev + points);
+    setUserActivityHistory((current) =>
+      normalizeUserActivityHistory([
+        {
+          id: `activity-awareness-${date}`,
+          type: "awareness",
+          occurredAt,
+          postId: 0,
+          postAuthor: DEFAULT_CURRENT_USER_NAME,
+          postCategory: "Safety Awareness",
+          postPreview: `ผ่าน Safety Awareness ประจำวัน ได้ ${completion.score}/${completion.total} ข้อ`,
+          pointsDelta: points,
+        },
+        ...current.filter((item) => item.id !== `activity-awareness-${date}`),
+      ])
+    );
+    void apiFetch("/api/safety-awareness/attempts", apiJson("POST", {
+      score: completion.score,
+      total: completion.total,
+      questions: completion.questions,
+    }));
+  }, []);
+
+  const awardSafetyEffortCompletion = useCallback((sourceId: string, label = "Safety Effort สำเร็จ") => {
+    const occurredAt = Date.now();
+    const points = getSafetyPoint("safetyEffortCompleted");
+    const activityId = `activity-safety-effort-${sourceId}`;
+
+    setCurrentUserPoints((prev) => prev + points);
+    setUserActivityHistory((current) =>
+      normalizeUserActivityHistory([
+        {
+          id: activityId,
+          type: "safety-effort",
+          occurredAt,
+          postId: 0,
+          postAuthor: DEFAULT_CURRENT_USER_NAME,
+          postCategory: "Safety Effort",
+          postPreview: label,
+          pointsDelta: points,
+        },
+        ...current.filter((item) => item.id !== activityId),
+      ])
+    );
   }, []);
 
   const redeemPoints = useCallback(
@@ -1949,6 +2064,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
     updateAwarenessQuestions,
     updateAwarenessHolidays,
     markAwarenessDone,
+    awardSafetyEffortCompletion,
     redeemPoints,
   };
 
@@ -1972,4 +2088,3 @@ export function useAppActions() {
   if (!ctx) throw new Error("useAppActions must be used within AppProviders");
   return ctx;
 }
-

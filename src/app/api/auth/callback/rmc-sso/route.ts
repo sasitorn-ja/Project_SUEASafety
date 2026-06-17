@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { exchangeCodeForSession, getRequestOrigin } from "@/lib/server/sso-auth";
+import { exchangeCodeForSession, getRequestOrigin } from "@backend/components/auth/sso";
 
 export const dynamic = "force-dynamic";
 

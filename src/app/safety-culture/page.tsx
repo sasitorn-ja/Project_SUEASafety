@@ -644,7 +644,7 @@ export default function Page() {
                               className="absolute inset-0 z-0 cursor-zoom-in"
                               aria-label="ดูรูปภาพเต็ม"
                             >
-                              <Image src={activePhoto.dataUrl} alt={`Attached post scene by ${post.author}`} fill className="object-cover" />
+                              <Image src={activePhoto.dataUrl} alt={`Attached post scene by ${post.author}`} fill sizes="(max-width: 1023px) 100vw, 640px" className="object-cover" />
                             </button>
                             {postPhotos.length > 1 && (
                               <span className="absolute right-3 bottom-3 z-10 rounded-full bg-[rgba(53,50,48,0.86)] px-2.5 py-1 text-[13px] font-black text-white">
@@ -941,7 +941,7 @@ export default function Page() {
                         <>
                           {isNotificationPostPopup ? (
                             <div className="absolute inset-0 z-0">
-                              <Image src={expandedPostActivePhoto.dataUrl} alt={`Attached post scene by ${expandedPost.author}`} fill className="object-cover" />
+                              <Image src={expandedPostActivePhoto.dataUrl} alt={`Attached post scene by ${expandedPost.author}`} fill sizes="(max-width: 1023px) 100vw, 640px" className="object-cover" />
                             </div>
                           ) : (
                             <button
@@ -950,7 +950,7 @@ export default function Page() {
                               className="absolute inset-0 z-0 cursor-zoom-in"
                               aria-label="ดูรูปภาพเต็ม"
                             >
-                              <Image src={expandedPostActivePhoto.dataUrl} alt={`Attached post scene by ${expandedPost.author}`} fill className="object-cover" />
+                              <Image src={expandedPostActivePhoto.dataUrl} alt={`Attached post scene by ${expandedPost.author}`} fill sizes="(max-width: 1023px) 100vw, 640px" className="object-cover" />
                             </button>
                           )}
                           {expandedPostPhotos.length > 1 && (

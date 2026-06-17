@@ -62,7 +62,7 @@ const WANGJAI_MASCOTS: Record<MascotAction, string> = {
   running: "/images/mascots/nong-wangjai/transparent/running.png",
   smile: "/images/mascots/nong-wangjai/transparent/cheer.png",
   happy: "/images/mascots/nong-wangjai/transparent/happy.png",
-  idea: "/images/mascots/nong-wangjai/transparent/idea.png",
+  idea: "/images/mascots/nong-wangjai/idea-bulb.png",
   cheer: "/images/mascots/nong-wangjai/transparent/cheer.png",
   welcome: "/images/mascots/nong-wangjai/transparent/welcome.png",
   firstaid: "/images/mascots/nong-wangjai/transparent/firstaid.png",

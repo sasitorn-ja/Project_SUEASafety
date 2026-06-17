@@ -10,7 +10,7 @@ import { isAdminRoute, SAFETY_EFFORT_ROUTES } from "@/lib/navigation";
 import { cn } from "@/lib/utils";
 import { SafetyAwarenessGate } from "@/components/safety-awareness/safety-awareness-gate";
 import { FloatingSafetyAssistant } from "./floating-safety-assistant";
-import { hasAdminAccess, type SessionUser } from "@/lib/session-user";
+import { DEMO_ADMIN_USER, hasAdminAccess, isLocalDemoLoginHost, type SessionUser } from "@/lib/session-user";
 
 const LOGIN_SESSION_KEY = "cpac-safety-login-session";
 
@@ -44,7 +44,8 @@ export function AppShell({ children }: { children: ReactNode }) {
       loggedIn = false;
     }
 
-    const demoLoginAllowed = process.env.NODE_ENV !== "production" && loggedIn;
+    const demoLoginAllowed =
+      process.env.NODE_ENV !== "production" && loggedIn && isLocalDemoLoginHost(window.location.hostname);
 
     setLoginChecked(loggedIn);
     setSessionChecked(false);
@@ -69,6 +70,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         setSessionUser(null);
         setSessionChecked(true);
         if (demoLoginAllowed) {
+          setSessionUser(DEMO_ADMIN_USER);
           return;
         }
         router.replace("/login");
@@ -77,6 +79,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         if (!cancelled) {
           setSessionChecked(true);
           if (demoLoginAllowed) {
+            setSessionUser(DEMO_ADMIN_USER);
             return;
           }
           router.replace("/login");

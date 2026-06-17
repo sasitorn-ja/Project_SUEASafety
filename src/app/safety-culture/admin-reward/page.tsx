@@ -29,6 +29,7 @@ import {
 import { DEFAULT_REWARD_CATEGORIES, type RewardCategoryIcon } from "@/lib/safety-culture";
 import { SafetyCultureHero } from "@/components/safety-culture/safety-culture-hero";
 import { Button } from "@/components/ui/button";
+import { Combobox } from "@/components/ui/combobox";
 import { Card } from "@/components/ui/card";
 import {
   Dialog,
@@ -299,7 +300,7 @@ function RewardImage({
         </span>
       ) : null}
       {reward.imageSrc ? (
-        <Image src={themedImage(reward.imageSrc)} alt={reward.name} fill className="object-cover" />
+        <Image src={themedImage(reward.imageSrc)} alt={reward.name} fill sizes="(max-width: 768px) 50vw, 220px" className="object-cover" />
       ) : (
         <span className="px-4 text-center text-[13px] font-extrabold lowercase tracking-[0.02em] text-[#8E8A81]">
           {reward.imageText}
@@ -391,12 +392,13 @@ function RewardPreviewPanel({
 
       <div className="relative flex aspect-[4/3] w-full items-center justify-center overflow-hidden rounded-[14px] border-[1.5px] border-[var(--border)] bg-[var(--brand-image-placeholder)]">
         {reward.imageSrc ? (
-          <Image src={themedImage(reward.imageSrc)} alt={reward.name} fill className="object-cover" />
+          <Image src={themedImage(reward.imageSrc)} alt={reward.name} fill sizes="(max-width: 768px) 50vw, 220px" className="object-cover" />
         ) : reward.isHot ? (
           <Image
             src={mascot("salute")}
             alt="SUEA reward"
             fill
+            sizes="(max-width: 768px) 50vw, 220px"
             className="object-cover"
           />
         ) : (
@@ -1990,19 +1992,16 @@ export default function AdminRewardPage() {
                         <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
                           <div className="flex flex-col gap-2">
                             <Label className="text-[12px] font-black text-[var(--brand-text)]">Category</Label>
-                            <select
+                            <Combobox
                               value={editingReward.category}
-                              onChange={(event) =>
-                                updateEditingReward("category", event.target.value as RewardCatalogItem["category"])
+                              onValueChange={(value) =>
+                                updateEditingReward("category", value as RewardCatalogItem["category"])
                               }
-                              className="h-12 rounded-[18px] border border-[var(--border)] bg-white px-4 text-[15px] font-bold text-[var(--foreground)] outline-none"
-                            >
-                              {categoryOptions.map((option) => (
-                                <option key={option.value} value={option.value}>
-                                  {option.label}
-                                </option>
-                              ))}
-                            </select>
+                              aria-label="หมวดหมู่"
+                              searchPlaceholder="ค้นหาหมวดหมู่"
+                              className="h-12 rounded-[18px] border-[var(--border)] bg-white text-[15px] font-bold text-[var(--foreground)]"
+                              options={categoryOptions.map((option) => ({ value: option.value, label: option.label }))}
+                            />
                             <div className="text-[12px] font-bold text-[#8E8A81]">
                               {getCategoryMeta(editingReward.category, categoryOptions).hint}
                             </div>
@@ -2076,7 +2075,7 @@ export default function AdminRewardPage() {
                   <div className="flex items-center gap-3">
                     <div className="relative flex h-12 w-12 flex-shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-[var(--brand-soft)]">
                       {deletingReward.imageSrc ? (
-                        <Image src={deletingReward.imageSrc} alt={deletingReward.name} fill className="object-cover" />
+                        <Image src={deletingReward.imageSrc} alt={deletingReward.name} fill sizes="48px" className="object-cover" />
                       ) : (
                         <Gift className="h-4 w-4 text-[var(--brand-text)]" strokeWidth={2.2} />
                       )}

@@ -24,6 +24,7 @@ import {
 import { SafetyCultureHero } from "@/components/safety-culture/safety-culture-hero";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Combobox } from "@/components/ui/combobox";
 import { Card } from "@/components/ui/card";
 import {
   Dialog,
@@ -416,18 +417,17 @@ export default function AdminAwarenessPage() {
                 className="h-10 rounded-xl border-[var(--c-d7c5a7)] bg-[var(--c-fffdf8)] pl-9 text-[13px] font-bold"
               />
             </div>
-            <select
+            <Combobox
               value={categoryFilter}
-              onChange={(e) => setCategoryFilter(e.target.value)}
-              className="h-10 rounded-xl border border-[var(--c-d7c5a7)] bg-[var(--c-fffdf8)] px-3 text-[13px] font-black text-[var(--c-5c3214)] md:w-[280px]"
-            >
-              <option value="all">ทุกหมวดหมู่ ({awarenessQuestions.length})</option>
-              {categories.map((c) => (
-                <option key={c} value={c}>
-                  {c}
-                </option>
-              ))}
-            </select>
+              onValueChange={setCategoryFilter}
+              aria-label="กรองตามหมวดหมู่"
+              searchPlaceholder="ค้นหาหมวดหมู่"
+              className="h-10 border-[var(--c-d7c5a7)] bg-[var(--c-fffdf8)] text-[13px] font-black text-[var(--c-5c3214)] md:w-[280px]"
+              options={[
+                { value: "all", label: `ทุกหมวดหมู่ (${awarenessQuestions.length})` },
+                ...categories.map((c) => ({ value: c, label: c })),
+              ]}
+            />
           </div>
 
           {grouped.length === 0 ? (

@@ -2,8 +2,8 @@ import "server-only";
 
 import type { ResultSetHeader, RowDataPacket } from "mysql2/promise";
 
-import { queryRows, withTransaction } from "@/lib/server/db";
-import type { SsoUser } from "@/lib/server/sso-auth";
+import { queryRows, withTransaction } from "@backend/components/core/db";
+import type { SsoUser } from "@backend/components/auth/sso";
 import { hasAdminAccess } from "@/lib/access-control";
 
 export type DbUser = {

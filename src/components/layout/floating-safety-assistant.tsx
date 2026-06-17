@@ -1,21 +1,15 @@
 "use client";
 
 import Image from "next/image";
-import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   ArrowRight,
-  Bot,
   Camera,
-  CheckCircle2,
-  ChevronDown,
-  ClipboardCheck,
-  Gift,
+  ImageIcon,
   Loader2,
-  MessageCircle,
+  Minus,
   Send,
   ShieldCheck,
-  Sparkles,
   Trophy,
 } from "lucide-react";
 import {
@@ -32,7 +26,6 @@ import { cn } from "@/lib/utils";
 import { type MascotAction, useAppTheme } from "@/providers/theme-provider";
 import { useAppState } from "@/providers/app-providers";
 
-type PromptId = "today" | "rewards" | "kyt" | "rank";
 type ChatRole = "user" | "assistant";
 type ChatMessage = { id: string; role: ChatRole; content: string; error?: boolean; image?: string };
 type DragPosition = { right: number; bottom: number };
@@ -119,15 +112,9 @@ export function FloatingSafetyAssistant() {
   const {
     currentUserPoints,
     awarenessDoneToday,
-    awarenessRequiredToday,
-    isEventLive,
     personalRankings,
-    rewardsCatalog,
-    safetyCultureEvent,
-    teamStandings,
   } = useAppState();
   const [open, setOpen] = useState(false);
-  const [activePrompt, setActivePrompt] = useState<PromptId>("today");
   const [position, setPosition] = useState<DragPosition | null>(null);
   const [windowWidth, setWindowWidth] = useState(0);
   const asideRef = useRef<HTMLElement>(null);
@@ -147,92 +134,7 @@ export function FloatingSafetyAssistant() {
     () => getAssistantContext(pathname, awarenessDoneToday),
     [pathname, awarenessDoneToday]
   );
-  const sortedRewards = useMemo(
-    () => [...rewardsCatalog].sort((a, b) => a.points - b.points),
-    [rewardsCatalog]
-  );
-  const redeemableRewards = sortedRewards.filter((reward) => reward.points <= currentUserPoints);
-  const nextReward = sortedRewards.find((reward) => reward.points > currentUserPoints);
   const activeUser = personalRankings.find((person) => person.active);
-  const activeTeam = activeUser ? teamStandings.find((team) => team.name === activeUser.team) : undefined;
-
-  const prompts: Array<{ id: PromptId; label: string; Icon: typeof Sparkles }> = [
-    { id: "today", label: "วันนี้ต้องทำอะไร", Icon: Sparkles },
-    { id: "rewards", label: "คะแนนแลกอะไรได้", Icon: Gift },
-    { id: "kyt", label: "ไปทำ KYT", Icon: ClipboardCheck },
-    { id: "rank", label: "ดูอันดับ", Icon: Trophy },
-  ];
-
-  const botAnswer = useMemo(() => {
-    if (activePrompt === "rewards") {
-      if (redeemableRewards.length > 0) {
-        const topReward = redeemableRewards[redeemableRewards.length - 1];
-        return {
-          text: `ตอนนี้คุณมี ${currentUserPoints.toLocaleString()} แต้ม แลกได้ ${redeemableRewards.length} รางวัล แนะนำดู "${topReward.name}" ก่อนเลย`,
-          href: "/safety-culture/rewards",
-          cta: "ดูรางวัล",
-        };
-      }
-      return {
-        text: nextReward
-          ? `ยังขาดอีก ${(nextReward.points - currentUserPoints).toLocaleString()} แต้ม เพื่อแลก "${nextReward.name}"`
-          : "ตอนนี้ยังไม่มีรางวัลใหม่ในระบบ แต่คะแนนของคุณยังสะสมต่อได้",
-        href: "/safety-culture/rewards",
-        cta: "ดูแคตตาล็อก",
-      };
-    }
-
-    if (activePrompt === "kyt") {
-      return {
-        text: "KYT เหมาะมากก่อนเริ่มงานหรือก่อนเข้าพื้นที่เสี่ยง ฉันพาไปหน้าแบบฟอร์มให้ได้ทันที",
-        href: "/were-ok/kyt",
-        cta: "ไปทำ KYT",
-      };
-    }
-
-    if (activePrompt === "rank") {
-      return {
-        text: activeUser
-          ? `ตอนนี้คุณอยู่อันดับ ${activeUser.rank} ในทีม ${activeUser.team}${activeTeam ? ` ทีมมี ${activeTeam.points.toLocaleString()} แต้ม` : ""}`
-          : "ฉันยังไม่เจออันดับของคุณในข้อมูลปัจจุบัน ลองเปิด Leaderboard เพื่อดูภาพรวมทีม",
-        href: "/safety-culture/leaderboard",
-        cta: "เปิด Leaderboard",
-      };
-    }
-
-    if (awarenessRequiredToday && !awarenessDoneToday) {
-      return {
-        text: "งานสำคัญวันนี้คือทำ Safety Awareness ให้ครบก่อน เริ่มจากหน้าแรกได้เลย ระบบจะช่วยเก็บคะแนน KPI ให้",
-        href: "/",
-        cta: "ทำ Safety Awareness",
-      };
-    }
-
-    if (isEventLive) {
-      return {
-        text: `วันนี้ทำ Awareness แล้ว เยี่ยมเลย ตอนนี้มีกิจกรรม "${safetyCultureEvent.headline}" กำลังจัดอยู่ ไปเก็บแต้มต่อได้`,
-        href: "/safety-culture",
-        cta: "ดูกิจกรรม",
-      };
-    }
-
-    return {
-      text: "วันนี้พื้นฐานเรียบร้อยแล้ว แนะนำแชร์พฤติกรรมปลอดภัยหรือดูรางวัลที่คะแนนใกล้แลกได้",
-      href: "/safety-culture/post",
-      cta: "แชร์ Safety",
-    };
-  }, [
-    activePrompt,
-    activeTeam,
-    activeUser,
-    awarenessDoneToday,
-    awarenessRequiredToday,
-    currentUserPoints,
-    isEventLive,
-    nextReward,
-    redeemableRewards,
-    safetyCultureEvent.headline,
-  ]);
 
   const greeting = useMemo<ChatMessage>(
     () => ({
@@ -403,7 +305,6 @@ export function FloatingSafetyAssistant() {
 
   useEffect(() => {
     setOpen(false);
-    setActivePrompt("today");
     setChatMessages([]);
     setChatInput("");
   }, [pathname]);
@@ -637,47 +538,98 @@ export function FloatingSafetyAssistant() {
     >
       <div
         className={cn(
-          "absolute bottom-[calc(100%+10px)] flex max-h-[68vh] w-[min(calc(100vw-24px),350px)] flex-col overflow-hidden rounded-2xl border border-[var(--border)] bg-[rgba(var(--brand-nav-rgb),0.97)] text-white shadow-[0_18px_46px_var(--brand-shadow)] backdrop-blur-xl transition-all duration-200 md:max-h-[min(70vh,560px)] md:w-[352px]",
-          isDockedLeft ? "left-0 origin-bottom-left" : "right-0 origin-bottom-right",
+          "fixed bottom-[calc(var(--mobile-bottomnav-h)+84px)] flex max-h-[68vh] w-[min(calc(100vw-24px),350px)] flex-col overflow-hidden rounded-2xl border border-white/12 bg-[linear-gradient(145deg,rgba(5,24,52,0.98),rgba(11,57,104,0.96))] text-white shadow-[0_18px_46px_rgba(5,24,52,0.34)] backdrop-blur-xl transition-all duration-200 md:bottom-24 md:max-h-[min(70vh,560px)] md:w-[352px]",
+          isDockedLeft ? "left-3 origin-bottom-left" : "right-3 origin-bottom-right",
           open ? "visible translate-y-0 scale-100 opacity-100" : "invisible translate-y-2 scale-95 opacity-0"
         )}
       >
-        <div className="flex items-start gap-2.5 border-b border-white/10 p-3">
-          <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-white/10 text-[var(--brand-accent)]">
-            <Bot className="h-4.5 w-4.5" strokeWidth={2.5} />
-          </span>
-          <div className="min-w-0 flex-1">
-            <p className="text-[12.5px] font-black">น้องวางใจ AI Safety Buddy</p>
-            <p className="mt-0.5 text-[10.5px] font-bold leading-relaxed text-white/65">{context.message}</p>
+        {/* กรอบบน: โชว์เต็มตอนยังไม่เริ่มคุย / ยุบเป็นแถบเล็กเมื่อเริ่มสนทนาแล้ว
+            (chatMessages ถูกรีเซ็ตเมื่อ remount เช่น โหลดเว็บใหม่ → กลับมาโชว์เต็มเหมือนเดิม) */}
+        {chatMessages.length === 0 ? (
+          <div className="relative overflow-hidden px-3 pb-2.5 pt-3">
+            <div className="pointer-events-none absolute -right-8 top-8 h-28 w-28 rounded-full border-[14px] border-white/10" />
+            <ShieldCheck className="pointer-events-none absolute right-5 top-16 h-14 w-14 text-white/10" strokeWidth={1.6} />
+            <button
+              type="button"
+              onClick={() => setOpen(false)}
+              className="absolute right-3 top-3 z-10 flex h-7 w-7 items-center justify-center rounded-full bg-white/10 text-white/75 outline-none transition hover:bg-white/16 hover:text-white focus-visible:ring-2 focus-visible:ring-[var(--brand-accent)]"
+              aria-label="ย่อผู้ช่วย"
+            >
+              <Minus className="h-4 w-4" strokeWidth={3} />
+            </button>
+
+            <div className="relative grid grid-cols-[96px_minmax(0,1fr)] items-end gap-2.5 pr-7">
+              <div className="relative h-[116px]">
+                <Image
+                  src={mascot("idea")}
+                  alt="น้องวางใจ AI Safety Buddy"
+                  width={200}
+                  height={250}
+                  className="absolute -left-2.5 bottom-0 h-[132px] w-[100px] max-w-none object-contain drop-shadow-[0_12px_22px_rgba(0,0,0,0.28)]"
+                />
+              </div>
+              <div className="min-w-0 pb-4">
+                <p className="text-[15px] font-black leading-tight text-white">
+                  น้องวางใจ AI Safety Buddy
+                </p>
+                <p className="mt-1 text-[11px] font-bold leading-snug text-white/58">
+                  ผู้ช่วยแนะนำงานด้านความปลอดภัย
+                </p>
+              </div>
+            </div>
+
+            <div className="relative ml-[104px] border-t border-white/12 px-0.5 py-2">
+              <div className="flex items-center justify-between gap-3">
+                <span className="flex items-center gap-2 text-[12px] font-black text-white/86">
+                  <Trophy className="h-4.5 w-4.5 text-[var(--brand-accent)]" strokeWidth={2.5} />
+                  คะแนนของฉัน
+                </span>
+                <span className="text-[17px] font-black leading-none text-[var(--brand-accent)]">
+                  {currentUserPoints.toLocaleString()}
+                </span>
+              </div>
+            </div>
           </div>
-          <button
-            type="button"
-            onClick={() => setOpen(false)}
-            className="flex h-7 w-7 items-center justify-center rounded-full text-white/65 outline-none hover:bg-white/10 hover:text-white focus-visible:ring-2 focus-visible:ring-[var(--brand-accent)]"
-            aria-label="ย่อผู้ช่วย"
-          >
-            <ChevronDown className="h-4 w-4" strokeWidth={2.5} />
-          </button>
-        </div>
+        ) : (
+          <div className="relative flex items-center gap-2.5 px-3 py-2.5">
+            <Image
+              src="/images/mascots/nong-wangjai/transparent/logo-head-v5.png"
+              alt=""
+              width={40}
+              height={40}
+              className="h-9 w-9 flex-shrink-0 rounded-full bg-[#eaf4ff] object-cover object-[50%_38%] p-0.5 ring-1 ring-white/20"
+            />
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-[13px] font-black leading-tight text-white">
+                น้องวางใจ AI Safety Buddy
+              </p>
+              <p className="flex items-center gap-1 text-[10px] font-bold leading-tight text-white/55">
+                <Trophy className="h-3 w-3 text-[var(--brand-accent)]" strokeWidth={2.5} />
+                {currentUserPoints.toLocaleString()} คะแนน
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setOpen(false)}
+              className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-white/10 text-white/75 outline-none transition hover:bg-white/16 hover:text-white focus-visible:ring-2 focus-visible:ring-[var(--brand-accent)]"
+              aria-label="ย่อผู้ช่วย"
+            >
+              <Minus className="h-4 w-4" strokeWidth={3} />
+            </button>
+          </div>
+        )}
 
-        <div className="flex items-center justify-between border-b border-white/10 px-3 py-2">
-          <span className="flex items-center gap-1.5 text-[10px] font-extrabold text-white/70">
-            <Trophy className="h-3.5 w-3.5 text-[var(--brand-accent)]" strokeWidth={2.5} />
-            คะแนนของฉัน
-          </span>
-          <span className="text-[15px] font-black text-[var(--brand-accent)]">{currentUserPoints.toLocaleString()}</span>
-        </div>
-
-        <div ref={chatScrollRef} className="min-h-0 flex-1 space-y-2.5 overflow-y-auto p-2.5">
+        <div className="mx-2.5 flex min-h-0 flex-1 flex-col rounded-t-2xl bg-white/[0.07] px-2.5 pb-2.5 pt-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]">
+        <div ref={chatScrollRef} className="min-h-[96px] flex-1 space-y-2.5 overflow-y-auto pr-1">
           {[greeting, ...chatMessages].map((message) =>
             message.role === "assistant" ? (
               <div key={message.id} className="flex items-start gap-2">
                 <Image
-                  src={mascot(context.action)}
+                  src="/images/mascots/nong-wangjai/transparent/logo-head-v5.png"
                   alt=""
                   width={40}
                   height={40}
-                  className="mt-0.5 h-7 w-7 flex-shrink-0 rounded-full bg-white/10 object-contain"
+                  className="mt-0.5 h-8 w-8 flex-shrink-0 rounded-full bg-[#eaf4ff] object-cover object-[50%_38%] p-0.5 ring-1 ring-white/20"
                 />
                 <div
                   className={cn(
@@ -701,14 +653,14 @@ export function FloatingSafetyAssistant() {
             )
           )}
           {isSending ? (
-            <div className="flex items-center gap-2 pl-9 text-[10px] font-bold text-white/55">
-              <Loader2 className="h-3.5 w-3.5 animate-spin" strokeWidth={2.5} />
+            <div className="flex items-center gap-2 pl-10 text-[10px] font-bold text-white/55">
+              <Loader2 className="h-3.5 w-3.5 animate-spin text-[var(--brand-accent)]" strokeWidth={2.5} />
               น้องวางใจกำลังพิมพ์...
             </div>
           ) : null}
         </div>
 
-        <div className="border-t border-white/10 p-2.5">
+        <div className="pt-2.5">
           <input
             ref={fileInputRef}
             type="file"
@@ -721,31 +673,25 @@ export function FloatingSafetyAssistant() {
             type="button"
             disabled={isSending}
             onClick={() => fileInputRef.current?.click()}
-            className="mb-2 flex w-full items-center justify-center gap-1.5 rounded-xl border border-[var(--brand-accent)]/60 bg-[var(--brand-accent)]/15 px-3 py-2 text-[11px] font-black text-white outline-none transition hover:bg-[var(--brand-accent)]/25 focus-visible:ring-2 focus-visible:ring-[var(--brand-accent)] disabled:opacity-50"
+            className="mb-2 flex w-full items-center justify-between gap-2 rounded-xl border border-[var(--brand-accent)]/55 bg-[linear-gradient(135deg,#1496ff,#005fd2)] px-3 py-2 text-left text-white shadow-[0_8px_18px_rgba(0,102,215,0.28),inset_0_1px_0_rgba(255,255,255,0.26)] outline-none transition hover:brightness-105 focus-visible:ring-2 focus-visible:ring-[var(--brand-accent)] disabled:opacity-50"
           >
-            <ShieldCheck className="h-4 w-4 text-[var(--brand-accent)]" strokeWidth={2.6} />
-            ถ่าย/อัปโหลดรูป ตรวจการแต่งกาย PPE
+            <span className="flex items-center gap-2.5">
+              <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#075fb9]/55">
+                <Camera className="h-5 w-5" strokeWidth={2.4} />
+              </span>
+              <span className="min-w-0">
+                <span className="block text-[12px] font-black leading-tight">ถ่าย/อัปโหลดรูป</span>
+                <span className="block text-[10.5px] font-bold leading-tight text-white/90">ตรวจการแต่งกาย PPE</span>
+              </span>
+            </span>
+            <ArrowRight className="h-5 w-5 flex-shrink-0" strokeWidth={3.2} />
           </button>
-          <div className="mb-2 flex flex-wrap gap-1.5">
-            {prompts.map(({ id, label, Icon }) => (
-              <button
-                key={id}
-                type="button"
-                disabled={isSending}
-                onClick={() => sendMessage(label)}
-                className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/[0.08] px-2.5 py-1 text-[10px] font-bold text-white/78 outline-none transition hover:bg-white/[0.14] focus-visible:ring-2 focus-visible:ring-[var(--brand-accent)] disabled:opacity-50"
-              >
-                <Icon className="h-3 w-3 text-[var(--brand-accent)]" strokeWidth={2.5} />
-                {label}
-              </button>
-            ))}
-          </div>
           <form
             onSubmit={(event) => {
               event.preventDefault();
               sendMessage(chatInput);
             }}
-            className="flex items-center gap-1.5"
+            className="flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.10] px-1.5 py-1.5"
           >
             <button
               type="button"
@@ -754,15 +700,15 @@ export function FloatingSafetyAssistant() {
               className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/[0.10] text-white/80 outline-none transition hover:bg-white/[0.18] focus-visible:ring-2 focus-visible:ring-[var(--brand-accent)] disabled:opacity-50"
               aria-label="แนบรูปเพื่อตรวจ PPE"
             >
-              <Camera className="h-4 w-4" strokeWidth={2.4} />
+              <ImageIcon className="h-4 w-4" strokeWidth={2.2} />
             </button>
             <input
               ref={inputRef}
               value={chatInput}
               onChange={(event) => setChatInput(event.target.value)}
-              placeholder="พิมพ์คุยกับน้องวางใจ..."
+              placeholder="พิมพ์ข้อความหรือถามอะไรได้เลย..."
               disabled={isSending}
-              className="min-w-0 flex-1 rounded-full border border-white/10 bg-white/[0.10] px-3 py-2 text-[11px] font-bold text-white outline-none transition placeholder:text-white/40 focus:border-[var(--brand-accent)] disabled:opacity-60"
+              className="min-w-0 flex-1 bg-transparent px-2 py-1.5 text-[11px] font-bold text-white outline-none placeholder:text-white/40 disabled:opacity-60"
             />
             <button
               type="submit"
@@ -778,9 +724,10 @@ export function FloatingSafetyAssistant() {
             </button>
           </form>
           <p className="mt-2 flex items-center gap-1.5 text-[9px] font-bold leading-relaxed text-white/45">
-            <CheckCircle2 className="h-3 w-3 flex-shrink-0 text-[var(--brand-accent)]" strokeWidth={2.5} />
-            ขับเคลื่อนด้วย AI (Gemma ผ่าน OpenRouter) • โปรดอย่ากรอกข้อมูลส่วนตัวที่ละเอียดอ่อน
+            <ShieldCheck className="h-3 w-3 flex-shrink-0 text-[var(--brand-accent)]" strokeWidth={2.4} />
+            น้องวางใจ AI อาจมีข้อผิดพลาด โปรดตรวจสอบข้อมูลสำคัญก่อนดำเนินการ
           </p>
+        </div>
         </div>
       </div>
 
@@ -797,9 +744,9 @@ export function FloatingSafetyAssistant() {
         onTouchEnd={handleTriggerTouchEnd}
         onTouchCancel={handleTriggerTouchCancel}
         className={cn(
-          "floating-safety-assistant-trigger group relative flex h-[56px] w-[56px] touch-none select-none items-center justify-center rounded-full border-2 border-white/70 bg-[rgba(var(--brand-nav-rgb),0.90)] shadow-[0_14px_34px_var(--brand-shadow)] outline-none backdrop-blur-lg transition-transform [-webkit-user-select:none] [-webkit-touch-callout:none] active:scale-95 hover:scale-105 focus-visible:ring-3 focus-visible:ring-[var(--brand-accent)] md:h-[64px] md:w-[64px]",
+          "floating-safety-assistant-trigger group relative flex h-[56px] w-[56px] touch-none select-none items-center justify-center rounded-full border-2 border-white/70 bg-[rgba(var(--brand-nav-rgb),0.90)] shadow-[0_14px_34px_var(--brand-shadow)] outline-none backdrop-blur-lg transition-all [-webkit-user-select:none] [-webkit-touch-callout:none] active:scale-95 hover:scale-105 focus-visible:ring-3 focus-visible:ring-[var(--brand-accent)] md:h-[64px] md:w-[64px]",
           isDragging ? "cursor-grabbing" : "cursor-grab",
-          open && "scale-105"
+          open && "pointer-events-none scale-90 opacity-0"
         )}
         aria-expanded={open}
         aria-label={open ? "ย่อผู้ช่วยน้องวางใจ" : "เปิดผู้ช่วยน้องวางใจ"}

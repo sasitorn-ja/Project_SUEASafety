@@ -22,6 +22,7 @@ import {
 import { SafetyCultureHero } from "@/components/safety-culture/safety-culture-hero";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Combobox } from "@/components/ui/combobox";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -1027,31 +1028,25 @@ export default function AdminEventPage() {
                               <div className="grid grid-cols-2 gap-3">
                                 <div className="flex flex-col gap-2">
                                   <label className="text-[11px] font-black uppercase tracking-[0.14em] text-[#8E8A81]">ชั่วโมง</label>
-                                  <select
+                                  <Combobox
                                     value={getTimeParts(startTime).hour}
-                                    onChange={(event) => updateTimePart("start", "hour", event.target.value)}
-                                    className="h-11 rounded-xl border border-[var(--c-d7c5a7)] bg-[var(--c-fffcf5)] px-3 text-[14px] font-black text-[var(--c-5c3214)] outline-none"
-                                  >
-                                    {HOUR_OPTIONS.map((hour) => (
-                                      <option key={hour} value={hour}>
-                                        {hour}
-                                      </option>
-                                    ))}
-                                  </select>
+                                    onValueChange={(v) => updateTimePart("start", "hour", v)}
+                                    aria-label="ชั่วโมงเริ่ม"
+                                    searchPlaceholder="ชั่วโมง"
+                                    className="h-11 rounded-xl border-[var(--c-d7c5a7)] bg-[var(--c-fffcf5)] text-[14px] font-black text-[var(--c-5c3214)]"
+                                    options={HOUR_OPTIONS.map((hour) => ({ value: hour, label: hour }))}
+                                  />
                                 </div>
                                 <div className="flex flex-col gap-2">
                                   <label className="text-[11px] font-black uppercase tracking-[0.14em] text-[#8E8A81]">นาที</label>
-                                  <select
+                                  <Combobox
                                     value={roundMinutesToNearestFive(getTimeParts(startTime).minute)}
-                                    onChange={(event) => updateTimePart("start", "minute", event.target.value)}
-                                    className="h-11 rounded-xl border border-[var(--c-d7c5a7)] bg-[var(--c-fffcf5)] px-3 text-[14px] font-black text-[var(--c-5c3214)] outline-none"
-                                  >
-                                    {MINUTE_OPTIONS.map((minute) => (
-                                      <option key={minute} value={minute}>
-                                        {minute}
-                                      </option>
-                                    ))}
-                                  </select>
+                                    onValueChange={(v) => updateTimePart("start", "minute", v)}
+                                    aria-label="นาทีเริ่ม"
+                                    searchPlaceholder="นาที"
+                                    className="h-11 rounded-xl border-[var(--c-d7c5a7)] bg-[var(--c-fffcf5)] text-[14px] font-black text-[var(--c-5c3214)]"
+                                    options={MINUTE_OPTIONS.map((minute) => ({ value: minute, label: minute }))}
+                                  />
                                 </div>
                               </div>
                             </div>
@@ -1120,31 +1115,25 @@ export default function AdminEventPage() {
                               <div className="grid grid-cols-2 gap-3">
                                 <div className="flex flex-col gap-2">
                                   <label className="text-[11px] font-black uppercase tracking-[0.14em] text-[#8E8A81]">ชั่วโมง</label>
-                                  <select
+                                  <Combobox
                                     value={getTimeParts(endTime).hour}
-                                    onChange={(event) => updateTimePart("end", "hour", event.target.value)}
-                                    className="h-11 rounded-xl border border-[var(--c-d7c5a7)] bg-[var(--c-fffcf5)] px-3 text-[14px] font-black text-[var(--c-5c3214)] outline-none"
-                                  >
-                                    {HOUR_OPTIONS.map((hour) => (
-                                      <option key={hour} value={hour}>
-                                        {hour}
-                                      </option>
-                                    ))}
-                                  </select>
+                                    onValueChange={(v) => updateTimePart("end", "hour", v)}
+                                    aria-label="ชั่วโมงจบ"
+                                    searchPlaceholder="ชั่วโมง"
+                                    className="h-11 rounded-xl border-[var(--c-d7c5a7)] bg-[var(--c-fffcf5)] text-[14px] font-black text-[var(--c-5c3214)]"
+                                    options={HOUR_OPTIONS.map((hour) => ({ value: hour, label: hour }))}
+                                  />
                                 </div>
                                 <div className="flex flex-col gap-2">
                                   <label className="text-[11px] font-black uppercase tracking-[0.14em] text-[#8E8A81]">นาที</label>
-                                  <select
+                                  <Combobox
                                     value={roundMinutesToNearestFive(getTimeParts(endTime).minute)}
-                                    onChange={(event) => updateTimePart("end", "minute", event.target.value)}
-                                    className="h-11 rounded-xl border border-[var(--c-d7c5a7)] bg-[var(--c-fffcf5)] px-3 text-[14px] font-black text-[var(--c-5c3214)] outline-none"
-                                  >
-                                    {MINUTE_OPTIONS.map((minute) => (
-                                      <option key={minute} value={minute}>
-                                        {minute}
-                                      </option>
-                                    ))}
-                                  </select>
+                                    onValueChange={(v) => updateTimePart("end", "minute", v)}
+                                    aria-label="นาทีจบ"
+                                    searchPlaceholder="นาที"
+                                    className="h-11 rounded-xl border-[var(--c-d7c5a7)] bg-[var(--c-fffcf5)] text-[14px] font-black text-[var(--c-5c3214)]"
+                                    options={MINUTE_OPTIONS.map((minute) => ({ value: minute, label: minute }))}
+                                  />
                                 </div>
                               </div>
                             </div>

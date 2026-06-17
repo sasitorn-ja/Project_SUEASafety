@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "@/lib/router-compat";
 import TigerMascot from "@/components/TigerMascot";
 import { getChecklistForType } from "@/features/safety-effort/config/checklists";
+import { useAppActions } from "@/providers/app-providers";
 
 const T = {
   background: "var(--background)",
@@ -36,6 +37,7 @@ function statusMeta(status) {
 export default function AssessmentSummary() {
   const navigate = useNavigate();
   const location = useLocation();
+  const actions = useAppActions();
   const [showSuccessPopup, setShowSuccessPopup] = useState(false);
   const checkin = location.state?.checkin ?? null;
   const activity = location.state?.activity ?? null;
@@ -115,6 +117,7 @@ export default function AssessmentSummary() {
         };
         submissions.unshift(newSubmission);
         localStorage.setItem("suea-safety-submissions-v1", JSON.stringify(submissions));
+        actions.awardSafetyEffortCompletion(newSubmission.id, `${newSubmission.activityLabel} สำเร็จ`);
       } catch (e) {
         console.error("Error saving submission", e);
       }

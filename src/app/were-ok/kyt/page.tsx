@@ -7,6 +7,7 @@ import { useAppState, useAppActions } from "@/providers/app-providers";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { getSafetyPoint } from "@/lib/point-rules";
 import { ArrowLeft, Camera, Check, X } from "lucide-react";
 
 export default function KytPage() {
@@ -135,6 +136,7 @@ export default function KytPage() {
     setTimeout(() => {
       actions.setKytData({ photo, isPhotoConfirmed: true, isSubmitted: true, hasRetaken });
       actions.completeSteps([1]);
+      actions.awardSafetyEffortCompletion(`kyt-${new Date().toISOString().slice(0, 10)}`, "KYT ก่อนขับรถสำเร็จ");
       router.push("/were-ok");
     }, 1500);
   };
@@ -269,7 +271,7 @@ export default function KytPage() {
                       </>
                     ) : (
                       <>
-                        <span>ส่งแล้ว · +10 แต้ม</span>
+                        <span>ส่งแล้ว · +{getSafetyPoint("safetyEffortCompleted")} แต้ม</span>
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4.5" strokeLinecap="round" strokeLinejoin="round">
                           <polyline points="20 6 9 17 4 12"/>
                         </svg>
@@ -285,7 +287,7 @@ export default function KytPage() {
                       </>
                     ) : (
                       <>
-                        <span>ส่ง · รับ +10 แต้ม</span>
+                        <span>ส่ง · รับ +{getSafetyPoint("safetyEffortCompleted")} แต้ม</span>
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4.5" strokeLinecap="round" strokeLinejoin="round">
                           <polyline points="20 6 9 17 4 12"/>
                         </svg>

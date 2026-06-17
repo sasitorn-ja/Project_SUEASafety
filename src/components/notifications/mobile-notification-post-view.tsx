@@ -175,7 +175,7 @@ export function MobileNotificationPostView({
               <div className={cn("relative aspect-[1.08/1] w-full overflow-hidden rounded-[18px] border-[1.5px]", imageFrameClass)}>
                 {activePhoto ? (
                   <>
-                    <Image src={activePhoto.dataUrl} alt={`Attached post scene by ${post.author}`} fill className="object-cover" />
+                    <Image src={activePhoto.dataUrl} alt={`Attached post scene by ${post.author}`} fill sizes="(max-width: 768px) 100vw, 480px" className="object-cover" />
                     {postPhotos.length > 1 ? (
                       <span className="absolute right-3 bottom-3 z-10 rounded-full bg-[rgba(53,50,48,0.86)] px-2.5 py-1 text-[12px] font-black text-white">
                         {activePhotoIndex + 1} / {postPhotos.length}

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { ArrowLeft, CalendarDays, Clock3, FileText, Gift, Heart, MessageCircle, UserRound } from "lucide-react";
+import { ArrowLeft, CalendarDays, CheckCircle2, Clock3, FileText, Gift, Heart, MessageCircle, ShieldCheck, UserRound } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -46,6 +46,22 @@ function getActivityMeta(type: SafetyCultureUserActivity["type"]) {
       label: "แลกรางวัล",
       icon: Gift,
       tone: "border-[#c8ead6] bg-[#edf9ef] text-[#1f7a55]",
+    };
+  }
+
+  if (type === "awareness") {
+    return {
+      label: "Awareness",
+      icon: ShieldCheck,
+      tone: "border-[#c9e8d5] bg-[#effaf2] text-[#1f7a55]",
+    };
+  }
+
+  if (type === "safety-effort") {
+    return {
+      label: "Safety Effort",
+      icon: CheckCircle2,
+      tone: "border-[#f3d28f] bg-[#fff8e6] text-[#8a5a10]",
     };
   }
 

@@ -6,7 +6,7 @@ import {
   getDiscoveryDocument,
   getRequestOrigin,
   setOAuthCookie,
-} from "@/lib/server/sso-auth";
+} from "@backend/components/auth/sso";
 
 export const dynamic = "force-dynamic";
 

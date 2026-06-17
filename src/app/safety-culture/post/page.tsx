@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { SAFETY_CULTURE_CATEGORIES } from "@/lib/safety-culture";
+import { getSafetyPoint } from "@/lib/point-rules";
 import { cn } from "@/lib/utils";
 
 const CATEGORIES = SAFETY_CULTURE_CATEGORIES.filter(
@@ -160,7 +161,7 @@ export default function PostSocialPage() {
       imageData: null,
       likes: 0,
       comments: [],
-      points: selectedFeedEvent?.points ?? 6,
+      points: getSafetyPoint("safetyPostApproved"),
       hasLiked: false,
       feedEventId: selectedFeedEvent?.id,
       feedEventTitle: selectedFeedEvent?.title,
@@ -177,10 +178,10 @@ export default function PostSocialPage() {
 
     toast.success("โพสต์สำเร็จ", {
       description: selectedFeedEvent
-        ? `โพสต์เข้ากิจกรรม ${selectedFeedEvent.title} แล้ว ฐาน ${selectedFeedEvent.points} แต้ม และโบนัส ${nextBonusLabel}`
+        ? `โพสต์เข้ากิจกรรม ${selectedFeedEvent.title} แล้ว ฐาน ${getSafetyPoint("safetyPostApproved")} แต้ม และโบนัส ${nextBonusLabel}`
         : isEventLive
-          ? `แชร์เรื่องความปลอดภัยแล้ว ได้ฐาน +6 แต้ม และโบนัสอีเว้น ${nextBonusLabel}`
-          : "แชร์เรื่องความปลอดภัยแล้ว ได้รับ +6 แต้ม",
+          ? `แชร์เรื่องความปลอดภัยแล้ว ได้ฐาน +${getSafetyPoint("safetyPostApproved")} แต้ม และโบนัสอีเว้น ${nextBonusLabel}`
+          : `แชร์เรื่องความปลอดภัยแล้ว ได้รับ +${getSafetyPoint("safetyPostApproved")} แต้ม`,
     });
 
     setTimeout(() => router.push("/safety-culture"), 800);
@@ -193,8 +194,8 @@ export default function PostSocialPage() {
 
     toast.success("โพสต์สำเร็จ", {
       description: isEventLive
-        ? `แชร์เรื่องความปลอดภัยแล้ว ได้ฐาน +6 แต้ม และโบนัสอีเว้น ${bonusLabel}`
-        : "แชร์เรื่องความปลอดภัยแล้ว ได้รับ +6 แต้ม",
+        ? `แชร์เรื่องความปลอดภัยแล้ว ได้ฐาน +${getSafetyPoint("safetyPostApproved")} แต้ม และโบนัสอีเว้น ${bonusLabel}`
+        : `แชร์เรื่องความปลอดภัยแล้ว ได้รับ +${getSafetyPoint("safetyPostApproved")} แต้ม`,
     });
 
     setTimeout(() => router.push("/safety-culture"), 800);
@@ -390,6 +391,7 @@ export default function PostSocialPage() {
                   src={photo.dataUrl}
                   alt={`Upload ${idx + 1}`}
                   fill
+                  sizes="(max-width: 768px) 33vw, 160px"
                   unoptimized
                   className="object-cover"
                 />
@@ -466,5 +468,4 @@ export default function PostSocialPage() {
     </>
   );
 }
-
 

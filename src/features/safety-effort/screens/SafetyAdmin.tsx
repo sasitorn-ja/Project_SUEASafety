@@ -11,6 +11,7 @@ import {
 } from "@/features/safety-effort/config/checklists";
 import { GripVertical, Eye, Trash2, Search, X, Download, Upload, Check, Settings, ChevronDown, ChevronUp, Pencil, MapPin } from "lucide-react";
 import * as XLSX from "xlsx";
+import { Combobox } from "@/components/ui/combobox";
 import mockExcelRecords from "@/features/safety-effort/config/mock_excel_records.json";
 import mockPlantsData from "@/features/safety-effort/config/mock_plants.json";
 import mockOfficesData from "@/features/safety-effort/config/mock_offices.json";
@@ -1675,43 +1676,33 @@ export default function SafetyAdmin() {
                 </div>
 
                 {/* Filter Activity */}
-                <select
+                <Combobox
                   value={activityFilter}
-                  onChange={(e) => setActivityFilter(e.target.value)}
-                  style={{
-                    ...inputStyle,
-                    width: isMobile ? "100%" : 160,
-                    minHeight: 38,
-                    borderRadius: 10,
-                    fontSize: 13,
-                    padding: "0 10px",
-                    cursor: "pointer"
-                  }}
-                >
-                  <option value="all">กิจกรรมทั้งหมด</option>
-                  <option value="line-walk">Line Walk</option>
-                  <option value="safety-contact">Safety Contact</option>
-                </select>
+                  onValueChange={setActivityFilter}
+                  aria-label="กรองกิจกรรม"
+                  searchPlaceholder="ค้นหากิจกรรม"
+                  style={{ width: isMobile ? "100%" : 160 }}
+                  options={[
+                    { value: "all", label: "กิจกรรมทั้งหมด" },
+                    { value: "line-walk", label: "Line Walk" },
+                    { value: "safety-contact", label: "Safety Contact" },
+                  ]}
+                />
 
                 {/* Filter Location Type */}
-                <select
+                <Combobox
                   value={locTypeFilter}
-                  onChange={(e) => setLocTypeFilter(e.target.value)}
-                  style={{
-                    ...inputStyle,
-                    width: isMobile ? "100%" : 160,
-                    minHeight: 38,
-                    borderRadius: 10,
-                    fontSize: 13,
-                    padding: "0 10px",
-                    cursor: "pointer"
-                  }}
-                >
-                  <option value="all">ทุกประเภทสถานที่</option>
-                  <option value="factory">โรงงาน</option>
-                  <option value="office">สำนักงาน</option>
-                  <option value="site">Site งาน</option>
-                </select>
+                  onValueChange={setLocTypeFilter}
+                  aria-label="กรองประเภทสถานที่"
+                  searchPlaceholder="ค้นหาประเภท"
+                  style={{ width: isMobile ? "100%" : 160 }}
+                  options={[
+                    { value: "all", label: "ทุกประเภทสถานที่" },
+                    { value: "factory", label: "โรงงาน" },
+                    { value: "office", label: "สำนักงาน" },
+                    { value: "site", label: "Site งาน" },
+                  ]}
+                />
               </div>
 
               {submissions.length > 0 && (
@@ -2086,33 +2077,30 @@ export default function SafetyAdmin() {
                 />
                 <Search size={14} style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: T.sub }} />
               </div>
-              <select
+              <Combobox
                 value={reportYearFilter}
-                onChange={(event) => setReportYearFilter(event.target.value)}
-                style={{ ...inputStyle, width: isMobile ? "100%" : 140, minHeight: 38, borderRadius: 10, fontSize: 13, padding: "0 10px", cursor: "pointer" }}
-              >
-                {reportYearOptions.map((year) => (
-                  <option key={year} value={year}>{year === "all" ? "ทุกปี" : year}</option>
-                ))}
-              </select>
-              <select
+                onValueChange={setReportYearFilter}
+                aria-label="กรองปี"
+                searchPlaceholder="ค้นหาปี"
+                style={{ width: isMobile ? "100%" : 140 }}
+                options={reportYearOptions.map((year) => ({ value: year, label: year === "all" ? "ทุกปี" : year }))}
+              />
+              <Combobox
                 value={reportMonthFilter}
-                onChange={(event) => setReportMonthFilter(event.target.value)}
-                style={{ ...inputStyle, width: isMobile ? "100%" : 160, minHeight: 38, borderRadius: 10, fontSize: 13, padding: "0 10px", cursor: "pointer" }}
-              >
-                {REPORT_MONTH_OPTIONS.map((month) => (
-                  <option key={month.value} value={month.value}>{month.label}</option>
-                ))}
-              </select>
-              <select
+                onValueChange={setReportMonthFilter}
+                aria-label="กรองเดือน"
+                searchPlaceholder="ค้นหาเดือน"
+                style={{ width: isMobile ? "100%" : 160 }}
+                options={REPORT_MONTH_OPTIONS.map((month) => ({ value: month.value, label: month.label }))}
+              />
+              <Combobox
                 value={reportActivityFilter}
-                onChange={(event) => setReportActivityFilter(event.target.value)}
-                style={{ ...inputStyle, width: isMobile ? "100%" : 240, minHeight: 38, borderRadius: 10, fontSize: 13, padding: "0 10px", cursor: "pointer" }}
-              >
-                {REPORT_ACTIVITY_OPTIONS.map((activity) => (
-                  <option key={activity.value} value={activity.value}>{activity.label}</option>
-                ))}
-              </select>
+                onValueChange={setReportActivityFilter}
+                aria-label="กรองกิจกรรม"
+                searchPlaceholder="ค้นหากิจกรรม"
+                style={{ width: isMobile ? "100%" : 240 }}
+                options={REPORT_ACTIVITY_OPTIONS.map((activity) => ({ value: activity.value, label: activity.label }))}
+              />
             </div>
 
             <div style={{ flex: 1, overflow: "auto", minHeight: 0 }}>
@@ -2726,28 +2714,19 @@ export default function SafetyAdmin() {
                   </div>
 
                   {/* Page size selector */}
-                  <select
-                    value={plantPageSize}
-                    onChange={(e) => {
-                      setPlantPageSize(parseInt(e.target.value));
-                      setPlantPage(1);
-                    }}
-                    style={{
-                      ...inputStyle,
-                      width: 110,
-                      minHeight: 28,
-                      height: 28,
-                      borderRadius: 6,
-                      fontSize: 12,
-                      padding: "0 6px",
-                      cursor: "pointer"
-                    }}
-                  >
-                    <option value={5}>5 / page</option>
-                    <option value={10}>10 / page</option>
-                    <option value={20}>20 / page</option>
-                    <option value={50}>50 / page</option>
-                  </select>
+                  <Combobox
+                    value={String(plantPageSize)}
+                    onValueChange={(v) => { setPlantPageSize(parseInt(v)); setPlantPage(1); }}
+                    aria-label="จำนวนต่อหน้า"
+                    searchable={false}
+                    style={{ width: 120 }}
+                    options={[
+                      { value: "5", label: "5 / page" },
+                      { value: "10", label: "10 / page" },
+                      { value: "20", label: "20 / page" },
+                      { value: "50", label: "50 / page" },
+                    ]}
+                  />
                 </div>
               </div>
             )}
@@ -3806,27 +3785,25 @@ export default function SafetyAdmin() {
               </label>
               <label style={fieldStyle}>
                 <span style={fieldLabelStyle}>เดือน</span>
-                <select
+                <Combobox
                   value={editingReport.month}
-                  onChange={(event) => setEditingReport((prev) => ({ ...prev, month: event.target.value }))}
-                  style={{ ...inputStyle, minHeight: 42, borderRadius: 10, fontSize: 13, padding: "0 10px", cursor: "pointer" }}
-                >
-                  {REPORT_MONTH_OPTIONS.filter((month) => month.value !== "all").map((month) => (
-                    <option key={month.value} value={month.value}>{month.label}</option>
-                  ))}
-                </select>
+                  onValueChange={(v) => setEditingReport((prev) => ({ ...prev, month: v }))}
+                  aria-label="เดือน"
+                  searchPlaceholder="ค้นหาเดือน"
+                  style={{ width: "100%" }}
+                  options={REPORT_MONTH_OPTIONS.filter((month) => month.value !== "all").map((month) => ({ value: month.value, label: month.label }))}
+                />
               </label>
               <label style={fieldStyle}>
                 <span style={fieldLabelStyle}>กิจกรรม</span>
-                <select
+                <Combobox
                   value={editingReport.activityType}
-                  onChange={(event) => setEditingReport((prev) => ({ ...prev, activityType: event.target.value }))}
-                  style={{ ...inputStyle, minHeight: 42, borderRadius: 10, fontSize: 13, padding: "0 10px", cursor: "pointer" }}
-                >
-                  {REPORT_ACTIVITY_OPTIONS.filter((activity) => activity.value !== "all").map((activity) => (
-                    <option key={activity.value} value={activity.value}>{activity.label}</option>
-                  ))}
-                </select>
+                  onValueChange={(v) => setEditingReport((prev) => ({ ...prev, activityType: v }))}
+                  aria-label="กิจกรรม"
+                  searchPlaceholder="ค้นหากิจกรรม"
+                  style={{ width: "100%" }}
+                  options={REPORT_ACTIVITY_OPTIONS.filter((activity) => activity.value !== "all").map((activity) => ({ value: activity.value, label: activity.label }))}
+                />
               </label>
             </div>
 

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { readDatabaseBackedSession } from "@/lib/server/sso-auth";
+import { readDatabaseBackedSession } from "@backend/components/auth/sso";
 
 export const dynamic = "force-dynamic";
 

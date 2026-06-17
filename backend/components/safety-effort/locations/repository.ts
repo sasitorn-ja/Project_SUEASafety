@@ -1,0 +1,311 @@
+import "server-only";
+
+import type { ResultSetHeader, RowDataPacket } from "mysql2/promise";
+
+import { queryRows, withTransaction } from "@backend/components/core/db";
+
+export type SafetyEffortLocationType = "PLANT" | "OFFICE" | "SITE" | "CUSTOM";
+
+export type SafetyEffortLocationInput = {
+  locationType: SafetyEffortLocationType;
+  nameTh: string;
+  lat: number;
+  lng: number;
+  code?: string | null;
+  externalKey?: string | null;
+  source?: string | null;
+  nameEn?: string | null;
+  provinceName?: string | null;
+  districtName?: string | null;
+  status?: string | null;
+  mapVisible?: boolean;
+  checkinEnabled?: boolean;
+  organizationId?: string | number | null;
+  createdBy?: string | number | null;
+};
+
+type LocationRow = RowDataPacket & {
+  id: string;
+  organization_id: string | null;
+  organization_code: string | null;
+  organization_name: string | null;
+  location_type: SafetyEffortLocationType;
+  source: string;
+  external_key: string | null;
+  code: string | null;
+  name_th: string;
+  name_en: string | null;
+  province_name: string | null;
+  district_name: string | null;
+  plant_type: string | null;
+  production_type: string | null;
+  sap_code: string | null;
+  site_material_code: string | null;
+  status: string;
+  map_visible: 0 | 1 | boolean;
+  checkin_enabled: 0 | 1 | boolean;
+  lat: number | string | null;
+  lng: number | string | null;
+  created_at: Date | string;
+  updated_at: Date | string;
+};
+
+const LOCATION_TYPES = new Set<SafetyEffortLocationType>(["PLANT", "OFFICE", "SITE", "CUSTOM"]);
+
+export function normalizeLocationType(value: string | null): SafetyEffortLocationType | null {
+  if (!value) return null;
+  const normalized = value.trim().toUpperCase();
+  if (normalized === "FACTORY") return "PLANT";
+  return LOCATION_TYPES.has(normalized as SafetyEffortLocationType)
+    ? (normalized as SafetyEffortLocationType)
+    : null;
+}
+
+function assertFiniteNumber(value: unknown, fieldName: string) {
+  const numberValue = Number(value);
+  if (!Number.isFinite(numberValue)) {
+    throw new Error(`${fieldName} must be a valid number`);
+  }
+  return numberValue;
+}
+
+export function parseLocationInput(raw: unknown, createdBy?: string): SafetyEffortLocationInput {
+  if (!raw || typeof raw !== "object") throw new Error("Invalid location payload");
+  const input = raw as Record<string, unknown>;
+  const locationType = normalizeLocationType(String(input.locationType || input.type || ""));
+  if (!locationType) throw new Error("locationType must be PLANT, OFFICE, SITE, or CUSTOM");
+
+  const nameTh = String(input.nameTh || input.name || "").trim();
+  if (!nameTh) throw new Error("nameTh is required");
+
+  return {
+    locationType,
+    nameTh,
+    lat: assertFiniteNumber(input.lat, "lat"),
+    lng: assertFiniteNumber(input.lng, "lng"),
+    code: input.code ? String(input.code).trim() : null,
+    externalKey: input.externalKey ? String(input.externalKey).trim() : null,
+    source: input.source ? String(input.source).trim().toUpperCase() : "ADMIN",
+    nameEn: input.nameEn ? String(input.nameEn).trim() : null,
+    provinceName: input.provinceName ? String(input.provinceName).trim() : null,
+    districtName: input.districtName ? String(input.districtName).trim() : null,
+    status: input.status ? String(input.status).trim().toUpperCase() : "ACTIVE",
+    mapVisible: input.mapVisible !== false,
+    checkinEnabled: input.checkinEnabled !== false,
+    organizationId: input.organizationId ? String(input.organizationId) : null,
+    createdBy: input.createdBy ? String(input.createdBy) : createdBy || null,
+  };
+}
+
+function mapLocation(row: LocationRow) {
+  return {
+    id: String(row.id),
+    organizationId: row.organization_id ? String(row.organization_id) : null,
+    organizationCode: row.organization_code,
+    organizationName: row.organization_name,
+    locationType: row.location_type,
+    source: row.source,
+    externalKey: row.external_key,
+    code: row.code,
+    nameTh: row.name_th,
+    nameEn: row.name_en,
+    provinceName: row.province_name,
+    districtName: row.district_name,
+    plantType: row.plant_type,
+    productionType: row.production_type,
+    sapCode: row.sap_code,
+    siteMaterialCode: row.site_material_code,
+    status: row.status,
+    mapVisible: Boolean(row.map_visible),
+    checkinEnabled: Boolean(row.checkin_enabled),
+    lat: row.lat === null ? null : Number(row.lat),
+    lng: row.lng === null ? null : Number(row.lng),
+    createdAt: new Date(row.created_at).toISOString(),
+    updatedAt: new Date(row.updated_at).toISOString(),
+  };
+}
+
+const SELECT_LOCATIONS_SQL = `
+  SELECT
+    l.id,
+    l.organization_id,
+    o.external_code AS organization_code,
+    o.name_th AS organization_name,
+    l.location_type,
+    l.source,
+    l.external_key,
+    l.code,
+    l.name_th,
+    l.name_en,
+    l.province_name,
+    l.district_name,
+    l.plant_type,
+    l.production_type,
+    l.sap_code,
+    l.site_material_code,
+    l.status,
+    l.map_visible,
+    l.checkin_enabled,
+    ST_Y(l.position) AS lat,
+    ST_X(l.position) AS lng,
+    l.created_at,
+    l.updated_at
+  FROM locations l
+  LEFT JOIN organizations o ON o.id = l.organization_id
+`;
+
+export async function listSafetyEffortLocations(options: {
+  type?: SafetyEffortLocationType | null;
+  search?: string | null;
+  limit?: number;
+}) {
+  const where = ["l.deleted_at IS NULL"];
+  const params: Record<string, unknown> = {
+    limit: Math.min(Math.max(options.limit || 200, 1), 1000),
+  };
+
+  if (options.type) {
+    where.push("l.location_type = :type");
+    params.type = options.type;
+  }
+
+  if (options.search?.trim()) {
+    where.push("(l.name_th LIKE :search OR l.name_en LIKE :search OR l.code LIKE :search OR l.external_key LIKE :search)");
+    params.search = `%${options.search.trim()}%`;
+  }
+
+  const rows = await queryRows<LocationRow>(
+    `
+      ${SELECT_LOCATIONS_SQL}
+      WHERE ${where.join(" AND ")}
+      ORDER BY l.location_type, l.name_th
+      LIMIT :limit
+    `,
+    params,
+  );
+
+  return rows.map(mapLocation);
+}
+
+export async function getSafetyEffortLocation(id: string) {
+  const rows = await queryRows<LocationRow>(
+    `
+      ${SELECT_LOCATIONS_SQL}
+      WHERE l.id = :id AND l.deleted_at IS NULL
+      LIMIT 1
+    `,
+    { id },
+  );
+  return rows[0] ? mapLocation(rows[0]) : null;
+}
+
+export async function createSafetyEffortLocation(input: SafetyEffortLocationInput) {
+  const pointWkt = `POINT(${input.lng} ${input.lat})`;
+  const id = await withTransaction(async (connection) => {
+    const [result] = await connection.execute<ResultSetHeader>(
+      `
+        INSERT INTO locations (
+          organization_id,
+          location_type,
+          source,
+          external_key,
+          code,
+          name_th,
+          name_en,
+          position,
+          province_name,
+          district_name,
+          status,
+          map_visible,
+          checkin_enabled,
+          created_by
+        ) VALUES (
+          :organizationId,
+          :locationType,
+          :source,
+          :externalKey,
+          :code,
+          :nameTh,
+          :nameEn,
+          ST_GeomFromText(:pointWkt, 4326),
+          :provinceName,
+          :districtName,
+          :status,
+          :mapVisible,
+          :checkinEnabled,
+          :createdBy
+        )
+      `,
+      { ...input, pointWkt },
+    );
+    return String(result.insertId);
+  });
+
+  const location = await getSafetyEffortLocation(id);
+  if (!location) throw new Error("Unable to load created location");
+  return location;
+}
+
+export async function updateSafetyEffortLocation(id: string, input: Partial<SafetyEffortLocationInput>) {
+  const current = await getSafetyEffortLocation(id);
+  if (!current) return null;
+
+  const next = {
+    locationType: input.locationType ?? current.locationType,
+    source: input.source ?? current.source,
+    externalKey: input.externalKey ?? current.externalKey,
+    code: input.code ?? current.code,
+    nameTh: input.nameTh ?? current.nameTh,
+    nameEn: input.nameEn ?? current.nameEn,
+    lat: input.lat ?? current.lat,
+    lng: input.lng ?? current.lng,
+    provinceName: input.provinceName ?? current.provinceName,
+    districtName: input.districtName ?? current.districtName,
+    status: input.status ?? current.status,
+    mapVisible: input.mapVisible ?? current.mapVisible,
+    checkinEnabled: input.checkinEnabled ?? current.checkinEnabled,
+    organizationId: input.organizationId ?? current.organizationId,
+  };
+
+  if (next.lat === null || next.lng === null) throw new Error("lat/lng are required");
+  const pointWkt = `POINT(${next.lng} ${next.lat})`;
+
+  await withTransaction(async (connection) => {
+    await connection.execute<ResultSetHeader>(
+      `
+        UPDATE locations
+        SET
+          organization_id = :organizationId,
+          location_type = :locationType,
+          source = :source,
+          external_key = :externalKey,
+          code = :code,
+          name_th = :nameTh,
+          name_en = :nameEn,
+          position = ST_GeomFromText(:pointWkt, 4326),
+          province_name = :provinceName,
+          district_name = :districtName,
+          status = :status,
+          map_visible = :mapVisible,
+          checkin_enabled = :checkinEnabled
+        WHERE id = :id AND deleted_at IS NULL
+      `,
+      { ...next, id, pointWkt },
+    );
+  });
+
+  return getSafetyEffortLocation(id);
+}
+
+export async function deleteSafetyEffortLocation(id: string) {
+  await withTransaction(async (connection) => {
+    await connection.execute<ResultSetHeader>(
+      `
+        UPDATE locations
+        SET deleted_at = UTC_TIMESTAMP(3), status = 'INACTIVE'
+        WHERE id = :id AND deleted_at IS NULL
+      `,
+      { id },
+    );
+  });
+}

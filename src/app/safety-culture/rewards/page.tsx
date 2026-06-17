@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
+import { Gift } from "lucide-react";
 import { SafetyCultureHero } from "@/components/safety-culture/safety-culture-hero";
 import { SafetyCultureTabs } from "@/components/safety-culture/safety-culture-tabs";
 import { SafetyCulturePageHeader } from "@/components/safety-culture/safety-culture-page-header";
@@ -198,7 +199,7 @@ export default function RewardsPage() {
             title="ร้านแลกของรางวัล"
             rightSlot={
               <div className="flex items-center gap-1.5 rounded-xl border-2 border-[var(--brand-accent)] bg-[var(--brand-soft)] px-3.5 py-1.5 text-[13.5px] font-black text-[var(--brand-text)] shadow-[0_2px_6px_rgba(var(--brand-accent-rgb),0.12)]">
-                <span>🎁</span>
+                <Gift className="h-4 w-4 text-[var(--brand-accent)]" strokeWidth={2.5} />
                 <span>{currentUserPoints.toLocaleString()} แต้ม</span>
               </div>
             }
@@ -250,9 +251,9 @@ export default function RewardsPage() {
 
                 <div className="relative flex aspect-[4/3] w-full items-center justify-center overflow-hidden rounded-[14px] border-[1.5px] border-[var(--border)] bg-[var(--brand-image-placeholder)]">
                   {reward.imageSrc ? (
-                    <Image src={themedImage(reward.imageSrc)} alt={reward.name} fill className="object-cover" />
+                    <Image src={themedImage(reward.imageSrc)} alt={reward.name} fill sizes="(max-width: 768px) 50vw, 220px" className="object-cover" />
                   ) : reward.isHot ? (
-                    <Image src={mascot("salute")} alt="SUEA reward" fill className="object-cover" />
+                    <Image src={mascot("salute")} alt="SUEA reward" fill sizes="(max-width: 768px) 50vw, 220px" className="object-cover" />
                   ) : (
                     <span className="text-[13px] font-extrabold lowercase text-[var(--brand-muted-text)]">{reward.imageText}</span>
                   )}

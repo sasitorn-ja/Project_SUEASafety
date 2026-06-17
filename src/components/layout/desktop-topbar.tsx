@@ -85,11 +85,13 @@ function ConfiguredMenuLink({
   pathname,
   onClick,
   compact = false,
+  asLabel = false,
 }: {
   node: MenuNode;
   pathname: string;
   onClick?: () => void;
   compact?: boolean;
+  asLabel?: boolean;
 }) {
   const Icon = getMenuIcon(node.icon);
   const content = (
@@ -102,7 +104,8 @@ function ConfiguredMenuLink({
     </>
   );
 
-  if (!node.href) {
+  // asLabel: หัวข้อหมวด (เช่น Safety Effort / Safety Culture) — แสดงเป็นชื่อหมวดเฉยๆ ไม่ลิงก์ไปหน้า
+  if (asLabel || !node.href) {
     return <div className="flex items-center gap-2 rounded-md px-2.5 py-1.5 text-white">{content}</div>;
   }
 
@@ -125,9 +128,9 @@ function AdminFlyoutSection({ section, pathname }: { section: MenuNode; pathname
 
   return (
     <div className="group/admin-section relative">
-      <div className="flex items-center rounded-lg hover:bg-white/10">
+      <div className="flex cursor-default items-center rounded-lg hover:bg-white/10">
         <div className="min-w-0 flex-1">
-          <ConfiguredMenuLink node={section} pathname={pathname} compact />
+          <ConfiguredMenuLink node={section} pathname={pathname} compact asLabel />
         </div>
         {children.length > 0 && <ChevronDown className="mr-1.5 h-3 w-3 -rotate-90 text-white/70" strokeWidth={2.5} />}
       </div>
@@ -349,7 +352,7 @@ export function DesktopTopbar() {
                 <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
                   {adminSections.map((section) => (
                     <div key={section.id} className="rounded-xl border border-white/10 bg-white/[0.04] p-1.5">
-                      <ConfiguredMenuLink node={section} pathname={pathname} onClick={() => setOpen(false)} compact />
+                      <ConfiguredMenuLink node={section} pathname={pathname} compact asLabel />
                       {section.children.filter((node) => node.enabled).length > 0 && (
                         <div className="ml-3 border-l border-white/15 pl-2">
                           {section.children.filter((node) => node.enabled).map((child) => (

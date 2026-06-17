@@ -5,7 +5,7 @@ import {
   clearSessionCookie,
   getDiscoveryDocument,
   getSsoConfig,
-} from "@/lib/server/sso-auth";
+} from "@backend/components/auth/sso";
 
 export const dynamic = "force-dynamic";
 

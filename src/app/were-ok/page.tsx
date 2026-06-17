@@ -13,10 +13,11 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
+import { getSafetyPoint } from "@/lib/point-rules";
 import { Check, X, ChevronRight, AlertTriangle, Minus, Plus } from "lucide-react";
 
 const STEPS = [
-  { id: 1, key: "kyt", num: "01", title: "KYT ก่อนขับรถ", getSubtext: (d: any) => d ? "ถ่ายรูปสำเร็จ · รับ +10 แต้ม" : "ถ่ายรูปยืนยันตัวตนในจุด KYT" },
+  { id: 1, key: "kyt", num: "01", title: "KYT ก่อนขับรถ", getSubtext: (d: any) => d ? `ถ่ายรูปสำเร็จ · รับ +${getSafetyPoint("safetyEffortCompleted")} แต้ม` : "ถ่ายรูปยืนยันตัวตนในจุด KYT" },
   { id: 2, key: "fit-to-drive", num: "02", title: "ตรวจความดันโลหิต", getSubtext: (d: any) => d ? `${d.systolic} / ${d.diastolic} · ${d.bpStatus}` : "วัดและบันทึกค่าความดัน" },
   { id: 3, key: "fit-to-drive", num: "03", title: "ตรวจแอลกอฮอล์", getSubtext: (d: any) => d ? `${d.alcohol?.toFixed(2)} mg% · ${d.alcStatus}` : "เป่าเครื่องวัดแอลกอฮอล์" },
   { id: 4, key: "pre-trip", num: "04", title: "ตรวจ 13 จุดแดงของรถโม่", getSubtext: (d: any) => d ? (d.hasFailures ? `ชำรุด ${Object.values(d.checkedStates).filter((s) => s === 'fail').length} จุด จาก 13 จุด` : "ปกติทุกจุด · 13 จาก 13") : "0 จาก 13" },

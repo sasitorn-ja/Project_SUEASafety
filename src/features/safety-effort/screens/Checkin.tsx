@@ -5,6 +5,7 @@ import { MapContainer, TileLayer, Marker, Popup, useMap, useMapEvents } from "re
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { useAppTheme } from "@/providers/theme-provider";
+import { Combobox } from "@/components/ui/combobox";
 
 // ─── Fix default Leaflet icon paths ───────────────────────────────────────────
 delete L.Icon.Default.prototype._getIconUrl;
@@ -586,16 +587,16 @@ function AddModal({ onAdd, onClose, userPos }) {
           </div>
           <div>
             <label className="ci-label" style={{ marginBottom: 4 }}>ประเภท</label>
-            <select
-              className="ci-input"
+            <Combobox
               value={type}
-              onChange={e => setType(e.target.value)}
-              style={{ cursor: "pointer" }}
-            >
-              <option value="โรงงาน">โรงงาน</option>
-              <option value="สำนักงาน">สำนักงาน</option>
-              <option value="Site งาน">Site งาน</option>
-            </select>
+              onValueChange={setType}
+              aria-label="ประเภท"
+              options={[
+                { value: "โรงงาน", label: "โรงงาน" },
+                { value: "สำนักงาน", label: "สำนักงาน" },
+                { value: "Site งาน", label: "Site งาน" },
+              ]}
+            />
           </div>
         </div>
 
