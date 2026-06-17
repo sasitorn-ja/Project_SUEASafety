@@ -74,12 +74,12 @@ export function FloatingSafetyAssistant() {
   return (
     <aside
       ref={asideRef}
-      className="floating-safety-assistant fixed bottom-[calc(var(--mobile-bottomnav-h)+14px)] right-3 z-[35] flex flex-col items-end font-sans md:bottom-5 md:right-5"
+      className="floating-safety-assistant pointer-events-none fixed bottom-[calc(var(--mobile-bottomnav-h)+14px)] right-3 z-[35] flex flex-col items-end font-sans md:bottom-5 md:right-5"
       aria-label="ผู้ช่วยน้องวางใจ"
     >
       <div
         className={cn(
-          "mb-2 w-[270px] origin-bottom-right overflow-hidden rounded-2xl border border-[var(--border)] bg-[rgba(var(--brand-nav-rgb),0.97)] text-white shadow-[0_18px_46px_var(--brand-shadow)] backdrop-blur-xl transition-all duration-200",
+          "pointer-events-auto mb-2 w-[270px] origin-bottom-right overflow-hidden rounded-2xl border border-[var(--border)] bg-[rgba(var(--brand-nav-rgb),0.97)] text-white shadow-[0_18px_46px_var(--brand-shadow)] backdrop-blur-xl transition-all duration-200",
           open ? "visible translate-y-0 scale-100 opacity-100" : "invisible translate-y-2 scale-95 opacity-0"
         )}
       >
@@ -132,7 +132,7 @@ export function FloatingSafetyAssistant() {
         type="button"
         onClick={() => setOpen((current) => !current)}
         className={cn(
-          "floating-safety-assistant-trigger group relative flex h-[56px] w-[56px] items-center justify-center rounded-full border-2 border-white/70 bg-[rgba(var(--brand-nav-rgb),0.90)] shadow-[0_14px_34px_var(--brand-shadow)] outline-none backdrop-blur-lg transition-transform hover:scale-105 focus-visible:ring-3 focus-visible:ring-[var(--brand-accent)] md:h-[64px] md:w-[64px]",
+          "floating-safety-assistant-trigger pointer-events-auto group relative flex h-[56px] w-[56px] items-center justify-center rounded-full border-2 border-white/70 bg-[rgba(var(--brand-nav-rgb),0.90)] shadow-[0_14px_34px_var(--brand-shadow)] outline-none backdrop-blur-lg transition-transform hover:scale-105 focus-visible:ring-3 focus-visible:ring-[var(--brand-accent)] md:h-[64px] md:w-[64px]",
           open && "scale-105"
         )}
         aria-expanded={open}

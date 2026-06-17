@@ -175,13 +175,13 @@ export default function RewardsPage() {
       <div className="mx-auto w-full max-w-[1180px] px-3.5 pt-2 pb-8 md:px-4">
         <div className="anim-fade" style={animStyle(0)}>
           <SafetyCultureHero
-            eyebrow="SUEA REWARDS SHOP"
+            eyebrow="CPAC SAFETY REWARDS SHOP"
             title={
               <>
                 ทำดี แลกของ <span className="text-[var(--brand-accent)]">ให้ทีมภูมิใจ</span>
               </>
             }
-            description="คะแนน Safety ของคุณเปลี่ยนเป็นรางวัลได้ พี่ SUEA คอยเชียร์ให้เก็บแต้มต่อทุกวัน"
+            description="คะแนน Safety ของคุณเปลี่ยนเป็นรางวัลสุดแสนพิเศษได้"
             mascotSrc={mascot("happy")}
             mascotAlt="SUEA Mascot"
             mascotAction="happy"

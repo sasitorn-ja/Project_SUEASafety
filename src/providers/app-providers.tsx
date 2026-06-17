@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import React, { createContext, useContext, useState, useCallback, ReactNode, useEffect } from "react";
 import {
@@ -78,9 +78,11 @@ export type Post = {
   isYou?: boolean;
   createdAt?: number;
   imageData?: string | null;
+  feedEventId?: string;
+  feedEventTitle?: string;
 };
 
-export type SafetyCultureUserActivityType = "post" | "reaction" | "comment";
+export type SafetyCultureUserActivityType = "post" | "reaction" | "comment" | "redeem";
 
 export type SafetyCultureUserActivity = {
   id: string;
@@ -98,6 +100,21 @@ export type NotificationType = {
   message: string;
   type: "sos" | "info" | "success";
 } | null;
+
+export type AppInboxNotificationKind = "activity" | "like" | "comment" | "reward";
+
+export type AppInboxNotification = {
+  id: string;
+  kind: AppInboxNotificationKind;
+  title: string;
+  body: string;
+  actorName?: string;
+  createdAt: number;
+  read: boolean;
+  postId?: number;
+  feedEventId?: string;
+  href?: string;
+};
 
 export type SafetyCultureEventStatus = "draft" | "scheduled" | "live" | "paused";
 export type SafetyCultureBonusMode = "multiplier" | "fixed";
@@ -138,6 +155,10 @@ export type SafetyCultureFeedEvent = {
   points: number;
   status: SafetyCultureFeedEventStatus;
   published: boolean;
+  bonusMode: SafetyCultureBonusMode;
+  multiplier: number;
+  fixedPoints: number;
+  enabledActions: SafetyCultureEventAction[];
 };
 
 export type LeaderboardTeam = {
@@ -197,6 +218,7 @@ type AppState = {
   posts: Post[];
   userActivityHistory: SafetyCultureUserActivity[];
   notification: NotificationType;
+  inboxNotifications: AppInboxNotification[];
   currentUserPoints: number;
   safetyCultureEvent: SafetyCultureEventConfig;
   feedEvents: SafetyCultureFeedEvent[];
@@ -224,11 +246,14 @@ type AppActions = {
   setSosData: (data: SosData) => void;
   showNotification: (notification: NotificationType) => void;
   dismissNotification: () => void;
+  markInboxNotificationRead: (notificationId: string) => void;
+  markAllInboxNotificationsRead: () => void;
   addPost: (post: Post) => void;
   toggleLike: (postId: number) => void;
   addComment: (postId: number, text: string) => void;
   updateSafetyCultureEvent: (data: SafetyCultureEventConfig) => void;
   updateFeedEvents: (events: SafetyCultureFeedEvent[]) => void;
+  sendFeedEventNotification: (feedEventId: string) => boolean;
   updateTeamStandings: (teams: LeaderboardTeam[]) => void;
   updatePersonalRankings: (rankings: LeaderboardPerson[]) => void;
   updateRewardsCatalog: (rewards: RewardCatalogItem[]) => void;
@@ -310,6 +335,66 @@ const INITIAL_POSTS: Post[] = [
     points: 20,
     hasLiked: false,
   },
+  {
+    id: 4,
+    author: "Chaiwat T.",
+    avatarBg: "var(--brand-accent)",
+    avatarColor: "#1A1A1A",
+    avatarText: "C",
+    isYou: true,
+    subtext: "BPI-04 · 42 นาที · Blue",
+    category: "ทั่วไป",
+    body: "พบจุดเสี่ยงบริเวณทางเดินหน้าไลน์งานแล้วรีบจัดระเบียบพื้นที่ พร้อมติดป้ายเตือนให้ทีมเห็นชัดขึ้นก่อนเริ่มกะ",
+    photos: [{ id: "suea-app-4-1", dataUrl: "/images/mascots/gallery/line-walk-3.png", type: "sample" }],
+    imageText: "BOSS EVENT",
+    likes: 6,
+    comments: [
+      { id: "post-4-comment-1", author: "Arisara P.", avatarText: "A", text: "ตัวอย่างนี้ดีมาก เดี๋ยวทีมจะเอาไปใช้ต่อ" },
+      { id: "post-4-comment-2", author: "Nattaya K.", avatarText: "N", text: "อ่านแล้วเห็นภาพเลยค่ะ ขอบคุณที่แชร์" },
+    ],
+    points: 6,
+    hasLiked: false,
+  },
+  {
+    id: 5,
+    author: "Chaiwat T.",
+    avatarBg: "var(--brand-accent)",
+    avatarColor: "#1A1A1A",
+    avatarText: "C",
+    isYou: true,
+    subtext: "OBK-C2 · 2 ชั่วโมง · Yellow",
+    category: "Line Walk",
+    body: "พาทีมเดิน Line Walk รอบบ่ายแล้วสรุปจุดเสี่ยงที่ต้องแก้ทันที พร้อมแชร์ภาพตัวอย่างให้กะถัดไปเอาไปใช้ต่อได้",
+    photos: [{ id: "suea-app-5-1", dataUrl: "/images/mascots/gallery/line-walk-2.png", type: "sample" }],
+    imageText: "LINE WALK SHARE",
+    likes: 9,
+    comments: [{ id: "post-5-comment-1", author: "Preecha V.", avatarText: "P", text: "ไอเดียนี้เอาไปใช้ต่อหน้างานได้ทันทีเลยครับ" }],
+    points: 14,
+    hasLiked: false,
+  },
+  {
+    id: 6,
+    author: "Chaiwat T.",
+    avatarBg: "var(--brand-accent)",
+    avatarColor: "#1A1A1A",
+    avatarText: "C",
+    isYou: true,
+    subtext: "BPI-04 · 4 ชั่วโมง · Red",
+    category: "5S",
+    body: "แชร์ภาพ before/after หลังจัดระเบียบพื้นที่กองวัสดุหน้าจุดโหลด เพื่อให้ทีมเห็นผลลัพธ์ชัดเจนและทำตามได้ง่ายขึ้น",
+    photos: [
+      { id: "suea-app-6-1", dataUrl: "/images/mascots/gallery/five-s-1.png", type: "sample" },
+      { id: "suea-app-6-2", dataUrl: "/images/mascots/gallery/line-walk-3.png", type: "sample" },
+    ],
+    imageText: "5S BEFORE AFTER",
+    likes: 11,
+    comments: [
+      { id: "post-6-comment-1", author: "Anand T.", avatarText: "A", text: "ตัวอย่างการจัดพื้นที่นี้ช่วยให้ทีมเห็นวิธีแก้จุดเสี่ยงได้ชัดขึ้น" },
+      { id: "post-6-comment-2", author: "Nattaya K.", avatarText: "N", text: "ภาพ before/after ชุดนี้ดูแล้วเข้าใจผลลัพธ์ได้ง่ายมาก" },
+    ],
+    points: 18,
+    hasLiked: false,
+  },
 ];
 
 const STORAGE_KEYS = {
@@ -327,6 +412,7 @@ const STORAGE_KEYS = {
   awarenessHistory: "safety-hub:safety-awareness-history",
   awarenessHolidays: "safety-hub:safety-awareness-holidays",
   userActivityHistory: "safety-hub:safety-culture-user-activity-history",
+  inboxNotifications: "safety-hub:inbox-notifications",
 } as const;
 
 const INITIAL_CURRENT_USER_POINTS = 254;
@@ -377,12 +463,144 @@ const INITIAL_USER_ACTIVITY_HISTORY: SafetyCultureUserActivity[] = [
   },
 ];
 
+const INITIAL_INBOX_NOTIFICATIONS: AppInboxNotification[] = [
+  {
+    id: "notif-comment-1",
+    kind: "comment",
+    actorName: "Arisara P.",
+    title: "\u0e21\u0e35\u0e04\u0e2d\u0e21\u0e40\u0e21\u0e19\u0e15\u0e4c\u0e17\u0e35\u0e48\u0e42\u0e1e\u0e2a\u0e15\u0e4c\u0e02\u0e2d\u0e07\u0e04\u0e38\u0e13",
+    body: "Arisara P. \u0e04\u0e2d\u0e21\u0e40\u0e21\u0e19\u0e15\u0e4c\u0e1a\u0e19\u0e42\u0e1e\u0e2a\u0e15\u0e4c\u0e02\u0e2d\u0e07\u0e04\u0e38\u0e13\u0e27\u0e48\u0e32\u0e15\u0e31\u0e27\u0e2d\u0e22\u0e48\u0e32\u0e07\u0e19\u0e35\u0e49\u0e14\u0e35\u0e21\u0e32\u0e01",
+    createdAt: new Date("2026-06-16T10:25:00+07:00").getTime(),
+    read: false,
+    postId: 4,
+    href: "/safety-culture",
+  },
+  {
+    id: "notif-like-1",
+    kind: "like",
+    actorName: "Nattaya K.",
+    title: "\u0e21\u0e35\u0e04\u0e19\u0e01\u0e14\u0e0a\u0e2d\u0e1a\u0e42\u0e1e\u0e2a\u0e15\u0e4c\u0e02\u0e2d\u0e07\u0e04\u0e38\u0e13",
+    body: "Nattaya K. \u0e01\u0e14\u0e0a\u0e2d\u0e1a\u0e42\u0e1e\u0e2a\u0e15\u0e4c PPE \u0e02\u0e2d\u0e07\u0e04\u0e38\u0e13\u0e43\u0e19\u0e2b\u0e19\u0e49\u0e32 Safety Culture",
+    createdAt: new Date("2026-06-16T10:55:00+07:00").getTime(),
+    read: false,
+    postId: 2,
+    href: "/safety-culture",
+  },
+  {
+    id: "notif-activity-1",
+    kind: "activity",
+    title: "\u0e01\u0e34\u0e08\u0e01\u0e23\u0e23\u0e21\u0e43\u0e2b\u0e21\u0e48\u0e43\u0e19 Safety Culture",
+    body: "Happy Hour Bonus x1.5 \u0e40\u0e1b\u0e34\u0e14\u0e43\u0e0a\u0e49\u0e07\u0e32\u0e19\u0e41\u0e25\u0e49\u0e27 \u0e40\u0e02\u0e49\u0e32\u0e21\u0e32\u0e23\u0e48\u0e27\u0e21\u0e01\u0e34\u0e08\u0e01\u0e23\u0e23\u0e21\u0e41\u0e25\u0e30\u0e40\u0e01\u0e47\u0e1a\u0e04\u0e30\u0e41\u0e19\u0e19\u0e1e\u0e34\u0e40\u0e28\u0e29\u0e44\u0e14\u0e49\u0e40\u0e25\u0e22",
+    createdAt: new Date("2026-06-16T08:15:00+07:00").getTime(),
+    read: false,
+    feedEventId: "activity-1",
+    href: "/safety-culture",
+  },
+  {
+    id: "notif-like-2",
+    kind: "like",
+    actorName: "Somchai T.",
+    title: "\u0e21\u0e35\u0e04\u0e19\u0e01\u0e14\u0e0a\u0e2d\u0e1a\u0e42\u0e1e\u0e2a\u0e15\u0e4c\u0e02\u0e2d\u0e07\u0e04\u0e38\u0e13",
+    body: "Somchai T. \u0e01\u0e14\u0e0a\u0e2d\u0e1a\u0e42\u0e1e\u0e2a\u0e15\u0e4c 5\u0e2a \u0e02\u0e2d\u0e07\u0e04\u0e38\u0e13\u0e40\u0e21\u0e37\u0e48\u0e2d\u0e27\u0e32\u0e19\u0e19\u0e35\u0e49",
+    createdAt: new Date("2026-06-15T16:40:00+07:00").getTime(),
+    read: true,
+    postId: 6,
+    href: "/safety-culture",
+  },
+  {
+    id: "notif-comment-2",
+    kind: "comment",
+    actorName: "Kanya S.",
+    title: "\u0e21\u0e35\u0e04\u0e2d\u0e21\u0e40\u0e21\u0e19\u0e15\u0e4c\u0e17\u0e35\u0e48\u0e42\u0e1e\u0e2a\u0e15\u0e4c\u0e02\u0e2d\u0e07\u0e04\u0e38\u0e13",
+    body: "Kanya S. \u0e40\u0e02\u0e49\u0e32\u0e21\u0e32\u0e04\u0e2d\u0e21\u0e40\u0e21\u0e19\u0e15\u0e4c\u0e02\u0e2d\u0e1a\u0e04\u0e38\u0e13\u0e2a\u0e33\u0e2b\u0e23\u0e31\u0e1a\u0e41\u0e19\u0e27\u0e17\u0e32\u0e07\u0e08\u0e31\u0e14\u0e40\u0e01\u0e47\u0e1a\u0e1e\u0e37\u0e49\u0e19\u0e17\u0e35\u0e48\u0e2b\u0e19\u0e49\u0e32\u0e44\u0e25\u0e19\u0e4c\u0e1c\u0e25\u0e34\u0e15",
+    createdAt: new Date("2026-06-15T13:20:00+07:00").getTime(),
+    read: true,
+    postId: 6,
+    href: "/safety-culture",
+  },
+  {
+    id: "notif-activity-2",
+    kind: "activity",
+    title: "กิจกรรมใหม่ใน Safety Culture",
+    body: "Walk Safe Challenge เปิดให้ส่งผลงานแล้ว พร้อมรับคะแนนจากการแชร์แนวทางลดจุดเสี่ยงในพื้นที่ทำงาน",
+    createdAt: new Date("2026-06-16T07:42:00+07:00").getTime(),
+    read: false,
+    feedEventId: "activity-1",
+    href: "/safety-culture",
+  },
+  {
+    id: "notif-like-3",
+    kind: "like",
+    actorName: "Preecha V.",
+    title: "มีคนกดชอบโพสต์ของคุณ",
+    body: "Preecha V. กดชอบโพสต์ Line Walk ของคุณและบอกว่าไอเดียนี้นำไปใช้ต่อได้ทันที",
+    createdAt: new Date("2026-06-16T06:58:00+07:00").getTime(),
+    read: false,
+    postId: 5,
+    href: "/safety-culture",
+  },
+  {
+    id: "notif-comment-3",
+    kind: "comment",
+    actorName: "Anand T.",
+    title: "มีคอมเมนต์ที่โพสต์ของคุณ",
+    body: "Anand T. คอมเมนต์ว่าตัวอย่างการจัดพื้นที่ของคุณช่วยให้ทีมเห็นวิธีแก้จุดเสี่ยงได้ชัดขึ้น",
+    createdAt: new Date("2026-06-16T06:15:00+07:00").getTime(),
+    read: false,
+    postId: 6,
+    href: "/safety-culture",
+  },
+  {
+    id: "notif-like-4",
+    kind: "like",
+    actorName: "Suda M.",
+    title: "มีคนกดชอบโพสต์ของคุณ",
+    body: "Suda M. กดชอบโพสต์ PPE ของคุณหลังจากเห็นตัวอย่างการตรวจอุปกรณ์ก่อนเริ่มงาน",
+    createdAt: new Date("2026-06-15T18:05:00+07:00").getTime(),
+    read: true,
+    postId: 2,
+    href: "/safety-culture",
+  },
+  {
+    id: "notif-activity-3",
+    kind: "activity",
+    title: "กิจกรรมใหม่ใน Safety Culture",
+    body: "PPE Buddy Check เปิดรอบใหม่แล้ว ชวนทีมจับคู่ตรวจ PPE ก่อนเริ่มงานและแชร์แนวทางเตือนกันอย่างสร้างสรรค์",
+    createdAt: new Date("2026-06-15T11:05:00+07:00").getTime(),
+    read: true,
+    feedEventId: "activity-2",
+    href: "/safety-culture",
+  },
+  {
+    id: "notif-comment-4",
+    kind: "comment",
+    actorName: "Nattaya K.",
+    title: "มีคอมเมนต์ที่โพสต์ของคุณ",
+    body: "Nattaya K. บอกว่าภาพ before/after ของคุณทำให้เข้าใจผลลัพธ์การปรับปรุงพื้นที่ได้ง่ายมาก",
+    createdAt: new Date("2026-06-14T16:12:00+07:00").getTime(),
+    read: true,
+    postId: 6,
+    href: "/safety-culture",
+  },
+  {
+    id: "notif-like-5",
+    kind: "like",
+    actorName: "Surachai J.",
+    title: "มีคนกดชอบโพสต์ของคุณ",
+    body: "Surachai J. กดชอบโพสต์ของคุณและแชร์ต่อให้ทีมหน้างานดูเป็นตัวอย่าง",
+    createdAt: new Date("2026-06-14T09:48:00+07:00").getTime(),
+    read: true,
+    postId: 4,
+    href: "/safety-culture",
+  },
+];
+
 const DEFAULT_SAFETY_CULTURE_EVENT: SafetyCultureEventConfig = {
   eventName: "Happy Hour Bonus",
   eventCode: "SC-HAPPY-HOUR-001",
   headline: "Happy Hour Bonus x1.5",
   supportingText: "แชร์เรื่องความปลอดภัยช่วง 14:00 - 16:00 แล้วรับคะแนนคูณเพิ่มทันที",
-  bannerNote: "เน้นกิจกรรมโพสต์ดีๆ ระหว่างกะบ่าย เพื่อดึงคนกลับเข้ามาใช้งานอีกครั้ง",
+  bannerNote: "เน้นกิจกรรมโพสต์ดี ๆ ระหว่างกะบ่าย เพื่อดึงคนกลับเข้ามาใช้งานอีกครั้ง",
   bannerVisible: true,
   status: "scheduled",
   bonusMode: "multiplier",
@@ -411,6 +629,10 @@ const DEFAULT_FEED_EVENTS: SafetyCultureFeedEvent[] = [
     points: 100,
     status: "open",
     published: true,
+    bonusMode: "fixed",
+    multiplier: 1,
+    fixedPoints: 0,
+    enabledActions: ["theme-post"],
   },
   {
     id: "activity-2",
@@ -427,6 +649,10 @@ const DEFAULT_FEED_EVENTS: SafetyCultureFeedEvent[] = [
     points: 120,
     status: "open",
     published: true,
+    bonusMode: "fixed",
+    multiplier: 1,
+    fixedPoints: 0,
+    enabledActions: ["theme-post"],
   },
   {
     id: "activity-3",
@@ -443,6 +669,10 @@ const DEFAULT_FEED_EVENTS: SafetyCultureFeedEvent[] = [
     points: 100,
     status: "closed",
     published: true,
+    bonusMode: "fixed",
+    multiplier: 1,
+    fixedPoints: 0,
+    enabledActions: ["theme-post"],
   },
 ];
 
@@ -484,6 +714,23 @@ function addDays(date: Date, days: number) {
   return next;
 }
 
+function repairMojibakeText(value?: string | null) {
+  if (!value) return value ?? "";
+  if (!/[ÃÂà]/.test(value)) return value;
+
+  try {
+    return decodeURIComponent(escape(value));
+  } catch {
+    return value;
+  }
+}
+
+function buildNotificationHref(notification: Pick<AppInboxNotification, "postId" | "feedEventId" | "href">) {
+  if (notification.postId) return `/safety-culture?postId=${notification.postId}`;
+  if (notification.feedEventId) return `/safety-culture?activityId=${encodeURIComponent(notification.feedEventId)}`;
+  return notification.href || "/notifications";
+}
+
 function createDefaultSafetyCultureEvent(): SafetyCultureEventConfig {
   const start = new Date();
   const end = addDays(start, 14);
@@ -500,9 +747,81 @@ function createDefaultSafetyCultureEvent(): SafetyCultureEventConfig {
   };
 }
 
+function normalizePosts(posts: Post[]) {
+  return posts.map((post, index) => ({
+    ...post,
+    id: Number.isFinite(post.id) ? post.id : index + 1,
+    author: repairMojibakeText(post.author) || "Unknown author",
+    avatarText: repairMojibakeText(post.avatarText) || "U",
+    subtext: repairMojibakeText(post.subtext) || "Safety Culture",
+    category: repairMojibakeText(post.category) || "ทั่วไป",
+    body: repairMojibakeText(post.body) || "รายละเอียดโพสต์จะแสดงที่นี่",
+    imageText: repairMojibakeText(post.imageText) || undefined,
+    comments: Array.isArray(post.comments)
+      ? post.comments.map((comment, commentIndex) => ({
+          ...comment,
+          id: comment.id || `comment-${post.id}-${commentIndex + 1}`,
+          author: repairMojibakeText(comment.author) || "Unknown author",
+          avatarText: repairMojibakeText(comment.avatarText) || "C",
+          text: repairMojibakeText(comment.text) || "",
+        }))
+      : Math.max(0, Number(post.comments) || 0),
+    likes: Math.max(0, Number(post.likes) || 0),
+    points: Math.max(0, Number(post.points) || 0),
+    hasLiked: Boolean(post.hasLiked),
+    photos: Array.isArray(post.photos)
+      ? post.photos
+          .filter((photo) => photo?.dataUrl)
+          .map((photo, photoIndex) => {
+            const normalizedPhotoUrl =
+              photo.dataUrl === "/images/mascots/gallery/live-1.png" ? "/images/mascots/gallery/line-walk-3.png" : photo.dataUrl;
+
+            return {
+              ...photo,
+              dataUrl: normalizedPhotoUrl,
+              id: photo.id || `photo-${post.id}-${photoIndex + 1}`,
+              type: photo.type || "sample",
+            };
+          })
+      : [],
+  }));
+}
+
+function mergePostsWithSeed(posts: Post[]) {
+  const merged = new Map<number, Post>();
+
+  for (const item of normalizePosts(INITIAL_POSTS)) {
+    merged.set(item.id, item);
+  }
+
+  for (const item of normalizePosts(posts)) {
+    const seed = merged.get(item.id);
+    const mergedPhotos = item.photos?.length ? item.photos : seed?.photos || [];
+    merged.set(item.id, {
+      ...seed,
+      ...item,
+      body: item.body || seed?.body || "",
+      subtext: item.subtext || seed?.subtext || "",
+      category: item.category || seed?.category || "ทั่วไป",
+      comments: item.comments || seed?.comments || 0,
+      photos: mergedPhotos.length ? mergedPhotos : item.id === 4 ? [{ id: "suea-app-4-fallback", dataUrl: "/images/mascots/gallery/line-walk-3.png", type: "sample" }] : [],
+    });
+  }
+
+  return Array.from(merged.values()).sort((left, right) => right.id - left.id);
+}
+
 function normalizeStoredSafetyCultureEvent(parsedEvent: Partial<SafetyCultureEventConfig>) {
   const defaultEvent = createDefaultSafetyCultureEvent();
-  const mergedEvent = { ...defaultEvent, ...parsedEvent };
+  const mergedEvent = {
+    ...defaultEvent,
+    ...parsedEvent,
+    eventName: repairMojibakeText(parsedEvent.eventName ?? defaultEvent.eventName),
+    eventCode: repairMojibakeText(parsedEvent.eventCode ?? defaultEvent.eventCode),
+    headline: repairMojibakeText(parsedEvent.headline ?? defaultEvent.headline),
+    supportingText: repairMojibakeText(parsedEvent.supportingText ?? defaultEvent.supportingText),
+    bannerNote: repairMojibakeText(parsedEvent.bannerNote ?? defaultEvent.bannerNote),
+  };
   const usesLegacyRange =
     parsedEvent.startDate === LEGACY_DEFAULT_EVENT_RANGE.startDate &&
     parsedEvent.startTime === LEGACY_DEFAULT_EVENT_RANGE.startTime &&
@@ -567,6 +886,21 @@ function isSafetyCultureEventLive(event: SafetyCultureEventConfig, now = Date.no
   return getSafetyCultureEventPhase(event, now) === "live";
 }
 
+function getFeedEventTimestamp(date?: string, endOfDay = false) {
+  if (!date) return null;
+  const parsed = new Date(`${date}T${endOfDay ? "23:59" : "00:00"}`);
+  const timestamp = parsed.getTime();
+  return Number.isNaN(timestamp) ? null : timestamp;
+}
+
+function isFeedEventLive(event: SafetyCultureFeedEvent, now = Date.now()) {
+  if (!event.published || event.status !== "open") return false;
+  const start = getFeedEventTimestamp(event.startDate, false);
+  const end = getFeedEventTimestamp(event.endDate, true);
+  if (start === null || end === null) return false;
+  return now >= start && now <= end;
+}
+
 function serializePostsForStorage(posts: Post[]) {
   return posts.map((post) => ({
     ...post,
@@ -576,6 +910,18 @@ function serializePostsForStorage(posts: Post[]) {
 
 function calculateAwardedPoints(basePoints: number, action: SafetyCultureEventAction, event: SafetyCultureEventConfig) {
   if (!event.enabledActions.includes(action) || !isSafetyCultureEventLive(event)) {
+    return basePoints;
+  }
+
+  if (event.bonusMode === "multiplier") {
+    return Math.max(basePoints, Math.round(basePoints * event.multiplier));
+  }
+
+  return basePoints + event.fixedPoints;
+}
+
+function calculateFeedEventAwardedPoints(basePoints: number, action: SafetyCultureEventAction, event: SafetyCultureFeedEvent, now = Date.now()) {
+  if (!event.enabledActions.includes(action) || !isFeedEventLive(event, now)) {
     return basePoints;
   }
 
@@ -656,9 +1002,10 @@ function normalizeRewardsCatalog(rewards: RewardCatalogItem[]): RewardCatalogIte
   return rewards.map((reward, index) => {
     const stockMode: RewardCatalogItem["stockMode"] = reward.stockMode === "limited" ? "limited" : "unlimited";
     const stockTotal = stockMode === "limited" ? Math.max(0, Number(reward.stockTotal) || 0) : null;
+    const parsedRemaining = Number(reward.stockRemaining);
     const stockRemaining =
       stockMode === "limited"
-        ? Math.max(0, Math.min(stockTotal ?? 0, Number(reward.stockRemaining) || stockTotal || 0))
+        ? Math.max(0, Math.min(stockTotal ?? 0, Number.isNaN(parsedRemaining) ? stockTotal ?? 0 : parsedRemaining))
         : null;
 
     return {
@@ -833,12 +1180,12 @@ function mergeRewardRedemptionsWithSeed(records: RewardRedemptionRecord[]) {
 function normalizeFeedEvents(events: SafetyCultureFeedEvent[]): SafetyCultureFeedEvent[] {
   return events.map((event, index) => ({
     id: event.id || `activity-${index + 1}`,
-    title: event.title || `กิจกรรม ${index + 1}`,
-    subtitle: event.subtitle || "Activity Details and Submission",
-    summary: event.summary || "รายละเอียดกิจกรรมจะปรากฏที่นี่",
-    details: event.details || event.summary || "รายละเอียดกิจกรรมจะปรากฏที่นี่",
+    title: repairMojibakeText(event.title) || `กิจกรรม ${index + 1}`,
+    subtitle: repairMojibakeText(event.subtitle) || "Activity Details and Submission",
+    summary: repairMojibakeText(event.summary) || "รายละเอียดกิจกรรมจะแสดงที่นี่",
+    details: repairMojibakeText(event.details || event.summary) || "รายละเอียดกิจกรรมจะแสดงที่นี่",
     imageSrc: event.imageSrc ?? null,
-    imageText: event.imageText || event.title || `Activity ${index + 1}`,
+    imageText: repairMojibakeText(event.imageText || event.title) || `Activity ${index + 1}`,
     startDate: event.startDate || "",
     endDate: event.endDate || "",
     dateLabel:
@@ -848,6 +1195,14 @@ function normalizeFeedEvents(events: SafetyCultureFeedEvent[]): SafetyCultureFee
     points: Math.max(0, Number(event.points) || 0),
     status: event.status === "closed" ? "closed" : "open",
     published: event.published !== false,
+    bonusMode: event.bonusMode === "multiplier" ? "multiplier" : "fixed",
+    multiplier: Math.max(1, Number(event.multiplier) || 1),
+    fixedPoints: Math.max(0, Number(event.fixedPoints) || 0),
+    enabledActions: Array.isArray(event.enabledActions) && event.enabledActions.length > 0
+      ? event.enabledActions.filter((action): action is SafetyCultureEventAction =>
+          ["approved-post", "comment", "reaction", "theme-post"].includes(action)
+        )
+      : ["theme-post"],
   }));
 }
 
@@ -860,17 +1215,62 @@ function normalizeUserActivityHistory(history: SafetyCultureUserActivity[]) {
     .filter((item) => item && item.id && item.type && Number.isFinite(item.occurredAt) && Number.isFinite(item.postId))
     .map((item) => ({
       ...item,
-      postAuthor: item.postAuthor || "Unknown author",
-      postCategory: item.postCategory || "General",
-      postPreview: item.postPreview || "ไม่มีรายละเอียดโพสต์",
+      postAuthor: repairMojibakeText(item.postAuthor) || "Unknown author",
+      postCategory: repairMojibakeText(item.postCategory) || "General",
+      postPreview: repairMojibakeText(item.postPreview) || "ไม่มีรายละเอียดโพสต์",
       pointsDelta: Number(item.pointsDelta) || 0,
-      commentText: item.commentText?.trim() || undefined,
+      commentText: repairMojibakeText(item.commentText)?.trim() || undefined,
     }))
     .sort((a, b) => b.occurredAt - a.occurredAt);
 }
 
 function createDefaultUserActivityHistory() {
   return normalizeUserActivityHistory(INITIAL_USER_ACTIVITY_HISTORY);
+}
+
+function normalizeInboxNotifications(notifications: AppInboxNotification[]) {
+  return notifications
+    .filter((item) => item && item.id && item.title && item.body && Number.isFinite(item.createdAt))
+    .map((item) => ({
+      ...item,
+      title: repairMojibakeText(item.title),
+      body: repairMojibakeText(item.body),
+      actorName: repairMojibakeText(item.actorName)?.trim() || undefined,
+      read: Boolean(item.read),
+      href: buildNotificationHref(item),
+    }))
+    .sort((a, b) => b.createdAt - a.createdAt);
+}
+
+function mergeInboxNotificationsWithSeed(notifications: AppInboxNotification[]) {
+  const merged = new Map<string, AppInboxNotification>();
+
+  for (const item of notifications) {
+    merged.set(item.id, item);
+  }
+
+  for (const item of INITIAL_INBOX_NOTIFICATIONS) {
+    const current = merged.get(item.id);
+    const resolvedPostId = current?.postId ?? item.postId;
+    const resolvedFeedEventId = current?.feedEventId ?? item.feedEventId;
+    merged.set(item.id, {
+      ...item,
+      ...current,
+      title: !current?.title || /\?{4,}/.test(current.title) ? item.title : current.title,
+      body: !current?.body || /\?{4,}/.test(current.body) ? item.body : current.body,
+      postId: resolvedPostId,
+      feedEventId: resolvedFeedEventId,
+      href:
+        !current?.href || current.href === "/safety-culture" || current.href === "/notifications"
+          ? buildNotificationHref({ postId: resolvedPostId, feedEventId: resolvedFeedEventId, href: current?.href ?? item.href })
+          : current.href,
+    });
+  }
+
+  return normalizeInboxNotifications(Array.from(merged.values()));
+}
+function createDefaultInboxNotifications() {
+  return mergeInboxNotificationsWithSeed(INITIAL_INBOX_NOTIFICATIONS);
 }
 
 export function AppProviders({ children }: { children: ReactNode }) {
@@ -880,15 +1280,16 @@ export function AppProviders({ children }: { children: ReactNode }) {
   const [preTripData, setPreTripData] = useState<PreTripData>(null);
   const [queueConfirmed, setQueueConfirmed] = useState(false);
   const [sosData, setSosData] = useState<SosData>(null);
-  const [posts, setPosts] = useState<Post[]>(INITIAL_POSTS);
+  const [posts, setPosts] = useState<Post[]>(() => mergePostsWithSeed(INITIAL_POSTS));
   const [userActivityHistory, setUserActivityHistory] = useState<SafetyCultureUserActivity[]>(() => createDefaultUserActivityHistory());
   const [notification, setNotification] = useState<NotificationType>(null);
+  const [inboxNotifications, setInboxNotifications] = useState<AppInboxNotification[]>(() => createDefaultInboxNotifications());
   const [currentUserPoints, setCurrentUserPoints] = useState(INITIAL_CURRENT_USER_POINTS);
   // NOTE: Must be a deterministic, static seed (no `new Date()`), otherwise the
   // server (UTC) and client (local TZ) compute different dates and React throws
   // a hydration mismatch (#418). The today-based default is applied on the
   // client inside the load effect below.
-  const [safetyCultureEvent, setSafetyCultureEvent] = useState<SafetyCultureEventConfig>(DEFAULT_SAFETY_CULTURE_EVENT);
+  const [safetyCultureEvent, setSafetyCultureEvent] = useState<SafetyCultureEventConfig>(() => createDefaultSafetyCultureEvent());
   const [feedEvents, setFeedEvents] = useState<SafetyCultureFeedEvent[]>(() => createDefaultFeedEvents());
   const [teamStandings, setTeamStandings] = useState<LeaderboardTeam[]>(() => createDefaultTeamStandings());
   const [personalRankings, setPersonalRankings] = useState<LeaderboardPerson[]>(() => createDefaultPersonalRankings());
@@ -913,11 +1314,12 @@ export function AppProviders({ children }: { children: ReactNode }) {
       const storedRewardCategories = window.localStorage.getItem(STORAGE_KEYS.rewardCategories);
       const storedRewardRedemptions = window.localStorage.getItem(STORAGE_KEYS.rewardRedemptions);
       const storedUserActivityHistory = window.localStorage.getItem(STORAGE_KEYS.userActivityHistory);
+      const storedInboxNotifications = window.localStorage.getItem(STORAGE_KEYS.inboxNotifications);
 
       if (storedPosts) {
         const parsedPosts = JSON.parse(storedPosts) as Post[];
         if (Array.isArray(parsedPosts) && parsedPosts.length > 0) {
-          setPosts(parsedPosts);
+          setPosts(mergePostsWithSeed(parsedPosts));
         }
       }
 
@@ -985,10 +1387,25 @@ export function AppProviders({ children }: { children: ReactNode }) {
           setUserActivityHistory(normalizeUserActivityHistory(parsedHistory));
         }
       }
+
+      if (storedInboxNotifications) {
+        const parsedNotifications = JSON.parse(storedInboxNotifications) as AppInboxNotification[];
+        if (Array.isArray(parsedNotifications) && parsedNotifications.length > 0) {
+          setInboxNotifications(mergeInboxNotificationsWithSeed(parsedNotifications));
+        }
+      }
     } catch {
       // Ignore invalid persisted data and keep defaults.
     }
   }, []);
+
+  const getLinkedFeedEvent = useCallback(
+    (feedEventId?: string) => {
+      if (!feedEventId) return null;
+      return feedEvents.find((event) => event.id === feedEventId) ?? null;
+    },
+    [feedEvents]
+  );
 
   useEffect(() => {
     try {
@@ -1069,6 +1486,14 @@ export function AppProviders({ children }: { children: ReactNode }) {
       // Ignore persistence failures and keep in-memory state.
     }
   }, [userActivityHistory]);
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(STORAGE_KEYS.inboxNotifications, JSON.stringify(inboxNotifications));
+    } catch {
+      // Ignore persistence failures and keep in-memory state.
+    }
+  }, [inboxNotifications]);
 
   // Load Safety Awareness question bank + today's completion flag.
   useEffect(() => {
@@ -1165,8 +1590,26 @@ export function AppProviders({ children }: { children: ReactNode }) {
     setNotification(null);
   }, []);
 
+  const markInboxNotificationRead = useCallback((notificationId: string) => {
+    setInboxNotifications((current) =>
+      normalizeInboxNotifications(
+        current.map((item) => (item.id === notificationId ? { ...item, read: true } : item))
+      )
+    );
+  }, []);
+
+  const markAllInboxNotificationsRead = useCallback(() => {
+    setInboxNotifications((current) =>
+      normalizeInboxNotifications(current.map((item) => ({ ...item, read: true })))
+    );
+  }, []);
+
   const addPost = useCallback((post: Post) => {
-    const awardedPoints = calculateAwardedPoints(post.points || 0, "approved-post", safetyCultureEvent);
+    const linkedFeedEvent = getLinkedFeedEvent(post.feedEventId);
+    const basePoints = linkedFeedEvent ? Math.max(0, linkedFeedEvent.points || 0) : Math.max(0, post.points || 0);
+    const awardedPoints = linkedFeedEvent
+      ? calculateFeedEventAwardedPoints(basePoints, "theme-post", linkedFeedEvent)
+      : calculateAwardedPoints(basePoints, "approved-post", safetyCultureEvent);
     const pointsDelta = Math.max(0, awardedPoints);
     const occurredAt = post.createdAt || Date.now();
 
@@ -1187,7 +1630,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
       ])
     );
     setCurrentUserPoints((prev) => prev + pointsDelta);
-  }, [safetyCultureEvent]);
+  }, [getLinkedFeedEvent, safetyCultureEvent]);
 
   const toggleLike = useCallback((postId: number) => {
     let currentDelta = 0;
@@ -1198,7 +1641,10 @@ export function AppProviders({ children }: { children: ReactNode }) {
       prev.map((p) => {
         if (p.id !== postId) return p;
         const isAdding = !p.hasLiked;
-        const awarded = calculateAwardedPoints(1, "reaction", safetyCultureEvent);
+        const linkedFeedEvent = getLinkedFeedEvent(p.feedEventId);
+        const awarded = linkedFeedEvent
+          ? calculateFeedEventAwardedPoints(1, "reaction", linkedFeedEvent)
+          : calculateAwardedPoints(1, "reaction", safetyCultureEvent);
         currentDelta = isAdding ? awarded : -awarded;
         if (isAdding) {
           likedPost = p;
@@ -1235,21 +1681,25 @@ export function AppProviders({ children }: { children: ReactNode }) {
     if (currentDelta !== 0) {
       setCurrentUserPoints((prev) => Math.max(0, prev + currentDelta));
     }
-  }, [safetyCultureEvent]);
+  }, [getLinkedFeedEvent, safetyCultureEvent]);
 
   const addComment = useCallback((postId: number, text: string) => {
-    const awardedPoints = calculateAwardedPoints(1, "comment", safetyCultureEvent);
     const occurredAt = Date.now();
     let targetPost: Post | null = null;
+    let currentAwardedPoints = 0;
 
     setPosts((prev) =>
       prev.map((p) => {
         if (p.id !== postId) return p;
         targetPost = p;
+        const linkedFeedEvent = getLinkedFeedEvent(p.feedEventId);
+        currentAwardedPoints = linkedFeedEvent
+          ? calculateFeedEventAwardedPoints(1, "comment", linkedFeedEvent)
+          : calculateAwardedPoints(1, "comment", safetyCultureEvent);
         const currentComments = Array.isArray(p.comments) ? p.comments : [];
         return {
           ...p,
-          points: (p.points || 0) + awardedPoints,
+          points: (p.points || 0) + currentAwardedPoints,
           comments: [
             ...currentComments,
             {
@@ -1274,15 +1724,15 @@ export function AppProviders({ children }: { children: ReactNode }) {
             postAuthor: activityPost.author,
             postCategory: activityPost.category,
             postPreview: activityPost.body,
-            pointsDelta: awardedPoints,
+            pointsDelta: currentAwardedPoints,
             commentText: text,
           },
           ...current,
         ])
       );
     }
-    setCurrentUserPoints((prev) => prev + awardedPoints);
-  }, [safetyCultureEvent]);
+    setCurrentUserPoints((prev) => prev + currentAwardedPoints);
+  }, [getLinkedFeedEvent, safetyCultureEvent]);
 
   const updateSafetyCultureEvent = useCallback((data: SafetyCultureEventConfig) => {
     setSafetyCultureEvent(data);
@@ -1291,6 +1741,31 @@ export function AppProviders({ children }: { children: ReactNode }) {
   const updateFeedEvents = useCallback((events: SafetyCultureFeedEvent[]) => {
     setFeedEvents(normalizeFeedEvents(events));
   }, []);
+
+  const sendFeedEventNotification = useCallback((feedEventId: string) => {
+    const targetEvent = feedEvents.find((event) => event.id === feedEventId);
+    if (!targetEvent) return false;
+
+    const occurredAt = Date.now();
+
+    setInboxNotifications((current) =>
+      normalizeInboxNotifications([
+        {
+          id: `activity-notification-${feedEventId}-${occurredAt}`,
+          kind: "activity",
+          title: "กิจกรรมใหม่จาก Safety Culture",
+          body: `กิจกรรม "${targetEvent.title}" พร้อมให้เข้าร่วมแล้ว กดเข้ามาดูรายละเอียดและร่วมกิจกรรมได้เลย`,
+          createdAt: occurredAt,
+          read: false,
+          feedEventId: targetEvent.id,
+          href: `/safety-culture?activityId=${encodeURIComponent(targetEvent.id)}`,
+        },
+        ...current,
+      ])
+    );
+
+    return true;
+  }, [feedEvents]);
 
   const updateTeamStandings = useCallback((teams: LeaderboardTeam[]) => {
     setTeamStandings(normalizeTeamStandings(teams));
@@ -1354,17 +1829,49 @@ export function AppProviders({ children }: { children: ReactNode }) {
         return { ok: false as const, reason: "out-of-stock" as const };
       }
 
+      const occurredAt = Date.now();
+      const redeemedAtIso = new Date(occurredAt).toISOString();
+
       setCurrentUserPoints((prev) => prev - points);
       setRewardRedemptions((current) =>
         normalizeRewardRedemptions([
           {
-            id: `reward-redemption-${Date.now()}-${rewardId}`,
+            id: `reward-redemption-${occurredAt}-${rewardId}`,
             rewardId: reward.id,
             rewardName: reward.name,
             rewardCategory: reward.category,
             pointsSpent: points,
-            redeemedAt: new Date().toISOString(),
+            redeemedAt: redeemedAtIso,
             redeemedBy: DEFAULT_CURRENT_USER_NAME,
+          },
+          ...current,
+        ])
+      );
+      setUserActivityHistory((current) =>
+        normalizeUserActivityHistory([
+          {
+            id: `activity-redeem-${rewardId}-${occurredAt}`,
+            type: "redeem",
+            occurredAt,
+            postId: 0,
+            postAuthor: DEFAULT_CURRENT_USER_NAME,
+            postCategory: reward.category || "Reward",
+            postPreview: `แลกรางวัล "${reward.name}" สำเร็จ ใช้ ${points.toLocaleString()} แต้ม`,
+            pointsDelta: -Math.max(0, points),
+          },
+          ...current,
+        ])
+      );
+      setInboxNotifications((current) =>
+        normalizeInboxNotifications([
+          {
+            id: `reward-notification-${rewardId}-${occurredAt}`,
+            kind: "reward",
+            title: "แลกรางวัลสำเร็จ",
+            body: `คุณได้แลกรางวัล "${reward.name}" ใช้ ${points.toLocaleString()} แต้ม ระบบจะส่งรหัสให้ตามช่องทางที่กำหนด`,
+            createdAt: occurredAt,
+            read: false,
+            href: "/safety-culture/rewards",
           },
           ...current,
         ])
@@ -1400,6 +1907,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
     posts,
     userActivityHistory,
     notification,
+    inboxNotifications,
     currentUserPoints,
     safetyCultureEvent,
     feedEvents,
@@ -1426,11 +1934,14 @@ export function AppProviders({ children }: { children: ReactNode }) {
     setSosData,
     showNotification,
     dismissNotification,
+    markInboxNotificationRead,
+    markAllInboxNotificationsRead,
     addPost,
     toggleLike,
     addComment,
     updateSafetyCultureEvent,
     updateFeedEvents,
+    sendFeedEventNotification,
     updateTeamStandings,
     updatePersonalRankings,
     updateRewardsCatalog,
@@ -1461,3 +1972,4 @@ export function useAppActions() {
   if (!ctx) throw new Error("useAppActions must be used within AppProviders");
   return ctx;
 }
+

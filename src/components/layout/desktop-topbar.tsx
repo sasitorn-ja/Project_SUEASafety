@@ -1,14 +1,16 @@
-"use client";
+﻿"use client";
 
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Bell, ChevronDown, FileText, Gift, Heart, Home, LayoutDashboard, Menu, ShieldCheck, Trophy, UserRound, X } from "lucide-react";
+import { NotificationCenter } from "@/components/notifications/notification-center";
 import { cn } from "@/lib/utils";
 import { isExactNavActive, isMainNavActive } from "@/lib/navigation";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { useAppState } from "@/providers/app-providers";
 import { useAppTheme } from "@/providers/theme-provider";
 import { getProfileDisplayName, PROFILE_IMAGE_KEY, PROFILE_IMAGE_UPDATED_EVENT } from "@/lib/profile";
 import {
@@ -55,7 +57,7 @@ const SAFETY_CULTURE_ITEMS = [
 
 const PROFILE_ITEMS = [
   {
-    label: "กิจกรรมของผู้ใช้งาน",
+    label: "\u0e01\u0e34\u0e08\u0e01\u0e23\u0e23\u0e21\u0e02\u0e2d\u0e07\u0e1c\u0e39\u0e49\u0e43\u0e0a\u0e49\u0e07\u0e32\u0e19",
     href: "/profile/activity-history",
     icon: FileText,
   },
@@ -129,18 +131,34 @@ function AdminFlyoutSection({ section, pathname }: { section: MenuNode; pathname
 
 export function DesktopTopbar() {
   const { mascot, theme } = useAppTheme();
+  const { inboxNotifications } = useAppState();
   const pathname = usePathname() ?? "";
   const [open, setOpen] = useState(false);
   const [configuredMenu, setConfiguredMenu] = useState<MenuNode[]>([]);
   const [profileImage, setProfileImage] = useState("");
   const isWangjai = theme === "wangjai";
   const [desktopMenu, setDesktopMenu] = useState<"safety-culture" | "admin" | "profile" | null>(null);
+  const [notificationOpen, setNotificationOpen] = useState(false);
+  const notificationRef = useRef<HTMLDivElement>(null);
+  const unreadNotificationCount = inboxNotifications.filter((item) => !item.read).length;
 
   const isActive = (href: string) => isMainNavActive(pathname, href);
 
   useEffect(() => {
     setDesktopMenu(null);
+    setNotificationOpen(false);
   }, [pathname]);
+
+  useEffect(() => {
+    const handlePointerDown = (event: MouseEvent) => {
+      if (!notificationRef.current?.contains(event.target as Node)) {
+        setNotificationOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handlePointerDown);
+    return () => document.removeEventListener("mousedown", handlePointerDown);
+  }, []);
 
   useEffect(() => {
     const refreshMenu = () => setConfiguredMenu(loadMenu());
@@ -220,8 +238,8 @@ export function DesktopTopbar() {
               "border border-white/[0.12] bg-white/[0.08] text-white",
               "cursor-pointer hover:bg-white/16 hover:text-white"
             )}
-            aria-label={open ? "ปิดเมนู" : "เปิดเมนู"}
-            title={open ? "ปิดเมนู" : "เปิดเมนู"}
+            aria-label={open ? "à¸›à¸´à¸”à¹€à¸¡à¸™à¸¹" : "à¹€à¸›à¸´à¸”à¹€à¸¡à¸™à¸¹"}
+            title={open ? "à¸›à¸´à¸”à¹€à¸¡à¸™à¸¹" : "à¹€à¸›à¸´à¸”à¹€à¸¡à¸™à¸¹"}
           >
             {open ? <X className="h-5 w-5" strokeWidth={2.35} /> : <Menu className="h-5 w-5" strokeWidth={2.35} />}
           </SheetTrigger>
@@ -321,7 +339,7 @@ export function DesktopTopbar() {
                         <AdminFlyoutSection key={section.id} section={section} pathname={pathname} />
                       ))}
                       {adminSections.length === 0 && (
-                        <div className="px-3 py-4 text-center text-xs font-bold text-white/60">ยังไม่มีเมนูย่อย Admin</div>
+                        <div className="px-3 py-4 text-center text-xs font-bold text-white/60">à¸¢à¸±à¸‡à¹„à¸¡à¹ˆà¸¡à¸µà¹€à¸¡à¸™à¸¹à¸¢à¹ˆà¸­à¸¢ Admin</div>
                       )}
                     </div>
                   </div>
@@ -407,24 +425,41 @@ export function DesktopTopbar() {
 
         <div className="desktop-actions flex flex-shrink-0 items-center gap-1.5">
           <ThemeToggle />
-          <NavTo
-            href="/notifications"
-            className={cn(
-              "relative flex h-11 w-11 flex-shrink-0 cursor-pointer items-center justify-center rounded-full",
-              "bg-transparent text-white transition-opacity hover:opacity-70",
-              isExactNavActive(pathname, "/notifications") && "bg-white/10"
-            )}
-            aria-label="การแจ้งเตือน"
-            title="การแจ้งเตือน"
-          >
-            <Bell className="h-5 w-5" strokeWidth={2.3} />
-            <span
-              className="absolute -top-[5px] -right-[5px] flex h-4 min-w-4 items-center justify-center rounded-full bg-[var(--brand-accent)] px-[3px] text-[10px] font-bold text-[var(--brand-accent-contrast)]"
-              style={{ outline: "2px solid var(--nav-brown)" }}
+          <div ref={notificationRef} className="relative">
+            <button
+              type="button"
+              onClick={() => setNotificationOpen((current) => !current)}
+              className={cn(
+                "relative flex h-11 w-11 flex-shrink-0 cursor-pointer items-center justify-center rounded-full",
+                "bg-transparent text-white transition-opacity hover:opacity-70",
+                notificationOpen && "bg-white/10"
+              )}
+              aria-label="Notifications"
+              title="Notifications"
+              aria-expanded={notificationOpen}
             >
-              3
-            </span>
-          </NavTo>
+              <Bell className="h-5 w-5" strokeWidth={2.3} />
+              {unreadNotificationCount > 0 ? (
+                <span
+                  className="absolute -top-[5px] -right-[5px] flex h-4 min-w-4 items-center justify-center rounded-full bg-[var(--brand-accent)] px-[3px] text-[10px] font-bold text-[var(--brand-accent-contrast)]"
+                  style={{ outline: "2px solid var(--nav-brown)" }}
+                >
+                  {Math.min(unreadNotificationCount, 9)}
+                </span>
+              ) : null}
+            </button>
+
+            <div
+              className={cn(
+                "absolute right-0 top-full z-50 w-[312px] max-w-[calc(100vw-32px)] pt-2 transition-all duration-150",
+                notificationOpen ? "visible translate-y-0 opacity-100" : "invisible -translate-y-1 opacity-0"
+              )}
+            >
+              <div className="rounded-[22px] border border-[#e5e7eb] bg-white p-2 text-[#111827] shadow-[0_18px_40px_rgba(15,23,42,0.16)]">
+                <NotificationCenter compact onItemClick={() => setNotificationOpen(false)} />
+              </div>
+            </div>
+          </div>
 
           <div
             className="relative"
@@ -434,7 +469,7 @@ export function DesktopTopbar() {
           >
             <NavTo
               href="/profile"
-              aria-label="โปรไฟล์ของฉัน"
+              aria-label="à¹‚à¸›à¸£à¹„à¸Ÿà¸¥à¹Œà¸‚à¸­à¸‡à¸‰à¸±à¸™"
               className={cn(
                 "login-btn-compact inline-flex h-11 w-11 cursor-pointer items-center justify-center overflow-hidden rounded-full bg-[var(--brand-accent)] p-0 text-white",
                 "shadow-[0_8px_18px_rgba(var(--brand-accent-rgb),0.22)] transition-colors hover:bg-[var(--brand-accent)]"

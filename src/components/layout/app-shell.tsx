@@ -16,6 +16,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   const { dismissNotification } = useAppActions();
   const pathname = usePathname() ?? "";
   const isSafetyEffort = SAFETY_EFFORT_ROUTES.has(pathname) || pathname === "/safety-admin";
+  const isSafetyCulturePost = pathname === "/safety-culture/post";
 
   const [topHidden, setTopHidden] = useState(false);
   const [btmHidden, setBtmHidden] = useState(false);
@@ -130,9 +131,9 @@ export function AppShell({ children }: { children: ReactNode }) {
 
       <main className={cn(isSafetyEffort ? "legacy-page-content" : "page-content")}>{children}</main>
 
-      <MobileBottomNav hidden={btmHidden} />
+      {!isSafetyCulturePost && <MobileBottomNav hidden={btmHidden} />}
 
-      {!isSafetyEffort && <FloatingSafetyAssistant />}
+      {!isSafetyEffort && !isSafetyCulturePost && <FloatingSafetyAssistant />}
 
       <SafetyAwarenessGate />
     </div>

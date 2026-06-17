@@ -2,11 +2,12 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { ArrowLeft, CalendarDays, Clock3, FileText, Heart, MessageCircle, UserRound } from "lucide-react";
+import { ArrowLeft, CalendarDays, Clock3, FileText, Gift, Heart, MessageCircle, UserRound } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAppState, type SafetyCultureUserActivity } from "@/providers/app-providers";
+import { useAppTheme } from "@/providers/theme-provider";
 import { getProfileDisplayName, PROFILE_IMAGE_KEY } from "@/lib/profile";
 import { cn } from "@/lib/utils";
 
@@ -40,6 +41,14 @@ function getActivityMeta(type: SafetyCultureUserActivity["type"]) {
     };
   }
 
+  if (type === "redeem") {
+    return {
+      label: "แลกรางวัล",
+      icon: Gift,
+      tone: "border-[#c8ead6] bg-[#edf9ef] text-[#1f7a55]",
+    };
+  }
+
   return {
     label: "กดชอบ",
     icon: Heart,
@@ -66,9 +75,14 @@ function isWithinRange(activityAt: number, fromDate: string, toDate: string) {
 
 export default function ProfileActivityHistoryPage() {
   const { userActivityHistory } = useAppState();
+  const { theme } = useAppTheme();
   const [profileImage, setProfileImage] = useState("");
   const [fromDate, setFromDate] = useState(() => getDateDaysAgo(30));
   const [toDate, setToDate] = useState(() => formatDateInput(new Date()));
+  const isWangjai = theme === "wangjai";
+  const pageBackgroundClass = isWangjai
+    ? "bg-[linear-gradient(180deg,#eef5fb_0%,#f8fbfe_260px,#fbfdff_100%)]"
+    : "bg-[linear-gradient(180deg,#f6efe3_0%,#fdf8f0_220px,#fffdf8_100%)]";
 
   useEffect(() => {
     try {
@@ -87,13 +101,14 @@ export default function ProfileActivityHistoryPage() {
     return filteredActivities.reduce(
       (acc, activity) => {
         acc.total += 1;
-        acc.points += Math.max(0, activity.pointsDelta);
+        acc.points += activity.type === "redeem" ? 0 : Math.max(0, activity.pointsDelta);
         if (activity.type === "post") acc.posts += 1;
         if (activity.type === "comment") acc.comments += 1;
         if (activity.type === "reaction") acc.reactions += 1;
+        if (activity.type === "redeem") acc.redeems += 1;
         return acc;
       },
-      { total: 0, posts: 0, comments: 0, reactions: 0, points: 0 }
+      { total: 0, posts: 0, comments: 0, reactions: 0, redeems: 0, points: 0 }
     );
   }, [filteredActivities]);
 
@@ -103,7 +118,7 @@ export default function ProfileActivityHistoryPage() {
   };
 
   return (
-    <div className="min-h-[calc(100vh-var(--topbar-h))] bg-[linear-gradient(180deg,#eef5fb_0%,#f8fbfe_260px,#fbfdff_100%)] px-3 pb-10 pt-2 font-sans md:px-6 md:pt-4">
+    <div className={cn("min-h-[calc(100vh-var(--topbar-h))] px-3 pb-10 pt-2 font-sans md:px-6 md:pt-4", pageBackgroundClass)}>
       <div className="mx-auto grid w-full max-w-[1080px] gap-3 md:gap-4">
         <section className="relative overflow-hidden rounded-[24px] bg-[linear-gradient(135deg,var(--brand-hero-start),var(--brand-hero-end))] p-4 text-white shadow-[0_18px_44px_var(--brand-shadow)] md:p-7">
           <div className="pointer-events-none absolute -right-16 -top-24 h-72 w-72 rounded-full bg-[var(--brand-accent)] opacity-15 blur-3xl" />
@@ -135,12 +150,13 @@ export default function ProfileActivityHistoryPage() {
           </div>
         </section>
 
-        <section className="grid grid-cols-2 gap-3 md:grid-cols-4">
+        <section className="grid grid-cols-2 gap-3 md:grid-cols-5">
           {[
             { label: "กิจกรรมทั้งหมด", value: summary.total, tone: "bg-[var(--brand-surface)]" },
             { label: "โพสต์", value: summary.posts, tone: "bg-[#fff8e6]" },
             { label: "คอมเมนต์", value: summary.comments, tone: "bg-[#edf5ff]" },
             { label: "กดชอบ", value: summary.reactions, tone: "bg-[#fff1f3]" },
+            { label: "แลกรางวัล", value: summary.redeems, tone: "bg-[#edf9ef]" },
           ].map((item) => (
             <Card key={item.label} className={cn("rounded-[20px] border border-[var(--border)] p-4 shadow-[0_10px_24px_rgba(57,94,127,0.08)]", item.tone)}>
               <div className="text-[10px] font-extrabold tracking-[0.06em] text-[var(--muted-foreground)]">{item.label}</div>
@@ -209,7 +225,9 @@ export default function ProfileActivityHistoryPage() {
                         <span className="rounded-full bg-[var(--secondary)] px-2.5 py-1 text-[11px] font-black text-[var(--brand-text)]">
                           {activity.postCategory}
                         </span>
-                        <span className="text-[12px] font-bold text-[var(--muted-foreground)]">โพสต์ของ {activity.postAuthor}</span>
+                        <span className="text-[12px] font-bold text-[var(--muted-foreground)]">
+                          {activity.type === "redeem" ? `รายการของ ${activity.postAuthor}` : `โพสต์ของ ${activity.postAuthor}`}
+                        </span>
                       </div>
 
                       <div className="mt-3 text-[15px] font-black leading-relaxed text-foreground md:text-[16px]">{activity.postPreview}</div>
@@ -233,8 +251,12 @@ export default function ProfileActivityHistoryPage() {
                         })}
                       </div>
                       <div className="text-right">
-                        <div className="text-[11px] font-bold text-[var(--muted-foreground)]">แต้มที่ได้รับ</div>
-                        <div className="text-[24px] font-black text-[#16845a]">+{Math.max(0, activity.pointsDelta)}</div>
+                        <div className="text-[11px] font-bold text-[var(--muted-foreground)]">
+                          {activity.type === "redeem" ? "แต้มที่ใช้ไป" : "แต้มที่ได้รับ"}
+                        </div>
+                        <div className={cn("text-[24px] font-black", activity.type === "redeem" ? "text-[#b45309]" : "text-[#16845a]")}>
+                          {activity.type === "redeem" ? `-${Math.max(0, Math.abs(activity.pointsDelta))}` : `+${Math.max(0, activity.pointsDelta)}`}
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -244,7 +266,7 @@ export default function ProfileActivityHistoryPage() {
           ) : (
             <Card className="rounded-[22px] border border-[var(--border)] bg-[var(--brand-surface)] p-8 text-center shadow-[0_10px_26px_var(--brand-shadow)]">
               <div className="text-[18px] font-black text-foreground">ยังไม่พบกิจกรรมในช่วงเวลาที่เลือก</div>
-              <div className="mt-2 text-[13px] font-bold text-[var(--muted-foreground)]">ลองขยายช่วงวันที่เพื่อดูโพสต์ คอมเมนต์ หรือ reaction ย้อนหลังเพิ่มเติม</div>
+              <div className="mt-2 text-[13px] font-bold text-[var(--muted-foreground)]">ลองขยายช่วงวันที่เพื่อดูโพสต์ คอมเมนต์ การกดชอบ หรือการแลกรางวัลย้อนหลังเพิ่มเติม</div>
             </Card>
           )}
         </section>

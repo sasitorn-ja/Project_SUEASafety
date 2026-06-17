@@ -1,11 +1,10 @@
-"use client";
+﻿"use client";
 
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import {
-  Bell,
   ChevronDown,
   FileText,
   Gift,
@@ -43,7 +42,13 @@ const CULTURE_ITEMS = [
   { label: "Rewards", icon: Gift, href: "/safety-culture/rewards" },
 ];
 
-const PROFILE_MENU_ITEMS = [{ label: "กิจกรรมของผู้ใช้งาน", icon: FileText, href: "/profile/activity-history" }];
+const PROFILE_MENU_ITEMS = [
+  {
+    label: "\u0e01\u0e34\u0e08\u0e01\u0e23\u0e23\u0e21\u0e02\u0e2d\u0e07\u0e1c\u0e39\u0e49\u0e43\u0e0a\u0e49\u0e07\u0e32\u0e19",
+    icon: FileText,
+    href: "/profile/activity-history",
+  },
+];
 
 type NavNode = {
   id: string;
@@ -217,7 +222,7 @@ export function MobileTopbar({ hidden = false }: { hidden?: boolean }) {
   };
 
   const closeDrawer = () => setOpen(false);
-  const menuLabel = open ? "ปิดเมนู" : "เปิดเมนู";
+  const menuLabel = open ? "à¸›à¸´à¸”à¹€à¸¡à¸™à¸¹" : "à¹€à¸›à¸´à¸”à¹€à¸¡à¸™à¸¹";
 
   return (
     <>
@@ -227,7 +232,7 @@ export function MobileTopbar({ hidden = false }: { hidden?: boolean }) {
           "border-b border-white/[0.08] bg-[rgba(var(--brand-nav-rgb),0.96)] shadow-[0_8px_24px_var(--brand-shadow)]",
           "backdrop-blur-[14px] transition-transform duration-200",
           "[transition-timing-function:cubic-bezier(0.2,0.8,0.2,1)]",
-          hidden && "-translate-y-full"
+          hidden && "pointer-events-none -translate-y-full"
         )}
         style={{ fontFamily: "var(--font-sans)", height: "var(--mobile-topbar-h)" }}
         role="banner"
@@ -267,26 +272,15 @@ export function MobileTopbar({ hidden = false }: { hidden?: boolean }) {
           </NavTo>
         </div>
 
-        <div className="flex flex-shrink-0 items-center gap-2">
+        <div className="flex flex-shrink-0 items-center">
           <ThemeToggle compact />
-          <NavTo
-            href="/notifications"
-            className="relative inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-full bg-transparent text-white transition-opacity hover:opacity-70"
-            aria-label="การแจ้งเตือน"
-            title="การแจ้งเตือน"
-          >
-            <Bell className="h-[17px] w-[17px]" strokeWidth={2.4} />
-            <span className="absolute -top-[3px] -right-0.5 flex h-[17px] w-[17px] items-center justify-center rounded-full border-[1.5px] border-[var(--brand-nav)] bg-[var(--brand-accent-strong)] text-[10px] font-extrabold text-[var(--brand-nav)]">
-              3
-            </span>
-          </NavTo>
         </div>
       </div>
 
       {open && (
         <div className="mobile-drawer-layer md:hidden">
-          <button className="mobile-drawer-overlay" aria-label="ปิดเมนู" onClick={closeDrawer} />
-          <aside className="mobile-drawer-aside" aria-label="เมนูหลัก">
+          <button className="mobile-drawer-overlay" aria-label="à¸›à¸´à¸”à¹€à¸¡à¸™à¸¹" onClick={closeDrawer} />
+          <aside className="mobile-drawer-aside" aria-label="à¹€à¸¡à¸™à¸¹à¸«à¸¥à¸±à¸">
             <div className="grid grid-cols-1 gap-2">
               <div>
                 <div
@@ -312,7 +306,7 @@ export function MobileTopbar({ hidden = false }: { hidden?: boolean }) {
                     type="button"
                     onClick={() => toggleSection("profile")}
                     aria-expanded={!!openSections.profile}
-                    aria-label="เปิดเมนูกิจกรรมของผู้ใช้งาน"
+                    aria-label="\u0e40\u0e1b\u0e34\u0e14\u0e40\u0e21\u0e19\u0e39\u0e01\u0e34\u0e08\u0e01\u0e23\u0e23\u0e21\u0e02\u0e2d\u0e07\u0e1c\u0e39\u0e49\u0e43\u0e0a\u0e49\u0e07\u0e32\u0e19"
                     className="flex w-12 flex-shrink-0 items-center justify-center rounded-r-xl text-[var(--brand-accent)] outline-none transition-colors hover:bg-white/[0.08] focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--brand-accent)]"
                   >
                     <ChevronDown className={cn("h-4 w-4 transition-transform duration-200", openSections.profile && "rotate-180")} strokeWidth={2.5} />
@@ -378,7 +372,7 @@ export function MobileTopbar({ hidden = false }: { hidden?: boolean }) {
                             />
                           ))}
                           {adminSections.length === 0 && (
-                            <div className="px-2.5 py-3 text-[11px] font-bold text-white/55">ยังไม่มีเมนูย่อย Admin</div>
+                            <div className="px-2.5 py-3 text-[11px] font-bold text-white/55">à¸¢à¸±à¸‡à¹„à¸¡à¹ˆà¸¡à¸µà¹€à¸¡à¸™à¸¹à¸¢à¹ˆà¸­à¸¢ Admin</div>
                           )}
                         </div>
                       )}

@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useState, useCallback, useEffect, type CSSProperties } from "react";
 import {
   useAppState,
@@ -9,7 +10,6 @@ import {
   type Post,
   type Comment as CommentType,
   type SafetyCultureFeedEvent,
-  getSafetyCultureEventPhase,
 } from "@/providers/app-providers";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -158,9 +158,15 @@ function getActivityStatusMeta(status: SafetyCultureFeedEvent["status"]) {
       };
 }
 
+function getActivityCardCopy(activity: Pick<SafetyCultureFeedEvent, "details" | "summary">) {
+  return activity.details?.trim() || activity.summary?.trim() || "รายละเอียดกิจกรรมจะแสดงที่นี่";
+}
+
 export default function Page() {
-  const { posts, safetyCultureEvent, feedEvents, isEventLive, eventNow } = useAppState();
+  const { posts, feedEvents } = useAppState();
   const { toggleLike, addComment } = useAppActions();
+  const router = useRouter();
+  const searchParams = useSearchParams();
 
   const [activeCategory, setActiveCategory] = useState("ทั้งหมด");
   const [commentDrafts, setCommentDrafts] = useState<Record<number, string>>({});
@@ -172,11 +178,14 @@ export default function Page() {
     postAuthor: string;
     index: number;
   } | null>(null);
+  const [expandedPostId, setExpandedPostId] = useState<number | null>(null);
   const [expandedActivity, setExpandedActivity] = useState<SafetyCultureFeedEvent | null>(null);
   const [mobileActivityStartIndex, setMobileActivityStartIndex] = useState(0);
   const [desktopActivityStartIndex, setDesktopActivityStartIndex] = useState(0);
   const [commentReactionState, setCommentReactionState] = useState<Record<string, { selected: string | null; counts: Record<string, number> }>>({});
   const [openCommentReactionPicker, setOpenCommentReactionPicker] = useState<string | null>(null);
+  const expandedPost = expandedPostId ? posts.find((post) => post.id === expandedPostId) ?? null : null;
+  const isNotificationPostPopup = Boolean(searchParams?.get("postId"));
 
   const animStyle = (delay: number) => ({
     animationDelay: `${delay}s`,
@@ -220,12 +229,13 @@ export default function Page() {
   }, []);
 
   useEffect(() => {
-    if (!expandedPhoto && !expandedActivity) return;
+    if (!expandedPhoto && !expandedActivity && !expandedPost) return;
 
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         setExpandedPhoto(null);
         setExpandedActivity(null);
+        setExpandedPostId(null);
         return;
       }
 
@@ -240,7 +250,48 @@ export default function Page() {
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [expandedActivity, expandedPhoto, goToExpandedPhoto]);
+  }, [expandedActivity, expandedPhoto, expandedPost, goToExpandedPhoto]);
+
+  useEffect(() => {
+    const postIdParam = searchParams?.get("postId");
+    const activityIdParam = searchParams?.get("activityId");
+
+    if (postIdParam) {
+      const numericPostId = Number(postIdParam);
+      if (Number.isFinite(numericPostId)) {
+        const targetPost = posts.find((post) => post.id === numericPostId);
+        if (targetPost) {
+          setExpandedPostId(targetPost.id);
+          setExpandedActivity(null);
+        }
+      }
+    } else if (activityIdParam) {
+      const targetActivity = feedEvents.find((event) => event.id === activityIdParam);
+      if (targetActivity) {
+        setExpandedActivity(targetActivity);
+        setExpandedPostId(null);
+      }
+    }
+  }, [feedEvents, posts, searchParams]);
+
+  useEffect(() => {
+    if (!expandedPostId) return;
+    setExpandedComments((prev) => ({ ...prev, [expandedPostId]: true }));
+  }, [expandedPostId]);
+
+  const closeExpandedPost = useCallback(() => {
+    setExpandedPostId(null);
+    if (searchParams?.get("postId")) {
+      router.replace("/safety-culture", { scroll: false });
+    }
+  }, [router, searchParams]);
+
+  const closeExpandedActivity = useCallback(() => {
+    setExpandedActivity(null);
+    if (searchParams?.get("activityId")) {
+      router.replace("/safety-culture", { scroll: false });
+    }
+  }, [router, searchParams]);
 
 
   const handleCommentSubmit = (postId: number) => {
@@ -264,19 +315,15 @@ export default function Page() {
     return commentReactionState[key] || { selected: null, counts: getDefaultCommentReactions() };
   };
 
-  const eventBonusLabel = safetyCultureEvent.bonusMode === "multiplier"
-    ? `x${safetyCultureEvent.multiplier}`
-    : `+${safetyCultureEvent.fixedPoints} pts`;
-  const tipText = `โพสต์ที่ได้รับอนุมัติ +6 แต้ม · Happy Hour ${eventBonusLabel} · คอมเมนต์และ reaction จะได้โบนัสตามช่วงอีเว้น`;
-
-  const eventPhase = getSafetyCultureEventPhase(safetyCultureEvent, eventNow);
+  const tipText = "โพสต์เรื่องความปลอดภัยให้ชัดเจน กระชับ และถ้าเข้ากิจกรรมแบบ Card อย่าลืมเลือกกิจกรรมก่อนโพสต์";
   const visibleFeedEvents = feedEvents.filter((event) => event.published);
   const maxMobileActivityStartIndex = Math.max(0, visibleFeedEvents.length - 1);
   const maxDesktopActivityStartIndex = Math.max(0, visibleFeedEvents.length - 3);
-  const shouldShowEventBanner = safetyCultureEvent.bannerVisible && eventPhase !== "draft";
-  const startAt = new Date(`${safetyCultureEvent.startDate}T${safetyCultureEvent.startTime}`);
-  const endAt = new Date(`${safetyCultureEvent.endDate}T${safetyCultureEvent.endTime}`);
-  const timeRangeLabel = `${startAt.toLocaleDateString("th-TH", { day: "2-digit", month: "short" })} ${safetyCultureEvent.startTime} - ${endAt.toLocaleDateString("th-TH", { day: "2-digit", month: "short" })} ${safetyCultureEvent.endTime}`;
+  const expandedPostPhotos = expandedPost ? getPostPhotos(expandedPost) : [];
+  const expandedPostActivePhotoIndex = expandedPost ? activePhotoByPost[expandedPost.id] || 0 : 0;
+  const expandedPostActivePhoto = expandedPostPhotos[expandedPostActivePhotoIndex] || expandedPostPhotos[0];
+  const expandedPostComments = expandedPost ? getPostComments(expandedPost) : [];
+  const expandedPostCommentCount = expandedPost ? getCommentCount(expandedPost) : 0;
 
   useEffect(() => {
     setMobileActivityStartIndex((current) => Math.min(current, Math.max(0, visibleFeedEvents.length - 1)));
@@ -285,26 +332,6 @@ export default function Page() {
   useEffect(() => {
     setDesktopActivityStartIndex((current) => Math.min(current, Math.max(0, visibleFeedEvents.length - 3)));
   }, [visibleFeedEvents.length]);
-
-  let eventStatusLabel: string = safetyCultureEvent.status;
-  let countdownLabel = "รอการตั้งเวลาอีเว้น";
-
-  if (eventPhase === "live") {
-    eventStatusLabel = "Live now";
-    countdownLabel = `เหลือเวลาอีก ${Math.max(0, Math.ceil((endAt.getTime() - eventNow) / 60000))} นาที`;
-  } else if (eventPhase === "upcoming") {
-    eventStatusLabel = "Starting soon";
-    countdownLabel = `เริ่มในอีก ${Math.max(0, Math.ceil((startAt.getTime() - eventNow) / 60000))} นาที`;
-  } else if (eventPhase === "ended") {
-    eventStatusLabel = "Ended";
-    countdownLabel = "อีเว้นสิ้นสุดแล้ว";
-  } else if (eventPhase === "paused") {
-    eventStatusLabel = "Paused";
-    countdownLabel = "อีเว้นถูกหยุดชั่วคราว";
-  } else if (eventPhase === "draft") {
-    eventStatusLabel = "Draft";
-    countdownLabel = "ยังไม่เปิดใช้งานอีเว้น";
-  }
 
   const handleCommentReaction = (postId: number, commentId: string, reactionId: string) => {
     const key = getCommentReactionKey(postId, commentId);
@@ -339,52 +366,13 @@ export default function Page() {
         <div className="anim-fade" style={animStyle(0)}>
           <SafetyCultureHero
             eyebrow="SAFETY CULTURE COMMUNITY"
-            title={<><span className="text-[var(--c-ffb000)]">SUEA</span> Safety</>}
-            description="พื้นที่แชร์เรื่องความปลอดภัยของทีม อ่านง่าย อบอุ่น และช่วยกันต่อยอดพฤติกรรมปลอดภัยในทุกวัน"
+            title={<>Safety Culture</>}
+            description="พื้นที่แชร์เรื่องความปลอดภัย และช่วยกันต่อยอดพฤติกรรมปลอดภัยในทุกวัน"
             mascotSrc="/images/mascots/gallery/line-walk-3.png"
             mascotAlt="SUEA Mascot"
             mascotAction="announce"
           />
         </div>
-
-        {shouldShowEventBanner ? (
-        <Card className="mt-[13px] rounded-[20px] border border-[var(--c-e0c28a)] bg-[linear-gradient(135deg,var(--c-fff3d1)_0%,var(--c-fffcf4)_100%)] px-4 py-3 text-[var(--c-4b2b0f)] shadow-[0_8px_18px_rgba(92,50,20,0.06)] anim-fade" style={animStyle(0.01)}>
-          <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-            <div className="flex items-start gap-2.5">
-              <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-[var(--c-5c3214)] text-lg text-[var(--c-ffcf55)]">
-                ⚡
-              </div>
-              <div className="min-w-0">
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="text-[14px] font-black">{safetyCultureEvent.headline}</span>
-                  <span
-                    className={cn(
-                      "rounded-full px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.16em]",
-                      isEventLive ? "bg-[#daf5e6] text-[#19734a]" : "bg-[var(--c-ede2d4)] text-[var(--c-6d4a22)]"
-                    )}
-                  >
-                    {eventStatusLabel}
-                  </span>
-                </div>
-                <p className="mt-1 text-[12.5px] font-bold leading-relaxed text-[var(--c-6d5a46)]">
-                  {safetyCultureEvent.supportingText}
-                </p>
-                <p className="mt-1 text-[11.5px] font-black text-[var(--c-9a6a24)]">
-                  {countdownLabel}
-                </p>
-              </div>
-            </div>
-            <div className="flex flex-wrap items-center gap-2 pl-11 md:pl-0">
-              <span className="rounded-full border border-[var(--c-d4b079)] bg-white px-3 py-1 text-[12px] font-black text-[var(--c-5c3214)]">
-                Bonus {eventBonusLabel}
-              </span>
-              <span className="rounded-full border border-[var(--c-d4b079)] bg-white px-3 py-1 text-[12px] font-black text-[var(--c-5c3214)]">
-                {timeRangeLabel}
-              </span>
-            </div>
-          </div>
-        </Card>
-        ) : null}
 
         <div className="mt-[13px] mb-[20px] anim-fade" style={animStyle(0.02)}>
           <SafetyCultureTabs />
@@ -392,13 +380,12 @@ export default function Page() {
 
         {visibleFeedEvents.length > 0 ? (
           <Card className="mb-4 overflow-hidden rounded-[24px] border border-[var(--c-e4d3b3)] bg-[var(--c-fffdfa)] p-4 shadow-[0_8px_18px_rgba(62,36,13,0.04)] anim-fade md:p-5" style={animStyle(0.03)}>
-            <div className="mb-5 flex items-start gap-3 text-[var(--c-5c3214)]">
+            <div className="mb-1 flex items-start gap-3 text-[var(--c-5c3214)]">
               <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[var(--c-fff1c9)] text-[var(--c-f0a400)] shadow-[0_6px_14px_rgba(240,164,0,0.15)]">
                 <Sparkles className="h-5 w-5" strokeWidth={2.2} />
               </div>
               <div className="flex-1 pt-0.5">
                 <h2 className="text-[20px] font-black">กิจกรรมปัจจุบัน</h2>
-                <p className="text-[12px] font-bold text-[#8E8A81]">Admin สามารถจัดการกิจกรรม และผู้ใช้กดดูรายละเอียดเพิ่มเติมได้ทันที</p>
               </div>
             </div>
 
@@ -436,12 +423,12 @@ export default function Page() {
                     key={activity.id}
                     className="flex min-w-full flex-[0_0_100%] flex-col rounded-[22px] border border-[var(--c-e4d3b3)] bg-white shadow-[0_10px_20px_rgba(62,36,13,0.05)]"
                   >
-                    <div className="relative aspect-[1.2/1] overflow-hidden rounded-t-[22px] bg-[var(--c-f7e7cf)]">
-                      {activity.imageSrc ? (
-                        <Image src={activity.imageSrc} alt={activity.title} fill className="object-cover" />
-                      ) : (
-                        <div className="flex h-full items-center justify-center px-6 text-center text-[18px] font-black text-[#8E8A81]">
-                          {activity.imageText}
+                      <div className="relative aspect-[1.42/1] overflow-hidden rounded-t-[22px] bg-[var(--c-f7e7cf)] sm:aspect-[1.3/1]">
+                        {activity.imageSrc ? (
+                        <Image src={activity.imageSrc} alt={activity.title} fill sizes="(max-width: 1023px) 100vw, 33vw" className="object-cover" />
+                        ) : (
+                          <div className="flex h-full items-center justify-center px-6 text-center text-[18px] font-black text-[#8E8A81]">
+                            {activity.imageText}
                         </div>
                       )}
                       <span className={cn("absolute top-3 right-3 rounded-full border px-3 py-1 text-[11px] font-black backdrop-blur-[2px]", statusMeta.badgeClass)}>
@@ -449,11 +436,11 @@ export default function Page() {
                       </span>
                     </div>
 
-                    <div className="flex flex-1 flex-col p-4">
+                    <div className="flex flex-1 flex-col px-4 pt-4 pb-3">
                       <h3 className="text-[18px] font-black text-[var(--c-2f261d)]">{activity.title}</h3>
-                      <p className="mt-2 line-clamp-3 text-[13.5px] font-bold leading-relaxed text-[#667085]">{activity.summary}</p>
+                      <p className="mt-2 line-clamp-2 text-[13.5px] font-bold leading-relaxed text-[#667085]">{getActivityCardCopy(activity)}</p>
 
-                      <div className="mt-4 flex flex-wrap items-center justify-between gap-2 text-[12px] font-black">
+                      <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-[12px] font-black">
                         <span className="inline-flex items-center gap-1.5 text-[#7d776c]">
                           <CalendarDays className="h-4 w-4" strokeWidth={2.1} />
                           {activity.dateLabel}
@@ -465,7 +452,7 @@ export default function Page() {
                         type="button"
                         variant="outline"
                         onClick={() => setExpandedActivity(activity)}
-                        className="mt-4 h-10 rounded-[14px] border-[var(--c-d7c5a7)] bg-[var(--c-faf8f2)] text-[13px] font-black text-[var(--c-5c3214)] hover:bg-[var(--c-fff2d8)]"
+                        className="mt-3 h-10 rounded-[14px] border-[var(--c-d7c5a7)] bg-[var(--c-faf8f2)] text-[13px] font-black text-[var(--c-5c3214)] hover:bg-[var(--c-fff2d8)]"
                       >
                         ดูรายละเอียด
                       </Button>
@@ -513,7 +500,7 @@ export default function Page() {
                     >
                       <div className="relative aspect-[1.2/1] overflow-hidden rounded-t-[22px] bg-[var(--c-f7e7cf)]">
                         {activity.imageSrc ? (
-                          <Image src={activity.imageSrc} alt={activity.title} fill className="object-cover" />
+                          <Image src={activity.imageSrc} alt={activity.title} fill sizes="(max-width: 1023px) 100vw, 33vw" className="object-cover" />
                         ) : (
                           <div className="flex h-full items-center justify-center px-6 text-center text-[18px] font-black text-[#8E8A81]">
                             {activity.imageText}
@@ -526,7 +513,7 @@ export default function Page() {
 
                       <div className="flex flex-1 flex-col p-4">
                         <h3 className="text-[18px] font-black text-[var(--c-2f261d)]">{activity.title}</h3>
-                        <p className="mt-2 line-clamp-3 text-[13.5px] font-bold leading-relaxed text-[#667085]">{activity.summary}</p>
+                        <p className="mt-2 line-clamp-2 text-[13.5px] font-bold leading-relaxed text-[#667085]">{getActivityCardCopy(activity)}</p>
 
                         <div className="mt-4 flex flex-wrap items-center justify-between gap-2 text-[12px] font-black">
                           <span className="inline-flex items-center gap-1.5 text-[#7d776c]">
@@ -895,10 +882,239 @@ export default function Page() {
         </div>
       ) : null}
 
+      {expandedPost ? (
+        <div
+          className="fixed inset-0 z-[91] flex items-center justify-center bg-[rgba(20,13,7,0.82)] p-4 animate-[fadeIn_0.2s_ease-out_both] md:p-6"
+          onClick={closeExpandedPost}
+          role="dialog"
+          aria-modal="true"
+          aria-label="รายละเอียดโพสต์"
+        >
+          <div
+            className="relative flex max-h-[86vh] w-full max-w-[430px] flex-col overflow-hidden rounded-[24px] border border-[var(--c-e4d3b3)] bg-[var(--c-fffdfa)] shadow-[0_24px_60px_rgba(0,0,0,0.28)] animate-[scaleUp_0.24s_cubic-bezier(0.175,0.885,0.32,1.12)_both] sm:max-w-[560px] md:max-h-[82vh] md:max-w-[620px] md:rounded-[24px]"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="flex items-start justify-between gap-3 border-b border-[var(--c-eee2cb)] px-4 py-3 md:gap-4 md:px-5 md:py-3.5">
+              <div className="min-w-0">
+                <div className="flex items-center gap-2.5 md:gap-3">
+                  <div
+                    className="flex h-[40px] w-[40px] flex-shrink-0 items-center justify-center rounded-full border-2 border-[#1A1A1A] text-[15px] font-black md:h-[36px] md:w-[36px] md:text-[14px]"
+                    style={{ backgroundColor: expandedPost.avatarBg, color: expandedPost.avatarColor }}
+                  >
+                    {expandedPost.avatarText}
+                  </div>
+                  <div className="min-w-0">
+                    <h3 className="truncate text-[16px] font-black text-[var(--c-2f261d)] md:text-[18px]">{expandedPost.author}</h3>
+                    <p className="text-[11px] font-bold text-[#667085] md:text-[11px]">{formatPostSubtext(expandedPost)}</p>
+                  </div>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={closeExpandedPost}
+                className="inline-flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full border border-[var(--c-ddd9cd)] bg-white text-[#667085] transition-colors hover:bg-[var(--c-faf8f2)] md:h-9 md:w-9"
+                aria-label="ปิดรายละเอียดโพสต์"
+              >
+                <X className="h-5 w-5" strokeWidth={2.3} />
+              </button>
+            </div>
+
+            <div
+              className="overflow-y-auto px-4 py-3.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden md:px-5 md:py-4"
+            >
+              <div className="flex flex-col gap-3.5 font-sarabun md:gap-4">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <span className="w-fit rounded-full border border-[var(--c-e8cda4)] bg-[var(--c-fff7e8)] px-2 py-0.5 text-[10.5px] font-black tracking-wide text-[var(--c-7b5625)]">
+                    {expandedPost.category}
+                  </span>
+                  <span className="w-fit rounded-full bg-[#e9fff4] px-2 py-0.5 text-[12px] font-black tracking-normal text-[#3D9A6A]">
+                    + {expandedPost.points} pts
+                  </span>
+                </div>
+
+                <p className="text-[14px] md:text-[14px] font-bold leading-relaxed text-[var(--c-33271a)]">{expandedPost.body}</p>
+
+                {(expandedPostPhotos.length > 0 || expandedPost.imageText) && (
+                  <div className="flex flex-col gap-2">
+                    <div className="relative aspect-[1.18/1] w-full overflow-hidden rounded-[16px] border-[1.5px] border-[var(--c-e5cfad)] bg-[var(--c-f7e7cf)] md:aspect-[1.52/1]">
+                      {expandedPostActivePhoto ? (
+                        <>
+                          {isNotificationPostPopup ? (
+                            <div className="absolute inset-0 z-0">
+                              <Image src={expandedPostActivePhoto.dataUrl} alt={`Attached post scene by ${expandedPost.author}`} fill className="object-cover" />
+                            </div>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => showExpandedPhotoAt(expandedPost, expandedPostActivePhotoIndex)}
+                              className="absolute inset-0 z-0 cursor-zoom-in"
+                              aria-label="ดูรูปภาพเต็ม"
+                            >
+                              <Image src={expandedPostActivePhoto.dataUrl} alt={`Attached post scene by ${expandedPost.author}`} fill className="object-cover" />
+                            </button>
+                          )}
+                          {expandedPostPhotos.length > 1 && (
+                            <span className="absolute right-3 bottom-3 z-10 rounded-full bg-[rgba(53,50,48,0.86)] px-2.5 py-1 text-[13px] font-black text-white">
+                              {expandedPostActivePhotoIndex + 1} / {expandedPostPhotos.length}
+                            </span>
+                          )}
+                          {!isNotificationPostPopup ? (
+                            <span className="pointer-events-none absolute top-3 right-3 z-10 rounded-full bg-[rgba(53,50,48,0.72)] px-2.5 py-1 text-[11px] font-black text-white">
+                              แตะเพื่อดูเต็มรูป
+                            </span>
+                          ) : null}
+                        </>
+                      ) : (
+                        <div className="flex h-full flex-col items-center justify-center gap-2 text-[15px] font-black lowercase text-[#8E8A81]">
+                          <ImageIcon className="h-8 w-8" />
+                          <span>{expandedPost.imageText}</span>
+                        </div>
+                      )}
+                    </div>
+
+                    {expandedPostPhotos.length > 1 && (
+                      <div className="flex gap-2 overflow-x-auto pt-0.5">
+                        {expandedPostPhotos.map((photo, photoIndex) => (
+                          <button
+                            key={photo.id}
+                            onClick={() => setActivePhotoByPost((prev) => ({ ...prev, [expandedPost.id]: photoIndex }))}
+                            className={cn(
+                              "h-[56px] w-[56px] overflow-hidden rounded-[10px] border-[1.5px] bg-[var(--c-efebe0)] p-0",
+                              photoIndex === expandedPostActivePhotoIndex ? "border-[var(--c-f3b400)] shadow-[0_0_0_1px_var(--c-3b1d07)]" : "border-[var(--c-ddd9cd)]"
+                            )}
+                          >
+                            <Image src={photo.dataUrl} alt="" width={56} height={56} className="h-full w-full object-cover" />
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                <div className="mt-0.5 flex items-center justify-between border-t border-[rgba(228,212,184,0.82)] pt-3">
+                  <div className="flex items-center gap-3">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => toggleLike(expandedPost.id)}
+                      className={cn(
+                        "h-auto gap-1.5 rounded-lg px-0 py-0 text-[13.5px] font-black hover:bg-transparent",
+                        expandedPost.hasLiked ? "text-[#D9383A]" : "text-[#7d776c] hover:text-foreground"
+                      )}
+                    >
+                      <span style={{ color: expandedPost.hasLiked ? "#D9383A" : "#8E8A81" }}>❤</span>
+                      <span style={{ color: "#555149" }}>{expandedPost.likes}</span>
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setExpandedComments((prev) => ({ ...prev, [expandedPost.id]: !prev[expandedPost.id] }))}
+                      className="h-auto gap-1.5 rounded-lg px-0 py-0 text-[13.5px] font-black text-[#7d776c] hover:bg-transparent hover:text-foreground"
+                    >
+                      <span style={{ color: "#8E8A81" }}>💬</span>
+                      <span style={{ color: "#555149" }}>{expandedPostCommentCount}</span>
+                    </Button>
+                  </div>
+                </div>
+
+                {expandedComments[expandedPost.id] ? (
+                  <div className="flex flex-col gap-2.5 border-t-[1.5px] border-[rgba(221,217,205,0.7)] pt-3">
+                    {expandedPostComments.length > 0 && (
+                      <div className="flex flex-col gap-2.5">
+                        {expandedPostComments.map((comment) => {
+                          const reactionData = getCommentReactionData(expandedPost.id, comment.id);
+                          const selectedReaction = COMMENT_REACTION_CHOICES.find((reaction) => reaction.id === reactionData.selected);
+                          const pickerKey = getCommentReactionKey(expandedPost.id, comment.id);
+
+                          return (
+                            <div key={comment.id} className="flex items-start gap-2">
+                              <div className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full border-[1.5px] border-[#1A1A1A] bg-[var(--c-f5bb00)] text-[11px] font-black text-[#1A1A1A]">
+                                {comment.avatarText || comment.author.charAt(0) || "C"}
+                              </div>
+                              <div className="flex min-w-0 flex-col items-start gap-1">
+                                <div className="min-w-0 rounded-[12px] border-[1.5px] border-[var(--c-ddd9cd)] bg-[var(--c-faf8f2)] px-2.5 py-1.5 text-[13px] font-bold leading-relaxed text-[#33312C]">
+                                  <span className="mb-0.5 block text-[11.5px] font-black text-[#1A1A1A]">{comment.author}</span>
+                                  {comment.text}
+                                </div>
+                                <div className="relative flex items-center gap-1 pl-0.5">
+                                  <button
+                                    className={cn(
+                                      "inline-flex cursor-pointer items-center gap-1 rounded-full bg-transparent px-1.5 py-[3px] text-[11.5px] font-[850] leading-none text-[#555149] transition-all hover:bg-[var(--c-faf8f2)] hover:text-[#1A1A1A]",
+                                      selectedReaction && "bg-[var(--c-fff7d6)] text-[#1A1A1A] shadow-[inset_0_0_0_1.5px_var(--c-f5bb00)]"
+                                    )}
+                                    onClick={() => setOpenCommentReactionPicker((prev) => (prev === pickerKey ? null : pickerKey))}
+                                  >
+                                    {selectedReaction ? (
+                                      <>
+                                        <span>{selectedReaction.icon}</span>
+                                        <span>{selectedReaction.label}</span>
+                                      </>
+                                    ) : (
+                                      <span>แสดงความรู้สึก</span>
+                                    )}
+                                  </button>
+                                  {openCommentReactionPicker === pickerKey && (
+                                    <div className="absolute bottom-[calc(100%+6px)] left-0 z-20 flex gap-[3px] rounded-full border-[1.5px] border-[var(--c-ddd9cd)] bg-white p-[5px] shadow-[0_8px_22px_rgba(0,0,0,0.12)] animate-[scaleUp_0.16s_ease-out_both]">
+                                      {COMMENT_REACTION_CHOICES.map((reaction) => (
+                                        <button
+                                          key={reaction.id}
+                                          className="flex h-[28px] w-[28px] items-center justify-center rounded-full bg-transparent text-md transition-all hover:-translate-y-0.5 hover:scale-110 hover:bg-[var(--c-fff7d6)]"
+                                          onClick={() => handleCommentReaction(expandedPost.id, comment.id, reaction.id)}
+                                          title={reaction.label}
+                                        >
+                                          {reaction.icon}
+                                        </button>
+                                      ))}
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                ) : null}
+              </div>
+            </div>
+
+            <div className="border-t border-[var(--c-eee2cb)] bg-[var(--c-fffdfa)] px-4 py-3 pb-[calc(env(safe-area-inset-bottom)+12px)] md:px-5 md:py-3">
+              <div className="flex w-full items-center gap-2">
+                <Input
+                  value={commentDrafts[expandedPost.id] || ""}
+                  onChange={(e) => setCommentDrafts((prev) => ({ ...prev, [expandedPost.id]: e.target.value }))}
+                  onFocus={() => setExpandedComments((prev) => ({ ...prev, [expandedPost.id]: true }))}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") handleCommentSubmit(expandedPost.id);
+                  }}
+                  placeholder="เขียนคอมเมนต์..."
+                  className="h-[44px] min-w-0 flex-1 rounded-full border border-[var(--c-2a2118)] bg-white px-4 text-[14px] font-bold placeholder:text-[var(--c-9f988d)] focus-visible:border-[var(--c-2a2118)] focus-visible:ring-0"
+                />
+                <Button
+                  type="button"
+                  size="sm"
+                  className={cn(
+                    "h-[44px] min-w-[52px] rounded-full px-4 text-[13px] font-black text-white transition-colors duration-200",
+                    (commentDrafts[expandedPost.id] || "").trim()
+                      ? "bg-[var(--c-5c3214)] hover:bg-[var(--c-45250f)] active:bg-[var(--c-341b0b)]"
+                      : "bg-[#A39E96] cursor-not-allowed hover:bg-[#A39E96]"
+                  )}
+                  onClick={() => handleCommentSubmit(expandedPost.id)}
+                  disabled={!(commentDrafts[expandedPost.id] || "").trim()}
+                >
+                  ส่ง
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
       {expandedActivity ? (
         <div
           className="fixed inset-0 z-[92] flex items-center justify-center bg-[rgba(20,13,7,0.82)] p-3 animate-[fadeIn_0.2s_ease-out_both] md:p-5"
-          onClick={() => setExpandedActivity(null)}
+          onClick={closeExpandedActivity}
           role="dialog"
           aria-modal="true"
           aria-label="รายละเอียดกิจกรรม"
@@ -914,8 +1130,8 @@ export default function Page() {
               </div>
               <button
                 type="button"
-                onClick={() => setExpandedActivity(null)}
-                className="inline-flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full border border-[var(--c-ddd9cd)] bg-white text-[#667085] transition-colors hover:bg-[var(--c-faf8f2)]"
+                onClick={closeExpandedActivity}
+                className="inline-flex h-10 w-10 flex-shrink-0 items-center justify-center bg-transparent text-[#667085] transition-colors hover:text-[#1A1A1A]"
                 aria-label="ปิดรายละเอียดกิจกรรม"
               >
                 <X className="h-5 w-5" strokeWidth={2.3} />
@@ -924,11 +1140,15 @@ export default function Page() {
 
             <div className="overflow-y-auto px-5 py-5 md:px-7 md:py-6">
               <div className="grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,1.05fr)_minmax(280px,0.95fr)]">
-                <div className="overflow-hidden rounded-[24px] border border-[var(--c-eee2cb)] bg-[var(--c-faf8f2)]">
+                <div className="self-start overflow-hidden rounded-[24px] border border-[var(--c-eee2cb)] bg-[var(--c-faf8f2)]">
                   {expandedActivity.imageSrc ? (
-                    <img src={expandedActivity.imageSrc} alt={expandedActivity.title} className="block w-full object-cover" />
+                    <img
+                      src={expandedActivity.imageSrc}
+                      alt={expandedActivity.title}
+                      className="block aspect-[4/3] max-h-[520px] min-h-[260px] w-full object-cover"
+                    />
                   ) : (
-                    <div className="flex min-h-[320px] items-center justify-center px-8 text-center text-[22px] font-black text-[#8E8A81]">
+                    <div className="flex aspect-[4/3] min-h-[260px] items-center justify-center px-8 text-center text-[22px] font-black text-[#8E8A81]">
                       {expandedActivity.imageText}
                     </div>
                   )}

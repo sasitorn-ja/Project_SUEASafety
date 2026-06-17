@@ -2,9 +2,10 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, LayoutDashboard, ShieldCheck, HeartPulse, ClipboardCheck, UsersRound } from "lucide-react";
+import { Home, LayoutDashboard, ShieldCheck, HeartPulse, ClipboardCheck, UsersRound, Bell } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { isMainNavActive } from "@/lib/navigation";
+import { useAppState } from "@/providers/app-providers";
 
 function NavTo(props: any) {
   return <Link prefetch={false} {...props} />;
@@ -17,12 +18,15 @@ const NAV_ITEMS = [
   { id: "were-ok", label: "We're OK", icon: HeartPulse, href: "/were-ok" },
   { id: "work-permit", label: "Work Permit", icon: ClipboardCheck, href: "/work-permit" },
   { id: "safety-culture", label: "Safety Culture", icon: UsersRound, href: "/safety-culture" },
+  { id: "notifications", label: "Notice", icon: Bell, href: "/notifications" },
 ];
 
-const ENABLED_HREFS = new Set(["/", "/dashboard", "/category", "/were-ok", "/work-permit", "/safety-culture"]);
+const ENABLED_HREFS = new Set(["/", "/dashboard", "/category", "/were-ok", "/work-permit", "/safety-culture", "/notifications"]);
 
 export function MobileBottomNav({ hidden = false }: { hidden?: boolean }) {
+  const { inboxNotifications } = useAppState();
   const pathname = usePathname() ?? "";
+  const unreadNotificationCount = inboxNotifications.filter((item) => !item.read).length;
 
   const isActive = (href: string) => isMainNavActive(pathname, href);
 
@@ -33,20 +37,21 @@ export function MobileBottomNav({ hidden = false }: { hidden?: boolean }) {
         "bg-[rgba(var(--brand-nav-rgb),0.96)] border-t border-white/[0.08]",
         "shadow-[0_-10px_28px_var(--brand-shadow)] backdrop-blur-[16px]",
         "mobile-bottom-nav",
-        hidden && "is-hidden"
+        hidden && "pointer-events-none is-hidden"
       )}
       style={{
         fontFamily: "var(--font-sans)",
         minHeight: "calc(var(--mobile-bottomnav-h) + env(safe-area-inset-bottom))",
         paddingBottom: "calc(5px + env(safe-area-inset-bottom))",
       }}
-      aria-label="เมนูหลักบนมือถือ"
+      aria-label="Mobile main navigation"
     >
-      <div className="grid h-[60px] w-full grid-cols-6 px-1 pt-[5px]">
+      <div className="grid h-[60px] w-full grid-cols-7 px-1 pt-[5px]">
         {NAV_ITEMS.map((item) => {
           const Icon = item.icon;
           const active = isActive(item.href);
           const enabled = ENABLED_HREFS.has(item.href);
+          const showBadge = item.id === "notifications" && unreadNotificationCount > 0;
 
           return (
             <NavTo
@@ -81,6 +86,11 @@ export function MobileBottomNav({ hidden = false }: { hidden?: boolean }) {
                 style={{ transition: "background 150ms" }}
               >
                 <Icon className="h-[18px] w-[18px] transition-all" strokeWidth={active && enabled ? 2.45 : 2.1} />
+                {showBadge ? (
+                  <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-[var(--brand-accent-strong)] px-[3px] text-[9px] font-black text-[var(--brand-nav)]">
+                    {Math.min(unreadNotificationCount, 9)}
+                  </span>
+                ) : null}
               </span>
               <span
                 className="max-w-[52px] overflow-hidden"

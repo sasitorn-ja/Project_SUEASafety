@@ -1,9 +1,8 @@
 ﻿"use client";
 
-import Link from "next/link";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import {
-  ArrowLeft,
+  BellRing,
   CalendarClock,
   CheckCircle2,
   Clock3,
@@ -194,6 +193,10 @@ function createFeedEventDraft(index: number): SafetyCultureFeedEvent {
     points: 100,
     status: "open",
     published: true,
+    bonusMode: "fixed",
+    multiplier: 1,
+    fixedPoints: 0,
+    enabledActions: ["theme-post"],
   };
 }
 
@@ -270,17 +273,16 @@ function getFeedEventStatusMeta(status: SafetyCultureFeedEvent["status"]) {
   return status === "open"
     ? {
         label: "เปิดกิจกรรม",
-        tone: "border-[#c7d8be] bg-[#f2fff2] text-[#245336]",
+        tone: "border-[#245336] bg-[#245336] text-white",
       }
     : {
         label: "ปิดกิจกรรม",
-        tone: "border-[#e2c8c8] bg-[#fff4f4] text-[#7d3434]",
+        tone: "border-[#7d3434] bg-[#7d3434] text-white",
       };
 }
 
-function getFeedEventParticipantCount(eventId: string, index: number) {
-  const seed = `${eventId}-${index}`.split("").reduce((total, char) => total + char.charCodeAt(0), 0);
-  return [1, 3, 6, 8, 11, 17, 24, 53][seed % 8];
+function getFeedEventCardCopy(event: Pick<SafetyCultureFeedEvent, "details" | "summary">) {
+  return event.details?.trim() || event.summary?.trim() || "รายละเอียดกิจกรรมจะแสดงที่นี่";
 }
 
 async function fileToDataUrl(file: File) {
@@ -320,11 +322,12 @@ function SectionCard({
 }
 
 export default function AdminEventPage() {
-  const { safetyCultureEvent, feedEvents, eventNow } = useAppState();
-  const { updateSafetyCultureEvent, updateFeedEvents } = useAppActions();
+  const { safetyCultureEvent, feedEvents, eventNow, posts } = useAppState();
+  const { updateSafetyCultureEvent, updateFeedEvents, sendFeedEventNotification } = useAppActions();
   const [saveLabel, setSaveLabel] = useState<"idle" | "saved" | "published">("idle");
   const [openTimePicker, setOpenTimePicker] = useState<"start" | "end" | null>(null);
   const [activitySaveLabel, setActivitySaveLabel] = useState<"idle" | "saved">("idle");
+  const [notifiedFeedEventId, setNotifiedFeedEventId] = useState<string | null>(null);
   const [draftFeedEvents, setDraftFeedEvents] = useState<SafetyCultureFeedEvent[]>(feedEvents);
   const [draggingFeedEventId, setDraggingFeedEventId] = useState<string | null>(null);
   const [dragOverFeedEventId, setDragOverFeedEventId] = useState<string | null>(null);
@@ -332,7 +335,8 @@ export default function AdminEventPage() {
   const [feedModalEventId, setFeedModalEventId] = useState<string | null>(null);
   const [feedModalDraft, setFeedModalDraft] = useState<SafetyCultureFeedEvent | null>(null);
   const [feedModalMode, setFeedModalMode] = useState<"create" | "edit">("edit");
-  const [editorMode, setEditorMode] = useState<(typeof ADMIN_EDITOR_MODES)[number]["id"]>("bonus");
+  const [pendingDeleteFeedEvent, setPendingDeleteFeedEvent] = useState<{ id: string; title: string } | null>(null);
+  const [editorMode] = useState<(typeof ADMIN_EDITOR_MODES)[number]["id"]>("feed");
   const imageInputRef = useRef<HTMLInputElement>(null);
 
   const {
@@ -373,16 +377,35 @@ export default function AdminEventPage() {
   const phaseLabel = getPhaseLabel(phase);
   const windowLabel = formatWindowLabel(startDate, startTime, endDate, endTime);
   const selectedActions = ACTION_OPTIONS.filter((action) => enabledActions.includes(action.id));
-  const editingFeedEvent = draftFeedEvents.find((event) => event.id === editingFeedEventId) ?? null;
-  const editingFeedEventStatusMeta = editingFeedEvent ? getFeedEventStatusMeta(editingFeedEvent.status) : null;
   const feedModalOpen = Boolean(feedModalEventId && feedModalDraft);
   const feedModalDurationMeta = getFeedEventDurationMeta(feedModalDraft?.startDate, feedModalDraft?.endDate);
   const feedModalTitle = feedModalMode === "create" ? "New Activity" : "Edit Activity";
   const feedModalDescription =
     feedModalMode === "create"
-      ? "สร้างกิจกรรมใหม่สำหรับหน้า Feed และกำหนดรายละเอียด Popup ได้จากหน้าต่างนี้"
-      : "ปรับรายละเอียดกิจกรรมที่จะถูกแสดงบนหน้า Feed และ Popup ได้จากหน้าต่างนี้";
+      ? "กรอกข้อมูลหลักของกิจกรรมและตั้งค่าการแสดงผล"
+      : "ปรับข้อมูลกิจกรรมและการแสดงผลบน Feed";
   const feedModalSubmitLabel = feedModalMode === "create" ? "Create Activity" : "Update Activity";
+  const feedModalSelectedActions = ACTION_OPTIONS.filter((action) => feedModalDraft?.enabledActions.includes(action.id));
+  const feedModalBonusPreview = feedModalDraft
+    ? formatBonusLabel(feedModalDraft.bonusMode, feedModalDraft.multiplier, feedModalDraft.fixedPoints)
+    : "+0 แต้ม";
+  const isFeedModalBonusEnabled = Boolean(feedModalDraft?.enabledActions.length);
+  const feedEventParticipantCounts = useMemo(() => {
+    const counts = new Map<string, number>();
+
+    for (const event of draftFeedEvents) {
+      const uniqueAuthors = new Set(
+        posts
+          .filter((post) => post.feedEventId === event.id)
+          .map((post) => (post.author || "").trim())
+          .filter(Boolean)
+      );
+
+      counts.set(event.id, uniqueAuthors.size);
+    }
+
+    return counts;
+  }, [draftFeedEvents, posts]);
 
   const validation = useMemo(() => {
     const issues: string[] = [];
@@ -549,13 +572,6 @@ export default function AdminEventPage() {
     setMultiplierInput(`${parsed}`);
   };
 
-  const patchFeedEvent = (eventId: string, recipe: (event: SafetyCultureFeedEvent) => SafetyCultureFeedEvent) => {
-    setDraftFeedEvents((current) =>
-      current.map((event) => (event.id === eventId ? syncFeedEventDateLabel(recipe(event)) : event))
-    );
-    setActivitySaveLabel("idle");
-  };
-
   const handleAddFeedEvent = () => {
     const nextEvent = createFeedEventDraft(draftFeedEvents.length);
     setDraftFeedEvents((current) => [nextEvent, ...current]);
@@ -580,9 +596,35 @@ export default function AdminEventPage() {
     setActivitySaveLabel("idle");
   };
 
+  const requestDeleteFeedEvent = (eventId: string) => {
+    const targetEvent = draftFeedEvents.find((event) => event.id === eventId);
+    if (!targetEvent) return;
+    setPendingDeleteFeedEvent({ id: targetEvent.id, title: targetEvent.title });
+  };
+
+  const closeDeleteFeedEventPrompt = () => {
+    setPendingDeleteFeedEvent(null);
+  };
+
+  const confirmDeleteFeedEvent = () => {
+    if (!pendingDeleteFeedEvent) return;
+    handleDeleteFeedEvent(pendingDeleteFeedEvent.id);
+    setPendingDeleteFeedEvent(null);
+  };
+
   const handleSaveFeedEvents = () => {
     updateFeedEvents(draftFeedEvents);
     setActivitySaveLabel("saved");
+  };
+
+  const handleNotifyFeedEvent = (feedEventId: string) => {
+    const sent = sendFeedEventNotification(feedEventId);
+    if (!sent) return;
+
+    setNotifiedFeedEventId(feedEventId);
+    window.setTimeout(() => {
+      setNotifiedFeedEventId((current) => (current === feedEventId ? null : current));
+    }, 2200);
   };
 
   const reorderFeedEvents = (sourceId: string, targetId: string) => {
@@ -620,15 +662,6 @@ export default function AdminEventPage() {
     setDragOverFeedEventId(null);
   };
 
-  const handleFeedImageChange = async (file: File | undefined) => {
-    if (!file || !editingFeedEvent) return;
-    const dataUrl = await fileToDataUrl(file);
-    patchFeedEvent(editingFeedEvent.id, (event) => ({
-      ...event,
-      imageSrc: dataUrl,
-    }));
-  };
-
   const openFeedEditorModal = (eventId: string) => {
     const selectedEvent = draftFeedEvents.find((event) => event.id === eventId);
     if (!selectedEvent) return;
@@ -650,6 +683,13 @@ export default function AdminEventPage() {
 
   const patchFeedModalDraft = (recipe: (event: SafetyCultureFeedEvent) => SafetyCultureFeedEvent) => {
     setFeedModalDraft((current) => (current ? syncFeedEventDateLabel(recipe(current)) : current));
+  };
+
+  const toggleFeedModalBonusEnabled = () => {
+    patchFeedModalDraft((current) => ({
+      ...current,
+      enabledActions: current.enabledActions.length > 0 ? [] : ["theme-post"],
+    }));
   };
 
   const handleFeedModalImageChange = async (file: File | undefined) => {
@@ -686,20 +726,6 @@ export default function AdminEventPage() {
           mascotSrc="/images/mascots/suea-mascot.png"
           mascotAlt="SUEA Admin Mascot"
           mascotAction="announce"
-          actions={
-            <div className="mt-[12px] flex flex-wrap gap-2">
-              <Link href="/safety-culture">
-                <Button className="h-[32px] rounded-full border border-white/30 bg-white/10 px-4 text-[12.5px] font-black text-white hover:bg-white/14 md:h-[36px] md:text-[13px]">
-                  <ArrowLeft className="mr-1 h-4 w-4" />
-                  กลับไปหน้า Feed
-                </Button>
-              </Link>
-              <div className="flex h-[32px] items-center rounded-full border border-[var(--c-d89b09)] bg-[var(--c-ffb000)] px-4 text-[12.5px] font-black text-[var(--c-3b1d07)] md:h-[36px] md:text-[13px]">
-                <Sparkles className="mr-1 h-4 w-4" />
-                พร้อมเชื่อมกับ Feed
-              </div>
-            </div>
-          }
         />
 
         {editorMode === "bonus" ? (
@@ -751,52 +777,6 @@ export default function AdminEventPage() {
           </div>
         </Card>
         ) : null}
-
-        <Card className="mt-4 rounded-[24px] border border-[var(--c-e4d3b3)] bg-[var(--c-fffdfa)] p-3.5 shadow-[0_8px_18px_rgba(62,36,13,0.04)] md:p-4">
-          <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-            <div>
-              <div className="text-[18px] font-black text-[#1A1A1A]">เลือกส่วนที่ต้องการแก้ไข</div>
-              <div className="text-[13px] font-bold leading-relaxed text-[#8E8A81]">สลับโหมดเพื่อจัดการ Event แบบเวลา หรือ Event แบบ Card ได้อย่างเป็นระเบียบ</div>
-            </div>
-            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:min-w-[560px]">
-              {ADMIN_EDITOR_MODES.map((mode) => {
-                const Icon = mode.icon;
-                const active = editorMode === mode.id;
-
-                return (
-                  <button
-                    key={mode.id}
-                    type="button"
-                    onClick={() => setEditorMode(mode.id)}
-                    className={cn(
-                      "rounded-[20px] border px-4 py-3 text-left transition-all",
-                      active
-                        ? "border-[var(--c-5c3214)] bg-[var(--c-5c3214)] text-white shadow-[0_12px_24px_rgba(62,36,13,0.14)]"
-                        : "border-[var(--c-e3d0ae)] bg-[var(--c-fffcf5)] text-[var(--c-4f4335)] hover:border-[var(--c-c89a4f)] hover:bg-[var(--c-fff6ea)]"
-                    )}
-                  >
-                    <div className="flex items-start gap-3">
-                      <div
-                        className={cn(
-                          "flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-2xl border",
-                          active ? "border-white/18 bg-white/12 text-white" : "border-[var(--c-ecd8b7)] bg-white text-[var(--c-6d4716)]"
-                        )}
-                      >
-                        <Icon className="h-5 w-5" strokeWidth={2.3} />
-                      </div>
-                      <div>
-                        <div className="text-[14px] font-black">{mode.label}</div>
-                        <div className={cn("mt-1 text-[12px] font-bold leading-relaxed", active ? "text-white/78" : "text-[#8E8A81]")}>
-                          {mode.description}
-                        </div>
-                      </div>
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        </Card>
 
         {editorMode === "bonus" ? (
           <Card className="mt-4 rounded-[22px] border border-[var(--c-e4d3b3)] bg-[var(--c-fffaf0)] p-3.5 shadow-[0_8px_18px_rgba(62,36,13,0.04)] md:p-4">
@@ -1401,20 +1381,21 @@ export default function AdminEventPage() {
                   </div>
 
                   <div className="hidden md:block">
-                    <div className="grid grid-cols-[minmax(260px,1.6fr)_110px_180px_120px_120px_96px] gap-3 border-b border-[var(--c-eee2cb)] bg-[var(--c-fffaf0)] px-5 py-3 text-[12px] font-black text-[var(--c-6e6254)]">
+                    <div className="grid grid-cols-[minmax(260px,1.6fr)_110px_180px_120px_120px_108px_96px] gap-3 border-b border-[var(--c-eee2cb)] bg-[var(--c-fffaf0)] px-5 py-3 text-[12px] font-black text-[var(--c-6e6254)]">
                       <div>Name</div>
                       <div>Points</div>
                       <div>Duration</div>
                       <div>Status</div>
                       <div>Participants</div>
+                      <div>Notify</div>
                       <div className="text-right">Actions</div>
                     </div>
 
                       <div className="divide-y divide-[var(--c-eee2cb)]">
-                      {draftFeedEvents.map((activity, index) => {
+                      {draftFeedEvents.map((activity) => {
                         const statusMeta = getFeedEventStatusMeta(activity.status);
                         const active = activity.id === editingFeedEventId;
-                        const participantCount = getFeedEventParticipantCount(activity.id, index);
+                        const participantCount = feedEventParticipantCounts.get(activity.id) ?? 0;
                         const isDragging = draggingFeedEventId === activity.id;
                         const isDropTarget = dragOverFeedEventId === activity.id && draggingFeedEventId !== activity.id;
 
@@ -1440,7 +1421,7 @@ export default function AdminEventPage() {
                             }}
                             onDragEnd={handleFeedEventDragEnd}
                             className={cn(
-                              "grid grid-cols-[minmax(260px,1.6fr)_110px_180px_120px_120px_96px] gap-3 px-5 py-4 transition-all",
+                              "grid grid-cols-[minmax(260px,1.6fr)_110px_180px_120px_120px_108px_96px] gap-3 px-5 py-4 transition-all",
                               active ? "bg-[var(--c-fff4e3)]" : "bg-white hover:bg-[var(--c-fffaf2)]",
                               isDragging ? "scale-[0.995] opacity-60" : "",
                               isDropTarget ? "ring-2 ring-[var(--c-5c3214)] ring-inset" : ""
@@ -1461,7 +1442,7 @@ export default function AdminEventPage() {
                               </div>
                               <div className="min-w-0">
                                 <div className="truncate text-[15px] font-black text-[#1A1A1A]">{activity.title}</div>
-                                <div className="mt-1 line-clamp-2 text-[12px] font-bold leading-relaxed text-[var(--c-7a6d5d)]">{activity.summary}</div>
+                                <div className="mt-1 line-clamp-2 text-[12px] font-bold leading-relaxed text-[var(--c-7a6d5d)]">{getFeedEventCardCopy(activity)}</div>
                               </div>
                             </button>
 
@@ -1478,6 +1459,24 @@ export default function AdminEventPage() {
                             <div className="flex items-center gap-2 text-[12px] font-black text-[var(--c-5f5344)]">
                               <Users className="h-4 w-4 text-[#7a869a]" strokeWidth={2.1} />
                               <span>{participantCount}</span>
+                            </div>
+
+                            <div className="flex items-center">
+                              <button
+                                type="button"
+                                onClick={() => handleNotifyFeedEvent(activity.id)}
+                                className={cn(
+                                  "inline-flex h-9 items-center gap-1.5 rounded-full border px-3 text-[11px] font-black transition-colors",
+                                  notifiedFeedEventId === activity.id
+                                    ? "border-[#bcdcc7] bg-[#effcf4] text-[#1c7b51]"
+                                    : "border-[#c9d2df] bg-[#f8fbff] text-[#52637a] hover:border-[#2f69a3] hover:text-[#2f69a3]"
+                                )}
+                                aria-label={`แจ้งเตือนผู้ใช้เกี่ยวกับ ${activity.title}`}
+                                title="ส่งแจ้งเตือนถึงผู้ใช้"
+                              >
+                                <BellRing className="h-3.5 w-3.5" strokeWidth={2.1} />
+                                {notifiedFeedEventId === activity.id ? "Sent" : "Notify"}
+                              </button>
                             </div>
 
                             <div className="flex items-center justify-end gap-2">
@@ -1497,7 +1496,7 @@ export default function AdminEventPage() {
                               </button>
                               <button
                                 type="button"
-                                onClick={() => handleDeleteFeedEvent(activity.id)}
+                                onClick={() => requestDeleteFeedEvent(activity.id)}
                                 className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[#edd1d1] bg-white text-[#c94f4f] transition-colors hover:bg-[#fff5f5]"
                                 aria-label={`ลบ ${activity.title}`}
                               >
@@ -1511,9 +1510,10 @@ export default function AdminEventPage() {
                   </div>
 
                   <div className="grid grid-cols-1 gap-3 p-4 md:hidden">
-                    {draftFeedEvents.map((activity, index) => {
+                    {draftFeedEvents.map((activity) => {
                       const statusMeta = getFeedEventStatusMeta(activity.status);
                       const active = activity.id === editingFeedEventId;
+                      const participantCount = feedEventParticipantCounts.get(activity.id) ?? 0;
                       const isDragging = draggingFeedEventId === activity.id;
                       const isDropTarget = dragOverFeedEventId === activity.id && draggingFeedEventId !== activity.id;
 
@@ -1574,7 +1574,7 @@ export default function AdminEventPage() {
                                 <div className="truncate text-[14px] font-black text-[#1A1A1A]">{activity.title}</div>
                                 <span className={cn("rounded-full border px-2 py-0.5 text-[10px] font-black", statusMeta.tone)}>{statusMeta.label}</span>
                               </div>
-                              <div className="mt-1 line-clamp-2 text-[12px] font-bold leading-relaxed text-[var(--c-6e6254)]">{activity.summary}</div>
+                              <div className="mt-1 line-clamp-2 text-[12px] font-bold leading-relaxed text-[var(--c-6e6254)]">{getFeedEventCardCopy(activity)}</div>
                               <div className="mt-3 flex items-center justify-between gap-2 text-[11px] font-black">
                                 <span className="text-[#8E8A81]">{activity.dateLabel}</span>
                                 <span className="text-[#18b989]">+{activity.points} pts</span>
@@ -1582,20 +1582,39 @@ export default function AdminEventPage() {
                               <div className="mt-3 flex items-center justify-between gap-2">
                                 <span className="flex items-center gap-1.5 text-[11px] font-black text-[#7a869a]">
                                   <Users className="h-3.5 w-3.5" strokeWidth={2.1} />
-                                  {getFeedEventParticipantCount(activity.id, index)}
+                                  {participantCount}
                                 </span>
-                                <button
-                                  type="button"
-                                  onClick={(event) => {
-                                    event.stopPropagation();
-                                    openFeedEditorModal(activity.id);
-                                  }}
-                                  className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-[#c9d2df] bg-[#f8fbff] text-[#52637a]"
-                                  aria-label={`แก้ไข ${activity.title}`}
-                                  title="แก้ไขกิจกรรม"
-                                >
-                                  <SquarePen className="h-3.5 w-3.5" strokeWidth={2.1} />
-                                </button>
+                                <div className="flex items-center gap-2">
+                                  <button
+                                    type="button"
+                                    onClick={(event) => {
+                                      event.stopPropagation();
+                                      handleNotifyFeedEvent(activity.id);
+                                    }}
+                                    className={cn(
+                                      "inline-flex h-8 w-8 items-center justify-center rounded-full border bg-[#f8fbff] transition-colors",
+                                      notifiedFeedEventId === activity.id
+                                        ? "border-[#bcdcc7] bg-[#effcf4] text-[#1c7b51]"
+                                        : "border-[#c9d2df] text-[#52637a]"
+                                    )}
+                                    aria-label={`แจ้งเตือนผู้ใช้เกี่ยวกับ ${activity.title}`}
+                                    title="ส่งแจ้งเตือนถึงผู้ใช้"
+                                  >
+                                    <BellRing className="h-3.5 w-3.5" strokeWidth={2.1} />
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={(event) => {
+                                      event.stopPropagation();
+                                      openFeedEditorModal(activity.id);
+                                    }}
+                                    className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-[#c9d2df] bg-[#f8fbff] text-[#52637a]"
+                                    aria-label={`แก้ไข ${activity.title}`}
+                                    title="แก้ไขกิจกรรม"
+                                  >
+                                    <SquarePen className="h-3.5 w-3.5" strokeWidth={2.1} />
+                                  </button>
+                                </div>
                               </div>
                             </div>
                           </div>
@@ -1710,7 +1729,7 @@ export default function AdminEventPage() {
               <button
                 type="button"
                 onClick={closeFeedEditorModal}
-                className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-[var(--c-ddd9cd)] bg-white text-[#8E8A81] transition-colors hover:bg-[var(--c-faf6ee)]"
+                className="inline-flex h-8 w-8 items-center justify-center text-[#8E8A81] transition-colors hover:text-[var(--c-2b2119)]"
                 aria-label="ปิดหน้าต่างแก้ไข"
               >
                 <X className="h-5 w-5" strokeWidth={2.2} />
@@ -1718,262 +1737,470 @@ export default function AdminEventPage() {
             </div>
 
             <div className="overflow-y-auto px-5 py-5 md:px-6">
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                <div className="flex flex-col gap-2">
-                  <Label className="text-[13px] font-black text-[var(--c-5c3214)]">Activity Name</Label>
-                  <Input
-                    value={feedModalDraft.title}
-                    onChange={(event) => patchFeedModalDraft((current) => ({ ...current, title: event.target.value }))}
-                    placeholder="เช่น Walk Safe Challenge"
-                    className="h-11 rounded-[14px] border-[var(--c-d7c5a7)] bg-white text-[14px] font-bold text-[#1A1A1A] focus-visible:border-[var(--c-5c3214)] focus-visible:ring-0"
-                  />
-                </div>
-                <div className="flex flex-col gap-2">
-                  <Label className="text-[13px] font-black text-[var(--c-5c3214)]">Points</Label>
-                  <Input
-                    type="number"
-                    min={0}
-                    inputMode="numeric"
-                    value={`${feedModalDraft.points}`}
-                    onChange={(event) =>
-                      patchFeedModalDraft((current) => ({
-                        ...current,
-                        points: Number(event.target.value) || 0,
-                      }))
-                    }
-                    className="h-11 rounded-[14px] border-[var(--c-d7c5a7)] bg-white text-[14px] font-bold text-[#1A1A1A] focus-visible:border-[var(--c-5c3214)] focus-visible:ring-0"
-                  />
-                  <div className="text-[12px] font-bold leading-relaxed text-[#8E8A81]">
-                    คะแนนของกิจกรรมนี้จะแสดงบนการ์ดและใช้เป็นข้อมูลอ้างอิงเวลาผู้ใช้เปิดรายละเอียดกิจกรรม
+              <div className="rounded-[22px] border border-[var(--c-eadcc7)] bg-[var(--c-fffaf2)] p-4">
+                <div className="flex flex-col gap-3">
+                  <div className="text-[15px] font-black text-[var(--c-2d241b)]">ข้อมูลหลักของกิจกรรม</div>
+
+                  <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1.25fr)_minmax(320px,0.75fr)]">
+                    <div className="flex flex-col gap-3">
+                      <Label className="text-[13px] font-black text-[var(--c-5c3214)]">Activity Name</Label>
+                      <Input
+                        value={feedModalDraft.title}
+                        onChange={(event) => patchFeedModalDraft((current) => ({ ...current, title: event.target.value }))}
+                        placeholder="เช่น Walk Safe Challenge"
+                        className="h-11 rounded-[14px] border-[var(--c-d7c5a7)] bg-white text-[14px] font-bold text-[#1A1A1A] focus-visible:border-[var(--c-5c3214)] focus-visible:ring-0"
+                      />
+
+                      <div className="flex flex-col gap-2">
+                        <Label className="text-[13px] font-black text-[var(--c-5c3214)]">Description</Label>
+                        <Textarea
+                          value={feedModalDraft.details}
+                          onChange={(event) => patchFeedModalDraft((current) => ({ ...current, details: event.target.value }))}
+                          placeholder="อธิบายวัตถุประสงค์ เงื่อนไข วิธีเข้าร่วม และสิ่งที่ผู้ใช้ต้องส่งให้ครบในส่วนนี้"
+                          className="min-h-[140px] rounded-[18px] border-[var(--c-d7c5a7)] bg-white text-[14px] font-bold leading-relaxed text-[#1A1A1A] focus-visible:border-[var(--c-5c3214)] focus-visible:ring-0"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 gap-4">
+                      <div className="rounded-[20px] border border-[var(--c-eadcc7)] bg-white p-4">
+                        <div className="flex flex-col gap-2">
+                          <Label className="text-[13px] font-black text-[var(--c-5c3214)]">Base Points</Label>
+                          <Input
+                            type="number"
+                            min={0}
+                            inputMode="numeric"
+                            value={`${feedModalDraft.points}`}
+                            onChange={(event) =>
+                              patchFeedModalDraft((current) => ({
+                                ...current,
+                                points: Number(event.target.value) || 0,
+                              }))
+                            }
+                            className="h-11 rounded-[14px] border-[var(--c-d7c5a7)] bg-white text-[14px] font-bold text-[#1A1A1A] focus-visible:border-[var(--c-5c3214)] focus-visible:ring-0"
+                          />
+                          <div className="text-[12px] font-bold leading-relaxed text-[#8E8A81]">คะแนนหลักของกิจกรรม</div>
+                        </div>
+                      </div>
+
+                      <div className="rounded-[20px] border border-[var(--c-eadcc7)] bg-white p-4">
+                        <div className="flex flex-col gap-2">
+                          <Label className="text-[13px] font-black text-[var(--c-5c3214)]">Card Subtitle</Label>
+                          <Input
+                            value={feedModalDraft.subtitle}
+                            onChange={(event) => patchFeedModalDraft((current) => ({ ...current, subtitle: event.target.value }))}
+                            placeholder="เช่น Activity Details and Submission"
+                            className="h-11 rounded-[14px] border-[var(--c-d7c5a7)] bg-white text-[14px] font-bold text-[#1A1A1A] focus-visible:border-[var(--c-5c3214)] focus-visible:ring-0"
+                          />
+                          <div className="text-[12px] font-bold leading-relaxed text-[#8E8A81]">ข้อความรองสั้น ๆ บนการ์ดหรือ popup</div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1.2fr)_minmax(260px,0.8fr)_minmax(180px,0.6fr)]">
+                    <div className="flex flex-col gap-3 rounded-[20px] border border-[var(--c-eadcc7)] bg-white p-4">
+                      <Label className="text-[13px] font-black text-[var(--c-5c3214)]">Schedule</Label>
+                      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                        <div className="flex flex-col gap-2">
+                          <Label className="text-[12px] font-black text-[var(--c-7a6d5d)]">Start Date</Label>
+                          <Input
+                            type="date"
+                            value={feedModalDraft.startDate || ""}
+                            onChange={(event) =>
+                              patchFeedModalDraft((current) => ({
+                                ...current,
+                                startDate: event.target.value,
+                                endDate:
+                                  current.endDate && event.target.value && current.endDate < event.target.value
+                                    ? event.target.value
+                                    : current.endDate,
+                              }))
+                            }
+                            className="h-11 rounded-[14px] border-[var(--c-d7c5a7)] bg-white text-[14px] font-bold text-[#1A1A1A] focus-visible:border-[var(--c-5c3214)] focus-visible:ring-0"
+                          />
+                        </div>
+                        <div className="flex flex-col gap-2">
+                          <Label className="text-[12px] font-black text-[var(--c-7a6d5d)]">End Date</Label>
+                          <Input
+                            type="date"
+                            min={feedModalDraft.startDate || undefined}
+                            value={feedModalDraft.endDate || ""}
+                            onChange={(event) =>
+                              patchFeedModalDraft((current) => ({
+                                ...current,
+                                endDate: event.target.value,
+                              }))
+                            }
+                            className="h-11 rounded-[14px] border-[var(--c-d7c5a7)] bg-white text-[14px] font-bold text-[#1A1A1A] focus-visible:border-[var(--c-5c3214)] focus-visible:ring-0"
+                          />
+                        </div>
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        {[7, 14, 30].map((days) => (
+                          <button
+                            key={days}
+                            type="button"
+                            disabled={!feedModalDraft.startDate}
+                            onClick={() =>
+                              patchFeedModalDraft((current) => ({
+                                ...current,
+                                endDate: addDaysToDateString(current.startDate || "", days - 1),
+                              }))
+                            }
+                            className="rounded-full border border-[var(--c-d7c5a7)] bg-white px-3 py-1.5 text-[12px] font-black text-[var(--c-5c3214)] transition-colors hover:bg-[var(--c-fff2d8)] disabled:cursor-not-allowed disabled:opacity-45"
+                          >
+                            {days} วัน
+                          </button>
+                        ))}
+                      </div>
+                      <div className={cn("text-[12px] font-bold leading-relaxed", feedModalDurationMeta.tone)}>
+                        {feedModalDurationMeta.label}
+                      </div>
+                    </div>
+
+                    <div className="rounded-[20px] border border-[var(--c-eadcc7)] bg-white p-4">
+                      <div className="flex flex-col gap-2">
+                        <Label className="text-[13px] font-black text-[var(--c-5c3214)]">Status</Label>
+                        <div className="grid grid-cols-2 gap-2">
+                          {(["open", "closed"] as const).map((statusOption) => {
+                            const meta = getFeedEventStatusMeta(statusOption);
+                            return (
+                              <button
+                                key={statusOption}
+                                type="button"
+                                onClick={() => patchFeedModalDraft((current) => ({ ...current, status: statusOption }))}
+                                className={cn(
+                                  "min-h-[52px] rounded-[14px] border px-3 py-2 text-[12px] font-black leading-tight transition-all",
+                                  feedModalDraft.status === statusOption ? meta.tone : "border-[var(--c-d7c5a7)] bg-[var(--c-fffcf5)] text-[var(--c-5c3214)]"
+                                )}
+                              >
+                                {meta.label}
+                              </button>
+                            );
+                          })}
+                        </div>
+                        <div className="text-[12px] font-bold leading-relaxed text-[#8E8A81]">เปิดหรือปิดรับกิจกรรม</div>
+                      </div>
+                    </div>
+
+                    <div className="rounded-[20px] border border-[var(--c-eadcc7)] bg-white p-4">
+                      <div className="flex flex-col gap-2">
+                        <Label className="text-[13px] font-black text-[var(--c-5c3214)]">Visibility</Label>
+                        <div className="grid grid-cols-2 gap-2">
+                          <button
+                            type="button"
+                            onClick={() => patchFeedModalDraft((current) => ({ ...current, published: true }))}
+                            className={cn(
+                              "min-h-[52px] rounded-[14px] border px-3 py-2 text-[12px] font-black leading-tight transition-all",
+                              feedModalDraft.published ? "border-[#245336] bg-[#245336] text-white" : "border-[var(--c-d7c5a7)] bg-[var(--c-fffcf5)] text-[var(--c-5c3214)]"
+                            )}
+                          >
+                            แสดง
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => patchFeedModalDraft((current) => ({ ...current, published: false }))}
+                            className={cn(
+                              "min-h-[52px] rounded-[14px] border px-3 py-2 text-[12px] font-black leading-tight transition-all",
+                              !feedModalDraft.published ? "border-[#7d3434] bg-[#7d3434] text-white" : "border-[var(--c-d7c5a7)] bg-[var(--c-fffcf5)] text-[var(--c-5c3214)]"
+                            )}
+                          >
+                            ซ่อน
+                          </button>
+                        </div>
+                        <div className="text-[12px] font-bold leading-relaxed text-[#8E8A81]">เลือกให้แสดงหรือซ่อนบน Feed</div>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
 
-              <div className="mt-4 flex flex-col gap-2">
-                <Label className="text-[13px] font-black text-[var(--c-5c3214)]">Description</Label>
-                <Textarea
-                  value={feedModalDraft.details}
-                  onChange={(event) => patchFeedModalDraft((current) => ({ ...current, details: event.target.value }))}
-                  placeholder="อธิบายวัตถุประสงค์ เงื่อนไข วิธีเข้าร่วม และสิ่งที่ผู้ใช้ต้องส่งให้ครบในส่วนนี้"
-                  className="min-h-[150px] rounded-[18px] border-[var(--c-d7c5a7)] bg-white text-[14px] font-bold leading-relaxed text-[#1A1A1A] focus-visible:border-[var(--c-5c3214)] focus-visible:ring-0"
-                />
-              </div>
+              <div className="mt-4 rounded-[22px] border border-[var(--c-eadcc7)] bg-[var(--c-fffaf2)] p-4">
+                <div className="flex flex-col gap-3">
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <div className="text-[15px] font-black text-[var(--c-2d241b)]">การแสดงผลบนการ์ด</div>
+                    </div>
+                  </div>
 
-              <div className="mt-4 grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)]">
-                <div className="flex flex-col gap-3 rounded-[20px] border border-[var(--c-eadcc7)] bg-[var(--c-fffaf2)] p-4">
-                  <Label className="text-[13px] font-black text-[var(--c-5c3214)]">Schedule</Label>
-                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  <div className="grid grid-cols-1 gap-4">
                     <div className="flex flex-col gap-2">
-                      <Label className="text-[12px] font-black text-[var(--c-7a6d5d)]">Start Date</Label>
-                      <Input
-                        type="date"
-                        value={feedModalDraft.startDate || ""}
-                        onChange={(event) =>
-                          patchFeedModalDraft((current) => ({
-                            ...current,
-                            startDate: event.target.value,
-                            endDate:
-                              current.endDate && event.target.value && current.endDate < event.target.value
-                                ? event.target.value
-                                : current.endDate,
-                          }))
-                        }
-                        className="h-11 rounded-[14px] border-[var(--c-d7c5a7)] bg-white text-[14px] font-bold text-[#1A1A1A] focus-visible:border-[var(--c-5c3214)] focus-visible:ring-0"
+                      <Label className="text-[13px] font-black text-[var(--c-5c3214)]">Activity Image</Label>
+                      <div className="overflow-hidden rounded-[20px] border border-[var(--c-eadcc7)] bg-white">
+                        <div className="relative min-h-[220px] overflow-hidden bg-[var(--c-faf3e3)] lg:min-h-[260px]">
+                          {feedModalDraft.imageSrc ? (
+                            <img src={feedModalDraft.imageSrc} alt={feedModalDraft.title} className="absolute inset-0 block h-full w-full object-cover" />
+                          ) : (
+                            <div className="flex min-h-[220px] items-center justify-center px-6 text-center text-[16px] font-black text-[#8E8A81] lg:min-h-[260px]">
+                              {feedModalDraft.imageText}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      <input
+                        ref={imageInputRef}
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={(event) => {
+                          void handleFeedModalImageChange(event.target.files?.[0]);
+                          event.currentTarget.value = "";
+                        }}
                       />
-                    </div>
-                    <div className="flex flex-col gap-2">
-                      <Label className="text-[12px] font-black text-[var(--c-7a6d5d)]">End Date</Label>
-                      <Input
-                        type="date"
-                        min={feedModalDraft.startDate || undefined}
-                        value={feedModalDraft.endDate || ""}
-                        onChange={(event) =>
-                          patchFeedModalDraft((current) => ({
-                            ...current,
-                            endDate: event.target.value,
-                          }))
-                        }
-                        className="h-11 rounded-[14px] border-[var(--c-d7c5a7)] bg-white text-[14px] font-bold text-[#1A1A1A] focus-visible:border-[var(--c-5c3214)] focus-visible:ring-0"
-                      />
-                    </div>
-                  </div>
-                  <div className="flex flex-wrap gap-2">
-                    {[7, 14, 30].map((days) => (
-                      <button
-                        key={days}
-                        type="button"
-                        disabled={!feedModalDraft.startDate}
-                        onClick={() =>
-                          patchFeedModalDraft((current) => ({
-                            ...current,
-                            endDate: addDaysToDateString(current.startDate || "", days - 1),
-                          }))
-                        }
-                        className="rounded-full border border-[var(--c-d7c5a7)] bg-white px-3 py-1.5 text-[12px] font-black text-[var(--c-5c3214)] transition-colors hover:bg-[var(--c-fff2d8)] disabled:cursor-not-allowed disabled:opacity-45"
-                      >
-                        {days} วัน
-                      </button>
-                    ))}
-                  </div>
-                  <div className={cn("text-[12px] font-bold leading-relaxed", feedModalDurationMeta.tone)}>
-                    {feedModalDurationMeta.label}
-                  </div>
-                </div>
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                  <div className="rounded-[20px] border border-[var(--c-eadcc7)] bg-[var(--c-fffaf2)] p-4">
-                    <div className="flex flex-col gap-2">
-                      <Label className="text-[13px] font-black text-[var(--c-5c3214)]">Status</Label>
+
                       <div className="grid grid-cols-2 gap-2">
-                        {(["open", "closed"] as const).map((statusOption) => {
-                          const meta = getFeedEventStatusMeta(statusOption);
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => imageInputRef.current?.click()}
+                          className="h-10 rounded-[14px] border-[var(--c-d7c5a7)] bg-white text-[12px] font-black text-[var(--c-5c3214)] hover:bg-[var(--c-fff4df)]"
+                        >
+                          <FileImage className="mr-1 h-4 w-4" />
+                          เปลี่ยนรูป
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => patchFeedModalDraft((current) => ({ ...current, imageSrc: null }))}
+                          className="h-10 rounded-[14px] border-[var(--c-d7c5a7)] bg-white text-[12px] font-black text-[var(--c-5c3214)] hover:bg-[var(--c-fff4df)]"
+                        >
+                          ล้างรูป
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-4 rounded-[22px] border border-[var(--c-eadcc7)] bg-[var(--c-fffaf2)] p-4">
+                <div className="flex flex-col gap-3">
+                  <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                    <div>
+                      <div className="text-[15px] font-black text-[var(--c-2d241b)]">โบนัสเพิ่มเติม</div>
+                      <div className="text-[12px] font-bold leading-relaxed text-[#8E8A81]">เปิดใช้เมื่ออยากให้กิจกรรมนี้ได้คะแนนพิเศษเพิ่มจากคะแนนหลัก</div>
+                    </div>
+                    <div className="flex flex-wrap items-center justify-end gap-3">
+                      {isFeedModalBonusEnabled ? (
+                        <span className="rounded-full border border-[#cde6d6] bg-[#f3fff7] px-3 py-1 text-[12px] font-black text-[#1c7b51]">
+                          โบนัสเพิ่ม {feedModalBonusPreview}
+                        </span>
+                      ) : (
+                        <span className="rounded-full border border-[var(--c-d7c5a7)] bg-white px-3 py-1 text-[12px] font-black text-[#8E8A81]">
+                          ไม่ใช้โบนัส
+                        </span>
+                      )}
+                      <div
+                        className={cn(
+                          "flex min-w-[260px] shrink-0 items-center justify-between gap-4 rounded-[18px] border px-3 py-3 shadow-[0_10px_24px_rgba(43,33,25,0.06)]",
+                          isFeedModalBonusEnabled
+                            ? "border-[#cde6d6] bg-[linear-gradient(135deg,#f8fffa_0%,#eefbf3_100%)]"
+                            : "border-[var(--c-e3d0ae)] bg-white"
+                        )}
+                      >
+                        <div className="min-w-0">
+                          <div className="text-[12px] font-black text-[var(--c-2d241b)]">เปิดโบนัสพิเศษ</div>
+                          <div
+                            className={cn(
+                              "text-[11px] font-bold",
+                              isFeedModalBonusEnabled ? "text-[#1c7b51]" : "text-[#8E8A81]"
+                            )}
+                          >
+                            {isFeedModalBonusEnabled ? "คำนวณแต้มโบนัสเพิ่มให้กิจกรรมนี้" : "ใช้เฉพาะคะแนนหลักของกิจกรรม"}
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={toggleFeedModalBonusEnabled}
+                          className={cn(
+                            "inline-flex shrink-0 items-center justify-center rounded-[14px] px-4 py-2 text-[12px] font-black transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--c-5c3214)] focus-visible:ring-offset-2",
+                            isFeedModalBonusEnabled
+                              ? "border border-[#c94f4f] bg-white text-[#b74242] hover:bg-[#fff4f4]"
+                              : "border border-[#1f7a55] bg-[#2a8b60] text-white hover:bg-[#22744f]"
+                          )}
+                        >
+                          {isFeedModalBonusEnabled ? "ปิดโบนัส" : "เปิดโบนัส"}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  {isFeedModalBonusEnabled ? (
+                    <>
+                      <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                        {BONUS_MODE_OPTIONS.map((option) => {
+                          const active = feedModalDraft.bonusMode === option.id;
                           return (
                             <button
-                              key={statusOption}
+                              key={option.id}
                               type="button"
-                              onClick={() => patchFeedModalDraft((current) => ({ ...current, status: statusOption }))}
+                              onClick={() =>
+                                patchFeedModalDraft((current) => ({
+                                  ...current,
+                                  bonusMode: option.id,
+                                }))
+                              }
                               className={cn(
-                                "min-h-[52px] rounded-[14px] border px-3 py-2 text-[12px] font-black leading-tight transition-all",
-                                feedModalDraft.status === statusOption ? meta.tone : "border-[var(--c-d7c5a7)] bg-[var(--c-fffcf5)] text-[var(--c-5c3214)]"
+                                "rounded-[16px] border px-4 py-3 text-left transition-all",
+                                active
+                                  ? "border-[var(--c-5c3214)] bg-[var(--c-fff4df)] shadow-[0_8px_18px_rgba(62,36,13,0.08)]"
+                                  : "border-[var(--c-d7c5a7)] bg-white hover:bg-[var(--c-fff8eb)]"
                               )}
                             >
-                              {meta.label}
+                              <div className="text-[13px] font-black text-[var(--c-2d241b)]">{option.label}</div>
+                              <div className="mt-1 text-[12px] font-bold text-[#8E8A81]">{option.hint}</div>
                             </button>
                           );
                         })}
                       </div>
-                      <div className="text-[12px] font-bold leading-relaxed text-[#8E8A81]">
-                        ใช้กำหนดว่ากิจกรรมนี้ยังเปิดให้เข้าร่วมหรือปิดรับแล้ว
-                      </div>
-                    </div>
-                  </div>
-                  <div className="rounded-[20px] border border-[var(--c-eadcc7)] bg-[var(--c-fffaf2)] p-4">
-                    <div className="flex flex-col gap-2">
-                      <Label className="text-[13px] font-black text-[var(--c-5c3214)]">Visibility</Label>
-                      <div className="grid grid-cols-2 gap-2">
-                        <button
-                          type="button"
-                          onClick={() => patchFeedModalDraft((current) => ({ ...current, published: true }))}
-                          className={cn(
-                            "min-h-[52px] rounded-[14px] border px-3 py-2 text-[12px] font-black leading-tight transition-all",
-                            feedModalDraft.published ? "border-[#245336] bg-[#245336] text-white" : "border-[var(--c-d7c5a7)] bg-[var(--c-fffcf5)] text-[var(--c-5c3214)]"
-                          )}
-                        >
-                          แสดง
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => patchFeedModalDraft((current) => ({ ...current, published: false }))}
-                          className={cn(
-                            "min-h-[52px] rounded-[14px] border px-3 py-2 text-[12px] font-black leading-tight transition-all",
-                            !feedModalDraft.published ? "border-[#7d3434] bg-[#7d3434] text-white" : "border-[var(--c-d7c5a7)] bg-[var(--c-fffcf5)] text-[var(--c-5c3214)]"
-                          )}
-                        >
-                          ซ่อน
-                        </button>
-                      </div>
-                      <div className="text-[12px] font-bold leading-relaxed text-[#8E8A81]">
-                        ใช้ควบคุมว่าจะให้การ์ดใบนี้แสดงบนหน้า Feed หรือเก็บไว้ก่อน
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
 
-              <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1.12fr)_minmax(0,0.88fr)]">
-                <div className="flex flex-col gap-2">
-                  <Label className="text-[13px] font-black text-[var(--c-5c3214)]">Activity Image</Label>
-                  <div className="overflow-hidden rounded-[20px] border border-[var(--c-eadcc7)] bg-white">
-                    <div className="relative min-h-[260px] overflow-hidden bg-[var(--c-faf3e3)] lg:min-h-[320px]">
-                      {feedModalDraft.imageSrc ? (
-                        <img src={feedModalDraft.imageSrc} alt={feedModalDraft.title} className="absolute inset-0 block h-full w-full object-cover" />
-                      ) : (
-                        <div className="flex min-h-[260px] items-center justify-center px-6 text-center text-[16px] font-black text-[#8E8A81] lg:min-h-[320px]">
-                          {feedModalDraft.imageText}
+                      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                        <div className="flex flex-col gap-2">
+                          <Label className="text-[13px] font-black text-[var(--c-5c3214)]">ตัวคูณโบนัส</Label>
+                          <Input
+                            type="number"
+                            min={1}
+                            step="0.1"
+                            inputMode="decimal"
+                            value={`${feedModalDraft.multiplier}`}
+                            disabled={feedModalDraft.bonusMode !== "multiplier"}
+                            onChange={(event) =>
+                              patchFeedModalDraft((current) => ({
+                                ...current,
+                                multiplier: Math.max(1, Number(event.target.value) || 1),
+                              }))
+                            }
+                            className="h-11 rounded-[14px] border-[var(--c-d7c5a7)] bg-white text-[14px] font-bold text-[#1A1A1A] focus-visible:border-[var(--c-5c3214)] focus-visible:ring-0 disabled:cursor-not-allowed disabled:bg-[#f5f1e8] disabled:text-[#9a9488]"
+                          />
                         </div>
-                      )}
-                    </div>
-                  </div>
-
-                  <input
-                    ref={imageInputRef}
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={(event) => {
-                      void handleFeedModalImageChange(event.target.files?.[0]);
-                      event.currentTarget.value = "";
-                    }}
-                  />
-
-                  <div className="grid grid-cols-2 gap-2">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => imageInputRef.current?.click()}
-                      className="h-10 rounded-[14px] border-[var(--c-d7c5a7)] bg-white text-[12px] font-black text-[var(--c-5c3214)] hover:bg-[var(--c-fff4df)]"
-                    >
-                      <FileImage className="mr-1 h-4 w-4" />
-                      เปลี่ยนรูป
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => patchFeedModalDraft((current) => ({ ...current, imageSrc: null }))}
-                      className="h-10 rounded-[14px] border-[var(--c-d7c5a7)] bg-white text-[12px] font-black text-[var(--c-5c3214)] hover:bg-[var(--c-fff4df)]"
-                    >
-                      ล้างรูป
-                    </Button>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 gap-4">
-                  <div className="rounded-[20px] border border-[var(--c-eadcc7)] bg-[var(--c-fffaf2)] p-4">
-                    <div className="flex flex-col gap-2">
-                      <Label className="text-[13px] font-black text-[var(--c-5c3214)]">Card Subtitle</Label>
-                      <Input
-                        value={feedModalDraft.subtitle}
-                        onChange={(event) => patchFeedModalDraft((current) => ({ ...current, subtitle: event.target.value }))}
-                        placeholder="เช่น Activity Details and Submission"
-                        className="h-11 rounded-[14px] border-[var(--c-d7c5a7)] bg-white text-[14px] font-bold text-[#1A1A1A] focus-visible:border-[var(--c-5c3214)] focus-visible:ring-0"
-                      />
-                      <div className="text-[12px] font-bold leading-relaxed text-[#8E8A81]">
-                        ข้อความรองสั้น ๆ ที่จะแสดงตอนเปิด Popup รายละเอียดกิจกรรม
+                        <div className="flex flex-col gap-2">
+                          <Label className="text-[13px] font-black text-[var(--c-5c3214)]">แต้มโบนัสเพิ่ม</Label>
+                          <Input
+                            type="number"
+                            min={0}
+                            inputMode="numeric"
+                            value={`${feedModalDraft.fixedPoints}`}
+                            disabled={feedModalDraft.bonusMode !== "fixed"}
+                            onChange={(event) =>
+                              patchFeedModalDraft((current) => ({
+                                ...current,
+                                fixedPoints: Math.max(0, Number(event.target.value) || 0),
+                              }))
+                            }
+                            className="h-11 rounded-[14px] border-[var(--c-d7c5a7)] bg-white text-[14px] font-bold text-[#1A1A1A] focus-visible:border-[var(--c-5c3214)] focus-visible:ring-0 disabled:cursor-not-allowed disabled:bg-[#f5f1e8] disabled:text-[#9a9488]"
+                          />
+                        </div>
                       </div>
-                    </div>
-                  </div>
-                  <div className="rounded-[20px] border border-[var(--c-eadcc7)] bg-[var(--c-fffaf2)] p-4">
-                    <div className="flex h-full flex-col gap-2">
-                      <Label className="text-[13px] font-black text-[var(--c-5c3214)]">Card Summary</Label>
-                      <Textarea
-                        value={feedModalDraft.summary}
-                        onChange={(event) => patchFeedModalDraft((current) => ({ ...current, summary: event.target.value }))}
-                        placeholder="เขียนสรุปกิจกรรมสั้น ๆ เพื่อให้ผู้ใช้เห็นภาพรวมก่อนกดดูรายละเอียด"
-                        className="min-h-[180px] flex-1 rounded-[18px] border-[var(--c-d7c5a7)] bg-white text-[14px] font-bold leading-relaxed text-[#1A1A1A] focus-visible:border-[var(--c-5c3214)] focus-visible:ring-0"
-                      />
-                      <div className="text-[12px] font-bold leading-relaxed text-[#8E8A81]">
-                        ส่วนนี้ควรเป็นข้อความสั้น กระชับ และอ่านรู้เรื่องได้ทันทีบนการ์ด
+
+                      <div className="flex flex-col gap-2">
+                        <Label className="text-[13px] font-black text-[var(--c-5c3214)]">กิจกรรมที่รับโบนัสเพิ่ม</Label>
+                        <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
+                          {ACTION_OPTIONS.map((action) => {
+                            const active = feedModalDraft.enabledActions.includes(action.id);
+
+                            return (
+                              <button
+                                key={action.id}
+                                type="button"
+                                onClick={() =>
+                                  patchFeedModalDraft((current) => ({
+                                    ...current,
+                                    enabledActions: current.enabledActions.includes(action.id)
+                                      ? current.enabledActions.filter((id) => id !== action.id)
+                                      : [...current.enabledActions, action.id],
+                                  }))
+                                }
+                                className={cn(
+                                  "rounded-[14px] border px-3 py-3 text-left transition-all",
+                                  active
+                                    ? "border-[var(--c-5c3214)] bg-[var(--c-fff6ea)] text-[var(--c-2d241b)]"
+                                    : "border-[var(--c-d7c5a7)] bg-white text-[var(--c-5c3214)] hover:bg-[var(--c-fffaf0)]"
+                                )}
+                              >
+                                <div className="flex items-center justify-between gap-3">
+                                  <span className="text-[12px] font-black leading-relaxed">{action.label}</span>
+                                  {active ? <CheckCircle2 className="h-4 w-4 text-[var(--c-5c3214)]" strokeWidth={2.3} /> : null}
+                                </div>
+                              </button>
+                            );
+                          })}
+                        </div>
+                        {feedModalSelectedActions.length === 0 ? <div className="text-[12px] font-bold text-[#8E8A81]">ยังไม่ได้เลือกกิจกรรมที่ใช้รับโบนัส</div> : null}
                       </div>
-                    </div>
-                  </div>
+                    </>
+                  ) : null}
                 </div>
               </div>
             </div>
 
-            <div className="flex items-center justify-end gap-3 border-t border-[var(--c-eee2cb)] bg-[var(--c-fffaf2)] px-5 py-4 md:px-6">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={closeFeedEditorModal}
-                className="h-10 rounded-[14px] border-[var(--c-d7c5a7)] bg-white px-4 text-[13px] font-black text-[var(--c-5c3214)] hover:bg-[var(--c-fff4df)]"
-              >
-                Cancel
-              </Button>
+            <div className="flex items-center justify-end border-t border-[var(--c-eee2cb)] bg-[var(--c-fffaf2)] px-5 py-4 md:px-6">
               <Button
                 type="button"
                 onClick={handleApplyFeedModal}
                 className="h-10 rounded-[14px] bg-[linear-gradient(135deg,#21b7c8_0%,#34d4cf_100%)] px-4 text-[13px] font-black text-white hover:brightness-95"
               >
                 {feedModalSubmitLabel}
+              </Button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {pendingDeleteFeedEvent ? (
+        <div
+          className="fixed inset-0 z-[125] flex items-center justify-center bg-[rgba(26,18,11,0.52)] p-3 backdrop-blur-[3px] animate-[fadeIn_0.18s_ease-out_both] md:p-6"
+          onClick={closeDeleteFeedEventPrompt}
+          role="dialog"
+          aria-modal="true"
+          aria-label="ยืนยันการลบกิจกรรม"
+        >
+          <div
+            className="w-full max-w-[440px] overflow-hidden rounded-[28px] border border-[#efc9c9] bg-[var(--c-fffdfa)] shadow-[0_24px_56px_rgba(0,0,0,0.22)] animate-[scaleUp_0.22s_cubic-bezier(0.175,0.885,0.32,1.12)_both]"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="flex items-start justify-between gap-4 border-b border-[var(--c-eee2cb)] px-5 py-4">
+              <div>
+                <div className="text-[24px] font-black text-[#7d3434]">ยืนยันก่อนลบ</div>
+                <div className="mt-1 text-[13px] font-bold leading-relaxed text-[#8E8A81]">
+                  กิจกรรมนี้จะถูกลบออกจากรายการบน Feed ทันทีเมื่อกดยืนยัน
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={closeDeleteFeedEventPrompt}
+                className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-[var(--c-ddd9cd)] bg-white text-[#8E8A81] transition-colors hover:bg-[var(--c-faf6ee)]"
+                aria-label="ปิดหน้าต่างยืนยัน"
+              >
+                <X className="h-5 w-5" strokeWidth={2.2} />
+              </button>
+            </div>
+
+            <div className="px-5 py-5">
+              <div className="rounded-[20px] border border-[#f0d8d8] bg-[#fff7f7] px-4 py-4">
+                <div className="text-[12px] font-black uppercase tracking-[0.12em] text-[#c05a5a]">Delete Activity</div>
+                <div className="mt-2 text-[18px] font-black text-[#2b2119]">{pendingDeleteFeedEvent.title}</div>
+                <div className="mt-2 text-[13px] font-bold leading-relaxed text-[#7b6d63]">
+                  หากลบแล้วจะต้องสร้างกิจกรรมใหม่หรือกู้คืนจากข้อมูลเดิมด้วยตนเอง
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-3 border-t border-[var(--c-eee2cb)] bg-[var(--c-fffaf2)] px-5 py-4">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={closeDeleteFeedEventPrompt}
+                className="h-10 rounded-[14px] border-[var(--c-d7c5a7)] bg-white px-4 text-[13px] font-black text-[var(--c-5c3214)] hover:bg-[var(--c-fff4df)]"
+              >
+                ยกเลิก
+              </Button>
+              <Button
+                type="button"
+                onClick={confirmDeleteFeedEvent}
+                className="h-10 rounded-[14px] bg-[#b74242] px-4 text-[13px] font-black text-white hover:bg-[#a33636]"
+              >
+                ลบกิจกรรมนี้
               </Button>
             </div>
           </div>

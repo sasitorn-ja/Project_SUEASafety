@@ -28,13 +28,13 @@ export default function LeaderboardPage() {
       <div className="mx-auto w-full max-w-[1180px] bg-[var(--background)] px-3.5 pt-2 pb-8 font-sarabun md:px-4">
         <div className="anim-fade" style={animStyle(0)}>
           <SafetyCultureHero
-            eyebrow="SUEA SAFETY SCOREBOARD"
+            eyebrow="CPAC SAFETY SCOREBOARD"
             title={
               <>
                 ทีมไหน <span className="text-[var(--brand-accent)]">ปลอดภัยสุด</span>
               </>
             }
-            description="พี่ SUEA ช่วยสรุปคะแนน Safety ให้เห็นภาพเร็วขึ้น ทั้งคะแนนทีมและอันดับในทีมของคุณ โดยข้อมูลจะอัปเดตตามที่แอดมินจัดการล่าสุด"
+            description="CPAC Safety ช่วยสรุปคะแนน Safety ให้เห็นภาพรวม ทั้งคะแนนทีมและอันดับในทีมของคุณ"
             mascotSrc="/images/mascots/suea-mascot.png"
             mascotAlt="SUEA Mascot"
             mascotAction="salute"
