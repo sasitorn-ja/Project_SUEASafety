@@ -235,7 +235,7 @@ export function MobileTopbar({ hidden = false }: { hidden?: boolean }) {
     <>
       <div
         className={cn(
-          "fixed top-0 right-0 left-0 z-50 flex items-center justify-between gap-2 px-2.5 md:hidden",
+          "fixed top-0 right-0 left-0 z-50 flex items-center justify-between gap-2 px-2.5 min-[1100px]:hidden",
           "border-b border-white/[0.08] bg-[rgba(var(--brand-nav-rgb),0.96)] shadow-[0_8px_24px_var(--brand-shadow)]",
           "backdrop-blur-[14px] transition-transform duration-200",
           "[transition-timing-function:cubic-bezier(0.2,0.8,0.2,1)]",
@@ -296,7 +296,7 @@ export function MobileTopbar({ hidden = false }: { hidden?: boolean }) {
       </div>
 
       {open && (
-        <div className="mobile-drawer-layer md:hidden">
+        <div className="mobile-drawer-layer min-[1100px]:hidden">
           <button className="mobile-drawer-overlay" aria-label="ปิดเมนู" onClick={closeDrawer} />
           <aside className="mobile-drawer-aside" aria-label="เมนูหลัก">
             <div className="grid grid-cols-1 gap-2">

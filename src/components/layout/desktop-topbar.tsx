@@ -196,7 +196,7 @@ export function DesktopTopbar() {
   return (
     <header
       className={cn(
-        "hidden md:flex fixed top-0 left-0 right-0 z-40 items-center",
+        "hidden min-[1100px]:flex fixed top-0 left-0 right-0 z-40 items-center",
         "bg-[rgba(var(--brand-nav-rgb),0.92)] border-b border-white/10",
         "shadow-[0_10px_30px_var(--brand-shadow)] backdrop-blur-[16px]",
         "[transition:margin-left_200ms_ease-out]",

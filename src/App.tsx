@@ -1,7 +1,7 @@
 // @ts-nocheck
 import { useEffect, useRef, useState } from "react";
 import dynamic from "next/dynamic";
-import { Navigate, Route, Routes, useLocation, useNavigate } from "./lib/router-compat";
+import { Route, Routes, useLocation, useNavigate } from "./lib/router-compat";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { useAppTheme } from "@/providers/theme-provider";
 
@@ -751,7 +751,9 @@ function MobileBottomNav({ activeId, onNav, visible }) {
 function AppRoutes({ onScroll }) {
   return (
     <Routes>
-      <Route index element={<Navigate to="/category" replace />} />
+      {/* "/" is now a real Next.js page (HomePage). The legacy shell must NOT
+          claim the index route, otherwise transitions through "/" (e.g. on
+          logout/login) get hijacked and redirected to /category. */}
       <Route path="category"    element={<Category />} />
       <Route path="checkin"     element={<Checkin />} />
       <Route path="activity"    element={<Activity />} />

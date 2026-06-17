@@ -1,7 +1,7 @@
 "use client";
 
 import { ReactNode, useEffect, useRef, useState } from "react";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { MobileTopbar } from "./mobile-topbar";
 import { DesktopTopbar } from "./desktop-topbar";
 import { MobileBottomNav } from "./mobile-bottom-nav";
@@ -11,15 +11,41 @@ import { cn } from "@/lib/utils";
 import { SafetyAwarenessGate } from "@/components/safety-awareness/safety-awareness-gate";
 import { FloatingSafetyAssistant } from "./floating-safety-assistant";
 
+const LOGIN_SESSION_KEY = "cpac-safety-login-session";
+
 export function AppShell({ children }: { children: ReactNode }) {
   const { notification } = useAppState();
   const { dismissNotification } = useAppActions();
   const pathname = usePathname() ?? "";
+  const router = useRouter();
   const isSafetyEffort = SAFETY_EFFORT_ROUTES.has(pathname) || pathname === "/safety-admin";
+  const [loginChecked, setLoginChecked] = useState(false);
 
   const [topHidden, setTopHidden] = useState(false);
   const [btmHidden, setBtmHidden] = useState(false);
   const lastScrollY = useRef(0);
+
+  useEffect(() => {
+    if (pathname === "/login") {
+      setLoginChecked(true);
+      return;
+    }
+
+    let loggedIn = false;
+    try {
+      loggedIn = window.sessionStorage.getItem(LOGIN_SESSION_KEY) === "true";
+    } catch {
+      loggedIn = false;
+    }
+
+    if (!loggedIn) {
+      setLoginChecked(false);
+      router.replace("/login");
+      return;
+    }
+
+    setLoginChecked(true);
+  }, [pathname, router]);
 
   useEffect(() => {
     const THRESHOLD = 10;
@@ -82,6 +108,10 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   if (pathname === "/login") {
     return <main className="min-h-screen w-full bg-background">{children}</main>;
+  }
+
+  if (!loginChecked) {
+    return <div className="min-h-screen bg-background" />;
   }
 
   return (

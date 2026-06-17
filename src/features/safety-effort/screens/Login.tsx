@@ -1,12 +1,27 @@
 // @ts-nocheck
-import React from "react";
+import React, { useEffect } from "react";
 import { useNavigate } from "@/lib/router-compat";
 import { Lock } from "lucide-react";
+
+const LOGIN_SESSION_KEY = "cpac-safety-login-session";
+
 export default function Login() {
   const navigate = useNavigate();
 
+  useEffect(() => {
+    try {
+      window.sessionStorage.removeItem(LOGIN_SESSION_KEY);
+    } catch {
+      // Keep the login screen usable if browser storage is unavailable.
+    }
+  }, []);
+
   const handleLogin = () => {
-    // Simulate login success by redirecting to home page
+    try {
+      window.sessionStorage.setItem(LOGIN_SESSION_KEY, "true");
+    } catch {
+      // The demo login still navigates home even without storage.
+    }
     navigate("/");
   };
 
@@ -41,7 +56,7 @@ export default function Login() {
           pointerEvents: "none",
         }}
       >
-        <source src="/images/branding/bg/login-bg2.mp4" type="video/mp4" />
+        <source src="/images/login/bg/login-bg2.mp4" type="video/mp4" />
       </video>
 
       {/* Dark overlay to match image background tone */}
@@ -60,7 +75,7 @@ export default function Login() {
       {/* Top Left Brand Logo (Floating on Desktop, centered header on Mobile) */}
       <div className="top-left-brand">
         <img
-          src="/images/CpacLogo.jpg"
+          src="/images/login/brand/CpacLogo.jpg"
           className="cpac-logo-img"
           alt="CPAC Logo"
         />
@@ -92,13 +107,13 @@ export default function Login() {
               {/* Desktop Mascot */}
               <img
                 className="mascot-left-img mascot-desktop"
-                src="/images/WangJai/login.png"
+                src="/images/login/wangjai/login.png"
                 alt="Mascot Desktop"
               />
               {/* Mobile Mascot */}
               <img
                 className="mascot-left-img mascot-mobile"
-                src="/images/WangJai/Wangjai2.png"
+                src="/images/login/wangjai/Wangjai2.png"
                 alt="Mascot Mobile"
               />
             </div>
@@ -127,7 +142,7 @@ export default function Login() {
                 className="login-btn btn-scg"
               >
                 <img
-                  src="/images/scg.logo.jpg"
+                  src="/images/login/brand/scg.logo.jpg"
                   alt="SCG Logo"
                   style={{ height: 24, width: "auto", objectFit: "contain", marginRight: 2 }}
                 />
@@ -408,7 +423,7 @@ export default function Login() {
           }
         }
 
-        @media (min-width: 821px) {
+        @media (min-width: 1100px) {
           .top-left-brand {
             left: 60px;
             top: 40px;
@@ -491,7 +506,7 @@ export default function Login() {
           }
         }
 
-        @media (max-width: 820px) {
+        @media (max-width: 1099px) {
           .top-left-brand {
             position: absolute;
             top: 26px;
