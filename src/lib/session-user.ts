@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { hasAdminAccess } from "@/lib/access-control";
 
 export type SessionUser = {
   id?: string;
@@ -18,7 +19,12 @@ export type SessionUser = {
   positionEn?: string;
   positionTh?: string;
   reportToEmail?: string;
+  roles?: string[];
+  permissions?: string[];
+  isAdmin?: boolean;
 };
+
+export { hasAdminAccess };
 
 export function getSessionDisplayName(user?: SessionUser | null) {
   if (!user) return "ผู้ใช้งาน";

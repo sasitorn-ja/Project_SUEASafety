@@ -1,8 +1,7 @@
-"use client";
+﻿"use client";
 
-import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { ArrowLeft, LayoutList, Pencil, Plus, Trash2 } from "lucide-react";
+import { LayoutList, Pencil, Plus, Trash2 } from "lucide-react";
 import { SafetyCultureHero } from "@/components/safety-culture/safety-culture-hero";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -214,22 +213,11 @@ export default function AdminLeaderboardPage() {
               จัดการ <span className="text-[var(--brand-accent)]">Leaderboard</span>
             </>
           }
-          description="โฟกัสเฉพาะการจัดการทีมและคะแนนให้พร้อมใช้งานจริง โดยแก้ผ่าน modal แล้วค่อย confirm ก่อนบันทึก"
+          description="โฟกัสเฉพาะการจัดการทีมและคะแนนให้พร้อมใช้งานจริง โดยแก้ผ่าน modal แล้วค่อยยืนยันก่อนบันทึก"
           mascotSrc="/images/mascots/suea-mascot.png"
           mascotAlt="SUEA Admin Mascot"
           mascotAction="clipboard"
-          actions={
-            <div className="mt-[12px] flex flex-wrap gap-2">
-              <Link href="/safety-culture/leaderboard">
-                <Button className="h-[32px] rounded-full border border-white/30 bg-white/10 px-4 text-[12.5px] font-black text-white hover:bg-white/14 md:h-[36px] md:text-[13px]">
-                  <ArrowLeft className="mr-1 h-4 w-4" />
-                  กลับไปหน้า Leaderboard
-                </Button>
-              </Link>
-            </div>
-          }
         />
-
         <Card className="mt-4 rounded-[16px] border border-[var(--border)] bg-[var(--brand-soft)] p-3.5 shadow-[0_8px_18px_var(--brand-shadow)] md:p-4">
           <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
             <div className="flex flex-wrap gap-2">
@@ -339,8 +327,8 @@ export default function AdminLeaderboardPage() {
               </DialogTitle>
               <DialogDescription className="max-w-[460px] text-[12px] font-bold leading-relaxed text-[#8E8A81] sm:text-[14px]">
                 {editingTeam?.mode === "create"
-                  ? "กรอกข้อมูลทีมใหม่ใน mockup นี้ แล้วกด confirm เพื่อเพิ่มทีมลงตาราง"
-                  : "ปรับข้อมูลใน mockup นี้ แล้วกด confirm เพื่ออัปเดตกลับไปยังตารางหลัก"}
+                  ? "กรอกข้อมูลทีมใหม่ใน mockup นี้ แล้วกดยืนยันเพื่อเพิ่มทีมลงตาราง"
+                  : "ปรับข้อมูลใน mockup นี้ แล้วกดยืนยันเพื่ออัปเดตกลับไปยังตารางหลัก"}
               </DialogDescription>
             </DialogHeader>
 
@@ -401,14 +389,7 @@ export default function AdminLeaderboardPage() {
             ) : null}
 
             <DialogFooter className="rounded-b-[26px] border-t border-[var(--border)] bg-[var(--brand-soft)] px-5 py-4 sm:rounded-b-[30px] sm:px-6 sm:py-5">
-              <div className="flex w-full justify-end gap-2 pr-1 pb-1 sm:pr-0 sm:pb-0">
-                <Button
-                  variant="outline"
-                  onClick={() => setEditingTeam(null)}
-                  className="h-10 rounded-full border-[var(--border)] bg-white px-4 text-[13px] text-[var(--brand-text)] hover:bg-[var(--brand-soft)] sm:h-11 sm:px-5 sm:text-[14px]"
-                >
-                  Cancel
-                </Button>
+              <div className="flex w-full justify-end pr-1 pb-1 sm:pr-0 sm:pb-0">
                 <Button
                   onClick={confirmTeamEdit}
                   className="h-10 rounded-full bg-[var(--brand-text)] px-4 text-[13px] text-white hover:bg-[var(--c-4a280f)] sm:h-11 sm:px-5 sm:text-[14px]"
@@ -453,14 +434,7 @@ export default function AdminLeaderboardPage() {
             ) : null}
 
             <DialogFooter className="rounded-b-[26px] border-t border-[var(--border)] bg-[var(--brand-soft)] px-5 py-4 sm:rounded-b-[30px] sm:px-6 sm:py-5">
-              <div className="flex w-full justify-end gap-2">
-                <Button
-                  variant="outline"
-                  onClick={() => setDeletingTeam(null)}
-                  className="h-10 rounded-full border-[var(--border)] bg-white px-4 text-[13px] text-[var(--brand-text)] hover:bg-[var(--brand-soft)] sm:h-11 sm:px-5 sm:text-[14px]"
-                >
-                  Cancel
-                </Button>
+              <div className="flex w-full justify-end">
                 <Button
                   onClick={confirmDeleteTeam}
                   className="h-10 rounded-full bg-[#b33a34] px-4 text-[13px] text-white hover:bg-[#982b26] sm:h-11 sm:px-5 sm:text-[14px]"

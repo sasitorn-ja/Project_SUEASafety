@@ -1,7 +1,7 @@
 import { cookies, headers } from "next/headers";
 import { NextRequest } from "next/server";
 import { createHash, createHmac, randomBytes, timingSafeEqual } from "crypto";
-import { dbUserToSessionUser, getUserBySsoExternalId, upsertSsoUser } from "@/lib/server/users";
+import { dbUserToSessionUser, getSessionUserBySsoExternalId, getUserAccess, upsertSsoUser } from "@/lib/server/users";
 
 export const SSO_SESSION_COOKIE = "cpac-safety-sso-session";
 export const SSO_OAUTH_COOKIE = "cpac-safety-sso-oauth";
@@ -35,6 +35,9 @@ export type SsoUser = {
   positionEn?: string;
   positionTh?: string;
   reportToEmail?: string;
+  roles?: string[];
+  permissions?: string[];
+  isAdmin?: boolean;
 };
 
 type OAuthState = {
@@ -424,7 +427,7 @@ export async function exchangeCodeForSession(request: NextRequest, code: string)
   if (!user.sub) throw new Error("SSO user profile is missing subject");
 
   const dbUser = await upsertSsoUser(user, rawUser, config.providerSlug);
-  await setSessionCookie(dbUserToSessionUser(dbUser));
+  await setSessionCookie(dbUserToSessionUser(dbUser, await getUserAccess(dbUser.id)));
   await clearOAuthCookie();
   return { user, returnTo: oauthState.returnTo };
 }
@@ -459,11 +462,11 @@ export async function readDatabaseBackedSession() {
   if (!session?.user?.sub) return null;
 
   try {
-    const dbUser = await getUserBySsoExternalId(session.user.sub);
+    const dbUser = await getSessionUserBySsoExternalId(session.user.sub);
     if (!dbUser) return session;
     return {
       ...session,
-      user: dbUserToSessionUser(dbUser),
+      user: dbUser,
     };
   } catch {
     return session;

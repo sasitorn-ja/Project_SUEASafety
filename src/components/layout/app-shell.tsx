@@ -6,10 +6,11 @@ import { MobileTopbar } from "./mobile-topbar";
 import { DesktopTopbar } from "./desktop-topbar";
 import { MobileBottomNav } from "./mobile-bottom-nav";
 import { useAppState, useAppActions } from "@/providers/app-providers";
-import { SAFETY_EFFORT_ROUTES } from "@/lib/navigation";
+import { isAdminRoute, SAFETY_EFFORT_ROUTES } from "@/lib/navigation";
 import { cn } from "@/lib/utils";
 import { SafetyAwarenessGate } from "@/components/safety-awareness/safety-awareness-gate";
 import { FloatingSafetyAssistant } from "./floating-safety-assistant";
+import { hasAdminAccess, type SessionUser } from "@/lib/session-user";
 
 const LOGIN_SESSION_KEY = "cpac-safety-login-session";
 
@@ -20,6 +21,9 @@ export function AppShell({ children }: { children: ReactNode }) {
   const router = useRouter();
   const isSafetyEffort = SAFETY_EFFORT_ROUTES.has(pathname) || pathname === "/safety-admin";
   const [loginChecked, setLoginChecked] = useState(false);
+  const isSafetyCulturePost = pathname === "/safety-culture/post";
+  const [sessionUser, setSessionUser] = useState<SessionUser | null>(null);
+  const [sessionChecked, setSessionChecked] = useState(false);
 
   const [topHidden, setTopHidden] = useState(false);
   const [btmHidden, setBtmHidden] = useState(false);
@@ -28,6 +32,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (pathname === "/login") {
       setLoginChecked(true);
+      setSessionChecked(true);
       return;
     }
 
@@ -39,12 +44,10 @@ export function AppShell({ children }: { children: ReactNode }) {
       loggedIn = false;
     }
 
-    if (loggedIn) {
-      setLoginChecked(true);
-      return;
-    }
+    const demoLoginAllowed = process.env.NODE_ENV !== "production" && loggedIn;
 
-    setLoginChecked(false);
+    setLoginChecked(loggedIn);
+    setSessionChecked(false);
     fetch("/api/auth/session", {
       credentials: "include",
       cache: "no-store",
@@ -53,24 +56,44 @@ export function AppShell({ children }: { children: ReactNode }) {
       .then((session) => {
         if (cancelled) return;
         if (session.authenticated) {
+          setSessionUser(session.user || null);
           try {
             window.sessionStorage.setItem(LOGIN_SESSION_KEY, "true");
           } catch {
             // The cookie-backed session remains authoritative.
           }
           setLoginChecked(true);
+          setSessionChecked(true);
+          return;
+        }
+        setSessionUser(null);
+        setSessionChecked(true);
+        if (demoLoginAllowed) {
           return;
         }
         router.replace("/login");
       })
       .catch(() => {
-        if (!cancelled) router.replace("/login");
+        if (!cancelled) {
+          setSessionChecked(true);
+          if (demoLoginAllowed) {
+            return;
+          }
+          router.replace("/login");
+        }
       });
 
     return () => {
       cancelled = true;
     };
   }, [pathname, router]);
+
+  useEffect(() => {
+    if (!loginChecked || !sessionChecked || pathname === "/login") return;
+    if (isAdminRoute(pathname) && !hasAdminAccess(sessionUser)) {
+      router.replace("/");
+    }
+  }, [loginChecked, pathname, router, sessionChecked, sessionUser]);
 
   useEffect(() => {
     const THRESHOLD = 10;
@@ -189,9 +212,9 @@ export function AppShell({ children }: { children: ReactNode }) {
 
       <main className={cn(isSafetyEffort ? "legacy-page-content" : "page-content")}>{children}</main>
 
-      <MobileBottomNav hidden={btmHidden} />
+      {!isSafetyCulturePost && <MobileBottomNav hidden={btmHidden} />}
 
-      {!isSafetyEffort && <FloatingSafetyAssistant />}
+      {!isSafetyEffort && !isSafetyCulturePost && <FloatingSafetyAssistant />}
 
       <SafetyAwarenessGate />
     </div>

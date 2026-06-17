@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useId, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -62,16 +62,18 @@ async function optimizeImage(file: File) {
 }
 
 export default function PostSocialPage() {
+  const cameraInputId = useId();
+  const uploadInputId = useId();
   const router = useRouter();
   const actions = useAppActions();
-  const { safetyCultureEvent, isEventLive } = useAppState();
-  const shouldShowEventHint = safetyCultureEvent.status !== "draft";
+  const { safetyCultureEvent, isEventLive, feedEvents } = useAppState();
+  const availableFeedEvents = feedEvents.filter((event) => event.published && event.status === "open");
   const [text, setText] = useState("");
   const [activeCategory, setActiveCategory] = useState("KYT");
+  const [selectedFeedEventId, setSelectedFeedEventId] = useState("");
   const [photos, setPhotos] = useState<DraftPhoto[]>([]);
   const [isProcessingPhotos, setIsProcessingPhotos] = useState(false);
-  const cameraRef = useRef<HTMLInputElement>(null);
-  const fileRef = useRef<HTMLInputElement>(null);
+  const selectedFeedEvent = availableFeedEvents.find((event) => event.id === selectedFeedEventId) ?? null;
 
   const animStyle = (delay: number) => ({
     animationDelay: `${delay}s`,
@@ -158,9 +160,31 @@ export default function PostSocialPage() {
       imageData: null,
       likes: 0,
       comments: [],
-      points: 6,
+      points: selectedFeedEvent?.points ?? 6,
       hasLiked: false,
+      feedEventId: selectedFeedEvent?.id,
+      feedEventTitle: selectedFeedEvent?.title,
     });
+
+    const nextBonusLabel =
+      selectedFeedEvent
+        ? selectedFeedEvent.bonusMode === "multiplier"
+          ? `x${selectedFeedEvent.multiplier}`
+          : `+${selectedFeedEvent.fixedPoints} แต้มเพิ่ม`
+        : safetyCultureEvent.bonusMode === "multiplier"
+          ? `x${safetyCultureEvent.multiplier}`
+          : `+${safetyCultureEvent.fixedPoints} แต้มเพิ่ม`;
+
+    toast.success("โพสต์สำเร็จ", {
+      description: selectedFeedEvent
+        ? `โพสต์เข้ากิจกรรม ${selectedFeedEvent.title} แล้ว ฐาน ${selectedFeedEvent.points} แต้ม และโบนัส ${nextBonusLabel}`
+        : isEventLive
+          ? `แชร์เรื่องความปลอดภัยแล้ว ได้ฐาน +6 แต้ม และโบนัสอีเว้น ${nextBonusLabel}`
+          : "แชร์เรื่องความปลอดภัยแล้ว ได้รับ +6 แต้ม",
+    });
+
+    setTimeout(() => router.push("/safety-culture"), 800);
+    return;
 
     const bonusLabel =
       safetyCultureEvent.bonusMode === "multiplier"
@@ -243,10 +267,72 @@ export default function PostSocialPage() {
           </div>
         </div>
 
+        {availableFeedEvents.length > 0 ? (
+          <div
+            className="anim-fade mb-5 rounded-[22px] border-[1.5px] border-[var(--border)] bg-white p-4"
+            style={animStyle(0.1)}
+          >
+            <div className="flex flex-col gap-3">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <div className="text-[13px] font-[850] uppercase tracking-wide text-foreground">Card Event</div>
+                  <div className="hidden">
+                    เลือกกิจกรรมที่ต้องการนับคะแนนร่วมกับโพสต์นี้ได้ ถ้าไม่เลือกจะเป็นโพสต์ทั่วไป
+                  </div>
+                </div>
+                {selectedFeedEvent ? (
+                  <span className="rounded-full bg-[#ecfff7] px-2.5 py-1 text-[11px] font-extrabold text-[#13885d]">
+                    +{selectedFeedEvent.points} pts
+                  </span>
+                ) : null}
+              </div>
+              <div className="scrollbar-hide flex gap-2 overflow-x-auto pb-1">
+                <button
+                  type="button"
+                  onClick={() => setSelectedFeedEventId("")}
+                  className={cn(
+                    "shrink-0 whitespace-nowrap rounded-full border px-3 py-1.5 text-[12px] font-extrabold transition-all",
+                    !selectedFeedEventId
+                      ? "border-[#1A1A1A] bg-[#1A1A1A] text-white"
+                      : "border-[var(--c-ddd9cd)] bg-white text-[#555149]"
+                  )}
+                >
+                  โพสต์ทั่วไป
+                </button>
+                {availableFeedEvents.map((event) => (
+                  <button
+                    key={event.id}
+                    type="button"
+                    onClick={() => setSelectedFeedEventId(event.id)}
+                    className={cn(
+                      "shrink-0 whitespace-nowrap rounded-full border px-3 py-1.5 text-[12px] font-extrabold transition-all",
+                      selectedFeedEventId === event.id
+                        ? "border-[var(--brand-accent)] bg-[var(--brand-accent)] text-[#1A1A1A]"
+                        : "border-[var(--c-ddd9cd)] bg-white text-[#555149]"
+                    )}
+                  >
+                    {event.title}
+                  </button>
+                ))}
+              </div>
+              {selectedFeedEvent ? (
+                <div className="rounded-[14px] border border-[var(--c-e4cdac)] bg-[#fff7e8] px-3 py-2 text-[12px] font-bold leading-relaxed text-[#6d5a46]">
+                  โพสต์นี้จะนับเข้ากิจกรรม {selectedFeedEvent.title} โดยใช้คะแนนฐาน {selectedFeedEvent.points} แต้ม และโบนัส{" "}
+                  {selectedFeedEvent.bonusMode === "multiplier" ? `x${selectedFeedEvent.multiplier}` : `+${selectedFeedEvent.fixedPoints}`}
+                </div>
+              ) : null}
+            </div>
+          </div>
+        ) : null}
+
         <div
           className="anim-fade mb-5 flex min-h-[180px] flex-col gap-2.5 rounded-3xl border-2 border-[var(--brand-text)] bg-[var(--brand-surface)] p-4 md:p-4"
-          style={animStyle(0.1)}
+          style={animStyle(0.12)}
         >
+          <div className="mb-1 flex items-center justify-between gap-2">
+            <span className="text-[12px] font-extrabold uppercase tracking-wide text-[#6b655a]">Post Details</span>
+          </div>
+
           <Textarea
             value={text}
             onChange={(e) => setText(e.target.value)}
@@ -319,44 +405,53 @@ export default function PostSocialPage() {
             ))}
 
             {photos.length < MAX_PHOTOS && (
-              <button
-                onClick={() => cameraRef.current?.click()}
-                disabled={isProcessingPhotos}
-                className="flex aspect-square flex-col items-center justify-center gap-1 rounded-2xl border-2 border-dashed border-[var(--border)] bg-white text-xs font-bold text-[var(--brand-text)] transition-colors hover:border-[var(--brand-accent)] hover:bg-[var(--brand-hover-surface)] disabled:cursor-wait disabled:opacity-60"
+              <label
+                htmlFor={cameraInputId}
+                className={cn(
+                  "flex aspect-square flex-col items-center justify-center gap-1 rounded-2xl border-2 border-dashed border-[var(--border)] bg-white text-xs font-bold text-[var(--brand-text)] transition-colors",
+                  isProcessingPhotos
+                    ? "cursor-wait opacity-60"
+                    : "cursor-pointer hover:border-[var(--brand-accent)] hover:bg-[var(--brand-hover-surface)]"
+                )}
               >
                 <Camera className="mb-0.5 h-5 w-5" />
                 ถ่ายรูป
-              </button>
+                <input
+                  id={cameraInputId}
+                  type="file"
+                  accept="image/*"
+                  capture="environment"
+                  className="sr-only"
+                  onChange={handleCameraChange}
+                  disabled={isProcessingPhotos}
+                />
+              </label>
             )}
 
             {photos.length < MAX_PHOTOS && (
-              <button
-                onClick={() => fileRef.current?.click()}
-                disabled={isProcessingPhotos}
-                className="flex aspect-square flex-col items-center justify-center gap-1 rounded-2xl border-2 border-dashed border-[var(--border)] bg-white text-xs font-bold text-[var(--brand-text)] transition-colors hover:border-[var(--brand-accent)] hover:bg-[var(--brand-hover-surface)] disabled:cursor-wait disabled:opacity-60"
+              <label
+                htmlFor={uploadInputId}
+                className={cn(
+                  "flex aspect-square flex-col items-center justify-center gap-1 rounded-2xl border-2 border-dashed border-[var(--border)] bg-white text-xs font-bold text-[var(--brand-text)] transition-colors",
+                  isProcessingPhotos
+                    ? "cursor-wait opacity-60"
+                    : "cursor-pointer hover:border-[var(--brand-accent)] hover:bg-[var(--brand-hover-surface)]"
+                )}
               >
                 <Plus className="mb-0.5 h-5 w-5" />
                 เพิ่มรูป
-              </button>
+                <input
+                  id={uploadInputId}
+                  type="file"
+                  accept="image/*"
+                  className="sr-only"
+                  onChange={handleFileChange}
+                  disabled={isProcessingPhotos}
+                />
+              </label>
             )}
           </div>
         </div>
-
-        {shouldShowEventHint ? (
-          <Card
-            className="anim-fade mb-5 flex w-full flex-row items-center justify-start gap-2 rounded-[18px] border border-[var(--brand-accent)] bg-[var(--brand-soft)] px-3.5 py-2.5 text-left"
-            style={animStyle(0.25)}
-          >
-            <span className="flex-shrink-0 text-base">⚡</span>
-            <span className="text-[12.5px] font-bold leading-normal text-[#555149]">
-              โพสต์ที่ได้รับอนุมัติ +6 แต้ม · อีเว้นตอนนี้{" "}
-              {isEventLive ? "กำลัง Live" : "ยังไม่ Live"} · โบนัส{" "}
-              {safetyCultureEvent.bonusMode === "multiplier"
-                ? `x${safetyCultureEvent.multiplier}`
-                : `+${safetyCultureEvent.fixedPoints}`}
-            </span>
-          </Card>
-        ) : null}
 
         <Button
           onClick={handleSubmit}
@@ -367,23 +462,9 @@ export default function PostSocialPage() {
           {isProcessingPhotos ? "กำลังเตรียมรูปภาพ..." : "โพสต์"}
         </Button>
 
-        <input
-          type="file"
-          ref={cameraRef}
-          accept="image/*"
-          capture="environment"
-          className="hidden"
-          onChange={handleCameraChange}
-        />
-        <input
-          type="file"
-          ref={fileRef}
-          accept="image/*"
-          multiple
-          className="hidden"
-          onChange={handleFileChange}
-        />
       </div>
     </>
   );
 }
+
+

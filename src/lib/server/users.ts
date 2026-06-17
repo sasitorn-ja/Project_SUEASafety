@@ -4,6 +4,7 @@ import type { ResultSetHeader, RowDataPacket } from "mysql2/promise";
 
 import { queryRows, withTransaction } from "@/lib/server/db";
 import type { SsoUser } from "@/lib/server/sso-auth";
+import { hasAdminAccess } from "@/lib/access-control";
 
 export type DbUser = {
   id: string;
@@ -33,6 +34,14 @@ export type DbUser = {
 export type SessionDbUser = SsoUser & {
   id: string;
   profileImageUrl?: string;
+  roles?: string[];
+  permissions?: string[];
+  isAdmin?: boolean;
+};
+
+export type UserAccess = {
+  roles: string[];
+  permissions: string[];
 };
 
 type DbUserRow = RowDataPacket & {
@@ -58,6 +67,14 @@ type DbUserRow = RowDataPacket & {
   sso_subject: string | null;
   sso_last_login_at: Date | string | null;
   status: string;
+};
+
+type RoleCodeRow = RowDataPacket & {
+  role_code: string;
+};
+
+type PermissionCodeRow = RowDataPacket & {
+  permission_code: string;
 };
 
 function mapUser(row: DbUserRow): DbUser {
@@ -134,7 +151,38 @@ export async function getUserBySsoExternalId(ssoExternalId: string) {
   return rows[0] ? mapUser(rows[0]) : null;
 }
 
-export function dbUserToSessionUser(user: DbUser): SessionDbUser {
+export async function getUserAccess(userId: string): Promise<UserAccess> {
+  const [roleRows, permissionRows] = await Promise.all([
+    queryRows<RoleCodeRow>(
+      `
+        SELECT DISTINCT r.code AS role_code
+        FROM user_roles ur
+        INNER JOIN roles r ON r.id = ur.role_id
+        WHERE ur.user_id = :userId
+        ORDER BY r.code
+      `,
+      { userId },
+    ),
+    queryRows<PermissionCodeRow>(
+      `
+        SELECT DISTINCT p.code AS permission_code
+        FROM user_roles ur
+        INNER JOIN role_permissions rp ON rp.role_id = ur.role_id
+        INNER JOIN permissions p ON p.id = rp.permission_id
+        WHERE ur.user_id = :userId
+        ORDER BY p.code
+      `,
+      { userId },
+    ),
+  ]);
+
+  return {
+    roles: roleRows.map((row) => row.role_code).filter(Boolean),
+    permissions: permissionRows.map((row) => row.permission_code).filter(Boolean),
+  };
+}
+
+export function dbUserToSessionUser(user: DbUser, access: UserAccess = { roles: [], permissions: [] }): SessionDbUser {
   return {
     id: user.id,
     sub: user.ssoExternalId,
@@ -151,7 +199,17 @@ export function dbUserToSessionUser(user: DbUser): SessionDbUser {
     positionEn: user.positionEn || undefined,
     positionTh: user.positionTh || user.positionName || undefined,
     reportToEmail: user.reportToEmail || undefined,
+    roles: access.roles,
+    permissions: access.permissions,
+    isAdmin: hasAdminAccess(access),
   };
+}
+
+export async function getSessionUserBySsoExternalId(ssoExternalId: string) {
+  const user = await getUserBySsoExternalId(ssoExternalId);
+  if (!user) return null;
+  const access = await getUserAccess(user.id);
+  return dbUserToSessionUser(user, access);
 }
 
 export async function upsertSsoUser(user: SsoUser, rawClaims: Record<string, unknown>, providerSlug: string) {

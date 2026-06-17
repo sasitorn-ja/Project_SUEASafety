@@ -5,6 +5,7 @@ export const SAFETY_CULTURE_CATEGORIES = [
   "PPE",
   "Line Walk",
   "5S",
+  "ทั่วไป",
   "เคล็ดลับ",
 ] as const;
 
@@ -131,7 +132,7 @@ export const REWARDS_LIST: RewardItem[] = [
   },
   {
     id: 6,
-    name: "ชุดบะหมี่กิ๊ฟทีม",
+    name: "ชุดบะหมี่กิ๊ฟท์ทีม",
     category: "team",
     description: "ของรางวัลแบบทีมสำหรับใช้ในกิจกรรมหรือ celebration ภายในหน่วยงาน",
     imageText: "// team",

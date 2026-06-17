@@ -6,11 +6,14 @@ import { usePathname } from "next/navigation";
 import {
   ArrowRight,
   Bot,
+  Camera,
   CheckCircle2,
   ChevronDown,
   ClipboardCheck,
   Gift,
+  Loader2,
   MessageCircle,
+  Send,
   ShieldCheck,
   Sparkles,
   Trophy,
@@ -30,6 +33,8 @@ import { type MascotAction, useAppTheme } from "@/providers/theme-provider";
 import { useAppState } from "@/providers/app-providers";
 
 type PromptId = "today" | "rewards" | "kyt" | "rank";
+type ChatRole = "user" | "assistant";
+type ChatMessage = { id: string; role: ChatRole; content: string; error?: boolean; image?: string };
 type DragPosition = { right: number; bottom: number };
 type DragState = {
   pointerId?: number;
@@ -132,6 +137,12 @@ export function FloatingSafetyAssistant() {
   const suppressClickTimerRef = useRef<number | null>(null);
   const mouseMoveCleanupRef = useRef<(() => void) | null>(null);
   const [isDragging, setIsDragging] = useState(false);
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
+  const [chatInput, setChatInput] = useState("");
+  const [isSending, setIsSending] = useState(false);
+  const chatScrollRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const context = useMemo(
     () => getAssistantContext(pathname, awarenessDoneToday),
     [pathname, awarenessDoneToday]
@@ -223,9 +234,178 @@ export function FloatingSafetyAssistant() {
     safetyCultureEvent.headline,
   ]);
 
+  const greeting = useMemo<ChatMessage>(
+    () => ({
+      id: "greeting",
+      role: "assistant",
+      content: `${context.greeting} ${context.message} ลองพิมพ์คำถามด้านความปลอดภัยมาคุยกับน้องวางใจได้เลยนะ`,
+    }),
+    [context.greeting, context.message]
+  );
+
+  const sendMessage = async (rawText: string) => {
+    const text = rawText.trim();
+    if (!text || isSending) return;
+
+    const userMessage: ChatMessage = {
+      id: `u-${Date.now()}`,
+      role: "user",
+      content: text,
+    };
+    const history = [...chatMessages, userMessage];
+    setChatMessages(history);
+    setChatInput("");
+    setIsSending(true);
+
+    try {
+      const res = await fetch("/api/assistant/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          messages: history.map(({ role, content }) => ({ role, content })),
+          context: {
+            page: pathname,
+            points: currentUserPoints,
+            awarenessDoneToday,
+            rank: activeUser?.rank ?? null,
+            team: activeUser?.team ?? null,
+          },
+        }),
+      });
+      const payload = (await res.json().catch(() => null)) as
+        | { ok: boolean; data?: { reply?: string }; error?: string }
+        | null;
+
+      if (!res.ok || !payload?.ok || !payload.data?.reply) {
+        throw new Error(payload?.error || `request_failed_${res.status}`);
+      }
+
+      setChatMessages((current) => [
+        ...current,
+        { id: `a-${Date.now()}`, role: "assistant", content: payload.data!.reply!.trim() },
+      ]);
+    } catch {
+      setChatMessages((current) => [
+        ...current,
+        {
+          id: `e-${Date.now()}`,
+          role: "assistant",
+          content: "ขออภัย ตอนนี้น้องวางใจเชื่อมต่อ AI ไม่ได้ชั่วคราว ลองใหม่อีกครั้งนะ",
+          error: true,
+        },
+      ]);
+    } finally {
+      setIsSending(false);
+    }
+  };
+
+  // Downscale + compress an image to keep the AI request small (lower cost & faster).
+  const downscaleImage = (file: File): Promise<string> =>
+    new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onerror = () => reject(new Error("read_failed"));
+      reader.onload = () => {
+        const img = new window.Image();
+        img.onerror = () => reject(new Error("decode_failed"));
+        img.onload = () => {
+          const maxSide = 1024;
+          const scale = Math.min(1, maxSide / Math.max(img.width, img.height));
+          const width = Math.round(img.width * scale);
+          const height = Math.round(img.height * scale);
+          const canvas = document.createElement("canvas");
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext("2d");
+          if (!ctx) {
+            reject(new Error("no_canvas"));
+            return;
+          }
+          ctx.drawImage(img, 0, 0, width, height);
+          resolve(canvas.toDataURL("image/jpeg", 0.7));
+        };
+        img.src = reader.result as string;
+      };
+      reader.readAsDataURL(file);
+    });
+
+  const analyzePpePhoto = async (file: File) => {
+    if (isSending) return;
+    setIsSending(true);
+    let dataUrl: string;
+    try {
+      dataUrl = await downscaleImage(file);
+    } catch {
+      setChatMessages((current) => [
+        ...current,
+        {
+          id: `e-${Date.now()}`,
+          role: "assistant",
+          content: "ขออภัย อ่านรูปไม่สำเร็จ ลองเลือกรูปใหม่อีกครั้งนะ",
+          error: true,
+        },
+      ]);
+      setIsSending(false);
+      return;
+    }
+
+    setChatMessages((current) => [
+      ...current,
+      { id: `ui-${Date.now()}`, role: "user", content: "ช่วยตรวจการแต่งกาย PPE จากรูปนี้ให้หน่อย", image: dataUrl },
+    ]);
+
+    try {
+      const res = await fetch("/api/assistant/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          mode: "ppe",
+          image: dataUrl,
+          context: { page: pathname },
+        }),
+      });
+      const payload = (await res.json().catch(() => null)) as
+        | { ok: boolean; data?: { reply?: string }; error?: string }
+        | null;
+
+      if (!res.ok || !payload?.ok || !payload.data?.reply) {
+        throw new Error(payload?.error || `request_failed_${res.status}`);
+      }
+
+      setChatMessages((current) => [
+        ...current,
+        { id: `a-${Date.now()}`, role: "assistant", content: payload.data!.reply!.trim() },
+      ]);
+    } catch {
+      setChatMessages((current) => [
+        ...current,
+        {
+          id: `e-${Date.now()}`,
+          role: "assistant",
+          content: "ขออภัย ตอนนี้น้องวางใจวิเคราะห์รูปไม่ได้ชั่วคราว ลองใหม่อีกครั้งนะ",
+          error: true,
+        },
+      ]);
+    } finally {
+      setIsSending(false);
+    }
+  };
+
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (file) void analyzePpePhoto(file);
+  };
+
+  useEffect(() => {
+    const node = chatScrollRef.current;
+    if (node) node.scrollTop = node.scrollHeight;
+  }, [chatMessages, isSending, open]);
+
   useEffect(() => {
     setOpen(false);
     setActivePrompt("today");
+    setChatMessages([]);
+    setChatInput("");
   }, [pathname]);
 
   useEffect(() => {
@@ -480,71 +660,127 @@ export function FloatingSafetyAssistant() {
           </button>
         </div>
 
-        <div className="min-h-0 overflow-y-auto p-2.5">
-          <div className="flex items-center justify-between rounded-xl bg-white/[0.08] px-3 py-2">
-            <span className="flex items-center gap-1.5 text-[10px] font-extrabold text-white/70">
-              <Trophy className="h-3.5 w-3.5 text-[var(--brand-accent)]" strokeWidth={2.5} />
-              คะแนนของฉัน
-            </span>
-            <span className="text-[15px] font-black text-[var(--brand-accent)]">{currentUserPoints.toLocaleString()}</span>
-          </div>
+        <div className="flex items-center justify-between border-b border-white/10 px-3 py-2">
+          <span className="flex items-center gap-1.5 text-[10px] font-extrabold text-white/70">
+            <Trophy className="h-3.5 w-3.5 text-[var(--brand-accent)]" strokeWidth={2.5} />
+            คะแนนของฉัน
+          </span>
+          <span className="text-[15px] font-black text-[var(--brand-accent)]">{currentUserPoints.toLocaleString()}</span>
+        </div>
 
-          <div className="mt-3 space-y-2">
-            <div className="flex items-start gap-2">
-              <Image
-                src={mascot(context.action)}
-                alt=""
-                width={40}
-                height={40}
-                className="mt-0.5 h-8 w-8 flex-shrink-0 rounded-full bg-white/10 object-contain"
-              />
-              <div className="rounded-2xl rounded-tl-md bg-white/[0.10] px-3 py-2">
-                <p className="text-[11.5px] font-black">{context.greeting}</p>
-                <p className="mt-0.5 text-[10.5px] font-bold leading-relaxed text-white/68">{context.message}</p>
+        <div ref={chatScrollRef} className="min-h-0 flex-1 space-y-2.5 overflow-y-auto p-2.5">
+          {[greeting, ...chatMessages].map((message) =>
+            message.role === "assistant" ? (
+              <div key={message.id} className="flex items-start gap-2">
+                <Image
+                  src={mascot(context.action)}
+                  alt=""
+                  width={40}
+                  height={40}
+                  className="mt-0.5 h-7 w-7 flex-shrink-0 rounded-full bg-white/10 object-contain"
+                />
+                <div
+                  className={cn(
+                    "max-w-[80%] rounded-2xl rounded-tl-md px-3 py-2 text-[11px] font-bold leading-relaxed",
+                    message.error ? "bg-red-500/25 text-white" : "bg-white/[0.10] text-white/90"
+                  )}
+                >
+                  <p className="whitespace-pre-wrap">{message.content}</p>
+                </div>
               </div>
-            </div>
-
-            <div className="ml-10 rounded-2xl rounded-tl-md bg-[var(--brand-accent)] px-3 py-2 text-[var(--brand-accent-contrast)]">
-              <div className="mb-1 flex items-center gap-1.5 text-[9.5px] font-black uppercase tracking-[0.12em] opacity-80">
-                <MessageCircle className="h-3.5 w-3.5" strokeWidth={2.6} />
-                Hybrid AI
+            ) : (
+              <div key={message.id} className="flex justify-end">
+                <div className="max-w-[80%] overflow-hidden rounded-2xl rounded-tr-md bg-[var(--brand-accent)] text-[11px] font-bold leading-relaxed text-[var(--brand-accent-contrast)]">
+                  {message.image ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={message.image} alt="รูปที่ส่งให้ตรวจ" className="max-h-44 w-full object-cover" />
+                  ) : null}
+                  <p className="whitespace-pre-wrap px-3 py-2">{message.content}</p>
+                </div>
               </div>
-              <p className="text-[11px] font-black leading-relaxed">{botAnswer.text}</p>
-              <Link
-                href={botAnswer.href}
-                className="mt-2 inline-flex items-center gap-1 rounded-full bg-[rgba(var(--brand-nav-rgb),0.92)] px-3 py-1.5 text-[10px] font-black text-white shadow-sm transition hover:brightness-110"
-              >
-                {botAnswer.cta}
-                <ArrowRight className="h-3.5 w-3.5" strokeWidth={2.7} />
-              </Link>
+            )
+          )}
+          {isSending ? (
+            <div className="flex items-center gap-2 pl-9 text-[10px] font-bold text-white/55">
+              <Loader2 className="h-3.5 w-3.5 animate-spin" strokeWidth={2.5} />
+              น้องวางใจกำลังพิมพ์...
             </div>
-          </div>
+          ) : null}
+        </div>
 
-          <div className="mt-3 grid grid-cols-2 gap-1.5">
+        <div className="border-t border-white/10 p-2.5">
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            capture="environment"
+            onChange={handleFileChange}
+            className="hidden"
+          />
+          <button
+            type="button"
+            disabled={isSending}
+            onClick={() => fileInputRef.current?.click()}
+            className="mb-2 flex w-full items-center justify-center gap-1.5 rounded-xl border border-[var(--brand-accent)]/60 bg-[var(--brand-accent)]/15 px-3 py-2 text-[11px] font-black text-white outline-none transition hover:bg-[var(--brand-accent)]/25 focus-visible:ring-2 focus-visible:ring-[var(--brand-accent)] disabled:opacity-50"
+          >
+            <ShieldCheck className="h-4 w-4 text-[var(--brand-accent)]" strokeWidth={2.6} />
+            ถ่าย/อัปโหลดรูป ตรวจการแต่งกาย PPE
+          </button>
+          <div className="mb-2 flex flex-wrap gap-1.5">
             {prompts.map(({ id, label, Icon }) => (
               <button
                 key={id}
                 type="button"
-                onClick={() => setActivePrompt(id)}
-                className={cn(
-                  "min-h-[42px] rounded-xl border px-2.5 py-2 text-left text-[10px] font-black leading-snug outline-none transition focus-visible:ring-2 focus-visible:ring-[var(--brand-accent)]",
-                  activePrompt === id
-                    ? "border-[var(--brand-accent)] bg-white text-[var(--brand-nav)]"
-                    : "border-white/10 bg-white/[0.08] text-white/78 hover:bg-white/[0.14]"
-                )}
+                disabled={isSending}
+                onClick={() => sendMessage(label)}
+                className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/[0.08] px-2.5 py-1 text-[10px] font-bold text-white/78 outline-none transition hover:bg-white/[0.14] focus-visible:ring-2 focus-visible:ring-[var(--brand-accent)] disabled:opacity-50"
               >
-                <span className="mb-1 flex items-center gap-1.5">
-                  <Icon className="h-3.5 w-3.5 text-[var(--brand-accent)]" strokeWidth={2.5} />
-                  {label}
-                </span>
+                <Icon className="h-3 w-3 text-[var(--brand-accent)]" strokeWidth={2.5} />
+                {label}
               </button>
             ))}
           </div>
-
-          <div className="mt-2 flex items-center gap-1.5 rounded-xl bg-white/[0.06] px-3 py-2 text-[9.5px] font-bold leading-relaxed text-white/58">
-            <CheckCircle2 className="h-3.5 w-3.5 flex-shrink-0 text-[var(--brand-accent)]" strokeWidth={2.5} />
-            เวอร์ชันนี้เป็นผู้ช่วยแบบ Hybrid ยังไม่ส่งข้อมูลไป AI ภายนอก
-          </div>
+          <form
+            onSubmit={(event) => {
+              event.preventDefault();
+              sendMessage(chatInput);
+            }}
+            className="flex items-center gap-1.5"
+          >
+            <button
+              type="button"
+              disabled={isSending}
+              onClick={() => fileInputRef.current?.click()}
+              className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/[0.10] text-white/80 outline-none transition hover:bg-white/[0.18] focus-visible:ring-2 focus-visible:ring-[var(--brand-accent)] disabled:opacity-50"
+              aria-label="แนบรูปเพื่อตรวจ PPE"
+            >
+              <Camera className="h-4 w-4" strokeWidth={2.4} />
+            </button>
+            <input
+              ref={inputRef}
+              value={chatInput}
+              onChange={(event) => setChatInput(event.target.value)}
+              placeholder="พิมพ์คุยกับน้องวางใจ..."
+              disabled={isSending}
+              className="min-w-0 flex-1 rounded-full border border-white/10 bg-white/[0.10] px-3 py-2 text-[11px] font-bold text-white outline-none transition placeholder:text-white/40 focus:border-[var(--brand-accent)] disabled:opacity-60"
+            />
+            <button
+              type="submit"
+              disabled={isSending || !chatInput.trim()}
+              className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-[var(--brand-accent)] text-[var(--brand-accent-contrast)] outline-none transition hover:brightness-110 focus-visible:ring-2 focus-visible:ring-white disabled:opacity-40"
+              aria-label="ส่งข้อความ"
+            >
+              {isSending ? (
+                <Loader2 className="h-4 w-4 animate-spin" strokeWidth={2.5} />
+              ) : (
+                <Send className="h-4 w-4" strokeWidth={2.5} />
+              )}
+            </button>
+          </form>
+          <p className="mt-2 flex items-center gap-1.5 text-[9px] font-bold leading-relaxed text-white/45">
+            <CheckCircle2 className="h-3 w-3 flex-shrink-0 text-[var(--brand-accent)]" strokeWidth={2.5} />
+            ขับเคลื่อนด้วย AI (Gemma ผ่าน OpenRouter) • โปรดอย่ากรอกข้อมูลส่วนตัวที่ละเอียดอ่อน
+          </p>
         </div>
       </div>
 

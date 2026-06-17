@@ -1,12 +1,10 @@
 ﻿"use client";
 
 import Image from "next/image";
-import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowDown,
   ArrowUp,
-  ArrowLeft,
   Clock3,
   HeartPulse,
   ChevronDown,
@@ -148,7 +146,7 @@ function createRewardEditor(reward: RewardCatalogItem): RewardEditorState {
     stockTotal: Math.max(0, Number(reward.stockTotal) || 0),
     stockRemaining:
       reward.stockMode === "limited"
-        ? Math.max(0, Number(reward.stockRemaining) || Number(reward.stockTotal) || 0)
+        ? Math.max(0, Number.isNaN(Number(reward.stockRemaining)) ? Number(reward.stockTotal) || 0 : Number(reward.stockRemaining))
         : 0,
   };
 }
@@ -746,11 +744,12 @@ export default function AdminRewardPage() {
       }
 
       const fallbackTotal = Math.max(1, current.stockTotal || current.stockRemaining || 1);
+      const nextRemaining = typeof current.stockRemaining === "number" ? current.stockRemaining : fallbackTotal;
       return {
         ...current,
         stockMode: mode,
         stockTotal: fallbackTotal,
-        stockRemaining: Math.min(Math.max(0, current.stockRemaining || fallbackTotal), fallbackTotal),
+        stockRemaining: Math.min(Math.max(0, nextRemaining), fallbackTotal),
       };
     });
   };
@@ -918,16 +917,6 @@ export default function AdminRewardPage() {
           mascotSrc="/images/mascots/suea-mascot.png"
           mascotAlt="SUEA Admin Mascot"
           mascotAction="happy"
-          actions={
-            <div className="mt-[12px] flex flex-wrap gap-2">
-              <Link href="/safety-culture/rewards">
-                <Button className="h-[32px] rounded-full border border-white/30 bg-white/10 px-4 text-[12.5px] font-black text-white hover:bg-white/14 md:h-[36px] md:text-[13px]">
-                  <ArrowLeft className="mr-1 h-4 w-4" />
-                  กลับไปหน้า Rewards
-                </Button>
-              </Link>
-            </div>
-          }
         />
 
         <div className="mt-4 flex flex-col gap-4">
@@ -2058,14 +2047,7 @@ export default function AdminRewardPage() {
             ) : null}
 
             <DialogFooter className="mx-0 mb-0 rounded-b-[28px] border-t border-[var(--border)] bg-[var(--brand-soft)] px-5 py-4 sm:px-6 lg:px-8">
-              <div className="flex w-full flex-col-reverse gap-2 sm:flex-row sm:justify-end sm:pr-1 lg:pr-2">
-                <Button
-                  variant="outline"
-                  onClick={() => setEditingReward(null)}
-                  className="h-10 rounded-full border-[var(--border)] bg-white px-4 text-[13px] text-[var(--brand-text)] hover:bg-[var(--brand-soft)]"
-                >
-                  Cancel
-                </Button>
+              <div className="flex w-full justify-end sm:pr-1 lg:pr-2">
                 <Button
                   onClick={confirmRewardEdit}
                   className="h-10 rounded-full bg-[var(--brand-text)] px-4 text-[13px] text-white hover:bg-[var(--c-4a280f)]"
@@ -2186,14 +2168,7 @@ export default function AdminRewardPage() {
             ) : null}
 
             <DialogFooter className="mx-0 mb-0 rounded-b-[26px] border-t border-[var(--border)] bg-[var(--brand-soft)] px-5 py-4 sm:rounded-b-[30px] sm:px-6 sm:py-5">
-              <div className="flex w-full justify-end gap-2">
-                <Button
-                  variant="outline"
-                  onClick={() => setPendingCategoryDelete(null)}
-                  className="h-10 rounded-full border-[var(--border)] bg-white px-4 text-[13px] text-[var(--brand-text)] hover:bg-[var(--brand-soft)]"
-                >
-                  Cancel
-                </Button>
+              <div className="flex w-full justify-end">
                 <Button
                   onClick={confirmRemoveCategory}
                   className="h-10 rounded-full bg-[#b33a34] px-4 text-[13px] text-white hover:bg-[#982b26]"
