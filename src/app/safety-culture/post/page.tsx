@@ -14,6 +14,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { SAFETY_CULTURE_CATEGORIES } from "@/lib/safety-culture";
 import { getSafetyPoint } from "@/lib/point-rules";
 import { cn } from "@/lib/utils";
+import { getSessionDisplayName, getSessionInitials, useSessionUser } from "@/lib/session-user";
 
 const CATEGORIES = SAFETY_CULTURE_CATEGORIES.filter(
   (category) => !["ทั้งหมด", "ทีมของฉัน"].includes(category)
@@ -68,6 +69,7 @@ export default function PostSocialPage() {
   const router = useRouter();
   const actions = useAppActions();
   const { safetyCultureEvent, isEventLive, feedEvents } = useAppState();
+  const { user: sessionUser } = useSessionUser();
   const availableFeedEvents = feedEvents.filter((event) => event.published && event.status === "open");
   const [text, setText] = useState("");
   const [activeCategory, setActiveCategory] = useState("KYT");
@@ -148,10 +150,10 @@ export default function PostSocialPage() {
 
     actions.addPost({
       id: timestamp,
-      author: "Chaiwat T.",
+      author: getSessionDisplayName(sessionUser),
       avatarBg: "var(--brand-accent)",
       avatarColor: "#1A1A1A",
-      avatarText: "C",
+      avatarText: getSessionInitials(sessionUser),
       isYou: true,
       createdAt: timestamp,
       subtext: "BPI-04 · เมื่อสักครู่ · Yellow",
@@ -251,11 +253,11 @@ export default function PostSocialPage() {
           style={animStyle(0.05)}
         >
           <div className="flex h-11 w-11 items-center justify-center rounded-full border-2 border-[var(--brand-accent)] bg-[var(--brand-soft)] text-lg font-extrabold text-[var(--brand-accent)]">
-            C
+            {getSessionInitials(sessionUser)}
           </div>
           <div className="flex flex-col gap-1">
             <span className="text-[15px] font-extrabold text-foreground">
-              Chaiwat T.
+              {getSessionDisplayName(sessionUser)}
             </span>
             <div className="flex gap-1.5">
               <span className="rounded-md border border-[var(--brand-accent)] bg-[var(--brand-soft)] px-2 py-0.5 text-[10px] font-[850] tracking-wide text-[var(--brand-accent-strong)]">
@@ -468,4 +470,3 @@ export default function PostSocialPage() {
     </>
   );
 }
-

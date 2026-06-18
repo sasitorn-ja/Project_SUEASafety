@@ -166,6 +166,7 @@ export function MobileTopbar({ hidden = false }: { hidden?: boolean }) {
   const [open, setOpen] = useState(false);
   const { user: sessionUser } = useSessionUser();
   const [configuredMenu, setConfiguredMenu] = useState<MenuNode[]>([]);
+  const [profileImageFailed, setProfileImageFailed] = useState(false);
   const isWangjai = theme === "wangjai";
 
   const isActive = (href: string) => isMainNavActive(pathname, href);
@@ -206,6 +207,10 @@ export function MobileTopbar({ hidden = false }: { hidden?: boolean }) {
   const displayInitials = sessionUser ? getSessionInitials(sessionUser) : getProfileInitials();
   const displayUsername = sessionUser?.username || MOCK_PROFILE.username;
   const displayImage = getSessionProfileImage(sessionUser);
+
+  useEffect(() => {
+    setProfileImageFailed(false);
+  }, [displayImage]);
 
   const toggleSection = (id: string) => {
     setOpenSections((current) => ({ ...current, [id]: !current[id] }));
@@ -281,8 +286,8 @@ export function MobileTopbar({ hidden = false }: { hidden?: boolean }) {
                 >
                   <NavTo href="/profile" onClick={closeDrawer} className="flex min-w-0 flex-1 items-center gap-3 px-3 py-3">
                     <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center overflow-hidden rounded-full border border-white/20 bg-white/12">
-                      {displayImage ? (
-                        <img src={displayImage} alt={displayName} className="h-full w-full object-cover" />
+                      {displayImage && !profileImageFailed ? (
+                        <img src={displayImage} alt={displayName} onError={() => setProfileImageFailed(true)} className="h-full w-full object-cover" />
                       ) : (
                         <span className="text-[12px] font-black tracking-[0.08em] text-[var(--brand-accent)]">{displayInitials}</span>
                       )}

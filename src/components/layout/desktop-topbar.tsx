@@ -148,6 +148,7 @@ export function DesktopTopbar() {
   const isWangjai = theme === "wangjai";
   const [desktopMenu, setDesktopMenu] = useState<"dashboard" | "safety-culture" | "admin" | "profile" | null>(null);
   const [notificationOpen, setNotificationOpen] = useState(false);
+  const [profileImageFailed, setProfileImageFailed] = useState(false);
   const notificationRef = useRef<HTMLDivElement>(null);
   const unreadNotificationCount = inboxNotifications.filter((item) => !item.read).length;
 
@@ -190,6 +191,10 @@ export function DesktopTopbar() {
   const adminSections = canUseAdmin ? configuredAdmin?.children.filter((node) => node.enabled) ?? [] : [];
   const displayName = sessionUser ? getSessionDisplayName(sessionUser) : getProfileDisplayName();
   const displayImage = getSessionProfileImage(sessionUser);
+
+  useEffect(() => {
+    setProfileImageFailed(false);
+  }, [displayImage]);
 
   return (
     <header
@@ -469,10 +474,11 @@ export function DesktopTopbar() {
                 "shadow-[0_8px_18px_rgba(var(--brand-accent-rgb),0.22)] transition-colors hover:bg-[var(--brand-accent)]"
               )}
             >
-              {displayImage ? (
+              {displayImage && !profileImageFailed ? (
                 <img
                   src={displayImage}
                   alt={displayName}
+                  onError={() => setProfileImageFailed(true)}
                   className="h-full w-full rounded-full border-2 border-white/75 object-cover"
                 />
               ) : (

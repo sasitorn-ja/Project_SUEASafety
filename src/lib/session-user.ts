@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { hasAdminAccess } from "@/lib/access-control";
+import { PROFILE_IMAGE_UPDATED_EVENT } from "@/lib/profile";
 
 const LOGIN_SESSION_KEY = "cpac-safety-login-session";
 
@@ -87,23 +88,27 @@ export function useSessionUser() {
       demoLoginAllowed = false;
     }
 
-    fetch("/api/auth/session", {
-      credentials: "include",
-      cache: "no-store",
-    })
-      .then((response) => (response.ok ? response.json() : { user: null }))
-      .then((session) => {
+    const loadSession = async () => {
+      try {
+        const response = await fetch("/api/auth/session", {
+          credentials: "include",
+          cache: "no-store",
+        });
+        const session = response.ok ? await response.json().catch(() => ({ user: null })) : { user: null };
         if (!cancelled) setUser(session.user || (demoLoginAllowed ? DEMO_ADMIN_USER : null));
-      })
-      .catch(() => {
+      } catch {
         if (!cancelled) setUser(demoLoginAllowed ? DEMO_ADMIN_USER : null);
-      })
-      .finally(() => {
+      } finally {
         if (!cancelled) setLoading(false);
-      });
+      }
+    };
+
+    void loadSession();
+    window.addEventListener(PROFILE_IMAGE_UPDATED_EVENT, loadSession);
 
     return () => {
       cancelled = true;
+      window.removeEventListener(PROFILE_IMAGE_UPDATED_EVENT, loadSession);
     };
   }, []);
 

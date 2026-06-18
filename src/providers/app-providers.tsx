@@ -17,6 +17,7 @@ import {
 } from "@/lib/safety-awareness";
 import { getSafetyPoint } from "@/lib/point-rules";
 import { apiFetch, apiJson } from "@/lib/api-client";
+import { getSessionDisplayName, getSessionInitials, type SessionUser } from "@/lib/session-user";
 
 export type HealthData = {
   systolic?: number;
@@ -1264,6 +1265,42 @@ type ApiPost = {
   hasLiked: boolean;
 };
 
+type ApiAwarenessAttempt = {
+  id: string | number;
+  attempt_date?: string;
+  attemptDate?: string;
+  completed_at?: string;
+  completedAt?: string;
+  score?: string | number;
+};
+
+function normalizeDateKey(value: unknown) {
+  if (!value) return "";
+  const raw = String(value);
+  if (/^\d{4}-\d{2}-\d{2}/.test(raw)) return raw.slice(0, 10);
+  const parsed = new Date(raw);
+  if (Number.isNaN(parsed.getTime())) return "";
+  return todayKey(parsed);
+}
+
+function awarenessCompletionFromApi(item: ApiAwarenessAttempt): AwarenessCompletion | null {
+  const date = normalizeDateKey(item.attempt_date || item.attemptDate || item.completed_at || item.completedAt);
+  if (!date) return null;
+  const percent = Math.max(0, Math.min(100, Math.round(Number(item.score || 0))));
+  const completedAt = item.completed_at || item.completedAt || `${date}T00:00:00.000Z`;
+  return {
+    date,
+    completedAt: String(completedAt),
+    score: percent,
+    total: 100,
+    questions: [],
+  };
+}
+
+function userDisplayName(user?: SessionUser | null) {
+  return user ? getSessionDisplayName(user) : DEFAULT_CURRENT_USER_NAME;
+}
+
 function postFromApi(post: ApiPost): Post {
   const idNumber = Number(post.id);
   return {
@@ -1323,6 +1360,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
 
   // true เมื่อมี session (ล็อกอินแล้ว) ใช้กันไม่ให้ยิง API ที่ต้องล็อกอินตอนยังไม่ล็อกอิน -> ไม่มี error 401 ใน console
   const isAuthenticatedRef = useRef(false);
+  const currentUserRef = useRef<SessionUser | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -1330,20 +1368,23 @@ export function AppProviders({ children }: { children: ReactNode }) {
     async function loadBackendState() {
       // ตรวจ session ก่อน ถ้ายังไม่ล็อกอินก็ไม่ต้องเรียก API ที่ต้องยืนยันตัวตน
       let authed = false;
+      let sessionUser: SessionUser | null = null;
       try {
         const sessionRes = await fetch("/api/auth/session", { credentials: "include", cache: "no-store" });
         if (sessionRes.ok) {
           const session = await sessionRes.json().catch(() => null);
           authed = !!(session?.authenticated || session?.user);
+          sessionUser = session?.user || null;
         }
       } catch {
         authed = false;
       }
       if (cancelled) return;
       isAuthenticatedRef.current = authed;
+      currentUserRef.current = sessionUser;
       if (!authed) return;
 
-      const [postsResult, balanceResult, notificationsResult, rewardsResult, leaderboardResult, teamsResult, awarenessResult, holidaysResult, eventsResult] = await Promise.all([
+      const [postsResult, balanceResult, notificationsResult, rewardsResult, leaderboardResult, teamsResult, awarenessResult, attemptsResult, holidaysResult, eventsResult] = await Promise.all([
         apiFetch<{ items: ApiPost[] }>("/api/safety-culture/posts?limit=50"),
         apiFetch<{ balance: { balance: number } }>("/api/safety-culture/points/me"),
         apiFetch<{ items: Array<Record<string, unknown>> }>("/api/notifications?limit=100"),
@@ -1351,6 +1392,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
         apiFetch<{ items: Array<Record<string, unknown>> }>("/api/safety-culture/leaderboard"),
         apiFetch<{ items: Array<Record<string, unknown>> }>("/api/safety-culture/teams"),
         apiFetch<{ items: Array<Record<string, unknown>> }>("/api/safety-awareness/questions"),
+        apiFetch<{ items: ApiAwarenessAttempt[] }>("/api/safety-awareness/attempts/me?pageSize=120"),
         apiFetch<{ items: Array<Record<string, unknown>> }>(`/api/holidays?year=${new Date().getFullYear()}`),
         apiFetch<{ items: Array<Record<string, unknown>> }>("/api/safety-culture/events?pageSize=100"),
       ]);
@@ -1399,6 +1441,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
           name: String(item.name_th || item.name || "Unknown user"),
           points: Number(item.points || 0),
           team: String(item.team || ""),
+          active: Boolean(sessionUser?.id && String(item.user_id || item.id) === String(sessionUser.id)),
         })));
       }
 
@@ -1430,6 +1473,15 @@ export function AppProviders({ children }: { children: ReactNode }) {
             enabled: true,
           };
         }));
+      }
+
+      if (attemptsResult.ok && Array.isArray(attemptsResult.data?.items)) {
+        const history = attemptsResult.data.items
+          .map(awarenessCompletionFromApi)
+          .filter((item): item is AwarenessCompletion => Boolean(item))
+          .sort((left, right) => left.date.localeCompare(right.date));
+        setAwarenessHistory(history);
+        setAwarenessDoneDate(history.some((item) => item.date === todayKey()) ? todayKey() : "");
       }
 
       if (holidaysResult.ok && Array.isArray(holidaysResult.data?.items)) {
@@ -1609,6 +1661,8 @@ export function AppProviders({ children }: { children: ReactNode }) {
     const occurredAt = Date.now();
     let targetPost: Post | null = null;
     let currentAwardedPoints = 0;
+    const actorName = userDisplayName(currentUserRef.current);
+    const actorInitials = currentUserRef.current ? getSessionInitials(currentUserRef.current) : "U";
 
     setPosts((prev) =>
       prev.map((p) => {
@@ -1626,8 +1680,8 @@ export function AppProviders({ children }: { children: ReactNode }) {
             ...currentComments,
             {
               id: `${Date.now()}`,
-              author: "Chaiwat T.",
-              avatarText: "C",
+              author: actorName,
+              avatarText: actorInitials,
               text,
             },
           ],
@@ -1814,38 +1868,55 @@ export function AppProviders({ children }: { children: ReactNode }) {
     const date = todayKey();
     const occurredAt = Date.now();
     const points = getSafetyPoint("safetyAwarenessCompleted");
+    const actorName = userDisplayName(currentUserRef.current);
+    const alreadyCompletedToday = awarenessDoneDate === date || awarenessHistory.some((item) => item.date === date);
     setAwarenessDoneDate(date);
     setAwarenessHistory((current) => [
       ...current.filter((item) => item.date !== date),
       { ...completion, date, completedAt: new Date().toISOString() },
     ]);
-    setCurrentUserPoints((prev) => prev + points);
-    setUserActivityHistory((current) =>
-      normalizeUserActivityHistory([
-        {
-          id: `activity-awareness-${date}`,
-          type: "awareness",
-          occurredAt,
-          postId: 0,
-          postAuthor: DEFAULT_CURRENT_USER_NAME,
-          postCategory: "Safety Awareness",
-          postPreview: `ผ่าน Safety Awareness ประจำวัน ได้ ${completion.score}/${completion.total} ข้อ`,
-          pointsDelta: points,
-        },
-        ...current.filter((item) => item.id !== `activity-awareness-${date}`),
-      ])
-    );
-    if (isAuthenticatedRef.current) void apiFetch("/api/safety-awareness/attempts", apiJson("POST", {
-      score: completion.score,
-      total: completion.total,
-      questions: completion.questions,
-    }));
-  }, []);
+    if (!alreadyCompletedToday) {
+      setCurrentUserPoints((prev) => prev + points);
+      setUserActivityHistory((current) =>
+        normalizeUserActivityHistory([
+          {
+            id: `activity-awareness-${date}`,
+            type: "awareness",
+            occurredAt,
+            postId: 0,
+            postAuthor: actorName,
+            postCategory: "Safety Awareness",
+            postPreview: `ผ่าน Safety Awareness ประจำวัน ได้ ${completion.score}/${completion.total} ข้อ`,
+            pointsDelta: points,
+          },
+          ...current.filter((item) => item.id !== `activity-awareness-${date}`),
+        ])
+      );
+    }
+    if (isAuthenticatedRef.current) {
+      void (async () => {
+        const saved = await apiFetch<{ attempt: { attemptDate?: string; score?: number; total?: number } }>("/api/safety-awareness/attempts", apiJson("POST", {
+          score: completion.score,
+          total: completion.total,
+          questions: completion.questions,
+        }));
+        if (!saved.ok) {
+          setNotification({ type: "info", message: "บันทึก Safety Awareness ไม่สำเร็จ กรุณารีเฟรชแล้วลองอีกครั้ง" });
+          return;
+        }
+        const balance = await apiFetch<{ balance: { balance: number } }>("/api/safety-culture/points/me");
+        if (balance.ok && typeof balance.data?.balance?.balance === "number") {
+          setCurrentUserPoints(Math.max(0, balance.data.balance.balance));
+        }
+      })();
+    }
+  }, [awarenessDoneDate, awarenessHistory]);
 
   const awardSafetyEffortCompletion = useCallback((sourceId: string, label = "Safety Effort สำเร็จ") => {
     const occurredAt = Date.now();
     const points = getSafetyPoint("safetyEffortCompleted");
     const activityId = `activity-safety-effort-${sourceId}`;
+    const actorName = userDisplayName(currentUserRef.current);
 
     setCurrentUserPoints((prev) => prev + points);
     setUserActivityHistory((current) =>
@@ -1855,7 +1926,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
           type: "safety-effort",
           occurredAt,
           postId: 0,
-          postAuthor: DEFAULT_CURRENT_USER_NAME,
+          postAuthor: actorName,
           postCategory: "Safety Effort",
           postPreview: label,
           pointsDelta: points,
@@ -1906,7 +1977,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
             rewardCategory: reward.category,
             pointsSpent: points,
             redeemedAt: redeemedAtIso,
-            redeemedBy: DEFAULT_CURRENT_USER_NAME,
+            redeemedBy: userDisplayName(currentUserRef.current),
           },
           ...current,
         ])
@@ -1918,7 +1989,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
             type: "redeem",
             occurredAt,
             postId: 0,
-            postAuthor: DEFAULT_CURRENT_USER_NAME,
+            postAuthor: userDisplayName(currentUserRef.current),
             postCategory: reward.category || "Reward",
             postPreview: `แลกรางวัล "${reward.name}" สำเร็จ ใช้ ${points.toLocaleString()} แต้ม`,
             pointsDelta: -Math.max(0, points),
