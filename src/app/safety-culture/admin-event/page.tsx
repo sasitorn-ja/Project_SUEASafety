@@ -335,6 +335,7 @@ export default function AdminEventPage() {
   const [editingFeedEventId, setEditingFeedEventId] = useState<string | null>(feedEvents[0]?.id ?? null);
   const [feedModalEventId, setFeedModalEventId] = useState<string | null>(null);
   const [feedModalDraft, setFeedModalDraft] = useState<SafetyCultureFeedEvent | null>(null);
+  const [feedModalMultiplierInput, setFeedModalMultiplierInput] = useState("1");
   const [feedModalMode, setFeedModalMode] = useState<"create" | "edit">("edit");
   const [pendingDeleteFeedEvent, setPendingDeleteFeedEvent] = useState<{ id: string; title: string } | null>(null);
   const [editorMode] = useState<(typeof ADMIN_EDITOR_MODES)[number]["id"]>("feed");
@@ -369,6 +370,10 @@ export default function AdminEventPage() {
       return feedEvents[0]?.id ?? null;
     });
   }, [feedEvents]);
+
+  useEffect(() => {
+    setFeedModalMultiplierInput(feedModalDraft ? `${feedModalDraft.multiplier}` : "1");
+  }, [feedModalDraft?.multiplier]);
 
   const autoHeadline = buildAutoHeadline(eventName, bonusMode, multiplier, fixedPoints);
   const autoSupportingText = buildAutoSupportingText(bonusMode, startTime, endTime);
@@ -680,10 +685,50 @@ export default function AdminEventPage() {
     }
     setFeedModalEventId(null);
     setFeedModalDraft(null);
+    setFeedModalMultiplierInput("1");
   };
 
   const patchFeedModalDraft = (recipe: (event: SafetyCultureFeedEvent) => SafetyCultureFeedEvent) => {
     setFeedModalDraft((current) => (current ? syncFeedEventDateLabel(recipe(current)) : current));
+  };
+
+  const handleFeedModalMultiplierChange = (value: string) => {
+    if (!/^\d*\.?\d*$/.test(value)) return;
+
+    setFeedModalMultiplierInput(value);
+
+    if (!value || value === ".") return;
+
+    const parsed = Number(value);
+    if (Number.isNaN(parsed)) return;
+
+    patchFeedModalDraft((current) => ({
+      ...current,
+      multiplier: parsed,
+    }));
+  };
+
+  const handleFeedModalMultiplierBlur = () => {
+    if (!feedModalDraft) return;
+
+    if (!feedModalMultiplierInput || feedModalMultiplierInput === ".") {
+      setFeedModalMultiplierInput(`${feedModalDraft.multiplier}`);
+      return;
+    }
+
+    const parsed = Number(feedModalMultiplierInput);
+    if (Number.isNaN(parsed)) {
+      setFeedModalMultiplierInput(`${feedModalDraft.multiplier}`);
+      return;
+    }
+
+    const normalized = parsed > 0 ? parsed : 1;
+
+    patchFeedModalDraft((current) => ({
+      ...current,
+      multiplier: normalized,
+    }));
+    setFeedModalMultiplierInput(`${normalized}`);
   };
 
   const toggleFeedModalBonusEnabled = () => {
@@ -704,13 +749,22 @@ export default function AdminEventPage() {
 
   const handleApplyFeedModal = () => {
     if (!feedModalEventId || !feedModalDraft) return;
-    const nextEvents = draftFeedEvents.map((event) => (event.id === feedModalEventId ? syncFeedEventDateLabel(feedModalDraft) : event));
+    const normalizedMultiplier = Number(feedModalMultiplierInput);
+    const nextDraft =
+      feedModalDraft.bonusMode === "multiplier" && Number.isFinite(normalizedMultiplier) && normalizedMultiplier > 0
+        ? {
+            ...feedModalDraft,
+            multiplier: normalizedMultiplier,
+          }
+        : feedModalDraft;
+    const nextEvents = draftFeedEvents.map((event) => (event.id === feedModalEventId ? syncFeedEventDateLabel(nextDraft) : event));
     setDraftFeedEvents(nextEvents);
     setEditingFeedEventId(feedModalEventId);
     updateFeedEvents(nextEvents);
     setActivitySaveLabel("saved");
     setFeedModalEventId(null);
     setFeedModalDraft(null);
+    setFeedModalMultiplierInput("1");
   };
 
   return (
@@ -2052,14 +2106,10 @@ export default function AdminEventPage() {
                             min={1}
                             step="0.1"
                             inputMode="decimal"
-                            value={`${feedModalDraft.multiplier}`}
+                            value={feedModalMultiplierInput}
                             disabled={feedModalDraft.bonusMode !== "multiplier"}
-                            onChange={(event) =>
-                              patchFeedModalDraft((current) => ({
-                                ...current,
-                                multiplier: Math.max(1, Number(event.target.value) || 1),
-                              }))
-                            }
+                            onChange={(event) => handleFeedModalMultiplierChange(event.target.value)}
+                            onBlur={handleFeedModalMultiplierBlur}
                             className="h-11 rounded-[14px] border-[var(--c-d7c5a7)] bg-white text-[14px] font-bold text-[#1A1A1A] focus-visible:border-[var(--c-5c3214)] focus-visible:ring-0 disabled:cursor-not-allowed disabled:bg-[#f5f1e8] disabled:text-[#9a9488]"
                           />
                         </div>

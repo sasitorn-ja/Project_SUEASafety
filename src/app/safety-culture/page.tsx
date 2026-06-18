@@ -20,9 +20,10 @@ import {
   COMMENT_REACTION_CHOICES,
   formatPostSubtext,
 } from "@/lib/safety-culture";
-import { CalendarDays, ChevronLeft, ChevronRight, Clock3, Heart, ImageIcon, Sparkles, Trophy, X } from "lucide-react";
+import { CalendarDays, ChevronLeft, ChevronRight, Clock3, Heart, ImageIcon, Sparkles, Trophy, UsersRound, X } from "lucide-react";
 import { SafetyCultureHero } from "@/components/safety-culture/safety-culture-hero";
 import { SafetyCultureTabs } from "@/components/safety-culture/safety-culture-tabs";
+import { useAppTheme } from "@/providers/theme-provider";
 
 function getPostComments(post: { comments: number | CommentType[] }): CommentType[] {
   if (Array.isArray(post.comments)) return post.comments;
@@ -69,34 +70,69 @@ function LeadingTeamCard({ className, style }: { className?: string; style?: CSS
 
 function TeamStandingsCard({ className, style }: { className?: string; style?: CSSProperties }) {
   const { teamStandings } = useAppState();
+  const { themedColor } = useAppTheme();
   return (
-    <Card className={cn("flex flex-col gap-3 rounded-[20px] border-[var(--c-e4d4b8)] bg-[var(--c-fffdf7)] p-5 font-sarabun", className)} style={style}>
-      <span className="text-[13px] font-[850] uppercase tracking-wide text-muted-foreground">TEAM RANK · YTD</span>
-      <h3 className="mt-0.5 mb-2 text-[20px] font-extrabold text-[#1A1A1A]">ตารางคะแนนทีม</h3>
-      <div className="flex flex-col gap-2.5">
-        {teamStandings.map((team) => (
-          <div key={team.id} className="flex flex-col gap-1.5 rounded-2xl border-[1.5px] border-[var(--c-ddd9cd)] bg-[var(--c-faf8f2)] p-2.5 md:p-3">
-            <div className="flex items-center justify-between gap-2">
-              <div className="flex min-w-0 items-center gap-2.5">
-                <span className="min-w-[12px] text-[17px] font-black text-[#1A1A1A]">{team.rank}</span>
-                <div className="h-4 w-4 flex-shrink-0 rounded-full border-[1.5px] border-[#1A1A1A]" style={{ backgroundColor: team.color }} />
-                <div className="min-w-0">
-                  <span className="block truncate text-[15.5px] font-extrabold text-[#1A1A1A]">{team.name}</span>
-                  <span className="text-[11.5px] font-bold text-[#8E8A81]">{team.members} สมาชิก</span>
+    <Card
+      className={cn(
+        "overflow-hidden rounded-[24px] border-[1.5px] border-[var(--border)] bg-[linear-gradient(180deg,rgba(255,255,255,0.82),rgba(255,255,255,0.62))] shadow-[0_16px_36px_var(--brand-shadow)] backdrop-blur-sm font-sarabun",
+        className
+      )}
+      style={style}
+    >
+      <div className="border-b border-[var(--border)] px-3.5 py-3.5 xl:px-4 xl:py-4">
+        <p className="text-[12.5px] font-black tracking-[0.01em] text-[var(--foreground)] xl:text-[13px]">ลำดับทีม · YTD</p>
+      </div>
+
+      <div className="space-y-2.5 p-2.5 xl:space-y-3 xl:p-4">
+        {teamStandings.map((team, idx) => (
+          <article
+            key={team.id}
+            className="rounded-[18px] border border-[var(--border)] bg-[var(--brand-surface)] px-2.5 py-2.5 shadow-[0_8px_22px_var(--brand-shadow)] transition-all duration-200 hover:-translate-y-[1px] hover:border-[rgba(var(--brand-accent-rgb),0.45)] xl:rounded-[20px] xl:px-4 xl:py-3"
+          >
+            <div className="flex items-center gap-2.5 xl:gap-3">
+              <div className="flex min-w-0 flex-1 items-center gap-2.5 xl:gap-3.5">
+                <div className="flex w-6 flex-shrink-0 items-center justify-center text-[17px] font-black text-[var(--foreground)] xl:w-7 xl:text-[20px]">
+                  {team.rank}
+                </div>
+                <div
+                  className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-[12px] border border-white/70 shadow-[inset_0_1px_0_rgba(255,255,255,0.4)] xl:h-12 xl:w-12 xl:rounded-[14px]"
+                  style={{ background: `linear-gradient(180deg, ${themedColor(team.color)}, color-mix(in srgb, ${themedColor(team.color)} 76%, white))` }}
+                >
+                  <UsersRound className="h-5 w-5 text-white xl:h-6 xl:w-6" strokeWidth={2.2} />
+                </div>
+
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-1.5 xl:gap-2">
+                    <h4 className="truncate text-[14px] font-black text-[var(--foreground)] xl:text-[16.5px]">{team.name}</h4>
+                    {idx === 0 ? (
+                      <span className="rounded-full bg-[var(--brand-soft)] px-1.5 py-0.5 text-[8px] font-extrabold uppercase tracking-[0.12em] text-[var(--brand-text)] xl:px-2 xl:text-[9px]">
+                        Leader
+                      </span>
+                    ) : null}
+                  </div>
+                  <p className="mt-0.5 truncate text-[10px] font-bold text-[var(--brand-muted-text)] xl:text-[11.5px]">{team.members} สมาชิก</p>
                 </div>
               </div>
+
               <div className="flex-shrink-0 text-right">
-                <span className="text-[15.5px] font-black text-[#1A1A1A]">{team.points.toLocaleString()}</span>
-                <span className="block text-[10px] font-bold text-[#8E8A81]">POINTS</span>
+                <p className="text-[16px] leading-none font-black text-[var(--foreground)] xl:text-[20px]">{team.points.toLocaleString()}</p>
+                <p className="mt-1 text-[8px] font-bold uppercase tracking-[0.1em] text-[var(--brand-muted-text)] xl:text-[9px] xl:tracking-[0.12em]">คะแนน</p>
               </div>
             </div>
-            <div className="h-[5px] w-full overflow-hidden rounded-full bg-[var(--c-efebe0)]">
-              <div
-                className="h-full rounded-full transition-[width] duration-1000 ease-out"
-                style={{ width: `${team.percent}%`, backgroundColor: team.color }}
-              />
+
+            <div className="mt-2.5 xl:mt-3">
+              <div className="mb-1 flex items-center justify-between text-[9px] font-bold text-[var(--brand-muted-text)] xl:mb-1.5 xl:text-[10px]">
+                <span>ภาพรวมทีม</span>
+                <span>{team.percent}%</span>
+              </div>
+              <div className="h-[6px] w-full overflow-hidden rounded-full bg-[var(--secondary)] xl:h-[7px]">
+                <div
+                  className="h-full rounded-full transition-[width] duration-1000 ease-out"
+                  style={{ width: `${team.percent}%`, backgroundColor: themedColor(team.color) }}
+                />
+              </div>
             </div>
-          </div>
+          </article>
         ))}
       </div>
     </Card>
@@ -106,24 +142,53 @@ function TeamStandingsCard({ className, style }: { className?: string; style?: C
 function PersonalRankingsCard({ className, style }: { className?: string; style?: CSSProperties }) {
   const { personalRankings } = useAppState();
   return (
-    <Card className={cn("flex flex-col gap-4 rounded-[24px] border-[var(--c-e4d4b8)] bg-[var(--c-fffdf7)] p-5 font-sarabun", className)} style={style}>
-      <span className="text-[13px] font-[850] uppercase tracking-wide text-muted-foreground">INSIDE YOUR TEAM · MONTH</span>
-      <h3 className="mt-0.5 mb-2 text-[20px] font-extrabold text-[#1A1A1A]">อันดับในทีมของฉัน</h3>
-      <div className="flex flex-col gap-2">
+    <Card
+      className={cn(
+        "overflow-hidden rounded-[24px] border-[1.5px] border-[var(--border)] bg-[linear-gradient(180deg,rgba(255,255,255,0.92),rgba(255,255,255,0.70))] shadow-[0_16px_36px_var(--brand-shadow)] backdrop-blur-sm font-sarabun",
+        className
+      )}
+      style={style}
+    >
+      <div className="border-b border-[var(--border)] px-4 py-4">
+        <p className="text-[14px] font-black tracking-[0.01em] text-[var(--foreground)]">อันดับในทีมของฉัน · เดือนนี้</p>
+      </div>
+
+      <div className="space-y-2.5 p-3 md:p-4">
         {personalRankings.map((user) => (
-          <div
+          <article
             key={user.id}
             className={cn(
-              "flex items-center justify-between rounded-xl border-[1.5px] px-3.5 py-2 text-[15px] font-bold text-[#1A1A1A]",
-              user.active ? "border-[var(--c-f5bb00)] bg-[var(--c-fff9e6)] shadow-[inset_0_0_0_1.5px_var(--c-f5bb00)]" : "border-transparent bg-transparent"
+              "flex items-center justify-between gap-3 rounded-[18px] border px-3 py-3 shadow-[0_8px_22px_var(--brand-shadow)] transition-all duration-200 md:px-4",
+              user.active
+                ? "border-[rgba(var(--brand-accent-rgb),0.55)] bg-[linear-gradient(180deg,rgba(var(--brand-accent-rgb),0.10),rgba(var(--brand-accent-rgb),0.03))]"
+                : "border-[var(--border)] bg-[var(--brand-surface)] hover:border-[rgba(var(--brand-accent-rgb),0.4)]"
             )}
           >
-            <div className="flex min-w-0 items-center gap-2">
-              <span className="min-w-[20px] font-extrabold text-[#8E8A81]">{user.rank}</span>
-              <span className="truncate font-[750]">{user.name}</span>
+            <div className="flex min-w-0 items-center gap-3">
+              <div
+                className={cn(
+                  "flex h-9 min-w-9 items-center justify-center rounded-full border text-[13px] font-black shadow-[inset_0_1px_0_rgba(255,255,255,0.45)]",
+                  user.active
+                    ? "border-[rgba(var(--brand-accent-rgb),0.36)] bg-[var(--brand-soft)] text-[var(--brand-text)]"
+                    : "border-[var(--border)] bg-[rgba(255,255,255,0.8)] text-[var(--brand-muted-text)]"
+                )}
+              >
+                {user.rank}
+              </div>
+
+              <div className="min-w-0">
+                <p className="truncate text-[18px] leading-tight font-black text-[var(--foreground)]">{user.name}</p>
+                <p className="mt-0.5 text-[12px] font-bold text-[var(--brand-muted-text)]">
+                  {user.active ? "ลำดับของคุณในทีม" : "สมาชิกในทีม"}
+                </p>
+              </div>
             </div>
-            <span className="flex-shrink-0 font-extrabold text-[15px]">{user.points} แต้ม</span>
-          </div>
+
+            <div className="flex-shrink-0 text-right">
+              <p className="text-[24px] leading-none font-black text-[var(--foreground)]">{user.points}</p>
+              <p className="mt-1 text-[10px] font-bold uppercase tracking-[0.12em] text-[var(--brand-muted-text)]">แต้ม</p>
+            </div>
+          </article>
         ))}
       </div>
     </Card>

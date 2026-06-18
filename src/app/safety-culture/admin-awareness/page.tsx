@@ -1,10 +1,9 @@
 "use client";
 
-import Link from "next/link";
 import { type ChangeEvent, useMemo, useState } from "react";
 import {
-  ArrowLeft,
   CalendarOff,
+  ChevronDown,
   CheckCircle2,
   CircleSlash,
   Download,
@@ -101,6 +100,8 @@ export default function AdminAwarenessPage() {
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [editor, setEditor] = useState<EditorState | null>(null);
+  const [pendingDeleteQuestion, setPendingDeleteQuestion] = useState<SafetyAwarenessQuestion | null>(null);
+  const [collapsedCategories, setCollapsedCategories] = useState<Record<string, boolean>>({});
   const [importOpen, setImportOpen] = useState(false);
   const [importReplace, setImportReplace] = useState(false);
   const [importQuestions, setImportQuestions] = useState<SafetyAwarenessQuestion[]>([]);
@@ -147,6 +148,19 @@ export default function AdminAwarenessPage() {
 
   const deleteQuestion = (id: string) => {
     updateAwarenessQuestions(awarenessQuestions.filter((q) => q.id !== id));
+  };
+
+  const confirmDeleteQuestion = () => {
+    if (!pendingDeleteQuestion) return;
+    deleteQuestion(pendingDeleteQuestion.id);
+    setPendingDeleteQuestion(null);
+  };
+
+  const toggleCategoryCollapsed = (category: string) => {
+    setCollapsedCategories((current) => ({
+      ...current,
+      [category]: !current[category],
+    }));
   };
 
   const saveEditor = () => {
@@ -287,15 +301,6 @@ export default function AdminAwarenessPage() {
         mascotSrc="/images/mascots/gallery/line-walk-3.png"
         mascotAlt="SUEA Mascot"
         mascotAction="flashlight"
-        actions={
-          <div className="mt-[12px] flex flex-wrap gap-2">
-            <Link href="/safety-culture">
-              <Button className="h-[34px] rounded-full border border-white/30 bg-white/10 px-4 text-[12.5px] font-black text-white hover:bg-white/14">
-                <ArrowLeft className="h-4 w-4" /> กลับ Safety Culture
-              </Button>
-            </Link>
-          </div>
-        }
       />
 
       {/* Stat strip */}
@@ -443,8 +448,22 @@ export default function AdminAwarenessPage() {
                     <Badge className="rounded-full border border-[var(--c-d7c5a7)] bg-[var(--c-fff6d6)] px-2 py-0.5 text-[10.5px] font-black text-[var(--c-8b5a12)]">
                       {items.length} ข้อ
                     </Badge>
+                    <button
+                      type="button"
+                      onClick={() => toggleCategoryCollapsed(category)}
+                      className="ml-auto flex h-7 w-7 items-center justify-center rounded-full border border-[var(--c-d7c5a7)] bg-white text-[var(--c-5c3214)] hover:bg-[var(--c-fff2d8)]"
+                      aria-label={`สลับการแสดงหมวด ${category}`}
+                    >
+                      <ChevronDown
+                        className={cn(
+                          "h-4 w-4 transition-transform",
+                          collapsedCategories[category] ? "-rotate-90" : "rotate-0"
+                        )}
+                        strokeWidth={2.4}
+                      />
+                    </button>
                   </div>
-                  <div className="flex flex-col gap-2">
+                  {!collapsedCategories[category] ? <div className="flex flex-col gap-2">
                     {items.map((q) => (
                       <div
                         key={q.id}
@@ -507,7 +526,7 @@ export default function AdminAwarenessPage() {
                           <button
                             type="button"
                             title="ลบ"
-                            onClick={() => deleteQuestion(q.id)}
+                            onClick={() => setPendingDeleteQuestion(q)}
                             className="flex h-8 w-8 items-center justify-center rounded-lg border border-[#eccdc6] bg-white text-[#b3271a] hover:bg-[#fbe3df]"
                           >
                             <Trash2 className="h-4 w-4" />
@@ -515,7 +534,7 @@ export default function AdminAwarenessPage() {
                         </div>
                       </div>
                     ))}
-                  </div>
+                  </div> : null}
                 </div>
               ))}
             </div>
@@ -634,17 +653,40 @@ export default function AdminAwarenessPage() {
 
           <DialogFooter>
             <Button
-              onClick={() => setEditor(null)}
-              className="h-9 rounded-xl border border-[var(--c-d7c5a7)] bg-white px-4 text-[12.5px] font-black text-[var(--c-5c3214)] hover:bg-[var(--c-fff2d8)]"
-            >
-              ยกเลิก
-            </Button>
-            <Button
               onClick={saveEditor}
               disabled={!editor?.text.trim()}
               className="h-9 rounded-xl bg-[var(--c-5c3214)] px-4 text-[12.5px] font-black text-white hover:bg-[var(--c-4a280f)] disabled:opacity-50"
             >
               บันทึก
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!pendingDeleteQuestion} onOpenChange={(open) => !open && setPendingDeleteQuestion(null)}>
+        <DialogContent className="font-sarabun sm:max-w-[460px]">
+          <DialogHeader>
+            <DialogTitle className="text-[var(--c-3b1d07)]">ยืนยันการลบคำถาม</DialogTitle>
+            <DialogDescription>
+              หากยืนยัน คำถามข้อนี้จะถูกลบออกจากคลังคำถามทันที
+            </DialogDescription>
+          </DialogHeader>
+
+          {pendingDeleteQuestion ? (
+            <div className="rounded-xl border border-[#eccdc6] bg-[#fff8f6] px-4 py-3">
+              <div className="text-[12px] font-black text-[#b3271a]">{pendingDeleteQuestion.category}</div>
+              <div className="mt-1 text-[13px] font-bold leading-relaxed text-[var(--c-3b1d07)]">
+                {pendingDeleteQuestion.text}
+              </div>
+            </div>
+          ) : null}
+
+          <DialogFooter>
+            <Button
+              onClick={confirmDeleteQuestion}
+              className="h-9 rounded-xl bg-[#b3271a] px-4 text-[12.5px] font-black text-white hover:bg-[#962113]"
+            >
+              ลบคำถาม
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -767,7 +809,7 @@ function StatCard({
         ? "text-[var(--c-9a8a72,#9a8a72)] bg-[var(--c-f6f1e6)]"
         : "text-[var(--c-6d4716)] bg-[var(--c-fff1c9)]";
   return (
-    <Card className="flex items-center gap-3 rounded-2xl border border-[var(--c-e6dcc6)] bg-white p-3">
+    <Card className="flex min-h-[122px] flex-col items-center justify-center gap-3 rounded-2xl border border-[var(--c-e6dcc6)] bg-white p-3 text-center">
       <div className={cn("flex h-10 w-10 items-center justify-center rounded-xl", toneCls)}>{icon}</div>
       <div className="min-w-0">
         <div className="text-[20px] font-black leading-none text-[var(--c-3b1d07)]">{value}</div>
@@ -776,3 +818,4 @@ function StatCard({
     </Card>
   );
 }
+
