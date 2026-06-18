@@ -9,7 +9,6 @@ import {
   Send,
   ShieldCheck,
   Trophy,
-  X,
 } from "lucide-react";
 import {
   type CSSProperties,
@@ -126,7 +125,6 @@ export function FloatingSafetyAssistant() {
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [chatInput, setChatInput] = useState("");
   const [isSending, setIsSending] = useState(false);
-  const [pendingImage, setPendingImage] = useState<string | null>(null);
   const chatScrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -148,18 +146,15 @@ export function FloatingSafetyAssistant() {
   const sendMessage = async (rawText: string) => {
     const text = rawText.trim();
     if (!text || isSending) return;
-    const imageToSend = pendingImage;
 
     const userMessage: ChatMessage = {
       id: `u-${Date.now()}`,
       role: "user",
       content: text,
-      image: imageToSend ?? undefined,
     };
     const history = [...chatMessages, userMessage];
     setChatMessages(history);
     setChatInput("");
-    setPendingImage(null);
     setIsSending(true);
 
     try {
@@ -175,7 +170,6 @@ export function FloatingSafetyAssistant() {
             rank: activeUser?.rank ?? null,
             team: activeUser?.team ?? null,
           },
-          image: imageToSend ?? undefined,
         }),
       });
       const payload = (await res.json().catch(() => null)) as
@@ -234,7 +228,7 @@ export function FloatingSafetyAssistant() {
       reader.readAsDataURL(file);
     });
 
-  const attachImage = async (file: File) => {
+  const analyzeSafetyPhoto = async (file: File) => {
     if (isSending) return;
     setIsSending(true);
     let dataUrl: string;
@@ -254,15 +248,52 @@ export function FloatingSafetyAssistant() {
       return;
     }
 
-    setPendingImage(dataUrl);
-    setIsSending(false);
-    inputRef.current?.focus();
+    setChatMessages((current) => [
+      ...current,
+      { id: `ui-${Date.now()}`, role: "user", content: "ตรวจรูปด้านความปลอดภัย", image: dataUrl },
+    ]);
+
+    try {
+      const res = await fetch("/api/assistant/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          mode: "ppe",
+          image: dataUrl,
+          context: { page: pathname },
+        }),
+      });
+      const payload = (await res.json().catch(() => null)) as
+        | { ok: boolean; data?: { reply?: string }; error?: string }
+        | null;
+
+      if (!res.ok || !payload?.ok || !payload.data?.reply) {
+        throw new Error(payload?.error || `request_failed_${res.status}`);
+      }
+
+      setChatMessages((current) => [
+        ...current,
+        { id: `a-${Date.now()}`, role: "assistant", content: payload.data!.reply!.trim() },
+      ]);
+    } catch {
+      setChatMessages((current) => [
+        ...current,
+        {
+          id: `e-${Date.now()}`,
+          role: "assistant",
+          content: "ขออภัย ตอนนี้น้องวางใจวิเคราะห์รูปไม่ได้ชั่วคราว ลองใหม่อีกครั้งนะ",
+          error: true,
+        },
+      ]);
+    } finally {
+      setIsSending(false);
+    }
   };
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     event.target.value = "";
-    if (file) void attachImage(file);
+    if (file) void analyzeSafetyPhoto(file);
   };
 
   useEffect(() => {
@@ -274,7 +305,6 @@ export function FloatingSafetyAssistant() {
     setOpen(false);
     setChatMessages([]);
     setChatInput("");
-    setPendingImage(null);
   }, [pathname]);
 
   useEffect(() => {
@@ -637,23 +667,6 @@ export function FloatingSafetyAssistant() {
             onChange={handleFileChange}
             className="hidden"
           />
-          {pendingImage ? (
-            <div className="mb-2 flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.08] p-1.5">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={pendingImage} alt="รูปที่แนบ" className="h-12 w-12 rounded-lg object-cover" />
-              <p className="min-w-0 flex-1 text-[10px] font-bold leading-snug text-white/70">
-                แนบรูปแล้ว พิมพ์คำถามด้านความปลอดภัยหรือ PPE ก่อนส่ง
-              </p>
-              <button
-                type="button"
-                onClick={() => setPendingImage(null)}
-                className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-white/10 text-white/75 outline-none transition hover:bg-white/18 hover:text-white focus-visible:ring-2 focus-visible:ring-[var(--brand-accent)]"
-                aria-label="ลบรูปที่แนบ"
-              >
-                <X className="h-4 w-4" strokeWidth={2.5} />
-              </button>
-            </div>
-          ) : null}
           <form
             onSubmit={(event) => {
               event.preventDefault();
