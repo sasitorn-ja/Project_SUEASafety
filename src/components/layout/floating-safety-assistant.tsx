@@ -3,14 +3,13 @@
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import {
-  ArrowRight,
-  Camera,
   ImageIcon,
   Loader2,
   Minus,
   Send,
   ShieldCheck,
   Trophy,
+  X,
 } from "lucide-react";
 import {
   type CSSProperties,
@@ -127,6 +126,7 @@ export function FloatingSafetyAssistant() {
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [chatInput, setChatInput] = useState("");
   const [isSending, setIsSending] = useState(false);
+  const [pendingImage, setPendingImage] = useState<string | null>(null);
   const chatScrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -148,15 +148,18 @@ export function FloatingSafetyAssistant() {
   const sendMessage = async (rawText: string) => {
     const text = rawText.trim();
     if (!text || isSending) return;
+    const imageToSend = pendingImage;
 
     const userMessage: ChatMessage = {
       id: `u-${Date.now()}`,
       role: "user",
       content: text,
+      image: imageToSend ?? undefined,
     };
     const history = [...chatMessages, userMessage];
     setChatMessages(history);
     setChatInput("");
+    setPendingImage(null);
     setIsSending(true);
 
     try {
@@ -172,6 +175,7 @@ export function FloatingSafetyAssistant() {
             rank: activeUser?.rank ?? null,
             team: activeUser?.team ?? null,
           },
+          image: imageToSend ?? undefined,
         }),
       });
       const payload = (await res.json().catch(() => null)) as
@@ -230,7 +234,7 @@ export function FloatingSafetyAssistant() {
       reader.readAsDataURL(file);
     });
 
-  const analyzePpePhoto = async (file: File) => {
+  const attachImage = async (file: File) => {
     if (isSending) return;
     setIsSending(true);
     let dataUrl: string;
@@ -250,52 +254,15 @@ export function FloatingSafetyAssistant() {
       return;
     }
 
-    setChatMessages((current) => [
-      ...current,
-      { id: `ui-${Date.now()}`, role: "user", content: "ช่วยตรวจการแต่งกาย PPE จากรูปนี้ให้หน่อย", image: dataUrl },
-    ]);
-
-    try {
-      const res = await fetch("/api/assistant/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          mode: "ppe",
-          image: dataUrl,
-          context: { page: pathname },
-        }),
-      });
-      const payload = (await res.json().catch(() => null)) as
-        | { ok: boolean; data?: { reply?: string }; error?: string }
-        | null;
-
-      if (!res.ok || !payload?.ok || !payload.data?.reply) {
-        throw new Error(payload?.error || `request_failed_${res.status}`);
-      }
-
-      setChatMessages((current) => [
-        ...current,
-        { id: `a-${Date.now()}`, role: "assistant", content: payload.data!.reply!.trim() },
-      ]);
-    } catch {
-      setChatMessages((current) => [
-        ...current,
-        {
-          id: `e-${Date.now()}`,
-          role: "assistant",
-          content: "ขออภัย ตอนนี้น้องวางใจวิเคราะห์รูปไม่ได้ชั่วคราว ลองใหม่อีกครั้งนะ",
-          error: true,
-        },
-      ]);
-    } finally {
-      setIsSending(false);
-    }
+    setPendingImage(dataUrl);
+    setIsSending(false);
+    inputRef.current?.focus();
   };
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     event.target.value = "";
-    if (file) void analyzePpePhoto(file);
+    if (file) void attachImage(file);
   };
 
   useEffect(() => {
@@ -307,6 +274,7 @@ export function FloatingSafetyAssistant() {
     setOpen(false);
     setChatMessages([]);
     setChatInput("");
+    setPendingImage(null);
   }, [pathname]);
 
   useEffect(() => {
@@ -669,23 +637,23 @@ export function FloatingSafetyAssistant() {
             onChange={handleFileChange}
             className="hidden"
           />
-          <button
-            type="button"
-            disabled={isSending}
-            onClick={() => fileInputRef.current?.click()}
-            className="mb-2 flex w-full items-center justify-between gap-2 rounded-xl border border-[var(--brand-accent)]/55 bg-[linear-gradient(135deg,#1496ff,#005fd2)] px-3 py-2 text-left text-white shadow-[0_8px_18px_rgba(0,102,215,0.28),inset_0_1px_0_rgba(255,255,255,0.26)] outline-none transition hover:brightness-105 focus-visible:ring-2 focus-visible:ring-[var(--brand-accent)] disabled:opacity-50"
-          >
-            <span className="flex items-center gap-2.5">
-              <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#075fb9]/55">
-                <Camera className="h-5 w-5" strokeWidth={2.4} />
-              </span>
-              <span className="min-w-0">
-                <span className="block text-[12px] font-black leading-tight">ถ่าย/อัปโหลดรูป</span>
-                <span className="block text-[10.5px] font-bold leading-tight text-white/90">ตรวจการแต่งกาย PPE</span>
-              </span>
-            </span>
-            <ArrowRight className="h-5 w-5 flex-shrink-0" strokeWidth={3.2} />
-          </button>
+          {pendingImage ? (
+            <div className="mb-2 flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.08] p-1.5">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={pendingImage} alt="รูปที่แนบ" className="h-12 w-12 rounded-lg object-cover" />
+              <p className="min-w-0 flex-1 text-[10px] font-bold leading-snug text-white/70">
+                แนบรูปแล้ว พิมพ์คำถามด้านความปลอดภัยหรือ PPE ก่อนส่ง
+              </p>
+              <button
+                type="button"
+                onClick={() => setPendingImage(null)}
+                className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-white/10 text-white/75 outline-none transition hover:bg-white/18 hover:text-white focus-visible:ring-2 focus-visible:ring-[var(--brand-accent)]"
+                aria-label="ลบรูปที่แนบ"
+              >
+                <X className="h-4 w-4" strokeWidth={2.5} />
+              </button>
+            </div>
+          ) : null}
           <form
             onSubmit={(event) => {
               event.preventDefault();
@@ -706,7 +674,7 @@ export function FloatingSafetyAssistant() {
               ref={inputRef}
               value={chatInput}
               onChange={(event) => setChatInput(event.target.value)}
-              placeholder="พิมพ์ข้อความหรือถามอะไรได้เลย..."
+              placeholder="ถามเรื่องความปลอดภัย..."
               disabled={isSending}
               className="min-w-0 flex-1 bg-transparent px-2 py-1.5 text-[11px] font-bold text-white outline-none placeholder:text-white/40 disabled:opacity-60"
             />

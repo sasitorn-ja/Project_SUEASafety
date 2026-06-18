@@ -9,6 +9,8 @@ const DEFAULT_MODEL = "google/gemma-4-31b-it:free";
 const MAX_MESSAGES = 12;
 const MAX_CHARS = 2000;
 const MAX_IMAGE_CHARS = 1_400_000; // ~1MB base64 guard
+const OUT_OF_SCOPE_REPLY =
+  "ขออภัยค่ะ พี่ Safety+  ไม่มีข้อมูลเกี่ยวกับสิ่งที่คุณพี่ถามค่ะ ถ้าพี่มีคำถามเกี่ยวกับด้านความปลอดภัย  สามารถถาม Safety+ ได้เลยนะคะ ยินดีให้คำแนะนำค่ะ";
 
 type ChatRole = "user" | "assistant";
 type ChatMessage = { role: ChatRole; content: string };
@@ -33,29 +35,18 @@ type ImagePart = { type: "image_url"; image_url: { url: string } };
 type OutboundMessage = { role: "user" | "assistant"; content: string | Array<TextPart | ImagePart> };
 
 const PPE_PROMPT = [
-  "คุณคือ \"น้องวางใจ\" ผู้ช่วยตรวจความปลอดภัยในการแต่งกาย",
-  "วิเคราะห์ภาพที่ส่งให้ว่าแต่งกายด้วยชุดความปลอดภัยส่วนบุคคล (PPE) ครบถ้วนหรือไม่",
-  "ให้ตอบกลับด้วยการชื่นชมในสิ่งที่ทำถูกต้องตามมาตรฐาน และสิ่งที่ควรปรับปรุง อย่างละ 2-3 ข้อ",
-  "ตอบเป็นภาษาไทย และใช้รูปแบบนี้เท่านั้น ห้ามมีหัวข้อหรือสัญลักษณ์พิเศษอื่นเพิ่ม:",
-  "",
-  "ชื่นชม",
-  "1.",
-  "2.",
-  "3.",
-  "ควรปรับปรุง",
-  "1.",
-  "2.",
+  "ตรวจรูป PPE/ความปลอดภัยเท่านั้น ถ้ารูปไม่เกี่ยวกับความปลอดภัยให้ตอบประโยคปฏิเสธมาตรฐาน",
+  `ประโยคปฏิเสธมาตรฐาน: ${OUT_OF_SCOPE_REPLY}`,
+  "ถ้าเกี่ยวข้อง ให้ตอบไทยสั้นๆ แบบนี้เท่านั้น:",
+  "ชื่นชม\n1.\n2.\nควรปรับปรุง\n1.\n2.",
 ].join("\n");
 
 function buildSystemPrompt(context: AssistantContext): string {
   const lines: string[] = [
-    "คุณคือ \"น้องวางใจ\" ผู้ช่วย AI ด้านความปลอดภัย (Safety Buddy) ในแอป SUEA Safety / CPAC Safety",
-    "บทบาท: เป็นเพื่อนคู่คิดที่อบอุ่น ให้กำลังใจ และช่วยพนักงานทำงานอย่างปลอดภัย",
-    "ขอบเขตหลักที่ช่วยได้: Safety Awareness ประจำวัน, KYT (Kiken Yochi Training), Pre-Trip / Fit-to-Drive, Work Permit, การสะสมคะแนนและแลกรางวัล, การดูอันดับ (Leaderboard) และวัฒนธรรมความปลอดภัย (Safety Culture)",
-    "แนวทางการตอบ: ตอบเป็นภาษาไทยที่สุภาพ กระชับ เข้าใจง่าย ใช้คำพูดให้กำลังใจ และเน้นความปลอดภัยมาก่อนเสมอ",
-    "ถ้าผู้ใช้ดูเครียดหรือไม่พร้อมทำงาน ให้รับฟังอย่างเห็นอกเห็นใจ และแนะนำให้หยุดพักหรือปรึกษาหัวหน้างานเมื่อจำเป็น อย่ากดดันให้ฝืนทำงานที่เสี่ยง",
-    "ถ้าถูกถามเรื่องที่อยู่นอกขอบเขตความปลอดภัย/แอป ให้ตอบสั้น ๆ อย่างสุภาพและชวนกลับมาที่เรื่องความปลอดภัย",
-    "อย่าแต่งข้อมูลคะแนนหรืออันดับเกินจากบริบทที่ได้รับ",
+    "คุณคือ Safety+ ผู้ช่วยด้านความปลอดภัยในแอป SUEA Safety",
+    "ตอบไทย กระชับ สุภาพ เน้นความปลอดภัยก่อนเสมอ",
+    "ตอบเฉพาะเรื่อง Safety Awareness, KYT, Pre-Trip/Fit-to-Drive, Work Permit, PPE, อุบัติเหตุ/ความเสี่ยง/เหตุฉุกเฉิน, คะแนน/รางวัล/อันดับ Safety Culture",
+    `ถ้าคำถามไม่เกี่ยวกับความปลอดภัยหรือแอปนี้ ให้ตอบเท่านี้: ${OUT_OF_SCOPE_REPLY}`,
   ];
 
   const ctx: string[] = [];
@@ -71,6 +62,85 @@ function buildSystemPrompt(context: AssistantContext): string {
   }
 
   return lines.join("\n");
+}
+
+const SAFETY_TERMS = [
+  "safety",
+  "ppe",
+  "kyt",
+  "pre-trip",
+  "pre trip",
+  "fit-to-drive",
+  "fit to drive",
+  "work permit",
+  "permit",
+  "hazard",
+  "risk",
+  "incident",
+  "accident",
+  "near miss",
+  "emergency",
+  "evacuation",
+  "fire",
+  "chemical",
+  "forklift",
+  "helmet",
+  "glove",
+  "mask",
+  "harness",
+  "first aid",
+  "toolbox",
+  "audit",
+  "leaderboard",
+  "reward",
+  "point",
+  "ความปลอดภัย",
+  "ปลอดภัย",
+  "พีพีอี",
+  "แต่งกาย",
+  "หมวก",
+  "รองเท้า",
+  "แว่น",
+  "ถุงมือ",
+  "หน้ากาก",
+  "เสื้อสะท้อนแสง",
+  "เข็มขัดนิรภัย",
+  "อุบัติเหตุ",
+  "อันตราย",
+  "ความเสี่ยง",
+  "เสี่ยง",
+  "ฉุกเฉิน",
+  "อพยพ",
+  "ไฟไหม้",
+  "ถังดับเพลิง",
+  "สารเคมี",
+  "รถยก",
+  "รถบรรทุก",
+  "ปฐมพยาบาล",
+  "ใบอนุญาตทำงาน",
+  "ที่อับอากาศ",
+  "ทำงานบนที่สูง",
+  "ล็อกเอาต์",
+  "แท็กเอาต์",
+  "จป",
+  "ตรวจหน้างาน",
+  "หน้างาน",
+  "คะแนน",
+  "รางวัล",
+  "อันดับ",
+  "กิจกรรม",
+  "วัฒนธรรมความปลอดภัย",
+  "suea",
+  "cpac",
+];
+
+function isSafetyRelatedText(text: string): boolean {
+  const normalized = text.toLowerCase();
+  return SAFETY_TERMS.some((term) => normalized.includes(term));
+}
+
+function latestUserText(messages: ChatMessage[]): string {
+  return [...messages].reverse().find((message) => message.role === "user")?.content.trim() ?? "";
 }
 
 function sanitizeMessages(messages: ChatMessage[]): ChatMessage[] {
@@ -98,11 +168,6 @@ export async function POST(request: NextRequest) {
   const { response } = await requireApiSession();
   if (response) return response;
 
-  const apiKey = process.env.OPENROUTER_API_KEY;
-  if (!apiKey) {
-    return apiError("OpenRouter ยังไม่ถูกตั้งค่า (ขาด OPENROUTER_API_KEY)", 503);
-  }
-
   let body: RequestBody;
   try {
     body = (await request.json()) as RequestBody;
@@ -117,7 +182,7 @@ export async function POST(request: NextRequest) {
   }
 
   let outboundMessages: OutboundMessage[];
-  let maxTokens = 600;
+  let maxTokens = 380;
   let temperature = 0.6;
 
   if (body.mode === "ppe") {
@@ -134,12 +199,16 @@ export async function POST(request: NextRequest) {
         ],
       },
     ];
-    maxTokens = 400;
+    maxTokens = 260;
     temperature = 0.3;
   } else {
     const messages = sanitizeMessages(body.messages ?? []);
     if (messages.length === 0 && !hasImage) {
       return apiError("empty_messages", 400);
+    }
+    const userText = latestUserText(messages);
+    if (!isSafetyRelatedText(userText)) {
+      return Response.json({ ok: true, data: { reply: OUT_OF_SCOPE_REPLY, model: "local-safety-guard" } });
     }
 
     const systemPrompt = buildSystemPrompt(body.context ?? {});
@@ -172,6 +241,11 @@ export async function POST(request: NextRequest) {
         ],
       });
     }
+  }
+
+  const apiKey = process.env.OPENROUTER_API_KEY;
+  if (!apiKey) {
+    return apiError("OpenRouter ยังไม่ถูกตั้งค่า (ขาด OPENROUTER_API_KEY)", 503);
   }
 
   try {
