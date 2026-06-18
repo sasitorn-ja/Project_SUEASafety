@@ -4,7 +4,9 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci
 
-FROM deps AS migrator
+FROM node:24-alpine AS migrator
+WORKDIR /app
+RUN npm install --no-save --omit=dev mysql2@3.22.5
 COPY scripts ./scripts
 
 FROM node:24-alpine AS builder
