@@ -38,10 +38,6 @@ function NavTo(props: any) {
   return <Link prefetch={false} {...props} />;
 }
 
-const DASHBOARD_ITEMS = [
-  { label: "Safety Effort Dashboard", icon: ShieldCheck, href: "/dashboard-safety-effort" },
-];
-
 const CULTURE_ITEMS = [
   { label: "Feed", icon: Heart, href: "/safety-culture" },
   { label: "Leaderboard", icon: Trophy, href: "/safety-culture/leaderboard" },
@@ -63,7 +59,7 @@ type NavNode = {
 
 const NAV_TREE: NavNode[] = [
   { id: "home", label: "Home", icon: Home, href: "/" },
-  { id: "dashboard", label: "Dashboard", icon: LayoutDashboard, href: "/dashboard", children: DASHBOARD_ITEMS },
+  { id: "dashboard", label: "Dashboard", icon: LayoutDashboard, href: "/dashboard" },
   { id: "safety-effort", label: "Safety Effort", icon: ShieldCheck, href: "/category" },
   { id: "safety-culture", label: "Safety Culture", icon: UsersRound, href: "/safety-culture", children: CULTURE_ITEMS },
   { id: "admin", label: "Admin", icon: UserRound },
@@ -174,7 +170,7 @@ export function MobileTopbar({ hidden = false }: { hidden?: boolean }) {
   const isWangjai = theme === "wangjai";
 
   const isActive = (href: string) => isMainNavActive(pathname, href);
-  const dashboardActive = pathname === "/dashboard" || DASHBOARD_ITEMS.some((item) => isExactNavActive(pathname, item.href));
+  const dashboardActive = pathname === "/dashboard";
   const cultureActive = CULTURE_ITEMS.some((item) => isExactNavActive(pathname, item.href));
   const adminActive = pathname === "/safety-admin" || pathname.startsWith("/safety-culture/admin-");
   const profileSectionActive = pathname === "/profile" || pathname.startsWith("/profile/");

@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { requireAdminApiSession, requireApiSession } from "@backend/components/core/api";
 import { API_CATALOG_ROUTES, type ApiCatalogRoute } from "@backend/components/api-catalog/registry";
+import { handlePersistedCatalogRoute } from "@backend/components/api-catalog/persistence";
 import { createCheckin, getCheckin, listCheckins } from "@backend/components/checkins/repository";
 import { awardPoints, getPointBalance, listPointRules, listPointTransactions } from "@backend/components/points/repository";
 import { createAwarenessAttempt } from "@backend/components/safety-awareness/repository";
@@ -112,17 +113,19 @@ async function readBody(request: NextRequest) {
   if (contentType.includes("multipart/form-data")) {
     const formData = await request.formData();
     const fields: Record<string, string> = {};
-    const files: Array<{ field: string; name: string; type: string; size: number }> = [];
+    const files: Array<{ field: string; name: string; type: string; size: number; bytes: Uint8Array }> = [];
 
     for (const [key, value] of formData.entries()) {
       if (typeof value === "string") {
         fields[key] = value;
       } else {
+        const bytes = new Uint8Array(await value.arrayBuffer());
         files.push({
           field: key,
           name: value.name,
           type: value.type,
           size: value.size,
+          bytes,
         });
       }
     }
@@ -257,7 +260,17 @@ export async function handleCatalogApiRoute(request: NextRequest, method: string
   const concreteResponse = await tryHandleConcreteRoute(request, method, match, auth.session, body);
   if (concreteResponse) return concreteResponse;
 
-  return NextResponse.json(responseShape(match.route, method, match.params, request, body));
+  const persistedResponse = await handlePersistedCatalogRoute(request, method, match, auth.session, body);
+  if (persistedResponse) return persistedResponse;
+
+  return NextResponse.json(
+    {
+      ok: false,
+      error: "api_route_not_implemented",
+      data: catalogPayload(match.route, match.params, request),
+    },
+    { status: 501 },
+  );
 }
 
 function jsonData(data: unknown, init?: ResponseInit) {

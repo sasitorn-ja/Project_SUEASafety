@@ -35,15 +35,6 @@ const NAV_ITEMS = [
   { id: "admin", label: "Admin", icon: UserRound, href: "/safety-admin" },
 ];
 
-const DASHBOARD_ITEMS = [
-  {
-    label: "Safety Effort Dashboard",
-    href: "/dashboard-safety-effort",
-    icon: ShieldCheck,
-    description: "รายงานสรุปผลและสถิติด้านความปลอดภัย",
-  },
-] as const;
-
 const SAFETY_CULTURE_ITEMS = [
   {
     label: "Feed",
@@ -294,32 +285,6 @@ export function DesktopTopbar() {
 
               <div className="rounded-2xl border border-white/10 bg-white/[0.06] p-2.5">
                 <div className="mb-2 flex items-center gap-2 px-1.5 text-[10px] font-extrabold uppercase tracking-[0.18em] text-[var(--brand-hero-label)]">
-                  <LayoutDashboard className="h-3.5 w-3.5" strokeWidth={2.3} />
-                  <span>Dashboard</span>
-                </div>
-                <div className="grid grid-cols-1 gap-1.5 md:grid-cols-2">
-                  {DASHBOARD_ITEMS.map((item) => {
-                    const Icon = item.icon;
-                    return (
-                      <NavTo
-                        key={item.href}
-                        href={item.href}
-                        onClick={() => setOpen(false)}
-                        className={cn(
-                          "flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-bold transition-colors hover:bg-white/10",
-                          isExactNavActive(pathname, item.href) ? "bg-white/10 text-[var(--brand-accent)]" : "text-white/[0.86]"
-                        )}
-                      >
-                        <Icon className="h-[17px] w-[17px] text-[var(--brand-accent)]" strokeWidth={2.3} />
-                        {item.label}
-                      </NavTo>
-                    );
-                  })}
-                </div>
-              </div>
-
-              <div className="rounded-2xl border border-white/10 bg-white/[0.06] p-2.5">
-                <div className="mb-2 flex items-center gap-2 px-1.5 text-[10px] font-extrabold uppercase tracking-[0.18em] text-[var(--brand-hero-label)]">
                   <Heart className="h-3.5 w-3.5" strokeWidth={2.3} />
                   <span>Safety Culture</span>
                 </div>
@@ -390,63 +355,6 @@ export function DesktopTopbar() {
                       {adminSections.length === 0 && (
                         <div className="px-3 py-4 text-center text-xs font-bold text-white/60">à¸¢à¸±à¸‡à¹„à¸¡à¹ˆà¸¡à¸µà¹€à¸¡à¸™à¸¹à¸¢à¹ˆà¸­à¸¢ Admin</div>
                       )}
-                    </div>
-                  </div>
-                </div>
-              );
-            }
-
-            if (item.id === "dashboard") {
-              const menuId = "dashboard";
-              const submenuItems = DASHBOARD_ITEMS;
-              return (
-                <div
-                  key={item.id}
-                  className="relative"
-                  onMouseEnter={() => setDesktopMenu(menuId)}
-                  onMouseLeave={() => setDesktopMenu(null)}
-                  onFocus={() => setDesktopMenu(menuId)}
-                >
-                  <NavTo
-                    href={item.href}
-                    className={cn(
-                      "desktop-nav-item inline-flex h-11 items-center justify-center gap-2 rounded-full px-4 text-sm font-bold whitespace-nowrap transition-all",
-                      active ? "bg-[var(--brand-nav-active)] text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.18),0_8px_18px_rgba(0,0,0,0.18)]" : "bg-transparent text-white/[0.82] hover:bg-white/10 hover:text-white"
-                    )}
-                  >
-                    <Icon className="h-[17px] w-[17px]" strokeWidth={2.35} />
-                    <span className="desktop-nav-label">{item.label}</span>
-                  </NavTo>
-
-                  <div
-                    className={cn(
-                      "absolute left-1/2 top-full z-50 w-[320px] -translate-x-1/2 pt-2 transition-all duration-150",
-                      desktopMenu === menuId ? "visible translate-y-0 opacity-100" : "invisible -translate-y-1 opacity-0"
-                    )}
-                  >
-                    <div className="max-h-[calc(100vh-var(--topbar-h)-24px)] overflow-y-auto rounded-xl border border-white/[0.14] bg-[rgba(var(--brand-nav-rgb),0.96)] p-1.5 text-white shadow-[0_18px_44px_var(--brand-shadow)] backdrop-blur-xl">
-                      {submenuItems.map((subitem) => {
-                        const SubIcon = subitem.icon;
-
-                        return (
-                          <NavTo
-                            key={subitem.href}
-                            href={subitem.href}
-                            className={cn(
-                              "flex items-center gap-2.5 rounded-lg p-2 text-white transition-colors hover:bg-white/10 focus:bg-white/10 focus:outline-none",
-                              isExactNavActive(pathname, subitem.href) && "bg-white/10"
-                            )}
-                          >
-                            <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full border border-white/10 bg-[rgba(var(--brand-accent-rgb),0.18)] text-[var(--brand-hero-label)]">
-                              <SubIcon className="h-[17px] w-[17px]" strokeWidth={2.35} />
-                            </span>
-                            <span className="min-w-0">
-                              <span className="block text-[12.5px] font-extrabold leading-[16px] text-white">{subitem.label}</span>
-                              <span className="mt-0.5 block text-[10.5px] font-semibold leading-[14px] text-white/[0.68]">{subitem.description}</span>
-                            </span>
-                          </NavTo>
-                        );
-                      })}
                     </div>
                   </div>
                 </div>

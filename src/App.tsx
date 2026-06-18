@@ -105,7 +105,7 @@ const NAV_ITEMS = [
 const SECTION_ORDER = ["SUEA SAFETY", "Operations"];
 
 // Routes that belong to the "safety-effort" nav section
-const SAFETY_EFFORT_ROUTES = ["/category", "/checkin", "/activity", "/create-post", "/linewalk", "/safety-contact", "/assessment-summary", "/dashboard-safety-effort"];
+const SAFETY_EFFORT_ROUTES = ["/category", "/checkin", "/activity", "/create-post", "/linewalk", "/safety-contact", "/assessment-summary", "/dashboard-safety-effort", "/dashboard"];
 // Routes where main content is fixed-height (no outer scroll)
 const FIXED_CONTENT_ROUTES = ["/safety-admin", "/checkin"];
 
@@ -763,6 +763,7 @@ function AppRoutes({ onScroll }) {
         <Route path="assessment-summary" element={<AssessmentSummary />} />
         <Route path="safety-admin" element={<SafetyAdmin />} />
         <Route path="dashboard-safety-effort" element={<DashboardSafetyEffort />} />
+        <Route path="dashboard" element={<DashboardSafetyEffort />} />
         <Route path="login" element={<Login />} />
       </Routes>
     );

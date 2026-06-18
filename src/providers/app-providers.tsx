@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import React, { createContext, useContext, useState, useCallback, ReactNode, useEffect } from "react";
+import React, { createContext, useContext, useState, useCallback, ReactNode, useEffect, useRef } from "react";
 import {
   DEFAULT_REWARD_CATEGORIES,
   PERSONAL_RANKINGS,
@@ -1528,10 +1528,28 @@ export function AppProviders({ children }: { children: ReactNode }) {
     }
   }, [inboxNotifications]);
 
+  // true เมื่อมี session (ล็อกอินแล้ว) ใช้กันไม่ให้ยิง API ที่ต้องล็อกอินตอนยังไม่ล็อกอิน -> ไม่มี error 401 ใน console
+  const isAuthenticatedRef = useRef(false);
+
   useEffect(() => {
     let cancelled = false;
 
     async function loadBackendState() {
+      // ตรวจ session ก่อน ถ้ายังไม่ล็อกอินก็ไม่ต้องเรียก API ที่ต้องยืนยันตัวตน
+      let authed = false;
+      try {
+        const sessionRes = await fetch("/api/auth/session", { credentials: "include", cache: "no-store" });
+        if (sessionRes.ok) {
+          const session = await sessionRes.json().catch(() => null);
+          authed = !!(session?.authenticated || session?.user);
+        }
+      } catch {
+        authed = false;
+      }
+      if (cancelled) return;
+      isAuthenticatedRef.current = authed;
+      if (!authed) return;
+
       const [postsResult, balanceResult] = await Promise.all([
         apiFetch<{ items: ApiPost[] }>("/api/safety-culture/posts?limit=50"),
         apiFetch<{ balance: { balance: number } }>("/api/safety-culture/points/me"),
@@ -1692,7 +1710,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
       ])
     );
     setCurrentUserPoints((prev) => prev + pointsDelta);
-    void apiFetch<{ post: ApiPost }>("/api/safety-culture/posts", apiJson("POST", {
+    if (isAuthenticatedRef.current) void apiFetch<{ post: ApiPost }>("/api/safety-culture/posts", apiJson("POST", {
       content: post.body,
       category: post.category,
       attachmentIds: post.photos.map((photo) => photo.id),
@@ -1748,7 +1766,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
     if (currentDelta !== 0) {
       setCurrentUserPoints((prev) => Math.max(0, prev + currentDelta));
     }
-    void apiFetch(`/api/safety-culture/posts/${postId}/reactions`, apiJson(currentDelta > 0 ? "POST" : "DELETE", { reactionType: "LIKE" }));
+    if (isAuthenticatedRef.current) void apiFetch(`/api/safety-culture/posts/${postId}/reactions`, apiJson(currentDelta > 0 ? "POST" : "DELETE", { reactionType: "LIKE" }));
   }, [getLinkedFeedEvent, safetyCultureEvent]);
 
   const addComment = useCallback((postId: number, text: string) => {
@@ -1800,7 +1818,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
       );
     }
     setCurrentUserPoints((prev) => prev + currentAwardedPoints);
-    void apiFetch(`/api/safety-culture/posts/${postId}/comments`, apiJson("POST", { content: text }));
+    if (isAuthenticatedRef.current) void apiFetch(`/api/safety-culture/posts/${postId}/comments`, apiJson("POST", { content: text }));
   }, [getLinkedFeedEvent, safetyCultureEvent]);
 
   const updateSafetyCultureEvent = useCallback((data: SafetyCultureEventConfig) => {
@@ -1890,7 +1908,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
         ...current.filter((item) => item.id !== `activity-awareness-${date}`),
       ])
     );
-    void apiFetch("/api/safety-awareness/attempts", apiJson("POST", {
+    if (isAuthenticatedRef.current) void apiFetch("/api/safety-awareness/attempts", apiJson("POST", {
       score: completion.score,
       total: completion.total,
       questions: completion.questions,

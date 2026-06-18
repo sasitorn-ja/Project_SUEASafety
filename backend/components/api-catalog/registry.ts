@@ -60,7 +60,7 @@ export const API_CATALOG_ROUTES = [
   },
   {
     "module": "Auth",
-    "method": "POST",
+    "method": "GET",
     "path": "/api/auth/logout",
     "documentedPath": "/api/auth/logout",
     "purpose": "ออกจากระบบและล้าง session",
@@ -97,7 +97,7 @@ export const API_CATALOG_ROUTES = [
     "auth": "User",
     "pagination": "Required page/pageSize",
     "responseSizeRisk": "High if unpaged",
-    "status": "Target",
+    "status": "Existing",
     "notes": "แยกจาก all locations เพราะข้อมูลเยอะ"
   },
   {
@@ -111,7 +111,7 @@ export const API_CATALOG_ROUTES = [
     "auth": "User",
     "pagination": "Required page/pageSize",
     "responseSizeRisk": "High if unpaged",
-    "status": "Target",
+    "status": "Existing",
     "notes": "แยกประเภทเพื่อ index/cache ได้ดี"
   },
   {
@@ -125,7 +125,7 @@ export const API_CATALOG_ROUTES = [
     "auth": "User",
     "pagination": "Required page/pageSize",
     "responseSizeRisk": "High if unpaged",
-    "status": "Target",
+    "status": "Existing",
     "notes": "site อาจเปลี่ยนบ่อยและมีปริมาณมาก"
   },
   {
@@ -139,7 +139,7 @@ export const API_CATALOG_ROUTES = [
     "auth": "User",
     "pagination": "Required page/pageSize",
     "responseSizeRisk": "Medium",
-    "status": "Target",
+    "status": "Existing",
     "notes": "รองรับ location นอก master"
   },
   {
@@ -153,7 +153,7 @@ export const API_CATALOG_ROUTES = [
     "auth": "User",
     "pagination": "Required bbox + cap",
     "responseSizeRisk": "Critical if returns all",
-    "status": "Target",
+    "status": "Existing",
     "notes": "ต้องใช้ spatial index"
   },
   {
@@ -167,7 +167,7 @@ export const API_CATALOG_ROUTES = [
     "auth": "User",
     "pagination": "Required limit <= 50",
     "responseSizeRisk": "Medium",
-    "status": "Target",
+    "status": "Existing",
     "notes": "ค้นด้วย code/name/external key"
   },
   {
@@ -181,7 +181,7 @@ export const API_CATALOG_ROUTES = [
     "auth": "User",
     "pagination": "No",
     "responseSizeRisk": "Small",
-    "status": "Target",
+    "status": "Existing",
     "notes": "โหลด detail แยกจาก list"
   },
   {
@@ -195,7 +195,7 @@ export const API_CATALOG_ROUTES = [
     "auth": "Admin",
     "pagination": "No",
     "responseSizeRisk": "Small",
-    "status": "Target",
+    "status": "Existing",
     "notes": "เขียนลง locations"
   },
   {
@@ -209,7 +209,7 @@ export const API_CATALOG_ROUTES = [
     "auth": "Admin",
     "pagination": "No",
     "responseSizeRisk": "Small",
-    "status": "Target",
+    "status": "Existing",
     "notes": "ต้อง audit"
   },
   {
@@ -223,7 +223,7 @@ export const API_CATALOG_ROUTES = [
     "auth": "Admin",
     "pagination": "No",
     "responseSizeRisk": "Small",
-    "status": "Target",
+    "status": "Existing",
     "notes": "soft delete เท่านั้น"
   },
   {
@@ -307,7 +307,7 @@ export const API_CATALOG_ROUTES = [
     "auth": "User",
     "pagination": "No",
     "responseSizeRisk": "Small",
-    "status": "Target",
+    "status": "Existing",
     "notes": "คืน checkinId เพื่อเริ่มกิจกรรม"
   },
   {
@@ -321,7 +321,7 @@ export const API_CATALOG_ROUTES = [
     "auth": "User",
     "pagination": "Required",
     "responseSizeRisk": "Medium",
-    "status": "Target",
+    "status": "Existing",
     "notes": "filter ตามวันที่"
   },
   {
@@ -335,7 +335,7 @@ export const API_CATALOG_ROUTES = [
     "auth": "Admin",
     "pagination": "Required",
     "responseSizeRisk": "High",
-    "status": "Target",
+    "status": "Existing",
     "notes": "ต้องมี indexes ตาม user/date/location"
   },
   {
@@ -349,7 +349,7 @@ export const API_CATALOG_ROUTES = [
     "auth": "User/Admin",
     "pagination": "No",
     "responseSizeRisk": "Small",
-    "status": "Target",
+    "status": "Existing",
     "notes": "รวม attachments summary"
   },
   {
@@ -377,7 +377,7 @@ export const API_CATALOG_ROUTES = [
     "auth": "User",
     "pagination": "No",
     "responseSizeRisk": "Small",
-    "status": "Target",
+    "status": "Existing",
     "notes": "สร้าง safety_activities"
   },
   {
@@ -391,7 +391,7 @@ export const API_CATALOG_ROUTES = [
     "auth": "User",
     "pagination": "Required",
     "responseSizeRisk": "Medium",
-    "status": "Target",
+    "status": "Existing",
     "notes": "ใช้ resume draft/submitted"
   },
   {
@@ -405,7 +405,7 @@ export const API_CATALOG_ROUTES = [
     "auth": "User",
     "pagination": "No",
     "responseSizeRisk": "Small",
-    "status": "Target",
+    "status": "Existing",
     "notes": "เชื่อม checkin"
   },
   {
@@ -419,7 +419,7 @@ export const API_CATALOG_ROUTES = [
     "auth": "User",
     "pagination": "No",
     "responseSizeRisk": "Small",
-    "status": "Target",
+    "status": "Existing",
     "notes": "status draft/submitted/cancelled"
   },
   {
@@ -433,7 +433,7 @@ export const API_CATALOG_ROUTES = [
     "auth": "User",
     "pagination": "No",
     "responseSizeRisk": "Medium",
-    "status": "Target",
+    "status": "Existing",
     "notes": "cache ได้"
   },
   {
@@ -447,7 +447,7 @@ export const API_CATALOG_ROUTES = [
     "auth": "User",
     "pagination": "No",
     "responseSizeRisk": "Medium",
-    "status": "Target",
+    "status": "Existing",
     "notes": "payload ไม่ฝัง base64"
   },
   {
@@ -461,7 +461,7 @@ export const API_CATALOG_ROUTES = [
     "auth": "User/Admin",
     "pagination": "No",
     "responseSizeRisk": "Medium",
-    "status": "Target",
+    "status": "Existing",
     "notes": "รวม answers + media refs"
   },
   {
@@ -475,7 +475,7 @@ export const API_CATALOG_ROUTES = [
     "auth": "Admin",
     "pagination": "Required",
     "responseSizeRisk": "High",
-    "status": "Target",
+    "status": "Existing",
     "notes": "export แยก endpoint"
   },
   {
@@ -489,7 +489,7 @@ export const API_CATALOG_ROUTES = [
     "auth": "Admin",
     "pagination": "Stream/export job",
     "responseSizeRisk": "High",
-    "status": "Target",
+    "status": "Existing",
     "notes": "สำหรับไฟล์ใหญ่ควรใช้ async job"
   },
   {
@@ -503,7 +503,7 @@ export const API_CATALOG_ROUTES = [
     "auth": "User",
     "pagination": "No",
     "responseSizeRisk": "Small",
-    "status": "Target",
+    "status": "Existing",
     "notes": "แยก finding จาก answer ถ้าต้อง track action"
   },
   {
@@ -517,7 +517,7 @@ export const API_CATALOG_ROUTES = [
     "auth": "Admin",
     "pagination": "No",
     "responseSizeRisk": "Small",
-    "status": "Target",
+    "status": "Existing",
     "notes": "ผูก safety_findings"
   },
   {
@@ -531,7 +531,7 @@ export const API_CATALOG_ROUTES = [
     "auth": "User/Admin",
     "pagination": "Required",
     "responseSizeRisk": "Medium",
-    "status": "Target",
+    "status": "Existing",
     "notes": "dashboard action"
   },
   {
@@ -545,7 +545,7 @@ export const API_CATALOG_ROUTES = [
     "auth": "User",
     "pagination": "No",
     "responseSizeRisk": "Small",
-    "status": "Target",
+    "status": "Existing",
     "notes": "รูป BP/Alc ใช้ uploads"
   },
   {
@@ -559,7 +559,7 @@ export const API_CATALOG_ROUTES = [
     "auth": "User",
     "pagination": "No",
     "responseSizeRisk": "Small",
-    "status": "Target",
+    "status": "Existing",
     "notes": "payload JSON + activityId"
   },
   {
@@ -573,7 +573,7 @@ export const API_CATALOG_ROUTES = [
     "auth": "User",
     "pagination": "No",
     "responseSizeRisk": "Small",
-    "status": "Target",
+    "status": "Existing",
     "notes": "รูป KYT ใช้ uploads"
   },
   {
@@ -587,7 +587,7 @@ export const API_CATALOG_ROUTES = [
     "auth": "User",
     "pagination": "No",
     "responseSizeRisk": "Small",
-    "status": "Target",
+    "status": "Existing",
     "notes": "แจ้งเตือน admin"
   },
   {
@@ -601,7 +601,7 @@ export const API_CATALOG_ROUTES = [
     "auth": "User",
     "pagination": "Cursor required",
     "responseSizeRisk": "High if unpaged",
-    "status": "Target",
+    "status": "Existing",
     "notes": "แทน localStorage posts"
   },
   {
@@ -615,7 +615,7 @@ export const API_CATALOG_ROUTES = [
     "auth": "User",
     "pagination": "No",
     "responseSizeRisk": "Small",
-    "status": "Target",
+    "status": "Existing",
     "notes": "ส่ง attachmentIds ไม่ส่ง base64"
   },
   {
@@ -629,7 +629,7 @@ export const API_CATALOG_ROUTES = [
     "auth": "User",
     "pagination": "No",
     "responseSizeRisk": "Medium",
-    "status": "Target",
+    "status": "Existing",
     "notes": "รวม comments page แรก"
   },
   {
@@ -643,7 +643,7 @@ export const API_CATALOG_ROUTES = [
     "auth": "Owner/Admin",
     "pagination": "No",
     "responseSizeRisk": "Small",
-    "status": "Target",
+    "status": "Existing",
     "notes": "optional"
   },
   {
@@ -657,7 +657,7 @@ export const API_CATALOG_ROUTES = [
     "auth": "Owner/Admin",
     "pagination": "No",
     "responseSizeRisk": "Small",
-    "status": "Target",
+    "status": "Existing",
     "notes": "soft delete"
   },
   {
@@ -671,7 +671,7 @@ export const API_CATALOG_ROUTES = [
     "auth": "User",
     "pagination": "No",
     "responseSizeRisk": "Small",
-    "status": "Target",
+    "status": "Existing",
     "notes": "ให้คะแนนตาม rule"
   },
   {
@@ -685,7 +685,7 @@ export const API_CATALOG_ROUTES = [
     "auth": "User",
     "pagination": "Cursor required",
     "responseSizeRisk": "Medium",
-    "status": "Target",
+    "status": "Existing",
     "notes": "แยกจาก feed"
   },
   {
@@ -699,7 +699,7 @@ export const API_CATALOG_ROUTES = [
     "auth": "User",
     "pagination": "No",
     "responseSizeRisk": "Small",
-    "status": "Target",
+    "status": "Existing",
     "notes": "upsert reaction"
   },
   {
@@ -713,7 +713,7 @@ export const API_CATALOG_ROUTES = [
     "auth": "User",
     "pagination": "No",
     "responseSizeRisk": "Small",
-    "status": "Target",
+    "status": "Existing",
     "notes": "delete reaction"
   },
   {
@@ -727,7 +727,7 @@ export const API_CATALOG_ROUTES = [
     "auth": "User",
     "pagination": "Required",
     "responseSizeRisk": "Medium",
-    "status": "Target",
+    "status": "Existing",
     "notes": "live/scheduled/closed"
   },
   {
@@ -741,7 +741,7 @@ export const API_CATALOG_ROUTES = [
     "auth": "Admin",
     "pagination": "No",
     "responseSizeRisk": "Small",
-    "status": "Target",
+    "status": "Existing",
     "notes": "แทน localStorage"
   },
   {
@@ -755,7 +755,7 @@ export const API_CATALOG_ROUTES = [
     "auth": "Admin",
     "pagination": "No",
     "responseSizeRisk": "Small",
-    "status": "Target",
+    "status": "Existing",
     "notes": "audit"
   },
   {
@@ -769,7 +769,7 @@ export const API_CATALOG_ROUTES = [
     "auth": "User",
     "pagination": "Limit/cached",
     "responseSizeRisk": "Medium",
-    "status": "Target",
+    "status": "Existing",
     "notes": "cache รายช่วงเวลา"
   },
   {
@@ -783,7 +783,7 @@ export const API_CATALOG_ROUTES = [
     "auth": "User",
     "pagination": "No or page",
     "responseSizeRisk": "Medium",
-    "status": "Target",
+    "status": "Existing",
     "notes": "cache ได้"
   },
   {
@@ -797,7 +797,7 @@ export const API_CATALOG_ROUTES = [
     "auth": "User",
     "pagination": "No",
     "responseSizeRisk": "Small",
-    "status": "Target",
+    "status": "Existing",
     "notes": "transactional"
   },
   {
@@ -811,7 +811,7 @@ export const API_CATALOG_ROUTES = [
     "auth": "User",
     "pagination": "No",
     "responseSizeRisk": "Small",
-    "status": "Target",
+    "status": "Existing",
     "notes": "cache by date"
   },
   {
@@ -825,7 +825,7 @@ export const API_CATALOG_ROUTES = [
     "auth": "User",
     "pagination": "No",
     "responseSizeRisk": "Small",
-    "status": "Target",
+    "status": "Existing",
     "notes": "บันทึก attempt"
   },
   {
@@ -839,7 +839,7 @@ export const API_CATALOG_ROUTES = [
     "auth": "User",
     "pagination": "Cursor required",
     "responseSizeRisk": "Medium",
-    "status": "Target",
+    "status": "Existing",
     "notes": "แทน in-memory/localStorage"
   },
   {
@@ -853,7 +853,7 @@ export const API_CATALOG_ROUTES = [
     "auth": "User",
     "pagination": "No",
     "responseSizeRisk": "Small",
-    "status": "Target",
+    "status": "Existing",
     "notes": ""
   },
   {
@@ -867,7 +867,7 @@ export const API_CATALOG_ROUTES = [
     "auth": "Admin",
     "pagination": "No",
     "responseSizeRisk": "Small",
-    "status": "Target",
+    "status": "Existing",
     "notes": "อาจ queue"
   },
   {
@@ -881,7 +881,7 @@ export const API_CATALOG_ROUTES = [
     "auth": "User",
     "pagination": "No",
     "responseSizeRisk": "Upload size limit",
-    "status": "Target",
+    "status": "Existing",
     "notes": "multipart/form-data"
   },
   {
@@ -895,7 +895,7 @@ export const API_CATALOG_ROUTES = [
     "auth": "User",
     "pagination": "No",
     "responseSizeRisk": "Small",
-    "status": "Target",
+    "status": "Existing",
     "notes": "ตรวจสิทธิ์"
   },
   {
@@ -909,7 +909,7 @@ export const API_CATALOG_ROUTES = [
     "auth": "User",
     "pagination": "No",
     "responseSizeRisk": "File",
-    "status": "Target",
+    "status": "Existing",
     "notes": "ใช้ signed URL/private URL"
   },
   {
@@ -923,7 +923,7 @@ export const API_CATALOG_ROUTES = [
     "auth": "Owner/Admin",
     "pagination": "No",
     "responseSizeRisk": "Small",
-    "status": "Target",
+    "status": "Existing",
     "notes": "soft delete + object lifecycle"
   },
   {
@@ -937,7 +937,7 @@ export const API_CATALOG_ROUTES = [
     "auth": "System/Admin",
     "pagination": "Batch cap",
     "responseSizeRisk": "Medium",
-    "status": "Target",
+    "status": "Existing",
     "notes": "ลบรูปที่ไม่ถูกผูกกับ owner"
   },
   {
@@ -951,7 +951,7 @@ export const API_CATALOG_ROUTES = [
     "auth": "Admin/User scoped",
     "pagination": "No or shallow depth",
     "responseSizeRisk": "Medium",
-    "status": "Target",
+    "status": "Existing",
     "notes": "ใช้กับ company/division/fact/section"
   },
   {
@@ -965,7 +965,7 @@ export const API_CATALOG_ROUTES = [
     "auth": "Admin",
     "pagination": "Required",
     "responseSizeRisk": "Medium",
-    "status": "Target",
+    "status": "Existing",
     "notes": "ไม่โหลด tree ใหญ่ทุกครั้ง"
   },
   {
@@ -979,7 +979,7 @@ export const API_CATALOG_ROUTES = [
     "auth": "Admin/User scoped",
     "pagination": "No",
     "responseSizeRisk": "Small",
-    "status": "Target",
+    "status": "Existing",
     "notes": ""
   },
   {
@@ -993,7 +993,7 @@ export const API_CATALOG_ROUTES = [
     "auth": "Admin",
     "pagination": "No",
     "responseSizeRisk": "Small",
-    "status": "Target",
+    "status": "Existing",
     "notes": "audit required"
   },
   {
@@ -1007,7 +1007,7 @@ export const API_CATALOG_ROUTES = [
     "auth": "Admin",
     "pagination": "No",
     "responseSizeRisk": "Small",
-    "status": "Target",
+    "status": "Existing",
     "notes": "audit required"
   },
   {
@@ -1021,7 +1021,7 @@ export const API_CATALOG_ROUTES = [
     "auth": "Admin",
     "pagination": "No",
     "responseSizeRisk": "Small",
-    "status": "Target",
+    "status": "Existing",
     "notes": "ต้องตรวจ child ก่อนลบ"
   },
   {
@@ -1035,7 +1035,7 @@ export const API_CATALOG_ROUTES = [
     "auth": "User",
     "pagination": "No",
     "responseSizeRisk": "Small",
-    "status": "Target",
+    "status": "Existing",
     "notes": "merge SSO + app profile"
   },
   {
@@ -1049,7 +1049,7 @@ export const API_CATALOG_ROUTES = [
     "auth": "User",
     "pagination": "No",
     "responseSizeRisk": "Small",
-    "status": "Target",
+    "status": "Existing",
     "notes": "profile image ใช้ mediaId"
   },
   {
@@ -1063,7 +1063,7 @@ export const API_CATALOG_ROUTES = [
     "auth": "Admin",
     "pagination": "Required",
     "responseSizeRisk": "Medium",
-    "status": "Target",
+    "status": "Existing",
     "notes": "ต้อง limit search"
   },
   {
@@ -1077,7 +1077,7 @@ export const API_CATALOG_ROUTES = [
     "auth": "Admin",
     "pagination": "No",
     "responseSizeRisk": "Small",
-    "status": "Target",
+    "status": "Existing",
     "notes": ""
   },
   {
@@ -1091,7 +1091,7 @@ export const API_CATALOG_ROUTES = [
     "auth": "Admin",
     "pagination": "No",
     "responseSizeRisk": "Small",
-    "status": "Target",
+    "status": "Existing",
     "notes": "audit required"
   },
   {
@@ -1105,7 +1105,7 @@ export const API_CATALOG_ROUTES = [
     "auth": "Admin",
     "pagination": "No",
     "responseSizeRisk": "Small",
-    "status": "Target",
+    "status": "Existing",
     "notes": ""
   },
   {
@@ -1119,7 +1119,7 @@ export const API_CATALOG_ROUTES = [
     "auth": "Admin",
     "pagination": "No",
     "responseSizeRisk": "Small",
-    "status": "Target",
+    "status": "Existing",
     "notes": ""
   },
   {
@@ -1133,7 +1133,7 @@ export const API_CATALOG_ROUTES = [
     "auth": "Admin",
     "pagination": "No",
     "responseSizeRisk": "Small",
-    "status": "Target",
+    "status": "Existing",
     "notes": ""
   },
   {
@@ -1147,7 +1147,7 @@ export const API_CATALOG_ROUTES = [
     "auth": "Admin",
     "pagination": "No",
     "responseSizeRisk": "Small",
-    "status": "Target",
+    "status": "Existing",
     "notes": ""
   },
   {
@@ -1161,7 +1161,7 @@ export const API_CATALOG_ROUTES = [
     "auth": "Admin",
     "pagination": "No",
     "responseSizeRisk": "Small",
-    "status": "Target",
+    "status": "Existing",
     "notes": "transactional"
   },
   {
@@ -1175,7 +1175,7 @@ export const API_CATALOG_ROUTES = [
     "auth": "Admin",
     "pagination": "No",
     "responseSizeRisk": "Small",
-    "status": "Target",
+    "status": "Existing",
     "notes": "transactional"
   },
   {
@@ -1189,7 +1189,7 @@ export const API_CATALOG_ROUTES = [
     "auth": "Admin",
     "pagination": "Upload/job",
     "responseSizeRisk": "High",
-    "status": "Target",
+    "status": "Existing",
     "notes": "สร้าง batch"
   },
   {
@@ -1203,7 +1203,7 @@ export const API_CATALOG_ROUTES = [
     "auth": "Admin",
     "pagination": "Required",
     "responseSizeRisk": "Medium",
-    "status": "Target",
+    "status": "Existing",
     "notes": ""
   },
   {
@@ -1217,7 +1217,7 @@ export const API_CATALOG_ROUTES = [
     "auth": "Admin",
     "pagination": "No",
     "responseSizeRisk": "Medium",
-    "status": "Target",
+    "status": "Existing",
     "notes": "รวม summary success/fail"
   },
   {
@@ -1231,7 +1231,7 @@ export const API_CATALOG_ROUTES = [
     "auth": "Admin",
     "pagination": "Required",
     "responseSizeRisk": "High",
-    "status": "Target",
+    "status": "Existing",
     "notes": "จำเป็นต้องแบ่งหน้า"
   },
   {
@@ -1245,7 +1245,7 @@ export const API_CATALOG_ROUTES = [
     "auth": "Admin",
     "pagination": "Batch cap",
     "responseSizeRisk": "Medium",
-    "status": "Target",
+    "status": "Existing",
     "notes": ""
   },
   {
@@ -1259,7 +1259,7 @@ export const API_CATALOG_ROUTES = [
     "auth": "Admin",
     "pagination": "Async job",
     "responseSizeRisk": "High",
-    "status": "Target",
+    "status": "Existing",
     "notes": "upsert locations"
   },
   {
@@ -1273,7 +1273,7 @@ export const API_CATALOG_ROUTES = [
     "auth": "User",
     "pagination": "Limit required",
     "responseSizeRisk": "Medium",
-    "status": "Target",
+    "status": "Existing",
     "notes": "spatial distance query"
   },
   {
@@ -1287,7 +1287,7 @@ export const API_CATALOG_ROUTES = [
     "auth": "User",
     "pagination": "No",
     "responseSizeRisk": "Small",
-    "status": "Target",
+    "status": "Existing",
     "notes": "ใช้ attachmentIds"
   },
   {
@@ -1301,7 +1301,7 @@ export const API_CATALOG_ROUTES = [
     "auth": "Owner/Admin",
     "pagination": "No",
     "responseSizeRisk": "Small",
-    "status": "Target",
+    "status": "Existing",
     "notes": ""
   },
   {
@@ -1315,7 +1315,7 @@ export const API_CATALOG_ROUTES = [
     "auth": "Admin",
     "pagination": "Aggregate",
     "responseSizeRisk": "Medium",
-    "status": "Target",
+    "status": "Existing",
     "notes": "ใช้ aggregate/cache"
   },
   {
@@ -1329,7 +1329,7 @@ export const API_CATALOG_ROUTES = [
     "auth": "Admin",
     "pagination": "No",
     "responseSizeRisk": "Medium",
-    "status": "Target",
+    "status": "Existing",
     "notes": ""
   },
   {
@@ -1343,7 +1343,7 @@ export const API_CATALOG_ROUTES = [
     "auth": "Admin",
     "pagination": "No",
     "responseSizeRisk": "Medium",
-    "status": "Target",
+    "status": "Existing",
     "notes": "versioned"
   },
   {
@@ -1357,7 +1357,7 @@ export const API_CATALOG_ROUTES = [
     "auth": "Admin",
     "pagination": "No",
     "responseSizeRisk": "Small",
-    "status": "Target",
+    "status": "Existing",
     "notes": ""
   },
   {
@@ -1371,7 +1371,7 @@ export const API_CATALOG_ROUTES = [
     "auth": "Admin",
     "pagination": "No",
     "responseSizeRisk": "Small",
-    "status": "Target",
+    "status": "Existing",
     "notes": "lock questions"
   },
   {
@@ -1385,7 +1385,7 @@ export const API_CATALOG_ROUTES = [
     "auth": "Admin",
     "pagination": "No",
     "responseSizeRisk": "Small",
-    "status": "Target",
+    "status": "Existing",
     "notes": ""
   },
   {
@@ -1399,7 +1399,7 @@ export const API_CATALOG_ROUTES = [
     "auth": "User/Admin",
     "pagination": "No",
     "responseSizeRisk": "Medium",
-    "status": "Target",
+    "status": "Existing",
     "notes": ""
   },
   {
@@ -1413,7 +1413,7 @@ export const API_CATALOG_ROUTES = [
     "auth": "Admin",
     "pagination": "No",
     "responseSizeRisk": "Small",
-    "status": "Target",
+    "status": "Existing",
     "notes": ""
   },
   {
@@ -1427,7 +1427,7 @@ export const API_CATALOG_ROUTES = [
     "auth": "Admin",
     "pagination": "No",
     "responseSizeRisk": "Small",
-    "status": "Target",
+    "status": "Existing",
     "notes": ""
   },
   {
@@ -1441,7 +1441,7 @@ export const API_CATALOG_ROUTES = [
     "auth": "Admin",
     "pagination": "No",
     "responseSizeRisk": "Small",
-    "status": "Target",
+    "status": "Existing",
     "notes": "soft disable if published"
   },
   {
@@ -1455,7 +1455,7 @@ export const API_CATALOG_ROUTES = [
     "auth": "User",
     "pagination": "No",
     "responseSizeRisk": "Small",
-    "status": "Target",
+    "status": "Existing",
     "notes": "server validates complete answers"
   },
   {
@@ -1469,7 +1469,7 @@ export const API_CATALOG_ROUTES = [
     "auth": "User",
     "pagination": "No",
     "responseSizeRisk": "Medium",
-    "status": "Target",
+    "status": "Existing",
     "notes": "attachmentIds only"
   },
   {
@@ -1483,7 +1483,7 @@ export const API_CATALOG_ROUTES = [
     "auth": "User",
     "pagination": "No",
     "responseSizeRisk": "Small",
-    "status": "Target",
+    "status": "Existing",
     "notes": ""
   },
   {
@@ -1497,7 +1497,7 @@ export const API_CATALOG_ROUTES = [
     "auth": "Admin",
     "pagination": "Aggregate",
     "responseSizeRisk": "Medium",
-    "status": "Target",
+    "status": "Existing",
     "notes": "cache by filter"
   },
   {
@@ -1511,7 +1511,7 @@ export const API_CATALOG_ROUTES = [
     "auth": "Admin",
     "pagination": "Required",
     "responseSizeRisk": "High",
-    "status": "Target",
+    "status": "Existing",
     "notes": ""
   },
   {
@@ -1525,7 +1525,7 @@ export const API_CATALOG_ROUTES = [
     "auth": "Admin",
     "pagination": "Required",
     "responseSizeRisk": "High",
-    "status": "Target",
+    "status": "Existing",
     "notes": ""
   },
   {
@@ -1539,7 +1539,7 @@ export const API_CATALOG_ROUTES = [
     "auth": "Admin",
     "pagination": "Required",
     "responseSizeRisk": "High",
-    "status": "Target",
+    "status": "Existing",
     "notes": ""
   },
   {
@@ -1553,7 +1553,7 @@ export const API_CATALOG_ROUTES = [
     "auth": "Admin",
     "pagination": "Async",
     "responseSizeRisk": "High",
-    "status": "Target",
+    "status": "Existing",
     "notes": "ใช้ได้หลาย module"
   },
   {
@@ -1567,7 +1567,7 @@ export const API_CATALOG_ROUTES = [
     "auth": "Admin",
     "pagination": "No",
     "responseSizeRisk": "Small",
-    "status": "Target",
+    "status": "Existing",
     "notes": ""
   },
   {
@@ -1581,7 +1581,7 @@ export const API_CATALOG_ROUTES = [
     "auth": "Admin",
     "pagination": "File",
     "responseSizeRisk": "File",
-    "status": "Target",
+    "status": "Existing",
     "notes": "signed URL or stream"
   },
   {
@@ -1595,7 +1595,7 @@ export const API_CATALOG_ROUTES = [
     "auth": "User/Admin",
     "pagination": "Required",
     "responseSizeRisk": "High",
-    "status": "Target",
+    "status": "Existing",
     "notes": ""
   },
   {
@@ -1609,7 +1609,7 @@ export const API_CATALOG_ROUTES = [
     "auth": "User/Admin",
     "pagination": "No",
     "responseSizeRisk": "Medium",
-    "status": "Target",
+    "status": "Existing",
     "notes": "รวม action/media"
   },
   {
@@ -1623,7 +1623,7 @@ export const API_CATALOG_ROUTES = [
     "auth": "Owner/Admin",
     "pagination": "No",
     "responseSizeRisk": "Small",
-    "status": "Target",
+    "status": "Existing",
     "notes": ""
   },
   {
@@ -1637,7 +1637,7 @@ export const API_CATALOG_ROUTES = [
     "auth": "Assignee/Admin",
     "pagination": "No",
     "responseSizeRisk": "Small",
-    "status": "Target",
+    "status": "Existing",
     "notes": ""
   },
   {
@@ -1651,7 +1651,7 @@ export const API_CATALOG_ROUTES = [
     "auth": "Assignee/Admin",
     "pagination": "No",
     "responseSizeRisk": "Small",
-    "status": "Target",
+    "status": "Existing",
     "notes": "require evidence optional"
   },
   {
@@ -1665,7 +1665,7 @@ export const API_CATALOG_ROUTES = [
     "auth": "User",
     "pagination": "No",
     "responseSizeRisk": "Small",
-    "status": "Target",
+    "status": "Existing",
     "notes": ""
   },
   {
@@ -1679,7 +1679,7 @@ export const API_CATALOG_ROUTES = [
     "auth": "Admin",
     "pagination": "Required",
     "responseSizeRisk": "High",
-    "status": "Target",
+    "status": "Existing",
     "notes": ""
   },
   {
@@ -1693,7 +1693,7 @@ export const API_CATALOG_ROUTES = [
     "auth": "Admin",
     "pagination": "No",
     "responseSizeRisk": "Small",
-    "status": "Target",
+    "status": "Existing",
     "notes": "optional if moderation enabled"
   },
   {
@@ -1707,7 +1707,7 @@ export const API_CATALOG_ROUTES = [
     "auth": "Admin",
     "pagination": "No",
     "responseSizeRisk": "Small",
-    "status": "Target",
+    "status": "Existing",
     "notes": "with reason"
   },
   {
@@ -1721,7 +1721,7 @@ export const API_CATALOG_ROUTES = [
     "auth": "User",
     "pagination": "No",
     "responseSizeRisk": "Medium",
-    "status": "Target",
+    "status": "Existing",
     "notes": ""
   },
   {
@@ -1735,7 +1735,7 @@ export const API_CATALOG_ROUTES = [
     "auth": "Admin",
     "pagination": "Batch/queue",
     "responseSizeRisk": "Medium",
-    "status": "Target",
+    "status": "Existing",
     "notes": ""
   },
   {
@@ -1749,7 +1749,7 @@ export const API_CATALOG_ROUTES = [
     "auth": "User",
     "pagination": "No",
     "responseSizeRisk": "Small",
-    "status": "Target",
+    "status": "Existing",
     "notes": ""
   },
   {
@@ -1763,7 +1763,7 @@ export const API_CATALOG_ROUTES = [
     "auth": "User",
     "pagination": "Cursor",
     "responseSizeRisk": "Medium",
-    "status": "Target",
+    "status": "Existing",
     "notes": ""
   },
   {
@@ -1777,7 +1777,7 @@ export const API_CATALOG_ROUTES = [
     "auth": "Admin",
     "pagination": "No",
     "responseSizeRisk": "Small",
-    "status": "Target",
+    "status": "Existing",
     "notes": ""
   },
   {
@@ -1791,7 +1791,7 @@ export const API_CATALOG_ROUTES = [
     "auth": "Admin",
     "pagination": "No",
     "responseSizeRisk": "Small",
-    "status": "Target",
+    "status": "Existing",
     "notes": "audit required"
   },
   {
@@ -1805,7 +1805,7 @@ export const API_CATALOG_ROUTES = [
     "auth": "Admin",
     "pagination": "No",
     "responseSizeRisk": "Small",
-    "status": "Target",
+    "status": "Existing",
     "notes": "audit + reason required"
   },
   {
@@ -1819,7 +1819,7 @@ export const API_CATALOG_ROUTES = [
     "auth": "Admin",
     "pagination": "No",
     "responseSizeRisk": "Small",
-    "status": "Target",
+    "status": "Existing",
     "notes": "reward image mediaId"
   },
   {
@@ -1833,7 +1833,7 @@ export const API_CATALOG_ROUTES = [
     "auth": "Admin",
     "pagination": "No",
     "responseSizeRisk": "Small",
-    "status": "Target",
+    "status": "Existing",
     "notes": ""
   },
   {
@@ -1847,7 +1847,7 @@ export const API_CATALOG_ROUTES = [
     "auth": "Admin",
     "pagination": "No",
     "responseSizeRisk": "Small",
-    "status": "Target",
+    "status": "Existing",
     "notes": "soft delete"
   },
   {
@@ -1861,7 +1861,7 @@ export const API_CATALOG_ROUTES = [
     "auth": "Admin",
     "pagination": "Required",
     "responseSizeRisk": "High",
-    "status": "Target",
+    "status": "Existing",
     "notes": ""
   },
   {
@@ -1875,7 +1875,7 @@ export const API_CATALOG_ROUTES = [
     "auth": "Admin",
     "pagination": "No",
     "responseSizeRisk": "Small",
-    "status": "Target",
+    "status": "Existing",
     "notes": "transaction-safe"
   },
   {
@@ -1889,7 +1889,7 @@ export const API_CATALOG_ROUTES = [
     "auth": "Admin",
     "pagination": "No",
     "responseSizeRisk": "Small",
-    "status": "Target",
+    "status": "Existing",
     "notes": "ledger"
   },
   {
@@ -1903,7 +1903,7 @@ export const API_CATALOG_ROUTES = [
     "auth": "Admin",
     "pagination": "Required",
     "responseSizeRisk": "Medium",
-    "status": "Target",
+    "status": "Existing",
     "notes": ""
   },
   {
@@ -1917,7 +1917,7 @@ export const API_CATALOG_ROUTES = [
     "auth": "Admin",
     "pagination": "No",
     "responseSizeRisk": "Small",
-    "status": "Target",
+    "status": "Existing",
     "notes": ""
   },
   {
@@ -1931,7 +1931,7 @@ export const API_CATALOG_ROUTES = [
     "auth": "Admin",
     "pagination": "No",
     "responseSizeRisk": "Small",
-    "status": "Target",
+    "status": "Existing",
     "notes": ""
   },
   {
@@ -1945,7 +1945,7 @@ export const API_CATALOG_ROUTES = [
     "auth": "Admin",
     "pagination": "No",
     "responseSizeRisk": "Small",
-    "status": "Target",
+    "status": "Existing",
     "notes": "soft disable"
   },
   {
@@ -1959,7 +1959,7 @@ export const API_CATALOG_ROUTES = [
     "auth": "User",
     "pagination": "Required",
     "responseSizeRisk": "Medium",
-    "status": "Target",
+    "status": "Existing",
     "notes": ""
   },
   {
@@ -1973,7 +1973,7 @@ export const API_CATALOG_ROUTES = [
     "auth": "Admin",
     "pagination": "Required",
     "responseSizeRisk": "High",
-    "status": "Target",
+    "status": "Existing",
     "notes": ""
   },
   {
@@ -1987,7 +1987,7 @@ export const API_CATALOG_ROUTES = [
     "auth": "User/Admin",
     "pagination": "No",
     "responseSizeRisk": "Small",
-    "status": "Target",
+    "status": "Existing",
     "notes": "cache yearly"
   },
   {
@@ -2001,7 +2001,7 @@ export const API_CATALOG_ROUTES = [
     "auth": "Admin",
     "pagination": "No",
     "responseSizeRisk": "Small",
-    "status": "Target",
+    "status": "Existing",
     "notes": ""
   },
   {
@@ -2015,7 +2015,7 @@ export const API_CATALOG_ROUTES = [
     "auth": "Admin",
     "pagination": "No",
     "responseSizeRisk": "Small",
-    "status": "Target",
+    "status": "Existing",
     "notes": ""
   },
   {
@@ -2029,7 +2029,7 @@ export const API_CATALOG_ROUTES = [
     "auth": "User",
     "pagination": "No",
     "responseSizeRisk": "Small",
-    "status": "Target",
+    "status": "Existing",
     "notes": ""
   },
   {
@@ -2043,7 +2043,7 @@ export const API_CATALOG_ROUTES = [
     "auth": "User",
     "pagination": "No",
     "responseSizeRisk": "Small",
-    "status": "Target",
+    "status": "Existing",
     "notes": ""
   },
   {
@@ -2057,7 +2057,7 @@ export const API_CATALOG_ROUTES = [
     "auth": "User",
     "pagination": "No",
     "responseSizeRisk": "Small",
-    "status": "Target",
+    "status": "Existing",
     "notes": ""
   },
   {
@@ -2071,7 +2071,7 @@ export const API_CATALOG_ROUTES = [
     "auth": "User",
     "pagination": "No",
     "responseSizeRisk": "Small",
-    "status": "Target",
+    "status": "Existing",
     "notes": ""
   },
   {
@@ -2085,7 +2085,7 @@ export const API_CATALOG_ROUTES = [
     "auth": "Owner/Admin",
     "pagination": "No",
     "responseSizeRisk": "Small",
-    "status": "Target",
+    "status": "Existing",
     "notes": "ownerType/ownerId/linkType"
   },
   {
@@ -2099,7 +2099,7 @@ export const API_CATALOG_ROUTES = [
     "auth": "Owner/Admin",
     "pagination": "No",
     "responseSizeRisk": "Small",
-    "status": "Target",
+    "status": "Existing",
     "notes": ""
   },
   {
@@ -2113,7 +2113,7 @@ export const API_CATALOG_ROUTES = [
     "auth": "User",
     "pagination": "Limit",
     "responseSizeRisk": "Medium",
-    "status": "Target",
+    "status": "Existing",
     "notes": "ตรวจสิทธิ์ตาม owner"
   },
   {
@@ -2127,7 +2127,7 @@ export const API_CATALOG_ROUTES = [
     "auth": "User",
     "pagination": "No",
     "responseSizeRisk": "Small",
-    "status": "Target",
+    "status": "Existing",
     "notes": "optional for scale"
   },
   {
@@ -2141,7 +2141,7 @@ export const API_CATALOG_ROUTES = [
     "auth": "User",
     "pagination": "No",
     "responseSizeRisk": "Small",
-    "status": "Target",
+    "status": "Existing",
     "notes": "verify object exists"
   },
   {
@@ -2155,7 +2155,7 @@ export const API_CATALOG_ROUTES = [
     "auth": "Admin",
     "pagination": "Required",
     "responseSizeRisk": "High",
-    "status": "Target",
+    "status": "Existing",
     "notes": "ห้ามเปิด public"
   },
   {
@@ -2169,7 +2169,7 @@ export const API_CATALOG_ROUTES = [
     "auth": "Public/Internal",
     "pagination": "No",
     "responseSizeRisk": "Small",
-    "status": "Target",
+    "status": "Existing",
     "notes": ""
   },
   {
@@ -2183,7 +2183,7 @@ export const API_CATALOG_ROUTES = [
     "auth": "Public/Internal",
     "pagination": "No",
     "responseSizeRisk": "Small",
-    "status": "Target",
+    "status": "Existing",
     "notes": ""
   }
 ] as const satisfies readonly ApiCatalogRoute[];

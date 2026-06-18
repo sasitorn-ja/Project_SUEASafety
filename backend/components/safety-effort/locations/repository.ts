@@ -105,6 +105,7 @@ function mapLocation(row: LocationRow) {
     organizationName: row.organization_name,
     locationType: row.location_type,
     source: row.source,
+    readOnly: row.source === "RMR_SSO_PLANT",
     externalKey: row.external_key,
     code: row.code,
     nameTh: row.name_th,
@@ -200,6 +201,10 @@ export async function getSafetyEffortLocation(id: string) {
 }
 
 export async function createSafetyEffortLocation(input: SafetyEffortLocationInput) {
+  const normalizedInput = {
+    ...input,
+    source: input.locationType === "PLANT" ? "ADMIN" : input.source || "ADMIN",
+  };
   const pointWkt = `POINT(${input.lng} ${input.lat})`;
   const id = await withTransaction(async (connection) => {
     const [result] = await connection.execute<ResultSetHeader>(
@@ -236,7 +241,7 @@ export async function createSafetyEffortLocation(input: SafetyEffortLocationInpu
           :createdBy
         )
       `,
-      { ...input, pointWkt },
+      { ...normalizedInput, pointWkt },
     );
     return String(result.insertId);
   });
@@ -249,6 +254,7 @@ export async function createSafetyEffortLocation(input: SafetyEffortLocationInpu
 export async function updateSafetyEffortLocation(id: string, input: Partial<SafetyEffortLocationInput>) {
   const current = await getSafetyEffortLocation(id);
   if (!current) return null;
+  if (current.source === "RMR_SSO_PLANT") throw new Error("source_read_only");
 
   const next = {
     locationType: input.locationType ?? current.locationType,
@@ -298,6 +304,9 @@ export async function updateSafetyEffortLocation(id: string, input: Partial<Safe
 }
 
 export async function deleteSafetyEffortLocation(id: string) {
+  const current = await getSafetyEffortLocation(id);
+  if (!current) return;
+  if (current.source === "RMR_SSO_PLANT") throw new Error("source_read_only");
   await withTransaction(async (connection) => {
     await connection.execute<ResultSetHeader>(
       `
