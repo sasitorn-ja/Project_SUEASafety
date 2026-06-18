@@ -27,15 +27,6 @@ const TOP_RANK_STYLES = [
   },
 ];
 
-const PERSONAL_RANKING_FALLBACKS = [
-  { id: "fallback-5", name: "Preecha V.", team: "RMC West", points: 241 },
-  { id: "fallback-6", name: "Jirawat S.", team: "North Region", points: 226 },
-  { id: "fallback-7", name: "Kanokwan L.", team: "RMC Metro", points: 214 },
-  { id: "fallback-8", name: "Thanawat P.", team: "RMC Northeast", points: 201 },
-  { id: "fallback-9", name: "Supansa R.", team: "RMC North", points: 188 },
-  { id: "fallback-10", name: "Phutthipong N.", team: "Other", points: 176 },
-] as const;
-
 function formatRankLabel(rank: string) {
   const digits = rank.replace(/[^\d]/g, "");
   return digits ? `#${digits}` : rank;
@@ -59,17 +50,6 @@ export default function LeaderboardPage() {
   const runnerUpTeam = teamStandings[1];
   const leadPoints = leadingTeam && runnerUpTeam ? leadingTeam.points - runnerUpTeam.points : 0;
   const topScorers = [...personalRankings];
-
-  if (topScorers.length < 10) {
-    for (const fallback of PERSONAL_RANKING_FALLBACKS) {
-      if (topScorers.length >= 10) break;
-      topScorers.push({
-        ...fallback,
-        rank: `#${topScorers.length + 1}`,
-      });
-    }
-  }
-
   const visibleTopScorers = showAllTopScorers ? topScorers.slice(0, 10) : topScorers.slice(0, 4);
 
   const animStyle = (delay: number) => ({
@@ -136,7 +116,12 @@ export default function LeaderboardPage() {
             </div>
 
             <div className="space-y-2.5 p-2.5 md:space-y-3 md:p-4">
-              {teamStandings.map((team, idx) => (
+              {teamStandings.length === 0 ? (
+                <div className="rounded-[18px] border border-dashed border-[var(--border)] bg-[var(--brand-surface)] px-4 py-8 text-center">
+                  <p className="text-[14px] font-black text-[var(--foreground)]">ยังไม่มีข้อมูลทีม</p>
+                  <p className="mt-1 text-[12px] font-bold text-[var(--brand-muted-text)]">เมื่อมีข้อมูลทีมใน DB ระบบจะแสดงอันดับที่นี่</p>
+                </div>
+              ) : teamStandings.map((team, idx) => (
                 <article
                   key={team.id}
                   className="rounded-[18px] border border-[var(--border)] bg-[var(--brand-surface)] px-2.5 py-2.5 shadow-[0_8px_22px_var(--brand-shadow)] transition-all duration-200 hover:-translate-y-[1px] hover:border-[rgba(var(--brand-accent-rgb),0.45)] md:rounded-[20px] md:px-4 md:py-3"
@@ -198,11 +183,16 @@ export default function LeaderboardPage() {
             style={animStyle(0.24)}
           >
             <div className="border-b border-[var(--border)] px-3.5 py-3.5 md:px-5 md:py-4">
-              <p className="text-[13px] font-black tracking-[0.01em] text-[var(--foreground)] md:text-[14px]">ผู้ทำคะแนนสูงสุด · เดือนนี้</p>
+              <p className="text-[13px] font-black tracking-[0.01em] text-[var(--foreground)] md:text-[14px]">อันดับในทีมของฉัน · เดือนนี้</p>
             </div>
 
             <div className="space-y-2.5 p-2.5 md:p-4">
-              {visibleTopScorers.map((user, index) => {
+              {visibleTopScorers.length === 0 ? (
+                <div className="rounded-[18px] border border-dashed border-[var(--border)] bg-[var(--brand-surface)] px-4 py-8 text-center">
+                  <p className="text-[14px] font-black text-[var(--foreground)]">ยังไม่มีอันดับในทีม</p>
+                  <p className="mt-1 text-[12px] font-bold text-[var(--brand-muted-text)]">ระบบจะแสดงอันดับเมื่อคุณมีทีมและมีสมาชิกทีมใน DB</p>
+                </div>
+              ) : visibleTopScorers.map((user, index) => {
                 const rankStyle = TOP_RANK_STYLES[index] ?? {
                   badgeClassName: "border-[var(--border)] bg-[var(--brand-soft)] text-[var(--brand-text)]",
                   avatarRingClassName: "ring-[rgba(var(--brand-accent-rgb),0.26)]",
@@ -253,6 +243,7 @@ export default function LeaderboardPage() {
               })}
             </div>
 
+            {topScorers.length > 4 ? (
             <div className="flex justify-end px-4 pb-4 md:px-5">
               <button
                 type="button"
@@ -263,6 +254,7 @@ export default function LeaderboardPage() {
                 {showAllTopScorers ? <ChevronDown className="h-4 w-4" strokeWidth={2.4} /> : <ChevronRight className="h-4 w-4" strokeWidth={2.4} />}
               </button>
             </div>
+            ) : null}
           </Card>
         </div>
       </div>

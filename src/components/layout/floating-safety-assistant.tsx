@@ -12,9 +12,7 @@ import {
 } from "lucide-react";
 import {
   type CSSProperties,
-  type MouseEvent as ReactMouseEvent,
   type PointerEvent as ReactPointerEvent,
-  type TouchEvent as ReactTouchEvent,
   useEffect,
   useMemo,
   useRef,
@@ -120,7 +118,6 @@ export function FloatingSafetyAssistant() {
   const lastDragPositionRef = useRef<DragPosition | null>(null);
   const suppressClickRef = useRef(false);
   const suppressClickTimerRef = useRef<number | null>(null);
-  const mouseMoveCleanupRef = useRef<(() => void) | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [chatInput, setChatInput] = useState("");
@@ -338,7 +335,6 @@ export function FloatingSafetyAssistant() {
     window.addEventListener("resize", handleResize);
     return () => {
       window.removeEventListener("resize", handleResize);
-      mouseMoveCleanupRef.current?.();
       if (suppressClickTimerRef.current !== null) {
         window.clearTimeout(suppressClickTimerRef.current);
       }
@@ -437,9 +433,7 @@ export function FloatingSafetyAssistant() {
     const drag = dragRef.current;
     if (!drag || drag.pointerId !== event.pointerId) return;
     const rect = event.currentTarget.getBoundingClientRect();
-    if (moveDrag(event.clientX, event.clientY, rect.width, rect.height)) {
-      event.preventDefault();
-    }
+    moveDrag(event.clientX, event.clientY, rect.width, rect.height);
   }
 
   function handleTriggerPointerUp(event: ReactPointerEvent<HTMLButtonElement>) {
@@ -457,60 +451,6 @@ export function FloatingSafetyAssistant() {
     if (event.currentTarget.hasPointerCapture(event.pointerId)) {
       event.currentTarget.releasePointerCapture(event.pointerId);
     }
-    dragRef.current = null;
-    setIsDragging(false);
-  }
-
-  function handleTriggerMouseDown(event: ReactMouseEvent<HTMLButtonElement>) {
-    const rect = event.currentTarget.getBoundingClientRect();
-    if (!dragRef.current) {
-      startDrag(event.clientX, event.clientY, rect);
-    }
-
-    function handleMouseMove(moveEvent: MouseEvent) {
-      if (moveDrag(moveEvent.clientX, moveEvent.clientY, rect.width, rect.height)) {
-        moveEvent.preventDefault();
-      }
-    }
-
-    function handleMouseUp() {
-      finishDrag(rect.width, rect.height);
-      mouseMoveCleanupRef.current?.();
-    }
-
-    mouseMoveCleanupRef.current?.();
-    mouseMoveCleanupRef.current = () => {
-      document.removeEventListener("mousemove", handleMouseMove);
-      document.removeEventListener("mouseup", handleMouseUp);
-      mouseMoveCleanupRef.current = null;
-    };
-    document.addEventListener("mousemove", handleMouseMove);
-    document.addEventListener("mouseup", handleMouseUp);
-  }
-
-  function handleTriggerTouchStart(event: ReactTouchEvent<HTMLButtonElement>) {
-    if (dragRef.current) return;
-    const touch = event.touches[0];
-    if (!touch) return;
-    startDrag(touch.clientX, touch.clientY, event.currentTarget.getBoundingClientRect());
-  }
-
-  function handleTriggerTouchMove(event: ReactTouchEvent<HTMLButtonElement>) {
-    const touch = event.touches[0];
-    if (!touch) return;
-    const rect = event.currentTarget.getBoundingClientRect();
-    if (moveDrag(touch.clientX, touch.clientY, rect.width, rect.height)) {
-      event.preventDefault();
-    }
-  }
-
-  function handleTriggerTouchEnd(event: ReactTouchEvent<HTMLButtonElement>) {
-    if (!dragRef.current) return;
-    const rect = event.currentTarget.getBoundingClientRect();
-    finishDrag(rect.width, rect.height);
-  }
-
-  function handleTriggerTouchCancel() {
     dragRef.current = null;
     setIsDragging(false);
   }
@@ -719,11 +659,6 @@ export function FloatingSafetyAssistant() {
         onPointerMove={handleTriggerPointerMove}
         onPointerUp={handleTriggerPointerUp}
         onPointerCancel={handleTriggerPointerCancel}
-        onMouseDown={handleTriggerMouseDown}
-        onTouchStart={handleTriggerTouchStart}
-        onTouchMove={handleTriggerTouchMove}
-        onTouchEnd={handleTriggerTouchEnd}
-        onTouchCancel={handleTriggerTouchCancel}
         className={cn(
           "floating-safety-assistant-trigger group relative flex h-[56px] w-[56px] touch-none select-none items-center justify-center rounded-full border-2 border-white/70 bg-[rgba(var(--brand-nav-rgb),0.90)] shadow-[0_14px_34px_var(--brand-shadow)] outline-none backdrop-blur-lg transition-all [-webkit-user-select:none] [-webkit-touch-callout:none] active:scale-95 hover:scale-105 focus-visible:ring-3 focus-visible:ring-[var(--brand-accent)] md:h-[64px] md:w-[64px]",
           isDragging ? "cursor-grabbing" : "cursor-grab",

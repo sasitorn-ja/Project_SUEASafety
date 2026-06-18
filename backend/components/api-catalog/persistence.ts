@@ -905,11 +905,35 @@ async function handleCultureRewards(request: NextRequest, method: string, match:
     }
   }
   if (method === "GET" && route === "/api/safety-culture/leaderboard") {
+    if (!userId) return jsonError("unauthorized", 401);
+    const memberships = await queryRows<DbRow>(
+      `SELECT tm.team_id
+       FROM team_members tm
+       JOIN teams t ON t.id = tm.team_id
+       WHERE tm.user_id = :userId
+         AND tm.left_at IS NULL
+         AND t.deleted_at IS NULL
+         AND t.status = 'ACTIVE'
+       LIMIT 1`,
+      { userId },
+    );
+    const teamId = memberships[0]?.team_id;
+    if (!teamId) return jsonData({ items: [] });
+
     const rows = await queryRows<DbRow>(
-      `SELECT u.id user_id, u.name_th, COALESCE(pb.balance, 0) points
-       FROM users u LEFT JOIN point_balances pb ON pb.user_id = u.id
-       WHERE u.deleted_at IS NULL AND u.status = 'ACTIVE'
+      `SELECT u.id user_id, u.name_th, t.name team, COALESCE(pb.balance, 0) points
+       FROM team_members tm
+       JOIN teams t ON t.id = tm.team_id
+       JOIN users u ON u.id = tm.user_id
+       LEFT JOIN point_balances pb ON pb.user_id = u.id
+       WHERE tm.team_id = :teamId
+         AND tm.left_at IS NULL
+         AND t.deleted_at IS NULL
+         AND t.status = 'ACTIVE'
+         AND u.deleted_at IS NULL
+         AND u.status = 'ACTIVE'
        ORDER BY points DESC, u.name_th LIMIT 100`,
+      { teamId },
     );
     return jsonData({ items: rows.map(serializeRow) });
   }
