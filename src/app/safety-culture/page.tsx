@@ -310,7 +310,7 @@ export default function Page() {
   };
 
   const tipText = "โพสต์เรื่องความปลอดภัยให้ชัดเจน กระชับ และถ้าเข้ากิจกรรมแบบ Card อย่าลืมเลือกกิจกรรมก่อนโพสต์";
-  const visibleFeedEvents = feedEvents.filter((event) => event.published);
+  const visibleFeedEvents = feedEvents.filter((event) => event.published && event.status === "open");
   const maxMobileActivityStartIndex = Math.max(0, visibleFeedEvents.length - 1);
   const maxDesktopActivityStartIndex = Math.max(0, visibleFeedEvents.length - 3);
   const expandedPostPhotos = expandedPost ? getPostPhotos(expandedPost) : [];

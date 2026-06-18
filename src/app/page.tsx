@@ -21,7 +21,7 @@ import {
   Zap,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
-import { useAppState, getSafetyCultureEventPhase } from "@/providers/app-providers";
+import { useAppState } from "@/providers/app-providers";
 import { useAppTheme } from "@/providers/theme-provider";
 
 const THAI_WEEKDAYS_SHORT = ["อา.", "จ.", "อ.", "พ.", "พฤ.", "ศ.", "ส."];
@@ -38,6 +38,13 @@ function formatThaiDate(date: Date, includeYear = false) {
   return includeYear ? `${day} ${month} ${date.getUTCFullYear() + 543}` : `${String(day).padStart(2, "0")} ${month}`;
 }
 
+function getDateTimestamp(date?: string, endOfDay = false) {
+  if (!date) return null;
+  const parsed = new Date(`${date}T${endOfDay ? "23:59:59" : "00:00:00"}+07:00`);
+  const timestamp = parsed.getTime();
+  return Number.isNaN(timestamp) ? null : timestamp;
+}
+
 export default function HomePage() {
   const { mascot } = useAppTheme();
   const {
@@ -45,7 +52,7 @@ export default function HomePage() {
     rewardsCatalog,
     personalRankings,
     teamStandings,
-    safetyCultureEvent,
+    feedEvents,
     eventNow,
     awarenessDoneToday,
     awarenessHistory,
@@ -69,33 +76,33 @@ export default function HomePage() {
     : 100;
   const remaining = nextReward ? nextReward.points - currentUserPoints : 0;
 
-  // อีเวนต์ที่กำลังจัด
-  const eventPhase = getSafetyCultureEventPhase(safetyCultureEvent, eventNow);
-  const startAt = new Date(`${safetyCultureEvent.startDate}T${safetyCultureEvent.startTime}+07:00`);
-  const endAt = new Date(`${safetyCultureEvent.endDate}T${safetyCultureEvent.endTime}+07:00`);
-  const eventBonusLabel =
-    safetyCultureEvent.bonusMode === "multiplier"
-      ? `x${safetyCultureEvent.multiplier}`
-      : `+${safetyCultureEvent.fixedPoints} pts`;
-  const timeRangeLabel = `${formatThaiDate(bangkokDate(startAt.getTime()))} ${safetyCultureEvent.startTime} - ${formatThaiDate(bangkokDate(endAt.getTime()))} ${safetyCultureEvent.endTime}`;
-
-  const isLive = eventPhase === "live";
-  let eventStatusLabel = "Draft";
-  let countdownLabel = "ยังไม่มีกิจกรรมในตอนนี้";
-  if (eventPhase === "live") {
-    eventStatusLabel = "กำลังจัด";
-    countdownLabel = `เหลือเวลาอีก ${Math.max(0, Math.ceil((endAt.getTime() - eventNow) / 60000))} นาที`;
-  } else if (eventPhase === "upcoming") {
-    eventStatusLabel = "ใกล้เริ่ม";
-    countdownLabel = `เริ่มในอีก ${Math.max(0, Math.ceil((startAt.getTime() - eventNow) / 60000))} นาที`;
-  } else if (eventPhase === "ended") {
-    eventStatusLabel = "จบแล้ว";
-    countdownLabel = "กิจกรรมสิ้นสุดแล้ว";
-  } else if (eventPhase === "paused") {
-    eventStatusLabel = "หยุดชั่วคราว";
-    countdownLabel = "กิจกรรมถูกหยุดชั่วคราว";
-  }
-  const showEvent = eventPhase !== "draft";
+  // อีเวนต์ที่กำลังจัด: ใช้เฉพาะ feedEvents จาก API จริงเท่านั้น
+  const activeFeedEvents = feedEvents
+    .filter((event) => {
+      if (!event.published || event.status !== "open") return false;
+      const start = getDateTimestamp(event.startDate, false);
+      const end = getDateTimestamp(event.endDate, true);
+      if (start !== null && eventNow < start) return false;
+      if (end !== null && eventNow > end) return false;
+      return true;
+    })
+    .sort((left, right) => (getDateTimestamp(left.startDate, false) ?? 0) - (getDateTimestamp(right.startDate, false) ?? 0));
+  const activeEvent = activeFeedEvents[0] ?? null;
+  const activeEventEndAt = getDateTimestamp(activeEvent?.endDate, true);
+  const eventBonusLabel = activeEvent
+    ? activeEvent.bonusMode === "multiplier"
+      ? `x${activeEvent.multiplier}`
+      : activeEvent.fixedPoints > 0
+        ? `+${activeEvent.fixedPoints} pts`
+        : activeEvent.points > 0
+          ? `+${activeEvent.points} pts`
+          : "OPEN"
+    : "";
+  const countdownLabel = activeEventEndAt
+    ? `เหลือเวลาอีก ${Math.max(0, Math.ceil((activeEventEndAt - eventNow) / 60000))} นาที`
+    : "กำลังเปิดรับกิจกรรม";
+  const timeRangeLabel = activeEvent?.dateLabel || "ไม่ระบุช่วงเวลา";
+  const showEvent = Boolean(activeEvent);
   const today = bangkokDate(eventNow);
   const todayDateKey = `${today.getUTCFullYear()}-${String(today.getUTCMonth() + 1).padStart(2, "0")}-${String(today.getUTCDate()).padStart(2, "0")}`;
   const awarenessDays = Array.from({ length: 14 }, (_, index) => {
@@ -472,18 +479,18 @@ export default function HomePage() {
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2">
                         <span className="truncate text-[12.5px] font-black text-[var(--brand-nav)]">
-                          {safetyCultureEvent.headline}
+                          {activeEvent?.title}
                         </span>
                         <span className="rounded-full bg-[var(--brand-accent)] px-2 py-0.5 text-[8.5px] font-black text-[var(--brand-accent-contrast)]">
                           {eventBonusLabel}
                         </span>
                       </div>
                       <p className="mt-1 line-clamp-2 text-[10.5px] font-bold leading-relaxed text-[var(--brand-text)]/75">
-                        {safetyCultureEvent.supportingText}
+                        {activeEvent?.summary || activeEvent?.details}
                       </p>
                       <div className="mt-2 flex flex-wrap items-center gap-2">
                         <span className="rounded-full bg-[var(--brand-soft)] px-2 py-1 text-[9.5px] font-black text-[var(--brand-text)]">
-                          {eventStatusLabel}
+                          กำลังจัด
                         </span>
                         <span className="text-[9.5px] font-black text-[var(--brand-accent-strong)]">{countdownLabel}</span>
                       </div>

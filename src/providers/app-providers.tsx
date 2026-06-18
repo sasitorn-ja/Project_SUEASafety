@@ -714,18 +714,25 @@ function buildNotificationHref(notification: Pick<AppInboxNotification, "postId"
 }
 
 function createDefaultSafetyCultureEvent(): SafetyCultureEventConfig {
-  const start = new Date();
-  const end = addDays(start, 14);
-  const startDate = formatLocalDate(start);
-  const endDate = formatLocalDate(end);
+  const startDate = "1970-01-01";
+  const endDate = "1970-01-01";
   const startTime = DEFAULT_SAFETY_CULTURE_EVENT.startTime;
   const endTime = DEFAULT_SAFETY_CULTURE_EVENT.endTime;
 
   return {
     ...DEFAULT_SAFETY_CULTURE_EVENT,
+    eventName: "",
+    eventCode: "",
+    headline: "",
+    supportingText: "",
+    bannerNote: "",
+    bannerVisible: false,
+    status: "draft",
+    enabledActions: [],
     startDate,
     endDate,
-    supportingText: `แชร์เรื่องความปลอดภัยช่วง ${startTime} - ${endTime} แล้วรับคะแนนคูณเพิ่มทันที`,
+    startTime,
+    endTime,
   };
 }
 

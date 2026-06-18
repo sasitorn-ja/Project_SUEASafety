@@ -210,22 +210,24 @@ export default function RewardsPage() {
           />
         </div>
 
-        <div className="scrollbar-hide mb-4 flex gap-2 overflow-x-auto py-2 anim-fade" style={animStyle(0.12)}>
-          {rewardFilters.map((tag) => (
-            <button
-              key={tag.value}
-              onClick={() => setFilter(tag.value)}
-              className={cn(
-                "flex-shrink-0 whitespace-nowrap rounded-full border-[1.5px] px-4 py-2 text-[13.5px] font-bold transition-all",
-                filter === tag.value
-                  ? "border-[var(--brand-text)] bg-[var(--brand-text)] text-white shadow-[0_4px_10px_rgba(0,0,0,0.08)]"
-                  : "border-[var(--border)] bg-white text-[var(--brand-text)] hover:border-[var(--brand-accent)] hover:bg-[var(--brand-soft)]"
-              )}
-            >
-              {tag.label}
-            </button>
-          ))}
-        </div>
+        {rewardsCatalog.length > 0 ? (
+          <div className="scrollbar-hide mb-4 flex gap-2 overflow-x-auto py-2 anim-fade" style={animStyle(0.12)}>
+            {rewardFilters.map((tag) => (
+              <button
+                key={tag.value}
+                onClick={() => setFilter(tag.value)}
+                className={cn(
+                  "flex-shrink-0 whitespace-nowrap rounded-full border-[1.5px] px-4 py-2 text-[13.5px] font-bold transition-all",
+                  filter === tag.value
+                    ? "border-[var(--brand-text)] bg-[var(--brand-text)] text-white shadow-[0_4px_10px_rgba(0,0,0,0.08)]"
+                    : "border-[var(--border)] bg-white text-[var(--brand-text)] hover:border-[var(--brand-accent)] hover:bg-[var(--brand-soft)]"
+                )}
+              >
+                {tag.label}
+              </button>
+            ))}
+          </div>
+        ) : null}
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           {filtered.map((reward, idx) => {
@@ -299,6 +301,19 @@ export default function RewardsPage() {
             );
           })}
         </div>
+
+        {rewardsCatalog.length === 0 ? (
+          <Card className="rounded-[18px] border border-dashed border-[var(--border)] bg-[var(--brand-surface)] px-5 py-10 text-center">
+            <p className="text-[17px] font-black text-[var(--brand-text)]">ยังไม่มีของรางวัลในระบบ</p>
+            <p className="mt-2 text-[13px] font-bold text-[var(--brand-muted-text)]">
+              เมื่อแอดมินเพิ่มรางวัลผ่าน API/หลังบ้าน รายการจะปรากฏที่หน้านี้
+            </p>
+          </Card>
+        ) : filtered.length === 0 ? (
+          <Card className="rounded-[18px] border border-dashed border-[var(--border)] bg-[var(--brand-surface)] px-5 py-10 text-center">
+            <p className="text-[17px] font-black text-[var(--brand-text)]">ไม่มีรางวัลในหมวดนี้</p>
+          </Card>
+        ) : null}
       </div>
 
       <Dialog open={!!redeeming} onOpenChange={(open) => !open && setRedeeming(null)}>
