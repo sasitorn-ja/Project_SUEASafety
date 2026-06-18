@@ -12,8 +12,13 @@ cd '${REMOTE_DIR}'
 git fetch origin '${REMOTE_BRANCH}'
 git reset --hard 'origin/${REMOTE_BRANCH}'
 test -f .env.production
-docker compose up -d --build --force-recreate
+docker compose build
+docker compose run --rm --no-deps cpac-safety-plus node scripts/run-migration.mjs scripts/migrations/001_real_api_storage.sql
+docker compose up -d --force-recreate
 docker compose logs --tail=80 cpac-safety-plus
 "
 
+curl --fail --silent --show-error --retry 12 --retry-delay 5 \
+  "https://safety.cipcloud.net/api/health"
+echo
 echo "Done: https://safety.cipcloud.net"

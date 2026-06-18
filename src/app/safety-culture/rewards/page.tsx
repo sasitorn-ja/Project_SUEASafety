@@ -135,10 +135,10 @@ export default function RewardsPage() {
     setRedeeming(item);
   };
 
-  const confirmRedeem = () => {
+  const confirmRedeem = async () => {
     if (!redeeming) return;
 
-    const redeemResult = redeemPoints(redeeming.id, redeeming.points);
+    const redeemResult = await redeemPoints(redeeming.id, redeeming.points);
     if (!redeemResult.ok) {
       setRedeeming(null);
       setResult({
@@ -150,13 +150,17 @@ export default function RewardsPage() {
               ? "ยังไม่ถึงเวลาแลก"
               : redeemResult.reason === "expired"
                 ? "หมดเวลาแลกแล้ว"
-                : "คะแนนยังไม่พอ",
+                : redeemResult.reason === "api-error"
+                  ? "ไม่สามารถแลกรางวัลได้"
+                  : "คะแนนยังไม่พอ",
         desc:
           redeemResult.reason === "out-of-stock"
             ? `รางวัล "${redeeming.name}" หมดสต็อกแล้ว`
             : redeemResult.reason === "not-started" || redeemResult.reason === "expired"
               ? getRewardScheduleText(redeeming)
-              : "คะแนนอาจถูกใช้ไปแล้ว กรุณาลองใหม่",
+              : redeemResult.reason === "api-error"
+                ? "ระบบไม่สามารถบันทึกการแลกรางวัลลงฐานข้อมูลได้ กรุณาลองใหม่"
+                : "คะแนนอาจถูกใช้ไปแล้ว กรุณาลองใหม่",
       });
       return;
     }

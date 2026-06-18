@@ -6,128 +6,96 @@ import {
   LOCATION_TYPE_OPTIONS,
   deepCloneChecklists,
   getActiveChecklistCollection,
+  hydrateChecklistDraft,
   restoreChecklistDefaults,
   saveChecklistDraft,
 } from "@/features/safety-effort/config/checklists";
 import { GripVertical, Eye, Trash2, Search, X, Download, Upload, Check, Settings, ChevronDown, ChevronUp, Pencil, MapPin } from "lucide-react";
 import * as XLSX from "xlsx";
 import { Combobox } from "@/components/ui/combobox";
-import mockExcelRecords from "@/features/safety-effort/config/mock_excel_records.json";
-import mockPlantsData from "@/features/safety-effort/config/mock_plants.json";
-import mockOfficesData from "@/features/safety-effort/config/mock_offices.json";
-import mockSitesData from "@/features/safety-effort/config/mock_sites.json";
 
 const getInitialOffices = () => {
-  if (typeof window !== "undefined") {
-    const stored = localStorage.getItem("suea-safety-offices-v1");
-    if (stored) {
-      try {
-        return JSON.parse(stored);
-      } catch (e) {
-        // fallback
-      }
-    }
-  }
-  
-  const initial = [...mockOfficesData];
-  const officeNames = ["สำนักงานซีแพคบางซ่อน", "สำนักงานใหญ่บางซื่อ", "สำนักงานระยอง", "สำนักงานเชียงใหม่", "สำนักงานหาดใหญ่", "สำนักงานขอนแก่น", "สำนักงานโคราช"];
-  const depts = ["HR", "IT Support", "Accounting & Finance", "Procurement", "Sales & Marketing"];
-  
-  for (let i = 5; i <= 25; i++) {
-    initial.push({
-      id: i,
-      companyCode: "130",
-      companyName: i % 2 === 0 ? "CPAC Group" : "Tiger Safety Co.",
-      divisionCode: String(90000200 + i),
-      divisionName: i % 2 === 0 ? "CPAC Central" : "RMC North",
-      deptCode: String(14320 + i),
-      deptName: depts[i % depts.length],
-      officeCode: `OFF-GEN-${i}`,
-      officeName: officeNames[i % officeNames.length] + ` โซน ${i}`,
-      floor: `ชั้น ${i % 10 + 1}`,
-      status: i % 3 === 0 ? "INACTIVE" : "ACTIVE",
-      lat: i % 5 === 0 ? 13.0 + (i * 0.02) : null,
-      lng: i % 5 === 0 ? 100.0 + (i * 0.02) : null
-    });
-  }
-  return initial;
+  return [];
 };
 
 const getInitialSites = () => {
-  if (typeof window !== "undefined") {
-    const stored = localStorage.getItem("suea-safety-sites-v1");
-    if (stored) {
-      try {
-        return JSON.parse(stored);
-      } catch (e) {
-        // fallback
-      }
-    }
-  }
-  
-  const initial = [...mockSitesData];
-  const siteNames = ["Site บางซื่อ", "Site รัชดา", "Site สุขุมวิท", "Site พญาไท", "Site พระราม 9", "Site ลาดพร้าว", "Site ลุมพินี"];
-  const customers = ["Sansiri PLC", "AP Thailand", "Land & Houses", "Origin Property", "Asset Wise"];
-  const contractors = ["Italian-Thai Development", "CH. Karnchang", "Sino-Thai Engineering", "Unique Engineering"];
-  const stages = ["Piling Phase (งานตอกเสาเข็ม)", "Structural Phase (งานโครงสร้าง)", "Finishing Phase (งานตกแต่ง)", "Testing Phase", "Completed (เสร็จสิ้น)"];
-
-  for (let i = 5; i <= 25; i++) {
-    initial.push({
-      id: i,
-      projectCode: `STE-GEN-${i}`,
-      projectName: siteNames[i % siteNames.length] + ` เฟส ${i}`,
-      customer: customers[i % customers.length],
-      contractor: contractors[i % contractors.length],
-      stage: stages[i % stages.length],
-      status: i % 5 === 0 ? "COMPLETED" : "ACTIVE",
-      lat: i % 5 === 0 ? 13.0 + (i * 0.03) : null,
-      lng: i % 5 === 0 ? 100.0 + (i * 0.03) : null
-    });
-  }
-  return initial;
+  return [];
 };
 
 const getInitialPlants = () => {
-  if (typeof window !== "undefined") {
-    const stored = localStorage.getItem("suea-safety-plants-v1");
-    if (stored) {
-      try {
-        return JSON.parse(stored);
-      } catch (e) {
-        // fallback
-      }
-    }
-  }
-  
-  const initial = [...mockPlantsData];
-  const factoryNames = ["หนองแค", "แก่งคอย", "พระประแดง", "ท่าหลวง", "บางซื่อ", "สามเสน", "ดอนเมือง", "ปทุมธานี", "รังสิต", "นครปฐม"];
-  const divisionNames = ["CPAC Metro", "RMC Metro", "RMC East", "RMC West", "SMART Structure"];
-  const statuses = ["CPAC", "ACTIVE", "INACTIVE"];
-
-  for (let i = 13; i <= 65; i++) {
-    const plantName = `โรงงาน${factoryNames[i % factoryNames.length]} สาขา ${i}`;
-    const divName = divisionNames[i % divisionNames.length];
-    const status = statuses[i % statuses.length];
-    
-    initial.push({
-      id: i,
-      companyCode: "130",
-      companyName: i % 3 === 0 ? "บริษัท ปูนซิเมนต์ไทย (ท่าหลวง) จำกัด" : "No name",
-      divisionCode: String(90000000 + i * 7),
-      divisionName: divName,
-      deptCode: i % 2 === 0 ? String(14300 + i) : "",
-      deptName: i % 2 === 0 ? `Metro ${i}` : "",
-      secCode: i % 4 === 0 ? String(14400 + i) : "",
-      secName: i % 4 === 0 ? `Prod.สาขา ${i}` : "",
-      plantCode: String(1300 + i),
-      plantName: plantName,
-      status: status,
-      lat: i % 5 === 0 ? 13.5 + (i * 0.01) : null,
-      lng: i % 5 === 0 ? 100.5 + (i * 0.01) : null
-    });
-  }
-  return initial;
+  return [];
 };
+
+function apiLocationToAdminItem(location, selectedType) {
+  const base = {
+    id: String(location.id),
+    status: location.status || "ACTIVE",
+    lat: location.lat === null || location.lat === undefined ? null : Number(location.lat),
+    lng: location.lng === null || location.lng === undefined ? null : Number(location.lng),
+    source: location.source,
+    readOnly: Boolean(location.readOnly),
+  };
+  if (selectedType === "factory") {
+    return {
+      ...base,
+      companyCode: "",
+      companyName: "",
+      divisionCode: "",
+      divisionName: "",
+      deptCode: "",
+      deptName: "",
+      secCode: "",
+      secName: "",
+      plantCode: location.code || location.externalKey || "",
+      plantName: location.nameTh || location.name_th || "",
+    };
+  }
+  if (selectedType === "office") {
+    return {
+      ...base,
+      companyCode: "",
+      companyName: "",
+      divisionCode: "",
+      divisionName: "",
+      deptCode: "",
+      deptName: "",
+      officeCode: location.code || location.externalKey || "",
+      officeName: location.nameTh || location.name_th || "",
+      floor: "",
+    };
+  }
+  return {
+    ...base,
+    projectCode: location.code || location.externalKey || "",
+    projectName: location.nameTh || location.name_th || "",
+    customer: "",
+    contractor: "",
+    stage: "",
+  };
+}
+
+function adminItemToLocationPayload(selectedType, item) {
+  const typeMap = { factory: "PLANT", office: "OFFICE", site: "SITE" };
+  const nameMap = {
+    factory: item.plantName,
+    office: item.officeName,
+    site: item.projectName,
+  };
+  const codeMap = {
+    factory: item.plantCode,
+    office: item.officeCode,
+    site: item.projectCode,
+  };
+  return {
+    locationType: typeMap[selectedType],
+    nameTh: nameMap[selectedType],
+    code: codeMap[selectedType],
+    status: item.status === "CPAC" ? "ACTIVE" : item.status || "ACTIVE",
+    lat: Number(item.lat),
+    lng: Number(item.lng),
+    source: "ADMIN",
+  };
+}
 
 const T = {
   page: "var(--background)",
@@ -249,17 +217,10 @@ function moveItem(list, from, to) {
   return next;
 }
 
-const REPORT_STORAGE_KEYS = {
-  submissions: "suea-safety-submissions-v1",
-  pms: "suea-safety-user-pms",
-  name: "suea-safety-user-name",
-  email: "suea-safety-user-email",
-};
-
 const REPORT_DEFAULT_PROFILE = {
-  pms: "24518",
-  name: "ศศิธร จรุงจรรยาพงศ์",
-  email: "SASITOJA@SCG.COM",
+  pms: "",
+  name: "",
+  email: "",
 };
 
 const REPORT_MONTH_OPTIONS = [
@@ -287,15 +248,7 @@ const REPORT_ACTIVITY_OPTIONS = [
 const REPORT_EXPORT_HEADERS = ["PMS", "Year", "เดือน", "Name", "E-mail", "กิจกรรม"];
 
 function readStoredProfile() {
-  if (typeof window === "undefined") {
-    return { ...REPORT_DEFAULT_PROFILE };
-  }
-
-  return {
-    pms: localStorage.getItem(REPORT_STORAGE_KEYS.pms) || REPORT_DEFAULT_PROFILE.pms,
-    name: localStorage.getItem(REPORT_STORAGE_KEYS.name) || REPORT_DEFAULT_PROFILE.name,
-    email: localStorage.getItem(REPORT_STORAGE_KEYS.email) || REPORT_DEFAULT_PROFILE.email,
-  };
+  return { ...REPORT_DEFAULT_PROFILE };
 }
 
 function toNumberOrFallback(value, fallback) {
@@ -489,13 +442,20 @@ export default function SafetyAdmin() {
   const [reportMonthFilter, setReportMonthFilter] = useState("all");
   const [reportActivityFilter, setReportActivityFilter] = useState("all");
   const [uploadedReportRecords, setUploadedReportRecords] = useState([]);
-  const [templateReportRecords, setTemplateReportRecords] = useState(() =>
-    mockExcelRecords.map((record, index) => normalizeReportRecord(record, index, "template")).filter(Boolean)
-  );
+  const [templateReportRecords, setTemplateReportRecords] = useState([]);
   const [editingReport, setEditingReport] = useState(null);
   const [showSenderSettings, setShowSenderSettings] = useState(false);
   const [senderProfile, setSenderProfile] = useState(() => readStoredProfile());
   const [selectedSub, setSelectedSub] = useState(null);
+
+  useEffect(() => {
+    hydrateChecklistDraft().then(collection => {
+      const hydrated = cloneDraft(collection);
+      setDraft(hydrated);
+      setSavedSnapshot(cloneDraft(collection));
+      setSelectedQuestionId(hydrated[selectedType]?.[0]?.id || "");
+    }).catch(error => console.error("Failed to load checklist settings", error));
+  }, []);
 
   const [plants, setPlants] = useState(() => getInitialPlants());
   const [offices, setOffices] = useState(() => getInitialOffices());
@@ -534,23 +494,56 @@ export default function SafetyAdmin() {
 
   const savePlants = (newPlants) => {
     setPlants(newPlants);
-    if (typeof window !== "undefined") {
-      localStorage.setItem("suea-safety-plants-v1", JSON.stringify(newPlants));
-    }
   };
 
   const saveOffices = (newOffices) => {
     setOffices(newOffices);
-    if (typeof window !== "undefined") {
-      localStorage.setItem("suea-safety-offices-v1", JSON.stringify(newOffices));
-    }
   };
 
   const saveSites = (newSites) => {
     setSites(newSites);
-    if (typeof window !== "undefined") {
-      localStorage.setItem("suea-safety-sites-v1", JSON.stringify(newSites));
+  };
+
+  const loadAdminLocations = async () => {
+    const endpoints = [
+      ["factory", "/api/locations/plants"],
+      ["office", "/api/locations/offices"],
+      ["site", "/api/locations/sites"],
+    ];
+    const results = await Promise.all(endpoints.map(async ([type, url]) => {
+      const response = await fetch(`${url}?pageSize=1000`, { credentials: "include" });
+      const payload = await response.json().catch(() => null);
+      if (!response.ok || !payload?.ok) throw new Error(payload?.error || `${type}_locations_load_failed`);
+      return [type, (payload.data?.items || payload.data?.locations || []).map(item => apiLocationToAdminItem(item, type))];
+    }));
+    for (const [type, items] of results) {
+      if (type === "factory") setPlants(items);
+      if (type === "office") setOffices(items);
+      if (type === "site") setSites(items);
     }
+  };
+
+  useEffect(() => {
+    loadAdminLocations().catch(error => {
+      console.error("Failed to load locations from API", error);
+      window.alert(`ไม่สามารถโหลด locations จาก API ได้: ${error?.message || error}`);
+    });
+  }, []);
+
+  const persistAdminLocation = async (method, id, item, locationType = selectedType) => {
+    const payload = adminItemToLocationPayload(locationType, item);
+    if (!Number.isFinite(payload.lat) || !Number.isFinite(payload.lng)) {
+      throw new Error("กรุณากรอก latitude/longitude เพื่อบันทึกลงฐานจริง");
+    }
+    const response = await fetch(id ? `/api/locations/${id}` : "/api/locations", {
+      method,
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    const result = await response.json().catch(() => null);
+    if (!response.ok || !result?.ok) throw new Error(result?.error || "location_save_failed");
+    return apiLocationToAdminItem(result.data?.location, locationType);
   };
 
   const handleAddPlant = () => {
@@ -657,15 +650,13 @@ export default function SafetyAdmin() {
     }
   };
 
-  const submitAddPlant = () => {
+  const submitAddPlant = async () => {
     if (selectedType === "factory") {
       if (!plantForm.plantName || !plantForm.plantCode) {
         window.alert("กรุณากรอกข้อมูลรหัสและชื่อโรงงาน");
         return;
       }
-      const maxId = plants.reduce((max, p) => Math.max(max, p.id || 0), 0);
       const newPlant = {
-        id: maxId + 1,
         companyCode: plantForm.companyCode,
         companyName: plantForm.companyName || "No name",
         divisionCode: plantForm.divisionCode,
@@ -681,15 +672,19 @@ export default function SafetyAdmin() {
         lng: plantForm.lng ? parseFloat(plantForm.lng) : null
       };
 
-      savePlants([newPlant, ...plants]);
+      try {
+        const saved = await persistAdminLocation("POST", null, newPlant);
+        savePlants([saved, ...plants]);
+      } catch (error) {
+        window.alert(error?.message || "บันทึกโรงงานไม่สำเร็จ");
+        return;
+      }
     } else if (selectedType === "office") {
       if (!plantForm.officeName || !plantForm.officeCode) {
         window.alert("กรุณากรอกข้อมูลรหัสและชื่อสำนักงาน");
         return;
       }
-      const maxId = offices.reduce((max, p) => Math.max(max, p.id || 0), 0);
       const newOffice = {
-        id: maxId + 1,
         companyCode: plantForm.companyCode,
         companyName: plantForm.companyName || "No name",
         divisionCode: plantForm.divisionCode,
@@ -704,15 +699,19 @@ export default function SafetyAdmin() {
         lng: plantForm.lng ? parseFloat(plantForm.lng) : null
       };
 
-      saveOffices([newOffice, ...offices]);
+      try {
+        const saved = await persistAdminLocation("POST", null, newOffice);
+        saveOffices([saved, ...offices]);
+      } catch (error) {
+        window.alert(error?.message || "บันทึกสำนักงานไม่สำเร็จ");
+        return;
+      }
     } else if (selectedType === "site") {
       if (!plantForm.projectName || !plantForm.projectCode) {
         window.alert("กรุณากรอกข้อมูลรหัสและชื่อโครงการ");
         return;
       }
-      const maxId = sites.reduce((max, p) => Math.max(max, p.id || 0), 0);
       const newSite = {
-        id: maxId + 1,
         projectCode: plantForm.projectCode,
         projectName: plantForm.projectName,
         customer: plantForm.customer || "",
@@ -723,12 +722,18 @@ export default function SafetyAdmin() {
         lng: plantForm.lng ? parseFloat(plantForm.lng) : null
       };
 
-      saveSites([newSite, ...sites]);
+      try {
+        const saved = await persistAdminLocation("POST", null, newSite);
+        saveSites([saved, ...sites]);
+      } catch (error) {
+        window.alert(error?.message || "บันทึกไซต์งานไม่สำเร็จ");
+        return;
+      }
     }
     setAddingPlant(false);
   };
 
-  const submitEditPlant = () => {
+  const submitEditPlant = async () => {
     if (selectedType === "factory") {
       if (!plantForm.plantName || !plantForm.plantCode) {
         window.alert("กรุณากรอกข้อมูลรหัสและชื่อโรงงาน");
@@ -756,7 +761,13 @@ export default function SafetyAdmin() {
         return p;
       });
 
-      savePlants(updated);
+      try {
+        const saved = await persistAdminLocation("PATCH", editingPlant.id, updated.find(p => p.id === editingPlant.id));
+        savePlants(updated.map(p => p.id === editingPlant.id ? saved : p));
+      } catch (error) {
+        window.alert(error?.message || "แก้ไขโรงงานไม่สำเร็จ");
+        return;
+      }
     } else if (selectedType === "office") {
       if (!plantForm.officeName || !plantForm.officeCode) {
         window.alert("กรุณากรอกข้อมูลรหัสและชื่อสำนักงาน");
@@ -783,7 +794,13 @@ export default function SafetyAdmin() {
         return p;
       });
 
-      saveOffices(updated);
+      try {
+        const saved = await persistAdminLocation("PATCH", editingPlant.id, updated.find(p => p.id === editingPlant.id));
+        saveOffices(updated.map(p => p.id === editingPlant.id ? saved : p));
+      } catch (error) {
+        window.alert(error?.message || "แก้ไขสำนักงานไม่สำเร็จ");
+        return;
+      }
     } else if (selectedType === "site") {
       if (!plantForm.projectName || !plantForm.projectCode) {
         window.alert("กรุณากรอกข้อมูลรหัสและชื่อโครงการ");
@@ -806,7 +823,13 @@ export default function SafetyAdmin() {
         return p;
       });
 
-      saveSites(updated);
+      try {
+        const saved = await persistAdminLocation("PATCH", editingPlant.id, updated.find(p => p.id === editingPlant.id));
+        saveSites(updated.map(p => p.id === editingPlant.id ? saved : p));
+      } catch (error) {
+        window.alert(error?.message || "แก้ไขไซต์งานไม่สำเร็จ");
+        return;
+      }
     }
     setEditingPlant(null);
   };
@@ -815,18 +838,28 @@ export default function SafetyAdmin() {
     setDeletePlantId(id);
   };
 
-  const confirmDeletePlant = () => {
-    if (selectedType === "factory") {
-      const next = plants.filter(p => p.id !== deletePlantId);
-      savePlants(next);
-    } else if (selectedType === "office") {
-      const next = offices.filter(p => p.id !== deletePlantId);
-      saveOffices(next);
-    } else if (selectedType === "site") {
-      const next = sites.filter(p => p.id !== deletePlantId);
-      saveSites(next);
+  const confirmDeletePlant = async () => {
+    try {
+      const response = await fetch(`/api/locations/${deletePlantId}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+      const result = await response.json().catch(() => null);
+      if (!response.ok || !result?.ok) throw new Error(result?.error || "location_delete_failed");
+      if (selectedType === "factory") {
+        const next = plants.filter(p => p.id !== deletePlantId);
+        savePlants(next);
+      } else if (selectedType === "office") {
+        const next = offices.filter(p => p.id !== deletePlantId);
+        saveOffices(next);
+      } else if (selectedType === "site") {
+        const next = sites.filter(p => p.id !== deletePlantId);
+        saveSites(next);
+      }
+      setDeletePlantId(null);
+    } catch (error) {
+      window.alert(error?.message || "ลบ location ไม่สำเร็จ");
     }
-    setDeletePlantId(null);
   };
 
   const handleImportPlantsFile = async (event) => {
@@ -860,8 +893,12 @@ export default function SafetyAdmin() {
           };
         }).filter(p => p.plantName || p.plantCode);
 
-        savePlants([...imported, ...plants]);
-        window.alert(`นำเข้าข้อมูลโรงงานสำเร็จจำนวน ${imported.length} รายการ`);
+        const saved = [];
+        for (const item of imported) {
+          saved.push(await persistAdminLocation("POST", null, item, "factory"));
+        }
+        savePlants([...saved, ...plants]);
+        window.alert(`นำเข้าข้อมูลโรงงานลงฐานข้อมูลสำเร็จจำนวน ${saved.length} รายการ`);
       } else if (selectedType === "office") {
         const imported = rows.map((row, index) => {
           const maxId = offices.reduce((max, p) => Math.max(max, p.id || 0), 0);
@@ -882,8 +919,12 @@ export default function SafetyAdmin() {
           };
         }).filter(p => p.officeName || p.officeCode);
 
-        saveOffices([...imported, ...offices]);
-        window.alert(`นำเข้าข้อมูลสำนักงานสำเร็จจำนวน ${imported.length} รายการ`);
+        const saved = [];
+        for (const item of imported) {
+          saved.push(await persistAdminLocation("POST", null, item, "office"));
+        }
+        saveOffices([...saved, ...offices]);
+        window.alert(`นำเข้าข้อมูลสำนักงานลงฐานข้อมูลสำเร็จจำนวน ${saved.length} รายการ`);
       } else if (selectedType === "site") {
         const imported = rows.map((row, index) => {
           const maxId = sites.reduce((max, p) => Math.max(max, p.id || 0), 0);
@@ -900,8 +941,12 @@ export default function SafetyAdmin() {
           };
         }).filter(p => p.projectName || p.projectCode);
 
-        saveSites([...imported, ...sites]);
-        window.alert(`นำเข้าข้อมูลไซต์งานสำเร็จจำนวน ${imported.length} รายการ`);
+        const saved = [];
+        for (const item of imported) {
+          saved.push(await persistAdminLocation("POST", null, item, "site"));
+        }
+        saveSites([...saved, ...sites]);
+        window.alert(`นำเข้าข้อมูลไซต์งานลงฐานข้อมูลสำเร็จจำนวน ${saved.length} รายการ`);
       }
     } catch (error) {
       console.error("Failed to import data", error);
@@ -911,166 +956,112 @@ export default function SafetyAdmin() {
     }
   };
 
-  const [submissions, setSubmissions] = useState(() => {
-    if (typeof window !== "undefined") {
-      const stored = localStorage.getItem(REPORT_STORAGE_KEYS.submissions);
-      if (stored) {
-        try {
-          return JSON.parse(stored);
-        } catch {
-          return [];
-        }
-      } else {
-        const mockData = [
-          {
-            id: "sub-mock-1",
-            timestamp: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
-            activityId: "line-walk",
-            activityLabel: "Line Walk",
-            locType: "factory",
-            locationName: "โรงงานแก่งคอย",
-            locationTag: "FAC-KK-01",
-            date: new Date().toISOString().split("T")[0],
-            isSafetyContact: false,
-            answeredItems: [
-              { id: "mixer", title: "Mixer", status: "safe", note: "ระบบล็อคฝาใช้งานได้ดี", photos: [] },
-              { id: "skiphoist", title: "Skiphoist", status: "safe", note: "การ์ดกั้นมิดชิด", photos: [] },
-              { id: "sand-drag", title: "เครื่องลากหิน-ทราย", status: "unsafe_condition", note: "ป้ายเตือนระวังอันตรายหลุดลอก", photos: [] },
-              { id: "motor-pump", title: "MOTOR / ปั๊ม", status: "safe", note: "สายดินเชื่อมต่อเรียบร้อย", photos: [] }
-            ]
-          },
-          {
-            id: "sub-mock-2",
-            timestamp: new Date(Date.now() - 1000 * 60 * 180).toISOString(),
-            activityId: "safety-contact",
-            activityLabel: "Safety Contact",
-            locType: "office",
-            locationName: "สำนักงานใหญ่บางซื่อ",
-            locationTag: "OFF-BS-01",
-            date: new Date().toISOString().split("T")[0],
-            isSafetyContact: true,
-            safetyContactText: "พูดคุยรณรงค์กับแผนกจัดซื้อเรื่องการเดินขึ้นลงบันไดโดยระมัดระวังไม่ใช้โทรศัพท์มือถือและให้จับราวบันไดทุกครั้ง พนักงานเข้าใจและยินดีปฏิบัติตามแนวทางเพื่อความปลอดภัย"
-          },
-          {
-            id: "sub-mock-3",
-            timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(),
-            activityId: "line-walk",
-            activityLabel: "Line Walk",
-            locType: "site",
-            locationName: "Site พญาไท",
-            locationTag: "STE-PT-03",
-            date: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString().split("T")[0],
-            isSafetyContact: false,
-            answeredItems: [
-              { id: "site-readiness", title: "ความพร้อมของพื้นที่หน้างาน", status: "safe", note: "พื้นที่เรียบร้อยดี", photos: [] },
-              { id: "site-safety", title: "ความปลอดภัยในหน้างาน", status: "unsafe_action", note: "พบคนงานไม่สวมหมวกนิรภัย 1 คน ได้ตักเตือนให้สวมใส่ทันที", photos: [] }
-            ]
-          }
-        ];
-        localStorage.setItem(REPORT_STORAGE_KEYS.submissions, JSON.stringify(mockData));
-        return mockData;
-      }
-    }
-    return [];
-  });
+  const [submissions, setSubmissions] = useState([]);
 
   useEffect(() => {
-    if ((adminTab === "submissions" || adminTab === "reports") && typeof window !== "undefined") {
-      const stored = localStorage.getItem(REPORT_STORAGE_KEYS.submissions);
-      if (stored) {
-        try {
-          setSubmissions(JSON.parse(stored));
-        } catch (e) { }
-      }
+    if (adminTab === "submissions" || adminTab === "reports") {
+      fetch("/api/safety-effort/assessment-runs?pageSize=100", { credentials: "include" })
+        .then(async response => {
+          const payload = await response.json().catch(() => null);
+          if (!response.ok || !payload?.ok) throw new Error(payload?.error || "assessment_runs_load_failed");
+          return payload.data?.items || [];
+        })
+        .then(items => {
+          setSubmissions(items.map(item => ({
+            id: String(item.id),
+            timestamp: item.created_at || item.createdAt,
+            activityId: item.activity_id || item.activityId || "assessment",
+            activityLabel: "Safety Assessment",
+            locType: "unknown",
+            locationName: `Activity #${item.activity_id || item.activityId || "-"}`,
+            locationTag: `RUN-${item.id}`,
+            date: String(item.created_at || item.createdAt || new Date().toISOString()).slice(0, 10),
+            isSafetyContact: false,
+            answeredItems: [],
+            status: item.status,
+            score: item.score,
+          })));
+        })
+        .catch(error => {
+          console.error("Failed to load assessment submissions", error);
+          setSubmissions([]);
+        });
     }
   }, [adminTab]);
 
   const handleDeleteSubmission = (id) => {
     const next = submissions.filter(s => s.id !== id);
     setSubmissions(next);
-    if (typeof window !== "undefined") {
-      localStorage.setItem(REPORT_STORAGE_KEYS.submissions, JSON.stringify(next));
-    }
   };
-  const [tempBackdateLimit, setTempBackdateLimit] = useState(() => {
-    if (typeof window !== "undefined") {
-      return parseInt(localStorage.getItem("safety_backdate_limit") || "5", 10);
-    }
-    return 5;
-  });
-  const [allowedMode, setAllowedMode] = useState(() => {
-    if (typeof window !== "undefined") {
-      return localStorage.getItem("safety_allowed_mode") || "all";
-    }
-    return "all";
-  });
-  const [allowedWeekdays, setAllowedWeekdays] = useState(() => {
-    if (typeof window !== "undefined") {
-      try {
-        const stored = localStorage.getItem("safety_allowed_weekdays");
-        if (stored) return JSON.parse(stored);
-      } catch (e) { }
-    }
-    return [0, 1, 2, 3, 4, 5, 6];
-  });
-  const [allowedDates, setAllowedDates] = useState(() => {
-    if (typeof window !== "undefined") {
-      try {
-        const stored = localStorage.getItem("safety_allowed_dates");
-        if (stored) return JSON.parse(stored);
-      } catch (e) { }
-    }
-    return [];
-  });
+  const [tempBackdateLimit, setTempBackdateLimit] = useState(5);
+  const [allowedMode, setAllowedMode] = useState("all");
+  const [allowedWeekdays, setAllowedWeekdays] = useState([0, 1, 2, 3, 4, 5, 6]);
+  const [allowedDates, setAllowedDates] = useState([]);
   const [newAllowedDate, setNewAllowedDate] = useState("");
   const [lastSavedAt, setLastSavedAt] = useState("");
   const [showPreview, setShowPreview] = useState(false);
   const [draggedId, setDraggedId] = useState(null);
   const [dragOverId, setDragOverId] = useState(null);
-  const [backdateMode, setBackdateMode] = useState(() => {
-    if (typeof window !== "undefined") {
-      return localStorage.getItem("safety_backdate_mode") || "today";
-    }
-    return "today";
-  });
+  const [backdateMode, setBackdateMode] = useState("today");
+
+  useEffect(() => {
+    fetch("/api/safety-settings?key=safety_backdate", { credentials: "include" })
+      .then(async response => {
+        const payload = await response.json().catch(() => null);
+        if (!response.ok || !payload?.ok) throw new Error(payload?.error || "settings_load_failed");
+        return payload.data?.setting?.setting_value || null;
+      })
+      .then(value => {
+        if (!value) return;
+        setTempBackdateLimit(Number(value.backdateLimit || 5));
+        setAllowedMode(value.allowedMode || "all");
+        setAllowedWeekdays(Array.isArray(value.allowedWeekdays) ? value.allowedWeekdays : [0, 1, 2, 3, 4, 5, 6]);
+        setAllowedDates(Array.isArray(value.allowedDates) ? value.allowedDates : []);
+        setBackdateMode(value.backdateMode || "today");
+      })
+      .catch(error => console.error("Failed to load safety settings", error));
+  }, []);
 
   const handleToggleMode = (mode) => {
     if (mode === "backdate") {
-      if (typeof window !== "undefined") {
-        setTempBackdateLimit(parseInt(localStorage.getItem("safety_backdate_limit") || "5", 10));
-        setAllowedMode(localStorage.getItem("safety_allowed_mode") || "all");
-        try {
-          setAllowedWeekdays(JSON.parse(localStorage.getItem("safety_allowed_weekdays")) || [0, 1, 2, 3, 4, 5, 6]);
-          setAllowedDates(JSON.parse(localStorage.getItem("safety_allowed_dates")) || []);
-        } catch (e) { }
-      }
       setBackdateMode("backdate");
       setShowBackdateLimitModal(true);
     } else {
       setBackdateMode("today");
-      if (typeof window !== "undefined") {
-        localStorage.setItem("safety_backdate_mode", "today");
-      }
+      void saveBackdateSettings("today");
     }
   };
 
   const handleCancelBackdateModal = () => {
-    if (typeof window !== "undefined") {
-      const savedMode = localStorage.getItem("safety_backdate_mode") || "today";
-      setBackdateMode(savedMode);
-    } else {
-      setBackdateMode("today");
-    }
     setShowBackdateLimitModal(false);
   };
 
-  const handleSaveBackdateModal = () => {
-    if (typeof window !== "undefined") {
-      localStorage.setItem("safety_backdate_limit", String(tempBackdateLimit));
-      localStorage.setItem("safety_allowed_mode", allowedMode);
-      localStorage.setItem("safety_allowed_weekdays", JSON.stringify(allowedWeekdays));
-      localStorage.setItem("safety_allowed_dates", JSON.stringify(allowedDates));
-      localStorage.setItem("safety_backdate_mode", "backdate");
+  const saveBackdateSettings = async (mode = backdateMode) => {
+    const response = await fetch("/api/safety-settings", {
+      method: "PUT",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        key: "safety_backdate",
+        value: {
+          backdateLimit: tempBackdateLimit,
+          allowedMode,
+          allowedWeekdays,
+          allowedDates,
+          backdateMode: mode,
+        },
+      }),
+    });
+    const payload = await response.json().catch(() => null);
+    if (!response.ok || !payload?.ok) throw new Error(payload?.error || "settings_save_failed");
+  };
+
+  const handleSaveBackdateModal = async () => {
+    try {
+      await saveBackdateSettings("backdate");
+    } catch (error) {
+      window.alert(error?.message || "บันทึก setting ไม่สำเร็จ");
+      return;
     }
     setBackdateMode("backdate");
     setShowBackdateLimitModal(false);
@@ -1283,11 +1274,22 @@ export default function SafetyAdmin() {
   };
 
   useEffect(() => {
-    if (typeof window === "undefined") return;
-    localStorage.setItem(REPORT_STORAGE_KEYS.pms, senderProfile.pms);
-    localStorage.setItem(REPORT_STORAGE_KEYS.name, senderProfile.name);
-    localStorage.setItem(REPORT_STORAGE_KEYS.email, senderProfile.email);
-  }, [senderProfile]);
+    fetch("/api/users/me", { credentials: "include" })
+      .then(async response => {
+        const payload = await response.json().catch(() => null);
+        if (!response.ok || !payload?.ok) throw new Error(payload?.error || "user_load_failed");
+        return payload.data?.user || null;
+      })
+      .then(user => {
+        if (!user) return;
+        setSenderProfile({
+          pms: String(user.employee_no || user.employeeNo || ""),
+          name: String(user.name_th || user.nameTh || ""),
+          email: String(user.email || ""),
+        });
+      })
+      .catch(error => console.error("Failed to load report sender profile", error));
+  }, []);
 
   const handleSenderProfileChange = (field, value) => {
     setSenderProfile((prev) => ({ ...prev, [field]: value }));
@@ -1354,9 +1356,6 @@ export default function SafetyAdmin() {
           : submission
       );
       setSubmissions(next);
-      if (typeof window !== "undefined") {
-        localStorage.setItem(REPORT_STORAGE_KEYS.submissions, JSON.stringify(next));
-      }
     } else if (editingReport.source === "upload") {
       setUploadedReportRecords((prev) =>
         prev.map((record) =>
@@ -1711,7 +1710,6 @@ export default function SafetyAdmin() {
                   onClick={() => {
                     if (window.confirm("คุณต้องการล้างประวัติการส่งรายงานทั้งหมดใช่หรือไม่?")) {
                       setSubmissions([]);
-                      localStorage.setItem("suea-safety-submissions-v1", JSON.stringify([]));
                     }
                   }}
                   style={{
@@ -2011,7 +2009,7 @@ export default function SafetyAdmin() {
               <div style={{ display: "grid", gap: 4 }}>
                 <div style={{ fontSize: 18, fontWeight: 900, color: T.accentDeep }}>รายงานแบบประเมิน</div>
                 <div style={{ fontSize: 13, color: T.sub }}>
-                  รวมข้อมูลจาก mock records, รายการที่บันทึกในระบบ, และไฟล์ Excel ที่อัปโหลดชั่วคราว
+                  รวมรายการที่บันทึกในระบบและไฟล์ Excel ที่อัปโหลดเพื่อใช้ตรวจสอบชั่วคราว
                 </div>
               </div>
               <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
@@ -2217,7 +2215,7 @@ export default function SafetyAdmin() {
                         <div><strong style={{ color: T.sub }}>เดือน:</strong> {monthLabel(item.month)}</div>
                         <div><strong style={{ color: T.sub }}>E-mail:</strong> {item.email || "-"}</div>
                         <div><strong style={{ color: T.sub }}>กิจกรรม:</strong> {item.activityType}</div>
-                        <div><strong style={{ color: T.sub }}>ที่มา:</strong> {item.source === "submission" ? "รายการที่บันทึก" : item.source === "upload" ? "ไฟล์อัปโหลด" : "mock records"}</div>
+                        <div><strong style={{ color: T.sub }}>ที่มา:</strong> {item.source === "submission" ? "รายการที่บันทึก" : item.source === "upload" ? "ไฟล์อัปโหลด" : "ข้อมูลระบบ"}</div>
                       </div>
                       <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 4, paddingTop: 8, borderTop: `1px solid ${T.line}` }}>
                         <button
@@ -3826,7 +3824,7 @@ export default function SafetyAdmin() {
             </label>
 
             <div style={{ fontSize: 12.5, color: T.sub }}>
-              แหล่งข้อมูล: {editingReport.source === "submission" ? "รายการที่บันทึกในระบบ" : editingReport.source === "upload" ? "ไฟล์ Excel ที่อัปโหลด" : "mock records"} 
+              แหล่งข้อมูล: {editingReport.source === "submission" ? "รายการที่บันทึกในระบบ" : editingReport.source === "upload" ? "ไฟล์ Excel ที่อัปโหลด" : "ข้อมูลระบบ"}
             </div>
 
             <div style={{ display: "flex", justifyContent: "flex-end", gap: 10 }}>

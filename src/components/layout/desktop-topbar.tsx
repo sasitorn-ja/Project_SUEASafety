@@ -12,7 +12,7 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { useAppState } from "@/providers/app-providers";
 import { useAppTheme } from "@/providers/theme-provider";
-import { getProfileDisplayName, PROFILE_IMAGE_KEY, PROFILE_IMAGE_UPDATED_EVENT } from "@/lib/profile";
+import { getProfileDisplayName } from "@/lib/profile";
 import { getSessionDisplayName, getSessionProfileImage, hasAdminAccess, useSessionUser } from "@/lib/session-user";
 import {
   MENU_STORAGE_KEY,
@@ -144,7 +144,6 @@ export function DesktopTopbar() {
   const pathname = usePathname() ?? "";
   const [open, setOpen] = useState(false);
   const [configuredMenu, setConfiguredMenu] = useState<MenuNode[]>([]);
-  const [profileImage, setProfileImage] = useState("");
   const { user: sessionUser } = useSessionUser();
   const isWangjai = theme === "wangjai";
   const [desktopMenu, setDesktopMenu] = useState<"dashboard" | "safety-culture" | "admin" | "profile" | null>(null);
@@ -184,32 +183,13 @@ export function DesktopTopbar() {
     };
   }, []);
 
-  useEffect(() => {
-    const refreshProfileImage = () => {
-      try {
-        setProfileImage(window.localStorage.getItem(PROFILE_IMAGE_KEY) || "");
-      } catch {
-        setProfileImage("");
-      }
-    };
-    const handleStorage = (event: StorageEvent) => {
-      if (!event.key || event.key === PROFILE_IMAGE_KEY) refreshProfileImage();
-    };
-    refreshProfileImage();
-    window.addEventListener(PROFILE_IMAGE_UPDATED_EVENT, refreshProfileImage);
-    window.addEventListener("storage", handleStorage);
-    return () => {
-      window.removeEventListener(PROFILE_IMAGE_UPDATED_EVENT, refreshProfileImage);
-      window.removeEventListener("storage", handleStorage);
-    };
-  }, []);
 
   const configuredAdmin = findAdminMenu(configuredMenu);
   const canUseAdmin = hasAdminAccess(sessionUser);
   const navItems = canUseAdmin ? NAV_ITEMS : NAV_ITEMS.filter((item) => item.id !== "admin");
   const adminSections = canUseAdmin ? configuredAdmin?.children.filter((node) => node.enabled) ?? [] : [];
   const displayName = sessionUser ? getSessionDisplayName(sessionUser) : getProfileDisplayName();
-  const displayImage = getSessionProfileImage(sessionUser) || profileImage;
+  const displayImage = getSessionProfileImage(sessionUser);
 
   return (
     <header

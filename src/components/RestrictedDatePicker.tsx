@@ -67,33 +67,26 @@ export default function RestrictedDatePicker({
   const [allowedDates, setAllowedDates] = useState([]);
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      const savedLimit = localStorage.getItem("safety_backdate_limit");
-      if (savedLimit) {
-        setBackdateLimit(parseInt(savedLimit, 10) || 5);
-      }
-      const modeVal = localStorage.getItem("safety_allowed_mode") || "all";
-      setAllowedMode(modeVal);
-      try {
-        const weekdaysStr = localStorage.getItem("safety_allowed_weekdays");
-        if (weekdaysStr) setAllowedWeekdays(JSON.parse(weekdaysStr));
-        const datesStr = localStorage.getItem("safety_allowed_dates");
-        if (datesStr) setAllowedDates(JSON.parse(datesStr));
-      } catch (e) {
-        // ignore
-      }
-    }
+    fetch("/api/safety-settings?key=safety_backdate", { credentials: "include" })
+      .then(async response => {
+        const payload = await response.json().catch(() => null);
+        if (!response.ok || !payload?.ok) throw new Error(payload?.error || "settings_load_failed");
+        return payload.data?.setting?.setting_value || null;
+      })
+      .then(value => {
+        if (!value) return;
+        setBackdateLimit(Number(value.backdateLimit || 5));
+        setAllowedMode(value.allowedMode || "all");
+        setAllowedWeekdays(Array.isArray(value.allowedWeekdays) ? value.allowedWeekdays : [0, 1, 2, 3, 4, 5, 6]);
+        setAllowedDates(Array.isArray(value.allowedDates) ? value.allowedDates : []);
+        setMode(value.backdateMode || "today");
+      })
+      .catch(() => undefined);
   }, []);
 
   const minBackdate = useMemo(() => startOfDay(addDays(today, -backdateLimit)), [today, backdateLimit]);
   const [mode, setMode] = useState("today");
 
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      const savedMode = localStorage.getItem("safety_backdate_mode") || "today";
-      setMode(savedMode);
-    }
-  }, []);
   const [viewMonth, setViewMonth] = useState(today);
 
   const selectedDate = useMemo(() => {

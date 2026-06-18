@@ -116,6 +116,11 @@ function emailForUser(user: SsoUser) {
   return user.email || `${encodeURIComponent(user.username || user.sub)}@sso.local`;
 }
 
+function varcharOrNull(value: string | null | undefined, maxLength: number) {
+  if (!value) return null;
+  return value.length <= maxLength ? value : null;
+}
+
 const SELECT_USER_SQL = `
   SELECT
     id,
@@ -213,6 +218,7 @@ export async function getSessionUserBySsoExternalId(ssoExternalId: string) {
 }
 
 export async function upsertSsoUser(user: SsoUser, rawClaims: Record<string, unknown>, providerSlug: string) {
+  const lineProfileImageUrl = varcharOrNull(user.lineProfileImageUrl, 1000);
   const payload = {
     ssoExternalId: user.sub,
     email: emailForUser(user),
@@ -228,8 +234,8 @@ export async function upsertSsoUser(user: SsoUser, rawClaims: Record<string, unk
     positionTh: user.positionTh || null,
     positionEn: user.positionEn || null,
     reportToEmail: user.reportToEmail || null,
-    profileImageUrl: user.lineProfileImageUrl || null,
-    lineProfileImageUrl: user.lineProfileImageUrl || null,
+    profileImageUrl: lineProfileImageUrl,
+    lineProfileImageUrl,
     ssoProvider: providerSlug,
     ssoSubject: user.sub,
     rawClaims: JSON.stringify(rawClaims),

@@ -39,6 +39,8 @@ export default function AssessmentSummary() {
   const location = useLocation();
   const actions = useAppActions();
   const [showSuccessPopup, setShowSuccessPopup] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState("");
   const checkin = location.state?.checkin ?? null;
   const activity = location.state?.activity ?? null;
   const linewalkData = location.state?.linewalkData ?? null;
@@ -72,57 +74,55 @@ export default function AssessmentSummary() {
     }
   };
 
-  const handleConfirmSave = () => {
-    if (typeof window !== "undefined") {
-      try {
-        const stored = localStorage.getItem("suea-safety-submissions-v1");
-        const submissions = stored ? JSON.parse(stored) : [];
-        
-        // Retrieve or default profile info
-        const pmsCode = localStorage.getItem("suea-safety-user-pms") || "24518";
-        const userName = localStorage.getItem("suea-safety-user-name") || "ศศิธร จรุงจรรยาพงศ์";
-        const userEmail = localStorage.getItem("suea-safety-user-email") || "SASITOJA@SCG.COM";
-        
-        const submissionDate = linewalkData?.date || new Date().toISOString().split("T")[0];
-        const dateObj = new Date(submissionDate);
-        const yearVal = isNaN(dateObj.getTime()) ? new Date().getFullYear() : dateObj.getFullYear();
-        const monthVal = isNaN(dateObj.getTime()) ? (new Date().getMonth() + 1) : (dateObj.getMonth() + 1);
-        const activityTypeVal = !!linewalkData?.isSafetyContact ? "Safety_Contact" : "Safety_Observation/Line_Walk";
-
-        const newSubmission = {
-          id: `sub-${Date.now()}`,
-          timestamp: new Date().toISOString(),
-          activityId: activity?.id || "line-walk",
-          activityLabel: activity?.label || (linewalkData?.isSafetyContact ? "Safety Contact" : "Line Walk"),
-          locType: linewalkData?.locType || "factory",
-          locationName: checkin?.name || "-",
-          locationTag: checkin?.tag || "-",
-          date: submissionDate,
-          isSafetyContact: !!linewalkData?.isSafetyContact,
-          safetyContactText: linewalkData?.safetyContactText || "",
-          answeredItems: answeredItems.map(item => ({
-            id: item.id,
-            title: item.title,
-            status: item.status,
-            note: item.note,
-            photos: item.photos
-          })),
-          // Storing the fields required for the evaluation report matching the Excel template
-          pms: pmsCode,
-          year: yearVal,
-          month: monthVal,
-          name: userName,
-          email: userEmail,
-          activityType: activityTypeVal
-        };
-        submissions.unshift(newSubmission);
-        localStorage.setItem("suea-safety-submissions-v1", JSON.stringify(submissions));
-        actions.awardSafetyEffortCompletion(newSubmission.id, `${newSubmission.activityLabel} สำเร็จ`);
-      } catch (e) {
-        console.error("Error saving submission", e);
-      }
+  const handleConfirmSave = async () => {
+    if (!checkin?.checkinId) {
+      setSaveError("ไม่พบ check-in จริง กรุณากลับไปเช็คอินและอนุญาตตำแหน่งก่อน");
+      return;
     }
-    setShowSuccessPopup(true);
+    setSaving(true);
+    setSaveError("");
+    try {
+      const activityLabel = activity?.label || (linewalkData?.isSafetyContact ? "Safety Contact" : "Line Walk");
+      const response = await fetch("/api/safety-effort/activities", {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          checkinId: checkin.checkinId,
+          activityType: linewalkData?.isSafetyContact ? "SAFETY_CONTACT" : "LINE_WALK",
+          title: activityLabel,
+          status: "COMPLETED",
+          completedAt: new Date().toISOString(),
+          notes: linewalkData?.safetyContactText || `ตรวจ ${answeredItems.length} รายการ`,
+        }),
+      });
+      const payload = await response.json().catch(() => null);
+      if (!response.ok || !payload?.ok) throw new Error(payload?.error || "activity_create_failed");
+      const savedActivity = payload.data?.activity;
+
+      const unsafeItems = answeredItems.filter(item => item.status === "unsafe_condition" || item.status === "unsafe_action");
+      await Promise.all(unsafeItems.map(item => fetch("/api/safety-effort/findings", {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          activityId: savedActivity?.id,
+          severity: item.status === "unsafe_action" ? "HIGH" : "MEDIUM",
+          description: `${item.title}: ${item.note || item.status}`,
+          status: "OPEN",
+        }),
+      }).then(async findingResponse => {
+        const findingPayload = await findingResponse.json().catch(() => null);
+        if (!findingResponse.ok || !findingPayload?.ok) throw new Error(findingPayload?.error || "finding_create_failed");
+      })));
+
+      actions.awardSafetyEffortCompletion(String(savedActivity?.id), `${activityLabel} สำเร็จ`);
+      setShowSuccessPopup(true);
+    } catch (error) {
+      setSaveError(error?.message || "บันทึกข้อมูลลงฐานไม่สำเร็จ");
+    } finally {
+      setSaving(false);
+    }
   };
 
   const answeredItems = useMemo(() => {
@@ -384,6 +384,7 @@ export default function AssessmentSummary() {
           <button
             type="button"
             onClick={handleConfirmSave}
+            disabled={saving}
             style={{
               minWidth: 220,
               height: 50,
@@ -394,13 +395,19 @@ export default function AssessmentSummary() {
               fontFamily: "inherit",
               fontSize: 15,
               fontWeight: 800,
-              cursor: "pointer",
+              cursor: saving ? "wait" : "pointer",
+              opacity: saving ? 0.65 : 1,
               boxShadow: "0 12px 24px rgba(26,22,19,0.18)",
             }}
           >
-            บันทึกข้อมูล
+            {saving ? "กำลังบันทึกลงฐาน..." : "บันทึกข้อมูล"}
           </button>
         </div>
+        {saveError && (
+          <div style={{ marginTop: 12, textAlign: "center", color: "#b91c1c", fontSize: 13, fontWeight: 800 }}>
+            {saveError}
+          </div>
+        )}
 
         {showSuccessPopup && (
           <div style={{

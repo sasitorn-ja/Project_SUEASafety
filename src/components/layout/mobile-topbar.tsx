@@ -21,7 +21,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { isExactNavActive, isMainNavActive } from "@/lib/navigation";
-import { getProfileDisplayName, getProfileInitials, MOCK_PROFILE, PROFILE_IMAGE_KEY, PROFILE_IMAGE_UPDATED_EVENT } from "@/lib/profile";
+import { getProfileDisplayName, getProfileInitials, MOCK_PROFILE } from "@/lib/profile";
 import { getSessionDisplayName, getSessionInitials, getSessionProfileImage, hasAdminAccess, useSessionUser } from "@/lib/session-user";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { useAppTheme } from "@/providers/theme-provider";
@@ -164,7 +164,6 @@ export function MobileTopbar({ hidden = false }: { hidden?: boolean }) {
   const { mascot, theme } = useAppTheme();
   const pathname = usePathname() ?? "";
   const [open, setOpen] = useState(false);
-  const [profileImage, setProfileImage] = useState("");
   const { user: sessionUser } = useSessionUser();
   const [configuredMenu, setConfiguredMenu] = useState<MenuNode[]>([]);
   const isWangjai = theme === "wangjai";
@@ -184,25 +183,6 @@ export function MobileTopbar({ hidden = false }: { hidden?: boolean }) {
     profile: profileSectionActive,
   }));
 
-  useEffect(() => {
-    const refreshProfileImage = () => {
-      try {
-        setProfileImage(window.localStorage.getItem(PROFILE_IMAGE_KEY) || "");
-      } catch {
-        setProfileImage("");
-      }
-    };
-    const handleStorage = (event: StorageEvent) => {
-      if (!event.key || event.key === PROFILE_IMAGE_KEY) refreshProfileImage();
-    };
-    refreshProfileImage();
-    window.addEventListener(PROFILE_IMAGE_UPDATED_EVENT, refreshProfileImage);
-    window.addEventListener("storage", handleStorage);
-    return () => {
-      window.removeEventListener(PROFILE_IMAGE_UPDATED_EVENT, refreshProfileImage);
-      window.removeEventListener("storage", handleStorage);
-    };
-  }, []);
 
   useEffect(() => {
     const refreshMenu = () => setConfiguredMenu(loadMenu());
@@ -225,7 +205,7 @@ export function MobileTopbar({ hidden = false }: { hidden?: boolean }) {
   const displayName = sessionUser ? getSessionDisplayName(sessionUser) : getProfileDisplayName();
   const displayInitials = sessionUser ? getSessionInitials(sessionUser) : getProfileInitials();
   const displayUsername = sessionUser?.username || MOCK_PROFILE.username;
-  const displayImage = getSessionProfileImage(sessionUser) || profileImage;
+  const displayImage = getSessionProfileImage(sessionUser);
 
   const toggleSection = (id: string) => {
     setOpenSections((current) => ({ ...current, [id]: !current[id] }));

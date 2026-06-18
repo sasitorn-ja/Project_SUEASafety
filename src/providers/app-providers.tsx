@@ -268,10 +268,10 @@ type AppActions = {
   redeemPoints: (
     rewardId: number,
     points: number
-  ) => {
+  ) => Promise<{
     ok: boolean;
-    reason?: "not-found" | "insufficient-points" | "not-started" | "expired" | "out-of-stock";
-  };
+    reason?: "not-found" | "insufficient-points" | "not-started" | "expired" | "out-of-stock" | "api-error";
+  }>;
 };
 
 const AppStateContext = createContext<AppState | undefined>(undefined);
@@ -400,34 +400,10 @@ const INITIAL_POSTS: Post[] = [
   },
 ];
 
-const STORAGE_KEYS = {
-  posts: "safety-hub:safety-culture-posts",
-  event: "safety-hub:safety-culture-event",
-  feedEvents: "safety-hub:safety-culture-feed-events",
-  currentUserPoints: "safety-hub:safety-culture-current-user-points",
-  teamStandings: "safety-hub:safety-culture-team-standings",
-  personalRankings: "safety-hub:safety-culture-personal-rankings",
-  rewardsCatalog: "safety-hub:safety-culture-rewards-catalog",
-  rewardCategories: "safety-hub:safety-culture-reward-categories",
-  rewardRedemptions: "safety-hub:safety-culture-reward-redemptions",
-  awarenessQuestions: "safety-hub:safety-awareness-questions",
-  awarenessDoneDate: "safety-hub:safety-awareness-done-date",
-  awarenessHistory: "safety-hub:safety-awareness-history",
-  awarenessHolidays: "safety-hub:safety-awareness-holidays",
-  userActivityHistory: "safety-hub:safety-culture-user-activity-history",
-  inboxNotifications: "safety-hub:inbox-notifications",
-} as const;
-
 const INITIAL_CURRENT_USER_POINTS = 254;
 
 function getDefaultCurrentUserName() {
-  const activeRankingName = PERSONAL_RANKINGS.find((person) => person.active)?.name;
-  if (activeRankingName) {
-    return activeRankingName.replace(/\s*\(.+?\)\s*$/, "").trim();
-  }
-
-  const currentPostAuthor = INITIAL_POSTS.find((post) => post.isYou)?.author;
-  return currentPostAuthor || "Current User";
+  return "Current User";
 }
 
 const DEFAULT_CURRENT_USER_NAME = getDefaultCurrentUserName();
@@ -1313,124 +1289,27 @@ export function AppProviders({ children }: { children: ReactNode }) {
   const [preTripData, setPreTripData] = useState<PreTripData>(null);
   const [queueConfirmed, setQueueConfirmed] = useState(false);
   const [sosData, setSosData] = useState<SosData>(null);
-  const [posts, setPosts] = useState<Post[]>(() => mergePostsWithSeed(INITIAL_POSTS));
-  const [userActivityHistory, setUserActivityHistory] = useState<SafetyCultureUserActivity[]>(() => createDefaultUserActivityHistory());
+  const [posts, setPosts] = useState<Post[]>([]);
+  const [userActivityHistory, setUserActivityHistory] = useState<SafetyCultureUserActivity[]>([]);
   const [notification, setNotification] = useState<NotificationType>(null);
-  const [inboxNotifications, setInboxNotifications] = useState<AppInboxNotification[]>(() => createDefaultInboxNotifications());
-  const [currentUserPoints, setCurrentUserPoints] = useState(INITIAL_CURRENT_USER_POINTS);
+  const [inboxNotifications, setInboxNotifications] = useState<AppInboxNotification[]>([]);
+  const [currentUserPoints, setCurrentUserPoints] = useState(0);
   // NOTE: Must be a deterministic, static seed (no `new Date()`), otherwise the
   // server (UTC) and client (local TZ) compute different dates and React throws
   // a hydration mismatch (#418). The today-based default is applied on the
   // client inside the load effect below.
   const [safetyCultureEvent, setSafetyCultureEvent] = useState<SafetyCultureEventConfig>(() => createDefaultSafetyCultureEvent());
-  const [feedEvents, setFeedEvents] = useState<SafetyCultureFeedEvent[]>(() => createDefaultFeedEvents());
-  const [teamStandings, setTeamStandings] = useState<LeaderboardTeam[]>(() => createDefaultTeamStandings());
-  const [personalRankings, setPersonalRankings] = useState<LeaderboardPerson[]>(() => createDefaultPersonalRankings());
-  const [rewardsCatalog, setRewardsCatalog] = useState<RewardCatalogItem[]>(() => createDefaultRewardsCatalog());
-  const [rewardCategories, setRewardCategories] = useState<RewardCategory[]>(() => createDefaultRewardCategories());
-  const [rewardRedemptions, setRewardRedemptions] = useState<RewardRedemptionRecord[]>(() => createDefaultRewardRedemptions());
-  const [awarenessQuestions, setAwarenessQuestions] = useState<SafetyAwarenessQuestion[]>(() => createDefaultAwarenessQuestions());
+  const [feedEvents, setFeedEvents] = useState<SafetyCultureFeedEvent[]>([]);
+  const [teamStandings, setTeamStandings] = useState<LeaderboardTeam[]>([]);
+  const [personalRankings, setPersonalRankings] = useState<LeaderboardPerson[]>([]);
+  const [rewardsCatalog, setRewardsCatalog] = useState<RewardCatalogItem[]>([]);
+  const [rewardCategories, setRewardCategories] = useState<RewardCategory[]>([]);
+  const [rewardRedemptions, setRewardRedemptions] = useState<RewardRedemptionRecord[]>([]);
+  const [awarenessQuestions, setAwarenessQuestions] = useState<SafetyAwarenessQuestion[]>([]);
   const [awarenessDoneDate, setAwarenessDoneDate] = useState<string>("");
   const [awarenessHistory, setAwarenessHistory] = useState<AwarenessCompletion[]>([]);
   const [awarenessHolidays, setAwarenessHolidays] = useState<AwarenessHoliday[]>([]);
   const [eventNow, setEventNow] = useState(0);
-
-  useEffect(() => {
-    try {
-      const storedPosts = window.localStorage.getItem(STORAGE_KEYS.posts);
-      const storedEvent = window.localStorage.getItem(STORAGE_KEYS.event);
-      const storedFeedEvents = window.localStorage.getItem(STORAGE_KEYS.feedEvents);
-      const storedCurrentUserPoints = window.localStorage.getItem(STORAGE_KEYS.currentUserPoints);
-      const storedTeamStandings = window.localStorage.getItem(STORAGE_KEYS.teamStandings);
-      const storedPersonalRankings = window.localStorage.getItem(STORAGE_KEYS.personalRankings);
-      const storedRewardsCatalog = window.localStorage.getItem(STORAGE_KEYS.rewardsCatalog);
-      const storedRewardCategories = window.localStorage.getItem(STORAGE_KEYS.rewardCategories);
-      const storedRewardRedemptions = window.localStorage.getItem(STORAGE_KEYS.rewardRedemptions);
-      const storedUserActivityHistory = window.localStorage.getItem(STORAGE_KEYS.userActivityHistory);
-      const storedInboxNotifications = window.localStorage.getItem(STORAGE_KEYS.inboxNotifications);
-
-      if (storedPosts) {
-        const parsedPosts = JSON.parse(storedPosts) as Post[];
-        if (Array.isArray(parsedPosts) && parsedPosts.length > 0) {
-          setPosts(mergePostsWithSeed(parsedPosts));
-        }
-      }
-
-      if (storedEvent) {
-        const parsedEvent = JSON.parse(storedEvent) as Partial<SafetyCultureEventConfig>;
-        setSafetyCultureEvent(normalizeStoredSafetyCultureEvent(parsedEvent));
-      } else {
-        // No persisted event: apply the today-based default on the client only
-        // (the initial render uses a static seed to stay hydration-safe).
-        setSafetyCultureEvent(createDefaultSafetyCultureEvent());
-      }
-
-      if (storedFeedEvents) {
-        const parsedFeedEvents = JSON.parse(storedFeedEvents) as SafetyCultureFeedEvent[];
-        if (Array.isArray(parsedFeedEvents) && parsedFeedEvents.length > 0) {
-          setFeedEvents(normalizeFeedEvents(parsedFeedEvents));
-        }
-      }
-
-      if (storedCurrentUserPoints) {
-        const parsedPoints = Number(storedCurrentUserPoints);
-        if (!Number.isNaN(parsedPoints)) {
-          setCurrentUserPoints(parsedPoints);
-        }
-      }
-
-      if (storedTeamStandings) {
-        const parsedTeams = JSON.parse(storedTeamStandings) as LeaderboardTeam[];
-        if (Array.isArray(parsedTeams) && parsedTeams.length > 0) {
-          setTeamStandings(normalizeTeamStandings(parsedTeams));
-        }
-      }
-
-      if (storedPersonalRankings) {
-        const parsedRankings = JSON.parse(storedPersonalRankings) as LeaderboardPerson[];
-        if (Array.isArray(parsedRankings) && parsedRankings.length > 0) {
-          setPersonalRankings(normalizePersonalRankings(parsedRankings));
-        }
-      }
-
-      if (storedRewardsCatalog) {
-        const parsedRewards = JSON.parse(storedRewardsCatalog) as RewardCatalogItem[];
-        if (Array.isArray(parsedRewards) && parsedRewards.length > 0) {
-          setRewardsCatalog(normalizeRewardsCatalog(parsedRewards));
-        }
-      }
-
-      if (storedRewardCategories) {
-        const parsedCategories = JSON.parse(storedRewardCategories) as RewardCategory[];
-        if (Array.isArray(parsedCategories) && parsedCategories.length > 0) {
-          setRewardCategories(normalizeRewardCategories(parsedCategories));
-        }
-      }
-
-      if (storedRewardRedemptions) {
-        const parsedRedemptions = JSON.parse(storedRewardRedemptions) as RewardRedemptionRecord[];
-        if (Array.isArray(parsedRedemptions) && parsedRedemptions.length > 0) {
-          setRewardRedemptions(mergeRewardRedemptionsWithSeed(parsedRedemptions));
-        }
-      }
-
-      if (storedUserActivityHistory) {
-        const parsedHistory = JSON.parse(storedUserActivityHistory) as SafetyCultureUserActivity[];
-        if (Array.isArray(parsedHistory) && parsedHistory.length > 0) {
-          setUserActivityHistory(normalizeUserActivityHistory(parsedHistory));
-        }
-      }
-
-      if (storedInboxNotifications) {
-        const parsedNotifications = JSON.parse(storedInboxNotifications) as AppInboxNotification[];
-        if (Array.isArray(parsedNotifications) && parsedNotifications.length > 0) {
-          setInboxNotifications(mergeInboxNotificationsWithSeed(parsedNotifications));
-        }
-      }
-    } catch {
-      // Ignore invalid persisted data and keep defaults.
-    }
-  }, []);
 
   const getLinkedFeedEvent = useCallback(
     (feedEventId?: string) => {
@@ -1439,94 +1318,6 @@ export function AppProviders({ children }: { children: ReactNode }) {
     },
     [feedEvents]
   );
-
-  useEffect(() => {
-    try {
-      window.localStorage.setItem(STORAGE_KEYS.posts, JSON.stringify(serializePostsForStorage(posts)));
-    } catch {
-      // Prevent crashes when attached images exceed localStorage quota.
-    }
-  }, [posts]);
-
-  useEffect(() => {
-    try {
-      window.localStorage.setItem(STORAGE_KEYS.event, JSON.stringify(safetyCultureEvent));
-    } catch {
-      // Ignore persistence failures and keep in-memory state.
-    }
-  }, [safetyCultureEvent]);
-
-  useEffect(() => {
-    try {
-      window.localStorage.setItem(STORAGE_KEYS.feedEvents, JSON.stringify(feedEvents));
-    } catch {
-      // Ignore persistence failures and keep in-memory state.
-    }
-  }, [feedEvents]);
-
-  useEffect(() => {
-    try {
-      window.localStorage.setItem(STORAGE_KEYS.currentUserPoints, `${currentUserPoints}`);
-    } catch {
-      // Ignore persistence failures and keep in-memory state.
-    }
-  }, [currentUserPoints]);
-
-  useEffect(() => {
-    try {
-      window.localStorage.setItem(STORAGE_KEYS.teamStandings, JSON.stringify(teamStandings));
-    } catch {
-      // Ignore persistence failures and keep in-memory state.
-    }
-  }, [teamStandings]);
-
-  useEffect(() => {
-    try {
-      window.localStorage.setItem(STORAGE_KEYS.personalRankings, JSON.stringify(personalRankings));
-    } catch {
-      // Ignore persistence failures and keep in-memory state.
-    }
-  }, [personalRankings]);
-
-  useEffect(() => {
-    try {
-      window.localStorage.setItem(STORAGE_KEYS.rewardsCatalog, JSON.stringify(rewardsCatalog));
-    } catch {
-      // Ignore persistence failures and keep in-memory state.
-    }
-  }, [rewardsCatalog]);
-
-  useEffect(() => {
-    try {
-      window.localStorage.setItem(STORAGE_KEYS.rewardCategories, JSON.stringify(rewardCategories));
-    } catch {
-      // Ignore persistence failures and keep in-memory state.
-    }
-  }, [rewardCategories]);
-
-  useEffect(() => {
-    try {
-      window.localStorage.setItem(STORAGE_KEYS.rewardRedemptions, JSON.stringify(rewardRedemptions));
-    } catch {
-      // Ignore persistence failures and keep in-memory state.
-    }
-  }, [rewardRedemptions]);
-
-  useEffect(() => {
-    try {
-      window.localStorage.setItem(STORAGE_KEYS.userActivityHistory, JSON.stringify(userActivityHistory));
-    } catch {
-      // Ignore persistence failures and keep in-memory state.
-    }
-  }, [userActivityHistory]);
-
-  useEffect(() => {
-    try {
-      window.localStorage.setItem(STORAGE_KEYS.inboxNotifications, JSON.stringify(inboxNotifications));
-    } catch {
-      // Ignore persistence failures and keep in-memory state.
-    }
-  }, [inboxNotifications]);
 
   // true เมื่อมี session (ล็อกอินแล้ว) ใช้กันไม่ให้ยิง API ที่ต้องล็อกอินตอนยังไม่ล็อกอิน -> ไม่มี error 401 ใน console
   const isAuthenticatedRef = useRef(false);
@@ -1550,22 +1341,122 @@ export function AppProviders({ children }: { children: ReactNode }) {
       isAuthenticatedRef.current = authed;
       if (!authed) return;
 
-      const [postsResult, balanceResult] = await Promise.all([
+      const [postsResult, balanceResult, notificationsResult, rewardsResult, leaderboardResult, teamsResult, awarenessResult, holidaysResult, eventsResult] = await Promise.all([
         apiFetch<{ items: ApiPost[] }>("/api/safety-culture/posts?limit=50"),
         apiFetch<{ balance: { balance: number } }>("/api/safety-culture/points/me"),
+        apiFetch<{ items: Array<Record<string, unknown>> }>("/api/notifications?limit=100"),
+        apiFetch<{ items: Array<Record<string, unknown>> }>("/api/safety-culture/rewards?pageSize=100"),
+        apiFetch<{ items: Array<Record<string, unknown>> }>("/api/safety-culture/leaderboard"),
+        apiFetch<{ items: Array<Record<string, unknown>> }>("/api/safety-culture/teams"),
+        apiFetch<{ items: Array<Record<string, unknown>> }>("/api/safety-awareness/questions"),
+        apiFetch<{ items: Array<Record<string, unknown>> }>(`/api/holidays?year=${new Date().getFullYear()}`),
+        apiFetch<{ items: Array<Record<string, unknown>> }>("/api/safety-culture/events?pageSize=100"),
       ]);
 
       if (cancelled) return;
 
       if (postsResult.ok && Array.isArray(postsResult.data?.items)) {
         const backendPosts = postsResult.data.items.map(postFromApi);
-        if (backendPosts.length > 0) {
-          setPosts(mergePostsWithSeed(backendPosts));
-        }
+        setPosts(backendPosts);
       }
 
       if (balanceResult.ok && typeof balanceResult.data?.balance?.balance === "number") {
         setCurrentUserPoints(Math.max(0, balanceResult.data.balance.balance));
+      }
+
+      if (notificationsResult.ok && Array.isArray(notificationsResult.data?.items)) {
+        setInboxNotifications(notificationsResult.data.items.map((item) => ({
+          id: String(item.id),
+          kind: "activity",
+          title: String(item.title || "Notification"),
+          body: String(item.body || ""),
+          createdAt: new Date(String(item.created_at || Date.now())).getTime(),
+          read: Boolean(item.read_at),
+          href: "/notifications",
+        })));
+      }
+
+      if (rewardsResult.ok && Array.isArray(rewardsResult.data?.items)) {
+        setRewardsCatalog(rewardsResult.data.items.map((item) => ({
+          id: Number(item.id),
+          name: String(item.name || ""),
+          category: "reward",
+          description: String(item.description || ""),
+          imageText: String(item.code || item.name || ""),
+          points: Number(item.points_required || 0),
+          stockMode: "limited",
+          stockTotal: Number(item.stock_qty || 0),
+          stockRemaining: Number(item.stock_qty || 0),
+        })));
+      }
+
+      if (leaderboardResult.ok && Array.isArray(leaderboardResult.data?.items)) {
+        setPersonalRankings(leaderboardResult.data.items.map((item, index) => ({
+          id: String(item.user_id || item.id),
+          rank: `#${index + 1}`,
+          name: String(item.name_th || item.name || "Unknown user"),
+          points: Number(item.points || 0),
+          team: String(item.team || ""),
+        })));
+      }
+
+      if (teamsResult.ok && Array.isArray(teamsResult.data?.items)) {
+        const maxMembers = Math.max(1, ...teamsResult.data.items.map((item) => Number(item.members || 0)));
+        setTeamStandings(teamsResult.data.items.map((item, index) => ({
+          id: String(item.id),
+          rank: index + 1,
+          name: String(item.name || ""),
+          leader: "",
+          members: Number(item.members || 0),
+          color: "var(--brand-accent)",
+          points: 0,
+          percent: (Number(item.members || 0) / maxMembers) * 100,
+          streak: 0,
+          awards: 0,
+        })));
+      }
+
+      if (awarenessResult.ok && Array.isArray(awarenessResult.data?.items)) {
+        setAwarenessQuestions(awarenessResult.data.items.map((item) => {
+          const options = item.options_json as Record<string, unknown> | null;
+          return {
+            id: String(item.id),
+            category: String((options && options.category) || "ทั่วไป"),
+            text: String(item.question_text || ""),
+            answer: Boolean((options && options.answer) ?? true),
+            note: String((options && options.note) || ""),
+            enabled: true,
+          };
+        }));
+      }
+
+      if (holidaysResult.ok && Array.isArray(holidaysResult.data?.items)) {
+        setAwarenessHolidays(holidaysResult.data.items.map((item) => ({
+          date: String(item.holiday_date || ""),
+          name: String(item.name || ""),
+        })));
+      }
+
+      if (eventsResult.ok && Array.isArray(eventsResult.data?.items)) {
+        setFeedEvents(eventsResult.data.items.map((item) => ({
+          id: String(item.id),
+          title: String(item.title || ""),
+          subtitle: String(item.location_text || ""),
+          summary: String(item.description || ""),
+          details: String(item.description || ""),
+          imageSrc: null,
+          imageText: String(item.title || "EVENT"),
+          startDate: item.event_start_at ? String(item.event_start_at).slice(0, 10) : undefined,
+          endDate: item.event_end_at ? String(item.event_end_at).slice(0, 10) : undefined,
+          dateLabel: "",
+          points: 0,
+          status: item.status === "ACTIVE" ? "open" : "closed",
+          published: item.status !== "DRAFT",
+          bonusMode: "fixed",
+          multiplier: 1,
+          fixedPoints: 0,
+          enabledActions: [],
+        })));
       }
     }
 
@@ -1574,69 +1465,6 @@ export function AppProviders({ children }: { children: ReactNode }) {
       cancelled = true;
     };
   }, []);
-
-  // Load Safety Awareness question bank + today's completion flag.
-  useEffect(() => {
-    try {
-      const storedQuestions = window.localStorage.getItem(STORAGE_KEYS.awarenessQuestions);
-      if (storedQuestions) {
-        const parsed = JSON.parse(storedQuestions) as SafetyAwarenessQuestion[];
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          setAwarenessQuestions(normalizeAwarenessQuestions(parsed));
-        }
-      }
-      const storedDone = window.localStorage.getItem(STORAGE_KEYS.awarenessDoneDate);
-      if (storedDone) setAwarenessDoneDate(storedDone);
-      const storedHistory = window.localStorage.getItem(STORAGE_KEYS.awarenessHistory);
-      if (storedHistory) {
-        const parsed = JSON.parse(storedHistory) as AwarenessCompletion[];
-        if (Array.isArray(parsed)) setAwarenessHistory(parsed);
-      } else if (storedDone) {
-        setAwarenessHistory([{ date: storedDone, completedAt: `${storedDone}T00:00:00.000Z`, score: 0, total: 0, questions: [] }]);
-      }
-      const storedHolidays = window.localStorage.getItem(STORAGE_KEYS.awarenessHolidays);
-      if (storedHolidays) {
-        const parsed = JSON.parse(storedHolidays) as AwarenessHoliday[];
-        if (Array.isArray(parsed)) setAwarenessHolidays(parsed);
-      }
-    } catch {
-      // Keep defaults on parse/storage failure.
-    }
-  }, []);
-
-  useEffect(() => {
-    try {
-      window.localStorage.setItem(STORAGE_KEYS.awarenessQuestions, JSON.stringify(awarenessQuestions));
-    } catch {
-      // Ignore persistence failures and keep in-memory state.
-    }
-  }, [awarenessQuestions]);
-
-  useEffect(() => {
-    try {
-      if (awarenessDoneDate) {
-        window.localStorage.setItem(STORAGE_KEYS.awarenessDoneDate, awarenessDoneDate);
-      }
-    } catch {
-      // Ignore persistence failures and keep in-memory state.
-    }
-  }, [awarenessDoneDate]);
-
-  useEffect(() => {
-    try {
-      window.localStorage.setItem(STORAGE_KEYS.awarenessHistory, JSON.stringify(awarenessHistory));
-    } catch {
-      // Ignore persistence failures and keep in-memory state.
-    }
-  }, [awarenessHistory]);
-
-  useEffect(() => {
-    try {
-      window.localStorage.setItem(STORAGE_KEYS.awarenessHolidays, JSON.stringify(awarenessHolidays));
-    } catch {
-      // Ignore persistence failures and keep in-memory state.
-    }
-  }, [awarenessHolidays]);
 
   useEffect(() => {
     setEventNow(Date.now());
@@ -1676,12 +1504,18 @@ export function AppProviders({ children }: { children: ReactNode }) {
         current.map((item) => (item.id === notificationId ? { ...item, read: true } : item))
       )
     );
+    if (isAuthenticatedRef.current) {
+      void apiFetch(`/api/notifications/${notificationId}/read`, apiJson("PATCH", {}));
+    }
   }, []);
 
   const markAllInboxNotificationsRead = useCallback(() => {
     setInboxNotifications((current) =>
       normalizeInboxNotifications(current.map((item) => ({ ...item, read: true })))
     );
+    if (isAuthenticatedRef.current) {
+      void apiFetch("/api/notifications/read-all", apiJson("PATCH", {}));
+    }
   }, []);
 
   const addPost = useCallback((post: Post) => {
@@ -1823,11 +1657,39 @@ export function AppProviders({ children }: { children: ReactNode }) {
 
   const updateSafetyCultureEvent = useCallback((data: SafetyCultureEventConfig) => {
     setSafetyCultureEvent(data);
+    if (isAuthenticatedRef.current) {
+      void apiFetch("/api/safety-culture/events", apiJson("POST", {
+        title: data.eventName || data.headline,
+        description: data.supportingText,
+        eventStartAt: `${data.startDate} ${data.startTime}:00`,
+        eventEndAt: `${data.endDate} ${data.endTime}:00`,
+        status: data.status === "live" ? "ACTIVE" : data.status.toUpperCase(),
+        metadata: data,
+      }));
+    }
   }, []);
 
   const updateFeedEvents = useCallback((events: SafetyCultureFeedEvent[]) => {
-    setFeedEvents(normalizeFeedEvents(events));
-  }, []);
+    const normalized = normalizeFeedEvents(events);
+    const previousIds = new Set(feedEvents.map((event) => event.id));
+    setFeedEvents(normalized);
+    if (isAuthenticatedRef.current) {
+      for (const event of normalized) {
+        const existing = previousIds.has(event.id) && /^\d+$/.test(event.id);
+        void apiFetch(
+          existing ? `/api/safety-culture/events/${event.id}` : "/api/safety-culture/events",
+          apiJson(existing ? "PATCH" : "POST", {
+            title: event.title,
+            description: event.details || event.summary,
+            eventStartAt: event.startDate || null,
+            eventEndAt: event.endDate || null,
+            status: event.published ? "ACTIVE" : "DRAFT",
+            metadata: event,
+          }),
+        );
+      }
+    }
+  }, [feedEvents]);
 
   const sendFeedEventNotification = useCallback((feedEventId: string) => {
     const targetEvent = feedEvents.find((event) => event.id === feedEventId);
@@ -1850,12 +1712,25 @@ export function AppProviders({ children }: { children: ReactNode }) {
         ...current,
       ])
     );
+    if (isAuthenticatedRef.current && /^\d+$/.test(feedEventId)) {
+      void apiFetch(`/api/safety-culture/events/${feedEventId}/notify`, apiJson("POST", {}));
+    }
 
     return true;
   }, [feedEvents]);
 
   const updateTeamStandings = useCallback((teams: LeaderboardTeam[]) => {
-    setTeamStandings(normalizeTeamStandings(teams));
+    const normalized = normalizeTeamStandings(teams);
+    setTeamStandings(normalized);
+    if (isAuthenticatedRef.current) {
+      void apiFetch("/api/safety-culture/teams", apiJson("PUT", {
+        teams: normalized.map((team) => ({
+          id: /^\d+$/.test(team.id) ? team.id : null,
+          name: team.name,
+          status: "ACTIVE",
+        })),
+      }));
+    }
   }, []);
 
   const updatePersonalRankings = useCallback((rankings: LeaderboardPerson[]) => {
@@ -1863,24 +1738,74 @@ export function AppProviders({ children }: { children: ReactNode }) {
   }, []);
 
   const updateRewardsCatalog = useCallback((rewards: RewardCatalogItem[]) => {
-    setRewardsCatalog(normalizeRewardsCatalog(rewards));
-  }, []);
+    const normalized = normalizeRewardsCatalog(rewards);
+    const previousIds = new Set(rewardsCatalog.map((reward) => reward.id));
+    const nextIds = new Set(normalized.map((reward) => reward.id));
+    setRewardsCatalog(normalized);
+    if (isAuthenticatedRef.current) {
+      for (const reward of normalized) {
+        const existing = previousIds.has(reward.id);
+        void apiFetch(
+          existing ? `/api/safety-culture/rewards/${reward.id}` : "/api/safety-culture/rewards",
+          apiJson(existing ? "PATCH" : "POST", {
+            code: `REWARD-${reward.id}`,
+            name: reward.name,
+            pointsRequired: reward.points,
+            stockQty: reward.stockRemaining ?? 0,
+            status: "ACTIVE",
+          }),
+        );
+      }
+      for (const reward of rewardsCatalog) {
+        if (!nextIds.has(reward.id)) void apiFetch(`/api/safety-culture/rewards/${reward.id}`, { method: "DELETE" });
+      }
+    }
+  }, [rewardsCatalog]);
 
   const updateRewardCategories = useCallback((categories: RewardCategory[]) => {
     setRewardCategories(normalizeRewardCategories(categories));
   }, []);
 
   const updateAwarenessQuestions = useCallback((questions: SafetyAwarenessQuestion[]) => {
-    setAwarenessQuestions(normalizeAwarenessQuestions(questions));
-  }, []);
+    const normalized = normalizeAwarenessQuestions(questions);
+    const previousIds = new Set(awarenessQuestions.map((question) => question.id));
+    const nextIds = new Set(normalized.map((question) => question.id));
+    setAwarenessQuestions(normalized);
+    if (isAuthenticatedRef.current) {
+      for (const question of normalized) {
+        const existing = previousIds.has(question.id) && /^\d+$/.test(question.id);
+        void apiFetch(
+          existing ? `/api/safety-awareness/questions/${question.id}` : "/api/safety-awareness/questions",
+          apiJson(existing ? "PATCH" : "POST", {
+            questionText: question.text,
+            optionsJson: { category: question.category, answer: question.answer, note: question.note || "" },
+            correctAnswerJson: { answer: question.answer },
+            status: question.enabled ? "ACTIVE" : "INACTIVE",
+          }),
+        );
+      }
+      for (const question of awarenessQuestions) {
+        if (/^\d+$/.test(question.id) && !nextIds.has(question.id)) {
+          void apiFetch(`/api/safety-awareness/questions/${question.id}`, { method: "DELETE" });
+        }
+      }
+    }
+  }, [awarenessQuestions]);
 
   const updateAwarenessHolidays = useCallback((holidays: AwarenessHoliday[]) => {
-    setAwarenessHolidays(
-      holidays
+    const normalized = holidays
         .filter((holiday) => holiday.date && holiday.name.trim())
         .map((holiday) => ({ date: holiday.date, name: holiday.name.trim() }))
-        .sort((a, b) => a.date.localeCompare(b.date)),
-    );
+        .sort((a, b) => a.date.localeCompare(b.date));
+    setAwarenessHolidays(normalized);
+    if (isAuthenticatedRef.current) {
+      for (const holiday of normalized) {
+        void apiFetch("/api/holidays", apiJson("POST", {
+          holidayDate: holiday.date,
+          name: holiday.name,
+        }));
+      }
+    }
   }, []);
 
   const markAwarenessDone = useCallback((completion: Omit<AwarenessCompletion, "date" | "completedAt">) => {
@@ -1939,7 +1864,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
   }, []);
 
   const redeemPoints = useCallback(
-    (rewardId: number, points: number) => {
+    async (rewardId: number, points: number) => {
       const reward = rewardsCatalog.find((item) => item.id === rewardId);
       if (!reward) {
         return { ok: false as const, reason: "not-found" as const };
@@ -1964,6 +1889,10 @@ export function AppProviders({ children }: { children: ReactNode }) {
 
       const occurredAt = Date.now();
       const redeemedAtIso = new Date(occurredAt).toISOString();
+      const persisted = await apiFetch(`/api/safety-culture/rewards/${rewardId}/redeem`, apiJson("POST", { points }));
+      if (!persisted.ok) {
+        return { ok: false as const, reason: "api-error" as const };
+      }
 
       setCurrentUserPoints((prev) => prev - points);
       setRewardRedemptions((current) =>
@@ -2020,7 +1949,6 @@ export function AppProviders({ children }: { children: ReactNode }) {
           })
         )
       );
-
       return { ok: true as const };
     },
     [currentUserPoints, rewardsCatalog]

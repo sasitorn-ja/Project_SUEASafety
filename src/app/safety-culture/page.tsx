@@ -26,13 +26,7 @@ import { SafetyCultureTabs } from "@/components/safety-culture/safety-culture-ta
 
 function getPostComments(post: { comments: number | CommentType[] }): CommentType[] {
   if (Array.isArray(post.comments)) return post.comments;
-
-  return Array.from({ length: post.comments || 0 }, (_, index) => ({
-    id: `mock-${index}`,
-    author: index % 2 === 0 ? "Anand T." : "Nattaya K.",
-    avatarText: index % 2 === 0 ? "A" : "N",
-    text: index % 2 === 0 ? "รับทราบครับ เป็นตัวอย่างที่ดีมาก" : "ขอบคุณที่แชร์นะคะ",
-  }));
+  return [];
 }
 
 function getCommentCount(post: { comments: number | CommentType[] }) {

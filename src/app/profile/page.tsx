@@ -13,7 +13,7 @@ import {
   Upload,
   UserRound,
 } from "lucide-react";
-import { getProfileDisplayName, MOCK_PROFILE, notifyProfileImageUpdated, PROFILE_IMAGE_KEY } from "@/lib/profile";
+import { getProfileDisplayName, MOCK_PROFILE, notifyProfileImageUpdated } from "@/lib/profile";
 import { getSessionDisplayName, getSessionEnglishName, getSessionProfileImage, useSessionUser } from "@/lib/session-user";
 
 const MAX_IMAGE_SIZE = 3 * 1024 * 1024;
@@ -48,14 +48,10 @@ export default function ProfilePage() {
   ];
 
   useEffect(() => {
-    try {
-      setProfileImage(window.localStorage.getItem(PROFILE_IMAGE_KEY) || "");
-    } catch {
-      // The profile still works when browser storage is unavailable.
-    }
-  }, []);
+    setProfileImage(getSessionProfileImage(sessionUser));
+  }, [sessionUser]);
 
-  const handleImageChange = (event: ChangeEvent<HTMLInputElement>) => {
+  const handleImageChange = async (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     event.target.value = "";
     if (!file) return;
@@ -69,29 +65,51 @@ export default function ProfilePage() {
       return;
     }
 
-    const reader = new FileReader();
-    reader.onload = () => {
-      const result = typeof reader.result === "string" ? reader.result : "";
-      setProfileImage(result);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("module", "profile");
+      formData.append("ownerType", "USER_PROFILE");
+      const uploadResponse = await fetch("/api/uploads", {
+        method: "POST",
+        credentials: "include",
+        body: formData,
+      });
+      const uploadPayload = await uploadResponse.json().catch(() => null);
+      if (!uploadResponse.ok || !uploadPayload?.ok) throw new Error(uploadPayload?.error || "profile_upload_failed");
+      const mediaId = uploadPayload.data?.media?.id || uploadPayload.data?.attachment?.id;
+      const imageUrl = `/api/uploads/${mediaId}/download`;
+      const updateResponse = await fetch("/api/users/me", {
+        method: "PATCH",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ profileImageUrl: imageUrl }),
+      });
+      const updatePayload = await updateResponse.json().catch(() => null);
+      if (!updateResponse.ok || !updatePayload?.ok) throw new Error(updatePayload?.error || "profile_update_failed");
+      setProfileImage(imageUrl);
       setImageError("");
-      try {
-        window.localStorage.setItem(PROFILE_IMAGE_KEY, result);
-        notifyProfileImageUpdated();
-      } catch {
-        setImageError("แสดงรูปได้ชั่วคราว แต่ browser ไม่สามารถบันทึกรูปนี้ไว้ได้");
-      }
-    };
-    reader.readAsDataURL(file);
+      notifyProfileImageUpdated();
+    } catch (error) {
+      setImageError(error instanceof Error ? error.message : "อัปโหลดรูปไม่สำเร็จ");
+    }
   };
 
-  const removeImage = () => {
-    setProfileImage("");
-    setImageError("");
+  const removeImage = async () => {
     try {
-      window.localStorage.removeItem(PROFILE_IMAGE_KEY);
+      const response = await fetch("/api/users/me", {
+        method: "PATCH",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ profileImageUrl: null }),
+      });
+      const payload = await response.json().catch(() => null);
+      if (!response.ok || !payload?.ok) throw new Error(payload?.error || "profile_update_failed");
+      setProfileImage("");
+      setImageError("");
       notifyProfileImageUpdated();
-    } catch {
-      // Keep the UI responsive even if storage is unavailable.
+    } catch (error) {
+      setImageError(error instanceof Error ? error.message : "ลบรูปไม่สำเร็จ");
     }
   };
 

@@ -60,6 +60,7 @@ const JSON_COLUMNS = new Set([
   "answer_json",
   "correct_answer_json",
   "payload",
+  "metadata",
   "before_data",
   "after_data",
 ]);
@@ -259,85 +260,154 @@ async function audit(input: {
   });
 }
 
-async function createRecord(entityType: string, data: Record<string, unknown>, actorUserId?: string | null, request?: NextRequest) {
+async function createCultureEvent(input: JsonInput, userId?: string | null) {
   const id = await withTransaction(async (connection) => {
     const [result] = await connection.execute<ResultSetHeader>(
-      `INSERT INTO audit_logs (actor_user_id, action, entity_type, after_data, ip_address)
-       VALUES (:actorUserId, 'CREATE_RECORD', :entityType, :afterData, :ipAddress)`,
+      `INSERT INTO safety_culture_events
+       (title, description, event_start_at, event_end_at, location_text, status, metadata, created_by)
+       VALUES (:title, :description, :eventStartAt, :eventEndAt, :locationText, :status, :metadata, :createdBy)`,
       {
-        actorUserId: actorUserId || null,
-        entityType,
-        afterData: JSON.stringify({ ...data, status: data.status || "ACTIVE" }),
-        ipAddress: request?.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || null,
+        title: input.title || input.name || "Safety Event",
+        description: input.description || input.body || null,
+        eventStartAt: input.eventStartAt || input.startAt || null,
+        eventEndAt: input.eventEndAt || input.endAt || null,
+        locationText: input.locationText || input.location || null,
+        status: input.status || "DRAFT",
+        metadata: JSON.stringify(input.metadata || input),
+        createdBy: userId || null,
       },
     );
     return String(result.insertId);
   });
-  return getRecord(entityType, id);
+  return getRow("safety_culture_events", id);
 }
 
-async function getRecord(entityType: string, id: string): Promise<Record<string, any> | null> {
-  const rows = await queryRows<DbRow>(
-    `SELECT id, actor_user_id, after_data, created_at
-     FROM audit_logs
-     WHERE id = :id AND entity_type = :entityType AND action IN ('CREATE_RECORD', 'UPDATE_RECORD')
-     LIMIT 1`,
-    { id, entityType },
-  );
-  if (!rows[0]) return null;
-  const row = serializeRow(rows[0]);
-  return { id: String(row.id), ...(row.after_data as Record<string, unknown>), createdAt: row.created_at };
-}
-
-async function listRecords(entityType: string, request: NextRequest, ownerId?: string | null): Promise<{
-  items: Record<string, any>[];
-  page: number;
-  pageSize: number;
-  nextPage: number | null;
-}> {
-  const { page, pageSize, offset } = pageParams(request);
-  const where = ["entity_type = :entityType", "action IN ('CREATE_RECORD', 'UPDATE_RECORD')"];
-  const params: Record<string, unknown> = { entityType, limit: pageSize, offset };
-  if (ownerId) {
-    where.push("actor_user_id = :ownerId");
-    params.ownerId = ownerId;
-  }
-  const rows = await queryRows<DbRow>(
-    `SELECT id, actor_user_id, after_data, created_at
-     FROM audit_logs WHERE ${where.join(" AND ")}
-     ORDER BY id DESC LIMIT :limit OFFSET :offset`,
-    params,
-  );
-  return {
-    items: rows.map((row) => {
-      const item = serializeRow(row);
-      return { id: String(item.id), ...(item.after_data as Record<string, unknown>), createdAt: item.created_at };
-    }),
-    page,
-    pageSize,
-    nextPage: rows.length === pageSize ? page + 1 : null,
+async function updateCultureEvent(id: string, input: JsonInput) {
+  const values = {
+    title: input.title || input.name || undefined,
+    description: input.description || input.body,
+    event_start_at: input.eventStartAt || input.startAt,
+    event_end_at: input.eventEndAt || input.endAt,
+    location_text: input.locationText || input.location,
+    status: input.status,
+    metadata: input.metadata ? JSON.stringify(input.metadata) : undefined,
   };
+  const columns = Object.entries(values).filter(([, value]) => value !== undefined);
+  if (columns.length) {
+    await withTransaction(async (connection) => {
+      await connection.execute<ResultSetHeader>(
+        `UPDATE safety_culture_events
+         SET ${columns.map(([column]) => `${column} = :${column}`).join(", ")}
+         WHERE id = :id AND deleted_at IS NULL`,
+        Object.fromEntries([...columns, ["id", id]]) as never,
+      );
+    });
+  }
+  return getRow("safety_culture_events", id);
 }
 
-async function updateRecord(entityType: string, id: string, patch: Record<string, unknown>, actorUserId?: string | null, request?: NextRequest): Promise<Record<string, any> | null> {
-  const current = await getRecord(entityType, id);
-  if (!current) return null;
-  const next = { ...current, ...patch, updatedAt: new Date().toISOString() };
+async function createMediaAsset(input: JsonInput, userId?: string | null) {
+  const id = await withTransaction(async (connection) => {
+    const [result] = await connection.execute<ResultSetHeader>(
+      `INSERT INTO media_assets
+       (file_name, original_name, mime_type, size_bytes, status, module, owner_type, owner_id, link_type, upload_mode, storage_path, public_url, metadata, created_by)
+       VALUES (:fileName, :originalName, :mimeType, :sizeBytes, :status, :module, :ownerType, :ownerId, :linkType, :uploadMode, :storagePath, :publicUrl, :metadata, :createdBy)`,
+      {
+        fileName: input.fileName,
+        originalName: input.originalName || input.fileName || null,
+        mimeType: input.mimeType || null,
+        sizeBytes: Number(input.size || input.sizeBytes || 0),
+        status: input.status || "READY",
+        module: input.module || null,
+        ownerType: input.ownerType || null,
+        ownerId: input.ownerId || null,
+        linkType: input.linkType || null,
+        uploadMode: input.uploadMode || "server",
+        storagePath: input.storagePath || null,
+        publicUrl: input.publicUrl || null,
+        metadata: input.metadata ? JSON.stringify(input.metadata) : null,
+        createdBy: userId || null,
+      },
+    );
+    return String(result.insertId);
+  });
+  return getRow("media_assets", id);
+}
+
+async function updateMediaAsset(id: string, input: JsonInput) {
+  const values = pickColumns(input, [
+    "status",
+    "module",
+    "owner_type",
+    "owner_id",
+    "link_type",
+    "upload_mode",
+    "storage_path",
+    "public_url",
+    "metadata",
+    "deleted_at",
+  ]);
+  const columns = Object.keys(values);
+  if (columns.length) {
+    await withTransaction(async (connection) => {
+      await connection.execute<ResultSetHeader>(
+        `UPDATE media_assets SET ${columns.map((column) => `${column} = :${column}`).join(", ")}
+         WHERE id = :id AND deleted_at IS NULL`,
+        { ...values, id } as never,
+      );
+    });
+  }
+  return getRow("media_assets", id);
+}
+
+async function createExportJob(input: JsonInput, userId?: string | null) {
+  const jobType = String(input.jobType || input.type || "GENERIC_EXPORT");
+  const id = await withTransaction(async (connection) => {
+    const [result] = await connection.execute<ResultSetHeader>(
+      `INSERT INTO export_jobs
+       (job_type, status, params, result_json, file_name, created_by, started_at, completed_at)
+       VALUES (:jobType, 'COMPLETED', :params, :resultJson, :fileName, :createdBy, UTC_TIMESTAMP(3), UTC_TIMESTAMP(3))`,
+      {
+        jobType,
+        params: JSON.stringify(input),
+        resultJson: JSON.stringify({ ready: true, jobType }),
+        fileName: input.fileName || `${jobType.toLowerCase()}-${Date.now()}.csv`,
+        createdBy: userId || null,
+      },
+    );
+    return String(result.insertId);
+  });
+  return getRow("export_jobs", id);
+}
+
+async function getNotificationPreferences(userId: string) {
+  const rows = await queryRows<DbRow>(
+    "SELECT * FROM notification_preferences WHERE user_id = :userId LIMIT 1",
+    { userId },
+  );
+  return rows[0]
+    ? serializeRow(rows[0])
+    : { user_id: userId, email_enabled: 1, in_app_enabled: 1, preferences_json: null };
+}
+
+async function updateNotificationPreferences(userId: string, input: JsonInput) {
   await withTransaction(async (connection) => {
     await connection.execute<ResultSetHeader>(
-      `UPDATE audit_logs SET action = 'UPDATE_RECORD', actor_user_id = :actorUserId,
-       before_data = after_data, after_data = :afterData, ip_address = :ipAddress
-       WHERE id = :id AND entity_type = :entityType`,
+      `INSERT INTO notification_preferences (user_id, email_enabled, in_app_enabled, preferences_json)
+       VALUES (:userId, :emailEnabled, :inAppEnabled, :preferencesJson)
+       ON DUPLICATE KEY UPDATE
+         email_enabled = VALUES(email_enabled),
+         in_app_enabled = VALUES(in_app_enabled),
+         preferences_json = VALUES(preferences_json)`,
       {
-        id,
-        entityType,
-        actorUserId: actorUserId || null,
-        afterData: JSON.stringify(next),
-        ipAddress: request?.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || null,
+        userId,
+        emailEnabled: input.email === false || input.emailEnabled === false ? 0 : 1,
+        inAppEnabled: input.inApp === false || input.inAppEnabled === false ? 0 : 1,
+        preferencesJson: JSON.stringify(input),
       },
     );
   });
-  return getRecord(entityType, id);
+  return getNotificationPreferences(userId);
 }
 
 async function handleOrganizations(request: NextRequest, method: string, match: RouteMatch, input: JsonInput, userId?: string) {
@@ -619,8 +689,23 @@ async function handleActivitiesAssessments(request: NextRequest, method: string,
     return jsonData({ run: await getAssessmentRun(match.params.id) });
   }
   if (method === "POST" && route === "/api/safety-effort/assessment-runs/:id/attachments") {
-    const record = await createRecord("ASSESSMENT_ATTACHMENT", { assessmentRunId: match.params.id, ...input }, userId, request);
-    return jsonData({ attachment: record }, { status: 201 });
+    const id = await withTransaction(async (connection) => {
+      const [result] = await connection.execute<ResultSetHeader>(
+        `INSERT INTO assessment_attachments
+         (assessment_run_id, media_asset_id, file_url, attachment_type, metadata, created_by)
+         VALUES (:assessmentRunId, :mediaAssetId, :fileUrl, :attachmentType, :metadata, :createdBy)`,
+        {
+          assessmentRunId: match.params.id,
+          mediaAssetId: input.mediaAssetId || input.media_asset_id || null,
+          fileUrl: input.fileUrl || input.url || null,
+          attachmentType: input.attachmentType || "EVIDENCE",
+          metadata: JSON.stringify(input.metadata || input),
+          createdBy: userId || null,
+        },
+      );
+      return String(result.insertId);
+    });
+    return jsonData({ attachment: await getRow("assessment_attachments", id) }, { status: 201 });
   }
   if (method === "GET" && route === "/api/safety-effort/assessment-runs/export") {
     const rows = await queryRows<DbRow>(
@@ -683,8 +768,22 @@ async function handleFindingsActions(request: NextRequest, method: string, match
     return jsonData({ action: await updateRow("corrective_actions", match.params.id, { ...input, status: "COMPLETED", completedAt: new Date() }) });
   }
   if (method === "POST" && route === "/api/safety-effort/corrective-actions/:id/comments") {
-    const comment = await createRecord("CORRECTIVE_ACTION_COMMENT", { actionId: match.params.id, ...input }, userId, request);
-    return jsonData({ comment }, { status: 201 });
+    const content = String(input.content || input.text || "").trim();
+    if (!content) return jsonError("content_required", 422);
+    const id = await withTransaction(async (connection) => {
+      const [result] = await connection.execute<ResultSetHeader>(
+        `INSERT INTO corrective_action_comments (corrective_action_id, author_id, content, metadata)
+         VALUES (:actionId, :authorId, :content, :metadata)`,
+        {
+          actionId: match.params.id,
+          authorId: userId || null,
+          content,
+          metadata: JSON.stringify(input.metadata || {}),
+        },
+      );
+      return String(result.insertId);
+    });
+    return jsonData({ comment: await getRow("corrective_action_comments", id) }, { status: 201 });
   }
   return null;
 }
@@ -705,7 +804,7 @@ async function handleWereOk(method: string, match: RouteMatch, input: JsonInput,
       `INSERT INTO ${table} (activity_id, user_id, status, payload, occurred_at)
        VALUES (:activityId, :userId, :status, :payload, UTC_TIMESTAMP(3))`,
       {
-        activityId: input.activityId || input.activity_id,
+        activityId: input.activityId || input.activity_id || null,
         userId,
         status: input.status || "COMPLETED",
         payload: JSON.stringify(input.payload || input),
@@ -718,13 +817,75 @@ async function handleWereOk(method: string, match: RouteMatch, input: JsonInput,
 
 async function handleCultureRewards(request: NextRequest, method: string, match: RouteMatch, input: JsonInput, userId?: string) {
   const route = match.route.path;
+  if (route === "/api/safety-culture/teams") {
+    if (method === "GET") {
+      const rows = await queryRows<DbRow>(
+        `SELECT t.id, t.organization_id, t.name, t.status, COUNT(tm.user_id) members
+         FROM teams t
+         LEFT JOIN team_members tm ON tm.team_id = t.id AND tm.left_at IS NULL
+         WHERE t.deleted_at IS NULL
+         GROUP BY t.id, t.organization_id, t.name, t.status
+         ORDER BY t.name`,
+      );
+      return jsonData({ items: rows.map(serializeRow) });
+    }
+    if (method === "PUT") {
+      const teams = Array.isArray(input.teams) ? input.teams as JsonInput[] : [];
+      await withTransaction(async (connection) => {
+        const keepIds: string[] = [];
+        for (const team of teams) {
+          const id = Number(team.id);
+          if (Number.isFinite(id) && id > 0) {
+            await connection.execute(
+              `UPDATE teams SET name = :name, organization_id = :organizationId, status = :status,
+               deleted_at = NULL WHERE id = :id`,
+              {
+                id,
+                name: team.name || `Team ${id}`,
+                organizationId: team.organizationId || null,
+                status: team.status || "ACTIVE",
+              },
+            );
+            keepIds.push(String(id));
+          } else {
+            const [result] = await connection.execute<ResultSetHeader>(
+              "INSERT INTO teams (organization_id, name, status) VALUES (:organizationId, :name, :status)",
+              {
+                organizationId: team.organizationId || null,
+                name: team.name || "New Team",
+                status: team.status || "ACTIVE",
+              },
+            );
+            keepIds.push(String(result.insertId));
+          }
+        }
+        if (keepIds.length) {
+          await connection.query(
+            "UPDATE teams SET deleted_at = UTC_TIMESTAMP(3), status = 'INACTIVE' WHERE deleted_at IS NULL AND id NOT IN (?)",
+            [keepIds],
+          );
+        } else {
+          await connection.execute("UPDATE teams SET deleted_at = UTC_TIMESTAMP(3), status = 'INACTIVE' WHERE deleted_at IS NULL");
+        }
+      });
+      const rows = await queryRows<DbRow>("SELECT * FROM teams WHERE deleted_at IS NULL ORDER BY name");
+      return jsonData({ items: rows.map(serializeRow) });
+    }
+  }
   if (route.startsWith("/api/safety-culture/events")) {
-    if (method === "GET" && route === "/api/safety-culture/events") return jsonData(await listRecords("CULTURE_EVENT", request));
-    if (method === "POST" && route === "/api/safety-culture/events") return jsonData({ event: await createRecord("CULTURE_EVENT", input, userId, request) }, { status: 201 });
-    if (method === "GET" && route === "/api/safety-culture/events/:id") return jsonData({ event: await getRecord("CULTURE_EVENT", match.params.id) });
-    if (method === "PATCH" && route === "/api/safety-culture/events/:id") return jsonData({ event: await updateRecord("CULTURE_EVENT", match.params.id, input, userId, request) });
+    if (method === "GET" && route === "/api/safety-culture/events") {
+      const status = request.nextUrl.searchParams.get("status");
+      return jsonData(await listRows("safety_culture_events", request, {
+        where: ["deleted_at IS NULL", ...(status ? ["status = :status"] : [])],
+        params: status ? { status } : {},
+        orderBy: "COALESCE(event_start_at, created_at) DESC, id DESC",
+      }));
+    }
+    if (method === "POST" && route === "/api/safety-culture/events") return jsonData({ event: await createCultureEvent(input, userId) }, { status: 201 });
+    if (method === "GET" && route === "/api/safety-culture/events/:id") return jsonData({ event: await getRow("safety_culture_events", match.params.id) });
+    if (method === "PATCH" && route === "/api/safety-culture/events/:id") return jsonData({ event: await updateCultureEvent(match.params.id, input) });
     if (method === "POST" && route === "/api/safety-culture/events/:id/notify") {
-      const event = await getRecord("CULTURE_EVENT", match.params.id);
+      const event = await getRow("safety_culture_events", match.params.id);
       if (!event) return jsonError("event_not_found", 404);
       const users = await queryRows<DbRow>("SELECT id FROM users WHERE status = 'ACTIVE' AND deleted_at IS NULL");
       await withTransaction(async (connection) => {
@@ -732,7 +893,11 @@ async function handleCultureRewards(request: NextRequest, method: string, match:
           await connection.execute(
             `INSERT INTO notifications (user_id, notification_type, title, body)
              VALUES (:userId, 'EVENT', :title, :body)`,
-            { userId: user.id, title: event.title || event.name || "Safety Event", body: event.description || event.body || "" },
+            {
+              userId: user.id,
+              title: String(event.title || "Safety Event"),
+              body: String(event.description || ""),
+            },
           );
         }
       });
@@ -940,8 +1105,23 @@ async function handleNotifications(request: NextRequest, method: string, match: 
   if (method === "POST" && route === "/api/notifications/:id/archive") {
     const notification = await getRow("notifications", match.params.id);
     if (!notification || String(notification.user_id) !== String(userId)) return jsonError("notification_not_found", 404);
-    await createRecord("ARCHIVED_NOTIFICATION", notification, userId, request);
-    await withTransaction(async (connection) => connection.execute("DELETE FROM notifications WHERE id=:id AND user_id=:userId", { id: match.params.id, userId }));
+    await withTransaction(async (connection) => {
+      await connection.execute<ResultSetHeader>(
+        `INSERT INTO archived_notifications
+         (notification_id, user_id, notification_type, title, body, read_at, original_created_at)
+         VALUES (:notificationId, :userId, :notificationType, :title, :body, :readAt, :originalCreatedAt)`,
+        {
+          notificationId: String(notification.id),
+          userId,
+          notificationType: String(notification.notification_type),
+          title: String(notification.title),
+          body: notification.body == null ? null : String(notification.body),
+          readAt: notification.read_at == null ? null : notification.read_at as never,
+          originalCreatedAt: notification.created_at == null ? null : notification.created_at as never,
+        },
+      );
+      await connection.execute("DELETE FROM notifications WHERE id=:id AND user_id=:userId", { id: match.params.id, userId });
+    });
     return jsonData({ archived: true });
   }
   if (method === "PATCH" && route === "/api/notifications/read-all") {
@@ -956,15 +1136,10 @@ async function handleNotifications(request: NextRequest, method: string, match: 
   }
   if (route === "/api/notifications/preferences") {
     if (method === "GET") {
-      const records = await listRecords("NOTIFICATION_PREFERENCES", request, userId);
-      return jsonData({ preferences: records.items[0] || { email: true, inApp: true } });
+      return jsonData({ preferences: await getNotificationPreferences(userId) });
     }
     if (method === "PATCH") {
-      const records = await listRecords("NOTIFICATION_PREFERENCES", request, userId);
-      const preferences = records.items[0]
-        ? await updateRecord("NOTIFICATION_PREFERENCES", String(records.items[0].id), input, userId, request)
-        : await createRecord("NOTIFICATION_PREFERENCES", input, userId, request);
-      return jsonData({ preferences });
+      return jsonData({ preferences: await updateNotificationPreferences(userId, input) });
     }
   }
   return null;
@@ -985,8 +1160,9 @@ async function handleUploadsMedia(request: NextRequest, method: string, match: R
     if (!file?.bytes) return jsonError("file_required");
     const fileName = `${Date.now()}-${safeFileName(file.name)}`;
     await fs.mkdir(uploadRoot(), { recursive: true });
-    await fs.writeFile(path.join(uploadRoot(), fileName), file.bytes);
-    const media = await createRecord("MEDIA_ASSET", {
+    const storagePath = path.join(uploadRoot(), fileName);
+    await fs.writeFile(storagePath, file.bytes);
+    const media = await createMediaAsset({
       fileName,
       originalName: file.name,
       mimeType: file.type,
@@ -995,63 +1171,107 @@ async function handleUploadsMedia(request: NextRequest, method: string, match: R
       module: input.module || "general",
       ownerType: input.ownerType || null,
       ownerId: input.ownerId || null,
-    }, userId, request);
+      storagePath,
+    }, userId);
     return jsonData({ attachment: media, media }, { status: 201 });
   }
   if (route === "/api/uploads/:id") {
-    const media = await getRecord("MEDIA_ASSET", match.params.id);
+    const media = await getRow("media_assets", match.params.id);
     if (method === "GET") return media ? jsonData({ media }) : jsonError("media_not_found", 404);
     if (method === "DELETE") {
-      if (media?.fileName) await fs.unlink(path.join(uploadRoot(), String(media.fileName))).catch(() => undefined);
-      await updateRecord("MEDIA_ASSET", match.params.id, { status: "DELETED" }, userId, request);
+      if (media?.file_name) await fs.unlink(String(media.storage_path || path.join(uploadRoot(), String(media.file_name)))).catch(() => undefined);
+      await updateMediaAsset(match.params.id, { status: "DELETED", deleted_at: new Date() });
       return jsonData({ deleted: true });
     }
   }
   if (method === "GET" && route === "/api/uploads/:id/download") {
-    const media = await getRecord("MEDIA_ASSET", match.params.id);
-    if (!media?.fileName) return jsonError("media_not_found", 404);
-    const bytes = await fs.readFile(path.join(uploadRoot(), String(media.fileName))).catch(() => null);
+    const media = await getRow("media_assets", match.params.id);
+    if (!media?.file_name) return jsonError("media_not_found", 404);
+    const bytes = await fs.readFile(String(media.storage_path || path.join(uploadRoot(), String(media.file_name)))).catch(() => null);
     if (!bytes) return jsonError("file_not_found", 404);
     return new NextResponse(bytes, {
       headers: {
-        "content-type": String(media.mimeType || "application/octet-stream"),
-        "content-disposition": `attachment; filename="${safeFileName(String(media.originalName || media.fileName))}"`,
+        "content-type": String(media.mime_type || "application/octet-stream"),
+        "content-disposition": `attachment; filename="${safeFileName(String(media.original_name || media.file_name))}"`,
       },
     });
   }
   if (method === "POST" && route === "/api/uploads/cleanup-drafts") {
-    const records = await listRecords("MEDIA_ASSET", request);
+    const records = await listRows("media_assets", request, { where: ["status = 'DRAFT'", "deleted_at IS NULL"] });
     let cleaned = 0;
     for (const media of records.items) {
-      if (media.status !== "DRAFT") continue;
-      if (media.fileName) await fs.unlink(path.join(uploadRoot(), String(media.fileName))).catch(() => undefined);
-      await updateRecord("MEDIA_ASSET", String(media.id), { status: "DELETED" }, userId, request);
+      if (media.file_name) await fs.unlink(String(media.storage_path || path.join(uploadRoot(), String(media.file_name)))).catch(() => undefined);
+      await updateMediaAsset(String(media.id), { status: "DELETED" });
       cleaned += 1;
     }
     return jsonData({ cleaned });
   }
   if (route === "/api/uploads/:id/link") {
-    if (method === "POST") return jsonData({ media: await updateRecord("MEDIA_ASSET", match.params.id, { ...input, status: "LINKED" }, userId, request) });
-    if (method === "DELETE") return jsonData({ media: await updateRecord("MEDIA_ASSET", match.params.id, { ownerType: null, ownerId: null, linkType: null, status: "READY" }, userId, request) });
+    if (method === "POST") return jsonData({ media: await updateMediaAsset(match.params.id, { ...input, status: "LINKED" }) });
+    if (method === "DELETE") return jsonData({ media: await updateMediaAsset(match.params.id, { ownerType: null, ownerId: null, linkType: null, status: "READY" }) });
   }
   if (method === "GET" && route === "/api/media") {
-    const records = await listRecords("MEDIA_ASSET", request);
     const ownerType = request.nextUrl.searchParams.get("ownerType");
     const ownerId = request.nextUrl.searchParams.get("ownerId");
-    return jsonData({ ...records, items: records.items.filter((item) => (!ownerType || item.ownerType === ownerType) && (!ownerId || String(item.ownerId) === ownerId)) });
+    return jsonData(await listRows("media_assets", request, {
+      where: [
+        "deleted_at IS NULL",
+        ...(ownerType ? ["owner_type = :ownerType"] : []),
+        ...(ownerId ? ["owner_id = :ownerId"] : []),
+      ],
+      params: { ...(ownerType ? { ownerType } : {}), ...(ownerId ? { ownerId } : {}) },
+      orderBy: "id DESC",
+    }));
   }
   if (method === "POST" && route === "/api/uploads/presign") {
-    const draft = await createRecord("MEDIA_ASSET", { ...input, status: "DRAFT", uploadMode: "server" }, userId, request);
+    const draft = await createMediaAsset({
+      fileName: input.fileName || `draft-${Date.now()}`,
+      originalName: input.originalName || input.fileName || null,
+      mimeType: input.mimeType || null,
+      size: input.size || 0,
+      ...input,
+      status: "DRAFT",
+      uploadMode: "server",
+    }, userId);
     return jsonData({ id: draft?.id, uploadUrl: "/api/uploads", method: "POST", fields: { draftId: draft?.id } }, { status: 201 });
   }
   if (method === "POST" && route === "/api/uploads/:id/complete") {
-    return jsonData({ media: await updateRecord("MEDIA_ASSET", match.params.id, { ...input, status: "READY" }, userId, request) });
+    return jsonData({ media: await updateMediaAsset(match.params.id, { ...input, status: "READY" }) });
   }
   return null;
 }
 
 async function handleImportsReportsAudit(request: NextRequest, method: string, match: RouteMatch, input: JsonInput, userId?: string) {
   const route = match.route.path;
+  if (route === "/api/safety-settings") {
+    const key = String(request.nextUrl.searchParams.get("key") || input.key || "safety_backdate");
+    if (method === "GET") {
+      const rows = await queryRows<DbRow>(
+        "SELECT setting_key, setting_value, updated_at FROM safety_settings WHERE setting_key = :key LIMIT 1",
+        { key },
+      );
+      return jsonData({ setting: rows[0] ? serializeRow(rows[0]) : null });
+    }
+    if (method === "PUT") {
+      await withTransaction(async (connection) => {
+        await connection.execute<ResultSetHeader>(
+          `INSERT INTO safety_settings (setting_key, setting_value, updated_by)
+           VALUES (:key, :value, :updatedBy)
+           ON DUPLICATE KEY UPDATE setting_value = VALUES(setting_value), updated_by = VALUES(updated_by)`,
+          {
+            key,
+            value: JSON.stringify(input.value || input),
+            updatedBy: userId || null,
+          },
+        );
+      });
+      const rows = await queryRows<DbRow>(
+        "SELECT setting_key, setting_value, updated_at FROM safety_settings WHERE setting_key = :key LIMIT 1",
+        { key },
+      );
+      return jsonData({ setting: rows[0] ? serializeRow(rows[0]) : null });
+    }
+  }
   if (route === "/api/location-imports") {
     if (method === "GET") {
       const status = request.nextUrl.searchParams.get("status");
@@ -1140,13 +1360,13 @@ async function handleImportsReportsAudit(request: NextRequest, method: string, m
   }
   if (route === "/api/exports") {
     if (method === "POST") {
-      const job = await createRecord("EXPORT_JOB", { ...input, status: "COMPLETED", completedAt: new Date().toISOString() }, userId, request);
+      const job = await createExportJob(input, userId);
       return jsonData({ export: job }, { status: 202 });
     }
   }
-  if (method === "GET" && route === "/api/exports/:id") return jsonData({ export: await getRecord("EXPORT_JOB", match.params.id) });
+  if (method === "GET" && route === "/api/exports/:id") return jsonData({ export: await getRow("export_jobs", match.params.id) });
   if (method === "GET" && route === "/api/exports/:id/download") {
-    const job = await getRecord("EXPORT_JOB", match.params.id);
+    const job = await getRow("export_jobs", match.params.id);
     if (!job) return jsonError("export_not_found", 404);
     const csv = toCsv([job]);
     return new NextResponse(csv, { headers: { "content-type": "text/csv; charset=utf-8", "content-disposition": `attachment; filename=export-${match.params.id}.csv` } });

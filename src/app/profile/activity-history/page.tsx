@@ -8,7 +8,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAppState, type SafetyCultureUserActivity } from "@/providers/app-providers";
 import { useAppTheme } from "@/providers/theme-provider";
-import { getProfileDisplayName, PROFILE_IMAGE_KEY } from "@/lib/profile";
+import { getProfileDisplayName } from "@/lib/profile";
+import { getSessionProfileImage, useSessionUser } from "@/lib/session-user";
 import { cn } from "@/lib/utils";
 
 function formatDateInput(date: Date) {
@@ -92,21 +93,14 @@ function isWithinRange(activityAt: number, fromDate: string, toDate: string) {
 export default function ProfileActivityHistoryPage() {
   const { userActivityHistory } = useAppState();
   const { theme } = useAppTheme();
-  const [profileImage, setProfileImage] = useState("");
+  const { user: sessionUser } = useSessionUser();
+  const profileImage = getSessionProfileImage(sessionUser);
   const [fromDate, setFromDate] = useState(() => getDateDaysAgo(30));
   const [toDate, setToDate] = useState(() => formatDateInput(new Date()));
   const isWangjai = theme === "wangjai";
   const pageBackgroundClass = isWangjai
     ? "bg-[linear-gradient(180deg,#eef5fb_0%,#f8fbfe_260px,#fbfdff_100%)]"
     : "bg-[linear-gradient(180deg,#f6efe3_0%,#fdf8f0_220px,#fffdf8_100%)]";
-
-  useEffect(() => {
-    try {
-      setProfileImage(window.localStorage.getItem(PROFILE_IMAGE_KEY) || "");
-    } catch {
-      setProfileImage("");
-    }
-  }, []);
 
   const filteredActivities = useMemo(
     () => userActivityHistory.filter((activity) => isWithinRange(activity.occurredAt, fromDate, toDate)),
