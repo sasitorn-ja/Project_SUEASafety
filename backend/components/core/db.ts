@@ -6,12 +6,16 @@ const globalForDb = globalThis as typeof globalThis & {
   cpacSafetyDbPool?: Pool;
 };
 
-function getDatabaseUrl() {
+export function getDatabaseUrl() {
   const url = process.env.DATABASE_URL;
   if (!url) {
     throw new Error("DATABASE_URL is not configured for CPAC_Safety.");
   }
   return url;
+}
+
+export function isDatabaseConfigured() {
+  return Boolean(process.env.DATABASE_URL?.trim());
 }
 
 export function getDbPool() {

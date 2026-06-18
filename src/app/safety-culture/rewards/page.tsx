@@ -57,6 +57,16 @@ function getRewardScheduleText(reward: { redeemStartAt?: string | null; redeemEn
   return "แลกได้ตลอดเวลา";
 }
 
+function getRewardRemainingOnlyLabel(reward: {
+  stockMode?: "limited" | "unlimited";
+  stockRemaining?: number | null;
+}) {
+  if (reward.stockMode !== "limited") return "พร้อมใช้งาน";
+
+  const remaining = Math.max(0, Number(reward.stockRemaining) || 0);
+  return `คงเหลือ ${remaining} ชิ้น`;
+}
+
 export default function RewardsPage() {
   const { themedImage, mascot } = useAppTheme();
   const { currentUserPoints, rewardsCatalog, rewardCategories } = useAppState();
@@ -266,23 +276,22 @@ export default function RewardsPage() {
                 </div>
 
                 <div className="flex flex-1 flex-col gap-1">
-                  <span className="text-[14.5px] font-[850] text-foreground">{reward.name}</span>
-                  <p className="line-clamp-2 text-[12.5px] font-bold leading-relaxed text-[var(--brand-muted-text)]">
-                    {reward.description}
-                  </p>
-                  <div className="flex flex-wrap gap-1.5 pt-1">
-                    <span className="rounded-full bg-[var(--brand-soft)] px-2.5 py-1 text-[11px] font-black text-[var(--brand-text)]">
-                      {reward.stockMode === "limited"
-                        ? `คงเหลือ ${availability.remaining}${reward.stockTotal ? ` / ${reward.stockTotal}` : ""}`
-                        : "ไม่จำกัดจำนวน"}
-                    </span>
-                    <span className="rounded-full border border-[var(--border)] bg-white px-2.5 py-1 text-[11px] font-black text-[var(--brand-muted-text)]">
-                      {getRewardScheduleText(reward)}
+                  <div className="flex items-start justify-between gap-3">
+                    <span className="line-clamp-2 text-[14.5px] font-[850] text-foreground">{reward.name}</span>
+                    <span className="flex-shrink-0 rounded-full bg-[var(--brand-soft)] px-2.5 py-1 text-[11px] font-black text-[var(--brand-text)]">
+                      {reward.points.toLocaleString()} pts
                     </span>
                   </div>
-                  <span className="pt-1 text-[12.5px] font-extrabold text-[var(--brand-accent-strong)]">
-                    {reward.points.toLocaleString()} <span className="ml-0.5 text-[10px] font-bold text-muted-foreground">POINTS</span>
-                  </span>
+                  <div className="flex min-h-[58px] flex-wrap content-start gap-1.5 pt-2">
+                    <span className="rounded-full bg-[var(--brand-soft)] px-2.5 py-1 text-[11px] font-black text-[var(--brand-text)]">
+                      {getRewardRemainingOnlyLabel(reward)}
+                    </span>
+                    {reward.redeemStartAt || reward.redeemEndAt ? (
+                      <span className="rounded-full border border-[var(--border)] bg-white px-2.5 py-1 text-[11px] font-black text-[var(--brand-muted-text)]">
+                        {getRewardScheduleText(reward)}
+                      </span>
+                    ) : null}
+                  </div>
                 </div>
 
                 {disabledReason ? (
@@ -374,3 +383,4 @@ export default function RewardsPage() {
     </>
   );
 }
+

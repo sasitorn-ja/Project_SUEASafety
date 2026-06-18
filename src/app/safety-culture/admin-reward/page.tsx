@@ -269,6 +269,16 @@ function getRewardStockLabel(reward: {
   return `คงเหลือ ${remaining}/${total}`;
 }
 
+function getRewardRemainingOnlyLabel(reward: {
+  stockMode?: "limited" | "unlimited";
+  stockRemaining?: number | null;
+}) {
+  if (reward.stockMode !== "limited") return "พร้อมใช้งาน";
+
+  const remaining = Math.max(0, Number(reward.stockRemaining) || 0);
+  return `คงเหลือ ${remaining} ชิ้น`;
+}
+
 function formatRedemptionDateTime(value: string) {
   const parsed = new Date(value);
   if (Number.isNaN(parsed.getTime())) return value;
@@ -415,7 +425,7 @@ function RewardPreviewPanel({
         </p>
         <div className="flex flex-wrap gap-1.5 pt-1">
           <span className="rounded-full bg-[var(--brand-soft)] px-2.5 py-1 text-[11px] font-black text-[var(--brand-text)]">
-            {getRewardStockLabel(reward)}
+            {getRewardRemainingOnlyLabel(reward)}
           </span>
           <span className="rounded-full border border-[var(--border)] bg-white px-2.5 py-1 text-[11px] font-black text-[#8E8A81]">
             {getRewardScheduleLabel(reward)}
@@ -538,8 +548,12 @@ export default function AdminRewardPage() {
   const [newCategoryLabel, setNewCategoryLabel] = useState("");
   const [newCategoryIcon, setNewCategoryIcon] = useState<RewardCategoryIcon>("gift");
   const [isCategoryIconMenuOpen, setIsCategoryIconMenuOpen] = useState(false);
+  const [isCategoryManagerExpanded, setIsCategoryManagerExpanded] = useState(false);
   const [activeAdminCategory, setActiveAdminCategory] = useState("all");
   const [categorySearch, setCategorySearch] = useState("");
+  const [rewardCatalogSearch, setRewardCatalogSearch] = useState("");
+  const [rewardSortOrder, setRewardSortOrder] = useState<"latest" | "points-desc" | "points-asc" | "stock-desc">("latest");
+  const [isRewardSortOpen, setIsRewardSortOpen] = useState(false);
   const [categoryPickerSearch, setCategoryPickerSearch] = useState("");
   const [pressedRewardId, setPressedRewardId] = useState<number | null>(null);
   const [draggingRewardId, setDraggingRewardId] = useState<number | null>(null);
@@ -617,10 +631,47 @@ export default function AdminRewardPage() {
     [activeAdminCategory, draftRewards]
   );
 
+  const filteredVisibleRewards = useMemo(() => {
+    const keyword = normalizeCategorySearchText(rewardCatalogSearch);
+    if (!keyword) return visibleRewards;
+
+    return visibleRewards.filter((reward) => {
+      const category = getCategoryMeta(reward.category, categoryOptions);
+      const haystack = normalizeCategorySearchText(`${reward.name} ${reward.description} ${category.label} ${reward.imageText}`);
+      return haystack.includes(keyword);
+    });
+  }, [categoryOptions, rewardCatalogSearch, visibleRewards]);
+
   const rewardOrderMap = useMemo(
     () => new Map(draftRewards.map((reward, index) => [reward.id, index])),
     [draftRewards]
   );
+
+  const displayedRewards = useMemo(() => {
+    const rewards = [...filteredVisibleRewards];
+    if (rewardSortOrder === "points-desc") {
+      rewards.sort((left, right) => right.points - left.points || (rewardOrderMap.get(left.id) ?? 0) - (rewardOrderMap.get(right.id) ?? 0));
+    } else if (rewardSortOrder === "points-asc") {
+      rewards.sort((left, right) => left.points - right.points || (rewardOrderMap.get(left.id) ?? 0) - (rewardOrderMap.get(right.id) ?? 0));
+    } else if (rewardSortOrder === "stock-desc") {
+      rewards.sort(
+        (left, right) =>
+          (Number(right.stockRemaining) || 0) - (Number(left.stockRemaining) || 0) ||
+          (rewardOrderMap.get(left.id) ?? 0) - (rewardOrderMap.get(right.id) ?? 0)
+      );
+    }
+
+    return rewards;
+  }, [filteredVisibleRewards, rewardSortOrder, rewardOrderMap]);
+
+  const rewardSortLabel =
+    rewardSortOrder === "points-desc"
+      ? "คะแนนมากสุด"
+      : rewardSortOrder === "points-asc"
+        ? "คะแนนน้อยสุด"
+        : rewardSortOrder === "stock-desc"
+          ? "คงเหลือมากสุด"
+          : "ล่าสุด";
 
   const filteredRewardRedemptions = useMemo(() => {
     const keyword = normalizeCategorySearchText(redemptionSearch);
@@ -779,6 +830,19 @@ export default function AdminRewardPage() {
     });
   };
 
+  const updateEditingRewardAvailableStock = (value: number) => {
+    setEditingReward((current) => {
+      if (!current) return current;
+      const nextRemaining = Math.max(0, value || 0);
+      const nextTotal = Math.max(current.stockTotal || 0, nextRemaining);
+      return {
+        ...current,
+        stockTotal: nextTotal,
+        stockRemaining: nextRemaining,
+      };
+    });
+  };
+
   const addCategory = () => {
     const label = newCategoryLabel.trim();
     const value = makeCategoryValue(label);
@@ -907,7 +971,7 @@ export default function AdminRewardPage() {
 
   return (
     <>
-      <div className="mx-auto w-full max-w-[1320px] bg-[var(--background)] px-3.5 pt-0 pb-8 font-sarabun md:px-4">
+      <div className="mx-auto w-full max-w-[1460px] bg-[var(--background)] px-3.5 pt-0 pb-8 font-sarabun md:px-4 lg:px-5">
         <SafetyCultureHero
           eyebrow="SAFETY CULTURE ADMIN"
           title={
@@ -922,39 +986,31 @@ export default function AdminRewardPage() {
         />
 
         <div className="mt-4 flex flex-col gap-4">
-          <Card className="rounded-[18px] border border-[var(--border)] bg-[var(--brand-soft)] p-4 shadow-[0_8px_18px_var(--brand-shadow)]">
-            <div className="rounded-[16px] border border-[var(--border)] bg-white/55 p-3">
-              <div className="mb-2 flex items-center justify-between gap-3">
-                <div className="text-[12px] font-black text-[var(--brand-text)]">สรุปหมวดหมู่ทั้งหมด</div>
-                <div className="text-[11px] font-bold text-[#8E8A81]">เลื่อนซ้าย-ขวาเพื่อดูครบ</div>
-              </div>
-              <div className="scrollbar-hide flex gap-3 overflow-x-auto pb-1">
-                {categorySummary.map((item) => {
-                  const Icon = CATEGORY_ICON_MAP[item.icon];
-                  return (
-                    <div
-                      key={item.value}
-                      className="flex min-w-[220px] flex-shrink-0 items-center justify-between gap-4 rounded-[16px] border border-[var(--border)] bg-white px-4 py-3"
-                    >
-                      <div className="flex min-w-0 items-center gap-3">
-                        <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-2xl bg-[var(--brand-soft)] text-[var(--brand-text)]">
-                          <Icon className="h-4 w-4" strokeWidth={2.2} />
-                        </div>
-                        <div className="min-w-0">
-                          <div className="truncate text-[13px] font-black text-[#1A1A1A]">{item.label}</div>
-                          <div className="text-[11px] font-bold text-[#8E8A81]">ในหมวดนี้</div>
-                        </div>
+          <Card className="overflow-hidden rounded-[20px] border border-[var(--border)] bg-[var(--brand-surface)] p-2.5 shadow-[0_10px_24px_var(--brand-shadow)]">
+            <div className="scrollbar-hide flex gap-2 overflow-x-auto pb-1">
+              {categorySummary.map((item) => {
+                const Icon = CATEGORY_ICON_MAP[item.icon];
+                return (
+                  <div
+                    key={item.value}
+                    className="flex min-w-[320px] flex-shrink-0 items-center justify-between gap-3 rounded-[16px] border border-[var(--border)] bg-white px-4 py-3 lg:min-w-[340px]"
+                  >
+                    <div className="flex min-w-0 items-center gap-3">
+                      <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-2xl bg-[var(--brand-soft)] text-[var(--brand-text)]">
+                        <Icon className="h-4.5 w-4.5" strokeWidth={2.2} />
                       </div>
-                      <div className="text-right">
-                        <div className="text-[20px] font-black leading-none text-[#1A1A1A]">{item.count}</div>
-                        <div className="mt-1 text-[10px] font-black uppercase tracking-[0.14em] text-[var(--brand-accent-strong)]">
-                          items
-                        </div>
+                      <div className="min-w-0">
+                        <div className="truncate text-[14px] font-black text-[#1A1A1A]">{item.label}</div>
+                        <div className="text-[11px] font-bold text-[#8E8A81]">หมวดหมู่</div>
                       </div>
                     </div>
-                  );
-                })}
-              </div>
+                    <div className="text-right">
+                      <div className="text-[22px] font-black leading-none text-[var(--brand-text)]">{item.count}</div>
+                      <div className="mt-1 text-[10px] font-bold text-[#8E8A81]">รายการ</div>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </Card>
 
@@ -966,12 +1022,27 @@ export default function AdminRewardPage() {
 
           <SectionCard
             title="Category Manager"
-            description="เพิ่มหมวดหมู่สำหรับ reward ได้เอง เพื่อให้ Admin จัดกลุ่มสินค้าได้ยืดหยุ่นขึ้น"
+            description="เพิ่มหมวดหมู่"
             icon={<Users className="h-5 w-5" strokeWidth={2.3} />}
+            className="overflow-visible"
+            actions={
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setIsCategoryManagerExpanded((current) => !current)}
+                className="h-11 rounded-[16px] border-[var(--brand-accent)] bg-white px-4 text-[13px] font-black text-[var(--brand-text)] hover:bg-[var(--brand-soft)]"
+              >
+                {isCategoryManagerExpanded ? "ซ่อนรายละเอียดหมวดหมู่" : "ดูรายละเอียดหมวดหมู่"}
+                <ChevronDown
+                  className={cn("ml-2 h-4 w-4 transition-transform", isCategoryManagerExpanded ? "rotate-180" : "")}
+                  strokeWidth={2.2}
+                />
+              </Button>
+            }
           >
-            <div className="rounded-[18px] border border-dashed border-[var(--border)] bg-[var(--brand-soft)] p-4">
-              <div className="grid grid-cols-1 gap-3 md:grid-cols-[minmax(0,1fr)_auto] md:items-start">
-                <div className="relative">
+            <div className="relative overflow-visible rounded-[20px] border border-[var(--border)] bg-[linear-gradient(135deg,var(--brand-surface)_0%,var(--brand-soft)_100%)] p-4">
+              <div className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_auto] xl:items-center">
+                <div className={cn("relative", isCategoryIconMenuOpen ? "z-40" : "z-10")}>
                   <div className="flex items-center gap-2 rounded-[16px] border border-[var(--border)] bg-white p-1.5">
                     <Input
                       value={newCategoryLabel}
@@ -1002,7 +1073,7 @@ export default function AdminRewardPage() {
                     </button>
                   </div>
                   {isCategoryIconMenuOpen ? (
-                    <div className="absolute top-[calc(100%+8px)] left-0 z-20 grid w-full grid-cols-4 gap-2 rounded-[16px] border border-[var(--border)] bg-white p-3 shadow-[0_18px_36px_rgba(62,36,13,0.14)] sm:grid-cols-6 xl:grid-cols-8">
+                    <div className="absolute top-[calc(100%+8px)] left-0 z-50 grid w-full grid-cols-4 gap-2 rounded-[16px] border border-[var(--border)] bg-white p-3 shadow-[0_18px_36px_rgba(62,36,13,0.14)] sm:grid-cols-6 xl:grid-cols-8">
                       {CATEGORY_ICON_OPTIONS.map((option) => {
                         const Icon = CATEGORY_ICON_MAP[option.value];
                         const isActive = option.value === newCategoryIcon;
@@ -1039,9 +1110,6 @@ export default function AdminRewardPage() {
                   เพิ่มหมวด
                 </Button>
               </div>
-              <div className="mt-3 text-[12px] font-bold text-[#8E8A81]">
-                หากลบหมวดที่มี reward อยู่ ระบบจะยังไม่ยอมลบ เพื่อป้องกัน reward หลุดหมวด
-              </div>
               {categoryNotice ? (
                 <div className="mt-3 rounded-[14px] border border-[var(--border)] bg-white px-3 py-2 text-[12px] font-black text-[var(--brand-text)]">
                   {categoryNotice}
@@ -1049,84 +1117,87 @@ export default function AdminRewardPage() {
               ) : null}
             </div>
 
-            <div className="mt-4 flex flex-col gap-3 rounded-[18px] border border-[var(--border)] bg-[var(--brand-soft)] p-3">
-              <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-                <div className="flex flex-wrap gap-2">
-                  <div className="rounded-full bg-white px-3 py-1.5 text-[12px] font-black text-[var(--brand-text)]">
-                    ใช้งานอยู่ {usedCategorySummary.length} หมวด
-                  </div>
-                  <div className="rounded-full bg-white px-3 py-1.5 text-[12px] font-black text-[#8E8A81]">
-                    ยังไม่มี reward {emptyCategorySummary.length} หมวด
-                  </div>
-                </div>
-                <div className="relative w-full lg:max-w-[340px]">
-                  <Search className="pointer-events-none absolute top-1/2 left-4 h-4 w-4 -translate-y-1/2 text-[#8E8A81]" />
-                  <Input
-                    value={categorySearch}
-                    onChange={(event) => setCategorySearch(event.target.value)}
-                    placeholder="ค้นหาหมวดหมู่"
-                    className="h-11 rounded-[14px] border-[var(--border)] bg-white pr-4 pl-10 text-[13px] font-bold"
-                  />
-                </div>
-              </div>
-            </div>
-
-            {usedCategorySummary.length > 0 ? (
-              <div className="mt-4">
-                <div className="mb-3 flex items-center justify-between gap-3">
-                  <div className="text-[13px] font-black text-[var(--brand-text)]">หมวดที่กำลังใช้งาน</div>
-                  <div className="text-[11px] font-bold text-[#8E8A81]">เลื่อนซ้าย-ขวาเพื่อจัดการเร็วขึ้น</div>
-                </div>
-                <div className="scrollbar-hide flex gap-3 overflow-x-auto pb-2">
-                  {usedCategorySummary.map((item) => (
-                    <div key={item.value} className="min-w-[310px] flex-shrink-0 sm:min-w-[340px]">
-                      <CategorySummaryCard
-                        item={item}
-                        isRecentlyAdded={recentCategoryValue === item.value}
-                        onRemove={requestRemoveCategory}
+            {isCategoryManagerExpanded ? (
+              <>
+                <div className="mt-4 flex flex-col gap-3 rounded-[18px] border border-[var(--border)] bg-[var(--brand-soft)] p-3">
+                  <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+                    <div className="text-[12px] font-black text-[var(--brand-text)]">รายละเอียดหมวดหมู่</div>
+                    <div className="relative w-full lg:max-w-[340px]">
+                      <Search className="pointer-events-none absolute top-1/2 left-4 h-4 w-4 -translate-y-1/2 text-[#8E8A81]" />
+                      <Input
+                        value={categorySearch}
+                        onChange={(event) => setCategorySearch(event.target.value)}
+                        placeholder="ค้นหาหมวดหมู่"
+                        className="h-11 rounded-[14px] border-[var(--border)] bg-white pr-4 pl-10 text-[13px] font-bold"
                       />
                     </div>
-                  ))}
+                  </div>
                 </div>
-              </div>
-            ) : null}
 
-            {emptyCategorySummary.length > 0 ? (
-              <div className="mt-4">
-                <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-                  <div className="text-[13px] font-black text-[var(--brand-text)]">หมวดที่ยังไม่มี reward</div>
-                </div>
-                <div className="scrollbar-hide flex gap-3 overflow-x-auto pb-2">
-                  {emptyCategorySummary.map((item) => (
-                    <div key={item.value} className="min-w-[310px] flex-shrink-0 sm:min-w-[340px]">
-                      <CategorySummaryCard
-                        item={item}
-                        isRecentlyAdded={recentCategoryValue === item.value}
-                        onRemove={requestRemoveCategory}
-                      />
+                {usedCategorySummary.length > 0 ? (
+                  <div className="mt-4">
+                    <div className="mb-3 flex items-center justify-between gap-3">
+                      <div className="text-[13px] font-black text-[var(--brand-text)]">หมวดที่กำลังใช้งาน</div>
+                      <div className="text-[11px] font-bold text-[#8E8A81]">เลื่อนซ้าย-ขวาเพื่อจัดการเร็วขึ้น</div>
                     </div>
-                  ))}
-                </div>
-              </div>
-            ) : null}
+                    <div className="scrollbar-hide flex gap-3 overflow-x-auto pb-2">
+                      {usedCategorySummary.map((item) => (
+                        <div key={item.value} className="min-w-[310px] flex-shrink-0 sm:min-w-[340px]">
+                          <CategorySummaryCard
+                            item={item}
+                            isRecentlyAdded={recentCategoryValue === item.value}
+                            onRemove={requestRemoveCategory}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
 
-            {filteredCategorySummary.length === 0 ? (
-              <div className="mt-4 rounded-[18px] border border-dashed border-[var(--border)] bg-white px-5 py-8 text-center">
-                <div className="text-[16px] font-black text-[#1A1A1A]">ไม่พบหมวดหมู่ที่ค้นหา</div>
-                <div className="mt-2 text-[13px] font-bold text-[#8E8A81]">ลองค้นหาด้วยชื่อหมวด หรือคำอธิบายอื่น</div>
-              </div>
+                {emptyCategorySummary.length > 0 ? (
+                  <div className="mt-4">
+                    <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                      <div className="text-[13px] font-black text-[var(--brand-text)]">หมวดที่ยังไม่มี reward</div>
+                    </div>
+                    <div className="scrollbar-hide flex gap-3 overflow-x-auto pb-2">
+                      {emptyCategorySummary.map((item) => (
+                        <div key={item.value} className="min-w-[310px] flex-shrink-0 sm:min-w-[340px]">
+                          <CategorySummaryCard
+                            item={item}
+                            isRecentlyAdded={recentCategoryValue === item.value}
+                            onRemove={requestRemoveCategory}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
+
+                {filteredCategorySummary.length === 0 ? (
+                  <div className="mt-4 rounded-[18px] border border-dashed border-[var(--border)] bg-white px-5 py-8 text-center">
+                    <div className="text-[16px] font-black text-[#1A1A1A]">ไม่พบหมวดหมู่ที่ค้นหา</div>
+                    <div className="mt-2 text-[13px] font-bold text-[#8E8A81]">ลองค้นหาด้วยชื่อหมวด หรือคำอธิบายอื่น</div>
+                  </div>
+                ) : null}
+              </>
             ) : null}
           </SectionCard>
 
           <SectionCard
-            title="Reward Catalog Studio"
-            description="จัดการ rewards ผ่าน card-based layout เห็นภาพและบริบทของแต่ละรายการได้ทันที"
+            title="Reward Catalog"
+            description="จัดการ rewards"
             icon={<Gift className="h-5 w-5" strokeWidth={2.3} />}
             actions={
               <div className="flex flex-wrap items-center gap-2">
-                <div className="rounded-full border border-[var(--border)] bg-white px-3 py-2 text-[11px] font-black text-[#8E8A81]">
-                  ลากการ์ดเพื่อจัดลำดับหน้า Rewards
-                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setIsRedemptionLogOpen(true)}
+                  className="h-11 rounded-[16px] border-[var(--brand-accent)] bg-white px-4 text-[13px] font-black text-[var(--brand-text)] shadow-[0_8px_18px_rgba(var(--brand-accent-rgb),0.14)] hover:bg-[var(--brand-surface)]"
+                >
+                  <History className="mr-1.5 h-4 w-4" />
+                  ประวัติรางวัล
+                </Button>
                 <Button
                   onClick={addReward}
                   className="h-11 rounded-xl bg-[var(--brand-accent-strong)] px-5 text-[13px] font-black text-white hover:bg-[var(--brand-accent)]"
@@ -1137,77 +1208,111 @@ export default function AdminRewardPage() {
               </div>
             }
           >
-            <div className="mb-4 rounded-[18px] border border-[var(--border)] bg-[var(--brand-soft)] p-3.5">
-              <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-                <div className="flex flex-wrap gap-2">
-                  <div className="rounded-full bg-white px-3 py-2 text-[12px] font-black text-[var(--brand-text)]">
-                    แลกแล้ว {rewardRedemptionSummary.totalRedeemed} รายการ
+            <div className="mb-4 rounded-[20px] border border-[var(--border)] bg-[var(--brand-surface)] p-3">
+              <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
+                <div className="flex w-full flex-col gap-3 xl:flex-row xl:items-center">
+                  <div className="relative w-full xl:max-w-[320px]">
+                    <Search className="pointer-events-none absolute top-1/2 left-4 h-4 w-4 -translate-y-1/2 text-[#8E8A81]" />
+                    <Input
+                      value={rewardCatalogSearch}
+                      onChange={(event) => setRewardCatalogSearch(event.target.value)}
+                      placeholder="ค้นหาหมวดหมู่ หรือชื่อรางวัล"
+                      className="h-11 rounded-[14px] border-[var(--border)] bg-white pr-4 pl-10 text-[13px] font-bold"
+                    />
                   </div>
-                  <div className="rounded-full bg-white px-3 py-2 text-[12px] font-black text-[#8E8A81]">
-                    ผู้แลก {rewardRedemptionSummary.uniqueRedeemers} คน
-                  </div>
-                  <div className="rounded-full bg-white px-3 py-2 text-[12px] font-black text-[#8E8A81]">
-                    ใช้ไป {rewardRedemptionSummary.totalPointsSpent.toLocaleString()} pts
+                  <div className="scrollbar-hide flex gap-2 overflow-x-auto pb-1">
+                    <button
+                      type="button"
+                      onClick={() => setActiveAdminCategory("all")}
+                      className={cn(
+                        "flex-shrink-0 rounded-full border px-4 py-2 text-[12px] font-black transition-colors",
+                        activeAdminCategory === "all"
+                          ? "border-[var(--brand-accent)] bg-[var(--brand-soft)] text-[var(--brand-text)]"
+                          : "border-[var(--border)] bg-white text-[#8E8A81] hover:bg-[var(--brand-soft)]"
+                      )}
+                    >
+                      ทั้งหมด
+                    </button>
+                    {categoryOptions.map((category) => (
+                      <button
+                        key={category.value}
+                        type="button"
+                        onClick={() => setActiveAdminCategory(category.value)}
+                        className={cn(
+                          "flex-shrink-0 rounded-full border px-4 py-2 text-[12px] font-black transition-colors",
+                          activeAdminCategory === category.value
+                            ? "border-[var(--brand-accent)] bg-[var(--brand-soft)] text-[var(--brand-text)]"
+                            : "border-[var(--border)] bg-white text-[#8E8A81] hover:bg-[var(--brand-soft)]"
+                        )}
+                      >
+                        {category.label}
+                      </button>
+                    ))}
                   </div>
                 </div>
 
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setIsRedemptionLogOpen(true)}
-                  className="h-11 rounded-[16px] border-[var(--brand-accent)] bg-white px-4 text-[13px] font-black text-[var(--brand-text)] shadow-[0_8px_18px_rgba(var(--brand-accent-rgb),0.14)] hover:bg-[var(--brand-surface)]"
-                >
-                  <History className="mr-1.5 h-4 w-4" />
-                  ดูประวัติการแลก
-                </Button>
+                <div className="ml-auto flex flex-nowrap items-center justify-end gap-2">
+                  <div className={cn("relative", isRewardSortOpen ? "z-40" : "z-10")}>
+                    <button
+                      type="button"
+                      onClick={() => setIsRewardSortOpen((current) => !current)}
+                      className="flex h-11 min-w-[170px] items-center rounded-[14px] border border-[var(--border)] bg-white pr-10 pl-4 text-[12px] font-black text-[var(--brand-text)] transition-colors hover:bg-[var(--brand-soft)]"
+                    >
+                      {`เรียงตาม: ${rewardSortLabel}`}
+                      <ChevronDown
+                        className={cn(
+                          "pointer-events-none absolute top-1/2 right-3 h-4 w-4 -translate-y-1/2 text-[#8E8A81] transition-transform",
+                          isRewardSortOpen ? "rotate-180" : ""
+                        )}
+                        strokeWidth={2.2}
+                      />
+                    </button>
+                    {isRewardSortOpen ? (
+                      <div className="absolute top-[calc(100%+10px)] right-0 z-50 min-w-full rounded-[16px] border border-[var(--border)] bg-white p-2 shadow-[0_18px_36px_rgba(62,36,13,0.14)]">
+                        {[
+                          { value: "latest", label: "ล่าสุด" },
+                          { value: "points-desc", label: "คะแนนมากสุด" },
+                          { value: "points-asc", label: "คะแนนน้อยสุด" },
+                          { value: "stock-desc", label: "คงเหลือมากสุด" },
+                        ].map((option) => (
+                          <button
+                            key={option.value}
+                            type="button"
+                            onClick={() => {
+                              setRewardSortOrder(option.value as typeof rewardSortOrder);
+                              setIsRewardSortOpen(false);
+                            }}
+                            className={cn(
+                              "flex w-full items-center rounded-[12px] px-3 py-2.5 text-left text-[12px] font-black transition-colors",
+                              rewardSortOrder === option.value
+                                ? "bg-[var(--brand-soft)] text-[var(--brand-text)]"
+                                : "text-[#8E8A81] hover:bg-[var(--brand-soft)] hover:text-[var(--brand-text)]"
+                            )}
+                          >
+                            {option.label}
+                          </button>
+                        ))}
+                      </div>
+                    ) : null}
+                  </div>
+                </div>
               </div>
             </div>
 
-            <div className="mb-4 flex flex-wrap gap-2">
-              <button
-                type="button"
-                onClick={() => setActiveAdminCategory("all")}
-                className={cn(
-                  "rounded-full border px-4 py-2 text-[12px] font-black transition-colors",
-                  activeAdminCategory === "all"
-                    ? "border-[var(--brand-accent)] bg-[var(--brand-soft)] text-[var(--brand-text)]"
-                    : "border-[var(--border)] bg-white text-[#8E8A81] hover:bg-[var(--brand-soft)]"
-                )}
-              >
-                ทุกหมวด
-              </button>
-              {categoryOptions.map((category) => (
-                <button
-                  key={category.value}
-                  type="button"
-                  onClick={() => setActiveAdminCategory(category.value)}
-                  className={cn(
-                    "rounded-full border px-4 py-2 text-[12px] font-black transition-colors",
-                    activeAdminCategory === category.value
-                      ? "border-[var(--brand-accent)] bg-[var(--brand-soft)] text-[var(--brand-text)]"
-                      : "border-[var(--border)] bg-white text-[#8E8A81] hover:bg-[var(--brand-soft)]"
-                  )}
-                >
-                  {category.label}
-                </button>
-              ))}
-            </div>
-
-            {visibleRewards.length === 0 ? (
+            {displayedRewards.length === 0 ? (
               <div className="rounded-[18px] border border-dashed border-[var(--border)] bg-[var(--brand-soft)] px-5 py-8 text-center">
                 <div className="text-[18px] font-black text-[#1A1A1A]">
-                  {activeAdminCategory === "all"
-                    ? "ยังไม่มี reward ในระบบ"
-                    : `ยังไม่มี reward ในหมวด ${getCategoryMeta(activeAdminCategory, categoryOptions).label}`}
-                </div>
-                <div className="mt-2 text-[13px] font-bold text-[#8E8A81]">
-                  กด New Reward เพื่อสร้างรายการแรกในหมวดนี้ได้ทันที
+                  {rewardCatalogSearch
+                    ? "ไม่พบรางวัลที่ค้นหา"
+                    : activeAdminCategory === "all"
+                      ? "ยังไม่มี reward ในระบบ"
+                      : `ยังไม่มี reward ในหมวด ${getCategoryMeta(activeAdminCategory, categoryOptions).label}`}
                 </div>
               </div>
             ) : null}
 
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-              {visibleRewards.map((reward) => {
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+              {displayedRewards.map((reward) => {
                 const category = getCategoryMeta(reward.category, categoryOptions);
                 const CategoryIcon = CATEGORY_ICON_MAP[category.icon];
                 const rewardIndex = rewardOrderMap.get(reward.id) ?? 0;
@@ -1256,110 +1361,89 @@ export default function AdminRewardPage() {
                     <div className="p-4">
                       <div className="mb-3 flex items-center justify-between gap-3">
                         <div className="flex flex-wrap items-center gap-2">
-                          <div
-                            className={cn(
-                              "inline-flex items-center gap-2 rounded-full border px-3 py-1 text-[11px] font-black transition-all duration-200",
-                              isDragging
-                                ? "border-[var(--brand-accent)] bg-[var(--brand-accent)] text-white shadow-[0_10px_20px_rgba(var(--brand-accent-rgb),0.28)]"
-                                : isPressed
-                                  ? "border-[var(--brand-accent)] bg-[var(--brand-soft)] text-[var(--brand-text)] shadow-[0_8px_18px_rgba(var(--brand-accent-rgb),0.18)]"
-                                  : "border-[var(--border)] bg-[var(--brand-soft)] text-[var(--brand-text)]"
-                            )}
-                          >
-                            <GripVertical
-                              className={cn(
-                                "h-3.5 w-3.5 transition-transform duration-200",
-                                isDragging ? "animate-pulse scale-110" : isPressed ? "animate-pulse scale-105" : ""
-                              )}
-                              strokeWidth={2.3}
-                            />
-                            ลากเพื่อเรียงลำดับ
+                          <div className="rounded-full border border-[var(--border)] bg-[var(--brand-soft)] px-3 py-1 text-[11px] font-black text-[var(--brand-text)]">
+                            {category.label}
                           </div>
-                          <div className="flex items-center gap-1">
-                            <button
-                              type="button"
-                              onClick={() => moveRewardToTop(reward.id)}
-                              disabled={isFirstReward}
-                              className="flex h-8 w-8 items-center justify-center rounded-full border border-[var(--border)] bg-white text-[var(--brand-text)] transition-colors hover:bg-[var(--brand-soft)] disabled:cursor-not-allowed disabled:opacity-40"
-                              aria-label={`ย้าย ${reward.name} ไปบนสุด`}
-                            >
-                              <ChevronsUp className="h-3.5 w-3.5" strokeWidth={2.2} />
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => moveRewardByStep(reward.id, -1)}
-                              disabled={isFirstReward}
-                              className="flex h-8 w-8 items-center justify-center rounded-full border border-[var(--border)] bg-white text-[var(--brand-text)] transition-colors hover:bg-[var(--brand-soft)] disabled:cursor-not-allowed disabled:opacity-40"
-                              aria-label={`เลื่อน ${reward.name} ขึ้น 1 ตำแหน่ง`}
-                            >
-                              <ArrowUp className="h-3.5 w-3.5" strokeWidth={2.2} />
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => moveRewardByStep(reward.id, 1)}
-                              disabled={isLastReward}
-                              className="flex h-8 w-8 items-center justify-center rounded-full border border-[var(--border)] bg-white text-[var(--brand-text)] transition-colors hover:bg-[var(--brand-soft)] disabled:cursor-not-allowed disabled:opacity-40"
-                              aria-label={`เลื่อน ${reward.name} ลง 1 ตำแหน่ง`}
-                            >
-                              <ArrowDown className="h-3.5 w-3.5" strokeWidth={2.2} />
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => moveRewardToBottom(reward.id)}
-                              disabled={isLastReward}
-                              className="flex h-8 w-8 items-center justify-center rounded-full border border-[var(--border)] bg-white text-[var(--brand-text)] transition-colors hover:bg-[var(--brand-soft)] disabled:cursor-not-allowed disabled:opacity-40"
-                              aria-label={`ย้าย ${reward.name} ไปล่างสุด`}
-                            >
-                              <ChevronsDown className="h-3.5 w-3.5" strokeWidth={2.2} />
-                            </button>
-                          </div>
+                          {reward.isHot ? (
+                            <div className="rounded-full bg-[#eef8ea] px-3 py-1 text-[11px] font-black text-[#5e9f41]">ฮิต</div>
+                          ) : null}
                         </div>
-                        <div className="text-[11px] font-black uppercase tracking-[0.14em] text-[#8E8A81]">#{rewardIndex + 1}</div>
+                        <button
+                          type="button"
+                          onClick={() => openEditReward(reward)}
+                          className="flex h-9 w-9 items-center justify-center rounded-full border border-[var(--border)] bg-white text-[var(--brand-text)] transition-colors hover:border-[var(--brand-accent)] hover:bg-[var(--brand-soft)]"
+                          aria-label={`แก้ไขรางวัล ${reward.name}`}
+                        >
+                          <Pencil className="h-4 w-4" strokeWidth={2.2} />
+                        </button>
                       </div>
                       <RewardImage reward={reward} />
                       <div className="mt-4 flex items-start justify-between gap-3">
                         <div className="min-w-0">
                           <div className="truncate text-[17px] font-black text-[#1A1A1A]">{reward.name}</div>
-                          <div className="mt-1 flex items-center gap-2 text-[12px] font-black text-[#8E8A81]">
-                            <CategoryIcon className="h-3.5 w-3.5 text-[var(--brand-text)]" strokeWidth={2.2} />
-                            {category.label}
-                          </div>
                         </div>
                         <div className="rounded-full bg-[var(--brand-soft)] px-3 py-1 text-[12px] font-black text-[var(--brand-text)]">
                           {reward.points.toLocaleString()} pts
                         </div>
                       </div>
 
-                      <p className="mt-3 line-clamp-3 min-h-[60px] text-[13px] font-bold leading-relaxed text-[var(--c-6f665b)]">
-                        {reward.description}
-                      </p>
-
-                      <div className="mt-3 flex flex-wrap gap-2">
+                      <div className="mt-3 flex min-h-[58px] flex-wrap content-start gap-2">
                         <div className="rounded-full bg-[var(--brand-soft)] px-3 py-1 text-[11px] font-black text-[var(--brand-text)]">
-                          {getRewardStockLabel(reward)}
+                          {getRewardRemainingOnlyLabel(reward)}
                         </div>
-                        <div className="rounded-full border border-[var(--border)] bg-white px-3 py-1 text-[11px] font-black text-[#8E8A81]">
-                          {getRewardScheduleLabel({
-                            hasRedeemWindow: Boolean(reward.redeemStartAt || reward.redeemEndAt),
-                            redeemStartAt: reward.redeemStartAt,
-                            redeemEndAt: reward.redeemEndAt,
-                          })}
-                        </div>
+                        {reward.redeemStartAt || reward.redeemEndAt ? (
+                          <div className="rounded-full border border-[var(--border)] bg-white px-3 py-1 text-[11px] font-black text-[#8E8A81]">
+                            {getRewardScheduleLabel({
+                              hasRedeemWindow: Boolean(reward.redeemStartAt || reward.redeemEndAt),
+                              redeemStartAt: reward.redeemStartAt,
+                              redeemEndAt: reward.redeemEndAt,
+                            })}
+                          </div>
+                        ) : null}
                       </div>
                     </div>
 
                     <div className="flex items-center justify-between border-t border-[var(--border)] bg-[var(--brand-soft)] px-4 py-3">
-                      <div className="text-[12px] font-black text-[#8E8A81]">
-                        {reward.isHot ? "Featured on public page" : reward.imageText}
+                      <div className="flex items-center gap-1 text-[12px] font-black text-[#8E8A81]">
+                        <GripVertical className="h-3.5 w-3.5" strokeWidth={2.2} />
+                        #{rewardIndex + 1}
                       </div>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-1.5">
                         <button
                           type="button"
-                          onClick={() => openEditReward(reward)}
-                          className="flex h-9 w-9 items-center justify-center rounded-full border border-[var(--border)] bg-white text-[var(--brand-text)] transition-colors hover:border-[var(--brand-accent)] hover:bg-[var(--brand-soft)] hover:text-[var(--c-a36206)]"
-                          aria-label={`แก้ไขรางวัล ${reward.name}`}
+                          onClick={() => moveRewardToTop(reward.id)}
+                          disabled={isFirstReward}
+                          className="flex h-8 w-8 items-center justify-center rounded-full border border-[var(--border)] bg-white text-[var(--brand-text)] transition-colors hover:bg-[var(--brand-soft)] disabled:cursor-not-allowed disabled:opacity-40"
+                          aria-label={`ย้าย ${reward.name} ไปบนสุด`}
                         >
-                          <Pencil className="h-4 w-4" strokeWidth={2.2} />
+                          <ChevronsUp className="h-3.5 w-3.5" strokeWidth={2.2} />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => moveRewardByStep(reward.id, -1)}
+                          disabled={isFirstReward}
+                          className="flex h-8 w-8 items-center justify-center rounded-full border border-[var(--border)] bg-white text-[var(--brand-text)] transition-colors hover:bg-[var(--brand-soft)] disabled:cursor-not-allowed disabled:opacity-40"
+                          aria-label={`เลื่อน ${reward.name} ขึ้น 1 ตำแหน่ง`}
+                        >
+                          <ArrowUp className="h-3.5 w-3.5" strokeWidth={2.2} />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => moveRewardByStep(reward.id, 1)}
+                          disabled={isLastReward}
+                          className="flex h-8 w-8 items-center justify-center rounded-full border border-[var(--border)] bg-white text-[var(--brand-text)] transition-colors hover:bg-[var(--brand-soft)] disabled:cursor-not-allowed disabled:opacity-40"
+                          aria-label={`เลื่อน ${reward.name} ลง 1 ตำแหน่ง`}
+                        >
+                          <ArrowDown className="h-3.5 w-3.5" strokeWidth={2.2} />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => moveRewardToBottom(reward.id)}
+                          disabled={isLastReward}
+                          className="flex h-8 w-8 items-center justify-center rounded-full border border-[var(--border)] bg-white text-[var(--brand-text)] transition-colors hover:bg-[var(--brand-soft)] disabled:cursor-not-allowed disabled:opacity-40"
+                          aria-label={`ย้าย ${reward.name} ไปล่างสุด`}
+                        >
+                          <ChevronsDown className="h-3.5 w-3.5" strokeWidth={2.2} />
                         </button>
                         <button
                           type="button"
@@ -1614,7 +1698,7 @@ export default function AdminRewardPage() {
                         </div>
                       </DetailCard>
 
-                      <DetailCard title="การแลกและสต็อก" subtitle="กำหนดช่วงเวลาแลก และจำนวนคงเหลือของรางวัลนี้">
+                      <DetailCard title="การแลกและสต็อก" subtitle="กำหนดช่วงเวลาและสินค้าคงเหลือ">
                         <div className="space-y-4">
                           <div className="rounded-[18px] border border-[var(--border)] bg-[var(--brand-soft)] p-4">
                             <label className="flex cursor-pointer items-start justify-between gap-3">
@@ -1684,32 +1768,19 @@ export default function AdminRewardPage() {
                             </div>
 
                             {editingReward.stockMode === "limited" ? (
-                              <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-2">
-                                <div className="flex flex-col gap-2">
-                                  <Label className="text-[12px] font-black text-[var(--brand-text)]">จำนวนทั้งหมด</Label>
-                                  <Input
-                                    type="number"
-                                    min="0"
-                                    value={`${editingReward.stockTotal}`}
-                                    onChange={(event) => updateEditingRewardStockTotal(Number(event.target.value))}
-                                    className="h-12 rounded-[18px] border-[var(--border)] bg-white px-4 text-[14px] font-bold"
-                                  />
-                                </div>
-                                <div className="flex flex-col gap-2">
-                                  <Label className="text-[12px] font-black text-[var(--brand-text)]">สินค้าคงเหลือ</Label>
-                                  <Input
-                                    type="number"
-                                    min="0"
-                                    max={`${editingReward.stockTotal}`}
-                                    value={`${editingReward.stockRemaining}`}
-                                    onChange={(event) => updateEditingRewardStockRemaining(Number(event.target.value))}
-                                    className="h-12 rounded-[18px] border-[var(--border)] bg-white px-4 text-[14px] font-bold"
-                                  />
-                                </div>
+                              <div className="mt-4 flex flex-col gap-2">
+                                <Label className="text-[12px] font-black text-[var(--brand-text)]">สินค้าคงเหลือ</Label>
+                                <Input
+                                  type="number"
+                                  min="0"
+                                  value={`${editingReward.stockRemaining}`}
+                                  onChange={(event) => updateEditingRewardAvailableStock(Number(event.target.value))}
+                                  className="h-12 rounded-[18px] border-[var(--border)] bg-white px-4 text-[14px] font-bold"
+                                />
                               </div>
                             ) : (
                               <div className="mt-3 text-[12px] font-bold text-[#8E8A81]">
-                                หน้า Rewards จะแสดงว่า reward นี้ไม่มีการจำกัดจำนวน
+                                reward นี้ไม่มีการจำกัดสต็อก
                               </div>
                             )}
                           </div>
@@ -1885,7 +1956,7 @@ export default function AdminRewardPage() {
                         </div>
                       </DetailCard>
 
-                      <DetailCard title="การแลกและสต็อก" subtitle="ตั้งช่วงเวลาแลก จำนวนรวม และสินค้าคงเหลือ">
+                      <DetailCard title="การแลกและสต็อก" subtitle="ตั้งช่วงเวลาและสินค้าคงเหลือ">
                         <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
                           <div className="rounded-[18px] border border-[var(--border)] bg-[var(--brand-soft)] p-4 lg:col-span-2">
                             <label className="flex cursor-pointer items-start justify-between gap-3">
@@ -1927,7 +1998,6 @@ export default function AdminRewardPage() {
                           </div>
 
                           <div className="rounded-[18px] border border-[var(--border)] bg-[var(--brand-soft)] p-4 lg:col-span-2">
-                            <div className="mb-3 text-[14px] font-black text-[var(--brand-text)]">จำนวนสินค้า</div>
                             <div className="flex flex-wrap gap-2">
                               <button
                                 type="button"
@@ -1956,39 +2026,26 @@ export default function AdminRewardPage() {
                             </div>
 
                             {editingReward.stockMode === "limited" ? (
-                              <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-2">
-                                <div className="flex flex-col gap-2">
-                                  <Label className="text-[12px] font-black text-[var(--brand-text)]">จำนวนทั้งหมด</Label>
-                                  <Input
-                                    type="number"
-                                    min="0"
-                                    value={`${editingReward.stockTotal}`}
-                                    onChange={(event) => updateEditingRewardStockTotal(Number(event.target.value))}
-                                    className="h-12 rounded-[18px] border-[var(--border)] bg-white px-4 text-[14px] font-bold"
-                                  />
-                                </div>
-                                <div className="flex flex-col gap-2">
-                                  <Label className="text-[12px] font-black text-[var(--brand-text)]">สินค้าคงเหลือ</Label>
-                                  <Input
-                                    type="number"
-                                    min="0"
-                                    max={`${editingReward.stockTotal}`}
-                                    value={`${editingReward.stockRemaining}`}
-                                    onChange={(event) => updateEditingRewardStockRemaining(Number(event.target.value))}
-                                    className="h-12 rounded-[18px] border-[var(--border)] bg-white px-4 text-[14px] font-bold"
-                                  />
-                                </div>
+                              <div className="mt-4 flex flex-col gap-2">
+                                <Label className="text-[12px] font-black text-[var(--brand-text)]">สินค้าคงเหลือ</Label>
+                                <Input
+                                  type="number"
+                                  min="0"
+                                  value={`${editingReward.stockRemaining}`}
+                                  onChange={(event) => updateEditingRewardAvailableStock(Number(event.target.value))}
+                                  className="h-12 rounded-[18px] border-[var(--border)] bg-white px-4 text-[14px] font-bold"
+                                />
                               </div>
                             ) : (
                               <div className="mt-3 text-[12px] font-bold text-[#8E8A81]">
-                                reward นี้ไม่มีการจำกัดจำนวนคงเหลือ
+                                reward นี้ไม่มีการจำกัดสต็อก
                               </div>
                             )}
                           </div>
                         </div>
                       </DetailCard>
 
-                      <DetailCard title="Display Settings" subtitle="หมวดหมู่ ข้อความสำรอง และสถานะเด่น">
+                      <DetailCard title="Display Settings" subtitle="หมวดหมู่ และสถานะเด่น">
                         <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
                           <div className="flex flex-col gap-2">
                             <Label className="text-[12px] font-black text-[var(--brand-text)]">Category</Label>
@@ -2011,9 +2068,6 @@ export default function AdminRewardPage() {
                             <div className="text-[12px] font-black text-[var(--brand-text)]">Current Fallback</div>
                             <div className="mt-2 text-[15px] font-black text-[#1A1A1A]">
                               {editingReward.imageText || "ยังไม่มีข้อความสำรอง"}
-                            </div>
-                            <div className="mt-1 text-[12px] font-bold text-[#8E8A81]">
-                              ใช้เมื่อ reward นี้ยังไม่มีรูปอัปโหลด
                             </div>
                           </div>
                         </div>
