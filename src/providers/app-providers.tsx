@@ -235,6 +235,8 @@ type AppState = {
   awarenessHistory: AwarenessCompletion[];
   awarenessHolidays: AwarenessHoliday[];
   awarenessRequiredToday: boolean;
+  /** วันแรกที่ผู้ใช้เริ่มใช้งาน (YYYY-MM-DD). วันก่อนหน้านี้จะไม่ถูกนับใน KPI. */
+  awarenessStartDate: string;
   isEventLive: boolean;
   eventNow: number;
 };
@@ -1957,6 +1959,12 @@ export function AppProviders({ children }: { children: ReactNode }) {
   const awarenessNow = new Date(eventNow);
   const awarenessBangkokDay = new Date(awarenessNow.getTime() + 7 * 60 * 60 * 1000).getUTCDay();
   const awarenessTodayKey = todayKey(awarenessNow);
+  // วันเริ่มใช้งานของผู้ใช้: ใช้บันทึก Awareness แรกสุดถ้ามี ไม่งั้น = วันนี้ (ผู้ใช้ใหม่)
+  // เมื่อเชื่อม backend แล้วให้แทนที่ด้วย created_at ของผู้ใช้
+  const awarenessStartDate =
+    awarenessHistory.length > 0
+      ? awarenessHistory.reduce((min, item) => (item.date < min ? item.date : min), awarenessHistory[0].date)
+      : awarenessTodayKey;
 
   const state: AppState = {
     completedSteps,
@@ -1982,6 +1990,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
     awarenessHistory,
     awarenessHolidays,
     awarenessRequiredToday: ![0, 6].includes(awarenessBangkokDay) && !awarenessHolidays.some((holiday) => holiday.date === awarenessTodayKey),
+    awarenessStartDate,
     isEventLive: isSafetyCultureEventLive(safetyCultureEvent, eventNow),
     eventNow,
   };

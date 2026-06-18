@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import TigerMascot from "@/components/TigerMascot";
 import { useAppTheme } from "@/providers/theme-provider";
+import { useAppState } from "@/providers/app-providers";
 
 const T = {
   background: "var(--background)",
@@ -464,7 +465,16 @@ function Hero({ isDesktop }) {
 
 export default function Category() {
   const navigate = useNavigate();
+  const { userActivityHistory } = useAppState();
   const [open, setOpen] = useState("A");
+
+  // จำนวนการตรวจ Safety Effort ที่ทำสำเร็จในเดือนปัจจุบัน (นับจากกิจกรรมจริงของผู้ใช้)
+  const now = new Date();
+  const monthlyInspectionCount = userActivityHistory.filter((item) => {
+    if (item.type !== "safety-effort") return false;
+    const d = new Date(item.occurredAt);
+    return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth();
+  }).length;
   const [width, setWidth] = useState(typeof window !== "undefined" ? window.innerWidth : 1200);
 
   useEffect(() => {
@@ -553,7 +563,7 @@ export default function Category() {
               <div style={{ display: "grid", gap: 12 }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                   <span style={{ fontSize: 13, color: T.foreground2, fontWeight: 600 }}>การตรวจเดือนนี้สำเร็จแล้ว:</span>
-                  <span style={{ fontSize: 14, fontWeight: 800, color: T.foreground }}>9 ครั้ง</span>
+                  <span style={{ fontSize: 14, fontWeight: 800, color: T.foreground }}>{monthlyInspectionCount} ครั้ง</span>
                 </div>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                   <span style={{ fontSize: 13, color: T.foreground2, fontWeight: 600 }}>ระดับความเสี่ยงภาพรวม:</span>
@@ -561,13 +571,13 @@ export default function Category() {
                     style={{
                       fontSize: 11.5,
                       fontWeight: 800,
-                      color: "#1f7a55",
-                      background: "#eefaf4",
+                      color: monthlyInspectionCount > 0 ? "#1f7a55" : T.foreground3,
+                      background: monthlyInspectionCount > 0 ? "#eefaf4" : "var(--secondary)",
                       padding: "4px 8px",
                       borderRadius: 6,
                     }}
                   >
-                    ต่ำมาก
+                    {monthlyInspectionCount > 0 ? "ต่ำมาก" : "ยังไม่มีข้อมูล"}
                   </span>
                 </div>
               </div>

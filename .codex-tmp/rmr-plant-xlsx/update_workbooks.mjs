@@ -1,6 +1,7 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import { FileBlob, SpreadsheetFile } from "@oai/artifact-tool";
+import mysql from "mysql2/promise";
 
 const root = "/Users/sasitorn/Project_SUEASafety";
 const outputDir = path.join(root, ".codex-tmp/rmr-plant-xlsx/output");
@@ -76,6 +77,419 @@ function appendRows(workbook, sheetName, rows) {
 
 function normalizeApiPath(value) {
   return String(value || "").split("?")[0];
+}
+
+const realTableMetadata = {
+  safety_culture_events: ["Safety Culture", "กิจกรรมและแคมเปญ Safety Culture ที่บันทึกในฐานจริง", "Phase 3", "High"],
+  media_assets: ["Shared", "Metadata ของไฟล์จริง พร้อม owner/link โดยไม่เก็บ base64 ในข้อมูลธุรกิจ", "Shared", "Critical"],
+  export_jobs: ["Reports", "งาน export และผลลัพธ์ไฟล์จริงที่ตรวจสอบสถานะย้อนหลังได้", "Shared", "High"],
+  notification_preferences: ["Notifications", "การตั้งค่าช่องทางแจ้งเตือนรายผู้ใช้", "Shared", "Medium"],
+  assessment_attachments: ["Assessment", "หลักฐานไฟล์ที่ผูกกับ assessment run ผ่าน media_assets", "Phase 2", "High"],
+  corrective_action_comments: ["Safety Effort", "ความคิดเห็นและประวัติสนทนาของ corrective action", "Phase 2", "High"],
+  archived_notifications: ["Notifications", "สำเนาการแจ้งเตือนที่ผู้ใช้ archive แล้ว", "Shared", "Medium"],
+  safety_settings: ["Shared", "ค่าตั้งค่าระบบ Safety ที่ Admin แก้ไขผ่าน API", "Shared", "High"],
+};
+
+function parseRegistryRoutes() {
+  return fs.readFile(path.join(root, "backend/components/api-catalog/registry.ts"), "utf8").then((source) => {
+    const start = source.indexOf("[", source.indexOf("API_CATALOG_ROUTES"));
+    const end = source.lastIndexOf("] as const");
+    return JSON.parse(source.slice(start, end + 1));
+  });
+}
+
+async function loadRealTableSchema() {
+  const connection = await mysql.createConnection(process.env.DATABASE_URL);
+  try {
+    const tableNames = Object.keys(realTableMetadata);
+    const [columns] = await connection.query(
+      `SELECT TABLE_NAME, COLUMN_NAME, ORDINAL_POSITION, COLUMN_TYPE, DATA_TYPE,
+              CHARACTER_MAXIMUM_LENGTH, NUMERIC_PRECISION, NUMERIC_SCALE,
+              IS_NULLABLE, COLUMN_DEFAULT, COLUMN_KEY, EXTRA
+         FROM information_schema.COLUMNS
+        WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME IN (?)
+        ORDER BY TABLE_NAME, ORDINAL_POSITION`,
+      [tableNames],
+    );
+    const [foreignKeys] = await connection.query(
+      `SELECT k.TABLE_NAME, k.COLUMN_NAME, k.REFERENCED_TABLE_NAME, k.REFERENCED_COLUMN_NAME,
+              r.DELETE_RULE, r.UPDATE_RULE
+         FROM information_schema.KEY_COLUMN_USAGE k
+         JOIN information_schema.REFERENTIAL_CONSTRAINTS r
+           ON r.CONSTRAINT_SCHEMA = k.CONSTRAINT_SCHEMA
+          AND r.CONSTRAINT_NAME = k.CONSTRAINT_NAME
+        WHERE k.TABLE_SCHEMA = DATABASE()
+          AND k.TABLE_NAME IN (?)
+          AND k.REFERENCED_TABLE_NAME IS NOT NULL
+        ORDER BY k.TABLE_NAME, k.ORDINAL_POSITION`,
+      [tableNames],
+    );
+    const [indexes] = await connection.query(
+      `SELECT TABLE_NAME, COLUMN_NAME, INDEX_NAME, NON_UNIQUE, SEQ_IN_INDEX
+         FROM information_schema.STATISTICS
+        WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME IN (?)
+        ORDER BY TABLE_NAME, INDEX_NAME, SEQ_IN_INDEX`,
+      [tableNames],
+    );
+    return { columns, foreignKeys, indexes };
+  } finally {
+    await connection.end();
+  }
+}
+
+function columnDescription(columnName) {
+  const descriptions = {
+    id: "รหัสภายในของรายการ",
+    user_id: "ผู้ใช้งานเจ้าของรายการ",
+    created_by: "ผู้สร้างรายการ",
+    updated_by: "ผู้แก้ไขค่าล่าสุด",
+    author_id: "ผู้เขียนความคิดเห็น",
+    assessment_run_id: "Assessment run ที่แนบไฟล์",
+    media_asset_id: "ไฟล์ metadata ที่อ้างอิง",
+    corrective_action_id: "Corrective action ที่แสดงความคิดเห็น",
+    notification_id: "Notification ต้นฉบับ",
+    title: "ชื่อหรือหัวข้อ",
+    description: "รายละเอียด",
+    content: "ข้อความความคิดเห็น",
+    status: "สถานะรายการ",
+    metadata: "ข้อมูลประกอบแบบ JSON",
+    metadata_json: "ข้อมูลประกอบแบบ JSON",
+    preferences_json: "การตั้งค่าเพิ่มเติมแบบ JSON",
+    setting_key: "คีย์ค่าตั้งค่าระบบ",
+    setting_value: "ค่าตั้งค่าระบบแบบ JSON",
+    storage_path: "ตำแหน่งไฟล์จริงใน storage/server",
+    public_url: "URL สำหรับเข้าถึงไฟล์ตามสิทธิ์",
+    owner_type: "ประเภทข้อมูลธุรกิจที่เป็นเจ้าของไฟล์",
+    owner_id: "รหัสข้อมูลธุรกิจที่เป็นเจ้าของไฟล์",
+    link_type: "ประเภทความสัมพันธ์ของไฟล์",
+    file_name: "ชื่อไฟล์ในระบบ",
+    original_name: "ชื่อไฟล์ต้นฉบับ",
+    mime_type: "ชนิด MIME ของไฟล์",
+    size_bytes: "ขนาดไฟล์เป็นไบต์",
+    created_at: "วันที่และเวลาที่สร้างรายการ",
+    updated_at: "วันที่และเวลาที่แก้ไขล่าสุด",
+    deleted_at: "วันที่และเวลาที่ soft-delete",
+    archived_at: "วันที่และเวลาที่ archive",
+  };
+  return descriptions[columnName] || columnName.replaceAll("_", " ");
+}
+
+function defaultText(value, extra) {
+  if (extra?.includes("auto_increment")) return "AUTO_INCREMENT";
+  if (value === null || value === undefined) return "NULL";
+  if (Buffer.isBuffer(value)) return value.toString();
+  return String(value);
+}
+
+function buildRealColumnRows(schema, tableName) {
+  const fkByColumn = new Map(
+    schema.foreignKeys
+      .filter((item) => item.TABLE_NAME === tableName)
+      .map((item) => [item.COLUMN_NAME, item]),
+  );
+  const indexByColumn = new Map();
+  for (const item of schema.indexes.filter((entry) => entry.TABLE_NAME === tableName)) {
+    if (!indexByColumn.has(item.COLUMN_NAME)) indexByColumn.set(item.COLUMN_NAME, []);
+    indexByColumn.get(item.COLUMN_NAME).push(item);
+  }
+  return schema.columns
+    .filter((item) => item.TABLE_NAME === tableName)
+    .map((item) => {
+      const fk = fkByColumn.get(item.COLUMN_NAME);
+      const indexes = indexByColumn.get(item.COLUMN_NAME) || [];
+      const primary = item.COLUMN_KEY === "PRI";
+      const unique = indexes.some((index) => index.NON_UNIQUE === 0 && index.INDEX_NAME !== "PRIMARY");
+      const indexed = indexes.some((index) => index.INDEX_NAME !== "PRIMARY");
+      const keyType = primary ? "PK" : fk ? "FK" : unique ? "UK" : null;
+      const indexType = primary ? "PRIMARY" : unique ? "UNIQUE" : indexed ? "INDEX" : null;
+      const length = item.CHARACTER_MAXIMUM_LENGTH
+        ?? (item.NUMERIC_PRECISION ? `${item.NUMERIC_PRECISION}${item.NUMERIC_SCALE ? `,${item.NUMERIC_SCALE}` : ""}` : null);
+      return [
+        item.COLUMN_NAME,
+        String(item.COLUMN_TYPE || item.DATA_TYPE).toUpperCase(),
+        length,
+        item.IS_NULLABLE,
+        defaultText(item.COLUMN_DEFAULT, item.EXTRA),
+        keyType,
+        fk ? `${fk.REFERENCED_TABLE_NAME}.${fk.REFERENCED_COLUMN_NAME}` : null,
+        indexType,
+        columnDescription(item.COLUMN_NAME),
+        null,
+        item.DATA_TYPE === "json" ? "valid JSON" : null,
+        item.COLUMN_NAME.endsWith("_by") || item.COLUMN_NAME.endsWith("_id") && fk?.REFERENCED_TABLE_NAME === "users" ? "IDENTIFIER" : "NONE",
+        tableName === "media_assets" && item.COLUMN_NAME === "storage_path" ? "ไฟล์จริงอยู่นอก DB; DB เก็บ metadata เท่านั้น" : null,
+      ];
+    });
+}
+
+function ensureAppendedRows(workbook, sheetName, rows, keyIndex = 0) {
+  const current = getSheetValues(workbook, sheetName);
+  const existing = new Set(current.map((row) => String(row[keyIndex] || "")));
+  const missing = rows.filter((row) => !existing.has(String(row[keyIndex] || "")));
+  if (missing.length) appendRows(workbook, sheetName, missing);
+}
+
+function styleNewTableSheet(workbook, sheet, rowCount) {
+  const template = workbook.worksheets.getItem("audit_logs");
+  const columnCount = 13;
+  for (let row = 1; row <= rowCount; row += 1) {
+    let sourceRow = row;
+    if (row > 10 && row < rowCount - 2) sourceRow = 10;
+    if (row >= rowCount - 2) sourceRow = row === rowCount - 2 ? 21 : row === rowCount - 1 ? 22 : 23;
+    sourceRow = Math.min(sourceRow, 23);
+    sheet.getRangeByIndexes(row - 1, 0, 1, columnCount).copyFrom(
+      template.getRangeByIndexes(sourceRow - 1, 0, 1, columnCount),
+      "formats",
+    );
+  }
+  sheet.getUsedRange().format.wrapText = true;
+  const widths = [18, 24, 14, 12, 20, 12, 22, 18, 36, 22, 20, 22, 30];
+  for (let column = 0; column < widths.length; column += 1) {
+    sheet.getRangeByIndexes(0, column, rowCount, 1).format.columnWidth = widths[column];
+  }
+  sheet.freezePanes.freezeRows(9);
+}
+
+function updateRealDatabaseWorkbook(workbook, schema) {
+  const tableNames = Object.keys(realTableMetadata);
+  const totalColumns = schema.columns.length;
+
+  const completeIndex = getSheetValues(workbook, "Complete Index");
+  completeIndex[1][0] = "ไฟล์เดียวรวม Database Blueprint, Data Dictionary, Relationships, DDL และหน้าแยกครบ 50 tables";
+  updateRows(completeIndex, (row) => row[1] === "Table Summary", (row) => {
+    row[2] = "สรุป 50 tables";
+    return row;
+  });
+  updateRows(completeIndex, (row) => row[1] === "Column Dictionary", (row) => {
+    row[2] = "รายละเอียด 497 columns";
+    return row;
+  });
+  setSheetValues(workbook, "Complete Index", completeIndex);
+  ensureAppendedRows(workbook, "Complete Index", tableNames.map((name) => [
+    "Table Page", name, realTableMetadata[name][1], `เปิดแท็บ ${name}`,
+  ]), 1);
+
+  const readme = getSheetValues(workbook, "README");
+  updateRows(readme, (row) => row[0] === "Shared", (row) => {
+    row[1] = "Notifications, Media, Export, Safety Settings และ Audit Logs ใช้ข้ามทุก Phase";
+    return row;
+  });
+  setSheetValues(workbook, "README", readme);
+  ensureAppendedRows(workbook, "README", [
+    ["Real API Storage", "ข้อมูลธุรกิจของเมนูที่เปิดใช้งานเก็บในตารางจริง; audit_logs ใช้เป็น audit trail เท่านั้น"],
+    ["Disabled Menus", "Were OK และ Work Permit ปิดจาก menu config จึงไม่บังคับเชื่อม frontend API ในรอบนี้"],
+    ["Media Rule", "ไฟล์จริงเก็บใน storage/server upload directory และเก็บ metadata/owner link ใน media_assets"],
+  ]);
+
+  const tableSummaryRows = tableNames.map((name) => {
+    const [module, purpose, phase, priority] = realTableMetadata[name];
+    const columns = schema.columns.filter((item) => item.TABLE_NAME === name);
+    const pk = columns.filter((item) => item.COLUMN_KEY === "PRI").map((item) => item.COLUMN_NAME).join(", ");
+    const linked = [...new Set(schema.foreignKeys.filter((item) => item.TABLE_NAME === name).map((item) => item.REFERENCED_TABLE_NAME))].join(", ");
+    return [name, module, purpose, pk || "-", linked || null, phase, priority, columns.length];
+  });
+  ensureAppendedRows(workbook, "Table Summary", tableSummaryRows);
+
+  const dictionaryRows = [];
+  for (const tableName of tableNames) {
+    for (const row of buildRealColumnRows(schema, tableName)) dictionaryRows.push([tableName, ...row]);
+  }
+  const dictionary = getSheetValues(workbook, "Column Dictionary");
+  const existingDictionaryKeys = new Set(dictionary.map((row) => `${row[0]}:${row[1]}`));
+  const missingDictionary = dictionaryRows.filter((row) => !existingDictionaryKeys.has(`${row[0]}:${row[1]}`));
+  if (missingDictionary.length) appendRows(workbook, "Column Dictionary", missingDictionary);
+
+  const relationshipRows = schema.foreignKeys.map((fk) => [
+    fk.REFERENCED_TABLE_NAME,
+    fk.TABLE_NAME,
+    fk.COLUMN_NAME,
+    "1 : Many",
+    fk.DELETE_RULE,
+    fk.UPDATE_RULE,
+    `${fk.TABLE_NAME}.${fk.COLUMN_NAME} อ้างอิง ${fk.REFERENCED_TABLE_NAME}.${fk.REFERENCED_COLUMN_NAME}`,
+  ]);
+  const relationships = getSheetValues(workbook, "Relationships");
+  const relationshipKeys = new Set(relationships.map((row) => `${row[1]}:${row[2]}`));
+  const missingRelationships = relationshipRows.filter((row) => !relationshipKeys.has(`${row[1]}:${row[2]}`));
+  if (missingRelationships.length) appendRows(workbook, "Relationships", missingRelationships);
+
+  ensureAppendedRows(workbook, "Data Flow", [
+    [11, "Real API Persistence", "หน้าเมนูที่เปิดเรียก /api/*", "Validate session/permission → เขียน feature table จริง → เขียน audit_logs เมื่อเหมาะสม", "safety_culture_events, media_assets, export_jobs, notification_preferences, assessment_attachments, corrective_action_comments, archived_notifications, safety_settings, audit_logs", "audit_logs ห้ามเป็น primary storage; API fail ให้แสดง error/empty state ไม่เติม mock"],
+  ]);
+  ensureAppendedRows(workbook, "Privacy & Audit", [
+    ["Business records", "INTERNAL", "feature tables", "ตรวจสิทธิ์ตาม owner/role", "ใช้ตาม workflow ของระบบ", "ตาม retention ของแต่ละ feature", "audit_logs เก็บเฉพาะประวัติ ไม่ใช้แทนตารางธุรกิจ"],
+  ]);
+  const auditPage = getSheetValues(workbook, "audit_logs");
+  auditPage[1][0] = "Shared | Shared | Critical | Audit trail เท่านั้น ไม่ใช่ที่เก็บข้อมูลธุรกรรมของ feature";
+  updateRows(auditPage, (row) => row[0] === "purpose_th", (row) => {
+    row[1] = "Audit trail ของการเข้าถึงและแก้ไขข้อมูลสำคัญ; ห้ามใช้เป็น primary storage";
+    return row;
+  });
+  setSheetValues(workbook, "audit_logs", auditPage);
+
+  for (const tableName of tableNames) {
+    let sheet;
+    try {
+      sheet = workbook.worksheets.getItem(tableName);
+    } catch {
+      sheet = workbook.worksheets.add(tableName);
+    }
+    const [module, purpose, phase, priority] = realTableMetadata[tableName];
+    const columns = buildRealColumnRows(schema, tableName);
+    const fks = schema.foreignKeys.filter((item) => item.TABLE_NAME === tableName);
+    const values = [
+      [tableName],
+      [`${module} | ${phase} | ${priority} | ${purpose}`],
+      [],
+      ["table_name", tableName, "module", module, "phase", phase, "priority", priority],
+      ["purpose_th", purpose, "primary_key", columns.filter((row) => row[5] === "PK").map((row) => row[0]).join(", ") || "-", "column_count", columns.length],
+      [],
+      ["Column Dictionary"],
+      [],
+      ["column_name", "data_type", "length", "nullable", "default_value", "key_type", "references", "index_type", "description_th", "example_value", "validation_rule", "personal_data_classification", "notes"],
+      ...columns,
+      [],
+      ["Relationships ที่เกี่ยวข้อง"],
+      ["parent_table", "child_table", "foreign_key", "cardinality", "on_delete", "on_update", "description_th"],
+      ...fks.map((fk) => [
+        fk.REFERENCED_TABLE_NAME,
+        fk.TABLE_NAME,
+        fk.COLUMN_NAME,
+        "1 : Many",
+        fk.DELETE_RULE,
+        fk.UPDATE_RULE,
+        `${fk.TABLE_NAME}.${fk.COLUMN_NAME} อ้างอิง ${fk.REFERENCED_TABLE_NAME}.${fk.REFERENCED_COLUMN_NAME}`,
+      ]),
+    ];
+    const normalized = values.map((row) => Array.from({ length: 13 }, (_, index) => row[index] ?? null));
+    styleNewTableSheet(workbook, sheet, normalized.length);
+    sheet.getRangeByIndexes(0, 0, normalized.length, 13).values = normalized;
+  }
+
+  if (totalColumns !== 78) throw new Error(`Expected 78 new columns, found ${totalColumns}`);
+}
+
+function updateRealApiWorkbook(workbook, routes) {
+  const summary = getSheetValues(workbook, "00_Summary");
+  const summaryUpdates = {
+    "Backend structure": ["API catalog 159 routes ต่อ backend/components และฐานจริง", "คง HTTP layer บางและแยก repository/persistence ตาม feature", "P0", "ต้องทดสอบสิทธิ์ด้วย session จริง"],
+    Auth: ["SSO/session/users ต่อฐานจริงแล้ว และแก้ profile_image_url เกินความยาว", "ใช้ session guard เดียวกันทุก API", "P0", "ต้อง monitor callback และ schema drift"],
+    Locations: ["Locations/Plant mirror/Admin CRUD ต่อฐานจริงแล้ว", "rmr_sso.Plant read-only → CPAC mirror; Admin Plant source=ADMIN", "P0", "RMR source ห้ามแก้/ลบ"],
+    "Check-in": ["หน้า Check-in โหลด locations และ POST checkins จริง", "ใช้ CPAC local location id และ GPS จริง", "P0", "ต้องได้รับสิทธิ์ geolocation"],
+    "Safety Effort": ["Admin/Linewalk/Assessment ใช้ API และ feature tables จริง", "activities, runs, answers, findings/actions/comments", "P0", "ตรวจ workflow/permission รายบทบาท"],
+    "Safety Culture": ["posts/events/rewards/teams/awareness ใช้ API และฐานจริง", "ไม่มี mock/localStorage ใน production flow", "P0", "redeem ต้องอยู่ใน DB transaction"],
+    "Media/images": ["uploads เก็บไฟล์จริงและ metadata ใน media_assets", "owner_type/owner_id/link_type ผูกกับข้อมูลธุรกิจ", "P0", "กำหนด storage retention และ access"],
+    "Reports/export": ["export_jobs เก็บสถานะและผลลัพธ์จริง", "ดาวน์โหลดจาก job/result ไม่สร้าง mock response", "P1", "งานใหญ่ควร background"],
+    "Scale rules": ["list endpoints มี limit และ Plant อ่าน CPAC mirror", "pagination/bbox/index/cache ทุกเส้น list", "P0", "ติดตาม slow query"],
+  };
+  updateRows(summary, (row) => summaryUpdates[row[0]], (row) => {
+    const values = summaryUpdates[row[0]];
+    row[1] = values[0];
+    row[2] = values[1];
+    row[3] = values[2];
+    row[4] = values[3];
+    return row;
+  });
+  setSheetValues(workbook, "00_Summary", summary);
+
+  const header = ["Module", "Method", "Path", "Purpose", "Caller/Page", "When called", "Auth", "Pagination", "Response size risk", "Status", "Notes"];
+  const inventoryRows = routes.map((route) => {
+    const disabled = route.module === "Were OK";
+    return [
+      route.module,
+      route.method,
+      route.documentedPath || route.path,
+      route.purpose,
+      disabled ? "เมนูปิดอยู่" : route.caller,
+      disabled ? "ไม่เรียกจาก production UI" : route.whenCalled,
+      route.auth,
+      route.pagination,
+      route.responseSizeRisk,
+      disabled ? "Disabled" : route.status,
+      disabled ? "Backend route คงไว้ แต่ /were-ok ถูกปิดใน menu config และไม่อยู่ใน scope การเชื่อม UI" : route.notes || "DB-backed implementation",
+    ];
+  });
+  const inventorySheet = workbook.worksheets.getItem("01_API_Inventory");
+  const oldRows = inventorySheet.getUsedRange().values.length;
+  inventorySheet.getRangeByIndexes(0, 0, inventoryRows.length + 1, 11).values = [header, ...inventoryRows];
+  for (let row = oldRows + 1; row <= inventoryRows.length + 1; row += 1) {
+    copyRowStyle(inventorySheet, oldRows, row, 11);
+  }
+  inventorySheet.freezePanes.freezeRows(1);
+
+  const culture = getSheetValues(workbook, "04_Safety_Culture");
+  for (const row of culture) {
+    for (let index = 0; index < row.length; index += 1) {
+      row[index] = replaceText(row[index], [
+        ["culture_events", "safety_culture_events"],
+        ["media_asset_links", "media_assets(owner_type, owner_id, link_type)"],
+        ["แทน localStorage", "อ่านจากฐานจริง; API fail แสดง error/empty state"],
+      ]);
+    }
+  }
+  setSheetValues(workbook, "04_Safety_Culture", culture);
+
+  const uploads = getSheetValues(workbook, "05_Uploads_Media");
+  updateRows(uploads, (row) => row[0] === "Database", (row) => {
+    row[1] = "เก็บ metadata และ owner link ใน media_assets";
+    row[2] = "ใช้ owner_type, owner_id, link_type";
+    row[4] = "ไม่มี media_asset_links แยกใน schema ปัจจุบัน";
+    return row;
+  });
+  setSheetValues(workbook, "05_Uploads_Media", uploads);
+
+  ensureAppendedRows(workbook, "06_Table_Mapping", [
+    ["/api/safety-culture/events", "safety_culture_events", "users", "Read/Write", "กิจกรรมจริง ไม่เก็บ JSON ใน audit_logs"],
+    ["/api/uploads, /api/media", "media_assets", "users", "Read/Write", "ไฟล์จริงใน storage; metadata/owner link ใน DB"],
+    ["/api/exports", "export_jobs", "users", "Read/Write", "สร้างและติดตาม export job จริง"],
+    ["/api/notifications/preferences", "notification_preferences", "users", "Read/Write", "ตั้งค่ารายผู้ใช้"],
+    ["/api/notifications/archive", "archived_notifications", "notifications, users", "Read/Write", "เก็บ archive จริง"],
+    ["/api/assessments/:id/attachments", "assessment_attachments", "assessment_runs, media_assets", "Read/Write", "หลักฐาน assessment"],
+    ["/api/corrective-actions/:id/comments", "corrective_action_comments", "corrective_actions, users", "Read/Write", "ความคิดเห็น corrective action"],
+    ["/api/safety-settings", "safety_settings", "users", "Read/Write", "Admin settings จริง"],
+  ]);
+
+  const backlog = getSheetValues(workbook, "09_Backlog");
+  updateRows(backlog, () => true, (row, index) => {
+    if (index === 0) return row;
+    for (let column = 0; column < row.length; column += 1) {
+      row[column] = replaceText(row[column], [
+        ["ปัจจุบันยังใช้ localStorage", "เชื่อม API/DB จริงแล้ว"],
+        ["mock/localStorage", "API/DB จริง"],
+      ]);
+    }
+    return row;
+  });
+  ensureAppendedRows(workbook, "09_Backlog", [
+    ["DONE", "ย้าย feature JSON ออกจาก audit_logs", "สร้าง 8 ตารางจริงและ migration แล้ว", "Backend/DB", "audit_logs เหลือ audit trail เท่านั้น"],
+    ["DONE", "เชื่อมเมนูที่เปิดใช้งานกับ API จริง", "Check-in, Safety Effort/Admin, Safety Culture, Notifications, Profile", "Frontend", "ไม่มี business localStorage/mock fallback"],
+    ["OUT OF SCOPE", "Were OK / Work Permit", "เมนูถูกปิดใน menu config", "Frontend", "ไม่บังคับเชื่อม UI จนกว่าจะเปิดเมนู"],
+  ], 1);
+
+  const moduleCounts = new Map();
+  for (const row of inventoryRows) {
+    const module = row[0];
+    const current = moduleCounts.get(module) || { total: 0, existing: 0, disabled: 0 };
+    current.total += 1;
+    if (row[9] === "Disabled") current.disabled += 1;
+    else if (row[9] === "Existing") current.existing += 1;
+    moduleCounts.set(module, current);
+  }
+  const countRows = [["Module", "Total API rows", "Existing/Connected", "Disabled menu", "Comment"]];
+  for (const [module, count] of [...moduleCounts.entries()].sort((a, b) => b[1].total - a[1].total || a[0].localeCompare(b[0]))) {
+    countRows.push([
+      module,
+      count.total,
+      count.existing,
+      count.disabled,
+      count.disabled ? "Backend route คงไว้ แต่เมนูปิดและไม่เชื่อม production UI" : "API implementation มีใน repo",
+    ]);
+  }
+  countRows.push(["TOTAL", inventoryRows.length, inventoryRows.filter((row) => row[9] === "Existing").length, inventoryRows.filter((row) => row[9] === "Disabled").length, "159 routes; active-menu routes connected"]);
+  const countsSheet = workbook.worksheets.getItem("10_API_Counts");
+  const oldCountRows = countsSheet.getUsedRange().values.length;
+  countsSheet.getRangeByIndexes(0, 0, countRows.length, 5).values = countRows;
+  for (let row = oldCountRows + 1; row <= countRows.length; row += 1) copyRowStyle(countsSheet, oldCountRows, row, 5);
 }
 
 const implementedApiRoutes = new Set([
@@ -947,11 +1361,45 @@ async function main() {
     return;
   }
 
+  if (process.env.MODE === "inspect-real-api") {
+    for (const name of [
+      "Complete Index",
+      "README",
+      "Table Summary",
+      "Column Dictionary",
+      "Relationships",
+      "Data Flow",
+      "Privacy & Audit",
+      "audit_logs",
+      "notifications",
+    ]) {
+      console.log(`DATABASE:${name}`);
+      console.log(JSON.stringify(getSheetValues(databaseWorkbook, name)));
+    }
+    for (const name of [
+      "00_Summary",
+      "01_API_Inventory",
+      "04_Safety_Culture",
+      "05_Uploads_Media",
+      "06_Table_Mapping",
+      "09_Backlog",
+      "10_API_Counts",
+    ]) {
+      console.log(`API:${name}`);
+      console.log(JSON.stringify(getSheetValues(apiWorkbook, name)));
+    }
+    return;
+  }
+
   await fs.mkdir(outputDir, { recursive: true });
   await fs.mkdir(previewDir, { recursive: true });
 
-  updateDatabaseWorkbook(databaseWorkbook);
-  updateApiWorkbook(apiWorkbook);
+  const [realSchema, registryRoutes] = await Promise.all([
+    loadRealTableSchema(),
+    parseRegistryRoutes(),
+  ]);
+  updateRealDatabaseWorkbook(databaseWorkbook, realSchema);
+  updateRealApiWorkbook(apiWorkbook, registryRoutes);
 
   const databasePreviewFiles = await renderAllSheets(databaseWorkbook, "database");
   const apiPreviewFiles = await renderAllSheets(apiWorkbook, "api");
@@ -963,23 +1411,26 @@ async function main() {
 
   const databaseVerification = await verifyWorkbook(databaseOutput, {
     setup: "Database Setup!A1:D28",
-    readme: "README!A1:B34",
-    index: "Complete Index!A1:D59",
+    readme: "README!A1:B40",
+    index: "Complete Index!A1:D67",
     sourceMapping: "External Source Mapping!A1:G23",
     locationMapping: "Location Source Mapping!A1:I9",
-    tableSummary: "Table Summary!A1:H46",
-    columnDictionary: "Column Dictionary!A1:N423",
+    tableSummary: "Table Summary!A1:H54",
+    columnDictionary: "Column Dictionary!A1:N501",
   });
   const apiVerification = await verifyWorkbook(apiOutput, {
     summary: "00_Summary!A1:E10",
-    inventory: "01_API_Inventory!A1:K156",
+    inventory: "01_API_Inventory!A1:K160",
     locations: "02_Checkin_Locations!A1:J8",
     mapping: "06_Table_Mapping!A1:E21",
     payloads: "07_Payload_Response!A1:D11",
     scale: "08_Scale_Rules!A1:D13",
     backlog: "09_Backlog!A1:E14",
-    counts: "10_API_Counts!A1:E27",
+    counts: "10_API_Counts!A1:E29",
   });
+
+  await fs.copyFile(databaseOutput, databasePath);
+  await fs.copyFile(apiOutput, apiPath);
 
   await fs.writeFile(
     path.join(outputDir, "verification.json"),

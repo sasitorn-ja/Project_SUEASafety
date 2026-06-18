@@ -51,6 +51,7 @@ export default function HomePage() {
     awarenessHistory,
     awarenessHolidays,
     awarenessRequiredToday,
+    awarenessStartDate,
   } = useAppState();
 
   const me = personalRankings.find((person) => person.active);
@@ -102,14 +103,25 @@ export default function HomePage() {
     date.setUTCDate(today.getUTCDate() - (13 - index));
     const key = `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, "0")}-${String(date.getUTCDate()).padStart(2, "0")}`;
     const holiday = awarenessHolidays.find((item) => item.date === key);
-    const excludedReason = [0, 6].includes(date.getUTCDay()) ? "วันหยุดสุดสัปดาห์" : holiday?.name;
+    const beforeStart = key < awarenessStartDate;
+    const excludedReason = beforeStart
+      ? "ก่อนเริ่มใช้งาน"
+      : [0, 6].includes(date.getUTCDay())
+        ? "วันหยุดสุดสัปดาห์"
+        : holiday?.name;
     return { key, date, completion: awarenessHistory.find((item) => item.date === key), excludedReason };
   });
   const awarenessCountedDays = awarenessDays.filter((item) => !item.excludedReason);
   const awarenessCompletedCount = awarenessCountedDays.filter((item) => item.completion).length;
   const awarenessPastDays = awarenessCountedDays.filter((item) => item.key !== todayDateKey);
   const awarenessMissedCount = awarenessPastDays.filter((item) => !item.completion).length;
-  const awarenessRate = awarenessCountedDays.length > 0 ? Math.round((awarenessCompletedCount / awarenessCountedDays.length) * 100) : 100;
+  const awarenessPastCompletedCount = awarenessPastDays.filter((item) => item.completion).length;
+  // คิด completion rate จากเฉพาะวันที่ผ่านมาแล้ว (ไม่รวมวันนี้ที่ยังรอทำ)
+  // ผู้ใช้ใหม่ที่ยังไม่มีวันนับได้ในอดีต -> ไม่มีค่า (แสดงเป็น "–")
+  const hasAwarenessRate = awarenessPastDays.length > 0;
+  const awarenessRate = hasAwarenessRate
+    ? Math.round((awarenessPastCompletedCount / awarenessPastDays.length) * 100)
+    : 0;
   const latestAwareness = [...awarenessHistory].sort((a, b) => b.completedAt.localeCompare(a.completedAt))[0];
   const weeklyBars = [42, 58, 50, 66, 74, 82, 78, 96];
 
@@ -320,7 +332,7 @@ export default function HomePage() {
                 </span>
                 <div>
                   <p className="text-[11px] font-extrabold uppercase tracking-[0.12em] text-[var(--brand-muted-text)]">Completion rate</p>
-                  <p className="text-[22px] font-black leading-none text-[var(--brand-nav)] md:text-[28px]">{awarenessRate}%</p>
+                  <p className="text-[22px] font-black leading-none text-[var(--brand-nav)] md:text-[28px]">{hasAwarenessRate ? `${awarenessRate}%` : "–"}</p>
                 </div>
                 <span className={`ml-auto rounded-full px-2.5 py-1 text-[10px] font-black md:ml-2 ${!awarenessRequiredToday ? "bg-[var(--secondary)] text-[var(--brand-muted-text)]" : awarenessDoneToday ? "bg-[#daf5e6] text-[#19734a]" : "bg-[#fff0d8] text-[#a45b00]"}`}>
                   วันนี้: {!awarenessRequiredToday ? "ไม่นับ KPI" : awarenessDoneToday ? "ทำแล้ว" : "รอดำเนินการ"}
