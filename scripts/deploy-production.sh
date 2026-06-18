@@ -18,7 +18,7 @@ docker compose up -d --force-recreate
 docker compose logs --tail=80 cpac-safety-plus
 "
 
-curl --fail --silent --show-error --retry 12 --retry-delay 5 \
+curl --fail --silent --show-error --retry 12 --retry-delay 5 --retry-all-errors \
   "https://safety.cipcloud.net/api/health"
 echo
 echo "Done: https://safety.cipcloud.net"
