@@ -421,8 +421,7 @@ body * {
     gap: 4px !important;
   }
 
-  .desktop-actions > button,
-  .desktop-actions > .theme-toggle {
+  .desktop-actions > button {
     width: 40px !important;
     height: 40px !important;
   }

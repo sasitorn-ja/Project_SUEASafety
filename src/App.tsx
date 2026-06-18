@@ -2,7 +2,6 @@
 import { useEffect, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import { Route, Routes, useLocation, useNavigate } from "./lib/router-compat";
-import { ThemeToggle } from "@/components/theme-toggle";
 import { useAppTheme } from "@/providers/theme-provider";
 
 const screenLoading = (label) => (
@@ -557,7 +556,6 @@ function DesktopNavbar({ activeId, onNav, navVisible }) {
 
       {/* Right part: Notification + Login/CTA */}
       <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-        <ThemeToggle compact />
         {/* Notification Bell */}
         <button
           style={{
@@ -665,7 +663,6 @@ function MobileTopBar({ visible }) {
 
         {/* Right: Search and Notification */}
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-          <ThemeToggle compact />
           <button style={{ background: "transparent", border: "none", color: "#ffffff", padding: 0, cursor: "pointer", display: "flex", alignItems: "center" }}>
             <IcoSearch size={18} />
           </button>

@@ -9,7 +9,6 @@ import { NotificationCenter } from "@/components/notifications/notification-cent
 import { cn } from "@/lib/utils";
 import { isExactNavActive, isMainNavActive } from "@/lib/navigation";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { ThemeToggle } from "@/components/theme-toggle";
 import { useAppState } from "@/providers/app-providers";
 import { useAppTheme } from "@/providers/theme-provider";
 import { getProfileDisplayName } from "@/lib/profile";
@@ -423,7 +422,6 @@ export function DesktopTopbar() {
         </nav>
 
         <div className="desktop-actions flex flex-shrink-0 items-center gap-1.5">
-          <ThemeToggle />
           <div ref={notificationRef} className="relative">
             <button
               type="button"

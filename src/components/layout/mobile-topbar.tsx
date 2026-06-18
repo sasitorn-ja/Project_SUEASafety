@@ -23,7 +23,6 @@ import { cn } from "@/lib/utils";
 import { isExactNavActive, isMainNavActive } from "@/lib/navigation";
 import { getProfileDisplayName, getProfileInitials, MOCK_PROFILE } from "@/lib/profile";
 import { getSessionDisplayName, getSessionInitials, getSessionProfileImage, hasAdminAccess, useSessionUser } from "@/lib/session-user";
-import { ThemeToggle } from "@/components/theme-toggle";
 import { useAppTheme } from "@/providers/theme-provider";
 import {
   MENU_STORAGE_KEY,
@@ -267,9 +266,6 @@ export function MobileTopbar({ hidden = false }: { hidden?: boolean }) {
           </NavTo>
         </div>
 
-        <div className="flex flex-shrink-0 items-center">
-          <ThemeToggle compact />
-        </div>
       </div>
 
       {open && (
