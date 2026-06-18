@@ -1,4 +1,19 @@
 services:
+  migration:
+    build:
+      context: .
+      target: migrator
+    profiles:
+      - tools
+    env_file:
+      - .env.production
+    extra_hosts:
+      - "rmc-sso.cipcloud.net:192.168.1.48"
+    command:
+      - node
+      - scripts/run-migration.mjs
+      - scripts/migrations/001_real_api_storage.sql
+
   cpac-safety-plus:
     build:
       context: .

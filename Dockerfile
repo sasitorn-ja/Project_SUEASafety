@@ -4,6 +4,9 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci
 
+FROM deps AS migrator
+COPY scripts ./scripts
+
 FROM node:24-alpine AS builder
 WORKDIR /app
 
