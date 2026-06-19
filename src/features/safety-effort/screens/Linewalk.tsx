@@ -670,7 +670,7 @@ export default function Linewalk() {
 
             {!isMobileViewport && (
               <TigerMascot
-                action="clipboard"
+                action="linewalkClip"
                 size={isQuestionScreen ? "68px" : "88px"}
                 animation="float"
                 style={{ position: "absolute", right: fromActivity ? 118 : 20, bottom: isQuestionScreen ? -2 : 4, zIndex: 0 }}

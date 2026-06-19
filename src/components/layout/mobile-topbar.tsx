@@ -245,7 +245,7 @@ export function MobileTopbar({ hidden = false }: { hidden?: boolean }) {
 
           <NavTo href="/" onClick={closeDrawer} className="flex min-w-0 items-center gap-[9px]">
             <div className="flex h-[42px] w-[42px] flex-shrink-0 items-center justify-center overflow-hidden">
-              <Image src={mascot("logo")} alt="SUEA Safety Logo" width={42} height={42} className="h-full w-full object-contain" />
+              <Image src={mascot("logoMobile")} alt="SUEA Safety Logo" width={42} height={42} className="h-full w-full object-contain" />
             </div>
             <div className="flex min-w-0 flex-col leading-[1.12]">
               <span className="overflow-hidden text-ellipsis whitespace-nowrap text-[19px] font-extrabold tracking-normal text-white">

@@ -499,7 +499,7 @@ export function FloatingSafetyAssistant() {
             <div className="relative grid grid-cols-[96px_minmax(0,1fr)] items-end gap-2.5 pr-7">
               <div className="relative h-[116px]">
                 <Image
-                  src={mascot("idea")}
+                  src={mascot("idea2")}
                   alt="น้องวางใจ AI Safety Buddy"
                   width={200}
                   height={250}
@@ -563,7 +563,7 @@ export function FloatingSafetyAssistant() {
             message.role === "assistant" ? (
               <div key={message.id} className="flex items-start gap-2">
                 <Image
-                  src="/images/mascots/Transparent น้องวางใจ/21.png"
+                  src="/images/mascots/Transparent น้องวางใจ/20.png"
                   alt=""
                   width={40}
                   height={40}
@@ -672,7 +672,7 @@ export function FloatingSafetyAssistant() {
           {context.urgent ? "!" : "AI"}
         </span>
         <Image
-          src={mascot(context.action)}
+          src="/images/mascots/Transparent น้องวางใจ/25.png"
           alt="น้องวางใจ AI Safety Buddy"
           width={96}
           height={96}

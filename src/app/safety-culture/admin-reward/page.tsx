@@ -405,7 +405,7 @@ function RewardPreviewPanel({
           <Image src={themedImage(reward.imageSrc)} alt={reward.name} fill sizes="(max-width: 768px) 50vw, 220px" className="object-cover" />
         ) : reward.isHot ? (
           <Image
-            src={mascot("salute")}
+            src={mascot("saluteAlt")}
             alt="SUEA reward"
             fill
             sizes="(max-width: 768px) 50vw, 220px"
@@ -982,7 +982,7 @@ export default function AdminRewardPage() {
           description="ออกแบบ reward catalog, รูปภาพ, รายละเอียด และราคา ให้หน้า Rewards ใช้งานง่ายและดูดีขึ้นจากที่เดียว"
           mascotSrc="/images/mascots/suea-mascot.png"
           mascotAlt="SUEA Admin Mascot"
-          mascotAction="happy"
+          mascotAction="happyReward"
         />
 
         <div className="mt-4 flex flex-col gap-4">

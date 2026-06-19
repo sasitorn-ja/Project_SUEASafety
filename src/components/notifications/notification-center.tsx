@@ -205,7 +205,7 @@ export function NotificationCenter({ compact = false, onItemClick, onNotificatio
             <div className="absolute right-0 top-0 flex h-24 w-24 items-end justify-center">
               <div className="absolute inset-x-2 bottom-1 h-10 rounded-full bg-white/10 blur-md" />
               <Image
-                src={mascot("cheer")}
+                src={mascot("cheer2")}
                 alt="Safety mascot"
                 width={108}
                 height={108}

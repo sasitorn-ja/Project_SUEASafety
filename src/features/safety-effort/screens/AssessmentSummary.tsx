@@ -221,7 +221,7 @@ export default function AssessmentSummary() {
                 </p>
               </div>
             </div>
-            <TigerMascot action="happy" size="104px" animation="float" />
+            <TigerMascot action="assessHappy" size="104px" animation="float" />
           </div>
           <div style={{ height: 10, background: "repeating-linear-gradient(135deg,var(--brand-accent) 0 18px,#0e0f12 18px 36px)" }} />
         </section>

@@ -137,7 +137,7 @@ function Logo({ size = 28 }) {
   const { mascot, theme } = useAppTheme();
   return (
     <img
-      src={mascot("logo")}
+      src={mascot("logoApp")}
       alt={theme === "wangjai" ? "น้องวางใจ Safety" : "SUEA Safety tiger"}
       style={{
         width: size, height: size,

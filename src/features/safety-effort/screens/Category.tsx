@@ -446,7 +446,7 @@ function Hero({ isDesktop }) {
           }}
         >
           <img
-            src={isHovered ? mascot("thumbs-up") : mascot("clipboard")}
+            src={isHovered ? mascot("thumbs-up") : mascot("clipboardHover")}
             alt={theme === "wangjai" ? "น้องวางใจ Safety mascot" : "SUEA tiger mascot"}
             style={{
               width: isDesktop ? "185px" : "120px",

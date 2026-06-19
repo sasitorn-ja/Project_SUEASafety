@@ -80,7 +80,7 @@ export function SafetyAwarenessGate() {
               <h2 className="text-[20px] font-black leading-tight">Safety Awareness</h2>
             </div>
             <Image
-              src={mascot("happy")}
+              src={mascot("gateHappy")}
               alt=""
               width={66}
               height={66}

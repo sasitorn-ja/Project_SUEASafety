@@ -269,7 +269,7 @@ export default function RewardsPage() {
                   {reward.imageSrc ? (
                     <Image src={themedImage(reward.imageSrc)} alt={reward.name} fill sizes="(max-width: 768px) 50vw, 220px" className="object-cover" />
                   ) : reward.isHot ? (
-                    <Image src={mascot("salute")} alt="SUEA reward" fill sizes="(max-width: 768px) 50vw, 220px" className="object-cover" />
+                    <Image src={mascot("welcome")} alt="SUEA reward" fill sizes="(max-width: 768px) 50vw, 220px" className="object-cover" />
                   ) : (
                     <span className="text-[13px] font-extrabold lowercase text-[var(--brand-muted-text)]">{reward.imageText}</span>
                   )}
@@ -331,7 +331,7 @@ export default function RewardsPage() {
             <DialogTitle className="flex flex-col items-center gap-3 text-xl font-extrabold text-foreground">
               <div className="w-[120px] animate-[sueaMascotFloat_1.8s_ease-in-out_infinite_alternate]">
                 <Image
-                  src={mascot("happy")}
+                  src={mascot("happyClaim")}
                   alt="SUEA Mascot"
                   width={120}
                   height={120}
