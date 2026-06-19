@@ -72,7 +72,7 @@ export default function PostSocialPage() {
   const { user: sessionUser } = useSessionUser();
   const availableFeedEvents = feedEvents.filter((event) => event.published && event.status === "open");
   const [text, setText] = useState("");
-  const [activeCategory, setActiveCategory] = useState("KYT");
+  const [activeCategory, setActiveCategory] = useState("ทั่วไป");
   const [selectedFeedEventId, setSelectedFeedEventId] = useState("");
   const [photos, setPhotos] = useState<DraftPhoto[]>([]);
   const [isProcessingPhotos, setIsProcessingPhotos] = useState(false);
@@ -229,7 +229,7 @@ export default function PostSocialPage() {
             disabled={isProcessingPhotos}
             className="rounded-full bg-[#1A1A1A] px-6 text-sm font-extrabold text-white shadow-[0_4px_10px_rgba(0,0,0,0.1)] transition-all hover:bg-[var(--brand-accent)] hover:text-[#1A1A1A] disabled:cursor-wait disabled:opacity-70"
           >
-            โพสต์
+            {isProcessingPhotos ? "กำลังเตรียมรูปภาพ..." : "โพสต์"}
           </Button>
         </header>
 
@@ -453,15 +453,6 @@ export default function PostSocialPage() {
             )}
           </div>
         </div>
-
-        <Button
-          onClick={handleSubmit}
-          disabled={isProcessingPhotos}
-          className="anim-fade h-auto w-full rounded-2xl bg-[#1A1A1A] py-4 text-[15px] font-extrabold text-white shadow-[0_8px_18px_rgba(26,26,26,0.12)] transition-all hover:bg-[var(--brand-accent)] hover:text-[#1A1A1A] active:scale-[0.98] disabled:cursor-wait disabled:opacity-70"
-          style={animStyle(0.28)}
-        >
-          {isProcessingPhotos ? "กำลังเตรียมรูปภาพ..." : "โพสต์"}
-        </Button>
 
       </div>
     </>
