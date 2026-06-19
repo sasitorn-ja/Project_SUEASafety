@@ -29,6 +29,9 @@ export interface ComboboxProps {
   emptyText?: string;
   /** show the search box inside the popover (default: true) */
   searchable?: boolean;
+  /** allow a typed value that is not already in options */
+  allowCustomValue?: boolean;
+  customValueLabel?: (value: string) => string;
   disabled?: boolean;
   id?: string;
   /** className for the trigger button */
@@ -48,6 +51,8 @@ export function Combobox({
   searchPlaceholder = "ค้นหา...",
   emptyText = "ไม่พบรายการ",
   searchable = true,
+  allowCustomValue = false,
+  customValueLabel = (nextValue) => `ใช้ “${nextValue}”`,
   disabled = false,
   id,
   className,
@@ -56,10 +61,22 @@ export function Combobox({
   "aria-label": ariaLabel,
 }: ComboboxProps) {
   const [open, setOpen] = React.useState(false);
+  const [query, setQuery] = React.useState("");
   const selected = options.find((option) => option.value === value);
+  const customQuery = query.trim();
+  const hasExactOption = options.some(
+    (option) => option.value.toLowerCase() === customQuery.toLowerCase()
+      || option.label.toLowerCase() === customQuery.toLowerCase()
+  );
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover
+      open={open}
+      onOpenChange={(nextOpen) => {
+        setOpen(nextOpen);
+        if (!nextOpen) setQuery("");
+      }}
+    >
       <PopoverTrigger
         id={id}
         type="button"
@@ -76,7 +93,7 @@ export function Combobox({
         style={style}
       >
         <span className={cn("truncate", !selected && "text-[#9a8a72]")}>
-          {selected ? selected.label : placeholder}
+          {selected ? selected.label : value || placeholder}
         </span>
         <ChevronsUpDown className="h-4 w-4 shrink-0 opacity-60" strokeWidth={2.2} />
       </PopoverTrigger>
@@ -84,9 +101,28 @@ export function Combobox({
         className={cn("w-(--anchor-width) min-w-[180px] p-0", contentClassName)}
       >
         <Command>
-          {searchable ? <CommandInput placeholder={searchPlaceholder} /> : null}
+          {searchable ? (
+            <CommandInput
+              value={query}
+              onValueChange={setQuery}
+              placeholder={searchPlaceholder}
+            />
+          ) : null}
           <CommandList>
             <CommandEmpty>{emptyText}</CommandEmpty>
+            {allowCustomValue && customQuery && !hasExactOption ? (
+              <CommandItem
+                value={customQuery}
+                onSelect={() => {
+                  onValueChange(customQuery);
+                  setOpen(false);
+                  setQuery("");
+                }}
+              >
+                <Check className="h-4 w-4 shrink-0 opacity-0" strokeWidth={2.6} />
+                <span className="truncate">{customValueLabel(customQuery)}</span>
+              </CommandItem>
+            ) : null}
             {options.map((option) => (
               <CommandItem
                 key={option.value}

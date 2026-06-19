@@ -5,6 +5,7 @@ import { RefreshCcw, Search, ShieldCheck, ShieldMinus, UserCog, UsersRound } fro
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Combobox } from "@/components/ui/combobox";
 import { Input } from "@/components/ui/input";
 import {
   Pagination,
@@ -221,20 +222,23 @@ export default function AdminUsersPage() {
               placeholder="ค้นด้วยชื่อ อีเมล หรือรหัสพนักงาน"
             />
           </div>
-          <select
+          <Combobox
             aria-label="จำนวนรายการต่อหน้า"
-            value={pageSize}
-            onChange={(event) => {
+            value={String(pageSize)}
+            onValueChange={(value) => {
               setPage(1);
-              setPageSize(Number(event.target.value));
+              setPageSize(Number(value));
             }}
-            className="h-10 rounded-xl border border-[var(--border)] bg-background px-3 text-[13px] font-black outline-none"
-          >
-            <option value={10}>10 แถว</option>
-            <option value={25}>25 แถว</option>
-            <option value={50}>50 แถว</option>
-            <option value={100}>100 แถว</option>
-          </select>
+            searchable={false}
+            className="h-10 min-w-[130px] rounded-xl border-[var(--border)] bg-background text-[13px] font-black"
+            contentClassName="min-w-[130px]"
+            options={[
+              { value: "10", label: "10 แถว" },
+              { value: "25", label: "25 แถว" },
+              { value: "50", label: "50 แถว" },
+              { value: "100", label: "100 แถว" },
+            ]}
+          />
           <Button onClick={submitSearch} className="h-10 rounded-xl bg-[var(--brand-accent)] px-4 font-black text-[var(--brand-accent-contrast)]">
             <Search className="h-4 w-4" strokeWidth={2.5} />
             ค้นหา

@@ -568,18 +568,18 @@ export default function AdminAwarenessPage() {
             <div className="flex flex-col gap-3">
               <div>
                 <Label className="text-[12.5px] font-black text-[var(--c-5c3214)]">หมวดหมู่</Label>
-                <Input
+                <Combobox
                   value={editor.category}
-                  onChange={(e) => setEditor({ ...editor, category: e.target.value })}
+                  onValueChange={(category) => setEditor({ ...editor, category })}
                   placeholder="เช่น กฎจราจรและการควบคุมความเร็ว"
-                  list="awareness-categories"
+                  searchPlaceholder="ค้นหาหรือพิมพ์ชื่อหมวดใหม่"
+                  emptyText="พิมพ์ชื่อหมวดใหม่ได้"
+                  allowCustomValue
+                  customValueLabel={(value) => `สร้างหมวด “${value}”`}
+                  options={categories.map((category) => ({ value: category, label: category }))}
                   className="mt-1 h-10 rounded-xl border-[var(--c-d7c5a7)] text-[13px] font-bold"
+                  contentClassName="min-w-[320px]"
                 />
-                <datalist id="awareness-categories">
-                  {categories.map((c) => (
-                    <option key={c} value={c} />
-                  ))}
-                </datalist>
               </div>
 
               <div>
@@ -818,4 +818,3 @@ function StatCard({
     </Card>
   );
 }
-
