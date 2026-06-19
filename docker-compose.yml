@@ -11,8 +11,7 @@ services:
       - "rmc-sso.cipcloud.net:192.168.1.48"
     command:
       - node
-      - scripts/run-migration.mjs
-      - scripts/migrations/001_real_api_storage.sql
+      - scripts/run-migrations.mjs
 
   cpac-safety-plus:
     build:

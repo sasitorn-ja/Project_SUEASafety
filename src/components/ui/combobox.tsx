@@ -32,6 +32,7 @@ export interface ComboboxProps {
   /** allow a typed value that is not already in options */
   allowCustomValue?: boolean;
   customValueLabel?: (value: string) => string;
+  onSearchValueChange?: (value: string) => void;
   disabled?: boolean;
   id?: string;
   /** className for the trigger button */
@@ -53,6 +54,7 @@ export function Combobox({
   searchable = true,
   allowCustomValue = false,
   customValueLabel = (nextValue) => `ใช้ “${nextValue}”`,
+  onSearchValueChange,
   disabled = false,
   id,
   className,
@@ -104,7 +106,10 @@ export function Combobox({
           {searchable ? (
             <CommandInput
               value={query}
-              onValueChange={setQuery}
+              onValueChange={(nextQuery) => {
+                setQuery(nextQuery);
+                onSearchValueChange?.(nextQuery);
+              }}
               placeholder={searchPlaceholder}
             />
           ) : null}

@@ -6,6 +6,7 @@ import { SafetyCultureHero } from "@/components/safety-culture/safety-culture-he
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Combobox, type ComboboxOption } from "@/components/ui/combobox";
 import {
   Dialog,
   DialogContent,
@@ -29,6 +30,8 @@ type TeamEditorState = {
   id: string;
   rank: number;
   name: string;
+  leaderUserId: string;
+  leaderEmail: string;
   leader: string;
   members: number;
   points: number;
@@ -37,6 +40,18 @@ type TeamEditorState = {
   awards: number;
   color: string;
 };
+
+type ApiUser = {
+  id: string | number;
+  employee_no?: string | null;
+  email?: string | null;
+  name_th?: string | null;
+  name_en?: string | null;
+};
+
+function userName(user: ApiUser) {
+  return user.name_th || user.name_en || user.email || `User #${user.id}`;
+}
 
 function SectionCard({
   title,
@@ -82,7 +97,9 @@ function makeTeamDraft(index: number): LeaderboardTeam {
     id: `team-draft-${Date.now()}-${index}`,
     rank: index + 1,
     name: `ทีมใหม่ ${index + 1}`,
-    leader: "หัวหน้าทีม",
+    leaderUserId: "",
+    leaderEmail: "",
+    leader: "",
     members: 100,
     color: "var(--brand-accent)",
     points: 0,
@@ -98,6 +115,8 @@ function createTeamEditor(team: LeaderboardTeam): TeamEditorState {
     id: team.id,
     rank: team.rank,
     name: team.name,
+    leaderUserId: team.leaderUserId || "",
+    leaderEmail: team.leaderEmail || "",
     leader: team.leader,
     members: team.members,
     points: team.points,
@@ -117,10 +136,38 @@ export default function AdminLeaderboardPage() {
   const [saveState, setSaveState] = useState<"idle" | "saved">("idle");
   const [editingTeam, setEditingTeam] = useState<TeamEditorState | null>(null);
   const [deletingTeam, setDeletingTeam] = useState<LeaderboardTeam | null>(null);
+  const [leaderSearch, setLeaderSearch] = useState("");
+  const [leaderUsers, setLeaderUsers] = useState<ApiUser[]>([]);
+  const [leaderUsersLoading, setLeaderUsersLoading] = useState(false);
 
   useEffect(() => {
     setDraftTeams(teamStandings);
   }, [teamStandings]);
+
+  useEffect(() => {
+    if (!editingTeam) {
+      setLeaderSearch("");
+      setLeaderUsers([]);
+      return;
+    }
+
+    const timer = window.setTimeout(() => {
+      void (async () => {
+        setLeaderUsersLoading(true);
+        try {
+          const params = new URLSearchParams({ pageSize: "50" });
+          if (leaderSearch.trim()) params.set("search", leaderSearch.trim());
+          const response = await fetch(`/api/users?${params}`, { credentials: "include", cache: "no-store" });
+          const payload = await response.json().catch(() => null) as { data?: { items?: ApiUser[] } } | null;
+          setLeaderUsers(response.ok && Array.isArray(payload?.data?.items) ? payload.data.items : []);
+        } finally {
+          setLeaderUsersLoading(false);
+        }
+      })();
+    }, 250);
+
+    return () => window.clearTimeout(timer);
+  }, [editingTeam?.id, leaderSearch]);
 
   const totalPoints = useMemo(
     () => draftTeams.reduce((sum, team) => sum + (Number(team.points) || 0), 0),
@@ -130,6 +177,20 @@ export default function AdminLeaderboardPage() {
     () => draftTeams.reduce((sum, team) => sum + (Number(team.members) || 0), 0),
     [draftTeams]
   );
+  const leaderOptions = useMemo<ComboboxOption[]>(() => {
+    const options: ComboboxOption[] = leaderUsers.map((user) => ({
+      value: String(user.id),
+      label: `${userName(user)}${user.email ? ` · ${user.email}` : ""}`,
+      keywords: [user.email || "", user.employee_no || "", user.name_en || "", user.name_th || ""],
+    }));
+    if (editingTeam?.leaderUserId && !options.some((option) => option.value === editingTeam.leaderUserId)) {
+      options.unshift({
+        value: editingTeam.leaderUserId,
+        label: `${editingTeam.leader || `User #${editingTeam.leaderUserId}`}${editingTeam.leaderEmail ? ` · ${editingTeam.leaderEmail}` : ""}`,
+      });
+    }
+    return options;
+  }, [editingTeam, leaderUsers]);
 
   const commitTeams = (teams: LeaderboardTeam[]) => {
     const normalizedTeams = teams.map((team, index) => ({
@@ -176,6 +237,8 @@ export default function AdminLeaderboardPage() {
           id: editingTeam.id,
           rank: draftTeams.length + 1,
           name: editingTeam.name,
+          leaderUserId: editingTeam.leaderUserId,
+          leaderEmail: editingTeam.leaderEmail,
           leader: editingTeam.leader,
           members: editingTeam.members,
           color: editingTeam.color,
@@ -192,6 +255,8 @@ export default function AdminLeaderboardPage() {
             ? {
                 ...team,
                 name: editingTeam.name,
+                leaderUserId: editingTeam.leaderUserId,
+                leaderEmail: editingTeam.leaderEmail,
                 leader: editingTeam.leader,
                 color: editingTeam.color,
               }
@@ -364,11 +429,28 @@ export default function AdminLeaderboardPage() {
                   </div>
                   <div className="flex flex-col gap-2">
                     <Label className="text-[12px] font-black text-[var(--brand-text)]">Leader</Label>
-                    <Input
-                      value={editingTeam.leader}
-                      onChange={(event) => updateEditingTeam("leader", event.target.value)}
-                      className="h-11 rounded-[18px] border-[var(--border)] bg-white px-4 text-[14px] font-bold text-[var(--foreground)] focus-visible:border-[var(--brand-accent)] focus-visible:ring-0 sm:h-12 sm:text-[15px]"
+                    <Combobox
+                      value={editingTeam.leaderUserId}
+                      onValueChange={(userId) => {
+                        const selected = leaderUsers.find((user) => String(user.id) === userId);
+                        setEditingTeam((current) => current ? {
+                          ...current,
+                          leaderUserId: userId,
+                          leader: selected ? userName(selected) : current.leader,
+                          leaderEmail: selected?.email || current.leaderEmail,
+                        } : current);
+                      }}
+                      onSearchValueChange={setLeaderSearch}
+                      options={leaderOptions}
+                      placeholder="ค้นหาชื่อ อีเมล หรือรหัสพนักงาน"
+                      searchPlaceholder="พิมพ์ชื่อ อีเมล หรือรหัสพนักงาน"
+                      emptyText={leaderUsersLoading ? "กำลังค้นหาผู้ใช้..." : "ไม่พบผู้ใช้"}
+                      className="h-11 rounded-[18px] border-[var(--border)] bg-white px-4 text-[14px] font-bold text-[var(--foreground)] sm:h-12 sm:text-[15px]"
+                      contentClassName="min-w-[360px]"
                     />
+                    {editingTeam.leaderEmail ? (
+                      <p className="px-1 text-[11px] font-bold text-[#8E8A81]">{editingTeam.leaderEmail}</p>
+                    ) : null}
                   </div>
                   <div className="flex flex-col gap-2 sm:col-span-2">
                     <Label className="text-[12px] font-black text-[var(--brand-text)]">Team Color</Label>

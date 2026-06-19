@@ -165,6 +165,8 @@ export type LeaderboardTeam = {
   id: string;
   rank: number;
   name: string;
+  leaderUserId?: string;
+  leaderEmail?: string;
   leader: string;
   members: number;
   color: string;
@@ -514,6 +516,8 @@ function normalizeTeamStandings(teams: LeaderboardTeam[]) {
     ...team,
     id: team.id || `team-${index + 1}`,
     leader: team.leader || "Team Leader",
+    leaderUserId: team.leaderUserId ? String(team.leaderUserId) : "",
+    leaderEmail: team.leaderEmail || "",
     members: Math.max(0, Number(team.members) || 0),
     points: Math.max(0, Number(team.points) || 0),
     streak: Math.max(0, Number(team.streak) || 0),
@@ -942,7 +946,9 @@ export function AppProviders({ children }: { children: ReactNode }) {
           id: String(item.id),
           rank: index + 1,
           name: String(item.name || ""),
-          leader: "",
+          leaderUserId: String(item.leader_user_id || ""),
+          leaderEmail: String(item.leader_email || ""),
+          leader: String(item.leader_name_th || item.leader_name_en || item.leader_email || ""),
           members: Number(item.members || 0),
           color: "var(--brand-accent)",
           points: 0,
@@ -1279,6 +1285,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
         teams: normalized.map((team) => ({
           id: /^\d+$/.test(team.id) ? team.id : null,
           name: team.name,
+          leaderUserId: team.leaderUserId || null,
           status: "ACTIVE",
         })),
       }));

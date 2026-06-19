@@ -878,11 +878,16 @@ async function handleCultureRewards(request: NextRequest, method: string, match:
   if (route === "/api/safety-culture/teams") {
     if (method === "GET") {
       const rows = await queryRows<DbRow>(
-        `SELECT t.id, t.organization_id, t.name, t.status, COUNT(tm.user_id) members
+        `SELECT t.id, t.organization_id, t.leader_user_id, t.name, t.status,
+                leader.name_th leader_name_th, leader.name_en leader_name_en,
+                leader.email leader_email, leader.employee_no leader_employee_no,
+                COUNT(tm.user_id) members
          FROM teams t
+         LEFT JOIN users leader ON leader.id = t.leader_user_id AND leader.deleted_at IS NULL
          LEFT JOIN team_members tm ON tm.team_id = t.id AND tm.left_at IS NULL
          WHERE t.deleted_at IS NULL
-         GROUP BY t.id, t.organization_id, t.name, t.status
+         GROUP BY t.id, t.organization_id, t.leader_user_id, t.name, t.status,
+                  leader.name_th, leader.name_en, leader.email, leader.employee_no
          ORDER BY t.name`,
       );
       return jsonData({ items: rows.map(serializeRow) });
@@ -895,21 +900,25 @@ async function handleCultureRewards(request: NextRequest, method: string, match:
           const id = Number(team.id);
           if (Number.isFinite(id) && id > 0) {
             await connection.execute(
-              `UPDATE teams SET name = :name, organization_id = :organizationId, status = :status,
+              `UPDATE teams SET name = :name, organization_id = :organizationId,
+               leader_user_id = :leaderUserId, status = :status,
                deleted_at = NULL WHERE id = :id`,
               {
                 id,
                 name: team.name || `Team ${id}`,
                 organizationId: team.organizationId || null,
+                leaderUserId: team.leaderUserId || null,
                 status: team.status || "ACTIVE",
               },
             );
             keepIds.push(String(id));
           } else {
             const [result] = await connection.execute<ResultSetHeader>(
-              "INSERT INTO teams (organization_id, name, status) VALUES (:organizationId, :name, :status)",
+              `INSERT INTO teams (organization_id, leader_user_id, name, status)
+               VALUES (:organizationId, :leaderUserId, :name, :status)`,
               {
                 organizationId: team.organizationId || null,
+                leaderUserId: team.leaderUserId || null,
                 name: team.name || "New Team",
                 status: team.status || "ACTIVE",
               },
