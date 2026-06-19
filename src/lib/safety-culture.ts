@@ -1,11 +1,11 @@
 export const SAFETY_CULTURE_CATEGORIES = [
   "ทั้งหมด",
   "ทีมของฉัน",
+  "ทั่วไป",
   "KYT",
   "PPE",
   "Line Walk",
   "5S",
-  "ทั่วไป",
   "เคล็ดลับ",
 ] as const;
 

@@ -15,6 +15,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
+import { useSessionUser } from "@/lib/session-user";
 import {
   SAFETY_CULTURE_CATEGORIES,
   COMMENT_REACTION_CHOICES,
@@ -246,6 +247,13 @@ export default function Page() {
   const { toggleLike, addComment } = useAppActions();
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { user: sessionUser } = useSessionUser();
+
+  // มีหน่วยงาน (แผนก) จึงจะมีชิป "ทีมของฉัน" — ถ้า null/ว่าง ให้ซ่อน
+  const hasTeam = Boolean(sessionUser?.division && sessionUser.division.trim());
+  const visibleCategories = SAFETY_CULTURE_CATEGORIES.filter(
+    (category) => category !== "ทีมของฉัน" || hasTeam
+  );
 
   const [activeCategory, setActiveCategory] = useState("ทั้งหมด");
   const [commentDrafts, setCommentDrafts] = useState<Record<number, string>>({});
@@ -269,6 +277,13 @@ export default function Page() {
   const animStyle = (delay: number) => ({
     animationDelay: `${delay}s`,
   });
+
+  // ถ้าหมวดที่เลือกอยู่ถูกซ่อน (เช่น "ทีมของฉัน" ตอนไม่มีหน่วยงาน) ให้กลับไป "ทั้งหมด"
+  useEffect(() => {
+    if (!visibleCategories.includes(activeCategory as (typeof visibleCategories)[number])) {
+      setActiveCategory("ทั้งหมด");
+    }
+  }, [visibleCategories, activeCategory]);
 
   const filtered = activeCategory === "ทั้งหมด"
     ? posts
@@ -655,7 +670,7 @@ export default function Page() {
             </div>
 
             <div className="scrollbar-hide flex gap-2 overflow-x-auto py-0.5 anim-fade" style={animStyle(0.05)}>
-              {SAFETY_CULTURE_CATEGORIES.map((category) => (
+              {visibleCategories.map((category) => (
                 <button
                   key={category}
                   onClick={() => setActiveCategory(category)}

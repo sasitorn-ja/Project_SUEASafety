@@ -92,6 +92,9 @@ function SectionCard({
   );
 }
 
+// กลุ่มสำรองสำหรับ user ที่หน่วยงาน (แผนก) เป็น null/ว่าง
+const UNASSIGNED_DIVISION = "ไม่ระบุหน่วยงาน";
+
 function makeTeamDraft(index: number): LeaderboardTeam {
   return {
     id: `team-draft-${Date.now()}-${index}`,
@@ -139,10 +142,30 @@ export default function AdminLeaderboardPage() {
   const [leaderSearch, setLeaderSearch] = useState("");
   const [leaderUsers, setLeaderUsers] = useState<ApiUser[]>([]);
   const [leaderUsersLoading, setLeaderUsersLoading] = useState(false);
+  const [divisions, setDivisions] = useState<string[]>([]);
 
   useEffect(() => {
     setDraftTeams(teamStandings);
   }, [teamStandings]);
+
+  // ดึงรายชื่อหน่วยงาน (ระดับแผนก/DIVISION) จากระบบ ให้เลือกในตาราง
+  useEffect(() => {
+    void (async () => {
+      try {
+        const response = await fetch("/api/organizations?pageSize=1000", { credentials: "include", cache: "no-store" });
+        const payload = await response.json().catch(() => null) as { data?: { items?: Array<Record<string, unknown>> } } | null;
+        const items = Array.isArray(payload?.data?.items) ? payload!.data!.items! : [];
+        const names = items
+          .filter((item) => String(item.organization_type ?? item.organizationType ?? "").toUpperCase() === "DIVISION")
+          .map((item) => String(item.name_th ?? item.nameTh ?? item.name_en ?? item.nameEn ?? "").trim())
+          .filter(Boolean);
+        setDivisions(Array.from(new Set(names)));
+      } catch (error) {
+        console.error("Failed to load organizations", error);
+        setDivisions([]);
+      }
+    })();
+  }, []);
 
   useEffect(() => {
     if (!editingTeam) {
@@ -191,6 +214,17 @@ export default function AdminLeaderboardPage() {
     }
     return options;
   }, [editingTeam, leaderUsers]);
+
+  const divisionOptions = useMemo<ComboboxOption[]>(() => {
+    const options: ComboboxOption[] = divisions.map((name) => ({ value: name, label: name }));
+    // กลุ่มรองรับคนที่หน่วยงานเป็น null/ว่าง ให้คะแนนยังถูกนับได้
+    options.push({ value: UNASSIGNED_DIVISION, label: UNASSIGNED_DIVISION, keywords: ["null", "ไม่มี", "ว่าง", "unassigned"] });
+    // ให้แถวเดิมที่ชื่อหน่วยงานไม่อยู่ในรายการ ยังแสดงค่าปัจจุบันได้
+    if (editingTeam?.name && !options.some((option) => option.value === editingTeam.name)) {
+      options.unshift({ value: editingTeam.name, label: editingTeam.name });
+    }
+    return options;
+  }, [divisions, editingTeam?.name]);
 
   const commitTeams = (teams: LeaderboardTeam[]) => {
     const normalizedTeams = teams.map((team, index) => ({
@@ -421,10 +455,15 @@ export default function AdminLeaderboardPage() {
                 <div className="grid grid-cols-1 gap-3 pb-2 sm:grid-cols-2 sm:gap-4 sm:pb-1">
                   <div className="flex flex-col gap-2">
                     <Label className="text-[12px] font-black text-[var(--brand-text)]">ชื่อหน่วยงาน</Label>
-                    <Input
+                    <Combobox
                       value={editingTeam.name}
-                      onChange={(event) => updateEditingTeam("name", event.target.value)}
-                      className="h-11 rounded-[18px] border-[var(--border)] bg-white px-4 text-[14px] font-bold text-[var(--foreground)] focus-visible:border-[var(--brand-accent)] focus-visible:ring-0 sm:h-12 sm:text-[15px]"
+                      onValueChange={(name) => updateEditingTeam("name", name)}
+                      options={divisionOptions}
+                      placeholder="เลือกหน่วยงาน"
+                      searchPlaceholder="ค้นหาหน่วยงาน"
+                      emptyText="ไม่พบหน่วยงาน"
+                      className="h-11 rounded-[18px] border-[var(--border)] bg-white px-4 text-[14px] font-bold text-[var(--foreground)] sm:h-12 sm:text-[15px]"
+                      contentClassName="min-w-[300px]"
                     />
                   </div>
                   <div className="flex flex-col gap-2">
