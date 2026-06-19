@@ -43,7 +43,7 @@ export type MenuNode = {
   children: MenuNode[];
 };
 
-export const MENU_STORAGE_KEY = "suea-safety-menu-config-v3";
+export const MENU_STORAGE_KEY = "suea-safety-menu-config-v4";
 export const MENU_UPDATED_EVENT = "suea-safety-menu-updated";
 export const MAX_MENU_DEPTH = 3;
 
@@ -139,6 +139,12 @@ export function getDefaultMenu(): MenuNode[] {
       icon: "UserRound",
       children: [
         n({
+          label: "Safety Awareness",
+          href: "/safety-culture/admin-awareness",
+          icon: "ShieldCheck",
+          description: "จัดการวัน KPI และคลังคำถาม Safety Awareness",
+        }),
+        n({
           label: "Safety Effort",
           href: "/category",
           icon: "ShieldCheck",
@@ -173,12 +179,6 @@ export function getDefaultMenu(): MenuNode[] {
               href: "/safety-culture/admin-reward",
               icon: "Gift",
               description: "จัดการรางวัลและคะแนนแลก",
-            }),
-            n({
-              label: "Safety Awareness",
-              href: "/safety-culture/admin-awareness",
-              icon: "ShieldCheck",
-              description: "จัดการคลังคำถาม Safety Awareness",
             }),
           ],
         }),

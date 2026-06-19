@@ -6,12 +6,19 @@ import { isLocalDemoLoginHost } from "@/lib/session-user";
 
 const LOGIN_SESSION_KEY = "cpac-safety-login-session";
 
+function getSafeReturnTo() {
+  if (typeof window === "undefined") return "/";
+  const value = new URLSearchParams(window.location.search).get("returnTo") || "/";
+  return value.startsWith("/") && !value.startsWith("//") ? value : "/";
+}
+
 export default function Login() {
   const navigate = useNavigate();
   const ssoError = useMemo(() => {
     if (typeof window === "undefined") return "";
     return new URLSearchParams(window.location.search).get("sso_error") || "";
   }, []);
+  const returnTo = useMemo(getSafeReturnTo, []);
   const demoLoginAvailable = useMemo(() => {
     if (typeof window === "undefined") return false;
     return process.env.NODE_ENV !== "production" && isLocalDemoLoginHost(window.location.hostname);
@@ -26,7 +33,7 @@ export default function Login() {
   }, []);
 
   const handleLogin = () => {
-    window.location.assign("/api/auth/login");
+    window.location.assign(`/api/auth/login?returnTo=${encodeURIComponent(returnTo)}`);
   };
 
   const handleDemoLogin = () => {
@@ -35,7 +42,7 @@ export default function Login() {
     } catch {
       // The demo login still navigates home even without storage.
     }
-    navigate("/");
+    navigate(returnTo || "/");
   };
 
   return (
