@@ -115,13 +115,18 @@ const SELECT_POSTS_SQL = `
     (SELECT COUNT(*) FROM comments c WHERE c.post_id = p.id AND c.deleted_at IS NULL) AS comment_count,
     EXISTS(SELECT 1 FROM reactions vr WHERE vr.post_id = p.id AND vr.user_id = :viewerId) AS has_liked,
     (
-      SELECT JSON_ARRAYAGG(
-        JSON_OBJECT(
-          'id', CAST(ma.id AS CHAR),
-          'url', COALESCE(ma.public_url, CONCAT('/api/uploads/', ma.id, '/download')),
-          'type', COALESCE(ma.mime_type, 'image')
-        )
-        ORDER BY pm.sort_order, ma.id
+      SELECT CONCAT(
+        '[',
+        GROUP_CONCAT(
+          JSON_OBJECT(
+            'id', CAST(ma.id AS CHAR),
+            'url', COALESCE(ma.public_url, CONCAT('/api/uploads/', ma.id, '/download')),
+            'type', COALESCE(ma.mime_type, 'image')
+          )
+          ORDER BY pm.sort_order, ma.id
+          SEPARATOR ','
+        ),
+        ']'
       )
       FROM post_media pm
       JOIN media_assets ma ON ma.id = pm.media_asset_id
