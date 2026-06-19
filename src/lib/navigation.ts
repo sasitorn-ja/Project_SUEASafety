@@ -9,7 +9,7 @@ export const SAFETY_EFFORT_ROUTES = new Set([
 ]);
 
 export function isAdminRoute(pathname: string) {
-  return pathname === "/safety-admin" || pathname.startsWith("/safety-culture/admin-");
+  return pathname.startsWith("/safety-admin") || pathname.startsWith("/safety-culture/admin-");
 }
 
 export function isMainNavActive(pathname: string, href: string) {

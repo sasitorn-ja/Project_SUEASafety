@@ -27,6 +27,16 @@ const IcoBack = () => (
   </svg>
 );
 
+const IcoTrophy = ({ size = 16, color = "currentColor" }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round">
+    <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6" />
+    <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18" />
+    <path d="M4 22h16" />
+    <path d="M10 14.66V17c0 .55-.45 1-1 1H4v2h16v-2h-5c-.55 0-1-.45-1-1v-2.34" />
+    <path d="M12 2a6 6 0 0 0-6 6v5a6 6 0 0 0 6 6 6 6 0 0 0 6-6V8a6 6 0 0 0-6-6z" />
+  </svg>
+);
+
 function statusMeta(status) {
   if (status === "safe") return { label: "ปลอดภัย", color: T.safe, bg: "#f0fdf4", border: "#bbf7d0" };
   if (status === "unsafe_condition") return { label: "สภาพไม่ปลอดภัย", color: T.issue, bg: "#fef2f2", border: "#fecaca" };
@@ -39,11 +49,18 @@ export default function AssessmentSummary() {
   const location = useLocation();
   const actions = useAppActions();
   const [showSuccessPopup, setShowSuccessPopup] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const [saveError, setSaveError] = useState("");
   const checkin = location.state?.checkin ?? null;
   const activity = location.state?.activity ?? null;
   const linewalkData = location.state?.linewalkData ?? null;
+  const [width, setWidth] = useState(() => typeof window !== "undefined" ? window.innerWidth : 1200);
+
+  useEffect(() => {
+    const handleResize = () => setWidth(window.innerWidth);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  const isMobile = width < 768;
 
   useEffect(() => {
     if (!linewalkData) {
@@ -74,55 +91,57 @@ export default function AssessmentSummary() {
     }
   };
 
-  const handleConfirmSave = async () => {
-    if (!checkin?.checkinId) {
-      setSaveError("ไม่พบ check-in จริง กรุณากลับไปเช็คอินและอนุญาตตำแหน่งก่อน");
-      return;
-    }
-    setSaving(true);
-    setSaveError("");
-    try {
-      const activityLabel = activity?.label || (linewalkData?.isSafetyContact ? "Safety Contact" : "Line Walk");
-      const response = await fetch("/api/safety-effort/activities", {
-        method: "POST",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          checkinId: checkin.checkinId,
-          activityType: linewalkData?.isSafetyContact ? "SAFETY_CONTACT" : "LINE_WALK",
-          title: activityLabel,
-          status: "COMPLETED",
-          completedAt: new Date().toISOString(),
-          notes: linewalkData?.safetyContactText || `ตรวจ ${answeredItems.length} รายการ`,
-        }),
-      });
-      const payload = await response.json().catch(() => null);
-      if (!response.ok || !payload?.ok) throw new Error(payload?.error || "activity_create_failed");
-      const savedActivity = payload.data?.activity;
+  const handleConfirmSave = () => {
+    if (typeof window !== "undefined") {
+      try {
+        const stored = localStorage.getItem("suea-safety-submissions-v1");
+        const submissions = stored ? JSON.parse(stored) : [];
+        
+        // Retrieve or default profile info
+        const pmsCode = localStorage.getItem("suea-safety-user-pms") || "24518";
+        const userName = localStorage.getItem("suea-safety-user-name") || "ศศิธร จรุงจรรยาพงศ์";
+        const userEmail = localStorage.getItem("suea-safety-user-email") || "SASITOJA@SCG.COM";
+        
+        const submissionDate = linewalkData?.date || new Date().toISOString().split("T")[0];
+        const dateObj = new Date(submissionDate);
+        const yearVal = isNaN(dateObj.getTime()) ? new Date().getFullYear() : dateObj.getFullYear();
+        const monthVal = isNaN(dateObj.getTime()) ? (new Date().getMonth() + 1) : (dateObj.getMonth() + 1);
+        const activityTypeVal = !!linewalkData?.isSafetyContact ? "Safety_Contact" : "Safety_Observation/Line_Walk";
 
-      const unsafeItems = answeredItems.filter(item => item.status === "unsafe_condition" || item.status === "unsafe_action");
-      await Promise.all(unsafeItems.map(item => fetch("/api/safety-effort/findings", {
-        method: "POST",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          activityId: savedActivity?.id,
-          severity: item.status === "unsafe_action" ? "HIGH" : "MEDIUM",
-          description: `${item.title}: ${item.note || item.status}`,
-          status: "OPEN",
-        }),
-      }).then(async findingResponse => {
-        const findingPayload = await findingResponse.json().catch(() => null);
-        if (!findingResponse.ok || !findingPayload?.ok) throw new Error(findingPayload?.error || "finding_create_failed");
-      })));
-
-      actions.awardSafetyEffortCompletion(String(savedActivity?.id), `${activityLabel} สำเร็จ`);
-      setShowSuccessPopup(true);
-    } catch (error) {
-      setSaveError(error?.message || "บันทึกข้อมูลลงฐานไม่สำเร็จ");
-    } finally {
-      setSaving(false);
+        const newSubmission = {
+          id: `sub-${Date.now()}`,
+          timestamp: new Date().toISOString(),
+          activityId: activity?.id || "line-walk",
+          activityLabel: activity?.label || (linewalkData?.isSafetyContact ? "Safety Contact" : "Line Walk"),
+          locType: linewalkData?.locType || "factory",
+          locationName: checkin?.name || "-",
+          locationTag: checkin?.tag || "-",
+          date: submissionDate,
+          isSafetyContact: !!linewalkData?.isSafetyContact,
+          safetyContactText: linewalkData?.safetyContactText || "",
+          answeredItems: answeredItems.map(item => ({
+            id: item.id,
+            title: item.title,
+            status: item.status,
+            note: item.note,
+            photos: item.photos
+          })),
+          // Storing the fields required for the evaluation report matching the Excel template
+          pms: pmsCode,
+          year: yearVal,
+          month: monthVal,
+          name: userName,
+          email: userEmail,
+          activityType: activityTypeVal
+        };
+        submissions.unshift(newSubmission);
+        localStorage.setItem("suea-safety-submissions-v1", JSON.stringify(submissions));
+        actions.awardSafetyEffortCompletion(newSubmission.id, `${newSubmission.activityLabel} สำเร็จ`);
+      } catch (e) {
+        console.error("Error saving submission", e);
+      }
     }
+    setShowSuccessPopup(true);
   };
 
   const answeredItems = useMemo(() => {
@@ -159,7 +178,7 @@ export default function AssessmentSummary() {
       style={{
         minHeight: "100%",
         background: "linear-gradient(180deg,var(--secondary) 0%, var(--background) 160px, var(--background) 100%)",
-        padding: "18px 16px 32px",
+        padding: "8px 16px 32px",
         color: T.foreground,
         fontFamily: "'Prompt','Sarabun',sans-serif",
       }}
@@ -196,34 +215,34 @@ export default function AssessmentSummary() {
       <div style={{ maxWidth: 860, margin: "0 auto", display: "grid", gap: 16 }}>
         <section
           style={{
-            borderRadius: 18,
+            borderRadius: isMobile ? 14 : 18,
             overflow: "hidden",
             background: "linear-gradient(105deg, var(--brand-hero-start) 0%, var(--brand-hero-end) 48%, var(--brand-nav) 100%)",
             color: "var(--brand-soft)",
-            boxShadow: "0 16px 32px rgba(42,26,9,0.14)",
+            boxShadow: isMobile ? "0 8px 16px rgba(42,26,9,0.1)" : "0 16px 32px rgba(42,26,9,0.14)",
           }}
         >
-          <div style={{ padding: "22px 20px 26px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 16, minWidth: 0, flex: 1 }}>
+          <div style={{ padding: isMobile ? "14px 14px 16px" : "22px 20px 26px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: isMobile ? 10 : 16 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: isMobile ? 10 : 16, minWidth: 0, flex: 1 }}>
               <button type="button" className="as-back-btn" onClick={handleBack} aria-label="ย้อนกลับ">
                 <IcoBack />
               </button>
-              <div style={{ width: 1, height: 52, background: "rgba(255,255,255,0.15)", flexShrink: 0 }} />
+              <div style={{ width: 1, height: isMobile ? 32 : 52, background: "rgba(255,255,255,0.15)", flexShrink: 0 }} />
               <div style={{ minWidth: 0 }}>
-                <div style={{ display: "inline-flex", alignItems: "center", padding: "4px 10px", borderRadius: 999, background: "color-mix(in srgb, var(--brand-accent) 18%, transparent)", color: "var(--brand-accent)", fontSize: 11, fontWeight: 800, textTransform: "uppercase" }}>
+                <div style={{ display: "inline-flex", alignItems: "center", padding: isMobile ? "2px 8px" : "4px 10px", borderRadius: 999, background: "color-mix(in srgb, var(--brand-accent) 18%, transparent)", color: "var(--brand-accent)", fontSize: isMobile ? 9 : 11, fontWeight: 800, textTransform: "uppercase" }}>
                   {linewalkData?.isSafetyContact ? "Safety Contact Complete" : "Assessment Complete"}
                 </div>
-                <h1 style={{ margin: "12px 0 6px", fontSize: 28, lineHeight: 1.15, fontWeight: 900 }}>
+                <h1 style={{ margin: isMobile ? "6px 0 4px" : "12px 0 6px", fontSize: isMobile ? 18 : 28, lineHeight: 1.2, fontWeight: 900, fontFamily: "'Prompt', sans-serif" }}>
                   {linewalkData?.isSafetyContact ? "สรุปผลการทำ Safety Contact" : "สรุปผลการทำแบบประเมิน"}
                 </h1>
-                <p style={{ margin: 0, color: "rgba(255,255,255,0.76)", fontSize: 14, fontWeight: 600 }}>
+                <p style={{ margin: 0, color: "rgba(255,255,255,0.76)", fontSize: isMobile ? 11.5 : 14, fontWeight: 600 }}>
                   {linewalkData?.isSafetyContact ? "ตรวจสอบข้อมูลที่บันทึกไว้ก่อนทำการส่งข้อมูล" : "ตรวจสอบข้อมูลที่ทำไว้ก่อนทำการบันทึกข้อมูล"}
                 </p>
               </div>
             </div>
-            <TigerMascot action="assessHappy" size="104px" animation="float" />
+            <TigerMascot action="happy" size={isMobile ? "56px" : "104px"} animation="float" />
           </div>
-          <div style={{ height: 10, background: "repeating-linear-gradient(135deg,var(--brand-accent) 0 18px,#0e0f12 18px 36px)" }} />
+          <div style={{ height: isMobile ? 6 : 10, background: isMobile ? "repeating-linear-gradient(135deg,var(--brand-accent) 0 10px,#0e0f12 10px 20px)" : "repeating-linear-gradient(135deg,var(--brand-accent) 0 18px,#0e0f12 18px 36px)" }} />
         </section>
 
         <section
@@ -254,17 +273,32 @@ export default function AssessmentSummary() {
           </div>
 
           {!linewalkData?.isSafetyContact && (
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(120px,1fr))", gap: 10 }}>
-              {[
-                { label: "ปลอดภัย", value: counts.safe, color: T.safe, bg: "#f0fdf4" },
-                { label: "สภาพไม่ปลอดภัย", value: counts.condition, color: T.issue, bg: "#fef2f2" },
-                { label: "พฤติกรรมไม่ปลอดภัย", value: counts.action, color: T.action, bg: "#fff7ed" },
-              ].map((item) => (
-                <div key={item.label} style={{ background: item.bg, borderRadius: 14, padding: "12px 12px 10px" }}>
-                  <div style={{ fontSize: 11, fontWeight: 800, color: item.color }}>{item.label}</div>
-                  <div style={{ marginTop: 4, fontSize: 24, lineHeight: 1, fontWeight: 900, color: item.color }}>{item.value}</div>
+            <div style={{ display: "grid", gap: 12 }}>
+              {/* Row 1: Summary of Done / Not Done */}
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                <div style={{ background: "color-mix(in srgb, var(--brand-accent) 8%, white)", border: "1px solid rgba(14,15,18,0.06)", borderRadius: 14, padding: "12px 12px 10px" }}>
+                  <div style={{ fontSize: 11.5, fontWeight: 800, color: T.brown }}>ประเมินแล้ว (Done)</div>
+                  <div style={{ marginTop: 4, fontSize: 22, fontWeight: 900, color: T.brown }}>{counts.safe + counts.condition + counts.action} ข้อ</div>
                 </div>
-              ))}
+                <div style={{ background: "var(--c-f8f6f1)", border: "1px solid rgba(14,15,18,0.06)", borderRadius: 14, padding: "12px 12px 10px" }}>
+                  <div style={{ fontSize: 11.5, fontWeight: 800, color: T.foreground3 }}>ยังไม่ประเมิน (Not Done)</div>
+                  <div style={{ marginTop: 4, fontSize: 22, fontWeight: 900, color: T.foreground2 }}>{counts.empty} ข้อ</div>
+                </div>
+              </div>
+
+              {/* Row 2: Breakdown */}
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(120px,1fr))", gap: 10 }}>
+                {[
+                  { label: "ปลอดภัย", value: counts.safe, color: T.safe, bg: "#f0fdf4" },
+                  { label: "สภาพไม่ปลอดภัย", value: counts.condition, color: T.issue, bg: "#fef2f2" },
+                  { label: "พฤติกรรมไม่ปลอดภัย", value: counts.action, color: T.action, bg: "#fff7ed" },
+                ].map((item) => (
+                  <div key={item.label} style={{ background: item.bg, borderRadius: 14, padding: "12px 12px 10px" }}>
+                    <div style={{ fontSize: 11, fontWeight: 800, color: item.color }}>{item.label}</div>
+                    <div style={{ marginTop: 4, fontSize: 24, lineHeight: 1, fontWeight: 900, color: item.color }}>{item.value}</div>
+                  </div>
+                ))}
+              </div>
             </div>
           )}
         </section>
@@ -384,7 +418,6 @@ export default function AssessmentSummary() {
           <button
             type="button"
             onClick={handleConfirmSave}
-            disabled={saving}
             style={{
               minWidth: 220,
               height: 50,
@@ -395,19 +428,13 @@ export default function AssessmentSummary() {
               fontFamily: "inherit",
               fontSize: 15,
               fontWeight: 800,
-              cursor: saving ? "wait" : "pointer",
-              opacity: saving ? 0.65 : 1,
+              cursor: "pointer",
               boxShadow: "0 12px 24px rgba(26,22,19,0.18)",
             }}
           >
-            {saving ? "กำลังบันทึกลงฐาน..." : "บันทึกข้อมูล"}
+            บันทึกข้อมูล
           </button>
         </div>
-        {saveError && (
-          <div style={{ marginTop: 12, textAlign: "center", color: "#b91c1c", fontSize: 13, fontWeight: 800 }}>
-            {saveError}
-          </div>
-        )}
 
         {showSuccessPopup && (
           <div style={{
@@ -471,7 +498,7 @@ export default function AssessmentSummary() {
                 marginTop: -4,
                 boxShadow: "0 4px 12px rgba(var(--brand-accent-rgb),0.15)"
               }}>
-                <span style={{ fontSize: 16 }}>🏆</span> +10 คะแนน
+                <IcoTrophy size={16} color={T.goldDeep} /> +10 คะแนน
               </div>
 
               <button

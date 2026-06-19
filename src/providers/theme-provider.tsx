@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, type ReactNode, useContext, useMemo } from "react";
+import { createContext, type ReactNode, useContext, useEffect, useMemo, useState } from "react";
 
 export type AppTheme = "tiger" | "wangjai";
 export type MascotAction =
@@ -115,6 +115,7 @@ const WANGJAI_MASCOTS: Record<MascotAction, string> = {
 
 type ThemeContextValue = {
   theme: AppTheme;
+  toggleTheme: () => void;
   mascot: (action?: MascotAction) => string;
   mascotForTheme: (theme: AppTheme, action?: MascotAction) => string;
   themedImage: (src: string) => string;
@@ -146,17 +147,22 @@ function getThemedColor(theme: AppTheme, color?: string) {
 }
 
 export function AppThemeProvider({ children }: { children: ReactNode }) {
-  const theme: AppTheme = "wangjai";
+  const [theme, setTheme] = useState<AppTheme>("wangjai");
+
+  useEffect(() => {
+    document.documentElement.dataset.theme = theme;
+  }, [theme]);
 
   const value = useMemo<ThemeContextValue>(
     () => ({
       theme,
+      toggleTheme: () => setTheme((current) => (current === "tiger" ? "wangjai" : "tiger")),
       mascot: (action = "big") => getMascot(theme, action),
       mascotForTheme: getMascot,
       themedImage: (src) => getThemedImage(theme, src),
       themedColor: (color) => getThemedColor(theme, color),
     }),
-    []
+    [theme]
   );
 
   return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;

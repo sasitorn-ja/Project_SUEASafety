@@ -774,7 +774,7 @@ const STYLES = `
 
   .ac-section-heading {
     flex-shrink: 0;
-    padding: 12px 20px 8px;
+    padding: 0px 20px 8px;
     display: flex;
     align-items: flex-end;
     justify-content: space-between;
@@ -782,7 +782,7 @@ const STYLES = `
   }
 
   @media (max-width: 767px) {
-    .ac-section-heading { padding: 11px 16px 8px; }
+    .ac-section-heading { padding: 0px 16px 8px; }
     .ac-hdr-flex {
       flex-direction: column;
       align-items: stretch;
@@ -1157,8 +1157,8 @@ export default function Activity() {
           margin: "0 auto",
           display: "flex",
           flexDirection: "column",
-          gap: isMobile ? 0 : 18,
-          padding: isMobile ? "0 0 calc(102px + env(safe-area-inset-bottom))" : "24px 20px 40px",
+          gap: isMobile ? 12 : 16,
+          padding: isMobile ? "0px 0 calc(102px + env(safe-area-inset-bottom))" : "8px 20px 40px",
           minHeight: "100%",
         }}>
           <StepHeader />

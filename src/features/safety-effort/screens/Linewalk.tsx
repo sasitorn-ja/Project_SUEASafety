@@ -591,7 +591,7 @@ export default function Linewalk() {
         `}</style>
       )}
       <div className="lw" style={isMobileQuestionScreen ? { height:"100%", overflow:"hidden" } : undefined}>
-        <div style={{ width:"100%", maxWidth:isMobileViewport ? "100%" : 1180, margin:"0 auto", display:"flex", flexDirection:"column", gap:isMobileQuestionScreen ? 8 : (isMobileViewport ? 12 : 10), padding:isMobileQuestionScreen ? "0 0 8px" : (isMobileViewport ? "0 0 60px" : (isQuestionScreen ? "4px 20px 4px" : "12px 20px 20px")), minHeight:isMobileQuestionScreen ? "100%" : undefined, height:isMobileQuestionScreen ? "100%" : undefined, overflow:isMobileQuestionScreen ? "hidden" : undefined }}>
+        <div style={{ width:"100%", maxWidth:isMobileViewport ? "100%" : 1180, margin:"0 auto", display:"flex", flexDirection:"column", gap:isMobileQuestionScreen ? 8 : (isMobileViewport ? 12 : 16), padding:isMobileQuestionScreen ? "0 0 8px" : (isMobileViewport ? "0 0 60px" : (isQuestionScreen ? "4px 20px 4px" : "8px 20px 20px")), minHeight:isMobileQuestionScreen ? "100%" : undefined, height:isMobileQuestionScreen ? "100%" : undefined, overflow:isMobileQuestionScreen ? "hidden" : undefined }}>
 
           {/* ── HEADER ── */}
           {!isMobileQuestionScreen && <div style={{

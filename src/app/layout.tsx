@@ -40,7 +40,7 @@ export default function RootLayout({
       suppressHydrationWarning
       className={`${sarabun.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col bg-background text-foreground font-sans">
+      <body className="min-h-full flex flex-col bg-background text-foreground font-sans" suppressHydrationWarning>
         <AppThemeProvider>
           <TooltipProvider>
             <AppProviders>

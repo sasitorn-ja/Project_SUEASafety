@@ -138,12 +138,12 @@ export default function SafetyContact() {
         style={{
           minHeight: "100%",
           background: `linear-gradient(180deg, var(--secondary) 0%, ${T.background} 180px, ${T.background} 100%)`,
-          padding: isMobileInputScreen ? "8px 0" : (isMobileViewport ? "0 0 60px" : "12px 20px 20px"),
+          padding: isMobileInputScreen ? "8px 0" : (isMobileViewport ? "0 0 60px" : "8px 20px 20px"),
           color: T.foreground,
           fontFamily: "'Prompt','Sarabun',sans-serif",
         }}
       >
-        <div style={{ width: "100%", maxWidth: isMobileViewport ? "100%" : 1180, margin: "0 auto", display: "flex", flexDirection: "column", gap: isMobileInputScreen ? 8 : (isMobileViewport ? 12 : 10) }}>
+        <div style={{ width: "100%", maxWidth: isMobileViewport ? "100%" : 1180, margin: "0 auto", display: "flex", flexDirection: "column", gap: isMobileInputScreen ? 8 : (isMobileViewport ? 12 : 16) }}>
           
           {/* ── HEADER ── */}
           {!isMobileInputScreen && (

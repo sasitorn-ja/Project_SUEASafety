@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import Image from "next/image";
 import Link from "next/link";
@@ -78,7 +78,6 @@ const ENABLED_HREFS = new Set([
   "/profile",
   "/profile/activity-history",
   "/login",
-  "/dashboard-safety-effort",
 ]);
 
 function MobileConfiguredNode({
@@ -171,14 +170,14 @@ export function MobileTopbar({ hidden = false }: { hidden?: boolean }) {
   const isActive = (href: string) => isMainNavActive(pathname, href);
   const dashboardActive = pathname === "/dashboard";
   const cultureActive = CULTURE_ITEMS.some((item) => isExactNavActive(pathname, item.href));
-  const adminActive = pathname === "/safety-admin" || pathname.startsWith("/safety-culture/admin-");
+  const adminActive = pathname.startsWith("/safety-admin") || pathname.startsWith("/safety-culture/admin-");
   const profileSectionActive = pathname === "/profile" || pathname.startsWith("/profile/");
 
   const [openSections, setOpenSections] = useState<Record<string, boolean>>(() => ({
     "dashboard": dashboardActive,
     "safety-culture": cultureActive,
     admin: adminActive,
-    "admin-safety-effort": pathname === "/safety-admin",
+    "admin-safety-effort": pathname.startsWith("/safety-admin"),
     "admin-safety-culture": pathname.startsWith("/safety-culture/admin-"),
     profile: profileSectionActive,
   }));

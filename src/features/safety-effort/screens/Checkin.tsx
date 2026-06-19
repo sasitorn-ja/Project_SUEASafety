@@ -1672,8 +1672,8 @@ export default function Checkin() {
           margin: "0 auto",
           display: "flex",
           flexDirection: "column",
-          gap: 18,
-          padding: "24px 20px 40px",
+          gap: 16,
+          padding: "8px 20px 40px",
         }}>
           <StepHeader />
           <div style={{

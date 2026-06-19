@@ -1,7 +1,8 @@
 // @ts-nocheck
 import { useEffect, useRef, useState } from "react";
 import dynamic from "next/dynamic";
-import { Route, Routes, useLocation, useNavigate } from "./lib/router-compat";
+import { Navigate, Route, Routes, useLocation, useNavigate } from "./lib/router-compat";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { useAppTheme } from "@/providers/theme-provider";
 
 const screenLoading = (label) => (
@@ -60,6 +61,27 @@ const SafetyAdmin = dynamic(() => import("@/features/safety-effort/screens/Safet
   loading: () => screenLoading("หน้า Admin"),
 });
 
+const SafetyAdminRole = dynamic(() => import("@/features/safety-effort/screens/SafetyAdminRole"), {
+  ssr: false,
+  loading: () => screenLoading("หน้าจัดการบทบาทผู้ใช้งาน"),
+});
+
+const SafetyAdminReportHistory = dynamic(() => import("@/features/safety-effort/screens/SafetyAdminReportHistory"), {
+  ssr: false,
+  loading: () => screenLoading("หน้าประวัติการส่งรายงาน"),
+});
+
+const SafetyAdminExportReport = dynamic(() => import("@/features/safety-effort/screens/SafetyAdminExportReport"), {
+  ssr: false,
+  loading: () => screenLoading("หน้าส่งออกรายงาน"),
+});
+
+const SafetyAdminManageData = dynamic(() => import("@/features/safety-effort/screens/SafetyAdminManageData"), {
+  ssr: false,
+  loading: () => screenLoading("หน้าจัดการข้อมูล"),
+});
+
+
 const DashboardSafetyEffort = dynamic(() => import("@/features/safety-effort/screens/Dashboard Safety Effort"), {
   ssr: false,
   loading: () => screenLoading("หน้าแดชบอร์ดความปลอดภัย"),
@@ -104,9 +126,9 @@ const NAV_ITEMS = [
 const SECTION_ORDER = ["SUEA SAFETY", "Operations"];
 
 // Routes that belong to the "safety-effort" nav section
-const SAFETY_EFFORT_ROUTES = ["/category", "/checkin", "/activity", "/create-post", "/linewalk", "/safety-contact", "/assessment-summary", "/dashboard-safety-effort", "/dashboard"];
+const SAFETY_EFFORT_ROUTES = ["/category", "/checkin", "/activity", "/create-post", "/linewalk", "/safety-contact", "/assessment-summary"];
 // Routes where main content is fixed-height (no outer scroll)
-const FIXED_CONTENT_ROUTES = ["/safety-admin", "/checkin"];
+const FIXED_CONTENT_ROUTES = ["/safety-admin", "/safety-admin/role", "/safety-admin/export-report", "/safety-admin/manage-data", "/checkin"];
 
 // ─────────────────────────────────────────────────────────
 // INLINE SVG ICONS — no external dependency
@@ -137,7 +159,7 @@ function Logo({ size = 28 }) {
   const { mascot, theme } = useAppTheme();
   return (
     <img
-      src={mascot("logoApp")}
+      src={mascot("logo")}
       alt={theme === "wangjai" ? "น้องวางใจ Safety" : "SUEA Safety tiger"}
       style={{
         width: size, height: size,
@@ -556,6 +578,7 @@ function DesktopNavbar({ activeId, onNav, navVisible }) {
 
       {/* Right part: Notification + Login/CTA */}
       <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+        <ThemeToggle compact />
         {/* Notification Bell */}
         <button
           style={{
@@ -663,6 +686,7 @@ function MobileTopBar({ visible }) {
 
         {/* Right: Search and Notification */}
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <ThemeToggle compact />
           <button style={{ background: "transparent", border: "none", color: "#ffffff", padding: 0, cursor: "pointer", display: "flex", alignItems: "center" }}>
             <IcoSearch size={18} />
           </button>
@@ -759,8 +783,11 @@ function AppRoutes({ onScroll }) {
         <Route path="safety-contact" element={<SafetyContact />} />
         <Route path="assessment-summary" element={<AssessmentSummary />} />
         <Route path="safety-admin" element={<SafetyAdmin />} />
-        <Route path="dashboard-safety-effort" element={<DashboardSafetyEffort />} />
-        <Route path="dashboard" element={<DashboardSafetyEffort />} />
+        <Route path="safety-admin/role" element={<SafetyAdminRole />} />
+        <Route path="safety-admin/report-history" element={<SafetyAdminReportHistory />} />
+        <Route path="safety-admin/export-report" element={<SafetyAdminExportReport />} />
+        <Route path="safety-admin/manage-data" element={<SafetyAdminManageData />} />
+        <Route path="dashboard-safety-effort" element={<Navigate to="/dashboard" replace />} />
         <Route path="login" element={<Login />} />
       </Routes>
     );
@@ -772,12 +799,13 @@ function AppRoutes({ onScroll }) {
 export default function App() {
   const location      = useLocation();
   const { pathname }  = location;
-  const [width,        setWidth]       = useState(typeof window !== "undefined" ? window.innerWidth : 1200);
+  const [width,        setWidth]       = useState(1200);
   const [navVisible,   setNavVisible]  = useState(true);
   const mainRef        = useRef(null);
   const lastScrollY    = useRef(0);
 
   useEffect(() => {
+    setWidth(window.innerWidth);
     const onResize = () => setWidth(window.innerWidth);
     window.addEventListener("resize", onResize);
     return () => window.removeEventListener("resize", onResize);
@@ -797,6 +825,8 @@ export default function App() {
   const isLinewalkCalendarDesktop = pathname === "/linewalk" && !isMobile && !isLinewalkQuestionScreen;
   const isFixedContent          = (FIXED_CONTENT_ROUTES.includes(pathname) && (!isMobile || pathname !== "/safety-admin")) || isLinewalkQuestionScreen || isLinewalkCalendarDesktop;
   const hideBottomNav           = isLinewalkQuestionScreen;
+  const GAP_PAGES = new Set(["/category", "/assessment-summary"]);
+  const hasGap = GAP_PAGES.has(pathname);
   // Unified scroll-hide handler — threshold 10px (mobile + desktop)
   function handleScroll(e) {
     if (pathname === "/checkin") return;
@@ -819,7 +849,7 @@ export default function App() {
             onScroll={handleScroll}
               style={{
                 position: "absolute", inset: 0,
-                paddingTop: isLoginPage ? 0 : 48,
+                paddingTop: isLoginPage ? 0 : (hasGap ? "calc(var(--mobile-topbar-h, 66px) + 14px)" : "var(--mobile-topbar-h, 66px)"),
                 paddingBottom: isLoginPage
                   ? 0
                   : (isLinewalkQuestionScreen
@@ -845,7 +875,7 @@ export default function App() {
       <div style={{ height: "100vh", overflow: "hidden", background: T.background, fontFamily: "'Prompt','Sarabun',sans-serif", color: T.foreground }}>
         <div style={{
           position: "absolute", inset: 0,
-          paddingTop: isLoginPage ? 0 : 68,
+          paddingTop: isLoginPage ? 0 : (hasGap ? "calc(var(--topbar-h, 70px) + 8px)" : "var(--topbar-h, 70px)"),
           display: "flex", flexDirection: "column",
         }}>
           <main

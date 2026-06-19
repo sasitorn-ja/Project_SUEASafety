@@ -26,7 +26,8 @@ export function AppShell({ children }: { children: ReactNode }) {
   const { dismissNotification } = useAppActions();
   const pathname = usePathname() ?? "";
   const router = useRouter();
-  const isSafetyEffort = SAFETY_EFFORT_ROUTES.has(pathname) || pathname === "/safety-admin";
+  const isSafetyEffort = SAFETY_EFFORT_ROUTES.has(pathname) || pathname.startsWith("/safety-admin");
+  console.log("DEBUG AppShell path:", pathname, "isSafetyEffort:", isSafetyEffort);
   const [loginChecked, setLoginChecked] = useState(false);
   const isSafetyCulturePost = pathname === "/safety-culture/post";
   const [sessionUser, setSessionUser] = useState<SessionUser | null>(null);
@@ -224,7 +225,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 
       {!isSafetyCulturePost && <MobileBottomNav hidden={btmHidden} />}
 
-      {!isSafetyEffort && !isSafetyCulturePost && <FloatingSafetyAssistant />}
+      {!isSafetyEffort && !isSafetyCulturePost && pathname !== "/dashboard" && <FloatingSafetyAssistant />}
 
       <SafetyAwarenessGate />
     </div>

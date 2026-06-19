@@ -68,7 +68,7 @@ const PROFILE_ITEMS = [
   },
 ] as const;
 
-const ENABLED_HREFS = new Set(["/", "/dashboard", "/category", "/were-ok", "/work-permit", "/safety-culture", "/safety-admin", "/notifications", "/login", "/dashboard-safety-effort"]);
+const ENABLED_HREFS = new Set(["/", "/dashboard", "/category", "/were-ok", "/work-permit", "/safety-culture", "/safety-admin", "/notifications", "/login"]);
 
 function ConfiguredMenuLink({
   node,

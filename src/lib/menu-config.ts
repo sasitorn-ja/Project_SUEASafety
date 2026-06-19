@@ -20,6 +20,7 @@ import {
   BookOpen,
   Link2,
   UserCog,
+  Download,
   type LucideIcon,
 } from "lucide-react";
 
@@ -70,6 +71,7 @@ export const MENU_ICONS: Record<string, LucideIcon> = {
   BookOpen,
   Link2,
   UserCog,
+  Download,
 };
 
 export const MENU_ICON_NAMES = Object.keys(MENU_ICONS);
@@ -155,6 +157,24 @@ export function getDefaultMenu(): MenuNode[] {
               icon: "Settings2",
               description: "จัดการแบบประเมินและรายการตรวจ Safety Effort",
             }),
+            n({
+              label: "ประวัติส่งรายงาน",
+              href: "/safety-admin/report-history",
+              icon: "ClipboardCheck",
+              description: "ประวัติส่งรายงาน Linewalk / Safety Contact",
+            }),
+            n({
+              label: "ส่งออกรายงาน",
+              href: "/safety-admin/export-report",
+              icon: "Download",
+              description: "ส่งออกรายงานในรูปแบบ Excel",
+            }),
+            n({
+              label: "จัดการข้อมูล",
+              href: "/safety-admin/manage-data",
+              icon: "Settings2",
+              description: "จัดการข้อมูลโรงงาน สำนักงาน และไซต์งาน",
+            }),
           ],
         }),
         n({
@@ -179,6 +199,19 @@ export function getDefaultMenu(): MenuNode[] {
               href: "/safety-culture/admin-reward",
               icon: "Gift",
               description: "จัดการรางวัลและคะแนนแลก",
+            }),
+          ],
+        }),
+        n({
+          label: "Role",
+          href: "/safety-admin/role",
+          icon: "UsersRound",
+          children: [
+            n({
+              label: "User Roles",
+              href: "/safety-admin/role",
+              icon: "UserRound",
+              description: "จัดการบทบาทและสิทธิ์การใช้งานของบุคลากร",
             }),
           ],
         }),
@@ -221,7 +254,97 @@ export function loadMenu(): MenuNode[] {
     const stored = window.localStorage.getItem(MENU_STORAGE_KEY);
     if (stored) {
       const parsed = normalizeMenu(JSON.parse(stored));
-      if (parsed && parsed.length > 0) return parsed;
+      if (parsed && parsed.length > 0) {
+        // Migration: ensure "Role" node and "ประวัติส่งรายงาน" node exist under "Admin" section
+        const adminNode = parsed.find(
+          (node) => node.href === "/safety-admin" || node.label.trim().toLowerCase() === "admin"
+        );
+        if (adminNode) {
+          const n = (p: Partial<MenuNode>) => createMenuNode(p);
+          let updated = false;
+
+          const hasRole = adminNode.children.some(
+            (child) => child.href === "/safety-admin/role" || child.label.trim().toLowerCase() === "role"
+          );
+          if (!hasRole) {
+            adminNode.children.push(
+              n({
+                label: "Role",
+                href: "/safety-admin/role",
+                icon: "UsersRound",
+                children: [
+                  n({
+                    label: "User Roles",
+                    href: "/safety-admin/role",
+                    icon: "UserRound",
+                    description: "จัดการบทบาทและสิทธิ์การใช้งานของบุคลากร",
+                  }),
+                ],
+              })
+            );
+            updated = true;
+          }
+
+          const safetyEffortNode = adminNode.children.find(
+            (child) => child.href === "/category" || child.label.trim().toLowerCase() === "safety effort"
+          );
+          if (safetyEffortNode) {
+            const hasReportHistory = safetyEffortNode.children.some(
+              (child) => child.href === "/safety-admin/report-history" || child.label.includes("ประวัติส่งรายงาน")
+            );
+            if (!hasReportHistory) {
+              safetyEffortNode.children.push(
+                n({
+                  label: "ประวัติส่งรายงาน",
+                  href: "/safety-admin/report-history",
+                  icon: "ClipboardCheck",
+                  description: "ประวัติส่งรายงาน Linewalk / Safety Contact",
+                })
+              );
+              updated = true;
+            }
+
+            const hasExportReport = safetyEffortNode.children.some(
+              (child) => child.href === "/safety-admin/export-report" || child.label.includes("ส่งออกรายงาน")
+            );
+            if (!hasExportReport) {
+              safetyEffortNode.children.push(
+                n({
+                  label: "ส่งออกรายงาน",
+                  href: "/safety-admin/export-report",
+                  icon: "Download",
+                  description: "ส่งออกรายงานในรูปแบบ Excel",
+                })
+              );
+              updated = true;
+            }
+
+            const hasManageData = safetyEffortNode.children.some(
+              (child) => child.href === "/safety-admin/manage-data" || child.label.includes("จัดการข้อมูล")
+            );
+            if (!hasManageData) {
+              safetyEffortNode.children.push(
+                n({
+                  label: "จัดการข้อมูล",
+                  href: "/safety-admin/manage-data",
+                  icon: "Settings2",
+                  description: "จัดการข้อมูลโรงงาน สำนักงาน และไซต์งาน",
+                })
+              );
+              updated = true;
+            }
+          }
+
+          if (updated) {
+            try {
+              window.localStorage.setItem(MENU_STORAGE_KEY, JSON.stringify(parsed));
+            } catch (e) {
+              /* ignore quota errors */
+            }
+          }
+        }
+        return parsed;
+      }
     }
   } catch {
     /* fallback to default */

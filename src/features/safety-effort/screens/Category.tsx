@@ -16,7 +16,6 @@ import {
 } from "lucide-react";
 import TigerMascot from "@/components/TigerMascot";
 import { useAppTheme } from "@/providers/theme-provider";
-import { useAppState } from "@/providers/app-providers";
 
 const T = {
   background: "var(--background)",
@@ -106,8 +105,8 @@ function SectionTitle({ eyebrow, title, right }) {
       <div style={{ minWidth: 0 }}>
         <div
           style={{
-            color: T.foreground3,
-            fontSize: 11,
+            color: "var(--brand-muted-text)",
+            fontSize: 10.5,
             fontWeight: 800,
             letterSpacing: "0.12em",
             textTransform: "uppercase",
@@ -117,11 +116,11 @@ function SectionTitle({ eyebrow, title, right }) {
         </div>
         <h2
           style={{
-            margin: "4px 0 0",
-            color: T.foreground,
-            fontSize: 22,
+            margin: "2px 0 0",
+            color: "var(--brand-nav)",
+            fontSize: "15px",
             lineHeight: 1.25,
-            fontWeight: 800,
+            fontWeight: 900,
           }}
         >
           {title}
@@ -132,32 +131,32 @@ function SectionTitle({ eyebrow, title, right }) {
   );
 }
 
-function Timeline({ steps, variant }) {
+function Timeline({ steps, variant, isDesktop = true }) {
   const isAudit = variant === "A";
   const accent = isAudit ? T.primary : T.foreground;
 
   return (
-    <div style={{ display: "grid", gap: 10 }}>
+    <div style={{ display: "grid", gap: isDesktop ? 10 : 8 }}>
       {steps.map((step, index) => (
         <div
           key={step.name}
           style={{
             display: "grid",
-            gridTemplateColumns: "30px minmax(0,1fr)",
-            gap: 10,
+            gridTemplateColumns: isDesktop ? "30px minmax(0,1fr)" : "22px minmax(0,1fr)",
+            gap: isDesktop ? 10 : 8,
             alignItems: "start",
           }}
         >
           <div
             style={{
-              width: 30,
-              height: 30,
-              borderRadius: 10,
+              width: isDesktop ? 30 : 22,
+              height: isDesktop ? 30 : 22,
+              borderRadius: isDesktop ? 10 : 7,
               display: "grid",
               placeItems: "center",
               color: isAudit ? T.foreground : T.card,
               background: accent,
-              fontSize: 12,
+              fontSize: isDesktop ? 12 : 10,
               fontWeight: 900,
               boxShadow: isAudit ? "0 8px 16px color-mix(in srgb, var(--brand-accent) 24%, transparent)" : "none",
             }}
@@ -165,10 +164,10 @@ function Timeline({ steps, variant }) {
             {index + 1}
           </div>
           <div style={{ minWidth: 0 }}>
-            <div style={{ color: T.foreground, fontSize: 14, fontWeight: 800, lineHeight: 1.35 }}>
+            <div style={{ color: T.foreground, fontSize: isDesktop ? 14 : 12.5, fontWeight: 800, lineHeight: 1.35 }}>
               {step.name}
             </div>
-            <div style={{ color: T.foreground3, fontSize: 12.5, lineHeight: 1.55, marginTop: 2 }}>
+            <div style={{ color: T.foreground3, fontSize: isDesktop ? 12.5 : 11, lineHeight: isDesktop ? 1.55 : 1.35, marginTop: 2 }}>
               {step.desc}
             </div>
           </div>
@@ -178,7 +177,7 @@ function Timeline({ steps, variant }) {
   );
 }
 
-function CategoryCard({ cat, isOpen, onToggle, onStart }) {
+function CategoryCard({ cat, onStart, isDesktop = true }) {
   const isAudit = cat.id === "A";
   const Icon = isAudit ? ShieldCheck : UsersRound;
 
@@ -186,164 +185,121 @@ function CategoryCard({ cat, isOpen, onToggle, onStart }) {
     <article
       style={{
         background: T.card,
-        border: `1px solid ${isOpen ? "color-mix(in srgb, var(--brand-accent) 54%, transparent)" : T.border}`,
+        border: `1px solid color-mix(in srgb, var(--brand-accent) 54%, transparent)`,
         borderRadius: T.radius,
-        boxShadow: isOpen
-          ? "0 16px 34px var(--brand-shadow)"
-          : "0 8px 22px rgba(22,63,104,0.06)",
+        boxShadow: "0 16px 34px var(--brand-shadow)",
         overflow: "hidden",
       }}
     >
-      <button
-        type="button"
-        onClick={onToggle}
+      <div
         style={{
-          width: "100%",
-          border: 0,
-          background: "transparent",
-          cursor: "pointer",
-          padding: 0,
-          textAlign: "left",
-          fontFamily: "inherit",
-          color: "inherit",
+          display: "grid",
+          gridTemplateColumns: isDesktop ? "52px minmax(0,1fr)" : "38px minmax(0,1fr)",
+          gap: isDesktop ? 14 : 10,
+          alignItems: "start",
+          padding: isDesktop ? 18 : 12,
         }}
       >
         <div
           style={{
+            width: isDesktop ? 52 : 38,
+            height: isDesktop ? 52 : 38,
+            borderRadius: isDesktop ? 14 : 10,
             display: "grid",
-            gridTemplateColumns: "52px minmax(0,1fr) auto",
-            gap: 14,
-            alignItems: "start",
-            padding: 18,
+            placeItems: "center",
+            background: isAudit ? T.primarySoft : T.surface2,
+            color: isAudit ? T.warning : T.foreground,
+            border: `1px solid ${isAudit ? "color-mix(in srgb, var(--brand-accent) 42%, transparent)" : T.border}`,
           }}
         >
-          <div
-            style={{
-              width: 52,
-              height: 52,
-              borderRadius: 14,
-              display: "grid",
-              placeItems: "center",
-              background: isAudit ? T.primarySoft : T.surface2,
-              color: isAudit ? T.warning : T.foreground,
-              border: `1px solid ${isAudit ? "color-mix(in srgb, var(--brand-accent) 42%, transparent)" : T.border}`,
-            }}
-          >
-            <Icon size={26} strokeWidth={2.2} />
-          </div>
-
-          <div style={{ minWidth: 0 }}>
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 8,
-                flexWrap: "wrap",
-              }}
-            >
-              <h3
-                style={{
-                  margin: 0,
-                  color: T.foreground,
-                  fontSize: 17,
-                  lineHeight: 1.25,
-                  fontWeight: 900,
-                }}
-              >
-                {cat.title}
-              </h3>
-              <span
-                style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: 4,
-                  padding: "3px 8px",
-                  borderRadius: 999,
-                  background: isAudit ? T.primary : T.foreground,
-                  color: isAudit ? T.foreground : T.card,
-                  fontSize: 11,
-                  fontWeight: 900,
-                }}
-              >
-                <Star size={11} fill="currentColor" strokeWidth={1.5} />
-                +{cat.points} pts
-              </span>
-            </div>
-            <p
-              style={{
-                margin: "7px 0 0",
-                color: T.foreground3,
-                fontSize: 13.5,
-                lineHeight: 1.55,
-              }}
-            >
-              {cat.subtitle}
-            </p>
-          </div>
-
-          <div
-            style={{
-              width: 34,
-              height: 34,
-              borderRadius: 999,
-              display: "grid",
-              placeItems: "center",
-              background: isOpen ? T.primary : T.surface2,
-              color: T.foreground,
-              transform: isOpen ? "rotate(180deg)" : "rotate(0deg)",
-              transition: "transform 180ms ease, background 180ms ease",
-            }}
-          >
-            <ChevronDown size={18} strokeWidth={2.6} />
-          </div>
+          <Icon size={isDesktop ? 26 : 20} strokeWidth={2.2} />
         </div>
-      </button>
+
+        <div style={{ minWidth: 0 }}>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+              flexWrap: "wrap",
+            }}
+          >
+            <h3
+              style={{
+                margin: 0,
+                color: T.foreground,
+                fontSize: isDesktop ? 17 : 14.5,
+                lineHeight: 1.25,
+                fontWeight: 900,
+              }}
+            >
+              {cat.title}
+            </h3>
+            <span
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 4,
+                padding: isDesktop ? "3px 8px" : "2px 6px",
+                borderRadius: 999,
+                background: isAudit ? T.primary : T.foreground,
+                color: isAudit ? T.foreground : T.card,
+                fontSize: isDesktop ? 11 : 9.5,
+                fontWeight: 900,
+              }}
+            >
+              <Star size={isDesktop ? 11 : 9.5} fill="currentColor" strokeWidth={1.5} />
+              +{cat.points} pts
+            </span>
+          </div>
+          <p
+            style={{
+              margin: isDesktop ? "7px 0 0" : "4px 0 0",
+              color: T.foreground3,
+              fontSize: isDesktop ? 13.5 : 12,
+              lineHeight: 1.55,
+            }}
+          >
+            {cat.subtitle}
+          </p>
+        </div>
+      </div>
 
       <div
         style={{
-          display: "grid",
-          gridTemplateRows: isOpen ? "1fr" : "0fr",
-          transition: "grid-template-rows 260ms ease",
+          borderTop: `1px solid ${T.border}`,
+          background: isAudit
+            ? "linear-gradient(180deg, color-mix(in srgb, var(--brand-soft) 68%, white) 0%, var(--secondary) 100%)"
+            : "linear-gradient(180deg, var(--c-f8f2e7) 0%, var(--c-eee6d6) 100%)",
+          padding: isDesktop ? 18 : 12,
         }}
       >
-        <div style={{ overflow: "hidden" }}>
-          <div
-            style={{
-              borderTop: `1px solid ${T.border}`,
-              background: isAudit
-                ? "linear-gradient(180deg, color-mix(in srgb, var(--brand-soft) 68%, white) 0%, var(--secondary) 100%)"
-                : "linear-gradient(180deg, var(--c-f8f2e7) 0%, var(--c-eee6d6) 100%)",
-              padding: 18,
-            }}
-          >
-            <Timeline steps={cat.steps} variant={cat.id} />
-            <button
-              type="button"
-              onClick={onStart}
-              style={{
-                width: "100%",
-                marginTop: 18,
-                minHeight: 44,
-                border: `1px solid ${isAudit ? "color-mix(in srgb, var(--brand-accent) 46%, transparent)" : T.foreground}`,
-                borderRadius: 12,
-                background: isAudit ? T.primary : T.foreground,
-                color: isAudit ? T.primaryForeground : T.card,
-                display: "inline-flex",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: 8,
-                fontFamily: "inherit",
-                fontSize: 14,
-                fontWeight: 900,
-                cursor: "pointer",
-                boxShadow: isAudit ? "0 12px 18px color-mix(in srgb, var(--brand-accent) 24%, transparent)" : "none",
-              }}
-            >
-              เริ่มกิจกรรม
-              <ArrowRight size={17} strokeWidth={2.8} />
-            </button>
-          </div>
-        </div>
+        <Timeline steps={cat.steps} variant={cat.id} isDesktop={isDesktop} />
+        <button
+          type="button"
+          onClick={onStart}
+          style={{
+            width: "100%",
+            marginTop: isDesktop ? 18 : 12,
+            minHeight: isDesktop ? 44 : 36,
+            border: `1px solid ${isAudit ? "color-mix(in srgb, var(--brand-accent) 46%, transparent)" : T.foreground}`,
+            borderRadius: 12,
+            background: isAudit ? T.primary : T.foreground,
+            color: isAudit ? T.primaryForeground : T.card,
+            display: "inline-flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 8,
+            fontFamily: "inherit",
+            fontSize: isDesktop ? 14 : 12.5,
+            fontWeight: 900,
+            cursor: "pointer",
+            boxShadow: isAudit ? "0 12px 18px color-mix(in srgb, var(--brand-accent) 24%, transparent)" : "none",
+          }}
+        >
+          เริ่มกิจกรรม
+          <ArrowRight size={isDesktop ? 17 : 14} strokeWidth={2.8} />
+        </button>
       </div>
     </article>
   );
@@ -365,7 +321,7 @@ function Hero({ isDesktop }) {
         background:
           "linear-gradient(105deg, var(--brand-hero-start) 0%, var(--brand-hero-end) 48%, var(--brand-nav) 100%)",
         color: "var(--brand-soft)",
-        minHeight: isDesktop ? 220 : 280,
+        minHeight: isDesktop ? 220 : 140,
         boxShadow: "0 20px 42px var(--brand-shadow)",
       }}
     >
@@ -400,14 +356,14 @@ function Hero({ isDesktop }) {
           gap: isDesktop ? 24 : 12,
           alignItems: "center",
           minHeight: "inherit",
-          padding: isDesktop ? "28px 34px 34px" : "22px 18px 100px",
+          padding: isDesktop ? "28px 34px 34px" : "14px 14px 20px",
         }}
       >
-        <div style={{ minWidth: 0 }}>
+        <div style={{ minWidth: 0, paddingRight: isDesktop ? 0 : 80 }}>
           <h1
             style={{
               margin: 0,
-              fontSize: isDesktop ? 44 : 34,
+              fontSize: isDesktop ? 44 : 24,
               lineHeight: 1.05,
               fontWeight: 900,
               color: "#ffffff",
@@ -418,10 +374,10 @@ function Hero({ isDesktop }) {
           <p
             style={{
               maxWidth: 650,
-              margin: "12px 0 0",
+              margin: isDesktop ? "12px 0 0" : "6px 0 0",
               color: "rgba(255,248,230,0.86)",
-              fontSize: isDesktop ? 15.5 : 14,
-              lineHeight: 1.75,
+              fontSize: isDesktop ? 15.5 : 11.5,
+              lineHeight: isDesktop ? 1.75 : 1.4,
               fontWeight: 600,
             }}
           >
@@ -434,11 +390,11 @@ function Hero({ isDesktop }) {
           onMouseLeave={() => setIsHovered(false)}
           style={{
             position: isDesktop ? "relative" : "absolute",
-            right: isDesktop ? "auto" : 12,
-            bottom: isDesktop ? "auto" : 8,
+            right: isDesktop ? "auto" : 8,
+            bottom: isDesktop ? "auto" : 14,
             justifySelf: "center",
             alignSelf: "end",
-            width: isDesktop ? 230 : 150,
+            width: isDesktop ? 230 : 90,
             display: "flex",
             alignItems: "flex-end",
             justifyContent: "center",
@@ -446,10 +402,10 @@ function Hero({ isDesktop }) {
           }}
         >
           <img
-            src={isHovered ? mascot("thumbs-up") : mascot("clipboardHover")}
+            src={isHovered ? mascot("thumbs-up") : mascot("clipboard")}
             alt={theme === "wangjai" ? "น้องวางใจ Safety mascot" : "SUEA tiger mascot"}
             style={{
-              width: isDesktop ? "185px" : "120px",
+              width: isDesktop ? "185px" : "70px",
               height: "auto",
               objectFit: "contain",
               filter: "drop-shadow(0 14px 24px rgba(0,0,0,0.22))",
@@ -465,19 +421,10 @@ function Hero({ isDesktop }) {
 
 export default function Category() {
   const navigate = useNavigate();
-  const { userActivityHistory } = useAppState();
-  const [open, setOpen] = useState("A");
-
-  // จำนวนการตรวจ Safety Effort ที่ทำสำเร็จในเดือนปัจจุบัน (นับจากกิจกรรมจริงของผู้ใช้)
-  const now = new Date();
-  const monthlyInspectionCount = userActivityHistory.filter((item) => {
-    if (item.type !== "safety-effort") return false;
-    const d = new Date(item.occurredAt);
-    return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth();
-  }).length;
-  const [width, setWidth] = useState(typeof window !== "undefined" ? window.innerWidth : 1200);
+  const [width, setWidth] = useState(1200);
 
   useEffect(() => {
+    setWidth(window.innerWidth);
     const onResize = () => setWidth(window.innerWidth);
     window.addEventListener("resize", onResize);
     return () => window.removeEventListener("resize", onResize);
@@ -494,23 +441,23 @@ export default function Category() {
           "linear-gradient(180deg, var(--secondary) 0%, var(--background) 170px, var(--background) 100%)",
         fontFamily: "'Prompt','Sarabun','TH Sarabun New',Helvetica,sans-serif",
         color: T.foreground,
-        padding: `18px ${px}px ${width >= 768 ? 32 : 24}px`,
+        padding: `8px ${px}px ${width >= 768 ? 32 : 24}px`,
       }}
     >
-      <div style={{ maxWidth: 1180, margin: "0 auto", display: "grid", gap: 18 }}>
+      <div style={{ maxWidth: 1180, margin: "0 auto", display: "grid", gap: isDesktop ? 16 : 12 }}>
         <Hero isDesktop={width >= 768} />
 
         <div
           style={{
             display: "grid",
             gridTemplateColumns: isDesktop ? "minmax(0, 1.6fr) minmax(320px, 1fr)" : "1fr",
-            gap: 20,
+            gap: isDesktop ? 20 : 12,
             alignItems: "start",
             width: "100%",
           }}
         >
           {/* Left Column: Categories */}
-          <section style={{ display: "grid", gap: 14, minWidth: 0 }}>
+          <section style={{ display: "grid", gap: isDesktop ? 10 : 8, minWidth: 0 }}>
             <SectionTitle
               eyebrow="Choose activity"
               title="เลือกหมวดกิจกรรม"
@@ -521,14 +468,13 @@ export default function Category() {
               }
             />
 
-            <div style={{ display: "grid", gap: 14 }}>
+            <div style={{ display: "grid", gap: isDesktop ? 16 : 12 }}>
               {categories.map((cat) => (
                 <CategoryCard
                   key={cat.id}
                   cat={cat}
-                  isOpen={open === cat.id}
-                  onToggle={() => setOpen((prev) => (prev === cat.id ? null : cat.id))}
                   onStart={() => navigate(cat.id === "A" ? "/activity" : "/create-post")}
+                  isDesktop={isDesktop}
                 />
               ))}
             </div>
@@ -563,7 +509,7 @@ export default function Category() {
               <div style={{ display: "grid", gap: 12 }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                   <span style={{ fontSize: 13, color: T.foreground2, fontWeight: 600 }}>การตรวจเดือนนี้สำเร็จแล้ว:</span>
-                  <span style={{ fontSize: 14, fontWeight: 800, color: T.foreground }}>{monthlyInspectionCount} ครั้ง</span>
+                  <span style={{ fontSize: 14, fontWeight: 800, color: T.foreground }}>9 ครั้ง</span>
                 </div>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                   <span style={{ fontSize: 13, color: T.foreground2, fontWeight: 600 }}>ระดับความเสี่ยงภาพรวม:</span>
@@ -571,13 +517,13 @@ export default function Category() {
                     style={{
                       fontSize: 11.5,
                       fontWeight: 800,
-                      color: monthlyInspectionCount > 0 ? "#1f7a55" : T.foreground3,
-                      background: monthlyInspectionCount > 0 ? "#eefaf4" : "var(--secondary)",
+                      color: "#1f7a55",
+                      background: "#eefaf4",
                       padding: "4px 8px",
                       borderRadius: 6,
                     }}
                   >
-                    {monthlyInspectionCount > 0 ? "ต่ำมาก" : "ยังไม่มีข้อมูล"}
+                    ต่ำมาก
                   </span>
                 </div>
               </div>

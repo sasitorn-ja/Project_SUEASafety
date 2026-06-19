@@ -7,18 +7,33 @@ const globalForDb = globalThis as typeof globalThis & {
 };
 
 export function getDatabaseUrl() {
-  const url = process.env.DATABASE_URL;
-  if (!url) {
-    throw new Error("DATABASE_URL is not configured for CPAC_Safety.");
-  }
-  return url;
+  return process.env.DATABASE_URL || "";
 }
 
 export function isDatabaseConfigured() {
   return Boolean(process.env.DATABASE_URL?.trim());
 }
 
-export function getDbPool() {
+export function isDbConfigured() {
+  return isDatabaseConfigured();
+}
+
+export function getDbPool(): Pool {
+  if (!isDbConfigured()) {
+    // Return a dummy pool if DB is not configured
+    return {
+      query: async () => [[]],
+      getConnection: async () => ({
+        beginTransaction: async () => {},
+        commit: async () => {},
+        rollback: async () => {},
+        release: () => {},
+        query: async () => [[]],
+        execute: async () => [{}],
+      } as any),
+    } as any;
+  }
+
   if (!globalForDb.cpacSafetyDbPool) {
     globalForDb.cpacSafetyDbPool = mysql.createPool({
       uri: getDatabaseUrl(),
@@ -36,11 +51,28 @@ export function getDbPool() {
 }
 
 export async function queryRows<T extends RowDataPacket>(sql: string, params?: Record<string, unknown> | unknown[]) {
+  if (!isDbConfigured()) {
+    console.log("Database not configured. Bypassing queryRows:", sql);
+    return [] as T[];
+  }
   const [rows] = await getDbPool().query<T[]>(sql, params as never);
   return rows;
 }
 
 export async function withTransaction<T>(handler: (connection: PoolConnection) => Promise<T>) {
+  if (!isDbConfigured()) {
+    console.log("Database not configured. Bypassing withTransaction.");
+    const dummyConnection = {
+      beginTransaction: async () => {},
+      commit: async () => {},
+      rollback: async () => {},
+      release: () => {},
+      execute: async () => [{}],
+      query: async () => [[]],
+    } as any;
+    return await handler(dummyConnection);
+  }
+
   const connection = await getDbPool().getConnection();
   try {
     await connection.beginTransaction();

@@ -1,7 +1,7 @@
 // @ts-nocheck
 import React, { useEffect, useMemo } from "react";
 import { useNavigate } from "@/lib/router-compat";
-import { Lock } from "lucide-react";
+import { Lock, Info } from "lucide-react";
 import { isLocalDemoLoginHost } from "@/lib/session-user";
 
 const LOGIN_SESSION_KEY = "cpac-safety-login-session";
@@ -14,6 +14,7 @@ function getSafeReturnTo() {
 
 export default function Login() {
   const navigate = useNavigate();
+
   const ssoError = useMemo(() => {
     if (typeof window === "undefined") return "";
     return new URLSearchParams(window.location.search).get("sso_error") || "";
@@ -21,7 +22,10 @@ export default function Login() {
   const returnTo = useMemo(getSafeReturnTo, []);
   const demoLoginAvailable = useMemo(() => {
     if (typeof window === "undefined") return false;
-    return process.env.NODE_ENV !== "production" && isLocalDemoLoginHost(window.location.hostname);
+    return (
+      process.env.NODE_ENV !== "production" &&
+      isLocalDemoLoginHost(window.location.hostname)
+    );
   }, []);
 
   useEffect(() => {
@@ -46,604 +50,709 @@ export default function Login() {
   };
 
   return (
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        minHeight: "100vh",
-        width: "100%",
-        fontFamily: "'Prompt', 'Sarabun', sans-serif",
-        overflowX: "hidden",
-        overflowY: "auto",
-        position: "relative",
-      }}
-    >
-      {/* Background Video */}
-      <video
-        autoPlay
-        loop
-        muted
-        playsInline
-        style={{
-          position: "absolute",
-          top: 0,
-          left: 0,
-          width: "100%",
-          height: "100%",
-          objectFit: "cover",
-          zIndex: 0,
-          pointerEvents: "none",
-        }}
-      >
+    <main className="cpac-login-page">
+      <video className="bg-video" autoPlay loop muted playsInline>
         <source src="/images/login/bg/login-bg2.mp4" type="video/mp4" />
       </video>
 
-      {/* Dark overlay to match image background tone */}
-      <div
-        style={{
-          position: "absolute",
-          top: 0,
-          left: 0,
-          width: "100%",
-          height: "100%",
-          background: "rgba(15, 23, 42, 0.45)",
-          zIndex: 1,
-        }}
-      />
+      <div className="bg-image" />
+      <div className="bg-overlay" />
+      <div className="right-focus-gradient" />
+      <div className="hero-glow hero-glow-left" />
+      <div className="hero-glow hero-glow-card" />
 
-      {/* Top Left Brand Logo (Floating on Desktop, centered header on Mobile) */}
-      <div className="top-left-brand">
-        <img
-          src="/images/login/brand/CpacLogo.jpg"
-          className="cpac-logo-img"
-          alt="CPAC Logo"
-        />
-        <div className="cpac-safety-plus-text">
-          <span style={{ color: "#00a2e8", marginRight: 5 }}>CPAC</span>
-          <span style={{ color: "#ffffff" }}>Safety+</span>
-        </div>
-      </div>
+      {demoLoginAvailable && (
+        <button
+          type="button"
+          onClick={handleDemoLogin}
+          className="top-demo-btn"
+          title="Demo Login"
+        >
+          <Lock size={13} />
+          <span>Demo Login</span>
+        </button>
+      )}
 
-      {/* Modern Split Layout Container */}
-      <div className="login-container" style={{ zIndex: 2 }}>
-        {/* Left Column: Mascot & Brand Text */}
-        <div className="mascot-left-panel">
-          {/* Main Content: Text + Mascot */}
-          <div className="hero-main-content">
-            <div className="hero-text-block">
-              <div className="en-safety-text">
-                SAFETY<br />
-                <span className="light-blue">STARTS</span><br />
-                WITH US
-              </div>
-              <div className="th-safety-text">
-                <div className="th-dark">ความปลอดภัย</div>
-                <div className="th-light">เริ่มต้นที่เรา</div>
-              </div>
-            </div>
+      <section className="login-shell">
+        <div className="hero-section">
+          <div className="hero-copy">
+            <h1 className="hero-title">
+              <span>SAFETY</span>
+              <span className="cyan">STARTS</span>
+              <span>WITH US</span>
+            </h1>
 
-            <div className="hero-mascot-wrapper">
-              {/* Desktop Mascot */}
-              <img
-                className="mascot-left-img mascot-desktop"
-                src="/images/mascots/Transparent น้องวางใจ/44.png"
-                alt="Mascot Desktop"
-              />
-              {/* Mobile Mascot */}
-              <img
-                className="mascot-left-img mascot-mobile"
-                src="/images/mascots/Transparent น้องวางใจ/42.png"
-                alt="Mascot Mobile"
-              />
-            </div>
+            <div className="hero-line" />
+
+            <p className="hero-subtitle">
+              ความปลอดภัย <span>เริ่มต้นที่เรา</span>
+            </p>
+          </div>
+
+          <div className="mascot-wrap" aria-hidden="true">
+            <div className="mascot-halo" />
+            <img
+              className="mascot-img"
+              src="/images/login/Video/WangJaiLogin.gif"
+              alt="WangJai Mascot"
+            />
           </div>
         </div>
 
-        {/* Right Column: Login Card */}
-        <div className="login-right-panel">
+        <aside className="login-panel" aria-label="CPAC Safety+ Login">
           <div className="login-card">
-            {/* Brand/SSO Titles */}
-            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", width: "100%" }}>
-              <h1 className="login-title">
-                CPAC Safety+
-              </h1>
-              <p className="login-subtitle">
-                เข้าสู่ระบบเพื่อใช้งานบริการ RMC อย่างปลอดภัย
-              </p>
+            <div className="card-shine" />
+
+            <div className="brand-block">
+              <img
+                className="brand-logo"
+                src="/images/login/brand/LOGO2.png"
+                alt="CPAC Safety+"
+              />
+
+              <p>เข้าสู่ระบบเพื่อใช้งานบริการ CPAC Safety+ อย่างปลอดภัย</p>
             </div>
 
-            {/* Buttons Section */}
-            <div style={{ display: "flex", flexDirection: "column", gap: 14, width: "100%", marginTop: 12 }}>
-              {/* SCG Button */}
-              <button
-                type="button"
-                onClick={handleLogin}
-                className="login-btn btn-scg"
-              >
-                <img
-                  src="/images/login/brand/scg.logo.jpg"
-                  alt="SCG Logo"
-                  style={{ height: 24, width: "auto", objectFit: "contain", marginRight: 2 }}
-                />
+            <div className="action-block">
+              <button type="button" onClick={handleLogin} className="scg-login-btn">
+                <span className="scg-logo-badge">
+                  <img
+                    src="/images/login/brand/scg.logo.jpg"
+                    alt="SCG"
+                  />
+                </span>
                 <span>พนักงาน SCG เข้าสู่ระบบ</span>
               </button>
+
               {ssoError && (
-                <div className="rounded-xl border border-red-200 bg-red-50/95 px-3 py-2 text-center text-[11px] font-bold leading-relaxed text-red-700">
-                  ไม่สามารถเชื่อมต่อ SSO ได้: {ssoError}
-                  {ssoError.startsWith("missing:") && (
-                    <div className="mt-1 text-red-600">
-                      กรุณาตั้งค่า SSO_CLIENT_ID และ SSO_CLIENT_SECRET บนเซิร์ฟเวอร์
-                    </div>
-                  )}
+                <div className="sso-error-card">
+                  <Info size={18} />
+                  <div>
+                    <strong>ไม่สามารถเชื่อมต่อ SSO ได้</strong>
+                    <p>รหัส: {ssoError}</p>
+                    {ssoError.startsWith("missing:") && (
+                      <p>
+                        กรุณาตรวจสอบ SSO_CLIENT_ID และ SSO_CLIENT_SECRET
+                        บนเซิร์ฟเวอร์
+                      </p>
+                    )}
+                  </div>
                 </div>
               )}
-              {demoLoginAvailable && (
-                <button
-                  type="button"
-                  onClick={handleDemoLogin}
-                  className="login-btn"
-                  style={{ background: "rgba(255,255,255,0.92)", color: "#0f172a" }}
-                >
-                  <Lock size={18} />
-                  <span>Demo login</span>
-                </button>
-              )}
             </div>
 
-            {/* Shield verification text */}
-            <div className="shield-footer">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
-                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-                <polyline points="9 11 11 13 15 9" />
-              </svg>
-              <span>เชื่อมต่ออย่างปลอดภัยด้วยระบบ Single Sign-On</span>
-            </div>
+            <footer className="secure-footer">
+              <div>
+                <Lock size={15} />
+                <span>เชื่อมต่ออย่างปลอดภัยด้วยระบบ Single Sign-On</span>
+              </div>
+              <small>Bethezank Lab 2026</small>
+            </footer>
           </div>
-        </div>
-      </div>
+        </aside>
+      </section>
 
-      {/* Responsive styling */}
       <style>{`
-        .login-container {
-          display: flex;
-          flex-direction: column;
-          width: 100%;
-          max-width: 460px;
+        .cpac-login-page {
           min-height: 100vh;
-          justify-content: center;
-          align-items: center;
-          gap: 16px;
-          padding: 86px 32px 40px;
-          box-sizing: border-box;
+          width: 100%;
           position: relative;
-          margin-top: auto;
-          margin-bottom: auto;
+          overflow: hidden;
+          font-family: 'Prompt', 'Sarabun', system-ui, sans-serif;
+          color: #ffffff;
+          background: #06152b;
         }
 
-        .top-left-brand {
+        .bg-image,
+        .bg-video,
+        .bg-overlay,
+        .right-focus-gradient,
+        .hero-glow {
           position: absolute;
-          top: 30px;
-          left: 50%;
-          transform: translateX(-50%);
-          display: flex;
+          inset: 0;
+          pointer-events: none;
+        }
+
+        .bg-image {
+          background-image: url('/images/login/bg/login-bg.png');
+          background-size: cover;
+          background-position: center;
+          background-repeat: no-repeat;
+          z-index: 0;
+        }
+
+        .bg-video {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+          z-index: 1;
+          opacity: 0.75;
+        }
+
+        .bg-overlay {
+          z-index: 2;
+          background:
+            linear-gradient(90deg,
+              rgba(4, 24, 51, 0.40) 0%,
+              rgba(5, 28, 57, 0.38) 38%,
+              rgba(3, 11, 26, 0.78) 68%,
+              rgba(2, 8, 20, 0.94) 100%
+            ),
+            linear-gradient(180deg,
+              rgba(7, 34, 70, 0.18) 0%,
+              rgba(3, 10, 23, 0.45) 100%
+            );
+        }
+
+        .right-focus-gradient {
+          z-index: 3;
+          background:
+            radial-gradient(circle at 80% 45%,
+              rgba(0, 229, 255, 0.16) 0%,
+              rgba(0, 126, 255, 0.06) 24%,
+              transparent 48%
+            ),
+            radial-gradient(circle at 38% 42%,
+              rgba(0, 229, 255, 0.16) 0%,
+              transparent 30%
+            );
+        }
+
+        .hero-glow {
+          z-index: 4;
+          filter: blur(30px);
+        }
+
+        .hero-glow-left {
+          background: radial-gradient(circle at 14% 38%, rgba(0, 178, 255, 0.26), transparent 30%);
+        }
+
+        .hero-glow-card {
+          background: radial-gradient(circle at 80% 50%, rgba(0, 229, 255, 0.16), transparent 30%);
+        }
+
+        .login-shell {
+          position: relative;
+          z-index: 5;
+          min-height: 100vh;
+          width: min(100%, 1680px);
+          margin: 0 auto;
+          padding: clamp(28px, 5vw, 80px);
+          display: grid;
+          grid-template-columns: minmax(0, 1.15fr) minmax(420px, 0.78fr);
           align-items: center;
-          gap: 12px;
-          z-index: 10;
+          gap: clamp(24px, 4vw, 72px);
+          box-sizing: border-box;
         }
 
-        .cpac-logo-img {
-          height: 32px;
-          width: auto;
-          object-fit: contain;
-          border-radius: 4px;
+        .hero-section {
+          min-width: 0;
+          display: grid;
+          grid-template-columns: minmax(380px, 0.92fr) minmax(240px, 0.62fr);
+          align-items: center;
+          gap: clamp(10px, 2vw, 34px);
         }
 
-        .cpac-safety-plus-text {
-          font-size: 20px;
-          font-weight: 800;
-          font-family: 'Prompt', sans-serif;
+        .hero-copy {
+          transform: translateY(10px);
         }
 
-        .mascot-left-panel {
+        .hero-title {
+          margin: 0;
           display: flex;
           flex-direction: column;
-          align-items: center;
-          flex: none;
-          max-width: 220px;
-          width: 100%;
-          color: #ffffff;
-          box-sizing: border-box;
-          transform: translateY(-28px);
-        }
-
-        .hero-main-content {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          width: 100%;
-          gap: 0;
-        }
-
-        .hero-text-block {
-          display: none;
-        }
-
-        .en-safety-text {
-          font-size: 52px;
-          font-weight: 900;
+          font-size: clamp(56px, 6.3vw, 112px);
+          line-height: 0.93;
+          letter-spacing: -0.055em;
+          font-weight: 950;
           font-style: italic;
           color: #ffffff;
-          line-height: 0.95;
-          letter-spacing: -0.01em;
-          font-family: 'Prompt', sans-serif;
-          text-shadow: 0 4px 16px rgba(0, 0, 0, 0.7), 0 2px 4px rgba(0, 0, 0, 0.5);
+          text-transform: uppercase;
+          text-shadow:
+            0 4px 0 rgba(0, 0, 0, 0.25),
+            0 13px 25px rgba(0, 0, 0, 0.65),
+            0 26px 60px rgba(0, 0, 0, 0.50);
         }
 
-        .en-safety-text .light-blue {
+        .hero-title .cyan {
           color: #00e5ff;
+          text-shadow:
+            0 4px 0 rgba(0, 95, 125, 0.40),
+            0 13px 25px rgba(0, 0, 0, 0.65),
+            0 0 30px rgba(0, 229, 255, 0.35);
         }
 
-        .th-safety-text {
-          font-size: 26px;
-          font-weight: 700;
-          font-family: 'Prompt', sans-serif;
-          margin-top: 14px;
-          line-height: 1.35;
-          text-shadow: 0 4px 16px rgba(0, 0, 0, 0.7), 0 2px 4px rgba(0, 0, 0, 0.5);
+        .hero-line {
+          width: min(420px, 82%);
+          height: 3px;
+          margin: clamp(22px, 2.2vw, 36px) 0 clamp(16px, 1.8vw, 26px);
+          border-radius: 99px;
+          background: linear-gradient(90deg, #00e5ff, rgba(0, 229, 255, 0.12));
+          box-shadow: 0 0 24px rgba(0, 229, 255, 0.55);
         }
 
-        .th-safety-text .th-dark {
-          color: #ffffff;
+        .hero-subtitle {
+          margin: 0;
+          font-size: clamp(26px, 2.55vw, 46px);
+          line-height: 1.2;
+          font-weight: 800;
+          letter-spacing: -0.04em;
+          color: rgba(255, 255, 255, 0.96);
+          text-shadow:
+            0 5px 12px rgba(0, 0, 0, 0.78),
+            0 18px 32px rgba(0, 0, 0, 0.45);
+          white-space: nowrap;
         }
 
-        .th-safety-text .th-light {
+        .hero-subtitle span {
           color: #00e5ff;
-          margin-top: 6px;
+          margin-left: 10px;
+          text-shadow:
+            0 5px 12px rgba(0, 0, 0, 0.78),
+            0 0 22px rgba(0, 229, 255, 0.28);
         }
 
-        .hero-mascot-wrapper {
-          flex: none;
-          display: flex;
-          justify-content: center;
-          align-items: center;
-          width: clamp(112px, 18vw, 150px);
-          max-width: 150px;
-          animation: mascotFloatLeft 6s ease-in-out infinite;
-          will-change: transform;
+        .mascot-wrap {
+          position: relative;
+          width: min(44vw, 550px);
+          min-width: 320px;
+          justify-self: center;
+          transform: translate(-4%, -7%);
+          animation: mascotFloat 6s ease-in-out infinite;
         }
 
-        .mascot-left-img {
+        .mascot-halo {
+          position: absolute;
+          inset: 12% 4% 12% 2%;
+          border-radius: 999px;
+          background: radial-gradient(circle, rgba(0, 229, 255, 0.34), rgba(0, 145, 255, 0.10) 42%, transparent 70%);
+          filter: blur(18px);
+          transform: scale(1.08);
+        }
+
+        .mascot-img {
+          position: relative;
+          z-index: 1;
           width: 100%;
           height: auto;
-          max-height: 180px;
-          object-fit: contain;
-          filter: drop-shadow(0 20px 40px rgba(0, 0, 0, 0.45));
+          display: block;
+          filter:
+            drop-shadow(0 28px 42px rgba(0, 0, 0, 0.50))
+            drop-shadow(0 0 18px rgba(0, 229, 255, 0.18));
         }
 
-        .mascot-desktop {
-          display: none !important;
-        }
-
-        .mascot-mobile {
-          display: block !important;
-        }
-
-        .login-right-panel {
+        .login-panel {
           display: flex;
           justify-content: center;
           align-items: center;
-          flex: none;
-          max-width: 440px;
-          width: 100%;
         }
 
         .login-card {
-          width: 100%;
-          background: rgba(30, 41, 59, 0.75);
-          backdrop-filter: blur(18px);
-          -webkit-backdrop-filter: blur(18px);
-          border: 1px solid rgba(255, 255, 255, 0.18);
-          border-radius: 36px;
-          box-shadow: 0 24px 64px rgba(0, 0, 0, 0.4);
-          padding: 48px 40px 40px 40px;
+          width: min(100%, 560px);
+          min-height: 380px;
+          position: relative;
+          overflow: hidden;
+          box-sizing: border-box;
+          padding: clamp(20px, 2.5vw, 32px) clamp(34px, 3.5vw, 56px);
+          border-radius: 42px;
           display: flex;
           flex-direction: column;
           align-items: center;
-          gap: 24px;
-          color: #ffffff;
+          justify-content: center;
+          gap: clamp(14px, 1.8vw, 22px);
+          background:
+            linear-gradient(155deg,
+              rgba(22, 45, 76, 0.92) 0%,
+              rgba(7, 22, 43, 0.94) 48%,
+              rgba(3, 13, 29, 0.98) 100%
+            );
+          border: 1px solid rgba(161, 220, 255, 0.54);
+          box-shadow:
+            0 0 0 1px rgba(0, 229, 255, 0.14) inset,
+            0 0 38px rgba(0, 229, 255, 0.22),
+            0 34px 90px rgba(0, 0, 0, 0.62);
+          backdrop-filter: blur(28px) saturate(130%);
+          -webkit-backdrop-filter: blur(28px) saturate(130%);
         }
 
-        .login-title {
-          font-size: 38px;
-          font-weight: 800;
-          color: #ffffff;
-          line-height: 1.15;
-          margin: 0;
-          letter-spacing: -0.01em;
-          text-align: center;
+        .login-card::before {
+          content: "";
+          position: absolute;
+          inset: 0;
+          border-radius: inherit;
+          padding: 1px;
+          background: linear-gradient(135deg,
+            rgba(0, 229, 255, 0.85),
+            rgba(255, 255, 255, 0.34) 28%,
+            rgba(0, 92, 255, 0.18) 62%,
+            rgba(255, 255, 255, 0.26)
+          );
+          -webkit-mask:
+            linear-gradient(#000 0 0) content-box,
+            linear-gradient(#000 0 0);
+          -webkit-mask-composite: xor;
+          mask-composite: exclude;
+          pointer-events: none;
         }
 
-        .login-subtitle {
-          font-size: 14.5px;
-          color: rgba(255, 255, 255, 0.95);
-          font-weight: 500;
-          text-align: center;
-          margin: 8px 0 0 0;
-          line-height: 1.4;
+        .card-shine {
+          position: absolute;
+          top: -40%;
+          left: -35%;
+          width: 80%;
+          height: 70%;
+          transform: rotate(28deg);
+          background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.12), transparent);
+          filter: blur(14px);
         }
 
-        .login-btn {
+        .brand-block {
+          position: relative;
+          z-index: 1;
           width: 100%;
-          height: 56px;
-          border: none;
-          border-radius: 16px;
-          font-size: 16px;
-          font-weight: 800;
+          text-align: center;
+        }
+
+        .brand-logo {
+          width: min(72%, 300px);
+          height: auto;
+          display: block;
+          margin: -10px auto -18px;
+          filter: drop-shadow(0 12px 24px rgba(0, 0, 0, 0.45));
+        }
+
+        .brand-block h2 {
+          margin: 0;
+          font-size: clamp(25px, 2.15vw, 38px);
+          line-height: 1.2;
+          font-weight: 850;
+          letter-spacing: -0.035em;
+          color: #ffffff;
+          text-shadow: 0 10px 28px rgba(0, 0, 0, 0.36);
+        }
+
+        .brand-block p {
+          margin: 4px 0 0;
+          font-size: clamp(14px, 1.05vw, 18px);
+          line-height: 1.55;
+          font-weight: 500;
+          color: rgba(226, 241, 255, 0.70);
+        }
+
+        .action-block {
+          position: relative;
+          z-index: 1;
+          width: 100%;
+          display: flex;
+          flex-direction: column;
+          gap: 20px;
+        }
+
+        .scg-login-btn {
+          width: 100%;
+          min-height: 72px;
+          border: 0;
+          border-radius: 24px;
           cursor: pointer;
+          font-family: inherit;
+          font-size: clamp(16px, 1.2vw, 21px);
+          font-weight: 850;
           display: flex;
           align-items: center;
           justify-content: center;
-          gap: 10px;
-          transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-          font-family: inherit;
-          box-sizing: border-box;
+          gap: 18px;
+          transition:
+            transform 220ms ease,
+            box-shadow 220ms ease,
+            filter 220ms ease;
         }
 
-        .login-btn:hover {
-          transform: translateY(-2px);
-          filter: brightness(1.08);
+        .scg-login-btn {
+          color: #ffffff;
+          background:
+            linear-gradient(180deg, rgba(45, 139, 255, 1) 0%, rgba(27, 94, 218, 1) 48%, rgba(13, 74, 188, 1) 100%);
+          border: 1px solid rgba(174, 227, 255, 0.70);
+          box-shadow:
+            0 14px 28px rgba(0, 86, 220, 0.40),
+            0 0 28px rgba(0, 229, 255, 0.24),
+            inset 0 1px 0 rgba(255, 255, 255, 0.40),
+            inset 0 -12px 24px rgba(0, 45, 135, 0.30);
+          text-shadow: 0 2px 10px rgba(0, 0, 0, 0.30);
         }
 
-        .login-btn:active {
+        .scg-login-btn:hover {
+          transform: translateY(-3px);
+          filter: brightness(1.07);
+          box-shadow:
+            0 18px 38px rgba(0, 86, 220, 0.52),
+            0 0 36px rgba(0, 229, 255, 0.35),
+            inset 0 1px 0 rgba(255, 255, 255, 0.48),
+            inset 0 -12px 24px rgba(0, 45, 135, 0.30);
+        }
+
+        .scg-login-btn:active {
           transform: translateY(0);
         }
 
-        .btn-scg {
+        .scg-logo-badge {
+          width: 46px;
+          height: 46px;
+          border-radius: 50%;
+          flex: none;
+          display: grid;
+          place-items: center;
           background: #ffffff;
-          color: #1e3e6b;
-          border: 1px solid rgba(0, 0, 0, 0.08);
-          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+          box-shadow:
+            0 10px 18px rgba(0, 0, 0, 0.20),
+            inset 0 0 0 1px rgba(255, 255, 255, 0.75);
+          overflow: hidden;
         }
 
-        .btn-scg:hover {
-          background: #f8fafc;
-          box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+        .scg-logo-badge img {
+          width: 31px;
+          height: auto;
+          display: block;
+          object-fit: contain;
         }
 
-        .lock-icon {
-          color: #005eff;
-          stroke-width: 2.8;
-        }
 
-        .footer-links {
-          display: flex;
+
+        .sso-error-card {
+          display: grid;
+          grid-template-columns: auto 1fr;
           gap: 12px;
+          align-items: flex-start;
+          width: 100%;
+          box-sizing: border-box;
+          padding: 16px;
+          border-radius: 18px;
+          color: #e8f5ff;
+          background: rgba(255, 255, 255, 0.08);
+          border: 1px solid rgba(255, 255, 255, 0.16);
+        }
+
+        .sso-error-card svg {
+          color: #5dbdff;
+          margin-top: 2px;
+        }
+
+        .sso-error-card strong {
+          display: block;
+          font-size: 13px;
+          margin-bottom: 5px;
+        }
+
+        .sso-error-card p {
+          margin: 0 0 4px;
+          font-size: 12px;
+          line-height: 1.45;
+          color: #ffb4b4;
+          word-break: break-word;
+        }
+
+        .secure-footer {
+          position: relative;
+          z-index: 1;
+          width: 100%;
+          padding-top: 2px;
+          display: flex;
+          flex-direction: column;
           align-items: center;
-          font-size: 13.5px;
-          font-weight: 700;
-          color: rgba(255, 255, 255, 0.7);
-          margin-top: 12px;
+          gap: 9px;
+          color: rgba(226, 241, 255, 0.68);
+          text-align: center;
         }
 
-        .link-item {
-          color: inherit;
-          text-decoration: none;
-          transition: color 0.2s;
-        }
-
-        .link-item:hover {
-          color: #ffffff;
-        }
-
-        .divider {
-          color: rgba(255, 255, 255, 0.3);
-        }
-
-        .shield-footer {
+        .secure-footer div {
           display: flex;
           align-items: center;
           justify-content: center;
-          gap: 6px;
-          font-size: 11.5px;
-          font-weight: 600;
-          color: rgba(255, 255, 255, 0.55);
-          text-align: center;
-          width: 100%;
-          border-top: 1px solid rgba(255, 255, 255, 0.1);
-          padding-top: 20px;
-          margin-top: 4px;
+          gap: 9px;
+          font-size: clamp(12px, 0.9vw, 15px);
+          font-weight: 650;
         }
 
-        @keyframes mascotFloatLeft {
+        .secure-footer svg {
+          color: rgba(226, 241, 255, 0.72);
+        }
+
+        .secure-footer small {
+          font-size: 12px;
+          color: rgba(226, 241, 255, 0.42);
+        }
+
+        @keyframes mascotFloat {
           0%, 100% {
-            transform: translateY(0px) rotate(0deg);
+            transform: translate(-4%, -7%) rotate(0deg);
           }
           50% {
-            transform: translateY(-12px) rotate(1.5deg);
+            transform: translate(-4%, -11%) rotate(1.5deg);
           }
         }
 
-        @media (min-width: 1100px) {
-          .top-left-brand {
-            left: 60px;
-            top: 40px;
-            transform: none;
+        @media (max-width: 1280px) {
+          .login-shell {
+            grid-template-columns: 1fr 460px;
+            gap: 30px;
           }
 
-          .login-container {
-            flex-direction: row;
-            max-width: 1240px;
-            width: 100%;
-            justify-content: space-between;
-            align-items: center;
-            padding: 80px 60px 40px;
-            margin-left: auto;
-            margin-right: auto;
-            gap: 40px;
+          .hero-section {
+            grid-template-columns: 1fr;
           }
 
-          .mascot-left-panel {
-            max-width: 740px;
-            width: 100%;
-            transform: none;
-            align-items: flex-start;
-          }
-
-          .hero-main-content {
-            display: flex;
-            align-items: center;
-            justify-content: flex-start;
-            gap: 40px;
-            width: 100%;
-          }
-
-          .hero-text-block {
-            display: block;
-            text-align: left;
-          }
-
-          .en-safety-text {
-            font-size: 56px;
-            line-height: 0.95;
-          }
-
-          .th-safety-text {
-            font-size: 26px;
-            margin-top: 16px;
-          }
-
-          .hero-mascot-wrapper {
-            width: 360px;
-            max-width: 400px;
-            animation: mascotFloatLeft 6s ease-in-out infinite;
-          }
-
-          .mascot-left-img {
-            max-height: 480px;
-          }
-
-          .mascot-desktop {
-            display: block !important;
-          }
-
-          .mascot-mobile {
-            display: none !important;
-          }
-
-          .login-right-panel {
-            max-width: 440px;
-            width: 100%;
-            flex: none;
-          }
-        }
-
-        @media (max-width: 900px) {
-          .en-safety-text {
-            font-size: 42px;
-          }
-          .th-safety-text {
-            font-size: 22px;
-          }
-        }
-
-        @media (max-width: 1099px) {
-          .top-left-brand {
+          .mascot-wrap {
             position: absolute;
-            top: 26px;
-            left: 50%;
-            transform: translateX(-50%);
-            justify-content: center;
+            width: 380px;
+            min-width: 0;
+            left: 40%;
+            top: 24%;
           }
 
-          .login-container {
-            justify-content: center;
-            gap: 14px;
-            padding: 76px 24px 32px;
+          .hero-title {
+            font-size: clamp(58px, 7.2vw, 92px);
+          }
+        }
+
+        @media (max-width: 1024px) {
+          .cpac-login-page {
+            overflow-y: auto;
           }
 
-          .mascot-left-panel {
-            align-items: center;
-            flex: none;
-            max-width: 280px;
+          .login-shell {
+            min-height: 100vh;
+            grid-template-columns: 1fr;
+            justify-items: center;
+            align-content: center;
+            padding: 34px 22px;
+            gap: 22px;
+          }
+
+          .hero-section {
+            display: flex;
+            flex-direction: column;
             width: 100%;
-            transform: translateY(-22px);
           }
 
-          .hero-main-content {
-            justify-content: center;
-            align-items: center;
-          }
-
-          .hero-text-block {
+          .hero-copy {
             display: none;
           }
 
-          .hero-mascot-wrapper {
-            width: clamp(140px, 35vw, 240px);
-            max-width: 240px;
-            animation: mascotFloatMobile 5s ease-in-out infinite;
+          .mascot-wrap {
+            position: relative;
+            left: auto;
+            top: auto;
+            width: clamp(280px, 60vw, 420px);
+            transform: none;
+            animation: mascotFloatMobile 5.5s ease-in-out infinite;
           }
 
-          .mascot-left-img {
-            max-height: 250px;
-          }
-
-          .login-right-panel {
-            max-width: 440px;
-            flex: none;
-          }
-        }
-
-        @media (max-width: 480px) {
-          .login-container {
-            gap: 12px;
-            padding: 72px 16px 28px;
-          }
-
-          .hero-mascot-wrapper {
-            width: clamp(130px, 42vw, 190px);
-            max-width: 190px;
-          }
-
-          .mascot-left-img {
-            max-height: 200px;
+          .login-panel {
+            width: 100%;
           }
 
           .login-card {
-            padding: 32px 24px 28px 24px;
+            width: min(100%, 480px);
+            min-height: auto;
+            padding: 18px 24px 16px;
+            border-radius: 34px;
+            gap: 14px;
+          }
+
+          .brand-logo {
+            width: min(68%, 245px);
+            margin-top: -10px;
+            margin-bottom: -12px;
+          }
+        }
+
+        @media (max-width: 520px) {
+          .login-shell {
+            padding: 24px 16px;
+          }
+
+          .login-card {
             border-radius: 28px;
-            gap: 20px;
           }
 
-          .login-title {
-            font-size: 32px;
+          .brand-block h2 {
+            font-size: 22px;
           }
 
-          .login-subtitle {
+          .brand-block p {
             font-size: 13px;
           }
 
-          .login-btn {
-            height: 52px;
+          .scg-login-btn {
+            min-height: 58px;
+            border-radius: 18px;
             font-size: 15px;
-            border-radius: 14px;
+            gap: 10px;
           }
 
-          .footer-links {
+          .scg-logo-badge {
+            width: 36px;
+            height: 36px;
+          }
+
+          .scg-logo-badge img {
+            width: 25px;
+          }
+
+          .secure-footer div {
+            font-size: 11.5px;
+          }
+        }
+
+        .top-demo-btn {
+          position: absolute;
+          top: 20px;
+          right: 20px;
+          z-index: 100;
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          padding: 8px 14px;
+          background: rgba(255, 255, 255, 0.08);
+          border: 1px solid rgba(255, 255, 255, 0.15);
+          border-radius: 12px;
+          color: rgba(255, 255, 255, 0.85);
+          font-size: 13px;
+          font-weight: 600;
+          cursor: pointer;
+          backdrop-filter: blur(8px);
+          -webkit-backdrop-filter: blur(8px);
+          transition: all 0.2s ease;
+        }
+
+        .top-demo-btn:hover {
+          background: rgba(255, 255, 255, 0.16);
+          color: #ffffff;
+          border-color: rgba(0, 229, 255, 0.4);
+          box-shadow: 0 0 12px rgba(0, 229, 255, 0.2);
+        }
+
+        .top-demo-btn:active {
+          transform: translateY(1px);
+        }
+
+        @media (max-width: 520px) {
+          .top-demo-btn {
+            top: 12px;
+            right: 12px;
+            padding: 6px 10px;
             font-size: 12px;
           }
         }
 
         @keyframes mascotFloatMobile {
           0%, 100% {
-            transform: translateY(0px) rotate(0deg);
+            transform: translateY(0) rotate(0deg);
           }
           50% {
-            transform: translateY(-6px) rotate(1deg);
+            transform: translateY(-8px) rotate(1deg);
           }
         }
       `}</style>
-    </div>
+    </main>
   );
 }

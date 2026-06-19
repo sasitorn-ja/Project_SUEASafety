@@ -7,6 +7,7 @@ export type ChecklistQuestion = {
   guidelines: string[];
   format?: "original" | "text_box";
   image?: string;
+  active?: boolean;
 };
 
 export type ChecklistCollection = Record<ChecklistLocationType, ChecklistQuestion[]>;
@@ -78,6 +79,7 @@ function sanitizeQuestion(raw: any, fallbackIndex: number): ChecklistQuestion {
       : [],
     format: raw?.format === "text_box" ? "text_box" : "original",
     image: raw?.image ? String(raw.image) : undefined,
+    active: raw?.active === false ? false : true,
   };
 }
 
@@ -132,7 +134,8 @@ export function getActiveChecklistCollection() {
 
 export function getChecklistForType(type?: string | null) {
   const collection = getActiveChecklistCollection();
-  return collection[getChecklistLocationType(type)];
+  const list = collection[getChecklistLocationType(type)];
+  return list.filter((item) => item.active !== false);
 }
 
 export function createInitialItemStates(checklist: ChecklistQuestion[]) {
