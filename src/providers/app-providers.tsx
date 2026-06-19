@@ -882,7 +882,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
         apiFetch<{ items: Array<Record<string, unknown>> }>("/api/safety-culture/rewards?pageSize=100"),
         apiFetch<{ items: Array<Record<string, unknown>> }>("/api/safety-culture/leaderboard"),
         apiFetch<{ items: Array<Record<string, unknown>> }>("/api/safety-culture/teams"),
-        apiFetch<{ items: Array<Record<string, unknown>> }>("/api/safety-awareness/questions"),
+        apiFetch<{ items: Array<Record<string, unknown>> }>("/api/safety-awareness/questions/admin?pageSize=1000"),
         apiFetch<{ items: ApiAwarenessAttempt[] }>("/api/safety-awareness/attempts/me?pageSize=120"),
         apiFetch<{ items: Array<Record<string, unknown>> }>(`/api/holidays?year=${new Date().getFullYear()}`),
         apiFetch<{ items: Array<Record<string, unknown>> }>("/api/safety-culture/events?pageSize=100"),
@@ -961,7 +961,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
             text: String(item.question_text || ""),
             answer: Boolean((options && options.answer) ?? true),
             note: String((options && options.note) || ""),
-            enabled: true,
+            enabled: String(item.status || "ACTIVE").toUpperCase() === "ACTIVE",
           };
         }));
       } else {
@@ -1319,22 +1319,49 @@ export function AppProviders({ children }: { children: ReactNode }) {
   }, []);
 
   const updateAwarenessQuestions = useCallback((questions: SafetyAwarenessQuestion[]) => {
-    const normalized = normalizeAwarenessQuestions(questions);
+    const existingByText = new Map(
+      awarenessQuestions.map((question) => [question.text.trim(), question]),
+    );
+    const normalized = normalizeAwarenessQuestions(questions).map((question) => {
+      if (/^\d+$/.test(question.id)) return question;
+      const existing = existingByText.get(question.text.trim());
+      return existing ? { ...question, id: existing.id } : question;
+    });
+    const previousById = new Map(
+      awarenessQuestions.map((question) => [question.id, question]),
+    );
     const previousIds = new Set(awarenessQuestions.map((question) => question.id));
     const nextIds = new Set(normalized.map((question) => question.id));
     setAwarenessQuestions(normalized);
     if (isAuthenticatedRef.current) {
       for (const question of normalized) {
         const existing = previousIds.has(question.id) && /^\d+$/.test(question.id);
-        void apiFetch(
-          existing ? `/api/safety-awareness/questions/${question.id}` : "/api/safety-awareness/questions",
-          apiJson(existing ? "PATCH" : "POST", {
-            questionText: question.text,
-            optionsJson: { category: question.category, answer: question.answer, note: question.note || "" },
-            correctAnswerJson: { answer: question.answer },
-            status: question.enabled ? "ACTIVE" : "INACTIVE",
-          }),
-        );
+        const previous = previousById.get(question.id);
+        const changed = !previous
+          || previous.text !== question.text
+          || previous.category !== question.category
+          || previous.answer !== question.answer
+          || (previous.note || "") !== (question.note || "")
+          || previous.enabled !== question.enabled;
+        if (!changed) continue;
+
+        void (async () => {
+          const result = await apiFetch<{ question?: { id?: string | number } }>(
+            existing ? `/api/safety-awareness/questions/${question.id}` : "/api/safety-awareness/questions",
+            apiJson(existing ? "PATCH" : "POST", {
+              questionText: question.text,
+              optionsJson: { category: question.category, answer: question.answer, note: question.note || "" },
+              correctAnswerJson: { answer: question.answer },
+              status: question.enabled ? "ACTIVE" : "INACTIVE",
+            }),
+          );
+          const savedId = result.ok ? result.data?.question?.id : null;
+          if (!existing && savedId) {
+            setAwarenessQuestions((current) =>
+              current.map((item) => item.id === question.id ? { ...item, id: String(savedId) } : item),
+            );
+          }
+        })();
       }
       for (const question of awarenessQuestions) {
         if (/^\d+$/.test(question.id) && !nextIds.has(question.id)) {

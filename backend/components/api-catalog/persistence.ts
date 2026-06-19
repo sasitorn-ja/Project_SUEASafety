@@ -173,11 +173,19 @@ async function listRows(
      LIMIT :limit OFFSET :offset`,
     params,
   );
+  const countRows = await queryRows<DbRow>(
+    `SELECT COUNT(*) AS total FROM ${table}
+     ${where.length ? `WHERE ${where.join(" AND ")}` : ""}`,
+    options.params || {},
+  );
+  const total = Number(countRows[0]?.total || 0);
   return {
     items: rows.map(serializeRow),
     page,
     pageSize,
-    nextPage: rows.length === pageSize ? page + 1 : null,
+    total,
+    totalPages: Math.max(1, Math.ceil(total / pageSize)),
+    nextPage: page * pageSize < total ? page + 1 : null,
   };
 }
 
@@ -1110,7 +1118,7 @@ async function handleAwarenessHolidays(request: NextRequest, method: string, mat
     return jsonData({ items: rows.map(serializeRow), date });
   }
   if (method === "GET" && route === "/api/safety-awareness/questions/admin") {
-    return jsonData(await listRows("awareness_questions", request, { orderBy: "id DESC" }));
+    return jsonData(await listRows("awareness_questions", request, { orderBy: "id ASC", maxPageSize: 1000 }));
   }
   if (method === "POST" && route === "/api/safety-awareness/questions") {
     return jsonData({ question: await insertRow("awareness_questions", input, { status: "ACTIVE" }) }, { status: 201 });
