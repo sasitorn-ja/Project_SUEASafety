@@ -75,7 +75,7 @@ export async function syncRmrPlants(importedBy: string) {
         failedRows += 1;
         await connection.execute(
           `INSERT INTO location_import_rows
-           (import_batch_id, row_number, action, raw_data, error_message)
+           (import_batch_id, \`row_number\`, action, raw_data, error_message)
            VALUES (:batchId, :rowNumber, 'ERROR', :rawData, 'missing plant key/name/GPS')`,
           { batchId, rowNumber: index + 1, rawData: JSON.stringify(sourceRows[index]) },
         );
@@ -189,7 +189,7 @@ export async function syncRmrPlants(importedBy: string) {
       );
       await connection.execute(
         `INSERT INTO location_import_rows
-         (import_batch_id,row_number,external_key,action,raw_data)
+         (import_batch_id,\`row_number\`,external_key,action,raw_data)
          VALUES (:batchId,:rowNumber,:plantKey,:action,:rawData)`,
         { batchId, rowNumber: index + 1, plantKey: item.plantKey, action, rawData: JSON.stringify(item.row) },
       );
