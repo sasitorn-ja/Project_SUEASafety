@@ -589,7 +589,7 @@ async function handleCheckinExtras(request: NextRequest, method: string, match: 
     if (!Number.isFinite(lat) || !Number.isFinite(lng)) return jsonError("lat_lng_required");
     const rows = await queryRows<DbRow>(
       `SELECT id, location_type, source, external_key, code, name_th, name_en,
-       ST_Y(position) lat, ST_X(position) lng,
+       ST_Latitude(position) lat, ST_Longitude(position) lng,
        ST_Distance_Sphere(
          position,
          ST_GeomFromText(CONCAT('POINT(', :lng, ' ', :lat, ')'), 4326, 'axis-order=long-lat')

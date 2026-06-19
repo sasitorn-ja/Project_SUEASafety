@@ -147,8 +147,8 @@ const SELECT_LOCATIONS_SQL = `
     l.status,
     l.map_visible,
     l.checkin_enabled,
-    ST_Y(l.position) AS lat,
-    ST_X(l.position) AS lng,
+    ST_Latitude(l.position) AS lat,
+    ST_Longitude(l.position) AS lng,
     l.created_at,
     l.updated_at
   FROM locations l
