@@ -18,9 +18,9 @@ export const metadata: Metadata = {
   title: "CPAC Safety",
   description: "CPAC Safety — Safety Effort & Safety Culture",
   icons: {
-    icon: "/images/mascots/nong-wangjai/transparent/logo-head-v5.png",
-    shortcut: "/images/mascots/nong-wangjai/transparent/logo-head-v5.png",
-    apple: "/images/mascots/nong-wangjai/transparent/logo-head-v5.png",
+    icon: "/images/mascots/Transparent น้องวางใจ/41.png",
+    shortcut: "/images/mascots/Transparent น้องวางใจ/41.png",
+    apple: "/images/mascots/Transparent น้องวางใจ/41.png",
   },
 };
 

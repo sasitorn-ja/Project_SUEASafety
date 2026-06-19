@@ -127,13 +127,13 @@ export default function Login() {
               {/* Desktop Mascot */}
               <img
                 className="mascot-left-img mascot-desktop"
-                src="/images/login/wangjai/login.png"
+                src="/images/mascots/Transparent น้องวางใจ/44.png"
                 alt="Mascot Desktop"
               />
               {/* Mobile Mascot */}
               <img
                 className="mascot-left-img mascot-mobile"
-                src="/images/login/wangjai/Wangjai2.png"
+                src="/images/mascots/Transparent น้องวางใจ/42.png"
                 alt="Mascot Mobile"
               />
             </div>

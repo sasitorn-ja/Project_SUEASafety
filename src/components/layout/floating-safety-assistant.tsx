@@ -531,7 +531,7 @@ export function FloatingSafetyAssistant() {
         ) : (
           <div className="relative flex items-center gap-2.5 px-3 py-2.5">
             <Image
-              src="/images/mascots/nong-wangjai/transparent/logo-head-v5.png"
+              src="/images/mascots/Transparent น้องวางใจ/20.png"
               alt=""
               width={40}
               height={40}
@@ -563,7 +563,7 @@ export function FloatingSafetyAssistant() {
             message.role === "assistant" ? (
               <div key={message.id} className="flex items-start gap-2">
                 <Image
-                  src="/images/mascots/nong-wangjai/transparent/logo-head-v5.png"
+                  src="/images/mascots/Transparent น้องวางใจ/21.png"
                   alt=""
                   width={40}
                   height={40}

@@ -46,26 +46,29 @@ const TIGER_MASCOTS: Record<MascotAction, string> = {
   firstaid: "/images/mascots/suea-shield.png",
 };
 
+const WANGJAI_TRANSPARENT_BASE = "/images/mascots/Transparent น้องวางใจ";
+
+// New น้องวางใจ (CPAC) set — each action uses a unique image (no duplicates).
 const WANGJAI_MASCOTS: Record<MascotAction, string> = {
-  logo: "/images/mascots/nong-wangjai/transparent/logo-radio.png",
-  big: "/images/mascots/nong-wangjai/transparent/8.png",
-  "thumbs-up": "/images/mascots/nong-wangjai/transparent/thumbsup-cool.png",
-  salute: "/images/mascots/nong-wangjai/transparent/salute.png",
-  radio: "/images/mascots/nong-wangjai/transparent/radio.png",
-  stop: "/images/mascots/nong-wangjai/transparent/stop.png",
-  danger: "/images/mascots/nong-wangjai/transparent/stop.png",
-  shield: "/images/mascots/nong-wangjai/transparent/firstaid.png",
-  clipboard: "/images/mascots/nong-wangjai/transparent/clipboard.png",
-  flashlight: "/images/mascots/nong-wangjai/transparent/flashlight.png",
-  announce: "/images/mascots/nong-wangjai/transparent/announce.png",
-  whistle: "/images/mascots/nong-wangjai/transparent/megaphone.png",
-  running: "/images/mascots/nong-wangjai/transparent/running.png",
-  smile: "/images/mascots/nong-wangjai/transparent/cheer.png",
-  happy: "/images/mascots/nong-wangjai/transparent/happy.png",
-  idea: "/images/mascots/nong-wangjai/idea-bulb.png",
-  cheer: "/images/mascots/nong-wangjai/transparent/cheer.png",
-  welcome: "/images/mascots/nong-wangjai/transparent/welcome.png",
-  firstaid: "/images/mascots/nong-wangjai/transparent/firstaid.png",
+  logo: `${WANGJAI_TRANSPARENT_BASE}/16.png`,
+  big: `${WANGJAI_TRANSPARENT_BASE}/9.png`,
+  "thumbs-up": `${WANGJAI_TRANSPARENT_BASE}/37.png`,
+  salute: `${WANGJAI_TRANSPARENT_BASE}/23.png`,
+  radio: `${WANGJAI_TRANSPARENT_BASE}/25.png`,
+  stop: `${WANGJAI_TRANSPARENT_BASE}/8.png`,
+  danger: `${WANGJAI_TRANSPARENT_BASE}/18.png`,
+  shield: `${WANGJAI_TRANSPARENT_BASE}/31.png`,
+  clipboard: `${WANGJAI_TRANSPARENT_BASE}/22.png`,
+  flashlight: `${WANGJAI_TRANSPARENT_BASE}/7.png`,
+  announce: `${WANGJAI_TRANSPARENT_BASE}/5.png`,
+  whistle: `${WANGJAI_TRANSPARENT_BASE}/10.png`,
+  running: `${WANGJAI_TRANSPARENT_BASE}/32.png`,
+  smile: `${WANGJAI_TRANSPARENT_BASE}/40.png`,
+  happy: `${WANGJAI_TRANSPARENT_BASE}/39.png`,
+  idea: `${WANGJAI_TRANSPARENT_BASE}/17.png`,
+  cheer: `${WANGJAI_TRANSPARENT_BASE}/1.png`,
+  welcome: `${WANGJAI_TRANSPARENT_BASE}/4.png`,
+  firstaid: `${WANGJAI_TRANSPARENT_BASE}/11.png`,
 };
 
 type ThemeContextValue = {
