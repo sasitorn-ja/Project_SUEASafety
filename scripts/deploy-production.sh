@@ -12,7 +12,7 @@ cd '${REMOTE_DIR}'
 git fetch origin '${REMOTE_BRANCH}'
 git reset --hard 'origin/${REMOTE_BRANCH}'
 test -f .env.production
-docker compose build
+docker compose --profile tools build
 docker compose --profile tools run --rm migration
 docker compose up -d --force-recreate
 docker compose logs --tail=80 cpac-safety-plus
