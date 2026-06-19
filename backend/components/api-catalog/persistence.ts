@@ -181,6 +181,55 @@ async function listRows(
   };
 }
 
+async function attachUserRolesToList<T extends { items: Array<Record<string, unknown>> }>(list: T): Promise<T> {
+  const userIds = list.items.map((item) => String(item.id || "")).filter(Boolean);
+  if (!userIds.length) return list;
+
+  const roleRows = await queryRows<DbRow>(
+    `
+      SELECT
+        ur.user_id,
+        r.id AS role_id,
+        r.code AS role_code,
+        r.name AS role_name
+      FROM user_roles ur
+      INNER JOIN roles r ON r.id = ur.role_id
+      WHERE ur.user_id IN (:userIds)
+      ORDER BY r.code
+    `,
+    { userIds },
+  );
+  const rolesByUser = new Map<string, Array<Record<string, unknown>>>();
+  for (const row of roleRows) {
+    const userId = String(row.user_id || "");
+    const roles = rolesByUser.get(userId) || [];
+    roles.push({
+      id: String(row.role_id || ""),
+      code: String(row.role_code || ""),
+      name: String(row.role_name || row.role_code || ""),
+    });
+    rolesByUser.set(userId, roles);
+  }
+
+  return {
+    ...list,
+    items: list.items.map((item) => {
+      const roles = rolesByUser.get(String(item.id || "")) || [];
+      return {
+        ...item,
+        roles,
+        role_codes: roles.map((role) => role.code),
+      };
+    }),
+  };
+}
+
+async function attachUserRolesToRow(user: Record<string, unknown> | null) {
+  if (!user?.id) return user;
+  const list = await attachUserRolesToList({ items: [user] });
+  return list.items[0] || user;
+}
+
 async function getRow(table: string, id: string, select = "*") {
   const where = ["id = :id"];
   if (SOFT_DELETE_TABLES.has(table)) where.push("deleted_at IS NULL");
@@ -478,9 +527,10 @@ async function handleUsersIam(request: NextRequest, method: string, match: Route
       params.search = `%${search}%`;
     }
     if (organizationId) { where.push("organization_id = :organizationId"); params.organizationId = organizationId; }
-    return jsonData(await listRows("users", request, { where, params, orderBy: "name_th" }));
+    const users = await listRows("users", request, { where, params, orderBy: "name_th" });
+    return jsonData(await attachUserRolesToList(users));
   }
-  if (method === "GET" && route === "/api/users/:id") return jsonData({ user: await getRow("users", match.params.id) });
+  if (method === "GET" && route === "/api/users/:id") return jsonData({ user: await attachUserRolesToRow(await getRow("users", match.params.id)) });
   if (method === "PATCH" && route === "/api/users/:id/status") {
     const user = await updateRow("users", match.params.id, { status: input.status || "INACTIVE" });
     await audit({ actorUserId: userId, action: "STATUS_CHANGE", entityType: "USER", entityId: match.params.id, after: user, request });

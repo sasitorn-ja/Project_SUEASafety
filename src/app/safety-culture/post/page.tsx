@@ -156,7 +156,7 @@ export default function PostSocialPage() {
       avatarText: getSessionInitials(sessionUser),
       isYou: true,
       createdAt: timestamp,
-      subtext: "BPI-04 · เมื่อสักครู่ · Yellow",
+      subtext: "เมื่อสักครู่",
       category: activeCategory,
       body: text,
       photos: attachedPhotos,
@@ -260,11 +260,8 @@ export default function PostSocialPage() {
               {getSessionDisplayName(sessionUser)}
             </span>
             <div className="flex gap-1.5">
-              <span className="rounded-md border border-[var(--brand-accent)] bg-[var(--brand-soft)] px-2 py-0.5 text-[10px] font-[850] tracking-wide text-[var(--brand-accent-strong)]">
-                TEAM YELLOW
-              </span>
               <span className="rounded-md border border-[var(--c-c5c1b5)] bg-[var(--secondary)] px-2 py-0.5 text-[10px] font-[850] tracking-wide text-[#555149]">
-                📍 BPI-04
+                Safety Culture
               </span>
             </div>
           </div>

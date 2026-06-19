@@ -69,11 +69,12 @@ export default function HomePage() {
     () => [...rewardsCatalog].sort((a, b) => a.points - b.points),
     [rewardsCatalog]
   );
+  const hasRewards = sortedRewards.length > 0;
   const redeemableCount = sortedRewards.filter((reward) => reward.points <= currentUserPoints).length;
   const nextReward = sortedRewards.find((reward) => reward.points > currentUserPoints);
   const progress = nextReward
     ? Math.min(100, Math.round((currentUserPoints / nextReward.points) * 100))
-    : 100;
+    : hasRewards ? 100 : 0;
   const remaining = nextReward ? nextReward.points - currentUserPoints : 0;
 
   // อีเวนต์ที่กำลังจัด: ใช้เฉพาะ feedEvents จาก API จริงเท่านั้น
@@ -130,7 +131,6 @@ export default function HomePage() {
     ? Math.round((awarenessPastCompletedCount / awarenessPastDays.length) * 100)
     : 0;
   const latestAwareness = [...awarenessHistory].sort((a, b) => b.completedAt.localeCompare(a.completedAt))[0];
-  const weeklyBars = [42, 58, 50, 66, 74, 82, 78, 96];
 
   return (
     <div className="mx-auto w-full max-w-[1500px] px-3.5 pt-2 pb-8 font-sarabun sm:px-5 lg:px-8 2xl:px-10">
@@ -233,20 +233,14 @@ export default function HomePage() {
           </div>
 
           <div className="flex flex-col justify-center border-white/10 md:border-l md:pl-4 xl:pl-6">
-            <div className="flex items-center justify-between gap-3">
+            <div>
               <p className="text-[12px] font-extrabold uppercase tracking-[0.14em] text-[var(--brand-hero-label)]">
                 เทรนด์คะแนน 8 สัปดาห์
               </p>
-              <span className="text-[11px] font-black text-[#8cffb0]">+18%</span>
-            </div>
-            <div className="mt-4 flex h-9 items-end gap-2">
-              {weeklyBars.map((bar, index) => (
-                <div
-                  key={index}
-                  className={`flex-1 rounded-t-sm ${index === weeklyBars.length - 1 ? "bg-[#72e58a]" : "bg-white/28"}`}
-                  style={{ height: `${bar}%` }}
-                />
-              ))}
+              <div className="mt-4 rounded-[12px] border border-dashed border-white/25 bg-white/8 px-3 py-3">
+                <p className="text-[12px] font-black text-white/80">ยังไม่มีข้อมูลเทรนด์คะแนน</p>
+                <p className="mt-1 text-[10.5px] font-bold text-white/60">ระบบจะแสดงกราฟเมื่อ API มีประวัติคะแนนรายสัปดาห์</p>
+              </div>
             </div>
             <div className="mt-4 grid grid-cols-2 gap-2.5">
               <div className="rounded-[10px] border border-white/20 bg-white/10 px-3 py-2">
@@ -289,6 +283,13 @@ export default function HomePage() {
                   อีก <span className="font-black text-white">{remaining.toLocaleString()}</span> แต้ม ก็แลกได้ ({progress}%)
                 </p>
               </>
+            ) : !hasRewards ? (
+              <div className="flex items-center gap-2.5">
+                <Award className="h-7 w-7 flex-shrink-0 text-[var(--brand-hero-label)]" strokeWidth={2.2} />
+                <p className="text-[14px] font-extrabold leading-snug">
+                  ยังไม่มีรางวัลในระบบ
+                </p>
+              </div>
             ) : (
               <div className="flex items-center gap-2.5">
                 <Award className="h-7 w-7 flex-shrink-0 text-[var(--brand-hero-label)]" strokeWidth={2.2} />
@@ -436,7 +437,7 @@ export default function HomePage() {
               <div className="h-full rounded-full bg-[var(--brand-accent-strong)]" style={{ width: `${progress}%` }} />
             </div>
             <p className="mt-2 text-[10.5px] font-bold text-[var(--brand-muted-text)]">
-              อีก {remaining.toLocaleString()} แต้ม ไป Lv.5
+              {hasRewards ? `อีก ${remaining.toLocaleString()} แต้ม ไป Lv.5` : "ยังไม่มีข้อมูลรางวัลสำหรับคำนวณเลเวลถัดไป"}
             </p>
             <div className="mt-3 grid grid-cols-4 gap-2">
               {[

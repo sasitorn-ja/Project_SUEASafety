@@ -19,6 +19,7 @@ import {
   Star,
   BookOpen,
   Link2,
+  UserCog,
   type LucideIcon,
 } from "lucide-react";
 
@@ -42,7 +43,7 @@ export type MenuNode = {
   children: MenuNode[];
 };
 
-export const MENU_STORAGE_KEY = "suea-safety-menu-config-v1";
+export const MENU_STORAGE_KEY = "suea-safety-menu-config-v2";
 export const MENU_UPDATED_EVENT = "suea-safety-menu-updated";
 export const MAX_MENU_DEPTH = 3;
 
@@ -68,6 +69,7 @@ export const MENU_ICONS: Record<string, LucideIcon> = {
   Star,
   BookOpen,
   Link2,
+  UserCog,
 };
 
 export const MENU_ICON_NAMES = Object.keys(MENU_ICONS);
@@ -177,6 +179,12 @@ export function getDefaultMenu(): MenuNode[] {
               href: "/safety-culture/admin-awareness",
               icon: "ShieldCheck",
               description: "จัดการคลังคำถาม Safety Awareness",
+            }),
+            n({
+              label: "Users & Admin Access",
+              href: "/safety-culture/admin-users",
+              icon: "UserCog",
+              description: "จัดการผู้ใช้และสิทธิ์ Admin จาก DB",
             }),
           ],
         }),

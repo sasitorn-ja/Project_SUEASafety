@@ -53,9 +53,19 @@ function LeadingTeamCard({ className, style }: { className?: string; style?: CSS
           🏆
         </div>
         <div className="min-w-0 flex-1">
-          <span className="text-[12px] font-bold uppercase tracking-wider text-[#bcaaa4] md:text-[13px]">นำอยู่ตอนนี้</span>
-          <div className="mt-0.5 text-[26px] leading-none font-black tracking-tight text-white md:text-[30px]">{leadingTeam?.name ?? "-"}</div>
-          <span className="mt-1.5 block text-[13.5px] font-black md:text-[14.5px]" style={{ color: leadingTeam?.color ?? "var(--c-f5bb00)" }}>+ {leadPoints.toLocaleString()} คะแนน เหนือกว่า {runnerUpTeam?.name ?? "-"}</span>
+          {leadingTeam ? (
+            <>
+              <span className="text-[12px] font-bold uppercase tracking-wider text-[#bcaaa4] md:text-[13px]">นำอยู่ตอนนี้</span>
+              <div className="mt-0.5 text-[26px] leading-none font-black tracking-tight text-white md:text-[30px]">{leadingTeam.name}</div>
+              <span className="mt-1.5 block text-[13.5px] font-black md:text-[14.5px]" style={{ color: leadingTeam.color ?? "var(--c-f5bb00)" }}>+ {leadPoints.toLocaleString()} คะแนน เหนือกว่า {runnerUpTeam?.name ?? "-"}</span>
+            </>
+          ) : (
+            <>
+              <span className="text-[12px] font-bold uppercase tracking-wider text-[#bcaaa4] md:text-[13px]">ลำดับทีม</span>
+              <div className="mt-0.5 text-[24px] leading-none font-black tracking-tight text-white md:text-[28px]">ยังไม่มีข้อมูลทีม</div>
+              <span className="mt-1.5 block text-[13px] font-bold text-white/70 md:text-[14px]">ระบบจะแสดงข้อมูลเมื่อ DB มีคะแนนทีมจริง</span>
+            </>
+          )}
         </div>
       </div>
     </Card>
@@ -78,7 +88,12 @@ function TeamStandingsCard({ className, style }: { className?: string; style?: C
       </div>
 
       <div className="space-y-2.5 p-2.5 xl:space-y-3 xl:p-4">
-        {teamStandings.map((team, idx) => (
+        {teamStandings.length === 0 ? (
+          <div className="rounded-[18px] border border-dashed border-[var(--border)] bg-[var(--brand-surface)] px-4 py-7 text-center">
+            <p className="text-[13.5px] font-black text-[var(--foreground)]">ยังไม่มีข้อมูลทีม</p>
+            <p className="mt-1 text-[11.5px] font-bold text-[var(--brand-muted-text)]">รอข้อมูลจริงจาก DB</p>
+          </div>
+        ) : teamStandings.map((team, idx) => (
           <article
             key={team.id}
             className="rounded-[18px] border border-[var(--border)] bg-[var(--brand-surface)] px-2.5 py-2.5 shadow-[0_8px_22px_var(--brand-shadow)] transition-all duration-200 hover:-translate-y-[1px] hover:border-[rgba(var(--brand-accent-rgb),0.45)] xl:rounded-[20px] xl:px-4 xl:py-3"
@@ -148,7 +163,12 @@ function PersonalRankingsCard({ className, style }: { className?: string; style?
       </div>
 
       <div className="space-y-2.5 p-3 md:p-4">
-        {personalRankings.map((user) => (
+        {personalRankings.length === 0 ? (
+          <div className="rounded-[18px] border border-dashed border-[var(--border)] bg-[var(--brand-surface)] px-4 py-7 text-center">
+            <p className="text-[13.5px] font-black text-[var(--foreground)]">ยังไม่มีอันดับในทีม</p>
+            <p className="mt-1 text-[11.5px] font-bold text-[var(--brand-muted-text)]">รอข้อมูลคะแนนจริงจาก DB</p>
+          </div>
+        ) : personalRankings.map((user) => (
           <article
             key={user.id}
             className={cn(
@@ -253,7 +273,7 @@ export default function Page() {
   const filtered = activeCategory === "ทั้งหมด"
     ? posts
     : activeCategory === "ทีมของฉัน"
-      ? posts.filter((post) => post.subtext.includes("BPI-04"))
+      ? posts.filter((post) => post.isYou === true)
       : posts.filter((post) => post.category === activeCategory);
 
   const getPostPhotos = useCallback((post: Post) => {

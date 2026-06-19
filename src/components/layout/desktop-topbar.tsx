@@ -122,10 +122,10 @@ function AdminFlyoutSection({ section, pathname }: { section: MenuNode; pathname
         <div className="min-w-0 flex-1">
           <ConfiguredMenuLink node={section} pathname={pathname} compact asLabel />
         </div>
-        {children.length > 0 && <ChevronDown className="mr-1.5 h-3 w-3 -rotate-90 text-white/70" strokeWidth={2.5} />}
+        {children.length > 0 && <ChevronDown className="mr-1.5 h-3 w-3 rotate-90 text-white/70" strokeWidth={2.5} />}
       </div>
       {children.length > 0 && (
-        <div className="invisible absolute left-full top-0 z-50 w-[245px] -translate-x-1 pl-1.5 opacity-0 transition-all duration-150 group-hover/admin-section:visible group-hover/admin-section:translate-x-0 group-hover/admin-section:opacity-100">
+        <div className="invisible absolute right-full top-0 z-50 w-[min(245px,calc(100vw-32px))] translate-x-1 pr-1.5 opacity-0 transition-all duration-150 group-hover/admin-section:visible group-hover/admin-section:translate-x-0 group-hover/admin-section:opacity-100">
           <div className="max-h-[calc(100vh-var(--topbar-h)-24px)] overflow-y-auto rounded-lg border border-white/[0.14] bg-[rgba(var(--brand-nav-rgb),0.98)] p-1 shadow-[0_14px_32px_var(--brand-shadow)] backdrop-blur-xl">
             {children.map((child) => (
               <ConfiguredMenuLink key={child.id} node={child} pathname={pathname} />
@@ -331,7 +331,7 @@ export function DesktopTopbar() {
                     <span className="desktop-nav-label">{item.label}</span>
                     <ChevronDown className={cn("h-3.5 w-3.5 transition-transform", desktopMenu === "admin" && "rotate-180")} />
                   </NavTo>
-                  <div className={cn("absolute right-[-64px] top-full z-50 w-[220px] pt-1.5 transition-all duration-150", desktopMenu === "admin" ? "visible translate-y-0 opacity-100" : "invisible -translate-y-1 opacity-0")}>
+                  <div className={cn("absolute right-0 top-full z-50 w-[220px] pt-1.5 transition-all duration-150", desktopMenu === "admin" ? "visible translate-y-0 opacity-100" : "invisible -translate-y-1 opacity-0")}>
                     <div className="overflow-visible rounded-lg border border-white/[0.14] bg-[rgba(var(--brand-nav-rgb),0.96)] p-1 text-white shadow-[0_14px_32px_var(--brand-shadow)] backdrop-blur-xl">
                       {adminSections.map((section) => (
                         <AdminFlyoutSection key={section.id} section={section} pathname={pathname} />
