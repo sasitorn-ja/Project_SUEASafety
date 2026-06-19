@@ -244,18 +244,21 @@ function getActivityCardCopy(activity: Pick<SafetyCultureFeedEvent, "details" | 
 
 export default function Page() {
   const { posts, feedEvents } = useAppState();
-  const { toggleLike, addComment } = useAppActions();
+  const { toggleLike, addComment, fetchPosts } = useAppActions();
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user: sessionUser } = useSessionUser();
 
-  // มีหน่วยงาน (แผนก) จึงจะมีชิป "ทีมของฉัน" — ถ้า null/ว่าง ให้ซ่อน
-  const hasTeam = Boolean(sessionUser?.division && sessionUser.division.trim());
+  // แสดงชิปทีมเมื่อมี session แล้วให้ backend เป็นผู้ตัดสินว่าผู้ใช้มีทีมจริงหรือไม่
+  const hasTeam = Boolean(sessionUser?.id);
   const visibleCategories = SAFETY_CULTURE_CATEGORIES.filter(
     (category) => category !== "ทีมของฉัน" || hasTeam
   );
 
   const [activeCategory, setActiveCategory] = useState("ทั้งหมด");
+  const [myTeamPosts, setMyTeamPosts] = useState<Post[]>([]);
+  const [myTeamLoading, setMyTeamLoading] = useState(false);
+  const [myTeamLoaded, setMyTeamLoaded] = useState(false);
   const [commentDrafts, setCommentDrafts] = useState<Record<number, string>>({});
   const [expandedComments, setExpandedComments] = useState<Record<number, boolean>>({});
   const [activePhotoByPost, setActivePhotoByPost] = useState<Record<number, number>>({});
@@ -285,10 +288,35 @@ export default function Page() {
     }
   }, [visibleCategories, activeCategory]);
 
+  useEffect(() => {
+    if (activeCategory !== "ทีมของฉัน" || !sessionUser?.id) return;
+    let cancelled = false;
+    setMyTeamLoading(true);
+    fetchPosts({ scope: "my-team", limit: 50 })
+      .then((items) => {
+        if (!cancelled) {
+          setMyTeamPosts(items);
+          setMyTeamLoaded(true);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setMyTeamPosts([]);
+          setMyTeamLoaded(true);
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setMyTeamLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [activeCategory, fetchPosts, sessionUser?.id]);
+
   const filtered = activeCategory === "ทั้งหมด"
     ? posts
     : activeCategory === "ทีมของฉัน"
-      ? posts.filter((post) => post.isYou === true)
+      ? myTeamPosts
       : posts.filter((post) => post.category === activeCategory);
 
   const getPostPhotos = useCallback((post: Post) => {
@@ -902,7 +930,13 @@ export default function Page() {
 
             {filtered.length === 0 && (
               <Card className="py-10 text-center font-bold text-muted-foreground text-[18px] font-sarabun">
-                ยังไม่มีโพสต์ในหมวดหมู่นี้
+                {activeCategory === "ทีมของฉัน"
+                  ? myTeamLoading
+                    ? "กำลังโหลดโพสต์ทีมของฉัน..."
+                    : myTeamLoaded
+                      ? "ยังไม่มีโพสต์ในทีมของฉัน หรือบัญชียังไม่ได้ผูกทีม"
+                      : "เลือกทีมของฉันเพื่อโหลดโพสต์จากทีม"
+                  : "ยังไม่มีโพสต์ในหมวดหมู่นี้"}
               </Card>
             )}
           </div>

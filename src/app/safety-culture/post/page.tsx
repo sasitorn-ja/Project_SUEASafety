@@ -189,26 +189,34 @@ export default function PostSocialPage() {
         type: photo.type,
       }));
 
-    actions.addPost({
-      id: timestamp,
-      author: getSessionDisplayName(sessionUser),
-      avatarBg: "var(--brand-accent)",
-      avatarColor: "#1A1A1A",
-      avatarText: getSessionInitials(sessionUser),
-      isYou: true,
-      createdAt: timestamp,
-      subtext: "เมื่อสักครู่",
-      category: activeCategory,
-      body: text,
-      photos: attachedPhotos,
-      imageData: null,
-      likes: 0,
-      comments: [],
-      points: getSafetyPoint("safetyPostApproved"),
-      hasLiked: false,
-      feedEventId: selectedFeedEvent?.id,
-      feedEventTitle: selectedFeedEvent?.title,
-    });
+    try {
+      await actions.addPost({
+        id: timestamp,
+        author: getSessionDisplayName(sessionUser),
+        avatarBg: "var(--brand-accent)",
+        avatarColor: "#1A1A1A",
+        avatarText: getSessionInitials(sessionUser),
+        isYou: true,
+        createdAt: timestamp,
+        subtext: "เมื่อสักครู่",
+        category: activeCategory,
+        body: text,
+        photos: attachedPhotos,
+        imageData: null,
+        likes: 0,
+        comments: [],
+        points: getSafetyPoint("safetyPostApproved"),
+        hasLiked: false,
+        feedEventId: selectedFeedEvent?.id,
+        feedEventTitle: selectedFeedEvent?.title,
+      });
+    } catch {
+      toast.error("โพสต์ไม่สำเร็จ", {
+        description: "ระบบยังบันทึกโพสต์ไม่ได้ กรุณาลองใหม่อีกครั้ง",
+      });
+      setIsSubmitting(false);
+      return;
+    }
 
     const nextBonusLabel =
       selectedFeedEvent

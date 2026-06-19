@@ -899,14 +899,16 @@ async function handleCultureRewards(request: NextRequest, method: string, match:
         `SELECT t.id, t.organization_id, t.leader_user_id, t.name, t.status,
                 leader.name_th leader_name_th, leader.name_en leader_name_en,
                 leader.email leader_email, leader.employee_no leader_employee_no,
-                COUNT(tm.user_id) members
+                COUNT(tm.user_id) members,
+                COALESCE(SUM(pb.balance), 0) points
          FROM teams t
          LEFT JOIN users leader ON leader.id = t.leader_user_id AND leader.deleted_at IS NULL
          LEFT JOIN team_members tm ON tm.team_id = t.id AND tm.left_at IS NULL
+         LEFT JOIN point_balances pb ON pb.user_id = tm.user_id
          WHERE t.deleted_at IS NULL
          GROUP BY t.id, t.organization_id, t.leader_user_id, t.name, t.status,
                   leader.name_th, leader.name_en, leader.email, leader.employee_no
-         ORDER BY t.name`,
+         ORDER BY points DESC, t.name`,
       );
       return jsonData({ items: rows.map(serializeRow) });
     }

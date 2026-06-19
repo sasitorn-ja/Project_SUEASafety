@@ -50,6 +50,7 @@ export type PostPhoto = {
   id: string;
   dataUrl: string;
   type: string;
+  url?: string;
 };
 
 export type Comment = {
@@ -80,6 +81,14 @@ export type Post = {
   imageData?: string | null;
   feedEventId?: string;
   feedEventTitle?: string;
+  authorId?: string;
+  authorEmail?: string | null;
+  organizationId?: string | null;
+  organizationName?: string | null;
+  teamId?: string | null;
+  teamName?: string | null;
+  location?: string;
+  team?: string;
 };
 
 export type SafetyCultureUserActivityType = "post" | "reaction" | "comment" | "redeem" | "awareness" | "safety-effort";
@@ -252,7 +261,8 @@ type AppActions = {
   dismissNotification: () => void;
   markInboxNotificationRead: (notificationId: string) => void;
   markAllInboxNotificationsRead: () => void;
-  addPost: (post: Post) => void;
+  addPost: (post: Post) => Promise<Post>;
+  fetchPosts: (options?: { scope?: "all" | "my-team" | "mine"; category?: string | null; limit?: number }) => Promise<Post[]>;
   toggleLike: (postId: number) => void;
   addComment: (postId: number, text: string) => void;
   updateSafetyCultureEvent: (data: SafetyCultureEventConfig) => void;
@@ -752,12 +762,25 @@ function createDefaultInboxNotifications() {
 
 type ApiPost = {
   id: string;
+  authorId?: string;
   authorName: string;
+  authorEmail?: string | null;
+  organizationId?: string | null;
+  organizationName?: string | null;
+  teamId?: string | null;
+  teamName?: string | null;
+  eventId?: string | null;
+  category?: string | null;
   content: string;
+  pointsAwarded?: number;
+  status?: string;
+  publishedAt?: string | null;
   createdAt: string;
+  updatedAt?: string;
   likeCount: number;
   commentCount: number;
   hasLiked: boolean;
+  photos?: Array<{ id: string; dataUrl?: string; url?: string; type?: string }>;
 };
 
 type ApiAwarenessAttempt = {
@@ -798,21 +821,48 @@ function userDisplayName(user?: SessionUser | null) {
 
 function postFromApi(post: ApiPost): Post {
   const idNumber = Number(post.id);
+  const authorName = repairMojibakeText(post.authorName) || "Unknown user";
+  const createdAt = new Date(post.createdAt).getTime() || Date.now();
+  const teamName = repairMojibakeText(post.teamName || "") || null;
+  const organizationName = repairMojibakeText(post.organizationName || "") || null;
+  const photos = Array.isArray(post.photos)
+    ? post.photos
+        .map((photo, index) => {
+          const url = photo.url || photo.dataUrl || "";
+          return {
+            id: String(photo.id || `${post.id}-photo-${index + 1}`),
+            dataUrl: url,
+            url,
+            type: String(photo.type || "upload"),
+          };
+        })
+        .filter((photo) => photo.dataUrl)
+    : [];
+
   return {
     id: Number.isFinite(idNumber) ? idNumber : Date.now(),
-    author: post.authorName || "Unknown user",
+    author: authorName,
     avatarBg: "var(--brand-accent)",
     avatarColor: "#1A1A1A",
-    avatarText: (post.authorName || "U").charAt(0).toUpperCase(),
-    subtext: "Safety Culture",
-    category: "ทั่วไป",
-    body: post.content,
-    photos: [],
+    avatarText: authorName.charAt(0).toUpperCase(),
+    subtext: organizationName || teamName || "Safety Culture",
+    category: repairMojibakeText(post.category || "") || "ทั่วไป",
+    body: repairMojibakeText(post.content) || "",
+    photos,
     likes: Math.max(0, Number(post.likeCount) || 0),
     comments: Math.max(0, Number(post.commentCount) || 0),
-    points: getSafetyPoint("safetyPostApproved"),
+    points: Math.max(0, Number(post.pointsAwarded) || getSafetyPoint("safetyPostApproved")),
     hasLiked: Boolean(post.hasLiked),
-    createdAt: new Date(post.createdAt).getTime() || Date.now(),
+    createdAt,
+    authorId: post.authorId ? String(post.authorId) : undefined,
+    authorEmail: post.authorEmail ?? null,
+    organizationId: post.organizationId ? String(post.organizationId) : null,
+    organizationName,
+    teamId: post.teamId ? String(post.teamId) : null,
+    teamName,
+    team: teamName || undefined,
+    location: organizationName || undefined,
+    feedEventId: post.eventId ? String(post.eventId) : undefined,
   };
 }
 
@@ -941,7 +991,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
       }
 
       if (teamsResult.ok && Array.isArray(teamsResult.data?.items)) {
-        const maxMembers = Math.max(1, ...teamsResult.data.items.map((item) => Number(item.members || 0)));
+        const maxPoints = Math.max(1, ...teamsResult.data.items.map((item) => Number(item.points || 0)));
         setTeamStandings(teamsResult.data.items.map((item, index) => ({
           id: String(item.id),
           rank: index + 1,
@@ -951,8 +1001,8 @@ export function AppProviders({ children }: { children: ReactNode }) {
           leader: String(item.leader_name_th || item.leader_name_en || item.leader_email || ""),
           members: Number(item.members || 0),
           color: "var(--brand-accent)",
-          points: 0,
-          percent: (Number(item.members || 0) / maxMembers) * 100,
+          points: Number(item.points || 0),
+          percent: (Number(item.points || 0) / maxPoints) * 100,
           streak: 0,
           awards: 0,
         })));
@@ -1074,7 +1124,20 @@ export function AppProviders({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  const addPost = useCallback((post: Post) => {
+  const fetchPosts = useCallback(async (options: { scope?: "all" | "my-team" | "mine"; category?: string | null; limit?: number } = {}) => {
+    if (!isAuthenticatedRef.current) return [];
+    const params = new URLSearchParams();
+    params.set("limit", String(options.limit || 50));
+    if (options.scope) params.set("scope", options.scope);
+    if (options.category) params.set("category", options.category);
+    const result = await apiFetch<{ items: ApiPost[] }>(`/api/safety-culture/posts?${params.toString()}`);
+    if (!result.ok || !Array.isArray(result.data?.items)) {
+      throw new Error(result.error || "posts_fetch_failed");
+    }
+    return result.data.items.map(postFromApi);
+  }, []);
+
+  const addPost = useCallback(async (post: Post) => {
     const linkedFeedEvent = getLinkedFeedEvent(post.feedEventId);
     const basePoints = getSafetyPoint("safetyPostApproved");
     const awardedPoints = linkedFeedEvent
@@ -1082,6 +1145,38 @@ export function AppProviders({ children }: { children: ReactNode }) {
       : calculateAwardedPoints(basePoints, "approved-post", safetyCultureEvent);
     const pointsDelta = Math.max(0, awardedPoints);
     const occurredAt = post.createdAt || Date.now();
+
+    if (isAuthenticatedRef.current) {
+      const result = await apiFetch<{ post: ApiPost }>("/api/safety-culture/posts", apiJson("POST", {
+        content: post.body,
+        category: post.category,
+        attachmentIds: post.photos.map((photo) => photo.id),
+        feedEventId: post.feedEventId,
+      }));
+      if (!result.ok || !result.data?.post) {
+        throw new Error(result.error || "post_create_failed");
+      }
+      const savedPost = postFromApi(result.data.post);
+      const savedPoints = Math.max(0, Number(savedPost.points) || awardedPoints);
+      setPosts((prev) => [savedPost, ...prev.filter((item) => item.id !== savedPost.id)]);
+      setUserActivityHistory((current) =>
+        normalizeUserActivityHistory([
+          {
+            id: `activity-post-${savedPost.id}-${savedPost.createdAt || occurredAt}`,
+            type: "post",
+            occurredAt: savedPost.createdAt || occurredAt,
+            postId: savedPost.id,
+            postAuthor: savedPost.author,
+            postCategory: savedPost.category,
+            postPreview: savedPost.body,
+            pointsDelta: savedPoints,
+          },
+          ...current,
+        ])
+      );
+      setCurrentUserPoints((prev) => prev + savedPoints);
+      return savedPost;
+    }
 
     setPosts((prev) => [{ ...post, points: awardedPoints }, ...prev]);
     setUserActivityHistory((current) =>
@@ -1100,12 +1195,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
       ])
     );
     setCurrentUserPoints((prev) => prev + pointsDelta);
-    if (isAuthenticatedRef.current) void apiFetch<{ post: ApiPost }>("/api/safety-culture/posts", apiJson("POST", {
-      content: post.body,
-      category: post.category,
-      attachmentIds: post.photos.map((photo) => photo.id),
-      feedEventId: post.feedEventId,
-    }));
+    return { ...post, points: awardedPoints };
   }, [getLinkedFeedEvent, safetyCultureEvent]);
 
   const toggleLike = useCallback((postId: number) => {
@@ -1609,6 +1699,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
     markInboxNotificationRead,
     markAllInboxNotificationsRead,
     addPost,
+    fetchPosts,
     toggleLike,
     addComment,
     updateSafetyCultureEvent,
