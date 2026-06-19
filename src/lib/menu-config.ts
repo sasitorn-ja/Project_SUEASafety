@@ -43,7 +43,7 @@ export type MenuNode = {
   children: MenuNode[];
 };
 
-export const MENU_STORAGE_KEY = "suea-safety-menu-config-v2";
+export const MENU_STORAGE_KEY = "suea-safety-menu-config-v3";
 export const MENU_UPDATED_EVENT = "suea-safety-menu-updated";
 export const MAX_MENU_DEPTH = 3;
 
@@ -180,13 +180,13 @@ export function getDefaultMenu(): MenuNode[] {
               icon: "ShieldCheck",
               description: "จัดการคลังคำถาม Safety Awareness",
             }),
-            n({
-              label: "Users & Admin Access",
-              href: "/safety-culture/admin-users",
-              icon: "UserCog",
-              description: "จัดการผู้ใช้และสิทธิ์ Admin จาก DB",
-            }),
           ],
+        }),
+        n({
+          label: "จัดการผู้ใช้และสิทธิ์ Admin",
+          href: "/safety-culture/admin-users",
+          icon: "UserCog",
+          description: "จัดการผู้ใช้ Role และสิทธิ์ Admin จาก DB",
         }),
       ],
     }),

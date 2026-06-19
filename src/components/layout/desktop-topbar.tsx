@@ -116,6 +116,10 @@ function ConfiguredMenuLink({
 function AdminFlyoutSection({ section, pathname }: { section: MenuNode; pathname: string }) {
   const children = section.children.filter((node) => node.enabled);
 
+  if (children.length === 0) {
+    return <ConfiguredMenuLink node={section} pathname={pathname} compact />;
+  }
+
   return (
     <div className="group/admin-section relative">
       <div className="flex cursor-default items-center rounded-lg hover:bg-white/10">
@@ -301,7 +305,13 @@ export function DesktopTopbar() {
                 <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
                   {adminSections.map((section) => (
                     <div key={section.id} className="rounded-xl border border-white/10 bg-white/[0.04] p-1.5">
-                      <ConfiguredMenuLink node={section} pathname={pathname} compact asLabel />
+                      <ConfiguredMenuLink
+                        node={section}
+                        pathname={pathname}
+                        onClick={() => setOpen(false)}
+                        compact
+                        asLabel={section.children.filter((node) => node.enabled).length > 0}
+                      />
                       {section.children.filter((node) => node.enabled).length > 0 && (
                         <div className="ml-3 border-l border-white/15 pl-2">
                           {section.children.filter((node) => node.enabled).map((child) => (
