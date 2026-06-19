@@ -2,6 +2,7 @@ import "server-only";
 
 import fs from "node:fs/promises";
 import path from "node:path";
+import { createHash } from "node:crypto";
 import type { ResultSetHeader, RowDataPacket } from "mysql2/promise";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -367,8 +368,10 @@ async function createMediaAsset(input: JsonInput, userId?: string | null) {
   const id = await withTransaction(async (connection) => {
     const [result] = await connection.execute<ResultSetHeader>(
       `INSERT INTO media_assets
-       (file_name, original_name, mime_type, size_bytes, status, module, owner_type, owner_id, link_type, upload_mode, storage_path, public_url, metadata, created_by)
-       VALUES (:fileName, :originalName, :mimeType, :sizeBytes, :status, :module, :ownerType, :ownerId, :linkType, :uploadMode, :storagePath, :publicUrl, :metadata, :createdBy)`,
+       (file_name, original_name, mime_type, size_bytes, status, module, owner_type, owner_id, link_type, upload_mode,
+        provider, provider_asset_id, provider_public_id, storage_path, public_url, width_px, height_px, format, metadata, created_by)
+       VALUES (:fileName, :originalName, :mimeType, :sizeBytes, :status, :module, :ownerType, :ownerId, :linkType, :uploadMode,
+        :provider, :providerAssetId, :providerPublicId, :storagePath, :publicUrl, :widthPx, :heightPx, :format, :metadata, :createdBy)`,
       {
         fileName: input.fileName,
         originalName: input.originalName || input.fileName || null,
@@ -380,8 +383,14 @@ async function createMediaAsset(input: JsonInput, userId?: string | null) {
         ownerId: input.ownerId || null,
         linkType: input.linkType || null,
         uploadMode: input.uploadMode || "server",
+        provider: input.provider || "local",
+        providerAssetId: input.providerAssetId || null,
+        providerPublicId: input.providerPublicId || null,
         storagePath: input.storagePath || null,
         publicUrl: input.publicUrl || null,
+        widthPx: input.widthPx || null,
+        heightPx: input.heightPx || null,
+        format: input.format || null,
         metadata: input.metadata ? JSON.stringify(input.metadata) : null,
         createdBy: userId || null,
       },
@@ -399,8 +408,14 @@ async function updateMediaAsset(id: string, input: JsonInput) {
     "owner_id",
     "link_type",
     "upload_mode",
+    "provider",
+    "provider_asset_id",
+    "provider_public_id",
     "storage_path",
     "public_url",
+    "width_px",
+    "height_px",
+    "format",
     "metadata",
     "deleted_at",
   ]);
@@ -1247,15 +1262,97 @@ function uploadRoot() {
   return process.env.UPLOAD_DIR || path.join(process.cwd(), ".data", "uploads");
 }
 
+const MAX_UPLOAD_BYTES = Number(process.env.MAX_UPLOAD_BYTES || 8 * 1024 * 1024);
+const ALLOWED_UPLOAD_TYPES = new Set([
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "image/gif",
+]);
+
+function assertUploadAllowed(file: NonNullable<ParsedBody["files"]>[number]) {
+  if (file.size > MAX_UPLOAD_BYTES) throw new Error("file_too_large");
+  if (!ALLOWED_UPLOAD_TYPES.has(file.type)) throw new Error("unsupported_file_type");
+}
+
+function cloudinaryConfigured() {
+  return Boolean(process.env.CLOUDINARY_CLOUD_NAME && process.env.CLOUDINARY_API_KEY && process.env.CLOUDINARY_API_SECRET);
+}
+
+function signCloudinaryUpload(params: Record<string, string | number>) {
+  const signatureBase = Object.entries(params)
+    .filter(([, value]) => value !== "" && value !== undefined && value !== null)
+    .sort(([left], [right]) => left.localeCompare(right))
+    .map(([key, value]) => `${key}=${value}`)
+    .join("&");
+  return createHash("sha1").update(`${signatureBase}${process.env.CLOUDINARY_API_SECRET}`).digest("hex");
+}
+
+async function uploadToCloudinary(file: NonNullable<ParsedBody["files"]>[number], userId?: string) {
+  const cloudName = process.env.CLOUDINARY_CLOUD_NAME!;
+  const timestamp = Math.floor(Date.now() / 1000);
+  const folder = process.env.CLOUDINARY_UPLOAD_FOLDER || "cpac-safety";
+  const publicId = `${folder}/${userId || "anonymous"}/${Date.now()}-${safeFileName(file.name).replace(/\.[^.]+$/, "")}`;
+  const params = { folder, public_id: publicId, timestamp };
+  const signature = signCloudinaryUpload(params);
+  const formData = new FormData();
+  formData.set("file", new Blob([file.bytes as Uint8Array], { type: file.type }), file.name);
+  formData.set("api_key", process.env.CLOUDINARY_API_KEY!);
+  formData.set("timestamp", String(timestamp));
+  formData.set("folder", folder);
+  formData.set("public_id", publicId);
+  formData.set("signature", signature);
+
+  const response = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/auto/upload`, {
+    method: "POST",
+    body: formData,
+  });
+  const payload = await response.json().catch(() => null) as Record<string, unknown> | null;
+  if (!response.ok || !payload?.secure_url) {
+    throw new Error(String(payload?.error && typeof payload.error === "object" ? (payload.error as Record<string, unknown>).message : "cloudinary_upload_failed"));
+  }
+  return payload;
+}
+
+async function assertMediaAccess(id: string, userId?: string) {
+  const media = await getRow("media_assets", id);
+  if (!media) throw new Error("media_not_found");
+  if (userId && media.created_by && String(media.created_by) !== String(userId)) {
+    throw new Error("media_forbidden");
+  }
+  return media;
+}
+
 async function handleUploadsMedia(request: NextRequest, method: string, match: RouteMatch, input: JsonInput, body: ParsedBody, userId?: string) {
   const route = match.route.path;
   if (method === "POST" && route === "/api/uploads") {
     const file = body.files?.[0];
     if (!file?.bytes) return jsonError("file_required");
+    assertUploadAllowed(file);
     const fileName = `${Date.now()}-${safeFileName(file.name)}`;
-    await fs.mkdir(uploadRoot(), { recursive: true });
-    const storagePath = path.join(uploadRoot(), fileName);
-    await fs.writeFile(storagePath, file.bytes);
+    let storagePath: string | null = null;
+    let publicUrl: string | null = null;
+    let provider = "local";
+    let providerAssetId: string | null = null;
+    let providerPublicId: string | null = null;
+    let widthPx: number | null = null;
+    let heightPx: number | null = null;
+    let format: string | null = null;
+
+    if (cloudinaryConfigured()) {
+      const uploaded = await uploadToCloudinary(file, userId);
+      provider = "cloudinary";
+      providerAssetId = uploaded.asset_id ? String(uploaded.asset_id) : null;
+      providerPublicId = uploaded.public_id ? String(uploaded.public_id) : null;
+      publicUrl = String(uploaded.secure_url);
+      widthPx = Number(uploaded.width || 0) || null;
+      heightPx = Number(uploaded.height || 0) || null;
+      format = uploaded.format ? String(uploaded.format) : null;
+    } else {
+      await fs.mkdir(uploadRoot(), { recursive: true });
+      storagePath = path.join(uploadRoot(), fileName);
+      await fs.writeFile(storagePath, file.bytes);
+    }
     const media = await createMediaAsset({
       fileName,
       originalName: file.name,
@@ -1265,7 +1362,15 @@ async function handleUploadsMedia(request: NextRequest, method: string, match: R
       module: input.module || "general",
       ownerType: input.ownerType || null,
       ownerId: input.ownerId || null,
+      linkType: input.linkType || null,
       storagePath,
+      publicUrl,
+      provider,
+      providerAssetId,
+      providerPublicId,
+      widthPx,
+      heightPx,
+      format,
     }, userId);
     return jsonData({ attachment: media, media }, { status: 201 });
   }
@@ -1273,6 +1378,7 @@ async function handleUploadsMedia(request: NextRequest, method: string, match: R
     const media = await getRow("media_assets", match.params.id);
     if (method === "GET") return media ? jsonData({ media }) : jsonError("media_not_found", 404);
     if (method === "DELETE") {
+      await assertMediaAccess(match.params.id, userId);
       if (media?.file_name) await fs.unlink(String(media.storage_path || path.join(uploadRoot(), String(media.file_name)))).catch(() => undefined);
       await updateMediaAsset(match.params.id, { status: "DELETED", deleted_at: new Date() });
       return jsonData({ deleted: true });
@@ -1281,6 +1387,7 @@ async function handleUploadsMedia(request: NextRequest, method: string, match: R
   if (method === "GET" && route === "/api/uploads/:id/download") {
     const media = await getRow("media_assets", match.params.id);
     if (!media?.file_name) return jsonError("media_not_found", 404);
+    if (media.public_url) return NextResponse.redirect(String(media.public_url), 302);
     const bytes = await fs.readFile(String(media.storage_path || path.join(uploadRoot(), String(media.file_name)))).catch(() => null);
     if (!bytes) return jsonError("file_not_found", 404);
     return new NextResponse(bytes, {
@@ -1301,6 +1408,7 @@ async function handleUploadsMedia(request: NextRequest, method: string, match: R
     return jsonData({ cleaned });
   }
   if (route === "/api/uploads/:id/link") {
+    await assertMediaAccess(match.params.id, userId);
     if (method === "POST") return jsonData({ media: await updateMediaAsset(match.params.id, { ...input, status: "LINKED" }) });
     if (method === "DELETE") return jsonData({ media: await updateMediaAsset(match.params.id, { ownerType: null, ownerId: null, linkType: null, status: "READY" }) });
   }

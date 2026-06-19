@@ -6,12 +6,6 @@ import { isLocalDemoLoginHost } from "@/lib/session-user";
 
 const LOGIN_SESSION_KEY = "cpac-safety-login-session";
 
-function getSafeReturnTo() {
-  if (typeof window === "undefined") return "/";
-  const value = new URLSearchParams(window.location.search).get("returnTo") || "/";
-  return value.startsWith("/") && !value.startsWith("//") ? value : "/";
-}
-
 export default function Login() {
   const navigate = useNavigate();
 
@@ -19,7 +13,7 @@ export default function Login() {
     if (typeof window === "undefined") return "";
     return new URLSearchParams(window.location.search).get("sso_error") || "";
   }, []);
-  const returnTo = useMemo(getSafeReturnTo, []);
+
   const demoLoginAvailable = useMemo(() => {
     if (typeof window === "undefined") return false;
     return (
@@ -27,6 +21,15 @@ export default function Login() {
       isLocalDemoLoginHost(window.location.hostname)
     );
   }, []);
+
+  const handleDemoLogin = () => {
+    try {
+      window.sessionStorage.setItem(LOGIN_SESSION_KEY, "true");
+    } catch {
+      // The demo login still navigates home even without storage.
+    }
+    navigate("/");
+  };
 
   useEffect(() => {
     try {
@@ -37,16 +40,7 @@ export default function Login() {
   }, []);
 
   const handleLogin = () => {
-    window.location.assign(`/api/auth/login?returnTo=${encodeURIComponent(returnTo)}`);
-  };
-
-  const handleDemoLogin = () => {
-    try {
-      window.sessionStorage.setItem(LOGIN_SESSION_KEY, "true");
-    } catch {
-      // The demo login still navigates home even without storage.
-    }
-    navigate(returnTo || "/");
+    window.location.assign("/api/auth/login");
   };
 
   return (

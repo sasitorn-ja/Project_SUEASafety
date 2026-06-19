@@ -178,7 +178,7 @@ export async function awardPoints(input: {
   const sourceType = input.sourceType || rule.sourceType || RULE_SOURCE_TYPES[input.action];
 
   await withTransaction(async (connection) => {
-    await connection.execute<ResultSetHeader>(
+    const [transactionResult] = await connection.execute<ResultSetHeader>(
       `
         INSERT IGNORE INTO point_transactions (
           user_id,
@@ -210,6 +210,8 @@ export async function awardPoints(input: {
         description: input.description || SAFETY_POINT_RULE_LABELS[input.action],
       },
     );
+
+    if (transactionResult.affectedRows === 0) return;
 
     await connection.execute<ResultSetHeader>(
       `

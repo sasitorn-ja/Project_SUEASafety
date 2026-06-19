@@ -293,6 +293,11 @@ function jsonBody(body: unknown) {
     : {};
 }
 
+function optionalScalar(value: unknown): string | number | null {
+  if (typeof value === "string" || typeof value === "number") return value;
+  return null;
+}
+
 function locationTypeForPath(path: string): SafetyEffortLocationType | null {
   if (path === "/api/locations/plants") return "PLANT";
   if (path === "/api/locations/offices") return "OFFICE";
@@ -444,7 +449,13 @@ async function tryHandleConcreteRoute(
     }
 
     if (path === "/api/safety-culture/posts" && method === "GET" && userId) {
-      return jsonData(await listPosts({ viewerId: userId, limit: Number(query.get("limit") || 20), cursor: query.get("cursor") }));
+      return jsonData(await listPosts({
+        viewerId: userId,
+        limit: Number(query.get("limit") || 20),
+        cursor: query.get("cursor"),
+        scope: (query.get("scope") || "all") as "all" | "my-team" | "mine",
+        category: query.get("category"),
+      }));
     }
 
     if (path === "/api/safety-awareness/attempts" && method === "POST" && userId) {
@@ -460,7 +471,13 @@ async function tryHandleConcreteRoute(
 
     if (path === "/api/safety-culture/posts" && method === "POST" && userId) {
       const input = jsonBody(body);
-      const post = await createPost({ authorId: userId, content: String(input.content || input.body || "") });
+      const post = await createPost({
+        authorId: userId,
+        content: String(input.content || input.body || ""),
+        category: input.category ? String(input.category) : null,
+        attachmentIds: Array.isArray(input.attachmentIds) ? input.attachmentIds as Array<string | number> : [],
+        eventId: optionalScalar(input.eventId) || optionalScalar(input.feedEventId),
+      });
       return jsonData({ post }, { status: 201 });
     }
 

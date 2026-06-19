@@ -63,6 +63,30 @@ async function optimizeImage(file: File) {
   return canvas.toDataURL("image/jpeg", PHOTO_OUTPUT_QUALITY);
 }
 
+async function dataUrlToFile(dataUrl: string, fileName: string) {
+  const response = await fetch(dataUrl);
+  const blob = await response.blob();
+  return new File([blob], fileName, { type: blob.type || "image/jpeg" });
+}
+
+async function uploadDraftPhoto(photo: DraftPhoto, index: number) {
+  const file = await dataUrlToFile(photo.dataUrl, `safety-post-${Date.now()}-${index}.jpg`);
+  const formData = new FormData();
+  formData.append("file", file);
+  formData.append("module", "safety-culture");
+  formData.append("ownerType", "post");
+  formData.append("linkType", "attachment");
+
+  const response = await fetch("/api/uploads", {
+    method: "POST",
+    credentials: "include",
+    body: formData,
+  });
+  const payload = await response.json().catch(() => null);
+  if (!response.ok || !payload?.ok) throw new Error(payload?.error || "post_photo_upload_failed");
+  return String(payload.data?.media?.id || payload.data?.attachment?.id || "");
+}
+
 export default function PostSocialPage() {
   const cameraInputId = useId();
   const uploadInputId = useId();
@@ -76,6 +100,7 @@ export default function PostSocialPage() {
   const [selectedFeedEventId, setSelectedFeedEventId] = useState("");
   const [photos, setPhotos] = useState<DraftPhoto[]>([]);
   const [isProcessingPhotos, setIsProcessingPhotos] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const selectedFeedEvent = availableFeedEvents.find((event) => event.id === selectedFeedEventId) ?? null;
 
   const animStyle = (delay: number) => ({
@@ -124,7 +149,7 @@ export default function PostSocialPage() {
     await appendFiles(files, "upload");
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!text.trim()) {
       toast.error("ยังโพสต์ไม่ได้", {
         description: "กรุณาเขียนรายละเอียดก่อนโพสต์",
@@ -139,11 +164,27 @@ export default function PostSocialPage() {
       return;
     }
 
+    if (isSubmitting) return;
+    setIsSubmitting(true);
+
+    let uploadedPhotoIds: string[] = [];
+    try {
+      if (sessionUser?.id && photos.length > 0) {
+        uploadedPhotoIds = await Promise.all(photos.map((photo, index) => uploadDraftPhoto(photo, index)));
+      }
+    } catch {
+      toast.error("อัปโหลดรูปไม่สำเร็จ", {
+        description: "กรุณาลองโพสต์อีกครั้ง หรือเอารูปที่มีปัญหาออกก่อน",
+      });
+      setIsSubmitting(false);
+      return;
+    }
+
     const timestamp = Date.now();
     const attachedPhotos = photos
       .filter((photo) => photo.dataUrl)
       .map((photo, index) => ({
-        id: `${timestamp}-${index}`,
+        id: uploadedPhotoIds[index] || `${timestamp}-${index}`,
         dataUrl: photo.dataUrl,
         type: photo.type,
       }));
@@ -187,20 +228,6 @@ export default function PostSocialPage() {
     });
 
     setTimeout(() => router.push("/safety-culture"), 800);
-    return;
-
-    const bonusLabel =
-      safetyCultureEvent.bonusMode === "multiplier"
-        ? `x${safetyCultureEvent.multiplier}`
-        : `+${safetyCultureEvent.fixedPoints} แต้มเพิ่ม`;
-
-    toast.success("โพสต์สำเร็จ", {
-      description: isEventLive
-        ? `แชร์เรื่องความปลอดภัยแล้ว ได้ฐาน +${getSafetyPoint("safetyPostApproved")} แต้ม และโบนัสอีเว้น ${bonusLabel}`
-        : `แชร์เรื่องความปลอดภัยแล้ว ได้รับ +${getSafetyPoint("safetyPostApproved")} แต้ม`,
-    });
-
-    setTimeout(() => router.push("/safety-culture"), 800);
   };
 
   return (
@@ -226,10 +253,10 @@ export default function PostSocialPage() {
           </div>
           <Button
             onClick={handleSubmit}
-            disabled={isProcessingPhotos}
+            disabled={isProcessingPhotos || isSubmitting}
             className="rounded-full bg-[#1A1A1A] px-6 text-sm font-extrabold text-white shadow-[0_4px_10px_rgba(0,0,0,0.1)] transition-all hover:bg-[var(--brand-accent)] hover:text-[#1A1A1A] disabled:cursor-wait disabled:opacity-70"
           >
-            {isProcessingPhotos ? "กำลังเตรียมรูปภาพ..." : "โพสต์"}
+            {isSubmitting ? "กำลังโพสต์..." : isProcessingPhotos ? "กำลังเตรียมรูปภาพ..." : "โพสต์"}
           </Button>
         </header>
 

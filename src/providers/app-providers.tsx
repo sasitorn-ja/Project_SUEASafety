@@ -1104,6 +1104,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
       content: post.body,
       category: post.category,
       attachmentIds: post.photos.map((photo) => photo.id),
+      feedEventId: post.feedEventId,
     }));
   }, [getLinkedFeedEvent, safetyCultureEvent]);
 

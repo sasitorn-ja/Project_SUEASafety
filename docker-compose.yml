@@ -29,3 +29,8 @@ services:
       - "rmc-sso.cipcloud.net:192.168.1.48"
     ports:
       - "127.0.0.1:3000:3000"
+    volumes:
+      - cpac-safety-uploads:/app/.data/uploads
+
+volumes:
+  cpac-safety-uploads:

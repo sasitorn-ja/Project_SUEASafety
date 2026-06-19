@@ -9,7 +9,15 @@ type PostRow = RowDataPacket & {
   id: string;
   author_id: string;
   author_name: string | null;
+  author_email: string | null;
+  organization_id: string | null;
+  organization_name: string | null;
+  team_id: string | null;
+  team_name: string | null;
+  event_id: string | null;
+  category: string | null;
   content: string;
+  points_awarded: number | string;
   status: string;
   published_at: Date | string | null;
   created_at: Date | string;
@@ -17,6 +25,7 @@ type PostRow = RowDataPacket & {
   like_count: number | string;
   comment_count: number | string;
   has_liked: 0 | 1 | boolean;
+  photos_json: string | null;
 };
 
 type CommentRow = RowDataPacket & {
@@ -29,11 +38,39 @@ type CommentRow = RowDataPacket & {
 };
 
 function mapPost(row: PostRow) {
+  let photos: Array<{ id: string; dataUrl: string; type: string; url: string }> = [];
+  if (row.photos_json) {
+    try {
+      photos = (JSON.parse(row.photos_json) as Array<Record<string, unknown>>)
+        .filter((photo) => photo?.id)
+        .map((photo) => {
+          const id = String(photo.id);
+          const url = String(photo.url || `/api/uploads/${id}/download`);
+          return {
+            id,
+            dataUrl: url,
+            url,
+            type: String(photo.type || "upload"),
+          };
+        });
+    } catch {
+      photos = [];
+    }
+  }
+
   return {
     id: String(row.id),
     authorId: String(row.author_id),
     authorName: row.author_name || "Unknown user",
+    authorEmail: row.author_email,
+    organizationId: row.organization_id ? String(row.organization_id) : null,
+    organizationName: row.organization_name,
+    teamId: row.team_id ? String(row.team_id) : null,
+    teamName: row.team_name,
+    eventId: row.event_id ? String(row.event_id) : null,
+    category: row.category || "ทั่วไป",
     content: row.content,
+    pointsAwarded: Number(row.points_awarded || 0),
     status: row.status,
     publishedAt: row.published_at ? new Date(row.published_at).toISOString() : null,
     createdAt: new Date(row.created_at).toISOString(),
@@ -41,6 +78,7 @@ function mapPost(row: PostRow) {
     likeCount: Number(row.like_count || 0),
     commentCount: Number(row.comment_count || 0),
     hasLiked: Boolean(row.has_liked),
+    photos,
   };
 }
 
@@ -59,22 +97,83 @@ const SELECT_POSTS_SQL = `
   SELECT
     p.id,
     p.author_id,
+    p.organization_id,
+    p.team_id,
+    p.event_id,
+    p.category,
     u.name_th AS author_name,
+    u.email AS author_email,
+    o.name_th AS organization_name,
+    t.name AS team_name,
     p.content,
+    p.points_awarded,
     p.status,
     p.published_at,
     p.created_at,
     p.updated_at,
-    COUNT(DISTINCT r.user_id) AS like_count,
-    COUNT(DISTINCT c.id) AS comment_count,
-    MAX(CASE WHEN r.user_id = :viewerId THEN 1 ELSE 0 END) AS has_liked
+    (SELECT COUNT(*) FROM reactions r WHERE r.post_id = p.id) AS like_count,
+    (SELECT COUNT(*) FROM comments c WHERE c.post_id = p.id AND c.deleted_at IS NULL) AS comment_count,
+    EXISTS(SELECT 1 FROM reactions vr WHERE vr.post_id = p.id AND vr.user_id = :viewerId) AS has_liked,
+    (
+      SELECT JSON_ARRAYAGG(
+        JSON_OBJECT(
+          'id', CAST(ma.id AS CHAR),
+          'url', COALESCE(ma.public_url, CONCAT('/api/uploads/', ma.id, '/download')),
+          'type', COALESCE(ma.mime_type, 'image')
+        )
+        ORDER BY pm.sort_order, ma.id
+      )
+      FROM post_media pm
+      JOIN media_assets ma ON ma.id = pm.media_asset_id
+      WHERE pm.post_id = p.id
+        AND ma.deleted_at IS NULL
+        AND ma.status <> 'DELETED'
+    ) AS photos_json
   FROM posts p
   LEFT JOIN users u ON u.id = p.author_id
-  LEFT JOIN reactions r ON r.post_id = p.id
-  LEFT JOIN comments c ON c.post_id = p.id AND c.deleted_at IS NULL
+  LEFT JOIN organizations o ON o.id = p.organization_id
+  LEFT JOIN teams t ON t.id = p.team_id
 `;
 
-export async function listPosts(options: { viewerId: string; limit?: number; cursor?: string | null; status?: string | null }) {
+async function getUserTeamContext(userId: string) {
+  const rows = await queryRows<RowDataPacket & {
+    organization_id: string | null;
+    team_id: string | null;
+  }>(
+    `
+      SELECT
+        u.organization_id,
+        (
+          SELECT tm.team_id
+          FROM team_members tm
+          JOIN teams t ON t.id = tm.team_id
+          WHERE tm.user_id = u.id
+            AND tm.left_at IS NULL
+            AND t.deleted_at IS NULL
+            AND t.status = 'ACTIVE'
+          ORDER BY tm.joined_at DESC
+          LIMIT 1
+        ) AS team_id
+      FROM users u
+      WHERE u.id = :userId
+      LIMIT 1
+    `,
+    { userId },
+  );
+  return {
+    organizationId: rows[0]?.organization_id ? String(rows[0].organization_id) : null,
+    teamId: rows[0]?.team_id ? String(rows[0].team_id) : null,
+  };
+}
+
+export async function listPosts(options: {
+  viewerId: string;
+  limit?: number;
+  cursor?: string | null;
+  status?: string | null;
+  scope?: "all" | "my-team" | "mine";
+  category?: string | null;
+}) {
   const limit = Math.min(Math.max(Number(options.limit) || 20, 1), 100);
   const where = ["p.deleted_at IS NULL"];
   const params: Record<string, unknown> = {
@@ -92,12 +191,25 @@ export async function listPosts(options: { viewerId: string; limit?: number; cur
   } else {
     where.push("p.status = 'PUBLISHED'");
   }
+  if (options.category?.trim() && options.category !== "ทั้งหมด" && options.category !== "ทีมของฉัน") {
+    where.push("p.category = :category");
+    params.category = options.category.trim();
+  }
+  if (options.scope === "mine") {
+    where.push("p.author_id = :viewerId");
+  } else if (options.scope === "my-team") {
+    const context = await getUserTeamContext(options.viewerId);
+    if (!context.teamId) {
+      return { items: [], nextCursor: null, teamId: null };
+    }
+    where.push("p.team_id = :teamId");
+    params.teamId = context.teamId;
+  }
 
   const rows = await queryRows<PostRow>(
     `
       ${SELECT_POSTS_SQL}
       WHERE ${where.join(" AND ")}
-      GROUP BY p.id, p.author_id, u.name_th, p.content, p.status, p.published_at, p.created_at, p.updated_at
       ORDER BY p.id DESC
       LIMIT :limit
     `,
@@ -115,7 +227,6 @@ export async function getPost(id: string, viewerId: string) {
     `
       ${SELECT_POSTS_SQL}
       WHERE p.id = :id AND p.deleted_at IS NULL
-      GROUP BY p.id, p.author_id, u.name_th, p.content, p.status, p.published_at, p.created_at, p.updated_at
       LIMIT 1
     `,
     { id, viewerId },
@@ -123,26 +234,80 @@ export async function getPost(id: string, viewerId: string) {
   return rows[0] ? mapPost(rows[0]) : null;
 }
 
-export async function createPost(input: { authorId: string; content: string; status?: string }) {
+export async function createPost(input: {
+  authorId: string;
+  content: string;
+  category?: string | null;
+  status?: string;
+  attachmentIds?: Array<string | number>;
+  eventId?: string | number | null;
+}) {
   const content = input.content.trim();
   if (!content) throw new Error("content_required");
+  const category = String(input.category || "ทั่วไป").trim() || "ทั่วไป";
+  const context = await getUserTeamContext(input.authorId);
 
   const id = await withTransaction(async (connection) => {
     const [result] = await connection.execute<ResultSetHeader>(
       `
-        INSERT INTO posts (author_id, content, status, published_at)
-        VALUES (:authorId, :content, :status, CASE WHEN :status = 'PUBLISHED' THEN UTC_TIMESTAMP(3) ELSE NULL END)
+        INSERT INTO posts (
+          author_id,
+          organization_id,
+          team_id,
+          event_id,
+          category,
+          content,
+          status,
+          published_at
+        )
+        VALUES (
+          :authorId,
+          :organizationId,
+          :teamId,
+          :eventId,
+          :category,
+          :content,
+          :status,
+          CASE WHEN :status = 'PUBLISHED' THEN UTC_TIMESTAMP(3) ELSE NULL END
+        )
       `,
       {
         authorId: input.authorId,
+        organizationId: context.organizationId,
+        teamId: context.teamId,
+        eventId: input.eventId || null,
+        category,
         content,
         status: input.status || "PUBLISHED",
       },
     );
-    return String(result.insertId);
+    const postId = String(result.insertId);
+    const attachmentIds = (input.attachmentIds || [])
+      .map((value) => Number(value))
+      .filter((value) => Number.isFinite(value) && value > 0)
+      .slice(0, 5);
+    for (let index = 0; index < attachmentIds.length; index += 1) {
+      const mediaId = attachmentIds[index];
+      await connection.execute(
+        `
+          INSERT IGNORE INTO post_media (post_id, media_asset_id, sort_order)
+          VALUES (:postId, :mediaId, :sortOrder)
+        `,
+        { postId, mediaId, sortOrder: index },
+      );
+      await connection.execute(
+        `
+          UPDATE media_assets
+          SET owner_type='post', owner_id=:postId, link_type='attachment', status='LINKED'
+          WHERE id=:mediaId AND created_by=:authorId AND deleted_at IS NULL
+        `,
+        { postId, mediaId, authorId: input.authorId },
+      );
+    }
+    return postId;
   });
 
-  await awardPoints({
+  const balance = await awardPoints({
     userId: input.authorId,
     action: "safetyPostApproved",
     sourceType: "POST",
@@ -150,6 +315,21 @@ export async function createPost(input: { authorId: string; content: string; sta
     idempotencyKey: `post:${id}:approved`,
     description: "สร้าง Safety Post ที่อนุมัติ",
   }).catch(() => null);
+  if (balance) {
+    const ruleRows = await queryRows<RowDataPacket & { amount: number | string }>(
+      "SELECT amount FROM point_transactions WHERE idempotency_key = :key LIMIT 1",
+      { key: `post:${id}:approved` },
+    ).catch(() => []);
+    const pointsAwarded = Number(ruleRows[0]?.amount || 0);
+    if (pointsAwarded > 0) {
+      await withTransaction(async (connection) => {
+        await connection.execute(
+          "UPDATE posts SET points_awarded = :pointsAwarded WHERE id = :id",
+          { id, pointsAwarded },
+        );
+      });
+    }
+  }
 
   return getPost(id, input.authorId);
 }
