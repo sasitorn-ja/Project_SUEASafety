@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Image from "next/image";
 import Link from "next/link";
@@ -150,7 +150,6 @@ export function DesktopTopbar() {
   const { user: sessionUser } = useSessionUser();
   const isWangjai = theme === "wangjai";
   const [desktopMenu, setDesktopMenu] = useState<"dashboard" | "safety-culture" | "admin" | "profile" | null>(null);
-  const [openAdminSection, setOpenAdminSection] = useState<string | null>(null);
   const [notificationOpen, setNotificationOpen] = useState(false);
   const [profileImageFailed, setProfileImageFailed] = useState(false);
   const notificationRef = useRef<HTMLDivElement>(null);
