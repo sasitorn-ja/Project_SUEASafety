@@ -14,7 +14,7 @@ export function isAdminRoute(pathname: string) {
 
 export function isMainNavActive(pathname: string, href: string) {
   if (href === "/") return pathname === "/";
-  if (href === "/dashboard") return pathname === "/dashboard" || pathname === "/dashboard-safety-effort";
+  if (href === "/dashboard") return pathname === "/dashboard";
   if (href === "/category") return SAFETY_EFFORT_ROUTES.has(pathname);
   if (href === "/were-ok") return pathname === "/were-ok" || pathname.startsWith("/were-ok/");
   if (href === "/work-permit") return pathname === "/work-permit" || pathname.startsWith("/work-permit/");

@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import Image from "next/image";
 import Link from "next/link";
@@ -9,9 +9,10 @@ import { NotificationCenter } from "@/components/notifications/notification-cent
 import { cn } from "@/lib/utils";
 import { isExactNavActive, isMainNavActive } from "@/lib/navigation";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { useAppState } from "@/providers/app-providers";
 import { useAppTheme } from "@/providers/theme-provider";
-import { getProfileDisplayName } from "@/lib/profile";
+import { getProfileDisplayName, PROFILE_IMAGE_KEY, PROFILE_IMAGE_UPDATED_EVENT } from "@/lib/profile";
 import { getSessionDisplayName, getSessionProfileImage, hasAdminAccess, useSessionUser } from "@/lib/session-user";
 import {
   MENU_STORAGE_KEY,
@@ -116,10 +117,6 @@ function ConfiguredMenuLink({
 function AdminFlyoutSection({ section, pathname }: { section: MenuNode; pathname: string }) {
   const children = section.children.filter((node) => node.enabled);
 
-  if (children.length === 0) {
-    return <ConfiguredMenuLink node={section} pathname={pathname} compact />;
-  }
-
   return (
     <div className="group/admin-section relative">
       <div className="flex cursor-default items-center rounded-lg hover:bg-white/10">
@@ -129,7 +126,7 @@ function AdminFlyoutSection({ section, pathname }: { section: MenuNode; pathname
         {children.length > 0 && <ChevronDown className="mr-1.5 h-3 w-3 -rotate-90 text-white/70" strokeWidth={2.5} />}
       </div>
       {children.length > 0 && (
-        <div className="invisible absolute left-full top-0 z-50 w-[min(245px,calc(100vw-32px))] -translate-x-1 pl-1.5 opacity-0 transition-all duration-150 group-hover/admin-section:visible group-hover/admin-section:translate-x-0 group-hover/admin-section:opacity-100">
+        <div className="invisible absolute left-full top-0 z-50 w-[245px] -translate-x-1 pl-1.5 opacity-0 transition-all duration-150 group-hover/admin-section:visible group-hover/admin-section:translate-x-0 group-hover/admin-section:opacity-100">
           <div className="max-h-[calc(100vh-var(--topbar-h)-24px)] overflow-y-auto rounded-lg border border-white/[0.14] bg-[rgba(var(--brand-nav-rgb),0.98)] p-1 shadow-[0_14px_32px_var(--brand-shadow)] backdrop-blur-xl">
             {children.map((child) => (
               <ConfiguredMenuLink key={child.id} node={child} pathname={pathname} />
@@ -147,11 +144,12 @@ export function DesktopTopbar() {
   const pathname = usePathname() ?? "";
   const [open, setOpen] = useState(false);
   const [configuredMenu, setConfiguredMenu] = useState<MenuNode[]>([]);
+  const [profileImage, setProfileImage] = useState("");
   const { user: sessionUser } = useSessionUser();
   const isWangjai = theme === "wangjai";
   const [desktopMenu, setDesktopMenu] = useState<"dashboard" | "safety-culture" | "admin" | "profile" | null>(null);
+  const [openAdminSection, setOpenAdminSection] = useState<string | null>(null);
   const [notificationOpen, setNotificationOpen] = useState(false);
-  const [profileImageFailed, setProfileImageFailed] = useState(false);
   const notificationRef = useRef<HTMLDivElement>(null);
   const unreadNotificationCount = inboxNotifications.filter((item) => !item.read).length;
 
@@ -187,17 +185,32 @@ export function DesktopTopbar() {
     };
   }, []);
 
+  useEffect(() => {
+    const refreshProfileImage = () => {
+      try {
+        setProfileImage(window.localStorage.getItem(PROFILE_IMAGE_KEY) || "");
+      } catch {
+        setProfileImage("");
+      }
+    };
+    const handleStorage = (event: StorageEvent) => {
+      if (!event.key || event.key === PROFILE_IMAGE_KEY) refreshProfileImage();
+    };
+    refreshProfileImage();
+    window.addEventListener(PROFILE_IMAGE_UPDATED_EVENT, refreshProfileImage);
+    window.addEventListener("storage", handleStorage);
+    return () => {
+      window.removeEventListener(PROFILE_IMAGE_UPDATED_EVENT, refreshProfileImage);
+      window.removeEventListener("storage", handleStorage);
+    };
+  }, []);
 
   const configuredAdmin = findAdminMenu(configuredMenu);
   const canUseAdmin = hasAdminAccess(sessionUser);
   const navItems = canUseAdmin ? NAV_ITEMS : NAV_ITEMS.filter((item) => item.id !== "admin");
   const adminSections = canUseAdmin ? configuredAdmin?.children.filter((node) => node.enabled) ?? [] : [];
   const displayName = sessionUser ? getSessionDisplayName(sessionUser) : getProfileDisplayName();
-  const displayImage = getSessionProfileImage(sessionUser);
-
-  useEffect(() => {
-    setProfileImageFailed(false);
-  }, [displayImage]);
+  const displayImage = getSessionProfileImage(sessionUser) || profileImage;
 
   return (
     <header
@@ -271,58 +284,52 @@ export function DesktopTopbar() {
                 })}
               </div>
 
-              <div className="rounded-2xl border border-white/10 bg-white/[0.06] p-2.5">
-                <div className="mb-2 flex items-center gap-2 px-1.5 text-[10px] font-extrabold uppercase tracking-[0.18em] text-[var(--brand-hero-label)]">
-                  <Heart className="h-3.5 w-3.5" strokeWidth={2.3} />
-                  <span>Safety Culture</span>
-                </div>
-                <div className="grid grid-cols-1 gap-1.5 md:grid-cols-2">
-                  {SAFETY_CULTURE_ITEMS.map((item) => {
-                    const Icon = item.icon;
-                    return (
-                      <NavTo
-                        key={item.href}
-                        href={item.href}
-                        onClick={() => setOpen(false)}
-                        className={cn(
-                          "flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-bold transition-colors hover:bg-white/10",
-                          isExactNavActive(pathname, item.href) ? "bg-white/10 text-[var(--brand-accent)]" : "text-white/[0.86]"
-                        )}
-                      >
-                        <Icon className="h-[17px] w-[17px] text-[var(--brand-accent)]" strokeWidth={2.3} />
-                        {item.label}
-                      </NavTo>
-                    );
-                  })}
-                </div>
-              </div>
-
-              <div className="rounded-2xl border border-white/10 bg-white/[0.06] p-2.5">
-                <div className="mb-2 flex items-center gap-2 px-1.5 text-[10px] font-extrabold uppercase tracking-[0.18em] text-[var(--brand-hero-label)]">
-                  <UserRound className="h-3.5 w-3.5" strokeWidth={2.3} />
-                  <span>Admin</span>
-                </div>
-                <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
-                  {adminSections.map((section) => (
-                    <div key={section.id} className="rounded-xl border border-white/10 bg-white/[0.04] p-1.5">
-                      <ConfiguredMenuLink
-                        node={section}
-                        pathname={pathname}
-                        onClick={() => setOpen(false)}
-                        compact
-                        asLabel={section.children.filter((node) => node.enabled).length > 0}
-                      />
-                      {section.children.filter((node) => node.enabled).length > 0 && (
-                        <div className="ml-3 border-l border-white/15 pl-2">
-                          {section.children.filter((node) => node.enabled).map((child) => (
-                            <ConfiguredMenuLink key={child.id} node={child} pathname={pathname} onClick={() => setOpen(false)} compact />
-                          ))}
-                        </div>
-                      )}
+                  <div className="rounded-2xl border border-white/10 bg-white/[0.06] p-2.5">
+                    <div className="mb-2 flex items-center gap-2 px-1.5 text-[10px] font-extrabold uppercase tracking-[0.18em] text-[var(--brand-hero-label)]">
+                      <Heart className="h-3.5 w-3.5" strokeWidth={2.3} />
+                      <span>Safety Culture</span>
                     </div>
-                  ))}
-                </div>
-              </div>
+                    <div className="grid grid-cols-1 gap-1.5 md:grid-cols-2">
+                      {SAFETY_CULTURE_ITEMS.map((item) => {
+                        const Icon = item.icon;
+                        return (
+                          <NavTo
+                            key={item.href}
+                            href={item.href}
+                            onClick={() => setOpen(false)}
+                            className={cn(
+                              "flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-bold transition-colors hover:bg-white/10",
+                              isExactNavActive(pathname, item.href) ? "bg-white/10 text-[var(--brand-accent)]" : "text-white/[0.86]"
+                            )}
+                          >
+                            <Icon className="h-[17px] w-[17px] text-[var(--brand-accent)]" strokeWidth={2.3} />
+                            {item.label}
+                          </NavTo>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  <div className="rounded-2xl border border-white/10 bg-white/[0.06] p-2.5">
+                    <div className="mb-2 flex items-center gap-2 px-1.5 text-[10px] font-extrabold uppercase tracking-[0.18em] text-[var(--brand-hero-label)]">
+                      <UserRound className="h-3.5 w-3.5" strokeWidth={2.3} />
+                      <span>Admin</span>
+                    </div>
+                    <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
+                      {adminSections.map((section) => (
+                        <div key={section.id} className="rounded-xl border border-white/10 bg-white/[0.04] p-1.5">
+                          <ConfiguredMenuLink node={section} pathname={pathname} onClick={() => setOpen(false)} compact />
+                          {section.children.filter((node) => node.enabled).length > 0 && (
+                            <div className="ml-3 border-l border-white/15 pl-2">
+                              {section.children.filter((node) => node.enabled).map((child) => (
+                                <ConfiguredMenuLink key={child.id} node={child} pathname={pathname} onClick={() => setOpen(false)} compact />
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
             </div>
           </SheetContent>
         </Sheet>
@@ -341,7 +348,7 @@ export function DesktopTopbar() {
                     <span className="desktop-nav-label">{item.label}</span>
                     <ChevronDown className={cn("h-3.5 w-3.5 transition-transform", desktopMenu === "admin" && "rotate-180")} />
                   </NavTo>
-                  <div className={cn("absolute right-0 top-full z-50 w-[220px] pt-1.5 transition-all duration-150", desktopMenu === "admin" ? "visible translate-y-0 opacity-100" : "invisible -translate-y-1 opacity-0")}>
+                  <div className={cn("absolute right-[-64px] top-full z-50 w-[220px] pt-1.5 transition-all duration-150", desktopMenu === "admin" ? "visible translate-y-0 opacity-100" : "invisible -translate-y-1 opacity-0")}>
                     <div className="overflow-visible rounded-lg border border-white/[0.14] bg-[rgba(var(--brand-nav-rgb),0.96)] p-1 text-white shadow-[0_14px_32px_var(--brand-shadow)] backdrop-blur-xl">
                       {adminSections.map((section) => (
                         <AdminFlyoutSection key={section.id} section={section} pathname={pathname} />
@@ -354,6 +361,8 @@ export function DesktopTopbar() {
                 </div>
               );
             }
+
+
 
             if (item.id === "safety-culture") {
               const menuId = "safety-culture";
@@ -432,6 +441,7 @@ export function DesktopTopbar() {
         </nav>
 
         <div className="desktop-actions flex flex-shrink-0 items-center gap-1.5">
+          <ThemeToggle />
           <div ref={notificationRef} className="relative">
             <button
               type="button"
@@ -482,11 +492,10 @@ export function DesktopTopbar() {
                 "shadow-[0_8px_18px_rgba(var(--brand-accent-rgb),0.22)] transition-colors hover:bg-[var(--brand-accent)]"
               )}
             >
-              {displayImage && !profileImageFailed ? (
+              {displayImage ? (
                 <img
                   src={displayImage}
                   alt={displayName}
-                  onError={() => setProfileImageFailed(true)}
                   className="h-full w-full rounded-full border-2 border-white/75 object-cover"
                 />
               ) : (

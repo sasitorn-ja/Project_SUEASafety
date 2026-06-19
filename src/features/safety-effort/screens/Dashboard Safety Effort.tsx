@@ -1,5 +1,5 @@
 // @ts-nocheck
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "@/lib/router-compat";
 import {
   ArrowLeft,
@@ -38,9 +38,9 @@ const T = {
 
 // Extracted PPTX baseline data
 const OVERALL_DATA = {
-  totalChecks: 20680,
+  totalChecks: 20566,
   safeRate: 97.4,
-  unsafeCases: 538,
+  unsafeCases: 535,
   solvedCases: 48,
   pendingCases: 8,
   unresolvedCases: 1,
@@ -48,33 +48,33 @@ const OVERALL_DATA = {
 
 // Baseline Chart 1 data: ภาพรวม Line walk (approx. 182-day period)
 const BASELINE_CHART1_DATA = [
-  { name: "Office", value: 11.8, count: 2436, color: "#FFFF00" }, // Yellow
-  { name: "Plant", value: 82.6, count: 17087, color: "#0070C0" }, // Blue
-  { name: "Site", value: 5.6, count: 1157, color: "#FFC000" }     // Orange
+  { name: "Office", value: 11.8, count: 2427, color: "#FFFF00" }, // Yellow
+  { name: "Plant", value: 82.6, count: 16988, color: "#0070C0" }, // Blue
+  { name: "Site", value: 5.6, count: 1152, color: "#FFC000" }     // Orange
 ];
 
 // Baseline Chart 2 data: Status Line walk
 const BASELINE_CHART2_DATA = [
   {
     category: "Plant",
-    safe: 16618,
-    unsafeAct: 44,
-    unsafeCond: 425,
-    total: 17087
+    safe: 16520,
+    unsafeAct: 43,
+    unsafeCond: 424,
+    total: 16987
   },
   {
     category: "Office",
-    safe: 2413,
+    safe: 2404,
     unsafeAct: 4,
     unsafeCond: 19,
-    total: 2436
+    total: 2427
   },
   {
     category: "Site",
-    safe: 1112,
+    safe: 1107,
     unsafeAct: 1,
     unsafeCond: 44,
-    total: 1157
+    total: 1152
   }
 ];
 
@@ -88,13 +88,13 @@ const BASELINE_CHART3_DATA = [
 // Baseline Chart 4 data: Safety Line walk by Business Unit
 // safeRate = ระดับความปลอดภัยที่รายงานของแต่ละหน่วยงาน (ใช้กับ badge ในตาราง)
 const BASELINE_CHART4_DATA = [
-  { name: "CPAC Metro", safe: 1308, unsafe: 29, solved: 7, safeRate: 97.8 },
-  { name: "CPAC East", safe: 2629, unsafe: 30, solved: 6, safeRate: 98.9 },
-  { name: "CPAC West", safe: 3253, unsafe: 1, solved: 3, safeRate: 100.0 },
-  { name: "CPAC North", safe: 3004, unsafe: 42, solved: 15, safeRate: 95.2 },
-  { name: "CPAC Northeast", safe: 3431, unsafe: 121, solved: 28, safeRate: 91.6 },
-  { name: "CPAC RMC", safe: 1796, unsafe: 51, solved: 22, safeRate: 94.8 },
-  { name: "CPAC SMART Structure", safe: 1236, unsafe: 11, solved: 4, safeRate: 97.1 }
+  { name: "CPAC Metro", safe: 1301, unsafe: 29, solved: 7, safeRate: 97.8 },
+  { name: "CPAC East", safe: 2615, unsafe: 30, solved: 6, safeRate: 98.9 },
+  { name: "CPAC West", safe: 3235, unsafe: 1, solved: 3, safeRate: 100.0 },
+  { name: "CPAC North", safe: 2988, unsafe: 42, solved: 15, safeRate: 95.2 },
+  { name: "CPAC Northeast", safe: 3412, unsafe: 120, solved: 28, safeRate: 91.6 },
+  { name: "CPAC RMC", safe: 1786, unsafe: 51, solved: 22, safeRate: 94.8 },
+  { name: "CPAC SMART Structure", safe: 1229, unsafe: 11, solved: 4, safeRate: 97.1 }
 ];
 
 export default function DashboardSafetyEffort() {
@@ -107,6 +107,17 @@ export default function DashboardSafetyEffort() {
   const [hoveredSlice, setHoveredSlice] = useState(null);
   const [hoveredBar, setHoveredBar] = useState(null);
   const [scaleType, setScaleType] = useState("logarithmic");
+  const [width, setWidth] = useState(() => typeof window !== "undefined" ? window.innerWidth : 1200);
+
+  useEffect(() => {
+    const handleResize = () => setWidth(window.innerWidth);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  const isMobile = width < 768;
+  const isTablet = width >= 768 && width < 1024;
+  const isDesktop = width >= 1024;
 
   const exportToExcel = () => {
     const data = chart4Data.map(item => {
@@ -217,13 +228,21 @@ export default function DashboardSafetyEffort() {
   // Helper to scale values for column heights
   const getScaledHeight = (val, max) => {
     if (val === 0) return 0;
+    const maxHeight = isDesktop ? 90 : 180;
     if (scaleType === "linear") {
-      return (val / (max || 1)) * 180; // max height 180px
+      return (val / (max || 1)) * maxHeight;
     } else {
       const logVal = Math.log10(val + 1);
       const logMax = Math.log10(max + 1 || 1);
-      return (logVal / logMax) * 180;
+      return (logVal / logMax) * maxHeight;
     }
+  };
+
+  const formatNumberCompact = (val: number) => {
+    if (val >= 1000) {
+      return (val / 1000).toFixed(1) + "k";
+    }
+    return val.toString();
   };
 
   return (
@@ -243,17 +262,153 @@ export default function DashboardSafetyEffort() {
           }
         }
 
-        .db-overview-shell {
+        .db-top-layout {
           display: grid;
           grid-template-columns: 1fr;
-          gap: 14px;
-          margin-bottom: 14px;
+          gap: 12px;
+          margin-bottom: 12px;
+        }
+        .db-top-left-panel {
+          display: flex;
+          flex-direction: column;
+          gap: 12px;
+        }
+        .db-header-row {
+          display: flex;
+          flex-direction: column;
+          gap: 12px;
+        }
+        .db-kpi-row {
+          display: grid;
+          grid-template-columns: repeat(2, 1fr);
+          gap: 10px;
+        }
+        .db-top-right-panel {
+          display: grid;
+          grid-template-columns: repeat(2, 1fr);
+          gap: 10px;
+        }
+        .db-charts-row-1 {
+          display: grid;
+          grid-template-columns: 1fr;
+          gap: 12px;
+          margin-bottom: 12px;
+        }
+        .db-charts-row-2 {
+          display: grid;
+          grid-template-columns: 1fr;
+          gap: 12px;
+          margin-bottom: 12px;
+        }
+        .db-metrics-summary-card {
+          background: ${T.card};
+          border: 1px solid ${T.border};
+          border-radius: ${T.radius};
+          padding: 16px;
+          box-shadow: 0 6px 18px rgba(22,63,104,0.04);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          height: 100%;
+        }
+        .db-metrics-summary-grid {
+          display: grid;
+          grid-template-columns: repeat(2, 1fr);
+          gap: 12px;
+          width: 100%;
+        }
+        .db-summary-metric-item {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          background: rgba(14,15,18,0.02);
+          border: 1px solid rgba(14,15,18,0.04);
+          padding: 10px 12px;
+          border-radius: 10px;
+        }
+        .db-summary-metric-icon {
+          width: 36px;
+          height: 36px;
+          border-radius: 8px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          flex-shrink: 0;
+        }
+        .db-summary-metric-info {
+          display: flex;
+          flex-direction: column;
+          min-width: 0;
+        }
+        .db-summary-metric-val {
+          font-size: 13.5px;
+          font-weight: 800;
+          color: ${T.foreground};
+          line-height: 1.2;
+        }
+        .db-summary-metric-lbl {
+          font-size: 10.5px;
+          color: ${T.foreground3};
+          font-weight: 600;
+          margin-top: 1px;
         }
 
         @media (min-width: 1024px) {
-          .db-overview-shell {
-            grid-template-columns: minmax(0, 1.65fr) minmax(340px, 1fr);
-            align-items: stretch;
+          .db-top-layout {
+            grid-template-columns: 1.7fr 1fr;
+            gap: 16px;
+            margin-bottom: 12px;
+          }
+          .db-header-row {
+            flex-direction: row;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+          }
+          .db-kpi-row {
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+          }
+          .db-top-right-panel {
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+          }
+          .db-charts-row-1 {
+            grid-template-columns: 3.2fr 4.8fr 3fr;
+            gap: 14px;
+            margin-bottom: 12px;
+          }
+          .db-charts-row-2 {
+            grid-template-columns: 2.14fr 1fr;
+            gap: 14px;
+            margin-bottom: 12px;
+          }
+          .db-metrics-summary-card {
+            padding: 10px 12px;
+            border-radius: 12px;
+          }
+          .db-metrics-summary-grid {
+            gap: 6px;
+          }
+          .db-summary-metric-item {
+            padding: 6px 8px;
+            gap: 8px;
+            border-radius: 8px;
+          }
+          .db-summary-metric-icon {
+            width: 28px;
+            height: 28px;
+            border-radius: 6px;
+          }
+          .db-summary-metric-icon svg {
+            width: 14px;
+            height: 14px;
+          }
+          .db-summary-metric-val {
+            font-size: 11.5px;
+          }
+          .db-summary-metric-lbl {
+            font-size: 9px;
           }
         }
 
@@ -448,16 +603,23 @@ export default function DashboardSafetyEffort() {
           display: flex;
           align-items: center;
           gap: 8px;
+        }
+
+        .db-date-box {
+          display: flex;
+          align-items: center;
+          gap: 6px;
           background: ${T.card};
-          padding: 6px 12px;
-          border-radius: 10px;
+          padding: 6px 10px;
+          border-radius: 8px;
           border: 1px solid ${T.border};
           box-shadow: 0 2px 6px rgba(0,0,0,0.02);
+          position: relative;
         }
 
         .db-date-input {
           font-family: inherit;
-          font-size: 13px;
+          font-size: 12.5px;
           font-weight: 700;
           border: none;
           background: transparent;
@@ -465,6 +627,25 @@ export default function DashboardSafetyEffort() {
           outline: none;
           cursor: pointer;
           padding: 2px 4px;
+        }
+
+        .db-date-input::-webkit-calendar-picker-indicator {
+          background: transparent;
+          bottom: 0;
+          color: transparent;
+          cursor: pointer;
+          height: auto;
+          left: 0;
+          position: absolute;
+          right: 0;
+          top: 0;
+          width: auto;
+        }
+
+        .db-date-icon {
+          color: ${T.foreground3};
+          pointer-events: none;
+          flex-shrink: 0;
         }
 
         .db-filter-label {
@@ -892,99 +1073,280 @@ export default function DashboardSafetyEffort() {
             flex-direction: column;
           }
         }
+
+        @media (min-width: 1024px) {
+          .db-container {
+            padding: 8px 12px 10px;
+          }
+          .db-overview-shell {
+            gap: 10px;
+            margin-bottom: 10px;
+          }
+          .db-overview-card {
+            padding: 10px 12px;
+            gap: 8px;
+            border-radius: 12px;
+          }
+          .db-header {
+            gap: 8px;
+          }
+          .db-title {
+            font-size: 19px;
+          }
+          .db-subtitle {
+            font-size: 11px;
+          }
+          .db-overview-top {
+            gap: 6px;
+          }
+          .db-overview-copy div {
+            font-size: 13.5px !important;
+            line-height: 1.4 !important;
+          }
+          .db-tag {
+            padding: 3px 6px;
+            font-size: 10px;
+          }
+          .db-overview-stats {
+            gap: 6px;
+          }
+          .db-overview-stat {
+            padding: 6px 8px 5px;
+            border-radius: 8px;
+          }
+          .db-overview-stat-value {
+            font-size: 15px;
+          }
+          .db-overview-stat-label {
+            font-size: 9.5px;
+            line-height: 1.25;
+          }
+          .db-side-stack {
+            gap: 6px;
+          }
+          .db-side-card {
+            padding: 8px 10px;
+            border-radius: 12px;
+            gap: 6px;
+          }
+          .db-side-row {
+            font-size: 11px;
+            gap: 6px;
+          }
+          .db-side-row strong {
+            font-size: 11.5px;
+          }
+          .db-metrics-grid {
+            margin-bottom: 10px;
+            gap: 8px;
+          }
+          .db-metric-card {
+            padding: 8px 10px;
+            border-radius: 12px;
+            gap: 6px;
+          }
+          .db-metric-icon-wrapper {
+            width: 30px;
+            height: 30px;
+            border-radius: 6px;
+          }
+          .db-metric-icon-wrapper svg {
+            width: 16px;
+            height: 16px;
+          }
+          .db-metric-value {
+            font-size: 15px;
+          }
+          .db-metric-label {
+            font-size: 9.5px;
+            margin-top: 1px;
+          }
+          .db-charts-grid {
+            gap: 10px;
+            margin-bottom: 10px;
+          }
+          .db-chart-card {
+            min-height: 220px;
+            padding: 8px 10px;
+            border-radius: 12px;
+          }
+          .db-chart-card-header {
+            padding-bottom: 4px;
+            margin-bottom: 6px;
+          }
+          .db-chart-title {
+            font-size: 12.5px;
+          }
+          .db-donut-wrapper {
+            width: 105px;
+            height: 105px;
+          }
+          .db-donut-circle {
+            stroke-width: 8px;
+          }
+          .db-donut-circle:hover {
+            stroke-width: 10px;
+          }
+          .db-donut-center-value {
+            font-size: 14px;
+          }
+          .db-donut-center-label {
+            font-size: 8px;
+            margin-top: 1px;
+          }
+          .db-legend {
+            margin-top: 4px;
+            gap: 4px;
+          }
+          .db-legend-item {
+            padding: 1px 3px;
+            font-size: 9.5px;
+            gap: 3px;
+          }
+          .db-legend-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 1px;
+          }
+          .db-col-chart-container {
+            height: 110px !important;
+            padding-bottom: 2px;
+            margin-top: 0px;
+          }
+          .db-col-bars-flex {
+            height: 90px !important;
+            gap: 2px;
+          }
+          .db-col-bar {
+            border-radius: 2px 2px 0 0;
+          }
+          .db-col-label {
+            font-size: 8px;
+            margin-top: 2px;
+          }
+          .db-table-card {
+            padding: 8px 12px;
+            border-radius: 12px;
+            margin-bottom: 0px;
+          }
+          .db-table-card h2 {
+            font-size: 12.5px;
+          }
+          .db-table {
+            margin-top: 4px;
+          }
+          .db-table th {
+            padding: 4px 8px;
+            font-size: 9.5px;
+          }
+          .db-table td {
+            padding: 4px 8px;
+            font-size: 10.5px;
+          }
+        }
       `}</style>
 
-      <div className="db-overview-shell">
-        <section className="db-overview-card">
-          <header className="db-header">
-        <div className="db-header-left">
-          <button className="db-back-btn" onClick={() => navigate("/category")} aria-label="กลับหน้าหลัก">
-            <ArrowLeft size={18} strokeWidth={2.6} />
-          </button>
-          <div className="db-title-area">
-            <h1 className="db-title">แดชบอร์ดประเมินความปลอดภัย</h1>
-            <span className="db-subtitle">Safety Effort / Line Walk Analytics Overview</span>
+      <div className="db-top-layout">
+        {/* Left Side: Header & KPI Cards */}
+        <div className="db-top-left-panel">
+          {/* Header Row */}
+          <div className="db-header-row">
+            <div className="db-header-left">
+              <div className="db-title-area">
+                <h1 className="db-title">แดชบอร์ดประเมินความปลอดภัย</h1>
+                <span className="db-subtitle">Safety Effort / Line Walk Analytics Overview</span>
+              </div>
+            </div>
+
+            <div className="db-filters">
+              {/* Flexible Date Range Picker */}
+              <div className="db-datepicker-container">
+                <div className="db-date-box">
+                  <input 
+                    type="date" 
+                    className="db-date-input" 
+                    value={startDate} 
+                    onChange={(e) => setStartDate(e.target.value)}
+                  />
+                  <Calendar size={13} className="db-date-icon" />
+                </div>
+                <span style={{ color: T.foreground3, fontWeight: "800", fontSize: "13px" }}>—</span>
+                <div className="db-date-box">
+                  <input 
+                    type="date" 
+                    className="db-date-input" 
+                    value={endDate} 
+                    onChange={(e) => setEndDate(e.target.value)}
+                  />
+                  <Calendar size={13} className="db-date-icon" />
+                </div>
+              </div>
+
+              <div className="db-select-wrapper">
+                <Filter size={14} className="db-select-icon" style={{ left: 12, right: "auto" }} />
+                <Combobox
+                  value={selectedBU}
+                  onValueChange={setSelectedBU}
+                  aria-label="กรองหน่วยงาน"
+                  searchPlaceholder="ค้นหาหน่วยงาน"
+                  style={{ paddingLeft: 34, minWidth: isMobile ? 160 : 200 }}
+                  options={[
+                    { value: "All Business Units", label: "ทุกหน่วยงาน (All BUs)" },
+                    ...chart4Data.map((bu) => ({ value: bu.name, label: bu.name })),
+                  ]}
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* KPIs Grid */}
+          <div className="db-kpi-row">
+            <div className="db-metric-card">
+              <div className="db-metric-icon-wrapper" style={{ background: "var(--brand-soft)", color: "var(--brand-text)" }}>
+                <BarChart3 size={20} />
+              </div>
+              <div className="db-metric-info">
+                <span className="db-metric-value">{metrics.totalChecks.toLocaleString()}</span>
+                <span className="db-metric-label">จำนวนจุดตรวจทั้งหมด</span>
+              </div>
+            </div>
+
+            <div className="db-metric-card">
+              <div className="db-metric-icon-wrapper" style={{ background: "#ecfdf5", color: "#1f7a55" }}>
+                <CheckCircle2 size={20} />
+              </div>
+              <div className="db-metric-info">
+                <span className="db-metric-value">{metrics.safeRate}%</span>
+                <span className="db-metric-label">อัตราจุดปลอดภัย (Safe)</span>
+              </div>
+            </div>
+
+            <div className="db-metric-card">
+              <div className="db-metric-icon-wrapper" style={{ background: "#fef2f2", color: "#d5301a" }}>
+                <AlertTriangle size={20} />
+              </div>
+              <div className="db-metric-info">
+                <span className="db-metric-value">{metrics.unsafeCases.toLocaleString()}</span>
+                <span className="db-metric-label">พบข้อไม่ปลอดภัย (Unsafe)</span>
+              </div>
+            </div>
+
+            <div className="db-metric-card">
+              <div className="db-metric-icon-wrapper" style={{ background: "#fffbeb", color: "#b7791f" }}>
+                <Clock size={20} />
+              </div>
+              <div className="db-metric-info">
+                <span className="db-metric-value">
+                  {((metrics.solvedCases / (metrics.solvedCases + metrics.pendingCases || 1)) * 100).toFixed(1)}%
+                </span>
+                <span className="db-metric-label">สัดส่วนแก้ไขสำเร็จ</span>
+              </div>
+            </div>
           </div>
         </div>
 
-        <div className="db-filters">
-          {/* Flexible Date Range Picker */}
-          <div className="db-datepicker-container">
-            <Calendar size={15} style={{ color: T.foreground3, marginRight: 4 }} />
-            <span className="db-filter-label">ตั้งแต่:</span>
-            <input 
-              type="date" 
-              className="db-date-input" 
-              value={startDate} 
-              onChange={(e) => setStartDate(e.target.value)}
-            />
-            <span className="db-filter-label" style={{ margin: "0 4px" }}>—</span>
-            <span className="db-filter-label">ถึง:</span>
-            <input 
-              type="date" 
-              className="db-date-input" 
-              value={endDate} 
-              onChange={(e) => setEndDate(e.target.value)}
-            />
-          </div>
-
-          <div className="db-select-wrapper">
-            <Filter size={15} className="db-select-icon" style={{ left: 12, right: "auto" }} />
-            <Combobox
-              value={selectedBU}
-              onValueChange={setSelectedBU}
-              aria-label="กรองหน่วยงาน"
-              searchPlaceholder="ค้นหาหน่วยงาน"
-              style={{ paddingLeft: 34, minWidth: 220 }}
-              options={[
-                { value: "All Business Units", label: "ทุกหน่วยงาน (All BUs)" },
-                ...chart4Data.map((bu) => ({ value: bu.name, label: bu.name })),
-              ]}
-            />
-          </div>
-        </div>
-          </header>
-
-          <div className="db-overview-top">
-            <div className="db-overview-copy">
-              <div className="db-tag-row">
-                <span className="db-tag"><Calendar size={13} /> {dateRangeDays || 0} วัน</span>
-                <span className="db-tag"><Building2 size={13} /> {focusedBusinessUnitCount} หน่วยงาน</span>
-                <span className="db-tag"><CheckCircle2 size={13} /> Safe Rate {metrics.safeRate}%</span>
-              </div>
-              <div style={{ fontSize: 15, lineHeight: 1.55, color: T.foreground2, maxWidth: 780 }}>
-                มุมมองนี้สรุปปริมาณการตรวจ สัดส่วนความปลอดภัย สถานะการแก้ไข และผลแยกตาม Business Unit ในหน้าเดียว เพื่อให้เห็นภาพรวมได้เร็วขึ้นโดยไม่ต้องไล่ลงไปทีละการ์ด
-              </div>
-            </div>
-            <div style={{ minWidth: 120, textAlign: "right" }}>
-              <div style={{ fontSize: 11.5, fontWeight: 800, color: T.foreground3, textTransform: "uppercase", letterSpacing: "0.06em" }}>Focus</div>
-              <div style={{ fontSize: 18, fontWeight: 900, color: T.foreground, marginTop: 4 }}>
-                {selectedBU === "All Business Units" ? "All BUs" : selectedBU}
-              </div>
-            </div>
-          </div>
-
-          <div className="db-overview-stats">
-            <div className="db-overview-stat">
-              <div className="db-overview-stat-value">{metrics.totalChecks.toLocaleString()}</div>
-              <div className="db-overview-stat-label">จำนวนจุดตรวจรวมในช่วงเวลาที่เลือก</div>
-            </div>
-            <div className="db-overview-stat">
-              <div className="db-overview-stat-value" style={{ color: T.ok }}>{metrics.solvedCases.toLocaleString()}</div>
-              <div className="db-overview-stat-label">แก้ไขสำเร็จแล้ว</div>
-            </div>
-            <div className="db-overview-stat">
-              <div className="db-overview-stat-value" style={{ color: T.warning }}>{metrics.pendingCases.toLocaleString()}</div>
-              <div className="db-overview-stat-label">อยู่ระหว่างติดตาม</div>
-            </div>
-            <div className="db-overview-stat">
-              <div className="db-overview-stat-value">{correctionRate}%</div>
-              <div className="db-overview-stat-label">Correction completion</div>
-            </div>
-          </div>
-        </section>
-
-        <aside className="db-side-stack">
+        {/* Right Side: Quick Insight & View Mode */}
+        <div className="db-top-right-panel">
           <section className="db-side-card">
             <div className="db-side-title">Quick Insight</div>
             <div className="db-side-list">
@@ -1023,64 +1385,18 @@ export default function DashboardSafetyEffort() {
                   </button>
                 </div>
               </div>
-              <div style={{ fontSize: 12, color: T.foreground3, lineHeight: 1.45 }}>
-                ใช้ `Log` เมื่อต้องการเทียบแท่งข้อมูลที่ขนาดต่างกันมาก และใช้ `Linear` เมื่อต้องการดูสัดส่วนจริงแบบตรงไปตรงมา
+              <div style={{ fontSize: 11, color: T.foreground3, lineHeight: 1.4 }}>
+                ใช้ `Log` เมื่อเทียบข้อมูลที่มีขนาดต่างกันมาก และ `Linear` เมื่อดูสัดส่วนจริง
               </div>
             </div>
           </section>
-        </aside>
+        </div>
       </div>
 
-      {/* Metrics Row */}
-      <section className="db-metrics-grid">
-        <div className="db-metric-card">
-          <div className="db-metric-icon-wrapper" style={{ background: "var(--brand-soft)", color: "var(--brand-text)" }}>
-            <BarChart3 size={24} />
-          </div>
-          <div className="db-metric-info">
-            <span className="db-metric-value">{metrics.totalChecks.toLocaleString()}</span>
-            <span className="db-metric-label">จำนวนจุดตรวจทั้งหมด</span>
-          </div>
-        </div>
-
-        <div className="db-metric-card">
-          <div className="db-metric-icon-wrapper" style={{ background: "#ecfdf5", color: "#1f7a55" }}>
-            <CheckCircle2 size={24} />
-          </div>
-          <div className="db-metric-info">
-            <span className="db-metric-value">{metrics.safeRate}%</span>
-            <span className="db-metric-label">อัตราจุดปลอดภัย (Safe)</span>
-          </div>
-        </div>
-
-        <div className="db-metric-card">
-          <div className="db-metric-icon-wrapper" style={{ background: "#fef2f2", color: "#d5301a" }}>
-            <AlertTriangle size={24} />
-          </div>
-          <div className="db-metric-info">
-            <span className="db-metric-value">{metrics.unsafeCases.toLocaleString()}</span>
-            <span className="db-metric-label">พบข้อไม่ปลอดภัย (Unsafe)</span>
-          </div>
-        </div>
-
-        <div className="db-metric-card">
-          <div className="db-metric-icon-wrapper" style={{ background: "#fffbeb", color: "#b7791f" }}>
-            <Clock size={24} />
-          </div>
-          <div className="db-metric-info">
-            <span className="db-metric-value">
-              {((metrics.solvedCases / (metrics.solvedCases + metrics.pendingCases || 1)) * 100).toFixed(1)}%
-            </span>
-            <span className="db-metric-label">สัดส่วนแก้ไขสำเร็จ</span>
-          </div>
-        </div>
-      </section>
-
-      {/* Grid Charts */}
-      <main className="db-charts-grid">
-        
+      {/* Row 2: Charts Row 1 (Pie, Bar, Donut) */}
+      <div className="db-charts-row-1">
         {/* Chart 1: ภาพรวม Line walk */}
-        <section className="db-chart-card db-card-5">
+        <section className="db-chart-card">
           <div className="db-chart-card-header">
             <h2 className="db-chart-title">
               <PieChart size={18} color={T.primary} />
@@ -1151,7 +1467,7 @@ export default function DashboardSafetyEffort() {
         </section>
 
         {/* Chart 2: Status Line walk */}
-        <section className="db-chart-card db-card-7">
+        <section className="db-chart-card">
           <div className="db-chart-card-header">
             <h2 className="db-chart-title">
               <BarChart3 size={18} color={T.ok} />
@@ -1160,7 +1476,7 @@ export default function DashboardSafetyEffort() {
           </div>
 
           <div className="db-chart-body">
-            <div className="db-col-chart-container" style={{ gap: "28px" }}>
+            <div className="db-col-chart-container" style={{ gap: isDesktop ? "12px" : "28px" }}>
               {chart2Data.map(item => {
                 const max = Math.max(...chart2Data.map(d => d.safe));
                 const safeHeight = getScaledHeight(item.safe, max);
@@ -1192,6 +1508,11 @@ export default function DashboardSafetyEffort() {
                         onMouseLeave={() => setHoveredBar(null)}
                       />
                     </div>
+                    <div style={{ display: "flex", gap: "3.5px", fontSize: "8.5px", fontWeight: "800", marginTop: "3px", justifyContent: "center" }}>
+                      <span style={{ color: "#72b030" }}>{formatNumberCompact(item.safe)}</span>
+                      <span style={{ color: "#d5301a" }}>{formatNumberCompact(item.unsafeAct)}</span>
+                      <span style={{ color: "#b7791f" }}>{formatNumberCompact(item.unsafeCond)}</span>
+                    </div>
                     <div className="db-col-label">{item.category}</div>
                   </div>
                 );
@@ -1216,7 +1537,7 @@ export default function DashboardSafetyEffort() {
         </section>
 
         {/* Chart 3: สถานะการแก้ไข */}
-        <section className="db-chart-card db-card-5">
+        <section className="db-chart-card">
           <div className="db-chart-card-header">
             <h2 className="db-chart-title">
               <PieChart size={18} color={T.warning} />
@@ -1285,9 +1606,12 @@ export default function DashboardSafetyEffort() {
             )}
           </div>
         </section>
+      </div>
 
+      {/* Row 3: Charts Row 2 (BU Bar Chart & 6 Metrics Grid) */}
+      <div className="db-charts-row-2">
         {/* Chart 4: Safety Line walk */}
-        <section className="db-chart-card db-card-7">
+        <section className="db-chart-card">
           <div className="db-chart-card-header">
             <h2 className="db-chart-title">
               <Building2 size={18} color={T.info} />
@@ -1337,6 +1661,11 @@ export default function DashboardSafetyEffort() {
                         onMouseLeave={() => setHoveredBar(null)}
                       />
                     </div>
+                    <div style={{ display: "flex", gap: "2px", fontSize: "7.5px", fontWeight: "800", marginTop: "3px", justifyContent: "center" }}>
+                      <span style={{ color: "#72b030" }}>{formatNumberCompact(item.safe)}</span>
+                      <span style={{ color: "#d5301a" }}>{formatNumberCompact(item.unsafe)}</span>
+                      <span style={{ color: "#b7791f" }}>{formatNumberCompact(item.solved)}</span>
+                    </div>
                     {/* Shortened Label for UI fit */}
                     <div 
                       className="db-col-label" 
@@ -1359,7 +1688,77 @@ export default function DashboardSafetyEffort() {
           </div>
         </section>
 
-      </main>
+        {/* 6 Metrics Grid Card */}
+        <div className="db-metrics-summary-card">
+          <div className="db-metrics-summary-grid">
+            
+            {/* 1. ช่วงเวลาตรวจ */}
+            <div className="db-summary-metric-item">
+              <div className="db-summary-metric-icon" style={{ background: "rgba(35, 76, 142, 0.08)", color: "#234c8e" }}>
+                <Calendar size={18} />
+              </div>
+              <div className="db-summary-metric-info">
+                <span className="db-summary-metric-val">{dateRangeDays} วัน</span>
+                <span className="db-summary-metric-lbl">ช่วงเวลาตรวจ</span>
+              </div>
+            </div>
+
+            {/* 2. BUs ทั้งหมด */}
+            <div className="db-summary-metric-item">
+              <div className="db-summary-metric-icon" style={{ background: "rgba(146, 106, 69, 0.08)", color: "var(--brand-text)" }}>
+                <Building2 size={18} />
+              </div>
+              <div className="db-summary-metric-info">
+                <span className="db-summary-metric-val">{focusedBusinessUnitCount} หน่วยงาน</span>
+                <span className="db-summary-metric-lbl">BUS ทั้งหมด</span>
+              </div>
+            </div>
+            <div className="db-summary-metric-item">
+              <div className="db-summary-metric-icon" style={{ background: "#ecfdf5", color: "#1f7a55" }}>
+                <CheckCircle2 size={18} />
+              </div>
+              <div className="db-summary-metric-info">
+                <span className="db-summary-metric-val">Safe Rate {metrics.safeRate}%</span>
+                <span className="db-summary-metric-lbl">อัตราจุดปลอดภัย</span>
+              </div>
+            </div>
+
+            {/* 4. อยู่ระหว่างติดตาม */}
+            <div className="db-summary-metric-item">
+              <div className="db-summary-metric-icon" style={{ background: "#fff7ed", color: "#ea580c" }}>
+                <Clock size={18} />
+              </div>
+              <div className="db-summary-metric-info">
+                <span className="db-summary-metric-val">{metrics.pendingCases}</span>
+                <span className="db-summary-metric-lbl">อยู่ระหว่างติดตาม</span>
+              </div>
+            </div>
+
+            {/* 5. จำนวนจุดตรวจทั้งหมด */}
+            <div className="db-summary-metric-item">
+              <div className="db-summary-metric-icon" style={{ background: "var(--brand-soft)", color: "var(--brand-text)" }}>
+                <BarChart3 size={18} />
+              </div>
+              <div className="db-summary-metric-info">
+                <span className="db-summary-metric-val">{metrics.totalChecks.toLocaleString()}</span>
+                <span className="db-summary-metric-lbl">จำนวนจุดตรวจทั้งหมด</span>
+              </div>
+            </div>
+
+            {/* 6. แก้ไขสำเร็จแล้ว */}
+            <div className="db-summary-metric-item">
+              <div className="db-summary-metric-icon" style={{ background: "#fef2f2", color: "#d5301a" }}>
+                <CheckCircle2 size={18} />
+              </div>
+              <div className="db-summary-metric-info">
+                <span className="db-summary-metric-val">{metrics.solvedCases}</span>
+                <span className="db-summary-metric-lbl">แก้ไขสำเร็จแล้ว</span>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
 
       {/* Data Table */}
       <section className="db-table-card">
@@ -1395,10 +1794,10 @@ export default function DashboardSafetyEffort() {
           <table className="db-table">
             <thead>
               <tr>
-                <th>หน่วยงาน (Business Unit)</th>
-                <th>สแกนที่ปลอดภัย (Safe)</th>
-                <th>ความไม่ปลอดภัย (Unsafe)</th>
-                <th>แก้ไขแล้ว (Solved)</th>
+                <th>หน่วยงาน (BUSINESS UNIT)</th>
+                <th>สแกนที่ปลอดภัย (SAFE)</th>
+                <th>ความไม่ปลอดภัย (UNSAFE)</th>
+                <th>แก้ไขแล้ว (SOLVED)</th>
                 <th>ระดับความปลอดภัย</th>
               </tr>
             </thead>
@@ -1431,8 +1830,8 @@ export default function DashboardSafetyEffort() {
                   >
                     <td style={{ fontWeight: "700" }}>{item.name}</td>
                     <td style={{ color: "#1f7a55" }}>{item.safe.toLocaleString()}</td>
-                    <td style={{ color: "#d5301a" }}>{item.unsafe}</td>
-                    <td style={{ color: "#b7791f" }}>{item.solved}</td>
+                    <td style={{ color: "#d5301a", fontWeight: "700" }}>{item.unsafe.toLocaleString()}</td>
+                    <td style={{ color: "#b7791f", fontWeight: "700" }}>{item.solved.toLocaleString()}</td>
                     <td>
                       <span className={`db-badge ${ratingClass}`}>
                         {rating} ({safePercent.toFixed(1)}%)
@@ -1445,6 +1844,25 @@ export default function DashboardSafetyEffort() {
           </table>
         </div>
       </section>
+
+      {/* Footer */}
+      <div 
+        style={{ 
+          display: "flex", 
+          justifyContent: "center", 
+          alignItems: "center", 
+          gap: "12px", 
+          fontSize: "12px", 
+          color: T.foreground3, 
+          marginTop: "16px",
+          paddingBottom: "8px",
+          fontWeight: "600"
+        }}
+      >
+        <span>ข้อมูล ณ วันที่ 31 มีนาคม 2026</span>
+        <span>•</span>
+        <span>แหล่งข้อมูล: CPAC Safety System</span>
+      </div>
     </div>
   );
 }

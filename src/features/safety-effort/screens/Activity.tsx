@@ -1053,7 +1053,7 @@ export default function Activity() {
         <div className="ac-hdr-right-stepper">
           <div className="ac-stepper-inner-box">
             <span className="ac-stepper-title-lbl">
-              SAFETY AUDIT
+              SAFETY EFFORT
             </span>
             <div className="ac-stepper-row-flex">
               <StepPips current={1} total={4} />
@@ -1112,27 +1112,6 @@ export default function Activity() {
   // ฤฤ Footer Panel
   const FooterPanel = () => (
     <div className="ac-footer-panel">
-      {selected && (
-        <div className="ac-preview">
-          <div style={{
-            width: 34, height: 34, borderRadius: 10, background: "linear-gradient(135deg, var(--brand-accent) 0%, var(--brand-accent-strong) 100%)",
-            flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center",
-            boxShadow: "0 3px 10px rgba(var(--brand-accent-rgb),0.3)", alignContent: "center"
-          }}>
-            {(() => { const Icon = selected.icon ?? IcoShield; return <Icon />; })()}
-          </div>
-          <div style={{ minWidth: 0, flex: 1 }}>
-            <p style={{
-              margin: 0, fontSize: 13, fontWeight: 800, color: yellowDark,
-              whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
-              fontFamily: "'Prompt',sans-serif",
-            }}>{selected.label}</p>
-            <p style={{ margin: 0, fontSize: 11.5, color: yellowDark, opacity: 0.8, fontWeight: 600 }}>
-              {selected.desc}
-            </p>
-          </div>
-        </div>
-      )}
       <button
         className={`ac-cta ${selected ? "ready" : "disabled"}`}
         disabled={!selected}

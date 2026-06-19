@@ -69,7 +69,7 @@ export default function CreatePost() {
                 หน้านี้ถูกกู้คืนกลับมาเพื่อให้ flow เดิมยังใช้งานต่อได้
               </p>
             </div>
-            <TigerMascot action="createThumb" size="92px" animation="float" />
+            <TigerMascot action="thumbs-up" size="92px" animation="float" />
           </div>
 
           <div style={{ display: "grid", gap: 12 }}>

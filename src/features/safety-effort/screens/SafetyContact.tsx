@@ -186,7 +186,7 @@ export default function SafetyContact() {
                   {fromActivity && !isMobileViewport && (
                     <div style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}>
                       <div style={{ textAlign: "right" }}>
-                        <span style={{ fontSize: 9, color: "rgba(255,248,230,0.55)", fontWeight: 800, fontFamily: "'Prompt',sans-serif", letterSpacing: "0.05em", display: "block" }}>SAFETY AUDIT</span>
+                        <span style={{ fontSize: 9, color: "rgba(255,248,230,0.55)", fontWeight: 800, fontFamily: "'Prompt',sans-serif", letterSpacing: "0.05em", display: "block" }}>SAFETY EFFORT</span>
                         <div style={{ display: "flex", alignItems: "center", gap: 6, justifyContent: "flex-end" }}>
                           <StepPips current={started ? 4 : 3} total={4} />
                           <span style={{ fontSize: 11, color: "var(--brand-accent)", fontWeight: 900, fontFamily: "'Prompt',sans-serif" }}>

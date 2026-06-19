@@ -4,6 +4,13 @@ import { useNavigate, useLocation } from "@/lib/router-compat";
 import RestrictedDatePicker from "@/components/RestrictedDatePicker";
 import TigerMascot from "@/components/TigerMascot";
 import {
+  PRESET_COMPANIES,
+  PRESET_DEPTS,
+  PRESET_DIVISIONS,
+  PRESET_FACTORIES,
+  PRESET_OFFICES,
+  PRESET_REGIONS,
+  PRESET_SITES,
   createInitialItemStates,
   getChecklistForType,
 } from "@/features/safety-effort/config/checklists";
@@ -22,6 +29,15 @@ const T = {
   primaryDark:  "var(--brand-text)",
   border:      "rgba(14,15,18,0.08)",
 };
+
+// ─── Preset data ────────────────────────────────────────────────────────────
+const PRESET_DEPTS     = ["RMC Metro","RMC EAST","RMC WEST","RMC NORTH","RMC NORTHEAST","RMC SOUTH","QMIX"];
+const PRESET_COMPANIES = ["SMART Structure","CPAC Group","SCG Cement","Tiger Safety Co."];
+const PRESET_REGIONS   = ["Operation","Region 1","Region 2","Region 3","Headquarters"];
+const PRESET_DIVISIONS = ["Production","Maintenance","QA/QC","Warehouse & Shipping"];
+const PRESET_FACTORIES = ["หนองแค","แก่งคอย","พระประแดง","ท่าหลวง","บางซื่อ"];
+const PRESET_OFFICES   = ["สำนักงานซีแพคบางซ่อน","สำนักงานใหญ่บางซื่อ","สำนักงานระยอง","สำนักงานเชียงใหม่"];
+const PRESET_SITES     = ["Site บางซื่อ","Site รัชดา","Site สุขุมวิท","Site พญาไท"];
 
 // ─── Checklist data ─────────────────────────────────────────────────────────
 const FACTORY_CHECKLIST = [
@@ -325,54 +341,6 @@ export default function Linewalk() {
   const [factory, setFactory]   = useState(location.state?.linewalkData?.factory ?? "");
   const [office, setOffice]     = useState(location.state?.linewalkData?.office ?? "");
   const [siteName, setSiteName] = useState(location.state?.linewalkData?.siteName ?? "");
-  const [locationOptions, setLocationOptions] = useState({
-    factories: [],
-    offices: [],
-    sites: [],
-  });
-  const [organizationOptions, setOrganizationOptions] = useState({
-    departments: [],
-    companies: [],
-    regions: [],
-    divisions: [],
-  });
-
-  useEffect(() => {
-    Promise.all([
-      fetch("/api/locations/plants?pageSize=1000", { credentials: "include" }),
-      fetch("/api/locations/offices?pageSize=1000", { credentials: "include" }),
-      fetch("/api/locations/sites?pageSize=1000", { credentials: "include" }),
-      fetch("/api/organizations?pageSize=1000", { credentials: "include" }),
-    ])
-      .then(async responses => Promise.all(responses.map(async response => {
-        const payload = await response.json().catch(() => null);
-        if (!response.ok || !payload?.ok) throw new Error(payload?.error || "locations_load_failed");
-        return payload.data?.items || [];
-      })))
-      .then(([plants, offices, sites, organizations]) => {
-        const names = items => items.map(item => item.nameTh || item.name_th).filter(Boolean);
-        setLocationOptions({
-          factories: names(plants),
-          offices: names(offices),
-          sites: names(sites),
-        });
-        const byType = type => organizations
-          .filter(item => String(item.organization_type || item.organizationType || "").toUpperCase() === type)
-          .map(item => item.name_th || item.nameTh || item.name_en || item.nameEn)
-          .filter(Boolean);
-        setOrganizationOptions({
-          departments: byType("DEPARTMENT"),
-          companies: byType("COMPANY"),
-          regions: byType("REGION"),
-          divisions: byType("DIVISION"),
-        });
-      })
-      .catch(error => {
-        console.error("Failed to load linewalk locations", error);
-        setLocationOptions({ factories: [], offices: [], sites: [] });
-        setOrganizationOptions({ departments: [], companies: [], regions: [], divisions: [] });
-      });
-  }, []);
 
   // ── Checklist ──
   const [checklist,     setChecklist]     = useState([]);
@@ -631,7 +599,7 @@ export default function Linewalk() {
                 {fromActivity && !isMobileQuestionScreen && (
                   <div style={{ display:"flex", alignItems:"center", gap:10, flexShrink:0 }}>
                     <div style={{ textAlign:"right" }}>
-                      <span style={{ fontSize:9, color:"rgba(255,248,230,0.55)", fontWeight:800, fontFamily:"'Prompt',sans-serif", letterSpacing:"0.05em", display:"block" }}>SAFETY AUDIT</span>
+                      <span style={{ fontSize:9, color:"rgba(255,248,230,0.55)", fontWeight:800, fontFamily:"'Prompt',sans-serif", letterSpacing:"0.05em", display:"block" }}>SAFETY EFFORT</span>
                       <div style={{ display:"flex", alignItems:"center", gap:6, justifyContent:"flex-end" }}>
                         <StepPips current={isQuestionScreen ? 4 : 3} total={4} />
                         <span style={{ fontSize:11, color:"var(--brand-accent)", fontWeight:900, fontFamily:"'Prompt',sans-serif" }}>
@@ -670,7 +638,7 @@ export default function Linewalk() {
 
             {!isMobileViewport && (
               <TigerMascot
-                action="linewalkClip"
+                action="clipboard"
                 size={isQuestionScreen ? "68px" : "88px"}
                 animation="float"
                 style={{ position: "absolute", right: fromActivity ? 118 : 20, bottom: isQuestionScreen ? -2 : 4, zIndex: 0 }}
@@ -704,7 +672,7 @@ export default function Linewalk() {
                     style={{ border:"none", background:"transparent", width:"100%", height:"100%", padding:0, fontFamily:"inherit", fontSize:"13.5px", color:T.foreground, outline:"none" }} />
                 </div>
               </div>
-              <SearchInput label="สังกัดฝ่ายงาน" required value={dept} onChange={setDept} placeholder="เลือกสังกัด..." options={organizationOptions.departments} />
+              <SearchInput label="สังกัดฝ่ายงาน" required value={dept} onChange={setDept} placeholder="เลือกสังกัด..." options={PRESET_DEPTS} />
               <div style={{ display:"flex", flexDirection:"column", gap:6 }}>
                 <label style={{ fontSize:"11.5px", fontWeight:700, color:T.foreground2, fontFamily:"'Prompt',sans-serif" }}>
                   <span style={{ color:T.danger }}>*</span> ระดับพนักงาน *
@@ -826,17 +794,17 @@ export default function Linewalk() {
               </div>
               {locType === "โรงงาน" && (
                 <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(200px,1fr))", gap:12 }}>
-                  <SearchInput label="กิจการ" value={company} onChange={setCompany} placeholder="เลือกกิจการ" options={organizationOptions.companies} />
-                  <SearchInput label="ภาค"    value={region}  onChange={setRegion}  placeholder="เลือกภาค"    options={organizationOptions.regions} />
-                  <SearchInput label="แผนก"   value={division} onChange={setDivision} placeholder="เลือกแผนก"  options={organizationOptions.divisions} />
-                  <SearchInput label="โรงงาน" value={factory} onChange={setFactory} placeholder="เลือกโรงงาน" options={locationOptions.factories} />
+                  <SearchInput label="กิจการ" value={company} onChange={setCompany} placeholder="เลือกกิจการ" options={PRESET_COMPANIES} />
+                  <SearchInput label="ภาค"    value={region}  onChange={setRegion}  placeholder="เลือกภาค"    options={PRESET_REGIONS} />
+                  <SearchInput label="แผนก"   value={division} onChange={setDivision} placeholder="เลือกแผนก"  options={PRESET_DIVISIONS} />
+                  <SearchInput label="โรงงาน" value={factory} onChange={setFactory} placeholder="เลือกโรงงาน" options={PRESET_FACTORIES} />
                 </div>
               )}
               {locType === "สำนักงาน" && (
-                <SearchInput label="สำนักงาน" value={office} onChange={setOffice} placeholder="เลือกสำนักงาน" options={locationOptions.offices} />
+                <SearchInput label="สำนักงาน" value={office} onChange={setOffice} placeholder="เลือกสำนักงาน" options={PRESET_OFFICES} />
               )}
               {locType === "Site งาน" && (
-                <SearchInput label="Site งาน" value={siteName} onChange={setSiteName} placeholder="เลือก Site งาน" options={locationOptions.sites} />
+                <SearchInput label="Site งาน" value={siteName} onChange={setSiteName} placeholder="เลือก Site งาน" options={PRESET_SITES} />
               )}
               {!metaComplete && (
                 <p style={{ fontSize:12, color:T.foreground3, fontFamily:"'Prompt',sans-serif", fontStyle:"italic", margin:0 }}>
