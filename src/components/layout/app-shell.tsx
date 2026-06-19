@@ -14,6 +14,13 @@ import { DEMO_ADMIN_USER, hasAdminAccess, isLocalDemoLoginHost, type SessionUser
 
 const LOGIN_SESSION_KEY = "cpac-safety-login-session";
 
+function getSafeReturnTo(pathname: string) {
+  if (typeof window === "undefined" || pathname === "/login") return "/";
+
+  const currentPath = `${pathname}${window.location.search || ""}${window.location.hash || ""}`;
+  return currentPath.startsWith("/") && !currentPath.startsWith("//") ? currentPath : "/";
+}
+
 export function AppShell({ children }: { children: ReactNode }) {
   const { notification } = useAppState();
   const { dismissNotification } = useAppActions();
@@ -74,7 +81,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           setSessionUser(DEMO_ADMIN_USER);
           return;
         }
-        router.replace("/login");
+        router.replace(`/login?returnTo=${encodeURIComponent(getSafeReturnTo(pathname))}`);
       })
       .catch(() => {
         if (!cancelled) {
@@ -83,7 +90,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             setSessionUser(DEMO_ADMIN_USER);
             return;
           }
-          router.replace("/login");
+          router.replace(`/login?returnTo=${encodeURIComponent(getSafeReturnTo(pathname))}`);
         }
       });
 

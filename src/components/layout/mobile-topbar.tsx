@@ -21,9 +21,8 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { isExactNavActive, isMainNavActive } from "@/lib/navigation";
-import { getProfileDisplayName, getProfileInitials, MOCK_PROFILE, PROFILE_IMAGE_KEY, PROFILE_IMAGE_UPDATED_EVENT } from "@/lib/profile";
+import { getProfileDisplayName, getProfileInitials, MOCK_PROFILE } from "@/lib/profile";
 import { getSessionDisplayName, getSessionInitials, getSessionProfileImage, hasAdminAccess, useSessionUser } from "@/lib/session-user";
-import { ThemeToggle } from "@/components/theme-toggle";
 import { useAppTheme } from "@/providers/theme-provider";
 import {
   MENU_STORAGE_KEY,
@@ -163,9 +162,9 @@ export function MobileTopbar({ hidden = false }: { hidden?: boolean }) {
   const { mascot, theme } = useAppTheme();
   const pathname = usePathname() ?? "";
   const [open, setOpen] = useState(false);
-  const [profileImage, setProfileImage] = useState("");
   const { user: sessionUser } = useSessionUser();
   const [configuredMenu, setConfiguredMenu] = useState<MenuNode[]>([]);
+  const [profileImageFailed, setProfileImageFailed] = useState(false);
   const isWangjai = theme === "wangjai";
 
   const isActive = (href: string) => isMainNavActive(pathname, href);
@@ -183,25 +182,6 @@ export function MobileTopbar({ hidden = false }: { hidden?: boolean }) {
     profile: profileSectionActive,
   }));
 
-  useEffect(() => {
-    const refreshProfileImage = () => {
-      try {
-        setProfileImage(window.localStorage.getItem(PROFILE_IMAGE_KEY) || "");
-      } catch {
-        setProfileImage("");
-      }
-    };
-    const handleStorage = (event: StorageEvent) => {
-      if (!event.key || event.key === PROFILE_IMAGE_KEY) refreshProfileImage();
-    };
-    refreshProfileImage();
-    window.addEventListener(PROFILE_IMAGE_UPDATED_EVENT, refreshProfileImage);
-    window.addEventListener("storage", handleStorage);
-    return () => {
-      window.removeEventListener(PROFILE_IMAGE_UPDATED_EVENT, refreshProfileImage);
-      window.removeEventListener("storage", handleStorage);
-    };
-  }, []);
 
   useEffect(() => {
     const refreshMenu = () => setConfiguredMenu(loadMenu());
@@ -224,7 +204,11 @@ export function MobileTopbar({ hidden = false }: { hidden?: boolean }) {
   const displayName = sessionUser ? getSessionDisplayName(sessionUser) : getProfileDisplayName();
   const displayInitials = sessionUser ? getSessionInitials(sessionUser) : getProfileInitials();
   const displayUsername = sessionUser?.username || MOCK_PROFILE.username;
-  const displayImage = getSessionProfileImage(sessionUser) || profileImage;
+  const displayImage = getSessionProfileImage(sessionUser);
+
+  useEffect(() => {
+    setProfileImageFailed(false);
+  }, [displayImage]);
 
   const toggleSection = (id: string) => {
     setOpenSections((current) => ({ ...current, [id]: !current[id] }));
@@ -260,7 +244,7 @@ export function MobileTopbar({ hidden = false }: { hidden?: boolean }) {
 
           <NavTo href="/" onClick={closeDrawer} className="flex min-w-0 items-center gap-[9px]">
             <div className="flex h-[42px] w-[42px] flex-shrink-0 items-center justify-center overflow-hidden">
-              <Image src={mascot("logo")} alt="SUEA Safety Logo" width={42} height={42} className="h-full w-full object-contain" />
+              <Image src={mascot("logoMobile")} alt="SUEA Safety Logo" width={42} height={42} className="h-full w-full object-contain" />
             </div>
             <div className="flex min-w-0 flex-col leading-[1.12]">
               <span className="overflow-hidden text-ellipsis whitespace-nowrap text-[19px] font-extrabold tracking-normal text-white">
@@ -281,9 +265,6 @@ export function MobileTopbar({ hidden = false }: { hidden?: boolean }) {
           </NavTo>
         </div>
 
-        <div className="flex flex-shrink-0 items-center">
-          <ThemeToggle compact />
-        </div>
       </div>
 
       {open && (
@@ -300,8 +281,8 @@ export function MobileTopbar({ hidden = false }: { hidden?: boolean }) {
                 >
                   <NavTo href="/profile" onClick={closeDrawer} className="flex min-w-0 flex-1 items-center gap-3 px-3 py-3">
                     <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center overflow-hidden rounded-full border border-white/20 bg-white/12">
-                      {displayImage ? (
-                        <img src={displayImage} alt={displayName} className="h-full w-full object-cover" />
+                      {displayImage && !profileImageFailed ? (
+                        <img src={displayImage} alt={displayName} onError={() => setProfileImageFailed(true)} className="h-full w-full object-cover" />
                       ) : (
                         <span className="text-[12px] font-black tracking-[0.08em] text-[var(--brand-accent)]">{displayInitials}</span>
                       )}

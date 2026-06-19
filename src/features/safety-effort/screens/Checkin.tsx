@@ -27,13 +27,6 @@ function haversine(lat1, lng1, lat2, lng2) {
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
-// ─── Preset locations ─────────────────────────────────────────────────────────
-const PRESET_LOCATIONS = [
-  { id: "BPI-04", name: "บจก. ผลิตภัณฑ์และวัตถุก่อสร้าง (สำนักงานใหญ่)", tag: "BPI-04", type: "บริษัท", lat: 13.819307, lng: 100.514304 },
-  { id: "OBK-C2", name: "CPAC Solution Center", tag: "OBK-C2", type: "โรงงาน", lat: 13.820500, lng: 100.513500 },
-  { id: "MRT-PS", name: "CPAC", tag: "MRT-PS", type: "ก่อสร้าง", lat: 13.817500, lng: 100.515200 },
-];
-
 const DEFAULT_CENTER = { lat: 13.819307, lng: 100.514304 };
 
 const LOCATION_FILTERS = [
@@ -85,6 +78,25 @@ function getLocationTypeLabel(type, id = "") {
   if (kind === "office") return "สำนักงาน";
   if (kind === "site") return "Site งาน";
   return String(type ?? "");
+}
+
+function apiLocationToCheckinLocation(location) {
+  const labelByType = {
+    PLANT: "โรงงาน",
+    OFFICE: "สำนักงาน",
+    SITE: "Site งาน",
+    CUSTOM: "สถานที่อื่น",
+  };
+  return {
+    id: String(location.id),
+    name: location.nameTh || location.name_th || location.name || "-",
+    tag: location.code || location.externalKey || location.external_key || String(location.id),
+    type: labelByType[location.locationType || location.location_type] || "สถานที่",
+    lat: location.lat === null || location.lat === undefined ? null : Number(location.lat),
+    lng: location.lng === null || location.lng === undefined ? null : Number(location.lng),
+    source: location.source,
+    readOnly: Boolean(location.readOnly),
+  };
 }
 
 // ─── Design tokens ────────────────────────────────────────────────────────────
@@ -1356,6 +1368,9 @@ export default function Checkin() {
   const [locating,  setLocating]  = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [extraLocs, setExtraLocs] = useState([]);
+  const [loadingLocations, setLoadingLocations] = useState(true);
+  const [apiError, setApiError] = useState("");
+  const [savingCheckin, setSavingCheckin] = useState(false);
   const [mapMounted, setMapMounted] = useState(false);
   const [width, setWidth] = useState(1024);
 
@@ -1386,7 +1401,34 @@ export default function Checkin() {
 
   useEffect(() => { locateUser(); }, []);
 
-  const allLocations = [...PRESET_LOCATIONS, ...extraLocs]
+  useEffect(() => {
+    let cancelled = false;
+    setLoadingLocations(true);
+    setApiError("");
+    fetch("/api/locations/map?limit=1000", { credentials: "include" })
+      .then(async response => {
+        const payload = await response.json().catch(() => null);
+        if (!response.ok || !payload?.ok) throw new Error(payload?.error || "locations_load_failed");
+        return payload.data?.items || payload.data?.locations || [];
+      })
+      .then(items => {
+        if (cancelled) return;
+        setExtraLocs(items.map(apiLocationToCheckinLocation));
+      })
+      .catch(error => {
+        if (cancelled) return;
+        setExtraLocs([]);
+        setApiError(error?.message || "ไม่สามารถโหลดสถานที่จาก API ได้");
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingLocations(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const allLocations = extraLocs
     .map(l => ({
       ...l,
       dist: (l.lat && l.lng)
@@ -1464,6 +1506,48 @@ export default function Checkin() {
     setExtraLocs(prev => [...prev, loc]);
     setSelected(loc);
     setShowModal(false);
+  }
+
+  async function handleContinue() {
+    if (!selected) return;
+    setSavingCheckin(true);
+    setApiError("");
+    try {
+      let checkinRecord = null;
+      if (userPos?.lat && userPos?.lng) {
+        const response = await fetch("/api/checkins", {
+          method: "POST",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            locationId: selected.id,
+            actualLat: userPos.lat,
+            actualLng: userPos.lng,
+            locationSource: "GPS",
+          }),
+        });
+        const payload = await response.json().catch(() => null);
+        if (!response.ok || !payload?.ok) throw new Error(payload?.error || "checkin_create_failed");
+        checkinRecord = payload.data?.checkin || null;
+      }
+      navigate(nextPath, {
+        state: {
+          checkin: {
+            id: selected.id,
+            checkinId: checkinRecord?.id || null,
+            name: selected.name,
+            tag: selected.tag,
+            type: selected.type,
+            dist: selected.dist,
+          },
+          ...(activity ? { activity, fromActivity: true } : {}),
+        },
+      });
+    } catch (error) {
+      setApiError(error?.message || "ไม่สามารถบันทึก check-in ได้");
+    } finally {
+      setSavingCheckin(false);
+    }
   }
 
   const mapCenter = [center.lat, center.lng];
@@ -1563,24 +1647,11 @@ export default function Checkin() {
         <IcoPlus /> ระบุสถานที่อื่น
       </button>
       <button
-        className={`ci-cta ${selected ? "ready" : "disabled"}`}
-        disabled={!selected}
-        onClick={() =>
-          selected && navigate(nextPath, {
-            state: {
-              checkin: {
-                id:   selected.id,
-                name: selected.name,
-                tag:  selected.tag,
-                type: selected.type,
-                dist: selected.dist,
-              },
-              ...(activity ? { activity, fromActivity: true } : {}),
-            },
-          })
-        }
+        className={`ci-cta ${selected && !savingCheckin ? "ready" : "disabled"}`}
+        disabled={!selected || savingCheckin}
+        onClick={handleContinue}
       >
-        ถัดไป · เลือกวัน
+        {savingCheckin ? "กำลังบันทึก..." : "ถัดไป · เลือกวัน"}
         <IcoArrow c={selected ? "#fff" : T.foreground3} />
       </button>
     </div>
@@ -1640,6 +1711,16 @@ export default function Checkin() {
                     {filteredLocations.length} สถานที่
                   </span>
                 </div>
+                {loadingLocations && (
+                  <div style={{ marginTop: 10, fontSize: 12, fontWeight: 700, color: T.foreground3 }}>
+                    กำลังโหลดสถานที่จาก API จริง...
+                  </div>
+                )}
+                {apiError && (
+                  <div style={{ marginTop: 10, fontSize: 12, fontWeight: 800, color: T.danger }}>
+                    {apiError}
+                  </div>
+                )}
 
                 {/* Sleek Search Box */}
                 <div className="ci-search-box">
@@ -1752,6 +1833,16 @@ export default function Checkin() {
                 {filteredLocations.length} สถานที่
               </span>
             </div>
+            {loadingLocations && (
+              <div style={{ marginTop: 10, fontSize: 12, fontWeight: 700, color: T.foreground3 }}>
+                กำลังโหลดสถานที่จาก API จริง...
+              </div>
+            )}
+            {apiError && (
+              <div style={{ marginTop: 10, fontSize: 12, fontWeight: 800, color: T.danger }}>
+                {apiError}
+              </div>
+            )}
 
             {/* Sleek Search Box */}
             <div className="ci-search-box" style={{ marginTop: 10 }}>

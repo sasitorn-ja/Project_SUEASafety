@@ -24,14 +24,6 @@ export const LOCATION_TYPE_OPTIONS = [
   { key: "site" as const, label: LOCATION_TYPE_LABELS.site },
 ];
 
-export const PRESET_DEPTS = ["RMC Metro", "RMC EAST", "RMC WEST", "RMC NORTH", "RMC NORTHEAST", "RMC SOUTH", "QMIX"];
-export const PRESET_COMPANIES = ["SMART Structure", "CPAC Group", "SCG Cement", "Tiger Safety Co."];
-export const PRESET_REGIONS = ["Operation", "Region 1", "Region 2", "Region 3", "Headquarters"];
-export const PRESET_DIVISIONS = ["Production", "Maintenance", "QA/QC", "Warehouse & Shipping"];
-export const PRESET_FACTORIES = ["หนองแค", "แก่งคอย", "พระประแดง", "ท่าหลวง", "บางซื่อ"];
-export const PRESET_OFFICES = ["สำนักงานซีแพคบางซ่อน", "สำนักงานใหญ่บางซื่อ", "สำนักงานระยอง", "สำนักงานเชียงใหม่"];
-export const PRESET_SITES = ["Site บางซื่อ", "Site รัชดา", "Site สุขุมวิท", "Site พญาไท"];
-
 export const DEFAULT_CHECKLISTS: ChecklistCollection = {
   factory: [
     { id: "mixer", title: "Mixer", guidelines: ["มีป้ายข้อปฏิบัติงาน ก่อนเข้าใน Mixer", "มีป้ายบังคับสวมใส่อุปกรณ์ PPE บริเวณ Mixer", "มีระบบล็อคฝา Mixer และตู้ Load break switch มีสภาพที่ดี", "มี Emergency Switch ในจุดที่เหมาะสมใช้งานได้ พร้อมป้ายบ่งชี้", "มี Limit switch ที่ฝา Mixer ครบทุกฝา และใช้งานได้", "มีราวกันตกด้านหลัง Mixer ที่ปลอดภัย", "มีการครอบจุดหมุนของ Mixer เช่น สายพาน, ยอยเกียร์, ท้าย Motor ให้มิดชิด"] },
@@ -66,8 +58,6 @@ export const DEFAULT_CHECKLISTS: ChecklistCollection = {
     { id: "site-near-miss", title: "Nearmiss", guideTitle: false, guidelines: ["เหตุการณ์เกือบเกิดอุบัติเหตุ (Near Miss) คือเหตุการณ์ที่เกือบเกิดอุบัติเหตุแต่สามารถแก้ไขสถานการณ์ได้ทัน", "การรายงาน Near Miss ช่วยชี้จุดบกพร่องและแก้ไขเพื่อป้องกันไม่ให้เกิดอุบัติเหตุซ้ำขึ้นอีก"] },
   ],
 };
-
-const STORAGE_KEY = "suea-safety-admin-checklists-v1";
 
 export function deepCloneChecklists(checklists: ChecklistCollection = DEFAULT_CHECKLISTS): ChecklistCollection {
   return JSON.parse(JSON.stringify(checklists));
@@ -106,25 +96,36 @@ function sanitizeChecklistCollection(raw: any): ChecklistCollection | null {
 }
 
 export function loadChecklistDraft(): ChecklistCollection | null {
-  if (typeof window === "undefined") return null;
-
-  try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
-    if (!raw) return null;
-    return sanitizeChecklistCollection(JSON.parse(raw));
-  } catch {
-    return null;
-  }
+  return activeChecklistDraft ? deepCloneChecklists(activeChecklistDraft) : null;
 }
 
 export function saveChecklistDraft(checklists: ChecklistCollection) {
-  if (typeof window === "undefined") return;
-  window.localStorage.setItem(STORAGE_KEY, JSON.stringify(sanitizeChecklistCollection(checklists) || DEFAULT_CHECKLISTS));
+  activeChecklistDraft = sanitizeChecklistCollection(checklists) || deepCloneChecklists(DEFAULT_CHECKLISTS);
+  if (typeof window !== "undefined") {
+    void fetch("/api/safety-settings", {
+      method: "PUT",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ key: "safety_checklists", value: activeChecklistDraft }),
+    });
+  }
 }
 
 export function restoreChecklistDefaults() {
-  if (typeof window === "undefined") return;
-  window.localStorage.removeItem(STORAGE_KEY);
+  activeChecklistDraft = deepCloneChecklists(DEFAULT_CHECKLISTS);
+  saveChecklistDraft(activeChecklistDraft);
+}
+
+let activeChecklistDraft: ChecklistCollection | null = null;
+
+export async function hydrateChecklistDraft() {
+  if (typeof window === "undefined") return getActiveChecklistCollection();
+  const response = await fetch("/api/safety-settings?key=safety_checklists", { credentials: "include" });
+  const payload = await response.json().catch(() => null);
+  if (!response.ok || !payload?.ok) return getActiveChecklistCollection();
+  const stored = sanitizeChecklistCollection(payload.data?.setting?.setting_value);
+  if (stored) activeChecklistDraft = stored;
+  return getActiveChecklistCollection();
 }
 
 export function getActiveChecklistCollection() {
