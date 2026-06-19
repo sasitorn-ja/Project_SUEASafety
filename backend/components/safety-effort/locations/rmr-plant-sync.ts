@@ -95,7 +95,7 @@ export async function syncRmrPlants(importedBy: string) {
         action = "UPDATE";
         await connection.execute(
           `UPDATE locations SET name_th=:nameTh, name_en=:nameEn,
-           name_cn=:nameCn, position=ST_GeomFromText(:pointWkt,4326),
+           name_cn=:nameCn, position=ST_GeomFromText(:pointWkt,4326,'axis-order=long-lat'),
            province_name=:provinceName, district_name=:districtName,
            plant_type=:plantType, production_type=:productionType,
            sap_code=:sapCode, site_material_code=:siteMaterialCode, status=:status,
@@ -124,7 +124,7 @@ export async function syncRmrPlants(importedBy: string) {
             position, province_name, district_name, plant_type, production_type,
             sap_code, site_material_code, status, map_visible, checkin_enabled)
            VALUES ('PLANT','RMR_SSO_PLANT',:plantKey,:plantKey,:nameTh,:nameEn,:nameCn,
-           ST_GeomFromText(:pointWkt,4326),:provinceName,:districtName,:plantType,
+           ST_GeomFromText(:pointWkt,4326,'axis-order=long-lat'),:provinceName,:districtName,:plantType,
            :productionType,:sapCode,:siteMaterialCode,:status,1,1)`,
           {
             plantKey: item.plantKey,

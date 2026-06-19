@@ -590,7 +590,10 @@ async function handleCheckinExtras(request: NextRequest, method: string, match: 
     const rows = await queryRows<DbRow>(
       `SELECT id, location_type, source, external_key, code, name_th, name_en,
        ST_Y(position) lat, ST_X(position) lng,
-       ST_Distance_Sphere(position, ST_SRID(POINT(:lng, :lat), 4326)) distance_m
+       ST_Distance_Sphere(
+         position,
+         ST_GeomFromText(CONCAT('POINT(', :lng, ' ', :lat, ')'), 4326, 'axis-order=long-lat')
+       ) distance_m
        FROM locations
        WHERE deleted_at IS NULL AND status = 'ACTIVE' AND checkin_enabled = 1
        HAVING distance_m <= :radiusM ORDER BY distance_m LIMIT 100`,
