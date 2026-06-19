@@ -96,7 +96,7 @@ function makeTeamDraft(index: number): LeaderboardTeam {
   return {
     id: `team-draft-${Date.now()}-${index}`,
     rank: index + 1,
-    name: `ทีมใหม่ ${index + 1}`,
+    name: `หน่วยงานใหม่ ${index + 1}`,
     leaderUserId: "",
     leaderEmail: "",
     leader: "",
@@ -278,7 +278,7 @@ export default function AdminLeaderboardPage() {
               จัดการ <span className="text-[var(--brand-accent)]">Leaderboard</span>
             </>
           }
-          description="โฟกัสเฉพาะการจัดการทีมและคะแนนให้พร้อมใช้งานจริง โดยแก้ผ่าน modal แล้วค่อยยืนยันก่อนบันทึก"
+          description="โฟกัสเฉพาะการจัดการหน่วยงานและคะแนนให้พร้อมใช้งานจริง โดยแก้ผ่าน modal แล้วค่อยยืนยันก่อนบันทึก"
           mascotSrc="/images/mascots/suea-mascot.png"
           mascotAlt="SUEA Admin Mascot"
           mascotAction="clipboard"
@@ -287,7 +287,7 @@ export default function AdminLeaderboardPage() {
           <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
             <div className="flex flex-wrap gap-2">
               <Badge className="rounded-xl border border-[var(--border)] bg-white px-3 py-2 text-[11px] font-black text-[var(--brand-text)]">
-                {draftTeams.length} ทีม
+                {draftTeams.length} หน่วยงาน
               </Badge>
               <Badge className="rounded-xl border border-[var(--border)] bg-[var(--brand-soft)] px-3 py-2 text-[11px] font-black text-[var(--brand-text)]">
                 {totalMembers.toLocaleString()} สมาชิก
@@ -307,8 +307,8 @@ export default function AdminLeaderboardPage() {
 
         <div className="mt-4 flex flex-col gap-4">
           <SectionCard
-            title="Teams Management"
-            description="จัดการทีมในมุมมองเดียวแบบอ่านง่ายขึ้น เน้นตารางหลักที่สะอาดตาและ modal แก้ไขที่ใช้งานง่าย"
+            title="จัดการหน่วยงาน (Teams)"
+            description="จัดการหน่วยงานในมุมมองเดียวแบบอ่านง่ายขึ้น เน้นตารางหลักที่สะอาดตาและ modal แก้ไขที่ใช้งานง่าย"
             icon={<LayoutList className="h-5 w-5" strokeWidth={2.3} />}
             actions={
               <Button
@@ -316,7 +316,7 @@ export default function AdminLeaderboardPage() {
                 className="h-11 rounded-xl bg-[var(--brand-accent-strong)] px-5 text-[13px] font-black text-white hover:bg-[var(--brand-accent)]"
               >
                 <Plus className="mr-1.5 h-4 w-4" />
-                New Team
+                เพิ่มหน่วยงาน
               </Button>
             }
           >
@@ -325,11 +325,11 @@ export default function AdminLeaderboardPage() {
                 <table className="min-w-[980px] w-full">
                   <thead className="bg-[var(--brand-soft)] text-left">
                     <tr className="border-b border-[var(--border)]">
-                      <th className="px-4 py-4 text-[12px] font-black text-[var(--brand-text)]">Team Name</th>
-                      <th className="px-4 py-4 text-[12px] font-black text-[var(--brand-text)]">Leader</th>
-                      <th className="px-4 py-4 text-[12px] font-black text-[var(--brand-text)]">Members</th>
-                      <th className="px-4 py-4 text-[12px] font-black text-[var(--brand-text)]">Total Points</th>
-                      <th className="px-4 py-4 text-[12px] font-black text-[var(--brand-text)]">Actions</th>
+                      <th className="px-4 py-4 text-[12px] font-black text-[var(--brand-text)]">หน่วยงาน</th>
+                      <th className="px-4 py-4 text-[12px] font-black text-[var(--brand-text)]">หัวหน้า</th>
+                      <th className="px-4 py-4 text-[12px] font-black text-[var(--brand-text)]">สมาชิก</th>
+                      <th className="px-4 py-4 text-[12px] font-black text-[var(--brand-text)]">คะแนนรวม</th>
+                      <th className="px-4 py-4 text-[12px] font-black text-[var(--brand-text)]">จัดการ</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -361,7 +361,7 @@ export default function AdminLeaderboardPage() {
                               type="button"
                               onClick={() => openEditTeam(team)}
                               className="flex h-9 w-9 items-center justify-center rounded-full border border-[var(--border)] bg-white text-[var(--brand-text)] transition-colors hover:border-[var(--brand-accent)] hover:bg-[var(--brand-soft)] hover:text-[var(--c-a36206)]"
-                              aria-label={`แก้ไขทีม ${team.name}`}
+                              aria-label={`แก้ไขหน่วยงาน ${team.name}`}
                             >
                               <Pencil className="h-4 w-4" strokeWidth={2.2} />
                             </button>
@@ -369,7 +369,7 @@ export default function AdminLeaderboardPage() {
                               type="button"
                               onClick={() => setDeletingTeam(team)}
                               className="flex h-9 w-9 items-center justify-center rounded-full border border-[#f1caca] bg-white text-[#ef544d] transition-colors hover:bg-[#fff4f4] hover:text-[#d63b35]"
-                              aria-label={`ลบทีม ${team.name}`}
+                              aria-label={`ลบหน่วยงาน ${team.name}`}
                             >
                               <Trash2 className="h-4 w-4" strokeWidth={2.2} />
                             </button>
@@ -388,11 +388,11 @@ export default function AdminLeaderboardPage() {
           <DialogContent className="max-h-[88vh] max-w-[620px] overflow-hidden rounded-[18px] border border-[var(--border)] bg-[var(--brand-surface)] p-0 shadow-[0_24px_50px_rgba(62,36,13,0.18)] sm:rounded-[30px] sm:max-w-[680px]">
             <DialogHeader className="border-b border-[var(--border)] bg-[linear-gradient(180deg,var(--brand-soft)_0%,var(--brand-soft)_100%)] px-4 pt-4 pb-3 sm:px-6 sm:pt-6 sm:pb-5">
               <DialogTitle className="text-[22px] font-black text-[var(--brand-text)] sm:text-[28px]">
-                {editingTeam?.mode === "create" ? "Create Team" : "Edit Team"}
+                {editingTeam?.mode === "create" ? "เพิ่มหน่วยงาน" : "แก้ไขหน่วยงาน"}
               </DialogTitle>
               <DialogDescription className="max-w-[460px] text-[12px] font-bold leading-relaxed text-[#8E8A81] sm:text-[14px]">
                 {editingTeam?.mode === "create"
-                  ? "กรอกข้อมูลทีมใหม่ใน mockup นี้ แล้วกดยืนยันเพื่อเพิ่มทีมลงตาราง"
+                  ? "กรอกข้อมูลหน่วยงานใหม่ใน mockup นี้ แล้วกดยืนยันเพื่อเพิ่มหน่วยงานลงตาราง"
                   : "ปรับข้อมูลใน mockup นี้ แล้วกดยืนยันเพื่ออัปเดตกลับไปยังตารางหลัก"}
               </DialogDescription>
             </DialogHeader>
@@ -407,12 +407,12 @@ export default function AdminLeaderboardPage() {
                     />
                     <div className="min-w-0">
                       <div className="truncate text-[14px] font-black text-[#1A1A1A] sm:text-[16px]">
-                        {editingTeam.name || "Team name"}
+                        {editingTeam.name || "ชื่อหน่วยงาน"}
                       </div>
                       <div className="text-[11px] font-bold text-[#8E8A81] sm:text-[13px]">
                         {editingTeam.mode === "create"
-                          ? "ตั้งค่าทีมใหม่ก่อนยืนยัน"
-                          : "อัปเดตข้อมูลทีมก่อนยืนยัน"}
+                          ? "ตั้งค่าหน่วยงานใหม่ก่อนยืนยัน"
+                          : "อัปเดตข้อมูลหน่วยงานก่อนยืนยัน"}
                       </div>
                     </div>
                   </div>
@@ -420,7 +420,7 @@ export default function AdminLeaderboardPage() {
 
                 <div className="grid grid-cols-1 gap-3 pb-2 sm:grid-cols-2 sm:gap-4 sm:pb-1">
                   <div className="flex flex-col gap-2">
-                    <Label className="text-[12px] font-black text-[var(--brand-text)]">Team Name</Label>
+                    <Label className="text-[12px] font-black text-[var(--brand-text)]">ชื่อหน่วยงาน</Label>
                     <Input
                       value={editingTeam.name}
                       onChange={(event) => updateEditingTeam("name", event.target.value)}
@@ -428,7 +428,13 @@ export default function AdminLeaderboardPage() {
                     />
                   </div>
                   <div className="flex flex-col gap-2">
-                    <Label className="text-[12px] font-black text-[var(--brand-text)]">Leader</Label>
+                    <Label className="text-[12px] font-black text-[var(--brand-text)]">หัวหน้าหน่วยงาน</Label>
+                    <Input
+                      value={editingTeam.leader}
+                      onChange={(event) => updateEditingTeam("leader", event.target.value)}
+                      placeholder="พิมพ์ชื่อหัวหน้าหน่วยงาน"
+                      className="h-11 rounded-[18px] border-[var(--border)] bg-white px-4 text-[14px] font-bold text-[var(--foreground)] focus-visible:border-[var(--brand-accent)] focus-visible:ring-0 sm:h-12 sm:text-[15px]"
+                    />
                     <Combobox
                       value={editingTeam.leaderUserId}
                       onValueChange={(userId) => {
@@ -442,18 +448,19 @@ export default function AdminLeaderboardPage() {
                       }}
                       onSearchValueChange={setLeaderSearch}
                       options={leaderOptions}
-                      placeholder="ค้นหาชื่อ อีเมล หรือรหัสพนักงาน"
+                      placeholder="หรือเลือกจากรายชื่อผู้ใช้ (ถ้ามี)"
                       searchPlaceholder="พิมพ์ชื่อ อีเมล หรือรหัสพนักงาน"
                       emptyText={leaderUsersLoading ? "กำลังค้นหาผู้ใช้..." : "ไม่พบผู้ใช้"}
                       className="h-11 rounded-[18px] border-[var(--border)] bg-white px-4 text-[14px] font-bold text-[var(--foreground)] sm:h-12 sm:text-[15px]"
                       contentClassName="min-w-[360px]"
                     />
-                    {editingTeam.leaderEmail ? (
-                      <p className="px-1 text-[11px] font-bold text-[#8E8A81]">{editingTeam.leaderEmail}</p>
-                    ) : null}
+                    <p className="px-1 text-[11px] font-bold text-[#8E8A81]">
+                      พิมพ์ชื่อได้เอง หรือเลือกจากรายชื่อผู้ใช้เพื่อเติมให้อัตโนมัติ
+                      {editingTeam.leaderEmail ? ` · ${editingTeam.leaderEmail}` : ""}
+                    </p>
                   </div>
                   <div className="flex flex-col gap-2 sm:col-span-2">
-                    <Label className="text-[12px] font-black text-[var(--brand-text)]">Team Color</Label>
+                    <Label className="text-[12px] font-black text-[var(--brand-text)]">สีประจำหน่วยงาน</Label>
                     <div className="flex h-11 items-center gap-3 rounded-[18px] border border-[var(--border)] bg-white px-4 sm:h-12">
                       <input
                         type="color"
@@ -490,7 +497,7 @@ export default function AdminLeaderboardPage() {
                 Confirm Delete
               </DialogTitle>
               <DialogDescription className="max-w-[420px] text-[12px] font-bold leading-relaxed text-[#8E8A81] sm:text-[14px]">
-                แน่ใจใช่ไหมว่าต้องการลบทีมนี้ออกจาก Leaderboard หากยืนยัน รายการจะหายจากหน้าแอดมินและหน้าหลักทันที
+                แน่ใจใช่ไหมว่าต้องการลบหน่วยงานนี้ออกจาก Leaderboard หากยืนยัน รายการจะหายจากหน้าแอดมินและหน้าหลักทันที
               </DialogDescription>
             </DialogHeader>
 
@@ -507,7 +514,7 @@ export default function AdminLeaderboardPage() {
                         {deletingTeam.name}
                       </div>
                       <div className="text-[12px] font-bold text-[#8E8A81]">
-                        Leader {deletingTeam.leader} · Rank #{deletingTeam.rank}
+                        หัวหน้า {deletingTeam.leader} · อันดับ #{deletingTeam.rank}
                       </div>
                     </div>
                   </div>
