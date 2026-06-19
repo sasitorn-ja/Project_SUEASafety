@@ -8,6 +8,7 @@ import { handlePersistedCatalogRoute } from "@backend/components/api-catalog/per
 import { createCheckin, getCheckin, listCheckins } from "@backend/components/checkins/repository";
 import { awardPoints, getPointBalance, listPointRules, listPointTransactions } from "@backend/components/points/repository";
 import { createAwarenessAttempt } from "@backend/components/safety-awareness/repository";
+import { isRmrSsoDatabaseConfigured } from "@backend/components/core/rmr-sso-db";
 import {
   createSafetyEffortLocation,
   deleteSafetyEffortLocation,
@@ -18,6 +19,7 @@ import {
   updateSafetyEffortLocation,
   type SafetyEffortLocationType,
 } from "@backend/components/safety-effort/locations/repository";
+import { syncRmrPlants } from "@backend/components/safety-effort/locations/rmr-plant-sync";
 import {
   createComment,
   createPost,
@@ -299,6 +301,24 @@ function locationTypeForPath(path: string): SafetyEffortLocationType | null {
   return null;
 }
 
+async function listLocationsWithPlantBootstrap(
+  options: Parameters<typeof listSafetyEffortLocations>[0],
+  userId?: string,
+) {
+  let locations = await listSafetyEffortLocations(options);
+  const includesPlants = !options.type || options.type === "PLANT";
+
+  if (includesPlants && userId && isRmrSsoDatabaseConfigured()) {
+    const plantMirror = await listSafetyEffortLocations({ type: "PLANT", limit: 1 });
+    if (plantMirror.length === 0) {
+      await syncRmrPlants(userId);
+      locations = await listSafetyEffortLocations(options);
+    }
+  }
+
+  return locations;
+}
+
 async function tryHandleConcreteRoute(
   request: NextRequest,
   method: string,
@@ -313,29 +333,29 @@ async function tryHandleConcreteRoute(
   try {
     const typeFromPath = locationTypeForPath(path);
     if (method === "GET" && typeFromPath) {
-      const locations = await listSafetyEffortLocations({
+      const locations = await listLocationsWithPlantBootstrap({
         type: typeFromPath,
         search: query.get("search") || query.get("q"),
         limit: Number(query.get("pageSize") || query.get("limit") || 50),
-      });
+      }, userId);
       return jsonData({ items: locations, locations });
     }
 
     if (method === "GET" && path === "/api/locations/search") {
-      const locations = await listSafetyEffortLocations({
+      const locations = await listLocationsWithPlantBootstrap({
         type: normalizeLocationType(query.get("type")),
         search: query.get("q") || query.get("search"),
         limit: Number(query.get("limit") || 20),
-      });
+      }, userId);
       return jsonData({ items: locations, locations });
     }
 
     if (method === "GET" && path === "/api/locations/map") {
-      const locations = await listSafetyEffortLocations({
+      const locations = await listLocationsWithPlantBootstrap({
         type: normalizeLocationType(query.get("type")),
         search: query.get("search"),
         limit: Number(query.get("limit") || 500),
-      });
+      }, userId);
       const bbox = query.get("bbox")?.split(",").map(Number);
       const bounded = bbox?.length === 4 && bbox.every(Number.isFinite)
         ? locations.filter((location) => {

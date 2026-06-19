@@ -6,9 +6,23 @@ const globalForRmrDb = globalThis as typeof globalThis & {
   rmrSsoDbPool?: Pool;
 };
 
+export function getRmrSsoDatabaseUrl() {
+  return (
+    process.env.RMC_SSO_DATABASE_URL?.trim() ||
+    process.env.RMR_SSO_DATABASE_URL?.trim() ||
+    ""
+  );
+}
+
+export function isRmrSsoDatabaseConfigured() {
+  return Boolean(getRmrSsoDatabaseUrl());
+}
+
 export function getRmrSsoDbPool() {
-  const url = process.env.RMR_SSO_DATABASE_URL;
-  if (!url) throw new Error("RMR_SSO_DATABASE_URL is not configured");
+  const url = getRmrSsoDatabaseUrl();
+  if (!url) {
+    throw new Error("RMC_SSO_DATABASE_URL (or legacy RMR_SSO_DATABASE_URL) is not configured");
+  }
   if (!globalForRmrDb.rmrSsoDbPool) {
     globalForRmrDb.rmrSsoDbPool = mysql.createPool({
       uri: url,
