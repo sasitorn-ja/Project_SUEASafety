@@ -1545,7 +1545,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
       `/api/safety-culture/posts/${postId}`,
       apiJson("DELETE")
     );
-    if (!result.ok) {
+    if (!result.ok || result.data?.deleted !== true) {
       // revert on failure
       if (removed) {
         const restored = removed;

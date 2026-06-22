@@ -152,6 +152,25 @@ function pageParams(request: NextRequest, maximum = 200) {
   return { page, pageSize, offset: (page - 1) * pageSize };
 }
 
+function dateRangeFilters(
+  request: NextRequest,
+  column: string,
+  params: Record<string, unknown>,
+) {
+  const where: string[] = [];
+  const from = request.nextUrl.searchParams.get("from");
+  const to = request.nextUrl.searchParams.get("to");
+  if (from) {
+    where.push(`${column} >= :from`);
+    params.from = from;
+  }
+  if (to) {
+    where.push(`${column} < DATE_ADD(:to, INTERVAL 1 DAY)`);
+    params.to = to;
+  }
+  return where;
+}
+
 function cursorLimit(request: NextRequest, maximum = 100) {
   return Math.min(Math.max(Number(request.nextUrl.searchParams.get("limit") || 30), 1), maximum);
 }
@@ -2025,44 +2044,57 @@ async function handleImportsReportsAudit(request: NextRequest, method: string, m
   }
   if (method === "GET" && route.startsWith("/api/safety-effort/reports/")) {
     if (route === "/api/safety-effort/reports/summary") {
+      const activityParams: Record<string, unknown> = {};
+      const activityWhere = ["deleted_at IS NULL", ...dateRangeFilters(request, "COALESCE(completed_at, started_at, created_at)", activityParams)];
+      const assessmentParams: Record<string, unknown> = {};
+      const assessmentWhere = ["status='SUBMITTED'", ...dateRangeFilters(request, "submitted_at", assessmentParams)];
+      const findingParams: Record<string, unknown> = {};
+      const findingWhere = ["deleted_at IS NULL", "status <> 'CLOSED'", ...dateRangeFilters(request, "created_at", findingParams)];
+      const actionParams: Record<string, unknown> = {};
+      const actionWhere = ["status <> 'COMPLETED'", ...dateRangeFilters(request, "created_at", actionParams)];
       const rows = await queryRows<DbRow>(
         `SELECT
-         (SELECT COUNT(*) FROM safety_activities WHERE deleted_at IS NULL) activities,
-         (SELECT COUNT(*) FROM assessment_runs WHERE status='SUBMITTED') submitted_assessments,
-         (SELECT COUNT(*) FROM safety_findings WHERE deleted_at IS NULL AND status <> 'CLOSED') open_findings,
-         (SELECT COUNT(*) FROM corrective_actions WHERE status <> 'COMPLETED') open_actions`,
+         (SELECT COUNT(*) FROM safety_activities WHERE ${activityWhere.join(" AND ")}) activities,
+         (SELECT COUNT(*) FROM assessment_runs WHERE ${assessmentWhere.join(" AND ")}) submitted_assessments,
+         (SELECT COUNT(*) FROM safety_findings WHERE ${findingWhere.join(" AND ")}) open_findings,
+         (SELECT COUNT(*) FROM corrective_actions WHERE ${actionWhere.join(" AND ")}) open_actions`,
+        { ...activityParams, ...assessmentParams, ...findingParams, ...actionParams },
       );
       return jsonData(serializeRow(rows[0] || {}));
     }
     if (route === "/api/safety-effort/reports/by-location") {
       const { page, pageSize, offset } = pageParams(request);
+      const params: Record<string, unknown> = { limit: pageSize, offset };
+      const activityJoinFilters = ["a.checkin_id=c.id", "a.deleted_at IS NULL", ...dateRangeFilters(request, "COALESCE(a.completed_at, a.started_at, a.created_at)", params)];
       const rows = await queryRows<DbRow>(
         `SELECT l.id, l.name_th, l.location_type,
          COUNT(DISTINCT c.id) checkins, COUNT(DISTINCT a.id) activities
          FROM locations l
          LEFT JOIN checkins c ON c.selected_location_id=l.id
-         LEFT JOIN safety_activities a ON a.checkin_id=c.id AND a.deleted_at IS NULL
+         LEFT JOIN safety_activities a ON ${activityJoinFilters.join(" AND ")}
          WHERE l.deleted_at IS NULL
          GROUP BY l.id, l.name_th, l.location_type
          ORDER BY activities DESC, checkins DESC
          LIMIT :limit OFFSET :offset`,
-        { limit: pageSize, offset },
+        params,
       );
       return jsonData({ items: rows.map(serializeRow), page, pageSize, nextPage: rows.length === pageSize ? page + 1 : null });
     }
     if (route === "/api/safety-effort/reports/by-user") {
       const { page, pageSize, offset } = pageParams(request);
+      const params: Record<string, unknown> = { limit: pageSize, offset };
+      const activityJoinFilters = ["a.checkin_id=c.id", "a.deleted_at IS NULL", ...dateRangeFilters(request, "COALESCE(a.completed_at, a.started_at, a.created_at)", params)];
       const rows = await queryRows<DbRow>(
         `SELECT u.id, u.name_th,
          COUNT(DISTINCT c.id) checkins, COUNT(DISTINCT a.id) activities
          FROM users u
          LEFT JOIN checkins c ON c.user_id=u.id
-         LEFT JOIN safety_activities a ON a.checkin_id=c.id AND a.deleted_at IS NULL
+         LEFT JOIN safety_activities a ON ${activityJoinFilters.join(" AND ")}
          WHERE u.deleted_at IS NULL
          GROUP BY u.id, u.name_th
          ORDER BY activities DESC, checkins DESC
          LIMIT :limit OFFSET :offset`,
-        { limit: pageSize, offset },
+        params,
       );
       return jsonData({ items: rows.map(serializeRow), page, pageSize, nextPage: rows.length === pageSize ? page + 1 : null });
     }

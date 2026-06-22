@@ -222,7 +222,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       <DesktopTopbar />
 
       <main className={cn(
-        isSafetyEffort ? "legacy-page-content" : "page-content",
+        "page-content",
         usesStandardPageUi && "app-standard-page"
       )}>{children}</main>
 

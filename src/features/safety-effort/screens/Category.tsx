@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { useNavigate } from "@/lib/app-navigation";
 import {
   ArrowRight,
@@ -18,6 +19,11 @@ import {
 import styles from "./safety-effort-category.module.css";
 
 const HERO_MASCOT = "/images/mascots/wangjai/scenes/safety-effort-user-mascot.png";
+
+type MonthlyStats = {
+  count: number | null;
+  loading: boolean;
+};
 
 const steps = [
   {
@@ -44,6 +50,34 @@ const steps = [
 
 export default function Category() {
   const navigate = useNavigate();
+  const [monthlyStats, setMonthlyStats] = useState<MonthlyStats>({ count: null, loading: true });
+
+  useEffect(() => {
+    let cancelled = false;
+    const now = new Date();
+    const from = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-01`;
+    const toDate = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+    const to = `${toDate.getFullYear()}-${String(toDate.getMonth() + 1).padStart(2, "0")}-${String(toDate.getDate()).padStart(2, "0")}`;
+
+    setMonthlyStats((current) => ({ ...current, loading: true }));
+    fetch(`/api/safety-effort/submissions/me?from=${from}&to=${to}&pageSize=1`, {
+      credentials: "include",
+      cache: "no-store",
+    })
+      .then((response) => (response.ok ? response.json() : null))
+      .then((payload) => {
+        if (cancelled) return;
+        const total = Number(payload?.data?.total);
+        setMonthlyStats({ count: Number.isFinite(total) ? total : 0, loading: false });
+      })
+      .catch(() => {
+        if (!cancelled) setMonthlyStats({ count: 0, loading: false });
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   return (
     <div className={styles.page}>
@@ -115,7 +149,7 @@ export default function Category() {
                 <div>
                   <span className={styles.rowIcon}><ClipboardCheck /></span>
                   <strong>จำนวนการตรวจเดือนนี้</strong>
-                  <b>9 ครั้ง</b>
+                  <b>{monthlyStats.loading ? "..." : monthlyStats.count?.toLocaleString("th-TH") ?? "0"} ครั้ง</b>
                 </div>
                 <div>
                   <span className={styles.rowIcon}><ShieldCheck /></span>

@@ -494,7 +494,8 @@ async function tryHandleConcreteRoute(
         return post ? jsonData({ post }) : jsonError("post_not_found", 404);
       }
       if (method === "DELETE") {
-        return jsonData(await deletePost(match.params.id, userId));
+        const result = await deletePost(match.params.id, userId);
+        return result.deleted ? jsonData(result) : jsonError("post_not_found_or_not_owner", 404);
       }
     }
 
