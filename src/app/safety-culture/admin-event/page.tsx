@@ -327,7 +327,8 @@ export default function AdminEventPage() {
   const { updateSafetyCultureEvent, updateFeedEvents, sendFeedEventNotification } = useAppActions();
   const [saveLabel, setSaveLabel] = useState<"idle" | "saved" | "published">("idle");
   const [openTimePicker, setOpenTimePicker] = useState<"start" | "end" | null>(null);
-  const [activitySaveLabel, setActivitySaveLabel] = useState<"idle" | "saved">("idle");
+  const [activitySaveLabel, setActivitySaveLabel] = useState<"idle" | "saved" | "error">("idle");
+  const [isSavingFeedEvents, setIsSavingFeedEvents] = useState(false);
   const [notifiedFeedEventId, setNotifiedFeedEventId] = useState<string | null>(null);
   const [draftFeedEvents, setDraftFeedEvents] = useState<SafetyCultureFeedEvent[]>(feedEvents);
   const [draggingFeedEventId, setDraggingFeedEventId] = useState<string | null>(null);
@@ -612,15 +613,39 @@ export default function AdminEventPage() {
     setPendingDeleteFeedEvent(null);
   };
 
-  const confirmDeleteFeedEvent = () => {
+  const confirmDeleteFeedEvent = async () => {
     if (!pendingDeleteFeedEvent) return;
-    handleDeleteFeedEvent(pendingDeleteFeedEvent.id);
+    const deletedEventId = pendingDeleteFeedEvent.id;
+    const remaining = draftFeedEvents.filter((event) => event.id !== deletedEventId);
+    setIsSavingFeedEvents(true);
+    setActivitySaveLabel("idle");
+    const saved = await updateFeedEvents(remaining);
+    setIsSavingFeedEvents(false);
+
+    if (!saved) {
+      setActivitySaveLabel("error");
+      return;
+    }
+
+    setDraftFeedEvents(remaining);
+    setEditingFeedEventId((current) => {
+      if (current !== deletedEventId) return current;
+      return remaining[0]?.id ?? null;
+    });
+    if (feedModalEventId === deletedEventId) {
+      setFeedModalEventId(null);
+      setFeedModalDraft(null);
+    }
     setPendingDeleteFeedEvent(null);
+    setActivitySaveLabel("saved");
   };
 
-  const handleSaveFeedEvents = () => {
-    updateFeedEvents(draftFeedEvents);
-    setActivitySaveLabel("saved");
+  const handleSaveFeedEvents = async () => {
+    setIsSavingFeedEvents(true);
+    setActivitySaveLabel("idle");
+    const saved = await updateFeedEvents(draftFeedEvents);
+    setIsSavingFeedEvents(false);
+    setActivitySaveLabel(saved ? "saved" : "error");
   };
 
   const handleNotifyFeedEvent = (feedEventId: string) => {
@@ -747,7 +772,7 @@ export default function AdminEventPage() {
     }));
   };
 
-  const handleApplyFeedModal = () => {
+  const handleApplyFeedModal = async () => {
     if (!feedModalEventId || !feedModalDraft) return;
     const normalizedMultiplier = Number(feedModalMultiplierInput);
     const nextDraft =
@@ -758,9 +783,16 @@ export default function AdminEventPage() {
           }
         : feedModalDraft;
     const nextEvents = draftFeedEvents.map((event) => (event.id === feedModalEventId ? syncFeedEventDateLabel(nextDraft) : event));
+    setIsSavingFeedEvents(true);
+    setActivitySaveLabel("idle");
+    const saved = await updateFeedEvents(nextEvents);
+    setIsSavingFeedEvents(false);
+    if (!saved) {
+      setActivitySaveLabel("error");
+      return;
+    }
     setDraftFeedEvents(nextEvents);
     setEditingFeedEventId(feedModalEventId);
-    updateFeedEvents(nextEvents);
     setActivitySaveLabel("saved");
     setFeedModalEventId(null);
     setFeedModalDraft(null);
@@ -1407,6 +1439,7 @@ export default function AdminEventPage() {
                       <Button
                         type="button"
                         onClick={handleAddFeedEvent}
+                        disabled={isSavingFeedEvents}
                         className="h-10 rounded-[14px] bg-[linear-gradient(135deg,#0fb9b1_0%,#35d4cf_100%)] px-4 text-[13px] font-black text-white hover:brightness-95"
                       >
                         <Plus className="mr-1 h-4 w-4" />
@@ -1416,9 +1449,10 @@ export default function AdminEventPage() {
                         type="button"
                         variant="outline"
                         onClick={handleSaveFeedEvents}
+                        disabled={isSavingFeedEvents}
                         className="h-10 rounded-[14px] border-[var(--c-d7c5a7)] bg-[var(--c-fff8eb)] px-4 text-[13px] font-black text-[var(--c-5c3214)] hover:bg-[var(--c-fff2d8)]"
                       >
-                        บันทึกรายการ
+                        {isSavingFeedEvents ? "กำลังบันทึก..." : "บันทึกรายการ"}
                       </Button>
                     </div>
                   </div>
@@ -1672,6 +1706,11 @@ export default function AdminEventPage() {
                       {activitySaveLabel === "saved" ? (
                         <div className="rounded-full border border-[#bfd7c0] bg-[#f2fff2] px-3 py-1.5 text-[12px] font-black text-[#245336]">
                           บันทึกกิจกรรมเรียบร้อยแล้ว
+                        </div>
+                      ) : null}
+                      {activitySaveLabel === "error" ? (
+                        <div className="rounded-full border border-[#efc9c9] bg-[#fff7f7] px-3 py-1.5 text-[12px] font-black text-[#b74242]">
+                          บันทึกไม่สำเร็จ กรุณาลองใหม่อีกครั้ง
                         </div>
                       ) : null}
                     </div>
@@ -2177,9 +2216,10 @@ export default function AdminEventPage() {
               <Button
                 type="button"
                 onClick={handleApplyFeedModal}
+                disabled={isSavingFeedEvents}
                 className="h-10 rounded-[14px] bg-[linear-gradient(135deg,#21b7c8_0%,#34d4cf_100%)] px-4 text-[13px] font-black text-white hover:brightness-95"
               >
-                {feedModalSubmitLabel}
+                {isSavingFeedEvents ? "Saving..." : feedModalSubmitLabel}
               </Button>
             </div>
           </div>
@@ -2237,9 +2277,10 @@ export default function AdminEventPage() {
               <Button
                 type="button"
                 onClick={confirmDeleteFeedEvent}
+                disabled={isSavingFeedEvents}
                 className="h-10 rounded-[14px] bg-[#b74242] px-4 text-[13px] font-black text-white hover:bg-[#a33636]"
               >
-                ลบกิจกรรมนี้
+                {isSavingFeedEvents ? "กำลังลบ..." : "ลบกิจกรรมนี้"}
               </Button>
             </div>
           </div>

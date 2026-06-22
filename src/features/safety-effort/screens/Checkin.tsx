@@ -29,6 +29,22 @@ function haversine(lat1, lng1, lat2, lng2) {
 
 const DEFAULT_CENTER = { lat: 13.819307, lng: 100.514304 };
 
+function isValidPoint(point) {
+  if (!point) return false;
+  const lat = Number(point.lat);
+  const lng = Number(point.lng);
+  return Number.isFinite(lat) && Number.isFinite(lng) && lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180;
+}
+
+function pointToArray(point) {
+  return isValidPoint(point) ? [Number(point.lat), Number(point.lng)] : null;
+}
+
+function normalizePoint(point, fallback = null) {
+  if (!isValidPoint(point)) return fallback;
+  return { ...point, lat: Number(point.lat), lng: Number(point.lng) };
+}
+
 const LOCATION_FILTERS = [
   { key: "all", label: "ทั้งหมด" },
   { key: "factory", label: "โรงงาน" },
@@ -179,8 +195,9 @@ const meIcon = L.divIcon({
 function FlyTo({ target }) {
   const map = useMap();
   useEffect(() => {
-    if (target) {
-      map.flyTo([target.lat, target.lng], 14, { duration: 0.8 });
+    const targetPoint = pointToArray(target);
+    if (targetPoint) {
+      map.flyTo(targetPoint, 14, { duration: 0.8 });
     }
   }, [target, map]);
   return null;
@@ -189,8 +206,9 @@ function FlyTo({ target }) {
 function Recenter({ position, zoom }) {
   const map = useMap();
   useEffect(() => {
-    if (position) {
-      map.setView([position.lat, position.lng], zoom ?? map.getZoom());
+    const targetPoint = pointToArray(position);
+    if (targetPoint) {
+      map.setView(targetPoint, zoom ?? map.getZoom());
     }
   }, [position, map, zoom]);
   return null;
@@ -221,12 +239,15 @@ function InvalidateMapSize({ trigger }) {
 
 // ─── Map View (top-level to prevent re-creation on each render) ─────────────
 function CheckinMapView({ height = "100%", mapMounted, mapInstanceKey, mapCenter, userPos, allLocations, selected, setSelected, fitPoints, windowWidth }) {
+  const safeMapCenter = pointToArray(mapCenter) || pointToArray(DEFAULT_CENTER);
+  const safeUserPos = normalizePoint(userPos);
+  const safeSelected = normalizePoint(selected);
   return (
     <div className="ci-map-wrap" style={{ height, width: "100%" }}>
       {mapMounted ? (
         <MapContainer
           key={mapInstanceKey}
-          center={mapCenter}
+          center={safeMapCenter}
           zoom={10}
           style={{ width: "100%", height: "100%" }}
           zoomControl
@@ -237,17 +258,17 @@ function CheckinMapView({ height = "100%", mapMounted, mapInstanceKey, mapCenter
             subdomains="abcd"
             maxZoom={20}
           />
-          {userPos && (
-            <Marker position={[userPos.lat, userPos.lng]} icon={meIcon}>
+          {safeUserPos && (
+            <Marker position={[safeUserPos.lat, safeUserPos.lng]} icon={meIcon}>
               <Popup>ตำแหน่งของคุณ</Popup>
             </Marker>
           )}
           {allLocations
-            .filter(l => l.lat && l.lng)
+            .filter(isValidPoint)
             .map(loc => (
               <Marker
                 key={loc.id}
-                position={[loc.lat, loc.lng]}
+                position={[Number(loc.lat), Number(loc.lng)]}
                 icon={makePin(selected?.id === loc.id ? yellow : navy, selected?.id === loc.id ? 32 : 26, selected?.id === loc.id)}
                 eventHandlers={{ click: () => setSelected(loc) }}
               >
@@ -259,17 +280,17 @@ function CheckinMapView({ height = "100%", mapMounted, mapInstanceKey, mapCenter
                 </Popup>
               </Marker>
             ))}
-          <FlyTo target={selected} />
-          <Recenter position={userPos} zoom={13} />
+          <FlyTo target={safeSelected} />
+          <Recenter position={safeUserPos} zoom={13} />
           <FitAll points={fitPoints} />
           <InvalidateMapSize trigger={windowWidth} />
         </MapContainer>
       ) : (
         <div style={{ width: "100%", height: "100%", background: T.surface2 }} />
       )}
-      {userPos && (
+      {safeUserPos && (
         <div className="ci-coords-badge">
-          📍 {userPos.lat.toFixed(4)}°N &nbsp;·&nbsp; {userPos.lng.toFixed(4)}°E
+          📍 {safeUserPos.lat.toFixed(4)}°N &nbsp;·&nbsp; {safeUserPos.lng.toFixed(4)}°E
         </div>
       )}
     </div>
@@ -449,15 +470,16 @@ function FilteredLocCard({ loc, isSelected, onClick }) {
 // ─── Map click picker (used inside AddModal) ──────────────────────────────────
 function MapPicker({ position, onPick }) {
   const pinIcon = makePin(yellow, 28, false);
+  const safePosition = normalizePoint(position);
   useMapEvents({ click(e) { onPick({ lat: e.latlng.lat, lng: e.latlng.lng }); } });
-  return position
-    ? <Marker position={[position.lat, position.lng]} icon={pinIcon} />
+  return safePosition
+    ? <Marker position={[safePosition.lat, safePosition.lng]} icon={pinIcon} />
     : null;
 }
 
 // ─── Add-location modal ───────────────────────────────────────────────────────
 function AddModal({ onAdd, onClose, userPos }) {
-  const seed = userPos ?? DEFAULT_CENTER;
+  const seed = normalizePoint(userPos, DEFAULT_CENTER);
   const sanitizeModalType = value => {
     const label = getLocationTypeLabel(value);
     return label === "สำนักงาน" || label === "Site งาน" || label === "โรงงาน" ? label : "โรงงาน";
@@ -505,8 +527,8 @@ function AddModal({ onAdd, onClose, userPos }) {
       name: normalizedName,
       tag:  "CUSTOM",
       type: sanitizeModalType(type),
-      lat:  pinPos.lat,
-      lng:  pinPos.lng,
+      lat:  Number(pinPos.lat),
+      lng:  Number(pinPos.lng),
       dist: null,
     });
   }
@@ -536,7 +558,7 @@ function AddModal({ onAdd, onClose, userPos }) {
         <div style={{ position: "relative", borderRadius: 16, overflow: "hidden", marginBottom: 10, border: `1px solid ${T.border}`, boxShadow: "0 6px 20px rgba(0,0,0,0.05)" }}>
           <MapContainer
             key="modal-map"
-            center={[seed.lat, seed.lng]}
+            center={pointToArray(seed)}
             zoom={15}
             style={{ width: "100%", height: isMobile ? 300 : 180 }}
             zoomControl={false}
@@ -588,7 +610,7 @@ function AddModal({ onAdd, onClose, userPos }) {
           letterSpacing: "0.02em",
         }}>
           <span>📍</span>
-          <span>{pinPos.lat.toFixed(5)}°N &nbsp;·&nbsp; {pinPos.lng.toFixed(5)}°E</span>
+          <span>{Number(pinPos.lat).toFixed(5)}°N &nbsp;·&nbsp; {Number(pinPos.lng).toFixed(5)}°E</span>
         </div>
 
         <div style={{ display: "grid", gridTemplateColumns: "1fr 140px", gap: 10 }}>
@@ -1469,7 +1491,7 @@ export default function Checkin() {
   const allLocations = extraLocs
     .map(l => ({
       ...l,
-      dist: (l.lat && l.lng)
+      dist: isValidPoint(l)
         ? haversine(center.lat, center.lng, l.lat, l.lng)
         : null,
     }))
@@ -1524,7 +1546,7 @@ export default function Checkin() {
       const fresh = allLocations.find(l => l.id === selected.id)
         || allLocations.find(l => selected.tag && l.tag === selected.tag)
         || allLocations.find(l => selected.name && l.name === selected.name);
-      if (fresh) setSelected(fresh);
+      if (fresh && (fresh !== selected || !isValidPoint(selected))) setSelected(fresh);
     }
   }, [userPos, extraLocs]);
 
@@ -1562,8 +1584,11 @@ export default function Checkin() {
         || allLocations.find(l => selected.tag && l.tag === selected.tag)
         || allLocations.find(l => selected.name && l.name === selected.name)
         || selected;
+      if (!isValidPoint(selectedForSubmit)) {
+        throw new Error("สถานที่นี้ยังไม่มีพิกัด กรุณาเลือกสถานที่จากรายการอีกครั้ง");
+      }
       let checkinRecord = null;
-      if (userPos?.lat && userPos?.lng) {
+      if (isValidPoint(userPos)) {
         const response = await fetch("/api/checkins", {
           method: "POST",
           credentials: "include",
@@ -1572,8 +1597,8 @@ export default function Checkin() {
             locationId: selectedForSubmit.id,
             locationCode: selectedForSubmit.tag,
             locationName: selectedForSubmit.name,
-            actualLat: userPos.lat,
-            actualLng: userPos.lng,
+            actualLat: Number(userPos.lat),
+            actualLng: Number(userPos.lng),
             locationSource: "GPS",
           }),
         });
@@ -1589,6 +1614,8 @@ export default function Checkin() {
             name: selectedForSubmit.name,
             tag: selectedForSubmit.tag,
             type: selectedForSubmit.type,
+            lat: Number(selectedForSubmit.lat),
+            lng: Number(selectedForSubmit.lng),
             dist: selectedForSubmit.dist,
           },
           ...(activity ? { activity, fromActivity: true } : {}),
@@ -1601,9 +1628,16 @@ export default function Checkin() {
     }
   }
 
-  const mapCenter = [center.lat, center.lng];
-  const fitPoints = allLocations.filter(l => l.lat && l.lng).map(l => [l.lat, l.lng]);
+  const mapCenter = normalizePoint(center, DEFAULT_CENTER);
+  const fitPoints = allLocations.filter(isValidPoint).map(l => [Number(l.lat), Number(l.lng)]);
   const mapInstanceKey = isMobile ? "mobile" : "desktop";
+  const selectedForAction = selected
+    ? allLocations.find(l => l.id === selected.id)
+      || allLocations.find(l => selected.tag && l.tag === selected.tag)
+      || allLocations.find(l => selected.name && l.name === selected.name)
+      || selected
+    : null;
+  const canContinue = Boolean(selectedForAction && isValidPoint(selectedForAction) && !savingCheckin);
   const nextPath = activity?.id === "safety-contact"
     ? "/safety-contact"
     : activity
@@ -1698,12 +1732,12 @@ export default function Checkin() {
         <IcoPlus /> ระบุสถานที่อื่น
       </button>
       <button
-        className={`ci-cta ${selected && !savingCheckin ? "ready" : "disabled"}`}
-        disabled={!selected || savingCheckin}
+        className={`ci-cta ${canContinue ? "ready" : "disabled"}`}
+        disabled={!canContinue}
         onClick={handleContinue}
       >
         {savingCheckin ? "กำลังบันทึก..." : "ถัดไป · เลือกวัน"}
-        <IcoArrow c={selected ? "#fff" : T.foreground3} />
+        <IcoArrow c={canContinue ? "#fff" : T.foreground3} />
       </button>
     </div>
   );

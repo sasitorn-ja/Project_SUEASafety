@@ -276,7 +276,7 @@ type AppActions = {
   updatePost: (postId: number, content: string) => Promise<boolean>;
   deletePost: (postId: number) => Promise<boolean>;
   updateSafetyCultureEvent: (data: SafetyCultureEventConfig) => void;
-  updateFeedEvents: (events: SafetyCultureFeedEvent[]) => void;
+  updateFeedEvents: (events: SafetyCultureFeedEvent[]) => Promise<boolean>;
   sendFeedEventNotification: (feedEventId: string) => boolean;
   updateTeamStandings: (teams: LeaderboardTeam[]) => void;
   updatePersonalRankings: (rankings: LeaderboardPerson[]) => void;
@@ -1636,15 +1636,21 @@ export function AppProviders({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  const updateFeedEvents = useCallback((events: SafetyCultureFeedEvent[]) => {
+  const updateFeedEvents = useCallback(async (events: SafetyCultureFeedEvent[]) => {
     const normalized = normalizeFeedEvents(events);
     const previousIds = new Set(feedEvents.map((event) => event.id));
-    setFeedEvents(normalized);
-    if (isAuthenticatedRef.current) {
+    if (!isAuthenticatedRef.current) {
+      setFeedEvents(normalized);
+      return true;
+    }
+
+    const persistedEvents: SafetyCultureFeedEvent[] = [];
+
+    try {
       for (const event of normalized) {
         const existing = previousIds.has(event.id) && /^\d+$/.test(event.id);
         const status = !event.published ? "DRAFT" : event.status === "closed" ? "INACTIVE" : "ACTIVE";
-        void apiFetch(
+        const result = await apiFetch<{ event?: Record<string, unknown> }>(
           existing ? `/api/safety-culture/events/${event.id}` : "/api/safety-culture/events",
           apiJson(existing ? "PATCH" : "POST", {
             title: event.title,
@@ -1655,14 +1661,24 @@ export function AppProviders({ children }: { children: ReactNode }) {
             metadata: event,
           }),
         );
+
+        if (!result.ok) return false;
+        persistedEvents.push(result.data?.event ? feedEventFromApi(result.data.event, persistedEvents.length) : event);
       }
+
       const nextIds = new Set(normalized.map((event) => event.id));
       for (const event of feedEvents) {
         if (/^\d+$/.test(event.id) && !nextIds.has(event.id)) {
-          void apiFetch(`/api/safety-culture/events/${event.id}`, { method: "DELETE" });
+          const result = await apiFetch<{ deleted: boolean }>(`/api/safety-culture/events/${event.id}`, { method: "DELETE" });
+          if (!result.ok || result.data?.deleted !== true) return false;
         }
       }
+    } catch {
+      return false;
     }
+
+    setFeedEvents(normalizeFeedEvents(persistedEvents));
+    return true;
   }, [feedEvents]);
 
   const sendFeedEventNotification = useCallback((feedEventId: string) => {
