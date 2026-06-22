@@ -156,6 +156,7 @@ export function DesktopTopbar() {
   const [notificationOpen, setNotificationOpen] = useState(false);
   const [profileImageFailed, setProfileImageFailed] = useState(false);
   const notificationRef = useRef<HTMLDivElement>(null);
+  const desktopNavRef = useRef<HTMLElement>(null);
   const unreadNotificationCount = inboxNotifications.filter((item) => !item.read).length;
 
   const isActive = (href: string) => isMainNavActive(pathname, href);
@@ -170,10 +171,21 @@ export function DesktopTopbar() {
       if (!notificationRef.current?.contains(event.target as Node)) {
         setNotificationOpen(false);
       }
+      if (!desktopNavRef.current?.contains(event.target as Node)) {
+        setDesktopMenu(null);
+      }
+    };
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setDesktopMenu(null);
     };
 
     document.addEventListener("mousedown", handlePointerDown);
-    return () => document.removeEventListener("mousedown", handlePointerDown);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", handlePointerDown);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
   }, []);
 
   useEffect(() => {
@@ -331,7 +343,7 @@ export function DesktopTopbar() {
           </SheetContent>
         </Sheet>
 
-        <nav className="desktop-nav-visible flex min-w-0 flex-1 items-center justify-center gap-2" aria-label="Main navigation">
+        <nav ref={desktopNavRef} className="desktop-nav-visible flex min-w-0 flex-1 items-center justify-center gap-2" aria-label="Main navigation">
           {navItems.map((item) => {
             const Icon = item.icon;
             const active = isActive(item.href);
@@ -339,12 +351,12 @@ export function DesktopTopbar() {
 
             if (item.id === "admin") {
               return (
-                <div key={item.id} className="relative" onMouseEnter={() => setDesktopMenu("admin")} onMouseLeave={() => setDesktopMenu(null)} onFocus={() => setDesktopMenu("admin")}>
-                  <NavTo href={item.href} className={cn("desktop-nav-item home-desktop-nav-item inline-flex h-11 items-center justify-center gap-2 rounded-full px-4 text-[15px] font-bold whitespace-nowrap transition-all", active && "is-home-active", active ? "bg-[var(--brand-nav-active)] text-white" : "bg-transparent text-white/[0.82] hover:bg-white/10 hover:text-white")}>
+                <div key={item.id} className="relative">
+                  <button type="button" onClick={() => setDesktopMenu((current) => current === "admin" ? null : "admin")} aria-expanded={desktopMenu === "admin"} aria-haspopup="menu" className={cn("desktop-nav-item home-desktop-nav-item inline-flex h-11 items-center justify-center gap-2 rounded-full px-4 text-[15px] font-bold whitespace-nowrap transition-all", active && "is-home-active", active ? "bg-[var(--brand-nav-active)] text-white" : "bg-transparent text-white/[0.82] hover:bg-white/10 hover:text-white")}>
                     <Icon className="h-[17px] w-[17px]" strokeWidth={2.35} />
                     <span className="desktop-nav-label">{item.label}</span>
                     <ChevronDown className={cn("h-3.5 w-3.5 transition-transform", desktopMenu === "admin" && "rotate-180")} />
-                  </NavTo>
+                  </button>
                   <div className={cn("absolute right-0 top-full z-50 w-[320px] pt-2 transition-all duration-150", desktopMenu === "admin" ? "visible translate-y-0 opacity-100" : "invisible -translate-y-1 opacity-0")}>
                     <div className="overflow-visible rounded-xl border border-white/[0.14] bg-[rgba(var(--brand-nav-rgb),0.96)] p-1.5 text-white shadow-[0_18px_44px_var(--brand-shadow)] backdrop-blur-xl">
                       {adminSections.map((section) => (
@@ -366,12 +378,12 @@ export function DesktopTopbar() {
                 <div
                   key={item.id}
                   className="relative"
-                  onMouseEnter={() => setDesktopMenu(menuId)}
-                  onMouseLeave={() => setDesktopMenu(null)}
-                  onFocus={() => setDesktopMenu(menuId)}
                 >
-                  <NavTo
-                    href={item.href}
+                  <button
+                    type="button"
+                    onClick={() => setDesktopMenu((current) => current === menuId ? null : menuId)}
+                    aria-expanded={desktopMenu === menuId}
+                    aria-haspopup="menu"
                     className={cn(
                       "desktop-nav-item inline-flex h-11 items-center justify-center gap-2 rounded-full px-4 text-[15px] font-bold whitespace-nowrap transition-all",
                       "home-desktop-nav-item",
@@ -381,7 +393,8 @@ export function DesktopTopbar() {
                   >
                     <Icon className="h-[17px] w-[17px]" strokeWidth={2.35} />
                     <span className="desktop-nav-label">{item.label}</span>
-                  </NavTo>
+                    <ChevronDown className={cn("h-3.5 w-3.5 transition-transform", desktopMenu === menuId && "rotate-180")} />
+                  </button>
 
                   <div
                     className={cn(
@@ -397,6 +410,7 @@ export function DesktopTopbar() {
                           <NavTo
                             key={subitem.href}
                             href={subitem.href}
+                            onClick={() => setDesktopMenu(null)}
                             className={cn(
                               "flex items-center gap-2.5 rounded-lg p-2 text-white transition-colors hover:bg-white/10 focus:bg-white/10 focus:outline-none",
                               isExactNavActive(pathname, subitem.href) && "bg-white/10"
