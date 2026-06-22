@@ -169,6 +169,7 @@ function mapLocationToAdminRow(location, selectedType) {
       status: location.status || "ACTIVE",
       lat: location.lat,
       lng: location.lng,
+      creatorName: location.creatorName || location.creatorEmail || "ไม่ทราบผู้เพิ่ม",
       apiLocation: location,
     };
   }
@@ -183,6 +184,7 @@ function mapLocationToAdminRow(location, selectedType) {
       status: location.status || "ACTIVE",
       lat: location.lat,
       lng: location.lng,
+      creatorName: location.creatorName || location.creatorEmail || "ไม่ทราบผู้เพิ่ม",
       apiLocation: location,
     };
   }
@@ -201,13 +203,14 @@ function mapLocationToAdminRow(location, selectedType) {
     status: location.status || "ACTIVE",
     lat: location.lat,
     lng: location.lng,
+    creatorName: location.creatorName || location.creatorEmail || "ไม่ทราบผู้เพิ่ม",
     approvedBy: "",
     apiLocation: location,
   };
 }
 
 async function fetchAdminLocations(type, selectedType) {
-  const response = await fetch(`/api/safety-effort/locations?type=${type}&limit=1000`, {
+  const response = await fetch(`/api/safety-effort/locations?type=${type}&source=ADMIN&limit=1000`, {
     credentials: "include",
     cache: "no-store",
   });
@@ -823,9 +826,9 @@ export default function SafetyAdminManageData() {
         >
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
             <div>
-              <h1 style={{ fontSize: 18, fontWeight: 900, color: T.ink, margin: 0 }}>จัดการข้อมูล (Manage Data)</h1>
+              <h1 style={{ fontSize: 18, fontWeight: 900, color: T.ink, margin: 0 }}>แก้ไขสถานที่ที่ผู้ใช้เพิ่มเอง</h1>
               <p style={{ fontSize: 12.5, color: T.sub, margin: "2px 0 0" }}>
-                จัดการและนำเข้าข้อมูลโรงงาน สำนักงาน และไซต์งานที่เกี่ยวข้องในระบบ
+                แก้ไขหรือลบเฉพาะสถานที่ที่เพิ่มจากหน้า Check-in โดยไม่กระทบข้อมูลจากระบบ RMC
               </p>
             </div>
           </div>
@@ -928,43 +931,11 @@ export default function SafetyAdminManageData() {
             >
               <div style={{ display: "grid", gap: 4 }}>
                 <div style={{ fontSize: 16, fontWeight: 900, color: T.accentDeep }}>
-                  {selectedType === "factory" ? "จัดการข้อมูลโรงงาน" : selectedType === "office" ? "จัดการข้อมูลสำนักงาน" : "จัดการข้อมูลไซต์งาน"}
+                  {selectedType === "factory" ? "โรงงานที่ผู้ใช้เพิ่มเอง" : selectedType === "office" ? "สำนักงานที่ผู้ใช้เพิ่มเอง" : "ไซต์งานที่ผู้ใช้เพิ่มเอง"}
                 </div>
                 <div style={{ fontSize: 12.5, color: T.sub }}>
-                  เพิ่ม แก้ไข ลบ หรือนำเข้าข้อมูลผ่านไฟล์ Excel
+                  แสดงเฉพาะข้อมูล source = ADMIN สามารถแก้ไขและลบได้
                 </div>
-              </div>
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
-                <label
-                  style={{
-                    ...buttonGhostStyle,
-                    height: 38,
-                    borderRadius: 10,
-                    fontSize: 12.5,
-                    padding: "0 14px",
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: 6
-                  }}
-                >
-                  <Upload size={14} />
-                  <span>นำเข้า Excel</span>
-                  <input type="file" accept=".xlsx,.xls" onChange={handleImportPlantsFile} style={{ display: "none" }} />
-                </label>
-                <button
-                  type="button"
-                  onClick={handleAddPlant}
-                  style={{
-                    ...buttonPrimaryStyle,
-                    height: 38,
-                    borderRadius: 10,
-                    fontSize: 12.5,
-                    padding: "0 14px",
-                    boxShadow: "none"
-                  }}
-                >
-                  {selectedType === "factory" ? "+ Add Plant" : selectedType === "office" ? "+ เพิ่มสำนักงาน" : "+ เพิ่มไซต์งาน"}
-                </button>
               </div>
             </div>
 
@@ -1000,7 +971,7 @@ export default function SafetyAdminManageData() {
             <div style={{ flex: 1, overflow: "auto", minHeight: 0 }}>
               {filteredPlants.length === 0 ? (
                 <div style={{ border: `1px dashed ${T.lineStrong}`, borderRadius: 18, padding: 32, textAlign: "center", color: T.sub, fontSize: 14 }}>
-                  ไม่พบข้อมูลตามเงื่อนไขที่เลือก
+                  {plantSearchQuery ? "ไม่พบสถานที่ที่ตรงกับคำค้น" : "ยังไม่มีสถานที่ประเภทนี้ที่ผู้ใช้เพิ่มเอง"}
                 </div>
               ) : selectedType === "factory" ? (
                 /* Plants Table */
@@ -1016,7 +987,7 @@ export default function SafetyAdminManageData() {
                           <th style={{ padding: "10px 16px", fontWeight: 800, color: T.sub }}>Plant Code</th>
                           <th style={{ padding: "10px 16px", fontWeight: 800, color: T.sub }}>Plant Name</th>
                           <th style={{ padding: "10px 16px", fontWeight: 800, color: T.sub }}>Status</th>
-                          <th style={{ padding: "10px 16px", fontWeight: 800, color: T.sub }}>Approved By</th>
+                          <th style={{ padding: "10px 16px", fontWeight: 800, color: T.sub }}>ผู้เพิ่มสถานที่</th>
                           <th style={{ padding: "10px 16px", fontWeight: 800, color: T.sub, textAlign: "center", width: 90 }}>จัดการ</th>
                         </tr>
                       </thead>
@@ -1044,7 +1015,7 @@ export default function SafetyAdminManageData() {
                                 {item.status}
                               </span>
                             </td>
-                            <td style={{ padding: "8px 16px" }}>{item.approvedBy ? `${item.approvedBy}@scg.com` : "-"}</td>
+                            <td style={{ padding: "8px 16px", fontWeight: 700 }}>{item.creatorName}</td>
                             <td style={{ padding: "8px 16px" }}>
                               <div style={{ display: "flex", justifyContent: "center", gap: 6 }}>
                                 <button type="button" onClick={() => handleEditPlant(item)} style={{ ...buttonGhostStyle, width: 28, height: 28, borderRadius: 6, padding: 0, display: "grid", placeItems: "center" }} title="แก้ไข"><Pencil size={12} /></button>
@@ -1079,7 +1050,7 @@ export default function SafetyAdminManageData() {
                             <strong style={{ color: T.sub }}>Dept/Sec:</strong> {item.deptName} {item.secName ? `/ ${item.secName}` : ""}
                           </div>
                         )}
-                        <div><strong style={{ color: T.sub }}>Approved By:</strong> {item.approvedBy ? `${item.approvedBy}@scg.com` : "-"}</div>
+                        <div><strong style={{ color: T.sub }}>ผู้เพิ่มสถานที่:</strong> {item.creatorName}</div>
                         <div style={{ display: "flex", gap: 10, justifyContent: "flex-end", marginTop: 6, paddingTop: 6, borderTop: `1px solid ${T.line}` }}>
                           <button type="button" onClick={() => handleEditPlant(item)} style={{ ...buttonGhostStyle, height: 28, borderRadius: 6, fontSize: 12, padding: "0 10px", display: "flex", alignItems: "center", gap: 4 }}><Pencil size={11} /> แก้ไข</button>
                           <button type="button" onClick={() => handleDeletePlant(item.id)} style={{ ...buttonDangerStyle, height: 28, borderRadius: 6, fontSize: 12, padding: "0 10px", display: "flex", alignItems: "center", gap: 4 }}><Trash2 size={11} /> ลบ</button>
@@ -1102,6 +1073,7 @@ export default function SafetyAdminManageData() {
                           <th style={{ padding: "10px 16px", fontWeight: 800, color: T.sub }}>Office Code</th>
                           <th style={{ padding: "10px 16px", fontWeight: 800, color: T.sub }}>Office Name</th>
                           <th style={{ padding: "10px 16px", fontWeight: 800, color: T.sub }}>Floor</th>
+                          <th style={{ padding: "10px 16px", fontWeight: 800, color: T.sub }}>ผู้เพิ่มสถานที่</th>
                           <th style={{ padding: "10px 16px", fontWeight: 800, color: T.sub }}>Status</th>
                           <th style={{ padding: "10px 16px", fontWeight: 800, color: T.sub, textAlign: "center", width: 90 }}>จัดการ</th>
                         </tr>
@@ -1116,6 +1088,7 @@ export default function SafetyAdminManageData() {
                             <td style={{ padding: "8px 16px", fontWeight: 700 }}>{item.officeCode}</td>
                             <td style={{ padding: "8px 16px", fontWeight: 700 }}>{item.officeName}</td>
                             <td style={{ padding: "8px 16px" }}>{item.floor}</td>
+                            <td style={{ padding: "8px 16px", fontWeight: 700 }}>{item.creatorName}</td>
                             <td style={{ padding: "8px 16px" }}>
                               <span style={{
                                 fontSize: "11px",
@@ -1158,6 +1131,7 @@ export default function SafetyAdminManageData() {
                         <div><strong style={{ color: T.sub }}>Company:</strong> {item.companyCode} ({item.companyName})</div>
                         <div><strong style={{ color: T.sub }}>Dept:</strong> {item.deptCode} ({item.deptName})</div>
                         <div><strong style={{ color: T.sub }}>Floor:</strong> {item.floor || "-"}</div>
+                        <div><strong style={{ color: T.sub }}>ผู้เพิ่มสถานที่:</strong> {item.creatorName}</div>
                         <div style={{ display: "flex", gap: 10, justifyContent: "flex-end", marginTop: 6, paddingTop: 6, borderTop: `1px solid ${T.line}` }}>
                           <button type="button" onClick={() => handleEditPlant(item)} style={{ ...buttonGhostStyle, height: 28, borderRadius: 6, fontSize: 12, padding: "0 10px", display: "flex", alignItems: "center", gap: 4 }}><Pencil size={11} /> แก้ไข</button>
                           <button type="button" onClick={() => handleDeletePlant(item.id)} style={{ ...buttonDangerStyle, height: 28, borderRadius: 6, fontSize: 12, padding: "0 10px", display: "flex", alignItems: "center", gap: 4 }}><Trash2 size={11} /> ลบ</button>
@@ -1179,6 +1153,7 @@ export default function SafetyAdminManageData() {
                           <th style={{ padding: "10px 16px", fontWeight: 800, color: T.sub }}>Customer</th>
                           <th style={{ padding: "10px 16px", fontWeight: 800, color: T.sub }}>Contractor</th>
                           <th style={{ padding: "10px 16px", fontWeight: 800, color: T.sub }}>Stage</th>
+                          <th style={{ padding: "10px 16px", fontWeight: 800, color: T.sub }}>ผู้เพิ่มสถานที่</th>
                           <th style={{ padding: "10px 16px", fontWeight: 800, color: T.sub }}>Status</th>
                           <th style={{ padding: "10px 16px", fontWeight: 800, color: T.sub, textAlign: "center", width: 90 }}>จัดการ</th>
                         </tr>
@@ -1192,6 +1167,7 @@ export default function SafetyAdminManageData() {
                             <td style={{ padding: "8px 16px" }}>{item.customer || "-"}</td>
                             <td style={{ padding: "8px 16px" }}>{item.contractor || "-"}</td>
                             <td style={{ padding: "8px 16px" }}>{item.stage || "-"}</td>
+                            <td style={{ padding: "8px 16px", fontWeight: 700 }}>{item.creatorName}</td>
                             <td style={{ padding: "8px 16px" }}>
                               <span style={{
                                 fontSize: "11px",
@@ -1234,6 +1210,7 @@ export default function SafetyAdminManageData() {
                         <div><strong style={{ color: T.sub }}>Customer:</strong> {item.customer || "-"}</div>
                         <div><strong style={{ color: T.sub }}>Contractor:</strong> {item.contractor || "-"}</div>
                         <div><strong style={{ color: T.sub }}>Stage:</strong> {item.stage || "-"}</div>
+                        <div><strong style={{ color: T.sub }}>ผู้เพิ่มสถานที่:</strong> {item.creatorName}</div>
                         <div style={{ display: "flex", gap: 10, justifyContent: "flex-end", marginTop: 6, paddingTop: 6, borderTop: `1px solid ${T.line}` }}>
                           <button type="button" onClick={() => handleEditPlant(item)} style={{ ...buttonGhostStyle, height: 28, borderRadius: 6, fontSize: 12, padding: "0 10px", display: "flex", alignItems: "center", gap: 4 }}><Pencil size={11} /> แก้ไข</button>
                           <button type="button" onClick={() => handleDeletePlant(item.id)} style={{ ...buttonDangerStyle, height: 28, borderRadius: 6, fontSize: 12, padding: "0 10px", display: "flex", alignItems: "center", gap: 4 }}><Trash2 size={11} /> ลบ</button>
@@ -1855,9 +1832,9 @@ export default function SafetyAdminManageData() {
               gap: 16,
             }}
           >
-            <div style={{ fontSize: 20, fontWeight: 950 }}>ยืนยันการลบข้อมูลโรงงาน</div>
+            <div style={{ fontSize: 20, fontWeight: 950 }}>ยืนยันการลบสถานที่</div>
             <div style={{ fontSize: 14, color: T.sub, lineHeight: 1.6 }}>
-              คุณแน่ใจว่าต้องการลบข้อมูลโรงงานนี้ใช่หรือไม่? การดำเนินการนี้ไม่สามารถย้อนกลับได้
+              คุณแน่ใจว่าต้องการลบสถานที่นี้ใช่หรือไม่? รายการจะหายจากหน้า Check-in และไม่สามารถย้อนกลับได้
             </div>
             <div style={{ display: "flex", justifyContent: "flex-end", gap: 10 }}>
               <button
@@ -1872,7 +1849,7 @@ export default function SafetyAdminManageData() {
                 onClick={confirmDeletePlant}
                 style={{ ...buttonDangerStyle, height: 38, borderRadius: 10, fontSize: 12.5 }}
               >
-                ลบโรงงาน
+                ลบสถานที่
               </button>
             </div>
           </div>

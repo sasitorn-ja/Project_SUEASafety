@@ -26,6 +26,9 @@ export type SafetyEffortLocationInput = {
 
 type LocationRow = RowDataPacket & {
   id: string;
+  created_by: string | null;
+  creator_name: string | null;
+  creator_email: string | null;
   organization_id: string | null;
   organization_code: string | null;
   organization_name: string | null;
@@ -100,6 +103,9 @@ export function parseLocationInput(raw: unknown, createdBy?: string): SafetyEffo
 function mapLocation(row: LocationRow) {
   return {
     id: String(row.id),
+    createdBy: row.created_by ? String(row.created_by) : null,
+    creatorName: row.creator_name,
+    creatorEmail: row.creator_email,
     organizationId: row.organization_id ? String(row.organization_id) : null,
     organizationCode: row.organization_code,
     organizationName: row.organization_name,
@@ -129,6 +135,9 @@ function mapLocation(row: LocationRow) {
 const SELECT_LOCATIONS_SQL = `
   SELECT
     l.id,
+    l.created_by,
+    COALESCE(NULLIF(creator.name_th, ''), NULLIF(creator.name_en, ''), creator.email) AS creator_name,
+    creator.email AS creator_email,
     l.organization_id,
     o.external_code AS organization_code,
     o.name_th AS organization_name,
@@ -153,11 +162,13 @@ const SELECT_LOCATIONS_SQL = `
     l.updated_at
   FROM locations l
   LEFT JOIN organizations o ON o.id = l.organization_id
+  LEFT JOIN users creator ON creator.id = l.created_by AND creator.deleted_at IS NULL
 `;
 
 export async function listSafetyEffortLocations(options: {
   type?: SafetyEffortLocationType | null;
   search?: string | null;
+  source?: string | null;
   limit?: number;
 }) {
   const where = ["l.deleted_at IS NULL"];
@@ -168,6 +179,11 @@ export async function listSafetyEffortLocations(options: {
   if (options.type) {
     where.push("l.location_type = :type");
     params.type = options.type;
+  }
+
+  if (options.source?.trim()) {
+    where.push("l.source = :source");
+    params.source = options.source.trim().toUpperCase();
   }
 
   if (options.search?.trim()) {
@@ -353,7 +369,7 @@ export async function updateSafetyEffortLocation(id: string, input: Partial<Safe
 export async function deleteSafetyEffortLocation(id: string) {
   const current = await getSafetyEffortLocation(id);
   if (!current) return;
-  if (current.source === "RMR_SSO_PLANT") throw new Error("source_read_only");
+  if (current.source.startsWith("RMR_SSO_") || current.source.startsWith("RMC_SSO_")) throw new Error("source_read_only");
   await withTransaction(async (connection) => {
     await connection.execute<ResultSetHeader>(
       `

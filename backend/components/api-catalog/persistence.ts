@@ -671,9 +671,10 @@ async function handleCheckinExtras(request: NextRequest, method: string, match: 
     if (method === "GET") {
       const type = normalizeLocationType(request.nextUrl.searchParams.get("type"));
       const search = request.nextUrl.searchParams.get("search") || request.nextUrl.searchParams.get("q");
+      const source = request.nextUrl.searchParams.get("source");
       const limit = Number(request.nextUrl.searchParams.get("limit") || 200);
       return jsonData({
-        items: await listSafetyEffortLocations({ type, search, limit }),
+        items: await listSafetyEffortLocations({ type, search, source, limit }),
       });
     }
     if (method === "POST") {
