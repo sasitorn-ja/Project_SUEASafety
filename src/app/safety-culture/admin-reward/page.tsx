@@ -1255,14 +1255,14 @@ export default function AdminRewardPage() {
                   </div>
                 </div>
 
-                <div className="ml-auto flex flex-nowrap items-center justify-end gap-2">
-                  <div className={cn("relative", isRewardSortOpen ? "z-40" : "z-10")}>
+                <div className="flex w-full flex-nowrap items-center justify-end gap-2 xl:ml-auto xl:w-auto">
+                  <div className={cn("relative w-full xl:w-auto", isRewardSortOpen ? "z-40" : "z-10")}>
                     <button
                       type="button"
                       onClick={() => setIsRewardSortOpen((current) => !current)}
-                      className="flex h-11 min-w-[170px] items-center rounded-[14px] border border-[var(--border)] bg-white pr-10 pl-4 text-[12px] font-black text-[var(--brand-text)] transition-colors hover:bg-[var(--brand-soft)]"
+                      className="flex h-11 w-full items-center rounded-[14px] border border-[var(--border)] bg-white pr-10 pl-4 text-[12px] font-black text-[var(--brand-text)] transition-colors hover:bg-[var(--brand-soft)] xl:w-auto xl:min-w-[210px]"
                     >
-                      {`เรียงตาม: ${rewardSortLabel}`}
+                      <span className="truncate whitespace-nowrap">{`เรียงตาม: ${rewardSortLabel}`}</span>
                       <ChevronDown
                         className={cn(
                           "pointer-events-none absolute top-1/2 right-3 h-4 w-4 -translate-y-1/2 text-[#8E8A81] transition-transform",
