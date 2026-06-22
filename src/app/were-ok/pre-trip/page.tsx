@@ -90,8 +90,9 @@ export default function PreTripPage() {
   const allDone = Object.keys(checkedStates).length === CHECKPOINTS.length;
   const hasFailures = Object.values(checkedStates).includes("fail");
 
-  const handleComplete = () => {
-    actions.setPreTripData({ checkedStates, hasFailures });
+  const handleComplete = async () => {
+    const saved = await actions.setPreTripData({ checkedStates, hasFailures });
+    if (!saved) { window.alert("บันทึกผลตรวจรถไม่สำเร็จ กรุณาลองใหม่อีกครั้ง"); return; }
     actions.completeSteps([4]);
     router.push("/were-ok");
   };

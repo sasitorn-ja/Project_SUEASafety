@@ -714,15 +714,23 @@ export default function AdminRewardPage() {
     return draftRewards.filter((reward) => reward.category === pendingCategoryDelete.value);
   }, [draftRewards, pendingCategoryDelete]);
 
-  const commitRewards = (rewards: RewardCatalogItem[]) => {
-    setDraftRewards(rewards);
-    updateRewardsCatalog(rewards);
+  const commitRewards = async (rewards: RewardCatalogItem[]) => {
+    const saved = await updateRewardsCatalog(rewards);
+    if (!saved) {
+      window.alert("บันทึกรางวัลไม่สำเร็จ กรุณาลองใหม่อีกครั้ง");
+      return false;
+    }
     setRewardSaveState("saved");
+    return true;
   };
 
-  const commitCategories = (categories: RewardCategory[]) => {
-    setDraftCategories(categories);
-    updateRewardCategories(categories);
+  const commitCategories = async (categories: RewardCategory[]) => {
+    const saved = await updateRewardCategories(categories);
+    if (!saved) {
+      window.alert("บันทึกหมวดหมู่ไม่สำเร็จ กรุณาลองใหม่อีกครั้ง");
+      return false;
+    }
+    return true;
   };
 
   const addReward = () => {
@@ -745,7 +753,7 @@ export default function AdminRewardPage() {
     setRewardSaveState("idle");
   };
 
-  const confirmRewardEdit = () => {
+  const confirmRewardEdit = async () => {
     if (!editingReward) return;
 
     const payload: RewardCatalogItem = {
@@ -770,19 +778,15 @@ export default function AdminRewardPage() {
           : null,
     };
 
-    if (editingReward.mode === "create") {
-      commitRewards([payload, ...draftRewards]);
-    } else {
-      commitRewards(draftRewards.map((reward) => (reward.id === editingReward.id ? payload : reward)));
-    }
-
-    setEditingReward(null);
+    const saved = editingReward.mode === "create"
+      ? await commitRewards([payload, ...draftRewards])
+      : await commitRewards(draftRewards.map((reward) => (reward.id === editingReward.id ? payload : reward)));
+    if (saved) setEditingReward(null);
   };
 
-  const confirmDeleteReward = () => {
+  const confirmDeleteReward = async () => {
     if (!deletingReward) return;
-    commitRewards(draftRewards.filter((reward) => reward.id !== deletingReward.id));
-    setDeletingReward(null);
+    if (await commitRewards(draftRewards.filter((reward) => reward.id !== deletingReward.id))) setDeletingReward(null);
   };
 
   const updateEditingReward = <K extends keyof RewardEditorState>(key: K, value: RewardEditorState[K]) => {
@@ -987,13 +991,13 @@ export default function AdminRewardPage() {
 
         <div className="mt-4 flex flex-col gap-4">
           <Card className="overflow-hidden rounded-[20px] border border-[var(--border)] bg-[var(--brand-surface)] p-2.5 shadow-[0_10px_24px_var(--brand-shadow)]">
-            <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
+            <div className="scrollbar-hide flex gap-2 overflow-x-auto pb-1">
               {categorySummary.map((item) => {
                 const Icon = CATEGORY_ICON_MAP[item.icon];
                 return (
                   <div
                     key={item.value}
-                    className="flex min-w-0 items-center justify-between gap-3 rounded-[16px] border border-[var(--border)] bg-white px-4 py-3"
+                    className="flex min-w-[230px] flex-shrink-0 items-center justify-between gap-3 rounded-[16px] border border-[var(--border)] bg-white px-4 py-3 sm:min-w-[250px]"
                   >
                     <div className="flex min-w-0 items-center gap-3">
                       <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-2xl bg-[var(--brand-soft)] text-[var(--brand-text)]">

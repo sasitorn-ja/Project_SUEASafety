@@ -17,6 +17,7 @@ import {
   updateSafetyEffortLocation,
 } from "@backend/components/safety-effort/locations/repository";
 import { syncRmrPlants } from "@backend/components/safety-effort/locations/rmr-plant-sync";
+import { awardPoints } from "@backend/components/points/repository";
 
 type CatalogSession = {
   user?: {
@@ -842,7 +843,11 @@ async function handleActivitiesAssessments(request: NextRequest, method: string,
       );
       return String(result.insertId);
     });
-    return jsonData({ submission: safetyEffortSubmissionDto(await getRow("safety_effort_submissions", id)) }, { status: 201 });
+    const balance = await awardPoints({
+      userId, action: "safetyEffortCompleted", sourceType: "SAFETY_EFFORT", sourceId: id,
+      idempotencyKey: `safety-effort:${id}:completed`, description: String(input.activityLabel || input.activity_label || "Safety Effort สำเร็จ"),
+    });
+    return jsonData({ submission: safetyEffortSubmissionDto(await getRow("safety_effort_submissions", id)), balance }, { status: 201 });
   }
   if (method === "GET" && ["/api/safety-effort/submissions", "/api/safety-effort/submissions/me"].includes(route)) {
     const where = ["deleted_at IS NULL"];
@@ -1095,6 +1100,18 @@ async function handleFindingsActions(request: NextRequest, method: string, match
 }
 
 async function handleWereOk(method: string, match: RouteMatch, input: JsonInput, userId?: string) {
+  if (method === "GET" && match.route.path === "/api/were-ok/state/me") {
+    if (!userId) return jsonError("unauthorized", 401);
+    const latest: Record<string, unknown> = {};
+    for (const [key, table] of Object.entries({ healthData: "health_checks", preTripData: "pretrip_checks", kytData: "kyt_records", sosData: "sos_events" })) {
+      const rows = await queryRows<DbRow>(
+        `SELECT payload, occurred_at FROM ${table} WHERE user_id=:userId ORDER BY occurred_at DESC, id DESC LIMIT 1`,
+        { userId },
+      );
+      latest[key] = rows[0] ? parseJson(rows[0].payload) : null;
+    }
+    return jsonData(latest);
+  }
   const route = match.route.path;
   if (method === "GET" && route === "/api/were-ok/jobs/current") {
     if (!userId) return jsonError("unauthorized", 401);
@@ -1146,7 +1163,10 @@ async function handleWereOk(method: string, match: RouteMatch, input: JsonInput,
     );
     return String(result.insertId);
   });
-  return jsonData({ record: await getRow(table, id) }, { status: 201 });
+  const balance = table === "kyt_records"
+    ? await awardPoints({ userId, action: "safetyEffortCompleted", sourceType: "KYT", sourceId: id, idempotencyKey: `kyt:${id}:completed`, description: "KYT ก่อนขับรถสำเร็จ" })
+    : null;
+  return jsonData({ record: await getRow(table, id), balance }, { status: 201 });
 }
 
 function wereOkJobDto(row: DbRow | null | undefined, warnings: DbRow[] = [], sleep?: DbRow | null) {
@@ -1406,12 +1426,13 @@ async function handleCultureRewards(request: NextRequest, method: string, match:
       await withTransaction(async (connection) => {
         for (const user of users) {
           await connection.execute(
-            `INSERT INTO notifications (user_id, notification_type, title, body)
-             VALUES (:userId, 'EVENT', :title, :body)`,
+            `INSERT INTO notifications (user_id, notification_type, title, body, metadata)
+             VALUES (:userId, 'EVENT', :title, :body, :metadata)`,
             {
               userId: user.id,
               title: String(event.title || "Safety Event"),
               body: String(event.description || ""),
+              metadata: JSON.stringify({ eventId: String(event.id), href: `/safety-culture?activityId=${encodeURIComponent(String(event.id))}` }),
             },
           );
         }
@@ -1531,7 +1552,14 @@ async function redeemReward(rewardId: string, userId: string) {
     );
     const reward = rewardRows[0];
     if (!reward) throw new Error("reward_not_found");
-    if (Number(reward.stock_qty) <= 0) throw new Error("reward_out_of_stock");
+    const metadata = parseJson(reward.metadata) || {};
+    const unlimited = metadata.stockMode === "unlimited";
+    const now = Date.now();
+    const startsAt = metadata.redeemStartAt ? Date.parse(String(metadata.redeemStartAt)) : NaN;
+    const endsAt = metadata.redeemEndAt ? Date.parse(String(metadata.redeemEndAt)) : NaN;
+    if (!Number.isNaN(startsAt) && now < startsAt) throw new Error("reward_not_started");
+    if (!Number.isNaN(endsAt) && now > endsAt) throw new Error("reward_expired");
+    if (!unlimited && Number(reward.stock_qty) <= 0) throw new Error("reward_out_of_stock");
     const [balanceRows] = await connection.execute<DbRow[]>(
       "SELECT balance FROM point_balances WHERE user_id = :userId FOR UPDATE",
       { userId },
@@ -1546,20 +1574,32 @@ async function redeemReward(rewardId: string, userId: string) {
       { userId, amount: -points, rewardId, key: `reward:${rewardId}:${userId}:${Date.now()}`, description: `Redeem ${reward.name}` },
     );
     await connection.execute("UPDATE point_balances SET balance = balance - :points WHERE user_id = :userId", { userId, points });
-    await connection.execute("UPDATE rewards SET stock_qty = stock_qty - 1 WHERE id = :rewardId", { rewardId });
+    if (!unlimited) await connection.execute("UPDATE rewards SET stock_qty = stock_qty - 1 WHERE id = :rewardId", { rewardId });
     const [redemption] = await connection.execute<ResultSetHeader>(
       `INSERT INTO reward_redemptions
        (user_id, reward_id, point_transaction_id, points_used, status)
        VALUES (:userId, :rewardId, :transactionId, :points, 'PENDING')`,
       { userId, rewardId, transactionId: transaction.insertId, points },
     );
+    if (!unlimited) {
+      await connection.execute(
+        `INSERT INTO reward_inventory_transactions
+         (reward_id, transaction_type, quantity, source_type, source_id)
+         VALUES (:rewardId, 'REDEEM', -1, 'REDEMPTION', :sourceId)`,
+        { rewardId, sourceId: redemption.insertId },
+      );
+    }
     await connection.execute(
-      `INSERT INTO reward_inventory_transactions
-       (reward_id, transaction_type, quantity, source_type, source_id)
-       VALUES (:rewardId, 'REDEEM', -1, 'REDEMPTION', :sourceId)`,
-      { rewardId, sourceId: redemption.insertId },
+      `INSERT INTO notifications (user_id, notification_type, title, body, metadata)
+       VALUES (:userId, 'REWARD', :title, :body, :metadata)`,
+      {
+        userId,
+        title: "แลกรางวัลสำเร็จ",
+        body: `แลกรางวัล ${String(reward.name)} จำนวน ${points} แต้ม`,
+        metadata: JSON.stringify({ rewardId, redemptionId: String(redemption.insertId), href: "/safety-culture/rewards" }),
+      },
     );
-    return { id: String(redemption.insertId), rewardId, userId, pointsUsed: points, status: "PENDING" };
+    return { id: String(redemption.insertId), rewardId, userId, pointsUsed: points, status: "PENDING", balance: balance - points };
   });
 }
 

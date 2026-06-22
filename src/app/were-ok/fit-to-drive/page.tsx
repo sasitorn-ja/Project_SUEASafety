@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { ArrowLeft, Camera, Check, AlertCircle, X } from "lucide-react";
+import { uploadSafetyEffortMediaSource } from "@/features/safety-effort/lib/upload-media";
 
 export default function FitToDrivePage() {
   const router = useRouter();
@@ -151,18 +152,25 @@ export default function FitToDrivePage() {
     reader.readAsDataURL(file);
   };
 
-  const handleNext = () => {
+  const handleNext = async () => {
     if (!isFormValid) return;
-    actions.setHealthData({
+    let persistedBpPhoto = bpPhoto;
+    let persistedAlcPhoto = alcPhoto;
+    try {
+      if (bpPhoto) persistedBpPhoto = (await uploadSafetyEffortMediaSource(bpPhoto, { ownerType: "health-check", linkType: "blood-pressure", fileName: `bp-${Date.now()}.jpg` })).url;
+      if (alcPhoto) persistedAlcPhoto = (await uploadSafetyEffortMediaSource(alcPhoto, { ownerType: "health-check", linkType: "alcohol", fileName: `alcohol-${Date.now()}.jpg` })).url;
+    } catch { window.alert("อัปโหลดรูปผลตรวจไม่สำเร็จ กรุณาลองใหม่อีกครั้ง"); return; }
+    const saved = await actions.setHealthData({
       systolic: sysVal,
       diastolic: diaVal,
       pulse: pulseVal,
       alcohol: alcVal,
       bpStatus: bpStatus.text,
       alcStatus: alcStatus.text,
-      bpPhoto,
-      alcPhoto,
+      bpPhoto: persistedBpPhoto,
+      alcPhoto: persistedAlcPhoto,
     });
+    if (!saved) { window.alert("บันทึกผล Fit to Drive ไม่สำเร็จ กรุณาลองใหม่อีกครั้ง"); return; }
     actions.completeSteps([2, 3]);
     router.push("/were-ok");
   };

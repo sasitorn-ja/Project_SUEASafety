@@ -1026,7 +1026,7 @@ export default function Activity() {
     setCustomOpen(false);
   }
 
-  const displayedActivities = BASE_ACTIVITIES;
+  const displayedActivities = [...customActivities, ...BASE_ACTIVITIES];
 
   // ฤฤ Step header (compact dashboard style matching Checkin) ฤฤ
   const StepHeader = () => (

@@ -294,90 +294,35 @@ export default function SafetyAdmin() {
 
 
 
-  const [tempBackdateLimit, setTempBackdateLimit] = useState(() => {
-    if (typeof window !== "undefined") {
-      return parseInt(localStorage.getItem("safety_backdate_limit") || "5", 10);
-    }
-    return 5;
-  });
-  const [allowedMode, setAllowedMode] = useState(() => {
-    if (typeof window !== "undefined") {
-      return localStorage.getItem("safety_allowed_mode") || "all";
-    }
-    return "all";
-  });
-  const [allowedWeekdays, setAllowedWeekdays] = useState(() => {
-    if (typeof window !== "undefined") {
-      try {
-        const stored = localStorage.getItem("safety_allowed_weekdays");
-        if (stored) return JSON.parse(stored);
-      } catch (e) { }
-    }
-    return [0, 1, 2, 3, 4, 5, 6];
-  });
-  const [allowedDates, setAllowedDates] = useState(() => {
-    if (typeof window !== "undefined") {
-      try {
-        const stored = localStorage.getItem("safety_allowed_dates");
-        if (stored) return JSON.parse(stored);
-      } catch (e) { }
-    }
-    return [];
-  });
+  const [tempBackdateLimit, setTempBackdateLimit] = useState(5);
+  const [allowedMode, setAllowedMode] = useState("all");
+  const [allowedWeekdays, setAllowedWeekdays] = useState([0, 1, 2, 3, 4, 5, 6]);
+  const [allowedDates, setAllowedDates] = useState([]);
   const [newAllowedDate, setNewAllowedDate] = useState("");
   const [lastSavedAt, setLastSavedAt] = useState("");
   const [showPreview, setShowPreview] = useState(false);
   const [draggedId, setDraggedId] = useState(null);
   const [dragOverId, setDragOverId] = useState(null);
-  const [backdateMode, setBackdateMode] = useState(() => {
-    if (typeof window !== "undefined") {
-      return localStorage.getItem("safety_backdate_mode") || "today";
-    }
-    return "today";
-  });
+  const [backdateMode, setBackdateMode] = useState("today");
 
   const handleToggleMode = (mode) => {
     if (mode === "backdate") {
-      if (typeof window !== "undefined") {
-        setTempBackdateLimit(parseInt(localStorage.getItem("safety_backdate_limit") || "5", 10));
-        setAllowedMode(localStorage.getItem("safety_allowed_mode") || "all");
-        try {
-          setAllowedWeekdays(JSON.parse(localStorage.getItem("safety_allowed_weekdays")) || [0, 1, 2, 3, 4, 5, 6]);
-          setAllowedDates(JSON.parse(localStorage.getItem("safety_allowed_dates")) || []);
-        } catch (e) { }
-      }
       setBackdateMode("backdate");
       setShowBackdateLimitModal(true);
     } else {
       setBackdateMode("today");
-      if (typeof window !== "undefined") {
-        localStorage.setItem("safety_backdate_mode", "today");
-      }
-      void persistBackdateSettings("today");
+      void persistBackdateSettings("today").then((saved) => { if (!saved) window.alert("บันทึกการตั้งค่าไม่สำเร็จ"); });
     }
   };
 
   const handleCancelBackdateModal = () => {
-    if (typeof window !== "undefined") {
-      const savedMode = localStorage.getItem("safety_backdate_mode") || "today";
-      setBackdateMode(savedMode);
-    } else {
-      setBackdateMode("today");
-    }
     setShowBackdateLimitModal(false);
   };
 
-  const handleSaveBackdateModal = () => {
-    if (typeof window !== "undefined") {
-      localStorage.setItem("safety_backdate_limit", String(tempBackdateLimit));
-      localStorage.setItem("safety_allowed_mode", allowedMode);
-      localStorage.setItem("safety_allowed_weekdays", JSON.stringify(allowedWeekdays));
-      localStorage.setItem("safety_allowed_dates", JSON.stringify(allowedDates));
-      localStorage.setItem("safety_backdate_mode", "backdate");
-    }
+  const handleSaveBackdateModal = async () => {
+    if (!await persistBackdateSettings("backdate")) { window.alert("บันทึกการตั้งค่าไม่สำเร็จ กรุณาลองใหม่อีกครั้ง"); return; }
     setBackdateMode("backdate");
     setShowBackdateLimitModal(false);
-    void persistBackdateSettings("backdate");
   };
 
   const [width, setWidth] = useState(typeof window !== "undefined" ? window.innerWidth : 1024);
@@ -390,8 +335,7 @@ export default function SafetyAdmin() {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  // Load backdate settings from real DB (safety_settings). localStorage is kept
-  // as a mirror so other screens (Checkin/Linewalk) that read these keys still work.
+  // DB is the source of truth for shared admin settings.
   useEffect(() => {
     let cancelled = false;
     (async () => {
@@ -403,26 +347,16 @@ export default function SafetyAdmin() {
         if (!raw) return;
         const value = typeof raw === "string" ? JSON.parse(raw) : raw;
         if (cancelled || !value || typeof value !== "object") return;
-        if (typeof window !== "undefined") {
-          if (value.limit != null) localStorage.setItem("safety_backdate_limit", String(value.limit));
-          if (value.mode) localStorage.setItem("safety_allowed_mode", value.mode);
-          if (value.weekdays) localStorage.setItem("safety_allowed_weekdays", JSON.stringify(value.weekdays));
-          if (value.dates) localStorage.setItem("safety_allowed_dates", JSON.stringify(value.dates));
-          if (value.backdateMode) localStorage.setItem("safety_backdate_mode", value.backdateMode);
-        }
         if (value.limit != null) setTempBackdateLimit(parseInt(String(value.limit), 10));
         if (value.mode) setAllowedMode(value.mode);
         if (Array.isArray(value.weekdays)) setAllowedWeekdays(value.weekdays);
         if (Array.isArray(value.dates)) setAllowedDates(value.dates);
         if (value.backdateMode) setBackdateMode(value.backdateMode);
-      } catch {
-        /* keep localStorage fallback */
-      }
+      } catch { /* defaults remain until DB is available */ }
     })();
     return () => { cancelled = true; };
   }, []);
 
-  // Persist backdate settings to the real DB (best-effort) alongside localStorage.
   const persistBackdateSettings = async (mode) => {
     const value = {
       limit: tempBackdateLimit,
@@ -432,15 +366,14 @@ export default function SafetyAdmin() {
       backdateMode: mode,
     };
     try {
-      await fetch("/api/safety-settings?key=safety_backdate", {
+      const response = await fetch("/api/safety-settings?key=safety_backdate", {
         method: "PUT",
         credentials: "include",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ value }),
       });
-    } catch {
-      /* localStorage already updated; ignore network errors */
-    }
+      return response.ok;
+    } catch { return false; }
   };
 
   useEffect(() => {

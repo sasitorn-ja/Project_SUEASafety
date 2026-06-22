@@ -244,7 +244,7 @@ function SUEATipCard({ className, style, tipText }: { className?: string; style?
     <Card className={cn("flex items-start gap-2.5 rounded-[16px] border-2 border-[var(--c-f5bb00)] bg-[var(--c-fff9e6)] p-3 font-sarabun", className)} style={style}>
       <span className="text-xl animate-[pulse_2s_infinite]">💡</span>
       <div className="flex flex-col gap-1">
-        <span className="text-[13.5px] font-[850] text-[#1A1A1A]">เคล็ดลับจากพี่ SUEA</span>
+        <span className="text-[13.5px] font-[850] text-[#1A1A1A]">เคล็ดลับจาก CPAC Safe +</span>
         <span className="text-[11.5px] font-bold leading-relaxed text-[#555149]">{tipText}</span>
       </div>
     </Card>
@@ -540,7 +540,12 @@ export default function Page() {
 
   const getCommentReactionData = (postId: number, commentId: string) => {
     const key = getCommentReactionKey(postId, commentId);
-    return commentReactionState[key] || { selected: null, counts: getDefaultCommentReactions() };
+    const comment = posts.find((post) => post.id === postId)?.comments;
+    const persisted = Array.isArray(comment) ? comment.find((item) => item.id === commentId) : null;
+    return commentReactionState[key] || {
+      selected: persisted?.viewerReaction || null,
+      counts: { ...getDefaultCommentReactions(), ...(persisted?.reactions || {}) },
+    };
   };
 
   const tipText = "โพสต์เรื่องความปลอดภัยให้ชัดเจน กระชับ และถ้าเข้ากิจกรรมแบบ Card อย่าลืมเลือกกิจกรรมก่อนโพสต์";
@@ -561,31 +566,30 @@ export default function Page() {
     setDesktopActivityStartIndex((current) => Math.min(current, Math.max(0, visibleFeedEvents.length - 3)));
   }, [visibleFeedEvents.length]);
 
-  const handleCommentReaction = (postId: number, commentId: string, reactionId: string) => {
+  const handleCommentReaction = async (postId: number, commentId: string, reactionId: string) => {
     const key = getCommentReactionKey(postId, commentId);
-
-    setCommentReactionState((prev) => {
-
-
-
-      const current = prev[key] || { selected: null, counts: getDefaultCommentReactions() };
-      const nextCounts = { ...current.counts };
-      let nextSelected: string | null = reactionId;
-
-      if (current.selected === reactionId) {
-        nextCounts[reactionId] = Math.max(0, (nextCounts[reactionId] || 0) - 1);
-        nextSelected = null;
-      } else {
-        if (current.selected) {
-          nextCounts[current.selected] = Math.max(0, (nextCounts[current.selected] || 0) - 1);
-        }
-        nextCounts[reactionId] = (nextCounts[reactionId] || 0) + 1;
-      }
-
-      return { ...prev, [key]: { selected: nextSelected, counts: nextCounts } };
-    });
-
+    const current = getCommentReactionData(postId, commentId);
+    let nextSelected: string | null = reactionId;
+    const nextCounts = { ...current.counts };
+    if (current.selected === reactionId) {
+      nextCounts[reactionId] = Math.max(0, (nextCounts[reactionId] || 0) - 1);
+      nextSelected = null;
+    } else {
+      if (current.selected) nextCounts[current.selected] = Math.max(0, (nextCounts[current.selected] || 0) - 1);
+      nextCounts[reactionId] = (nextCounts[reactionId] || 0) + 1;
+    }
+    setCommentReactionState((prev) => ({ ...prev, [key]: { selected: nextSelected, counts: nextCounts } }));
     setOpenCommentReactionPicker(null);
+    const response = await fetch(`/api/safety-culture/comments/${commentId}/reactions`, {
+      method: nextSelected ? "POST" : "DELETE", credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: nextSelected ? JSON.stringify({ reactionType: nextSelected }) : undefined,
+    });
+    const payload = await response.json().catch(() => null);
+    if (!response.ok || !payload?.ok) {
+      setCommentReactionState((prev) => ({ ...prev, [key]: current }));
+      window.alert("ไม่สามารถบันทึกความรู้สึกได้ กรุณาลองใหม่อีกครั้ง");
+    }
   };
 
   return (

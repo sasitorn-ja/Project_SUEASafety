@@ -102,6 +102,13 @@ export default function PostSocialPage() {
   const [isProcessingPhotos, setIsProcessingPhotos] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const selectedFeedEvent = availableFeedEvents.find((event) => event.id === selectedFeedEventId) ?? null;
+  const selectedFeedEventPoints = selectedFeedEvent
+    ? selectedFeedEvent.enabledActions.includes("theme-post")
+      ? selectedFeedEvent.bonusMode === "multiplier"
+        ? Math.round(selectedFeedEvent.points * Math.max(1, selectedFeedEvent.multiplier))
+        : selectedFeedEvent.points + Math.max(0, selectedFeedEvent.fixedPoints)
+      : selectedFeedEvent.points
+    : getSafetyPoint("safetyPostApproved");
 
   const animStyle = (delay: number) => ({
     animationDelay: `${delay}s`,
@@ -317,7 +324,7 @@ export default function PostSocialPage() {
                 </div>
                 {selectedFeedEvent ? (
                   <span className="rounded-full bg-[#ecfff7] px-2.5 py-1 text-[11px] font-extrabold text-[#13885d]">
-                    +{selectedFeedEvent.points} pts
+                    +{selectedFeedEventPoints} pts
                   </span>
                 ) : null}
               </div>
@@ -352,8 +359,7 @@ export default function PostSocialPage() {
               </div>
               {selectedFeedEvent ? (
                 <div className="rounded-[14px] border border-[var(--c-e4cdac)] bg-[#fff7e8] px-3 py-2 text-[12px] font-bold leading-relaxed text-[#6d5a46]">
-                  โพสต์นี้จะนับเข้ากิจกรรม {selectedFeedEvent.title} โดยใช้คะแนนฐาน {selectedFeedEvent.points} แต้ม และโบนัส{" "}
-                  {selectedFeedEvent.bonusMode === "multiplier" ? `x${selectedFeedEvent.multiplier}` : `+${selectedFeedEvent.fixedPoints}`}
+                  กิจกรรม {selectedFeedEvent.title} ให้ {selectedFeedEventPoints} แต้มเมื่อโพสต์สำเร็จ
                 </div>
               ) : null}
             </div>

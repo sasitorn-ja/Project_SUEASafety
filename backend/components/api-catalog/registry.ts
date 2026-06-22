@@ -606,6 +606,20 @@ export const API_CATALOG_ROUTES = [
   },
   {
     "module": "Were OK",
+    "method": "GET",
+    "path": "/api/were-ok/state/me",
+    "documentedPath": "/api/were-ok/state/me",
+    "purpose": "อ่านสถานะ Were OK ล่าสุดของผู้ใช้",
+    "caller": "Were OK",
+    "whenCalled": "เปิดหรือรีโหลด flow",
+    "auth": "User",
+    "pagination": "No",
+    "responseSizeRisk": "Small",
+    "status": "Existing",
+    "notes": "รวม health, KYT, pre-trip และ SOS ล่าสุด"
+  },
+  {
+    "module": "Were OK",
     "method": "POST",
     "path": "/api/were-ok/health-checks",
     "documentedPath": "/api/were-ok/health-checks",
@@ -729,6 +743,34 @@ export const API_CATALOG_ROUTES = [
     "responseSizeRisk": "High if unpaged",
     "status": "Existing",
     "notes": "แทน localStorage posts"
+  },
+  {
+    "module": "Safety Culture",
+    "method": "POST",
+    "path": "/api/safety-culture/comments/:id/reactions",
+    "documentedPath": "/api/safety-culture/comments/:id/reactions",
+    "purpose": "เพิ่มหรือเปลี่ยนความรู้สึกต่อความคิดเห็น",
+    "caller": "Feed/Post detail",
+    "whenCalled": "เลือกความรู้สึก",
+    "auth": "User",
+    "pagination": "No",
+    "responseSizeRisk": "Small",
+    "status": "Existing",
+    "notes": "upsert comment reaction"
+  },
+  {
+    "module": "Safety Culture",
+    "method": "DELETE",
+    "path": "/api/safety-culture/comments/:id/reactions",
+    "documentedPath": "/api/safety-culture/comments/:id/reactions",
+    "purpose": "ยกเลิกความรู้สึกต่อความคิดเห็น",
+    "caller": "Feed/Post detail",
+    "whenCalled": "ยกเลิกความรู้สึก",
+    "auth": "User",
+    "pagination": "No",
+    "responseSizeRisk": "Small",
+    "status": "Existing",
+    "notes": "delete comment reaction"
   },
   {
     "module": "Safety Culture",

@@ -1561,18 +1561,46 @@ export default function Checkin() {
     setLocating(true);
     navigator.geolocation.getCurrentPosition(
       pos => {
-        setUserPos({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+        setUserPos({ lat: pos.coords.latitude, lng: pos.coords.longitude, accuracy: pos.coords.accuracy });
         setLocating(false);
       },
-      () => setLocating(false),
+      () => {
+        setApiError("กรุณาเปิดสิทธิ์ตำแหน่ง GPS แล้วกดลองระบุตำแหน่งอีกครั้ง");
+        setLocating(false);
+      },
       { enableHighAccuracy: true, timeout: 8000 },
     );
   }
 
-  function handleAddLocation(loc) {
-    setExtraLocs(prev => [...prev, loc]);
-    setSelected(loc);
-    setShowModal(false);
+  async function handleAddLocation(loc) {
+    setApiError("");
+    const typeCodeByLabel = {
+      "โรงงาน": "PLANT",
+      "สำนักงาน": "OFFICE",
+      "Site งาน": "SITE",
+    };
+    const locationType = typeCodeByLabel[loc.type] || "CUSTOM";
+    try {
+      const response = await fetch("/api/locations", {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          locationType,
+          nameTh: loc.name,
+          lat: Number(loc.lat),
+          lng: Number(loc.lng),
+        }),
+      });
+      const payload = await response.json().catch(() => null);
+      if (!response.ok || !payload?.ok) throw new Error(payload?.error || "location_create_failed");
+      const saved = apiLocationToCheckinLocation(payload.data?.location || {});
+      setExtraLocs(prev => [...prev, saved]);
+      setSelected(saved);
+      setShowModal(false);
+    } catch (error) {
+      setApiError(error?.message || "ไม่สามารถบันทึกสถานที่ใหม่ลงฐานข้อมูลได้");
+    }
   }
 
   async function handleContinue() {
@@ -1587,8 +1615,11 @@ export default function Checkin() {
       if (!isValidPoint(selectedForSubmit)) {
         throw new Error("สถานที่นี้ยังไม่มีพิกัด กรุณาเลือกสถานที่จากรายการอีกครั้ง");
       }
+      if (!isValidPoint(userPos)) {
+        throw new Error("กรุณาเปิด GPS และระบุตำแหน่งจริงก่อนดำเนินการต่อ");
+      }
       let checkinRecord = null;
-      if (isValidPoint(userPos)) {
+      {
         const response = await fetch("/api/checkins", {
           method: "POST",
           credentials: "include",
@@ -1599,6 +1630,7 @@ export default function Checkin() {
             locationName: selectedForSubmit.name,
             actualLat: Number(userPos.lat),
             actualLng: Number(userPos.lng),
+            actualAccuracyM: Number.isFinite(Number(userPos.accuracy)) ? Number(userPos.accuracy) : null,
             locationSource: "GPS",
           }),
         });
@@ -1637,7 +1669,7 @@ export default function Checkin() {
       || allLocations.find(l => selected.name && l.name === selected.name)
       || selected
     : null;
-  const canContinue = Boolean(selectedForAction && isValidPoint(selectedForAction) && !savingCheckin);
+  const canContinue = Boolean(selectedForAction && isValidPoint(selectedForAction) && isValidPoint(userPos) && !savingCheckin);
   const nextPath = activity?.id === "safety-contact"
     ? "/safety-contact"
     : activity

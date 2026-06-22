@@ -37,6 +37,16 @@ type CommentRow = RowDataPacket & {
   author_profile_image_url: string | null;
   content: string;
   created_at: Date | string;
+  reactions_json?: string | null;
+  viewer_reaction?: string | null;
+};
+
+type CultureEventRow = RowDataPacket & {
+  id: string;
+  status: string;
+  event_start_at: Date | string | null;
+  event_end_at: Date | string | null;
+  metadata: string | Record<string, unknown> | null;
 };
 
 function mapHasLiked(value: PostRow["has_liked"]) {
@@ -91,6 +101,10 @@ function mapPost(row: PostRow) {
 }
 
 function mapComment(row: CommentRow) {
+  let reactions: Record<string, number> = {};
+  if (row.reactions_json) {
+    try { reactions = JSON.parse(row.reactions_json); } catch { reactions = {}; }
+  }
   return {
     id: String(row.id),
     postId: String(row.post_id),
@@ -99,7 +113,52 @@ function mapComment(row: CommentRow) {
     authorProfileImageUrl: row.author_profile_image_url || null,
     content: row.content,
     createdAt: new Date(row.created_at).toISOString(),
+    reactions,
+    viewerReaction: row.viewer_reaction || null,
   };
+}
+
+function parseMetadata(value: CultureEventRow["metadata"]) {
+  if (value && typeof value === "object") return value;
+  if (typeof value !== "string") return {};
+  try { return JSON.parse(value) as Record<string, unknown>; } catch { return {}; }
+}
+
+async function resolvePostPoints(eventId?: string | number | null) {
+  const ruleRows = await queryRows<RowDataPacket & { id: string; points: number | string }>(
+    "SELECT id, points FROM point_rules WHERE code='safetyPostApproved' AND status='ACTIVE' LIMIT 1",
+  ).catch(() => []);
+  const fallback = 6;
+  if (!eventId) return { amount: Number(ruleRows[0]?.points || fallback), pointRuleId: ruleRows[0]?.id || null };
+
+  const eventRows = await queryRows<CultureEventRow>(
+    `SELECT id, status, event_start_at, event_end_at, metadata
+     FROM safety_culture_events WHERE id=:eventId AND deleted_at IS NULL LIMIT 1`,
+    { eventId },
+  );
+  const event = eventRows[0];
+  if (!event || event.status !== "ACTIVE") throw new Error("event_not_available");
+  const metadata = parseMetadata(event.metadata);
+  const now = Date.now();
+  const start = metadata.startDate ? new Date(`${metadata.startDate}T00:00:00`).getTime() : event.event_start_at ? new Date(event.event_start_at).getTime() : NaN;
+  const end = metadata.endDate ? new Date(`${metadata.endDate}T23:59:59.999`).getTime() : event.event_end_at ? new Date(event.event_end_at).getTime() : NaN;
+  if ((!Number.isNaN(start) && now < start) || (!Number.isNaN(end) && now > end)) throw new Error("event_not_live");
+  const actions = Array.isArray(metadata.enabledActions) ? metadata.enabledActions.map(String) : [];
+  let amount = Math.max(0, Number(metadata.points) || 0);
+  if (actions.includes("theme-post")) {
+    if (metadata.bonusMode === "multiplier") amount = Math.round(amount * Math.max(1, Number(metadata.multiplier) || 1));
+    else amount += Math.max(0, Number(metadata.fixedPoints) || 0);
+  }
+  return { amount, pointRuleId: ruleRows[0]?.id || null };
+}
+
+async function createNotification(connection: any, input: { userId: string; actorId: string; type: string; title: string; body: string; metadata: Record<string, unknown> }) {
+  if (String(input.userId) === String(input.actorId)) return;
+  await connection.execute(
+    `INSERT INTO notifications (user_id, notification_type, title, body, metadata)
+     VALUES (:userId, :type, :title, :body, :metadata)`,
+    { ...input, metadata: JSON.stringify({ ...input.metadata, actorUserId: input.actorId }) },
+  );
 }
 
 const SELECT_POSTS_SQL = `
@@ -261,6 +320,7 @@ export async function createPost(input: {
   if (!content) throw new Error("content_required");
   const category = String(input.category || "ทั่วไป").trim() || "ทั่วไป";
   const context = await getUserTeamContext(input.authorId);
+  const points = await resolvePostPoints(input.eventId);
 
   const id = await withTransaction(async (connection) => {
     const [result] = await connection.execute<ResultSetHeader>(
@@ -273,6 +333,7 @@ export async function createPost(input: {
           category,
           content,
           status,
+          points_awarded,
           published_at
         )
         VALUES (
@@ -283,6 +344,7 @@ export async function createPost(input: {
           :category,
           :content,
           :status,
+          :pointsAwarded,
           CASE WHEN :status = 'PUBLISHED' THEN UTC_TIMESTAMP(3) ELSE NULL END
         )
       `,
@@ -294,6 +356,7 @@ export async function createPost(input: {
         category,
         content,
         status: input.status || "PUBLISHED",
+        pointsAwarded: points.amount,
       },
     );
     const postId = String(result.insertId);
@@ -319,32 +382,30 @@ export async function createPost(input: {
         { postId, mediaId, authorId: input.authorId },
       );
     }
+    if (points.amount > 0) {
+      const [pointResult] = await connection.execute<ResultSetHeader>(
+        `INSERT IGNORE INTO point_transactions
+         (user_id, point_rule_id, transaction_type, amount, source_type, source_id, idempotency_key, description)
+         VALUES (:userId, :pointRuleId, 'EARN', :amount, 'POST', :postId, :key, :description)`,
+        {
+          userId: input.authorId,
+          pointRuleId: points.pointRuleId,
+          amount: points.amount,
+          postId,
+          key: `post:${postId}:approved`,
+          description: input.eventId ? "สร้าง Safety Post ใน Card Event" : "สร้าง Safety Post ที่อนุมัติ",
+        },
+      );
+      if (pointResult.affectedRows > 0) {
+        await connection.execute(
+          `INSERT INTO point_balances (user_id, balance) VALUES (:userId, :amount)
+           ON DUPLICATE KEY UPDATE balance=balance+:amount, updated_at=UTC_TIMESTAMP(3)`,
+          { userId: input.authorId, amount: points.amount },
+        );
+      }
+    }
     return postId;
   });
-
-  const balance = await awardPoints({
-    userId: input.authorId,
-    action: "safetyPostApproved",
-    sourceType: "POST",
-    sourceId: id,
-    idempotencyKey: `post:${id}:approved`,
-    description: "สร้าง Safety Post ที่อนุมัติ",
-  }).catch(() => null);
-  if (balance) {
-    const ruleRows = await queryRows<RowDataPacket & { amount: number | string }>(
-      "SELECT amount FROM point_transactions WHERE idempotency_key = :key LIMIT 1",
-      { key: `post:${id}:approved` },
-    ).catch(() => []);
-    const pointsAwarded = Number(ruleRows[0]?.amount || 0);
-    if (pointsAwarded > 0) {
-      await withTransaction(async (connection) => {
-        await connection.execute(
-          "UPDATE posts SET points_awarded = :pointsAwarded WHERE id = :id",
-          { id, pointsAwarded },
-        );
-      });
-    }
-  }
 
   return getPost(id, input.authorId);
 }
@@ -445,10 +506,10 @@ export async function deletePost(id: string, userId: string) {
   });
 }
 
-export async function listComments(postId: string, options: { limit?: number; cursor?: string | null } = {}) {
+export async function listComments(postId: string, options: { limit?: number; cursor?: string | null; viewerId?: string | null } = {}) {
   const limit = Math.min(Math.max(Number(options.limit) || 30, 1), 100);
   const where = ["c.post_id = :postId", "c.deleted_at IS NULL"];
-  const params: Record<string, unknown> = { postId, limit };
+  const params: Record<string, unknown> = { postId, limit, viewerId: options.viewerId || 0 };
   if (options.cursor) {
     where.push("c.id < :cursor");
     params.cursor = options.cursor;
@@ -456,7 +517,8 @@ export async function listComments(postId: string, options: { limit?: number; cu
 
   const rows = await queryRows<CommentRow>(
     `
-      SELECT c.id, c.post_id, c.author_id, u.name_th AS author_name, u.profile_image_url AS author_profile_image_url, c.content, c.created_at
+      SELECT c.id, c.post_id, c.author_id, u.name_th AS author_name, u.profile_image_url AS author_profile_image_url, c.content, c.created_at,
+        (SELECT cr.reaction_type FROM comment_reactions cr WHERE cr.comment_id=c.id AND cr.user_id=:viewerId LIMIT 1) viewer_reaction
       FROM comments c
       LEFT JOIN users u ON u.id = c.author_id
       WHERE ${where.join(" AND ")}
@@ -466,8 +528,20 @@ export async function listComments(postId: string, options: { limit?: number; cu
     params,
   );
 
+  const reactionRows = rows.length ? await queryRows<RowDataPacket & { comment_id: string; reaction_type: string; reaction_count: number | string }>(
+    `SELECT comment_id, reaction_type, COUNT(*) reaction_count FROM comment_reactions
+     WHERE comment_id IN (:commentIds) GROUP BY comment_id, reaction_type`,
+    { commentIds: rows.map((row) => row.id) },
+  ) : [];
+  const reactionsByComment = new Map<string, Record<string, number>>();
+  for (const reaction of reactionRows) {
+    const counts = reactionsByComment.get(String(reaction.comment_id)) || {};
+    counts[reaction.reaction_type] = Number(reaction.reaction_count);
+    reactionsByComment.set(String(reaction.comment_id), counts);
+  }
+
   return {
-    items: rows.map(mapComment).reverse(),
+    items: rows.map((row) => mapComment({ ...row, reactions_json: JSON.stringify(reactionsByComment.get(String(row.id)) || {}) } as CommentRow)).reverse(),
     nextCursor: rows.length === limit ? String(rows[rows.length - 1].id) : null,
   };
 }
@@ -484,6 +558,19 @@ export async function createComment(postId: string, authorId: string, content: s
       `,
       { postId, authorId, content: text },
     );
+    const [owners] = await connection.execute<RowDataPacket[]>(
+      `SELECT p.author_id, u.name_th actor_name FROM posts p LEFT JOIN users u ON u.id=:authorId
+       WHERE p.id=:postId AND p.deleted_at IS NULL LIMIT 1`,
+      { postId, authorId },
+    );
+    const owner = owners[0] as (RowDataPacket & { author_id?: string; actor_name?: string }) | undefined;
+    if (owner?.author_id) {
+      await createNotification(connection, {
+        userId: String(owner.author_id), actorId: authorId, type: "COMMENT",
+        title: `${owner.actor_name || "มีผู้ใช้"} แสดงความคิดเห็นในโพสต์ของคุณ`, body: text,
+        metadata: { postId, commentId: String(result.insertId), href: `/safety-culture?postId=${postId}` },
+      });
+    }
     return String(result.insertId);
   });
 
@@ -553,6 +640,9 @@ export async function deleteComment(commentId: string, authorId: string) {
 
 export async function setReaction(postId: string, userId: string, reactionType = "LIKE") {
   await withTransaction(async (connection) => {
+    const [existingRows] = await connection.execute<RowDataPacket[]>(
+      "SELECT id FROM reactions WHERE post_id=:postId AND user_id=:userId LIMIT 1", { postId, userId },
+    );
     await connection.execute<ResultSetHeader>(
       `
         INSERT INTO reactions (post_id, user_id, reaction_type)
@@ -563,6 +653,18 @@ export async function setReaction(postId: string, userId: string, reactionType =
       `,
       { postId, userId, reactionType },
     );
+    if (!existingRows[0]) {
+      const [owners] = await connection.execute<RowDataPacket[]>(
+        `SELECT p.author_id, u.name_th actor_name FROM posts p LEFT JOIN users u ON u.id=:userId
+         WHERE p.id=:postId AND p.deleted_at IS NULL LIMIT 1`, { postId, userId },
+      );
+      const owner = owners[0] as (RowDataPacket & { author_id?: string; actor_name?: string }) | undefined;
+      if (owner?.author_id) await createNotification(connection, {
+        userId: String(owner.author_id), actorId: userId, type: "LIKE",
+        title: `${owner.actor_name || "มีผู้ใช้"} กดถูกใจโพสต์ของคุณ`, body: "กดเพื่อดูโพสต์",
+        metadata: { postId, href: `/safety-culture?postId=${postId}` },
+      });
+    }
   });
 
   await awardPoints({
@@ -584,5 +686,42 @@ export async function deleteReaction(postId: string, userId: string) {
       { postId, userId },
     );
   });
+  return { deleted: true };
+}
+
+export async function setCommentReaction(commentId: string, userId: string, reactionType: string) {
+  const allowed = new Set(["like", "love", "care", "wow", "useful"]);
+  if (!allowed.has(reactionType)) throw new Error("invalid_reaction_type");
+  await withTransaction(async (connection) => {
+    const [existing] = await connection.execute<RowDataPacket[]>(
+      "SELECT reaction_type FROM comment_reactions WHERE comment_id=:commentId AND user_id=:userId LIMIT 1",
+      { commentId, userId },
+    );
+    await connection.execute(
+      `INSERT INTO comment_reactions (comment_id, user_id, reaction_type)
+       VALUES (:commentId, :userId, :reactionType)
+       ON DUPLICATE KEY UPDATE reaction_type=VALUES(reaction_type), updated_at=UTC_TIMESTAMP(3)`,
+      { commentId, userId, reactionType },
+    );
+    if (!existing[0] || String(existing[0].reaction_type) !== reactionType) {
+      const [owners] = await connection.execute<RowDataPacket[]>(
+        `SELECT c.author_id, c.post_id, u.name_th actor_name FROM comments c LEFT JOIN users u ON u.id=:userId
+         WHERE c.id=:commentId AND c.deleted_at IS NULL LIMIT 1`, { commentId, userId },
+      );
+      const owner = owners[0] as (RowDataPacket & { author_id?: string; post_id?: string; actor_name?: string }) | undefined;
+      if (owner?.author_id && owner.post_id) await createNotification(connection, {
+        userId: String(owner.author_id), actorId: userId, type: "COMMENT_REACTION",
+        title: `${owner.actor_name || "มีผู้ใช้"} แสดงความรู้สึกต่อความคิดเห็นของคุณ`, body: "กดเพื่อดูความคิดเห็น",
+        metadata: { postId: String(owner.post_id), commentId, href: `/safety-culture?postId=${owner.post_id}` },
+      });
+    }
+  });
+  return { commentId, userId, reactionType };
+}
+
+export async function deleteCommentReaction(commentId: string, userId: string) {
+  await withTransaction(async (connection) => connection.execute(
+    "DELETE FROM comment_reactions WHERE comment_id=:commentId AND user_id=:userId", { commentId, userId },
+  ));
   return { deleted: true };
 }

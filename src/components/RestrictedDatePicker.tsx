@@ -75,10 +75,10 @@ export default function RestrictedDatePicker({
       })
       .then(value => {
         if (!value) return;
-        setBackdateLimit(Number(value.backdateLimit || 5));
-        setAllowedMode(value.allowedMode || "all");
-        setAllowedWeekdays(Array.isArray(value.allowedWeekdays) ? value.allowedWeekdays : [0, 1, 2, 3, 4, 5, 6]);
-        setAllowedDates(Array.isArray(value.allowedDates) ? value.allowedDates : []);
+        setBackdateLimit(Number(value.limit ?? value.backdateLimit ?? 5));
+        setAllowedMode(value.mode || value.allowedMode || "all");
+        setAllowedWeekdays(Array.isArray(value.weekdays) ? value.weekdays : Array.isArray(value.allowedWeekdays) ? value.allowedWeekdays : [0, 1, 2, 3, 4, 5, 6]);
+        setAllowedDates(Array.isArray(value.dates) ? value.dates : Array.isArray(value.allowedDates) ? value.allowedDates : []);
         setMode(value.backdateMode || "today");
       })
       .catch(() => undefined);

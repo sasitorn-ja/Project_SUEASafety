@@ -25,11 +25,13 @@ import {
   createPost,
   deleteComment,
   deletePost,
+  deleteCommentReaction,
   deleteReaction,
   getPost,
   listComments,
   listPosts,
   setReaction,
+  setCommentReaction,
   updateComment,
   updatePost,
 } from "@backend/components/safety-culture/posts/repository";
@@ -503,7 +505,7 @@ async function tryHandleConcreteRoute(
 
     if (match.route.path === "/api/safety-culture/posts/:id/comments" && userId) {
       if (method === "GET") {
-        return jsonData(await listComments(match.params.id, { limit: Number(query.get("limit") || 30), cursor: query.get("cursor") }));
+        return jsonData(await listComments(match.params.id, { limit: Number(query.get("limit") || 30), cursor: query.get("cursor"), viewerId: userId }));
       }
       if (method === "POST") {
         const comment = await createComment(match.params.id, userId, String(jsonBody(body).content || jsonBody(body).text || ""));
@@ -519,6 +521,15 @@ async function tryHandleConcreteRoute(
       }
       if (method === "DELETE") {
         return jsonData(await deleteComment(match.params.id, userId));
+      }
+    }
+
+    if (match.route.path === "/api/safety-culture/comments/:id/reactions" && userId) {
+      if (method === "POST") {
+        return jsonData({ reaction: await setCommentReaction(match.params.id, userId, String(jsonBody(body).reactionType || "like")) }, { status: 201 });
+      }
+      if (method === "DELETE") {
+        return jsonData(await deleteCommentReaction(match.params.id, userId));
       }
     }
 

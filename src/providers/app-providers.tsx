@@ -61,6 +61,7 @@ export type Comment = {
   avatarImageUrl?: string | null;
   text: string;
   reactions?: Record<string, number>;
+  viewerReaction?: string | null;
   isYou?: boolean;
 };
 
@@ -257,11 +258,11 @@ type AppState = {
 
 type AppActions = {
   completeSteps: (stepIds: number[]) => void;
-  setHealthData: (data: HealthData) => void;
-  setKytData: (data: KytData) => void;
-  setPreTripData: (data: PreTripData) => void;
+  setHealthData: (data: HealthData) => Promise<boolean>;
+  setKytData: (data: KytData) => Promise<boolean>;
+  setPreTripData: (data: PreTripData) => Promise<boolean>;
   confirmQueue: () => void;
-  setSosData: (data: SosData) => void;
+  setSosData: (data: SosData) => Promise<boolean>;
   showNotification: (notification: NotificationType) => void;
   dismissNotification: () => void;
   markInboxNotificationRead: (notificationId: string) => void;
@@ -280,8 +281,8 @@ type AppActions = {
   sendFeedEventNotification: (feedEventId: string) => boolean;
   updateTeamStandings: (teams: LeaderboardTeam[]) => void;
   updatePersonalRankings: (rankings: LeaderboardPerson[]) => void;
-  updateRewardsCatalog: (rewards: RewardCatalogItem[]) => void;
-  updateRewardCategories: (categories: RewardCategory[]) => void;
+  updateRewardsCatalog: (rewards: RewardCatalogItem[]) => Promise<boolean>;
+  updateRewardCategories: (categories: RewardCategory[]) => Promise<boolean>;
   updateAwarenessQuestions: (questions: SafetyAwarenessQuestion[]) => void;
   updateAwarenessHolidays: (holidays: AwarenessHoliday[]) => void;
   /** Mark today's Safety Awareness popup as completed. */
@@ -879,6 +880,8 @@ type ApiComment = {
   content?: string;
   text?: string;
   createdAt?: string;
+  reactions?: Record<string, number>;
+  viewerReaction?: string | null;
 };
 
 type ApiAwarenessAttempt = {
@@ -984,17 +987,19 @@ function commentFromApi(comment: ApiComment, viewerId?: string | null): Comment 
     avatarText: authorName.charAt(0).toUpperCase() || "C",
     avatarImageUrl: comment.authorProfileImageUrl || null,
     text: repairMojibakeText(comment.content || comment.text || "") || "",
+    reactions: comment.reactions || {},
+    viewerReaction: comment.viewerReaction || null,
     isYou: Boolean(viewerId && authorId && String(authorId) === String(viewerId)),
   };
 }
 
 export function AppProviders({ children }: { children: ReactNode }) {
   const [completedSteps, setCompletedSteps] = useState<number[]>([]);
-  const [healthData, setHealthData] = useState<HealthData>(null);
-  const [kytData, setKytData] = useState<KytData>(null);
-  const [preTripData, setPreTripData] = useState<PreTripData>(null);
+  const [healthData, setHealthDataState] = useState<HealthData>(null);
+  const [kytData, setKytDataState] = useState<KytData>(null);
+  const [preTripData, setPreTripDataState] = useState<PreTripData>(null);
   const [queueConfirmed, setQueueConfirmed] = useState(false);
-  const [sosData, setSosData] = useState<SosData>(null);
+  const [sosData, setSosDataState] = useState<SosData>(null);
   const [posts, setPosts] = useState<Post[]>([]);
   const [userActivityHistory, setUserActivityHistory] = useState<SafetyCultureUserActivity[]>([]);
   const [notification, setNotification] = useState<NotificationType>(null);
@@ -1076,7 +1081,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
       currentUserRef.current = sessionUser;
       if (!authed) return;
 
-      const [postsResult, balanceResult, notificationsResult, rewardsResult, rewardCategoriesResult, leaderboardResult, teamsResult, awarenessResult, attemptsResult, holidaysResult, eventsResult] = await Promise.all([
+      const [postsResult, balanceResult, notificationsResult, rewardsResult, rewardCategoriesResult, leaderboardResult, teamsResult, awarenessResult, attemptsResult, holidaysResult, eventsResult, wereOkResult, transactionsResult] = await Promise.all([
         apiFetch<{ items: ApiPost[] }>("/api/safety-culture/posts?limit=50"),
         apiFetch<{ balance: { balance: number } }>("/api/safety-culture/points/me"),
         apiFetch<{ items: Array<Record<string, unknown>> }>("/api/notifications?limit=100"),
@@ -1088,6 +1093,8 @@ export function AppProviders({ children }: { children: ReactNode }) {
         apiFetch<{ items: ApiAwarenessAttempt[] }>("/api/safety-awareness/attempts/me?pageSize=120"),
         apiFetch<{ items: Array<Record<string, unknown>> }>(`/api/holidays?year=${new Date().getFullYear()}`),
         apiFetch<{ items: Array<Record<string, unknown>> }>("/api/safety-culture/events?pageSize=100"),
+        apiFetch<{ healthData: HealthData; preTripData: PreTripData; kytData: KytData; sosData: SosData }>("/api/were-ok/state/me"),
+        apiFetch<{ items: Array<{ id: string; amount: number; sourceType: string; sourceId?: string | null; description?: string | null; occurredAt: string }> }>("/api/safety-culture/points/me/transactions?limit=100"),
       ]);
 
       if (cancelled) return;
@@ -1110,17 +1117,48 @@ export function AppProviders({ children }: { children: ReactNode }) {
       if (balanceResult.ok && typeof balanceResult.data?.balance?.balance === "number") {
         setCurrentUserPoints(Math.max(0, balanceResult.data.balance.balance));
       }
+      if (wereOkResult.ok && wereOkResult.data) {
+        setHealthDataState(wereOkResult.data.healthData || null);
+        setPreTripDataState(wereOkResult.data.preTripData || null);
+        setKytDataState(wereOkResult.data.kytData || null);
+        setSosDataState(wereOkResult.data.sosData || null);
+        const restoredSteps: number[] = [];
+        if (wereOkResult.data.kytData) restoredSteps.push(1);
+        if (wereOkResult.data.healthData) restoredSteps.push(2, 3);
+        if (wereOkResult.data.preTripData) restoredSteps.push(4);
+        setCompletedSteps(restoredSteps);
+      }
+      if (transactionsResult.ok && Array.isArray(transactionsResult.data?.items)) {
+        setUserActivityHistory(normalizeUserActivityHistory(transactionsResult.data.items.map((item) => ({
+          id: `transaction-${item.id}`,
+          type: item.sourceType === "REWARD" ? "redeem" : item.sourceType === "COMMENT" ? "comment" : item.sourceType === "REACTION" ? "reaction" : item.sourceType === "POST" ? "post" : item.sourceType === "SAFETY_AWARENESS" ? "awareness" : "safety-effort",
+          occurredAt: new Date(item.occurredAt).getTime(),
+          postId: item.sourceType === "POST" ? Number(item.sourceId) || 0 : 0,
+          postAuthor: userDisplayName(sessionUser),
+          postCategory: item.sourceType,
+          postPreview: item.description || item.sourceType,
+          pointsDelta: Number(item.amount) || 0,
+        }))));
+      }
 
       if (notificationsResult.ok && Array.isArray(notificationsResult.data?.items)) {
-        setInboxNotifications(notificationsResult.data.items.map((item) => ({
-          id: String(item.id),
-          kind: "activity",
-          title: String(item.title || "Notification"),
-          body: String(item.body || ""),
-          createdAt: new Date(String(item.created_at || Date.now())).getTime(),
-          read: Boolean(item.read_at),
-          href: "/notifications",
-        })));
+        setInboxNotifications(notificationsResult.data.items.map((item) => {
+          const metadata = metadataRecord(item.metadata);
+          const type = String(item.notification_type || "").toUpperCase();
+          const kind: AppInboxNotificationKind = type === "LIKE" || type === "COMMENT_REACTION"
+            ? "like" : type === "COMMENT" ? "comment" : type === "REWARD" ? "reward" : "activity";
+          const postId = Number(metadata.postId);
+          const feedEventId = metadata.eventId ? String(metadata.eventId) : undefined;
+          return {
+            id: String(item.id), kind,
+            title: String(item.title || "Notification"), body: String(item.body || ""),
+            actorName: metadata.actorName ? String(metadata.actorName) : undefined,
+            createdAt: new Date(String(item.created_at || Date.now())).getTime(), read: Boolean(item.read_at),
+            postId: Number.isFinite(postId) && postId > 0 ? postId : undefined,
+            feedEventId,
+            href: String(metadata.href || buildNotificationHref({ postId: Number.isFinite(postId) ? postId : undefined, feedEventId })),
+          };
+        }));
       }
 
       if (rewardsResult.ok && Array.isArray(rewardsResult.data?.items)) {
@@ -1231,6 +1269,18 @@ export function AppProviders({ children }: { children: ReactNode }) {
       return next;
     });
   }, []);
+
+  const persistWereOk = useCallback(async <T,>(path: string, data: T, setter: (value: T) => void) => {
+    if (!isAuthenticatedRef.current || !data) return false;
+    const result = await apiFetch(path, apiJson("POST", { status: "COMPLETED", payload: data }));
+    if (!result.ok) return false;
+    setter(data);
+    return true;
+  }, []);
+  const setHealthData = useCallback((data: HealthData) => persistWereOk("/api/were-ok/health-checks", data, setHealthDataState), [persistWereOk]);
+  const setKytData = useCallback((data: KytData) => persistWereOk("/api/were-ok/kyt-records", data, setKytDataState), [persistWereOk]);
+  const setPreTripData = useCallback((data: PreTripData) => persistWereOk("/api/were-ok/pretrip-checks", data, setPreTripDataState), [persistWereOk]);
+  const setSosData = useCallback((data: SosData) => persistWereOk("/api/were-ok/sos-events", data, setSosDataState), [persistWereOk]);
 
   const confirmQueue = useCallback(() => {
     setQueueConfirmed(true);
@@ -1728,15 +1778,15 @@ export function AppProviders({ children }: { children: ReactNode }) {
     setPersonalRankings(normalizePersonalRankings(rankings));
   }, []);
 
-  const updateRewardsCatalog = useCallback((rewards: RewardCatalogItem[]) => {
+  const updateRewardsCatalog = useCallback(async (rewards: RewardCatalogItem[]) => {
     const normalized = normalizeRewardsCatalog(rewards);
     const previousIds = new Set(rewardsCatalog.map((reward) => reward.id));
     const nextIds = new Set(normalized.map((reward) => reward.id));
-    setRewardsCatalog(normalized);
-    if (isAuthenticatedRef.current) {
+    if (!isAuthenticatedRef.current) return false;
+    try {
       for (const reward of normalized) {
         const existing = previousIds.has(reward.id);
-        void apiFetch(
+        const result = await apiFetch(
           existing ? `/api/safety-culture/rewards/${reward.id}` : "/api/safety-culture/rewards",
           apiJson(existing ? "PATCH" : "POST", {
             code: `REWARD-${reward.id}`,
@@ -1747,21 +1797,28 @@ export function AppProviders({ children }: { children: ReactNode }) {
             metadata: reward,
           }),
         );
+        if (!result.ok) return false;
       }
       for (const reward of rewardsCatalog) {
-        if (!nextIds.has(reward.id)) void apiFetch(`/api/safety-culture/rewards/${reward.id}`, { method: "DELETE" });
+        if (!nextIds.has(reward.id)) {
+          const result = await apiFetch(`/api/safety-culture/rewards/${reward.id}`, { method: "DELETE" });
+          if (!result.ok) return false;
+        }
       }
-    }
+      const refreshed = await apiFetch<{ items: Array<Record<string, unknown>> }>("/api/safety-culture/rewards?pageSize=100");
+      if (!refreshed.ok || !Array.isArray(refreshed.data?.items)) return false;
+      setRewardsCatalog(refreshed.data.items.map(rewardFromApi));
+      return true;
+    } catch { return false; }
   }, [rewardsCatalog]);
 
-  const updateRewardCategories = useCallback((categories: RewardCategory[]) => {
+  const updateRewardCategories = useCallback(async (categories: RewardCategory[]) => {
     const normalized = normalizeRewardCategories(categories);
+    if (!isAuthenticatedRef.current) return false;
+    const result = await apiFetch("/api/safety-settings?key=safety_reward_categories", apiJson("PUT", { value: { categories: normalized } }));
+    if (!result.ok) return false;
     setRewardCategories(normalized);
-    if (isAuthenticatedRef.current) {
-      void apiFetch("/api/safety-settings?key=safety_reward_categories", apiJson("PUT", {
-        value: { categories: normalized },
-      }));
-    }
+    return true;
   }, []);
 
   const updateAwarenessQuestions = useCallback((questions: SafetyAwarenessQuestion[]) => {
@@ -1901,28 +1958,10 @@ export function AppProviders({ children }: { children: ReactNode }) {
   }, [awarenessDoneDate, awarenessHistory, refreshAwarenessAttempts, refreshPointBalance]);
 
   const awardSafetyEffortCompletion = useCallback((sourceId: string, label = "Safety Effort สำเร็จ") => {
-    const occurredAt = Date.now();
-    const points = getSafetyPoint("safetyEffortCompleted");
-    const activityId = `activity-safety-effort-${sourceId}`;
-    const actorName = userDisplayName(currentUserRef.current);
-
-    setCurrentUserPoints((prev) => prev + points);
-    setUserActivityHistory((current) =>
-      normalizeUserActivityHistory([
-        {
-          id: activityId,
-          type: "safety-effort",
-          occurredAt,
-          postId: 0,
-          postAuthor: actorName,
-          postCategory: "Safety Effort",
-          postPreview: label,
-          pointsDelta: points,
-        },
-        ...current.filter((item) => item.id !== activityId),
-      ])
-    );
-  }, []);
+    void sourceId;
+    void label;
+    void refreshPointBalance();
+  }, [refreshPointBalance]);
 
   const redeemPoints = useCallback(
     async (rewardId: number, points: number) => {

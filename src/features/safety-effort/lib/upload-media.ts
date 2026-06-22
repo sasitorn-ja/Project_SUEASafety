@@ -35,3 +35,15 @@ export async function uploadSafetyEffortMedia(
 
   return media;
 }
+
+export async function uploadSafetyEffortMediaSource(
+  source: string,
+  options: Parameters<typeof uploadSafetyEffortMedia>[1] & { fileName: string },
+) {
+  if (!source.startsWith("data:") && !source.startsWith("blob:")) return { id: "", url: source };
+  const response = await fetch(source);
+  if (!response.ok) throw new Error("media_source_read_failed");
+  const blob = await response.blob();
+  const file = new File([blob], options.fileName, { type: blob.type || "image/jpeg" });
+  return uploadSafetyEffortMedia(file, options);
+}

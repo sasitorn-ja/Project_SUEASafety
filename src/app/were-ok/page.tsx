@@ -95,7 +95,7 @@ export default function WereOkPage() {
     opacity: mounted ? undefined : 0,
   });
 
-  const handleSosSubmit = () => {
+  const handleSosSubmit = async () => {
     if (!sosReason) return;
     const reasonText =
       sosReason === "ป่วย"
@@ -103,12 +103,13 @@ export default function WereOkPage() {
         : sosReason === "ล้า"
         ? "อ่อนเพลียสะสม/พักผ่อนน้อย"
         : "ธุระด่วนครอบครัว";
-    actions.setSosData({
+    const saved = await actions.setSosData({
       restHours: sosHours,
       restMinutes: 0,
       reason: reasonText,
       timestamp: new Date().toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit" }),
     });
+    if (!saved) { window.alert("ส่งสัญญาณ SOS ไม่สำเร็จ กรุณาลองใหม่อีกครั้ง"); return; }
     actions.showNotification({
       message: `ส่งสัญญาณ SOS และลงทะเบียนพักกะถัดไปเป็นเวลา ${sosHours} ชั่วโมง สำเร็จแล้ว (สาเหตุ: ${reasonText}) เจ้าหน้าที่บริหารงานขนส่งได้รับการแจ้งเตือนเรียบร้อย`,
       type: "sos",

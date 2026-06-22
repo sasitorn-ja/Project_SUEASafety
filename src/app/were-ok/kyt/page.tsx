@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { getSafetyPoint } from "@/lib/point-rules";
 import { ArrowLeft, Camera, Check, X } from "lucide-react";
+import { uploadSafetyEffortMediaSource } from "@/features/safety-effort/lib/upload-media";
 
 export default function KytPage() {
   const router = useRouter();
@@ -133,8 +134,13 @@ export default function KytPage() {
   const handleSubmit = () => {
     if (!photo || !isPhotoConfirmed || isSubmitted) return;
     setIsSubmitted(true);
-    setTimeout(() => {
-      actions.setKytData({ photo, isPhotoConfirmed: true, isSubmitted: true, hasRetaken });
+    setTimeout(async () => {
+      let persistedPhoto = photo;
+      try {
+        persistedPhoto = (await uploadSafetyEffortMediaSource(photo, { ownerType: "kyt-record", linkType: "evidence", fileName: `kyt-${Date.now()}.jpg` })).url;
+      } catch { setIsSubmitted(false); window.alert("อัปโหลดรูป KYT ไม่สำเร็จ กรุณาลองใหม่อีกครั้ง"); return; }
+      const saved = await actions.setKytData({ photo: persistedPhoto, isPhotoConfirmed: true, isSubmitted: true, hasRetaken });
+      if (!saved) { setIsSubmitted(false); window.alert("บันทึก KYT ไม่สำเร็จ กรุณาลองใหม่อีกครั้ง"); return; }
       actions.completeSteps([1]);
       actions.awardSafetyEffortCompletion(`kyt-${new Date().toISOString().slice(0, 10)}`, "KYT ก่อนขับรถสำเร็จ");
       router.push("/were-ok");
