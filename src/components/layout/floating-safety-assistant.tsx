@@ -484,9 +484,9 @@ export function FloatingSafetyAssistant() {
         {/* กรอบบน: โชว์เต็มตอนยังไม่เริ่มคุย / ยุบเป็นแถบเล็กเมื่อเริ่มสนทนาแล้ว
             (chatMessages ถูกรีเซ็ตเมื่อ remount เช่น โหลดเว็บใหม่ → กลับมาโชว์เต็มเหมือนเดิม) */}
         {chatMessages.length === 0 ? (
-          <div className="relative overflow-hidden px-3 pb-2.5 pt-3">
-            <div className="pointer-events-none absolute -right-8 top-8 h-28 w-28 rounded-full border-[14px] border-white/10" />
-            <ShieldCheck className="pointer-events-none absolute right-5 top-16 h-14 w-14 text-white/10" strokeWidth={1.6} />
+          <div className="relative overflow-hidden px-3 pb-2 pt-2.5">
+            <div className="pointer-events-none absolute -right-8 top-4 h-24 w-24 rounded-full border-[14px] border-white/10" />
+            <ShieldCheck className="pointer-events-none absolute right-5 top-9 h-12 w-12 text-white/10" strokeWidth={1.6} />
             <button
               type="button"
               onClick={() => setOpen(false)}
@@ -496,27 +496,27 @@ export function FloatingSafetyAssistant() {
               <Minus className="h-4 w-4" strokeWidth={3} />
             </button>
 
-            <div className="relative grid grid-cols-[96px_minmax(0,1fr)] items-end gap-2.5 pr-7">
-              <div className="relative h-[116px]">
+            <div className="relative grid grid-cols-[64px_minmax(0,1fr)] items-center gap-2.5 pr-7">
+              <div className="relative h-[68px]">
                 <Image
                   src={mascot("idea2")}
                   alt="น้องวางใจ AI Safety Buddy"
                   width={200}
                   height={250}
-                  className="mascot-motion mascot-motion-compact absolute -left-2.5 bottom-0 h-[132px] w-[100px] max-w-none object-contain drop-shadow-[0_12px_22px_rgba(0,0,0,0.28)]"
+                  className="mascot-motion mascot-motion-compact absolute -left-2 bottom-0 h-[84px] w-[64px] max-w-none object-contain drop-shadow-[0_12px_22px_rgba(0,0,0,0.28)]"
                 />
               </div>
-              <div className="min-w-0 pb-4">
+              <div className="min-w-0">
                 <p className="text-[15px] font-black leading-tight text-white">
                   น้องวางใจ AI Safety Buddy
                 </p>
-                <p className="mt-1 text-[11px] font-bold leading-snug text-white/58">
+                <p className="mt-0.5 text-[11px] font-bold leading-snug text-white/58">
                   ผู้ช่วยแนะนำงานด้านความปลอดภัย
                 </p>
               </div>
             </div>
 
-            <div className="relative ml-[104px] border-t border-white/12 px-0.5 py-2">
+            <div className="relative mt-2 border-t border-white/12 px-0.5 pt-2">
               <div className="flex items-center justify-between gap-3">
                 <span className="flex items-center gap-2 text-[12px] font-black text-white/86">
                   <Trophy className="h-4.5 w-4.5 text-[var(--brand-accent)]" strokeWidth={2.5} />
