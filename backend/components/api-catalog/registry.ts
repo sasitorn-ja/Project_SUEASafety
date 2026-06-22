@@ -914,6 +914,20 @@ export const API_CATALOG_ROUTES = [
   },
   {
     "module": "Safety Culture",
+    "method": "DELETE",
+    "path": "/api/safety-culture/events/:id",
+    "documentedPath": "/api/safety-culture/events/:id",
+    "purpose": "ลบกิจกรรม",
+    "caller": "Admin Event",
+    "whenCalled": "admin delete",
+    "auth": "Admin",
+    "pagination": "No",
+    "responseSizeRisk": "Small",
+    "status": "Existing",
+    "notes": "soft delete"
+  },
+  {
+    "module": "Safety Culture",
     "method": "GET",
     "path": "/api/safety-culture/leaderboard",
     "documentedPath": "/api/safety-culture/leaderboard?scope=&period=",

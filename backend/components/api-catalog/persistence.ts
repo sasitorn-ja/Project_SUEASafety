@@ -1390,13 +1390,14 @@ async function handleCultureRewards(request: NextRequest, method: string, match:
     if (method === "GET" && route === "/api/safety-culture/events/:id") return jsonData({ event: await getRow("safety_culture_events", match.params.id) });
     if (method === "PATCH" && route === "/api/safety-culture/events/:id") return jsonData({ event: await updateCultureEvent(match.params.id, input) });
     if (method === "DELETE" && route === "/api/safety-culture/events/:id") {
-      await withTransaction(async (connection) => {
-        await connection.execute<ResultSetHeader>(
+      const deleted = await withTransaction(async (connection) => {
+        const [result] = await connection.execute<ResultSetHeader>(
           "UPDATE safety_culture_events SET deleted_at = UTC_TIMESTAMP(3), status = 'DRAFT' WHERE id = :id AND deleted_at IS NULL",
           { id: match.params.id },
         );
+        return result.affectedRows > 0;
       });
-      return jsonData({ deleted: true });
+      return jsonData({ deleted });
     }
     if (method === "POST" && route === "/api/safety-culture/events/:id/notify") {
       const event = await getRow("safety_culture_events", match.params.id);
