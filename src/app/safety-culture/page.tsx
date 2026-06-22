@@ -310,6 +310,7 @@ export default function Page() {
     index: number;
   } | null>(null);
   const [expandedPostId, setExpandedPostId] = useState<number | null>(null);
+  const [likedByPostId, setLikedByPostId] = useState<number | null>(null);
   const [liveExpandedPost, setLiveExpandedPost] = useState<Post | null>(null);
   const [expandedActivity, setExpandedActivity] = useState<SafetyCultureFeedEvent | null>(null);
   const [mobileActivityStartIndex, setMobileActivityStartIndex] = useState(0);
@@ -322,6 +323,11 @@ export default function Page() {
         : posts.find((post) => post.id === expandedPostId) ?? null)
     : null;
   const isNotificationPostPopup = Boolean(searchParams?.get("postId"));
+  const likedByPost = likedByPostId == null
+    ? null
+    : posts.find((post) => post.id === likedByPostId)
+      ?? myTeamPosts.find((post) => post.id === likedByPostId)
+      ?? (liveExpandedPost?.id === likedByPostId ? liveExpandedPost : null);
 
   const animStyle = (delay: number) => ({
     animationDelay: `${delay}s`,
@@ -475,6 +481,13 @@ export default function Page() {
               comments: Array.isArray(comments) && comments.length > 0 ? comments : Math.max(0, Number(apiPost.commentCount) || 0),
               points: Math.max(0, Number(apiPost.pointsAwarded) || targetPost?.points || 0),
               hasLiked: Boolean(apiPost.hasLiked),
+              likedBy: Array.isArray(apiPost.likedBy)
+                ? apiPost.likedBy.map((person: { userId?: string; name?: string; profileImageUrl?: string | null }) => ({
+                    userId: String(person.userId || ""),
+                    name: String(person.name || "ผู้ใช้งาน"),
+                    profileImageUrl: person.profileImageUrl || null,
+                  }))
+                : [],
               isYou: targetPost?.isYou,
               createdAt: new Date(apiPost.createdAt).getTime() || targetPost?.createdAt,
               imageData: targetPost?.imageData || null,
@@ -507,11 +520,11 @@ export default function Page() {
   }, [feedEvents, fetchComments, posts, searchParams]);
 
   useEffect(() => {
-    if (!liveExpandedPost || !expandedPostId || liveExpandedPost.id !== expandedPostId) return;
+    if (!expandedPostId) return;
     const syncedPost = posts.find((post) => post.id === expandedPostId);
     if (!syncedPost) return;
     setLiveExpandedPost((current) => current && current.id === expandedPostId ? { ...current, ...syncedPost } : current);
-  }, [expandedPostId, liveExpandedPost, posts]);
+  }, [expandedPostId, posts]);
 
   useEffect(() => {
     if (!expandedPostId) return;
@@ -1061,8 +1074,15 @@ export default function Page() {
                         )}
                       >
                         <span className="inline-block w-[1.15em] text-center leading-none" style={{ color: post.hasLiked ? "#D9383A" : "#8E8A81" }}>❤</span>
-                        <span className="tabular-nums" style={{ color: "#555149" }}>{post.likes}</span>
                       </Button>
+                      <button
+                        type="button"
+                        onClick={() => setLikedByPostId(post.id)}
+                        className="-ml-1.5 tabular-nums text-[13.5px] font-black text-[#555149] hover:underline"
+                        aria-label={`ดูผู้กดถูกใจ ${post.likes} คน`}
+                      >
+                        {post.likes}
+                      </button>
                       <Button
                         variant="ghost"
                         size="sm"
@@ -1421,8 +1441,15 @@ export default function Page() {
                       )}
                     >
                       <span className="inline-block w-[1.15em] text-center leading-none" style={{ color: expandedPost.hasLiked ? "#D9383A" : "#8E8A81" }}>❤</span>
-                      <span className="tabular-nums" style={{ color: "#555149" }}>{expandedPost.likes}</span>
                     </Button>
+                    <button
+                      type="button"
+                      onClick={() => setLikedByPostId(expandedPost.id)}
+                      className="-ml-2 tabular-nums text-[13.5px] font-black text-[#555149] hover:underline"
+                      aria-label={`ดูผู้กดถูกใจ ${expandedPost.likes} คน`}
+                    >
+                      {expandedPost.likes}
+                    </button>
                     <Button
                       variant="ghost"
                       size="sm"
@@ -1569,6 +1596,43 @@ export default function Page() {
                   ส่ง
                 </Button>
               </div>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {likedByPostId != null ? (
+        <div
+          className="fixed inset-0 z-[110] flex items-center justify-center bg-[rgba(20,13,7,0.55)] p-4 animate-[fadeIn_0.2s_ease-out_both]"
+          onClick={() => setLikedByPostId(null)}
+          role="dialog"
+          aria-modal="true"
+          aria-label="ผู้ที่กดถูกใจ"
+        >
+          <div
+            className="w-full max-w-[380px] overflow-hidden rounded-[22px] bg-white shadow-[0_20px_48px_rgba(34,25,11,0.2)]"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="flex items-center justify-between border-b border-[var(--c-eee2cb)] px-5 py-4">
+              <div>
+                <h3 className="text-[18px] font-black text-[var(--c-2f261d)]">ผู้ที่กดถูกใจ</h3>
+                <p className="text-[12px] font-bold text-[#8E8A81]">ทั้งหมด {likedByPost?.likes ?? 0} คน</p>
+              </div>
+              <button type="button" onClick={() => setLikedByPostId(null)} aria-label="ปิด" className="p-2 text-[#667085]">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <div className="max-h-[55vh] overflow-y-auto p-3">
+              {(likedByPost?.likedBy || []).length > 0 ? (
+                (likedByPost?.likedBy || []).map((person) => (
+                  <div key={person.userId} className="flex items-center gap-3 rounded-[14px] px-2 py-2.5">
+                    <ProfileAvatar imageUrl={person.profileImageUrl} text={person.name.charAt(0)} sizeClassName="h-10 w-10" textClassName="text-[14px]" />
+                    <span className="min-w-0 truncate text-[14px] font-black text-[var(--c-33271a)]">{person.name}</span>
+                  </div>
+                ))
+              ) : (
+                <div className="px-4 py-8 text-center text-[13px] font-bold text-[#8E8A81]">ยังไม่มีผู้กดถูกใจโพสต์นี้</div>
+              )}
             </div>
           </div>
         </div>

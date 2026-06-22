@@ -26,6 +26,7 @@ type PostRow = RowDataPacket & {
   like_count: number | string;
   comment_count: number | string;
   has_liked: 0 | 1 | "0" | "1" | boolean;
+  liked_by_json: string | Array<Record<string, unknown>> | null;
   photos_json: string | null;
 };
 
@@ -55,6 +56,7 @@ function mapHasLiked(value: PostRow["has_liked"]) {
 
 function mapPost(row: PostRow) {
   let photos: Array<{ id: string; dataUrl: string; type: string; url: string }> = [];
+  let likedBy: Array<{ userId: string; name: string; profileImageUrl: string | null }> = [];
   if (row.photos_json) {
     try {
       photos = (JSON.parse(row.photos_json) as Array<Record<string, unknown>>)
@@ -71,6 +73,18 @@ function mapPost(row: PostRow) {
         });
     } catch {
       photos = [];
+    }
+  }
+  if (row.liked_by_json) {
+    try {
+      const parsed = typeof row.liked_by_json === "string" ? JSON.parse(row.liked_by_json) : row.liked_by_json;
+      likedBy = (Array.isArray(parsed) ? parsed : []).map((person) => ({
+        userId: String(person.userId || ""),
+        name: String(person.name || "ผู้ใช้งาน"),
+        profileImageUrl: typeof person.profileImageUrl === "string" ? person.profileImageUrl : null,
+      }));
+    } catch {
+      likedBy = [];
     }
   }
 
@@ -94,6 +108,7 @@ function mapPost(row: PostRow) {
     createdAt: new Date(row.created_at).toISOString(),
     updatedAt: new Date(row.updated_at).toISOString(),
     likeCount: Number(row.like_count || 0),
+    likedBy,
     commentCount: Number(row.comment_count || 0),
     hasLiked: mapHasLiked(row.has_liked),
     photos,
@@ -183,6 +198,18 @@ const SELECT_POSTS_SQL = `
     (SELECT COUNT(*) FROM reactions r WHERE r.post_id = p.id) AS like_count,
     (SELECT COUNT(*) FROM comments c WHERE c.post_id = p.id AND c.deleted_at IS NULL) AS comment_count,
     EXISTS(SELECT 1 FROM reactions vr WHERE vr.post_id = p.id AND vr.user_id = :viewerId) AS has_liked,
+    (
+      SELECT JSON_ARRAYAGG(
+        JSON_OBJECT(
+          'userId', CAST(lu.id AS CHAR),
+          'name', COALESCE(NULLIF(lu.name_th, ''), NULLIF(lu.name_en, ''), lu.email, 'ผู้ใช้งาน'),
+          'profileImageUrl', lu.profile_image_url
+        )
+      )
+      FROM reactions lr
+      JOIN users lu ON lu.id = lr.user_id
+      WHERE lr.post_id = p.id AND lu.deleted_at IS NULL
+    ) AS liked_by_json,
     (
       SELECT CONCAT(
         '[',
@@ -641,7 +668,7 @@ export async function deleteComment(commentId: string, authorId: string) {
 export async function setReaction(postId: string, userId: string, reactionType = "LIKE") {
   await withTransaction(async (connection) => {
     const [existingRows] = await connection.execute<RowDataPacket[]>(
-      "SELECT id FROM reactions WHERE post_id=:postId AND user_id=:userId LIMIT 1", { postId, userId },
+      "SELECT reaction_type FROM reactions WHERE post_id=:postId AND user_id=:userId LIMIT 1", { postId, userId },
     );
     const isNew = !existingRows[0];
 
@@ -654,8 +681,8 @@ export async function setReaction(postId: string, userId: string, reactionType =
       );
     } else {
       await connection.execute<ResultSetHeader>(
-        "UPDATE reactions SET reaction_type=:reactionType WHERE id=:id",
-        { reactionType, id: existingRows[0].id },
+        "UPDATE reactions SET reaction_type=:reactionType WHERE post_id=:postId AND user_id=:userId",
+        { reactionType, postId, userId },
       );
     }
 

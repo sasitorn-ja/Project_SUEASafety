@@ -82,6 +82,11 @@ export type Post = {
   comments: number | Comment[];
   points: number;
   hasLiked: boolean;
+  likedBy?: Array<{
+    userId: string;
+    name: string;
+    profileImageUrl?: string | null;
+  }>;
   isYou?: boolean;
   createdAt?: number;
   imageData?: string | null;
@@ -426,6 +431,7 @@ function normalizePosts(posts: Post[]) {
     likes: Math.max(0, Number(post.likes) || 0),
     points: Math.max(0, Number(post.points) || 0),
     hasLiked: Boolean(post.hasLiked),
+    likedBy: Array.isArray(post.likedBy) ? post.likedBy : [],
     photos: Array.isArray(post.photos)
       ? post.photos
           .filter((photo) => photo?.dataUrl)
@@ -915,6 +921,7 @@ type ApiPost = {
   likeCount: number;
   commentCount: number;
   hasLiked: boolean;
+  likedBy?: Array<{ userId: string; name: string; profileImageUrl?: string | null }>;
   photos?: Array<{ id: string; dataUrl?: string; url?: string; type?: string }>;
 };
 
@@ -1011,6 +1018,13 @@ function postFromApi(post: ApiPost): Post {
     comments: Math.max(0, Number(post.commentCount) || 0),
     points: Math.max(0, Number(post.pointsAwarded) || getSafetyPoint("safetyPostApproved")),
     hasLiked: Boolean(post.hasLiked),
+    likedBy: Array.isArray(post.likedBy)
+      ? post.likedBy.map((person) => ({
+          userId: String(person.userId || ""),
+          name: repairMojibakeText(person.name) || "ผู้ใช้งาน",
+          profileImageUrl: person.profileImageUrl || null,
+        }))
+      : [],
     createdAt,
     authorId: post.authorId ? String(post.authorId) : undefined,
     authorEmail: post.authorEmail ?? null,
@@ -1627,7 +1641,12 @@ export function AppProviders({ children }: { children: ReactNode }) {
             setPosts((current) =>
               current.map((post) =>
                 post.id === postId
-                  ? { ...post, likes: syncedPostBase.likes, hasLiked: syncedPostBase.hasLiked }
+                  ? {
+                      ...post,
+                      likes: syncedPostBase.likes,
+                      hasLiked: syncedPostBase.hasLiked,
+                      likedBy: syncedPostBase.likedBy,
+                    }
                   : post
               )
             );

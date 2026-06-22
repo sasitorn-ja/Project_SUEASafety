@@ -539,7 +539,7 @@ export default function AdminRewardPage() {
 
   const [draftRewards, setDraftRewards] = useState<RewardCatalogItem[]>(rewardsCatalog);
   const [draftCategories, setDraftCategories] = useState<RewardCategory[]>(rewardCategories);
-  const [rewardSaveState, setRewardSaveState] = useState<"idle" | "saved">("idle");
+  const [rewardSaveState, setRewardSaveState] = useState<"idle" | "saving" | "saved">("idle");
   const [categoryNotice, setCategoryNotice] = useState<string | null>(null);
   const [recentCategoryValue, setRecentCategoryValue] = useState<string | null>(null);
   const [editingReward, setEditingReward] = useState<RewardEditorState | null>(null);
@@ -715,9 +715,11 @@ export default function AdminRewardPage() {
   }, [draftRewards, pendingCategoryDelete]);
 
   const commitRewards = async (rewards: RewardCatalogItem[]) => {
+    setRewardSaveState("saving");
     const saved = await updateRewardsCatalog(rewards);
     if (!saved) {
-      window.alert("บันทึกรางวัลไม่สำเร็จ กรุณาลองใหม่อีกครั้ง");
+      setRewardSaveState("idle");
+      window.alert("บันทึกรางวัลไม่สำเร็จ กรุณาตรวจสอบชื่อและคะแนนแล้วลองใหม่อีกครั้ง");
       return false;
     }
     setRewardSaveState("saved");
@@ -755,6 +757,14 @@ export default function AdminRewardPage() {
 
   const confirmRewardEdit = async () => {
     if (!editingReward) return;
+    if (!editingReward.name.trim()) {
+      window.alert("กรุณาระบุชื่อรางวัล");
+      return;
+    }
+    if (!Number.isFinite(Number(editingReward.points)) || Number(editingReward.points) <= 0) {
+      window.alert("คะแนนที่ใช้แลกต้องมากกว่า 0");
+      return;
+    }
 
     const payload: RewardCatalogItem = {
       id: editingReward.id,
@@ -1591,7 +1601,7 @@ export default function AdminRewardPage() {
           >
             <DialogHeader className="border-b border-[var(--border)] bg-[linear-gradient(180deg,var(--brand-soft)_0%,var(--brand-soft)_100%)] px-5 pt-5 pb-4 sm:px-6 sm:pt-6 sm:pb-5 lg:px-8">
               <DialogTitle className="text-[24px] font-black text-[var(--brand-text)] sm:text-[30px]">
-                {editingReward?.mode === "create" ? "Create Reward" : "Edit Reward"}
+                {editingReward?.mode === "create" ? "สร้างรางวัลใหม่" : "แก้ไขรางวัล"}
               </DialogTitle>
               <DialogDescription className="max-w-[840px] text-[13px] font-bold leading-relaxed text-[#8E8A81] sm:text-[14px]">
                 {editingReward?.mode === "create"
@@ -2107,9 +2117,14 @@ export default function AdminRewardPage() {
               <div className="flex w-full justify-end sm:pr-1 lg:pr-2">
                 <Button
                   onClick={confirmRewardEdit}
+                  disabled={rewardSaveState === "saving"}
                   className="h-10 rounded-full bg-[var(--brand-text)] px-4 text-[13px] text-white hover:bg-[var(--c-4a280f)]"
                 >
-                  {editingReward?.mode === "create" ? "Confirm Create" : "Confirm Update"}
+                  {rewardSaveState === "saving"
+                    ? "กำลังบันทึก..."
+                    : editingReward?.mode === "create"
+                      ? "ยืนยันสร้างรางวัล"
+                      : "บันทึกการแก้ไข"}
                 </Button>
               </div>
             </DialogFooter>

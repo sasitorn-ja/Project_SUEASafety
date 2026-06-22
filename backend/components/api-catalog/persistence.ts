@@ -2,7 +2,7 @@ import "server-only";
 
 import fs from "node:fs/promises";
 import path from "node:path";
-import { createHash } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 import type { ResultSetHeader, RowDataPacket } from "mysql2/promise";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -1487,7 +1487,18 @@ async function handleCultureRewards(request: NextRequest, method: string, match:
   }
   if (route === "/api/safety-culture/rewards") {
     if (method === "GET") return jsonData(await listRows("rewards", request, { where: ["status = 'ACTIVE'"], orderBy: "points_required, id" }));
-    if (method === "POST") return jsonData({ reward: await insertRow("rewards", input, { status: "ACTIVE", stock_qty: 0 }) }, { status: 201 });
+    if (method === "POST") {
+      const pointsRequired = Number(input.pointsRequired ?? input.points_required);
+      if (!String(input.name || "").trim()) return jsonError("reward_name_required");
+      if (!Number.isFinite(pointsRequired) || pointsRequired <= 0) return jsonError("reward_points_must_be_greater_than_zero");
+      return jsonData({
+        reward: await insertRow("rewards", {
+          ...input,
+          code: `REWARD-${randomUUID()}`,
+          pointsRequired,
+        }, { status: "ACTIVE", stock_qty: 0 }),
+      }, { status: 201 });
+    }
   }
   if (method === "PATCH" && route === "/api/safety-culture/rewards/:id") return jsonData({ reward: await updateRow("rewards", match.params.id, input) });
   if (method === "DELETE" && route === "/api/safety-culture/rewards/:id") return jsonData(await deleteRow("rewards", match.params.id));
