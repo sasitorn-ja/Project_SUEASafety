@@ -1174,7 +1174,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
           const kind: AppInboxNotificationKind = type === "LIKE" || type === "COMMENT_REACTION"
             ? "like" : type === "COMMENT" ? "comment" : type === "REWARD" ? "reward" : "activity";
           const postId = Number(metadata.postId ?? metadata.post_id);
-          const rawEventId = metadata.eventId ?? metadata.event_id ?? metadata.activityId ?? metadata.feedEventId;
+          const rawEventId = metadata.eventId ?? metadata.event_id ?? metadata.activityId ?? metadata.feedEventId ?? item.target_event_id;
           const notificationTitle = String(item.title || "Notification");
           const fallbackEvent = kind === "activity"
             ? backendFeedEvents.find((event) => event.title.trim() === notificationTitle.trim())

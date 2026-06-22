@@ -1770,11 +1770,22 @@ async function handleNotifications(request: NextRequest, method: string, match: 
   if (method === "GET" && route === "/api/notifications") {
     const limit = cursorLimit(request);
     const cursor = request.nextUrl.searchParams.get("cursor");
-    const where = ["user_id = :userId"];
+    const where = ["n.user_id = :userId"];
     const params: Record<string, unknown> = { userId, limit };
-    if (cursor) { where.push("id < :cursor"); params.cursor = cursor; }
+    if (cursor) { where.push("n.id < :cursor"); params.cursor = cursor; }
     const rows = await queryRows<DbRow>(
-      `SELECT * FROM notifications WHERE ${where.join(" AND ")} ORDER BY id DESC LIMIT :limit`,
+      `SELECT n.*,
+        (
+          SELECT e.id
+          FROM safety_culture_events e
+          WHERE n.notification_type = 'EVENT' AND e.title = n.title
+          ORDER BY ABS(TIMESTAMPDIFF(SECOND, e.created_at, n.created_at)) ASC, e.id DESC
+          LIMIT 1
+        ) AS target_event_id
+       FROM notifications n
+       WHERE ${where.join(" AND ")}
+       ORDER BY n.id DESC
+       LIMIT :limit`,
       params,
     );
     return jsonData({ items: rows.map(serializeRow), nextCursor: rows.length === limit ? String(rows[rows.length - 1].id) : null });
