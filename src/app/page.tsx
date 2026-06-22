@@ -173,17 +173,6 @@ function LegacyHomePage() {
   })();
   const weeklyTrendMax = Math.max(1, ...weeklyTrend);
   const hasWeeklyTrend = weeklyTrend.some((value) => value > 0);
-  const isoWeekNumber = (() => {
-    const d = bangkokDate(eventNow);
-    const target = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
-    const dayNr = (target.getUTCDay() + 6) % 7;
-    target.setUTCDate(target.getUTCDate() - dayNr + 3);
-    const firstThursday = new Date(Date.UTC(target.getUTCFullYear(), 0, 4));
-    const firstDayNr = (firstThursday.getUTCDay() + 6) % 7;
-    firstThursday.setUTCDate(firstThursday.getUTCDate() - firstDayNr + 3);
-    return 1 + Math.round((target.getTime() - firstThursday.getTime()) / WEEK_MS);
-  })();
-
   // เลเวล/XP — derive จากคะแนนรวมจริง (currentUserPoints)
   // TODO(API): ถ้ามีระบบ XP/level จริงใน backend ให้ผูกแทนสูตร derive นี้
   const LEVEL_TITLES = ["Safety Rookie", "Safety Cadet", "Safety Guard", "Safety Pro", "Safety Master", "Safety Legend"];
@@ -296,9 +285,6 @@ function LegacyHomePage() {
               <p className="text-[12px] font-extrabold uppercase tracking-[0.14em] text-[var(--brand-hero-label)]">
                 เทรนด์คะแนน 8 สัปดาห์
               </p>
-              <span className="rounded-lg border border-white/20 bg-white/10 px-2 py-0.5 text-[10.5px] font-black text-white/85">
-                สัปดาห์ที่ {isoWeekNumber}
-              </span>
             </div>
 
             {/* SVG line chart — derived from real weekly points */}

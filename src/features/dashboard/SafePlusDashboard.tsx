@@ -46,14 +46,6 @@ function formatThaiDate(dateKey: string) {
   }).format(date);
 }
 
-function weekNumber(date: Date) {
-  const utc = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
-  const day = utc.getUTCDay() || 7;
-  utc.setUTCDate(utc.getUTCDate() + 4 - day);
-  const yearStart = new Date(Date.UTC(utc.getUTCFullYear(), 0, 1));
-  return Math.ceil((((utc.getTime() - yearStart.getTime()) / 86400000) + 1) / 7);
-}
-
 function StatTile({
   value,
   label,
@@ -208,7 +200,6 @@ export default function SafePlusDashboard() {
         <div className={styles.trendCard}>
           <div className={styles.trendHeader}>
             <h2>แนวโน้มคะแนน 8 สัปดาห์</h2>
-            <span>สัปดาห์ที่ <b>{weekNumber(new Date())}</b></span>
           </div>
           <div className={styles.chart}>
             <svg viewBox="0 0 620 130" role="img" aria-label="กราฟคะแนน 8 สัปดาห์">
