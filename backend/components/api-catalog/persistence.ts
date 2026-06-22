@@ -1778,7 +1778,8 @@ async function handleNotifications(request: NextRequest, method: string, match: 
         (
           SELECT e.id
           FROM safety_culture_events e
-          WHERE n.notification_type = 'EVENT' AND e.title = n.title
+          WHERE n.notification_type = 'EVENT'
+            AND e.title COLLATE utf8mb4_unicode_ci = n.title COLLATE utf8mb4_unicode_ci
           ORDER BY ABS(TIMESTAMPDIFF(SECOND, e.created_at, n.created_at)) ASC, e.id DESC
           LIMIT 1
         ) AS target_event_id
