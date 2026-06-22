@@ -730,6 +730,56 @@ function normalizeFeedEvents(events: SafetyCultureFeedEvent[]): SafetyCultureFee
   }));
 }
 
+function metadataRecord(value: unknown): Record<string, any> {
+  if (!value) return {};
+  if (typeof value === "object" && !Array.isArray(value)) return value as Record<string, any>;
+  if (typeof value !== "string") return {};
+  try {
+    const parsed = JSON.parse(value);
+    return parsed && typeof parsed === "object" && !Array.isArray(parsed) ? parsed : {};
+  } catch {
+    return {};
+  }
+}
+
+function dateOnly(value: unknown) {
+  if (!value) return "";
+  return String(value).slice(0, 10);
+}
+
+function feedEventFromApi(item: Record<string, unknown>, index: number): SafetyCultureFeedEvent {
+  const metadata = metadataRecord(item.metadata);
+  const dbStatus = String(item.status || "").toUpperCase();
+  const metadataStatus = metadata.status === "closed" || metadata.status === "open" ? metadata.status : undefined;
+  const status: SafetyCultureFeedEventStatus = dbStatus === "ACTIVE" ? (metadataStatus || "open") : "closed";
+  const published =
+    typeof metadata.published === "boolean"
+      ? metadata.published
+      : dbStatus !== "DRAFT";
+
+  return normalizeFeedEvents([
+    {
+      id: String(item.id || metadata.id || `activity-${index + 1}`),
+      title: String(metadata.title || item.title || ""),
+      subtitle: String(metadata.subtitle || item.location_text || ""),
+      summary: String(metadata.summary || item.description || ""),
+      details: String(metadata.details || metadata.summary || item.description || ""),
+      imageSrc: typeof metadata.imageSrc === "string" ? metadata.imageSrc : null,
+      imageText: String(metadata.imageText || metadata.title || item.title || "EVENT"),
+      startDate: dateOnly(metadata.startDate || item.event_start_at),
+      endDate: dateOnly(metadata.endDate || item.event_end_at),
+      dateLabel: String(metadata.dateLabel || ""),
+      points: Number(metadata.points || 0),
+      status,
+      published,
+      bonusMode: metadata.bonusMode === "multiplier" ? "multiplier" : "fixed",
+      multiplier: Number(metadata.multiplier || 1),
+      fixedPoints: Number(metadata.fixedPoints || 0),
+      enabledActions: Array.isArray(metadata.enabledActions) ? metadata.enabledActions : [],
+    },
+  ])[0];
+}
+
 function createDefaultFeedEvents() {
   return normalizeFeedEvents(DEFAULT_FEED_EVENTS);
 }
@@ -1129,25 +1179,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
       }
 
       if (eventsResult.ok && Array.isArray(eventsResult.data?.items)) {
-        setFeedEvents(eventsResult.data.items.map((item) => ({
-          id: String(item.id),
-          title: String(item.title || ""),
-          subtitle: String(item.location_text || ""),
-          summary: String(item.description || ""),
-          details: String(item.description || ""),
-          imageSrc: null,
-          imageText: String(item.title || "EVENT"),
-          startDate: item.event_start_at ? String(item.event_start_at).slice(0, 10) : undefined,
-          endDate: item.event_end_at ? String(item.event_end_at).slice(0, 10) : undefined,
-          dateLabel: "",
-          points: 0,
-          status: item.status === "ACTIVE" ? "open" : "closed",
-          published: item.status !== "DRAFT",
-          bonusMode: "fixed",
-          multiplier: 1,
-          fixedPoints: 0,
-          enabledActions: [],
-        })));
+        setFeedEvents(eventsResult.data.items.map(feedEventFromApi));
       }
     }
 
@@ -1588,6 +1620,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
     if (isAuthenticatedRef.current) {
       for (const event of normalized) {
         const existing = previousIds.has(event.id) && /^\d+$/.test(event.id);
+        const status = !event.published ? "DRAFT" : event.status === "closed" ? "INACTIVE" : "ACTIVE";
         void apiFetch(
           existing ? `/api/safety-culture/events/${event.id}` : "/api/safety-culture/events",
           apiJson(existing ? "PATCH" : "POST", {
@@ -1595,10 +1628,16 @@ export function AppProviders({ children }: { children: ReactNode }) {
             description: event.details || event.summary,
             eventStartAt: event.startDate || null,
             eventEndAt: event.endDate || null,
-            status: event.published ? "ACTIVE" : "DRAFT",
+            status,
             metadata: event,
           }),
         );
+      }
+      const nextIds = new Set(normalized.map((event) => event.id));
+      for (const event of feedEvents) {
+        if (/^\d+$/.test(event.id) && !nextIds.has(event.id)) {
+          void apiFetch(`/api/safety-culture/events/${event.id}`, { method: "DELETE" });
+        }
       }
     }
   }, [feedEvents]);

@@ -181,7 +181,7 @@ function serializeRow(row: Record<string, unknown>) {
     if (value instanceof Date) output[key] = value.toISOString();
     else if (typeof value === "bigint") output[key] = value.toString();
     else if (Buffer.isBuffer(value)) output[key] = value.toString();
-    else if (typeof value === "string" && (key.endsWith("_json") || key === "payload" || key.endsWith("_data"))) {
+    else if (typeof value === "string" && (key.endsWith("_json") || key === "payload" || key === "metadata" || key.endsWith("_data"))) {
       try {
         output[key] = JSON.parse(value);
       } catch {
@@ -1389,6 +1389,15 @@ async function handleCultureRewards(request: NextRequest, method: string, match:
     if (method === "POST" && route === "/api/safety-culture/events") return jsonData({ event: await createCultureEvent(input, userId) }, { status: 201 });
     if (method === "GET" && route === "/api/safety-culture/events/:id") return jsonData({ event: await getRow("safety_culture_events", match.params.id) });
     if (method === "PATCH" && route === "/api/safety-culture/events/:id") return jsonData({ event: await updateCultureEvent(match.params.id, input) });
+    if (method === "DELETE" && route === "/api/safety-culture/events/:id") {
+      await withTransaction(async (connection) => {
+        await connection.execute<ResultSetHeader>(
+          "UPDATE safety_culture_events SET deleted_at = UTC_TIMESTAMP(3), status = 'DRAFT' WHERE id = :id AND deleted_at IS NULL",
+          { id: match.params.id },
+        );
+      });
+      return jsonData({ deleted: true });
+    }
     if (method === "POST" && route === "/api/safety-culture/events/:id/notify") {
       const event = await getRow("safety_culture_events", match.params.id);
       if (!event) return jsonError("event_not_found", 404);

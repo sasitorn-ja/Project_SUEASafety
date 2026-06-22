@@ -79,17 +79,13 @@ function LegacyHomePage() {
     : hasRewards ? 100 : 0;
   const remaining = nextReward ? nextReward.points - currentUserPoints : 0;
 
-  // อีเวนต์ที่กำลังจัด: ใช้เฉพาะ feedEvents จาก API จริงเท่านั้น
+  // อีเวนต์ที่กำลังจัด: ใช้ชุดเดียวกับ Feed เพื่อสะท้อนข้อมูลที่ Admin เพิ่งบันทึกทันที
   const activeFeedEvents = feedEvents
     .filter((event) => {
       if (!event.published || event.status !== "open") return false;
-      const start = getDateTimestamp(event.startDate, false);
-      const end = getDateTimestamp(event.endDate, true);
-      if (start !== null && eventNow < start) return false;
-      if (end !== null && eventNow > end) return false;
       return true;
     })
-    .sort((left, right) => (getDateTimestamp(left.startDate, false) ?? 0) - (getDateTimestamp(right.startDate, false) ?? 0));
+    .sort((left, right) => (getDateTimestamp(right.startDate, false) ?? 0) - (getDateTimestamp(left.startDate, false) ?? 0));
   const activeEvent = activeFeedEvents[0] ?? null;
   const activeEventEndAt = getDateTimestamp(activeEvent?.endDate, true);
   const eventBonusLabel = activeEvent
