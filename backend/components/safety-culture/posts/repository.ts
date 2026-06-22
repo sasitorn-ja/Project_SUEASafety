@@ -643,27 +643,38 @@ export async function setReaction(postId: string, userId: string, reactionType =
     const [existingRows] = await connection.execute<RowDataPacket[]>(
       "SELECT id FROM reactions WHERE post_id=:postId AND user_id=:userId LIMIT 1", { postId, userId },
     );
-    await connection.execute<ResultSetHeader>(
-      `
-        INSERT INTO reactions (post_id, user_id, reaction_type)
-        VALUES (:postId, :userId, :reactionType)
-        ON DUPLICATE KEY UPDATE
-          reaction_type = VALUES(reaction_type),
-          created_at = created_at
-      `,
-      { postId, userId, reactionType },
-    );
-    if (!existingRows[0]) {
-      const [owners] = await connection.execute<RowDataPacket[]>(
-        `SELECT p.author_id, u.name_th actor_name FROM posts p LEFT JOIN users u ON u.id=:userId
-         WHERE p.id=:postId AND p.deleted_at IS NULL LIMIT 1`, { postId, userId },
+    const isNew = !existingRows[0];
+
+    // Plain INSERT/UPDATE instead of "ON DUPLICATE KEY UPDATE" so this works even
+    // when the legacy reactions table has no UNIQUE(post_id, user_id) key.
+    if (isNew) {
+      await connection.execute<ResultSetHeader>(
+        "INSERT INTO reactions (post_id, user_id, reaction_type) VALUES (:postId, :userId, :reactionType)",
+        { postId, userId, reactionType },
       );
-      const owner = owners[0] as (RowDataPacket & { author_id?: string; actor_name?: string }) | undefined;
-      if (owner?.author_id) await createNotification(connection, {
-        userId: String(owner.author_id), actorId: userId, type: "LIKE",
-        title: `${owner.actor_name || "มีผู้ใช้"} กดถูกใจโพสต์ของคุณ`, body: "กดเพื่อดูโพสต์",
-        metadata: { postId, href: `/safety-culture?postId=${postId}` },
-      });
+    } else {
+      await connection.execute<ResultSetHeader>(
+        "UPDATE reactions SET reaction_type=:reactionType WHERE id=:id",
+        { reactionType, id: existingRows[0].id },
+      );
+    }
+
+    if (isNew) {
+      // A failure to notify the author must never block the like itself.
+      try {
+        const [owners] = await connection.execute<RowDataPacket[]>(
+          `SELECT p.author_id, u.name_th actor_name FROM posts p LEFT JOIN users u ON u.id=:userId
+           WHERE p.id=:postId AND p.deleted_at IS NULL LIMIT 1`, { postId, userId },
+        );
+        const owner = owners[0] as (RowDataPacket & { author_id?: string; actor_name?: string }) | undefined;
+        if (owner?.author_id) await createNotification(connection, {
+          userId: String(owner.author_id), actorId: userId, type: "LIKE",
+          title: `${owner.actor_name || "มีผู้ใช้"} กดถูกใจโพสต์ของคุณ`, body: "กดเพื่อดูโพสต์",
+          metadata: { postId, href: `/safety-culture?postId=${postId}` },
+        });
+      } catch {
+        // ignore notification errors
+      }
     }
   });
 

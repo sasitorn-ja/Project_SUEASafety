@@ -124,7 +124,8 @@ export function formatPostSubtext(post: {
   if (!dateTime) return post.subtext;
 
   const parts = (post.subtext || "").split(/\s*·\s*/);
-  const location = post.location || parts[0] || "BPI-04";
-  const team = post.team || parts[2] || "Yellow";
-  return `${location} · ${dateTime} · ${team}`;
+  const location = post.location || parts[0] || "Safety Culture";
+  // Only show a team when the post actually has one (no fake "Yellow" default).
+  const team = (post.team || "").trim();
+  return team ? `${location} · ${dateTime} · ${team}` : `${location} · ${dateTime}`;
 }

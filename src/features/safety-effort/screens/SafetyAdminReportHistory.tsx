@@ -126,7 +126,15 @@ export default function SafetyAdminReportHistory() {
         if (res.ok) {
           const payload = await res.json().catch(() => null);
           const items = payload?.data?.items;
-          if (Array.isArray(items) && !cancelled) setSubmissions(items);
+          if (Array.isArray(items) && !cancelled) {
+            // API returns name/email/pms; this screen renders actorName/actorEmail/actorCode.
+            setSubmissions(items.map((it) => ({
+              ...it,
+              actorName: it.actorName || it.name || "",
+              actorEmail: it.actorEmail || it.email || "",
+              actorCode: it.actorCode || it.pms || "",
+            })));
+          }
         }
       } catch { if (!cancelled) setSubmissions([]); }
     })();

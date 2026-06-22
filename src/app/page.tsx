@@ -277,52 +277,7 @@ function LegacyHomePage() {
           </div>
 
           <div className="flex flex-col justify-center border-white/10 md:border-l md:pl-4 xl:pl-6">
-            <div className="flex items-center justify-between gap-2">
-              <p className="text-[12px] font-extrabold uppercase tracking-[0.14em] text-[var(--brand-hero-label)]">
-                เทรนด์คะแนน 8 สัปดาห์
-              </p>
-            </div>
-
-            {/* SVG line chart — derived from real weekly points */}
-            <div className="mt-3">
-              {hasWeeklyTrend ? (
-                <svg viewBox="0 0 320 90" preserveAspectRatio="none" className="h-[78px] w-full overflow-visible">
-                  {[0, 0.5, 1].map((g) => (
-                    <line key={g} x1="0" x2="320" y1={6 + g * 72} y2={6 + g * 72} stroke="rgba(255,255,255,0.14)" strokeWidth="1" />
-                  ))}
-                  {(() => {
-                    const pts = weeklyTrend.map((v, i) => {
-                      const x = (i / 7) * 320;
-                      const y = 78 - (v / weeklyTrendMax) * 66;
-                      return [x, y] as const;
-                    });
-                    const path = pts.map(([x, y], i) => `${i === 0 ? "M" : "L"}${x.toFixed(1)},${y.toFixed(1)}`).join(" ");
-                    const area = `${path} L320,84 L0,84 Z`;
-                    return (
-                      <>
-                        <path d={area} fill="rgba(255,255,255,0.10)" />
-                        <path d={path} fill="none" stroke="var(--brand-accent)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-                        {pts.map(([x, y], i) => (
-                          <circle key={i} cx={x} cy={y} r="3.2" fill="#fff" stroke="var(--brand-accent)" strokeWidth="2" />
-                        ))}
-                      </>
-                    );
-                  })()}
-                </svg>
-              ) : (
-                <div className="rounded-[12px] border border-dashed border-white/25 bg-white/8 px-3 py-4 text-center">
-                  <p className="text-[11.5px] font-black text-white/80">ยังไม่มีคะแนนในช่วง 8 สัปดาห์</p>
-                  <p className="mt-1 text-[10px] font-bold text-white/55">เริ่มทำกิจกรรมเพื่อสร้างกราฟเทรนด์</p>
-                </div>
-              )}
-              <div className="mt-1 flex justify-between text-[8.5px] font-bold text-white/50">
-                {weeklyTrend.map((_, i) => (
-                  <span key={i}>สัปดาห์ {i + 1}</span>
-                ))}
-              </div>
-            </div>
-
-            <div className="mt-3 grid grid-cols-2 gap-2.5">
+            <div className="grid grid-cols-2 gap-2.5">
               <div className="rounded-[10px] border border-white/20 bg-white/10 px-3 py-2">
                 <div className="flex items-center gap-1.5 text-[15px] font-black">
                   <Medal className="h-4 w-4 text-[var(--brand-hero-label)]" strokeWidth={2.4} />

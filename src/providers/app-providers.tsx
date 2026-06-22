@@ -1620,17 +1620,16 @@ export function AppProviders({ children }: { children: ReactNode }) {
             const syncedPostResult = await apiFetch<{ post: ApiPost }>(`/api/safety-culture/posts/${postId}`);
             if (!syncedPostResult.ok || !syncedPostResult.data?.post) return;
 
-            const viewerId = currentUserRef.current?.id ? String(currentUserRef.current.id) : null;
+            // Reconcile only the reaction fields with the server. Replacing the
+            // whole post (and reloading its comments) on every tap made the card
+            // visibly "jump"; the optimistic update already keeps the rest in sync.
             const syncedPostBase = postFromApi(syncedPostResult.data.post);
-            const syncedComments = await loadPostComments(syncedPostBase.id, viewerId).catch(() => null);
-            const syncedPost = {
-              ...syncedPostBase,
-              isYou: Boolean(viewerId && syncedPostBase.authorId && syncedPostBase.authorId === viewerId),
-              comments: syncedComments ?? syncedPostBase.comments,
-            };
-
             setPosts((current) =>
-              current.map((post) => (post.id === postId ? { ...post, ...syncedPost } : post))
+              current.map((post) =>
+                post.id === postId
+                  ? { ...post, likes: syncedPostBase.likes, hasLiked: syncedPostBase.hasLiked }
+                  : post
+              )
             );
             return;
           }

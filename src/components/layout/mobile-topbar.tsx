@@ -17,7 +17,6 @@ import {
   Trophy,
   UserRound,
   UsersRound,
-  Bell,
   X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -265,15 +264,6 @@ export function MobileTopbar({ hidden = false }: { hidden?: boolean }) {
             </div>
           </NavTo>
         </div>
-
-        <NavTo
-          href="/notifications"
-          className="home-mobile-bell relative flex h-11 w-11 flex-shrink-0 items-center justify-center text-white"
-          aria-label="Notifications"
-        >
-          <Bell className="h-7 w-7" strokeWidth={2.25} />
-          <span className="absolute right-[5px] top-[4px] h-2.5 w-2.5 rounded-full border-2 border-[#031a3b] bg-[#24d6ff]" />
-        </NavTo>
       </div>
 
       {open && (

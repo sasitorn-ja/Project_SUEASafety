@@ -814,6 +814,12 @@ async function handleActivitiesAssessments(request: NextRequest, method: string,
   if (method === "POST" && route === "/api/safety-effort/submissions") {
     if (!userId) return jsonError("unauthorized", 401);
     const answers = Array.isArray(input.answeredItems || input.answers) ? (input.answeredItems || input.answers) : [];
+    const submitter = (await getRow("users", userId)) as Record<string, unknown> | null;
+    const submitterName = input.name
+      || (submitter ? (submitter.name_th || submitter.name_en || submitter.username) : null)
+      || null;
+    const submitterEmail = input.email || (submitter ? submitter.email : null) || null;
+    const submitterPms = input.pms || (submitter ? submitter.employee_no : null) || null;
     const id = await withTransaction(async (connection) => {
       const [result] = await connection.execute<ResultSetHeader>(
         `INSERT INTO safety_effort_submissions
@@ -833,9 +839,9 @@ async function handleActivitiesAssessments(request: NextRequest, method: string,
           locationName: input.locationName || input.location_name || null,
           locationTag: input.locationTag || input.location_tag || null,
           submissionDate: input.date || input.submissionDate || input.submission_date || null,
-          pms: input.pms || null,
-          name: input.name || null,
-          email: input.email || null,
+          pms: submitterPms,
+          name: submitterName,
+          email: submitterEmail,
           safetyContactText: input.safetyContactText || input.safety_contact_text || null,
           answersJson: JSON.stringify(answers),
           metadata: JSON.stringify(input.metadata || {}),
@@ -850,22 +856,28 @@ async function handleActivitiesAssessments(request: NextRequest, method: string,
     return jsonData({ submission: safetyEffortSubmissionDto(await getRow("safety_effort_submissions", id)), balance }, { status: 201 });
   }
   if (method === "GET" && ["/api/safety-effort/submissions", "/api/safety-effort/submissions/me"].includes(route)) {
-    const where = ["deleted_at IS NULL"];
+    const where = ["s.deleted_at IS NULL"];
     const params: Record<string, unknown> = {};
     if (route.endsWith("/me")) {
-      where.push("user_id = :userId");
+      where.push("s.user_id = :userId");
       params.userId = userId;
     }
     const from = request.nextUrl.searchParams.get("from");
     const to = request.nextUrl.searchParams.get("to");
     const activityType = request.nextUrl.searchParams.get("activityType");
-    if (from) { where.push("submission_date >= :from"); params.from = from; }
-    if (to) { where.push("submission_date <= :to"); params.to = to; }
-    if (activityType) { where.push("activity_type = :activityType"); params.activityType = activityType; }
-    const result = await listRows("safety_effort_submissions", request, {
+    if (from) { where.push("s.submission_date >= :from"); params.from = from; }
+    if (to) { where.push("s.submission_date <= :to"); params.to = to; }
+    if (activityType) { where.push("s.activity_type = :activityType"); params.activityType = activityType; }
+    // Join users so the submitter name/email/code falls back to their profile
+    // for older rows that were saved without a name snapshot.
+    const result = await listRows("safety_effort_submissions s LEFT JOIN users u ON u.id = s.user_id", request, {
       where,
       params,
-      orderBy: "created_at DESC, id DESC",
+      orderBy: "s.created_at DESC, s.id DESC",
+      select:
+        "s.*, COALESCE(NULLIF(s.name, ''), u.name_th, u.name_en, u.username) AS name, " +
+        "COALESCE(NULLIF(s.email, ''), u.email) AS email, " +
+        "COALESCE(NULLIF(s.pms, ''), u.employee_no) AS pms",
       maxPageSize: 500,
     });
     return jsonData({ ...result, items: result.items.map(safetyEffortSubmissionDto) });

@@ -134,40 +134,6 @@ export default function SafePlusDashboard() {
   const latestScore = dashboardData.latest
     ? `${dashboardData.latest.score}/${dashboardData.latest.total}`
     : "-";
-  const trend = useMemo(() => {
-    const now = new Date();
-    const weeks = Array.from({ length: 8 }, (_, index) => {
-      const end = new Date(now);
-      end.setHours(23, 59, 59, 999);
-      end.setDate(now.getDate() - ((7 - 1 - index) * 7));
-      const start = new Date(end);
-      start.setDate(end.getDate() - 6);
-      start.setHours(0, 0, 0, 0);
-      return { start, end, delta: 0 };
-    });
-    for (const transaction of pointTransactions) {
-      const occurredAt = new Date(transaction.occurredAt);
-      const week = weeks.find((item) => occurredAt >= item.start && occurredAt <= item.end);
-      if (week) week.delta += Number(transaction.amount || 0);
-    }
-    let running = currentUserPoints - weeks.reduce((sum, item) => sum + item.delta, 0);
-    const values = weeks.map((item) => {
-      running += item.delta;
-      return running;
-    });
-    const min = Math.min(...values, 0);
-    const max = Math.max(...values, 1);
-    const range = Math.max(1, max - min);
-    const points = values.map((value, index) => ({
-      value,
-      x: 20 + index * 80,
-      y: 104 - ((value - min) / range) * 70,
-    }));
-    return {
-      points,
-      line: points.map((point, index) => `${index === 0 ? "M" : "L"}${point.x} ${point.y}`).join(" "),
-    };
-  }, [currentUserPoints, pointTransactions]);
 
   return (
     <div className={styles.dashboard}>
@@ -198,28 +164,6 @@ export default function SafePlusDashboard() {
         </div>
 
         <div className={styles.trendCard}>
-          <div className={styles.trendHeader}>
-            <h2>แนวโน้มคะแนน 8 สัปดาห์</h2>
-          </div>
-          <div className={styles.chart}>
-            <svg viewBox="0 0 620 130" role="img" aria-label="กราฟคะแนน 8 สัปดาห์">
-              <defs>
-                <linearGradient id="areaFill" x1="0" x2="0" y1="0" y2="1">
-                  <stop offset="0%" stopColor="#0aa8ff" stopOpacity=".48" />
-                  <stop offset="100%" stopColor="#0aa8ff" stopOpacity=".02" />
-                </linearGradient>
-              </defs>
-              <path d="M20 108H600M20 70H600M20 32H600" className={styles.gridLine} />
-              <path d={`${trend.line} L580 108 L20 108 Z`} fill="url(#areaFill)" />
-              <path d={trend.line} className={styles.chartLine} />
-              {trend.points.map((point) => (
-                <circle key={point.x} cx={point.x} cy={point.y} r="6" className={styles.chartDot} />
-              ))}
-            </svg>
-            <div className={styles.weekLabels}>
-              {Array.from({ length: 8 }, (_, index) => <span key={index}>สัปดาห์ {index + 1}</span>)}
-            </div>
-          </div>
           <div className={styles.trendStats}>
             <div><Award /><b>{currentUserPoints.toLocaleString()}</b><span>คะแนนปัจจุบัน</span></div>
             <div><Flame /><b>{dashboardData.done}</b><span>ทำ KPI ใน 14 วัน</span></div>

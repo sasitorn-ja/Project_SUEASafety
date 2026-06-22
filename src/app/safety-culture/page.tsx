@@ -15,7 +15,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
-import { useSessionUser } from "@/lib/session-user";
+import { useSessionUser, getSessionProfileImage, getSessionInitials } from "@/lib/session-user";
 import {
   SAFETY_CULTURE_CATEGORIES,
   COMMENT_REACTION_CHOICES,
@@ -48,6 +48,8 @@ function ProfileAvatar({
   sizeClassName?: string;
   textClassName?: string;
 }) {
+  const [failed, setFailed] = useState(false);
+  const showImage = Boolean(imageUrl) && !failed;
   return (
     <div
       className={cn(
@@ -56,8 +58,10 @@ function ProfileAvatar({
         textClassName,
       )}
     >
-      {imageUrl ? (
-        <Image src={imageUrl} alt="" width={48} height={48} className="h-full w-full object-cover" />
+      {showImage ? (
+        // Plain img (images are unoptimized) so a failed SSO/LINE photo falls back to initials.
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={imageUrl as string} alt="" className="h-full w-full object-cover" onError={() => setFailed(true)} />
       ) : (
         text
       )}
@@ -856,9 +860,12 @@ export default function Page() {
             <Card className={cn("rounded-[16px] px-3 py-2 anim-fade md:rounded-[18px] md:px-3.5 md:py-2.5", styles.composer)} style={animStyle(0.04)}>
               <div className="flex items-center gap-2 sm:gap-2.5">
                 <div className="flex min-w-0 flex-1 items-center gap-[8px]">
-                  <div className={cn("flex h-[32px] w-[32px] flex-shrink-0 items-center justify-center rounded-full border-2 text-[16px] leading-none font-black md:h-[36px] md:w-[36px] md:text-[18px]", styles.composerAvatar)}>
-                    C
-                  </div>
+                  <ProfileAvatar
+                    imageUrl={getSessionProfileImage(sessionUser)}
+                    text={getSessionInitials(sessionUser)}
+                    sizeClassName="h-[32px] w-[32px] md:h-[36px] md:w-[36px]"
+                    textClassName="text-[16px] md:text-[18px]"
+                  />
                   <Link href="/safety-culture/post" className="min-w-0 flex-1">
                     <div className={cn("flex h-[32px] items-center rounded-full border px-[12px] text-[13.5px] font-bold sm:whitespace-nowrap md:h-[36px]", styles.composerInput)}>
                       <span className="truncate">คุณกำลังคิดอะไรอยู่</span>
@@ -919,7 +926,7 @@ export default function Page() {
                 >
                   <div className="flex items-start justify-between gap-2.5 font-sarabun">
                     <div className="flex min-w-0 items-center gap-2.5">
-                      <ProfileAvatar imageUrl={post.avatarImageUrl} text={post.avatarText} />
+                      <ProfileAvatar imageUrl={post.avatarImageUrl || (post.isYou ? getSessionProfileImage(sessionUser) : null)} text={post.avatarText} />
                       <div className="min-w-0 flex flex-col gap-0">
                         <div className="flex flex-wrap items-center gap-1">
                           <span className="truncate text-[14.5px] font-extrabold text-[#1A1A1A]">{post.author}</span>
@@ -1049,12 +1056,12 @@ export default function Page() {
                         size="sm"
                         onClick={() => toggleLike(post.id)}
                         className={cn(
-                          "h-auto gap-1.5 rounded-lg px-0 py-0 text-[13.5px] font-black hover:bg-transparent",
+                          "h-auto gap-1.5 rounded-lg px-0 py-0 text-[13.5px] font-black hover:bg-transparent active:translate-y-0!",
                           post.hasLiked ? "text-[#D9383A]" : "text-[#7d776c] hover:text-foreground"
                         )}
                       >
-                        <span style={{ color: post.hasLiked ? "#D9383A" : "#8E8A81" }}>❤</span>
-                        <span style={{ color: "#555149" }}>{post.likes}</span>
+                        <span className="inline-block w-[1.15em] text-center leading-none" style={{ color: post.hasLiked ? "#D9383A" : "#8E8A81" }}>❤</span>
+                        <span className="tabular-nums" style={{ color: "#555149" }}>{post.likes}</span>
                       </Button>
                       <Button
                         variant="ghost"
@@ -1309,7 +1316,7 @@ export default function Page() {
               <div className="min-w-0">
                 <div className="flex items-center gap-2.5 md:gap-3">
                   <ProfileAvatar
-                    imageUrl={expandedPost.avatarImageUrl}
+                    imageUrl={expandedPost.avatarImageUrl || (expandedPost.isYou ? getSessionProfileImage(sessionUser) : null)}
                     text={expandedPost.avatarText}
                     sizeClassName="h-[40px] w-[40px] md:h-[36px] md:w-[36px]"
                     textClassName="text-[15px] md:text-[14px]"
@@ -1409,12 +1416,12 @@ export default function Page() {
                       size="sm"
                       onClick={() => toggleLike(expandedPost.id)}
                       className={cn(
-                        "h-auto gap-1.5 rounded-lg px-0 py-0 text-[13.5px] font-black hover:bg-transparent",
+                        "h-auto gap-1.5 rounded-lg px-0 py-0 text-[13.5px] font-black hover:bg-transparent active:translate-y-0!",
                         expandedPost.hasLiked ? "text-[#D9383A]" : "text-[#7d776c] hover:text-foreground"
                       )}
                     >
-                      <span style={{ color: expandedPost.hasLiked ? "#D9383A" : "#8E8A81" }}>❤</span>
-                      <span style={{ color: "#555149" }}>{expandedPost.likes}</span>
+                      <span className="inline-block w-[1.15em] text-center leading-none" style={{ color: expandedPost.hasLiked ? "#D9383A" : "#8E8A81" }}>❤</span>
+                      <span className="tabular-nums" style={{ color: "#555149" }}>{expandedPost.likes}</span>
                     </Button>
                     <Button
                       variant="ghost"

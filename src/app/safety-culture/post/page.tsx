@@ -14,7 +14,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { SAFETY_CULTURE_CATEGORIES } from "@/lib/safety-culture";
 import { getSafetyPoint } from "@/lib/point-rules";
 import { cn } from "@/lib/utils";
-import { getSessionDisplayName, getSessionInitials, useSessionUser } from "@/lib/session-user";
+import { getSessionDisplayName, getSessionInitials, getSessionProfileImage, useSessionUser } from "@/lib/session-user";
 
 const CATEGORIES = SAFETY_CULTURE_CATEGORIES.filter(
   (category) => !["ทั้งหมด", "ทีมของฉัน"].includes(category)
@@ -294,8 +294,12 @@ export default function PostSocialPage() {
           className="anim-fade mb-5 flex items-center gap-3 rounded-[16px] border-[1.5px] border-[var(--border)] bg-white p-4"
           style={animStyle(0.05)}
         >
-          <div className="flex h-11 w-11 items-center justify-center rounded-full border-2 border-[var(--brand-accent)] bg-[var(--brand-soft)] text-lg font-extrabold text-[var(--brand-accent)]">
-            {getSessionInitials(sessionUser)}
+          <div className="flex h-11 w-11 items-center justify-center overflow-hidden rounded-full border-2 border-[var(--brand-accent)] bg-[var(--brand-soft)] text-lg font-extrabold text-[var(--brand-accent)]">
+            {getSessionProfileImage(sessionUser) ? (
+              <Image src={getSessionProfileImage(sessionUser)} alt="" width={44} height={44} className="h-full w-full object-cover" />
+            ) : (
+              getSessionInitials(sessionUser)
+            )}
           </div>
           <div className="flex flex-col gap-1">
             <span className="text-[15px] font-extrabold text-foreground">

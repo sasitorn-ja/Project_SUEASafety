@@ -1,0 +1,5596 @@
+{
+  "info": {
+    "name": "SUEA Safety API - Full Catalog",
+    "description": "Generated from backend/components/api-catalog/registry.ts. Routes: 159. Import this file into Postman and set environment baseUrl/cookies.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "noauth"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "https://safety.cipcloud.net"
+    },
+    {
+      "key": "id",
+      "value": "1"
+    },
+    {
+      "key": "postId",
+      "value": "1"
+    },
+    {
+      "key": "commentId",
+      "value": "1"
+    },
+    {
+      "key": "rewardId",
+      "value": "1"
+    }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "GET /api/auth/session",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/session",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "session"
+              ],
+              "query": []
+            },
+            "description": "Purpose: อ่าน session ผู้ใช้ปัจจุบัน\nCaller: ทุกหน้า\nWhen: on app load / refresh\nAuth: User\nPagination: No\nRisk: Small\nStatus: Existing\nNotes: มีแล้วใน repo"
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/auth/login",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ],
+              "query": []
+            },
+            "description": "Purpose: เริ่ม RMC SSO login\nCaller: Login\nWhen: เมื่อกดเข้าสู่ระบบ\nAuth: Public\nPagination: No\nRisk: Small\nStatus: Existing\nNotes: มีแล้วใน repo"
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/auth/callback/rmc-sso",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/callback/rmc-sso",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "callback",
+                "rmc-sso"
+              ],
+              "query": []
+            },
+            "description": "Purpose: รับ callback จาก RMC SSO\nCaller: SSO provider\nWhen: หลัง login สำเร็จ\nAuth: Public/OIDC\nPagination: No\nRisk: Small\nStatus: Existing\nNotes: มีแล้วใน repo"
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/auth/logout",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/logout",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "logout"
+              ],
+              "query": []
+            },
+            "description": "Purpose: ออกจากระบบและล้าง session\nCaller: Header/Profile\nWhen: เมื่อกด logout\nAuth: User\nPagination: No\nRisk: Small\nStatus: Existing\nNotes: มีแล้วใน repo"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Assistant",
+      "item": [
+        {
+          "name": "POST /api/assistant/chat",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/assistant/chat",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "assistant",
+                "chat"
+              ],
+              "query": []
+            },
+            "description": "Purpose: คุยกับผู้ช่วย Safety\nCaller: Floating assistant\nWhen: เมื่อผู้ใช้ส่งข้อความ\nAuth: User\nPagination: No\nRisk: Medium\nStatus: Existing\nNotes: มีแล้วใน repo",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"example\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Locations",
+      "item": [
+        {
+          "name": "GET /api/locations/plants",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/locations/plants",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "locations",
+                "plants"
+              ],
+              "query": []
+            },
+            "description": "Purpose: รายการโรงงานสำหรับ check-in/search\nCaller: Check-in, Admin\nWhen: เมื่อเปิด filter โรงงาน\nAuth: User\nPagination: Required page/pageSize\nRisk: High if unpaged\nStatus: Existing\nNotes: แยกจาก all locations เพราะข้อมูลเยอะ"
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/locations/offices",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/locations/offices",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "locations",
+                "offices"
+              ],
+              "query": []
+            },
+            "description": "Purpose: รายการสำนักงานสำหรับ check-in/search\nCaller: Check-in, Admin\nWhen: เมื่อเปิด filter สำนักงาน\nAuth: User\nPagination: Required page/pageSize\nRisk: High if unpaged\nStatus: Existing\nNotes: แยกประเภทเพื่อ index/cache ได้ดี"
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/locations/sites",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/locations/sites",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "locations",
+                "sites"
+              ],
+              "query": []
+            },
+            "description": "Purpose: รายการ site งานสำหรับ check-in/search\nCaller: Check-in, Admin\nWhen: เมื่อเปิด filter site งาน\nAuth: User\nPagination: Required page/pageSize\nRisk: High if unpaged\nStatus: Existing\nNotes: site อาจเปลี่ยนบ่อยและมีปริมาณมาก"
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/locations/custom",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/locations/custom",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "locations",
+                "custom"
+              ],
+              "query": []
+            },
+            "description": "Purpose: รายการ location ที่ admin เพิ่มเอง\nCaller: Admin, Check-in\nWhen: เมื่อเลือก custom\nAuth: User\nPagination: Required page/pageSize\nRisk: Medium\nStatus: Existing\nNotes: รองรับ location นอก master"
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/locations/map?type=&bbox=&zoom=",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/locations/map",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "locations",
+                "map"
+              ],
+              "query": [
+                {
+                  "key": "type",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "bbox",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "zoom",
+                  "value": "",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Purpose: marker สำหรับแผนที่ตาม viewport\nCaller: Check-in map\nWhen: เมื่อ pan/zoom map\nAuth: User\nPagination: Required bbox + cap\nRisk: Critical if returns all\nStatus: Existing\nNotes: ต้องใช้ spatial index"
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/locations/search?type=&q=&limit=",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/locations/search",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "locations",
+                "search"
+              ],
+              "query": [
+                {
+                  "key": "type",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "q",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "limit",
+                  "value": "",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Purpose: autocomplete location\nCaller: Check-in search box\nWhen: เมื่อพิมพ์ค้นหา\nAuth: User\nPagination: Required limit <= 50\nRisk: Medium\nStatus: Existing\nNotes: ค้นด้วย code/name/external key"
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/locations/:id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/locations/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "locations",
+                "{{id}}"
+              ],
+              "query": []
+            },
+            "description": "Purpose: รายละเอียด location เดียว\nCaller: Check-in detail, Admin\nWhen: เมื่อเลือก marker/card\nAuth: User\nPagination: No\nRisk: Small\nStatus: Existing\nNotes: โหลด detail แยกจาก list"
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/locations",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/locations",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "locations"
+              ],
+              "query": []
+            },
+            "description": "Purpose: เพิ่ม location ใหม่\nCaller: Admin\nWhen: เมื่อ admin submit form\nAuth: Admin\nPagination: No\nRisk: Small\nStatus: Existing\nNotes: เขียนลง locations",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"example\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "PATCH /api/locations/:id",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/locations/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "locations",
+                "{{id}}"
+              ],
+              "query": []
+            },
+            "description": "Purpose: แก้ไข location\nCaller: Admin\nWhen: เมื่อ admin save\nAuth: Admin\nPagination: No\nRisk: Small\nStatus: Existing\nNotes: ต้อง audit",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"example\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "DELETE /api/locations/:id",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/locations/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "locations",
+                "{{id}}"
+              ],
+              "query": []
+            },
+            "description": "Purpose: soft delete location\nCaller: Admin\nWhen: เมื่อ admin ลบ\nAuth: Admin\nPagination: No\nRisk: Small\nStatus: Existing\nNotes: soft delete เท่านั้น",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"example\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/safety-effort/locations",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/safety-effort/locations",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "safety-effort",
+                "locations"
+              ],
+              "query": []
+            },
+            "description": "Purpose: รายการ location เดิมใน repo\nCaller: Check-in/Admin\nWhen: ปัจจุบันใช้ query type/search/limit\nAuth: User\nPagination: Optional limit\nRisk: High if raised too much\nStatus: Existing\nNotes: ควรค่อย migrate ไปเส้นแยกด้านบน"
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/safety-effort/locations",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/safety-effort/locations",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "safety-effort",
+                "locations"
+              ],
+              "query": []
+            },
+            "description": "Purpose: เพิ่ม location เดิมใน repo\nCaller: Admin\nWhen: Admin create\nAuth: Admin\nPagination: No\nRisk: Small\nStatus: Existing\nNotes: มีแล้ว",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"example\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/safety-effort/locations/:id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/safety-effort/locations/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "safety-effort",
+                "locations",
+                "{{id}}"
+              ],
+              "query": []
+            },
+            "description": "Purpose: อ่าน location เดิมรายตัว\nCaller: Admin/Check-in\nWhen: Detail\nAuth: User\nPagination: No\nRisk: Small\nStatus: Existing\nNotes: มีแล้ว"
+          },
+          "response": []
+        },
+        {
+          "name": "PATCH /api/safety-effort/locations/:id",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/safety-effort/locations/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "safety-effort",
+                "locations",
+                "{{id}}"
+              ],
+              "query": []
+            },
+            "description": "Purpose: แก้ location เดิม\nCaller: Admin\nWhen: Save\nAuth: Admin\nPagination: No\nRisk: Small\nStatus: Existing\nNotes: มีแล้ว",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"example\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "DELETE /api/safety-effort/locations/:id",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/safety-effort/locations/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "safety-effort",
+                "locations",
+                "{{id}}"
+              ],
+              "query": []
+            },
+            "description": "Purpose: soft delete location เดิม\nCaller: Admin\nWhen: Delete\nAuth: Admin\nPagination: No\nRisk: Small\nStatus: Existing\nNotes: มีแล้ว",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"example\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Check-in",
+      "item": [
+        {
+          "name": "POST /api/checkins",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/checkins",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "checkins"
+              ],
+              "query": []
+            },
+            "description": "Purpose: บันทึก check-in พร้อม GPS จริงและ selected location\nCaller: Check-in\nWhen: หลังผู้ใช้ยืนยันสถานที่\nAuth: User\nPagination: No\nRisk: Small\nStatus: Existing\nNotes: คืน checkinId เพื่อเริ่มกิจกรรม",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"example\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/checkins/me?from=&to=&page=&pageSize=",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/checkins/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "checkins",
+                "me"
+              ],
+              "query": [
+                {
+                  "key": "from",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "to",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "page",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "pageSize",
+                  "value": "",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Purpose: ประวัติ check-in ของฉัน\nCaller: Profile/History\nWhen: เปิดประวัติ\nAuth: User\nPagination: Required\nRisk: Medium\nStatus: Existing\nNotes: filter ตามวันที่"
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/checkins?locationId=&userId=&from=&to=&page=&pageSize=",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/checkins",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "checkins"
+              ],
+              "query": [
+                {
+                  "key": "locationId",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "userId",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "from",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "to",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "page",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "pageSize",
+                  "value": "",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Purpose: admin ดู check-in ทั้งหมด\nCaller: Safety Admin\nWhen: เปิดรายงาน\nAuth: Admin\nPagination: Required\nRisk: High\nStatus: Existing\nNotes: ต้องมี indexes ตาม user/date/location"
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/checkins/:id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/checkins/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "checkins",
+                "{{id}}"
+              ],
+              "query": []
+            },
+            "description": "Purpose: รายละเอียด check-in\nCaller: Admin/History\nWhen: เปิดรายการ\nAuth: User/Admin\nPagination: No\nRisk: Small\nStatus: Existing\nNotes: รวม attachments summary"
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/checkins/nearby?lat=&lng=&radiusM=&type=",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/checkins/nearby",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "checkins",
+                "nearby"
+              ],
+              "query": [
+                {
+                  "key": "lat",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "lng",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "radiusM",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "type",
+                  "value": "",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Purpose: สถานที่ใกล้ฉัน\nCaller: Check-in\nWhen: เมื่อเปิดหน้า/กด locate\nAuth: User\nPagination: Limit required\nRisk: Medium\nStatus: Existing\nNotes: spatial distance query"
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/checkins/:id/attachments",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/checkins/:id/attachments",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "checkins",
+                "{{id}}",
+                "attachments"
+              ],
+              "query": []
+            },
+            "description": "Purpose: ผูกรูป/หลักฐานกับ check-in\nCaller: Check-in\nWhen: หลัง upload\nAuth: User\nPagination: No\nRisk: Small\nStatus: Existing\nNotes: ใช้ attachmentIds",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"example\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "DELETE /api/checkins/:id/attachments/:attachmentId",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/checkins/:id/attachments/:attachmentId",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "checkins",
+                "{{id}}",
+                "attachments",
+                "{{attachmentId}}"
+              ],
+              "query": []
+            },
+            "description": "Purpose: ลบหลักฐาน check-in\nCaller: Check-in/Admin\nWhen: remove photo\nAuth: Owner/Admin\nPagination: No\nRisk: Small\nStatus: Existing\nNotes: -",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"example\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/checkins/stats?from=&to=&locationType=",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/checkins/stats",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "checkins",
+                "stats"
+              ],
+              "query": [
+                {
+                  "key": "from",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "to",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "locationType",
+                  "value": "",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Purpose: สถิติ check-in\nCaller: Dashboard/Admin\nWhen: เปิด dashboard\nAuth: Admin\nPagination: Aggregate\nRisk: Medium\nStatus: Existing\nNotes: ใช้ aggregate/cache"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Safety Effort",
+      "item": [
+        {
+          "name": "GET /api/safety-effort",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/safety-effort",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "safety-effort"
+              ],
+              "query": []
+            },
+            "description": "Purpose: API module briefing เดิม\nCaller: Dev/Admin\nWhen: debug/discovery\nAuth: User\nPagination: No\nRisk: Small\nStatus: Existing\nNotes: มีแล้ว"
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/safety-effort/activities",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/safety-effort/activities",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "safety-effort",
+                "activities"
+              ],
+              "query": []
+            },
+            "description": "Purpose: เริ่มกิจกรรม Safety Effort จาก check-in\nCaller: Category/Activity\nWhen: หลังเลือก activity\nAuth: User\nPagination: No\nRisk: Small\nStatus: Existing\nNotes: สร้าง safety_activities",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"example\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/safety-effort/activities/me?status=&page=&pageSize=",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/safety-effort/activities/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "safety-effort",
+                "activities",
+                "me"
+              ],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "page",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "pageSize",
+                  "value": "",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Purpose: กิจกรรมของฉัน\nCaller: Dashboard/Profile\nWhen: เปิด dashboard\nAuth: User\nPagination: Required\nRisk: Medium\nStatus: Existing\nNotes: ใช้ resume draft/submitted"
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/safety-effort/activities/:id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/safety-effort/activities/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "safety-effort",
+                "activities",
+                "{{id}}"
+              ],
+              "query": []
+            },
+            "description": "Purpose: รายละเอียดกิจกรรม\nCaller: Linewalk/Summary\nWhen: เปิดกิจกรรม\nAuth: User\nPagination: No\nRisk: Small\nStatus: Existing\nNotes: เชื่อม checkin"
+          },
+          "response": []
+        },
+        {
+          "name": "PATCH /api/safety-effort/activities/:id",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/safety-effort/activities/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "safety-effort",
+                "activities",
+                "{{id}}"
+              ],
+              "query": []
+            },
+            "description": "Purpose: อัปเดตสถานะกิจกรรม\nCaller: Linewalk/Summary\nWhen: save draft/submit\nAuth: User\nPagination: No\nRisk: Small\nStatus: Existing\nNotes: status draft/submitted/cancelled",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"example\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/safety-effort/findings",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/safety-effort/findings",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "safety-effort",
+                "findings"
+              ],
+              "query": []
+            },
+            "description": "Purpose: บันทึก safety finding\nCaller: Linewalk/Observation\nWhen: เมื่อพบจุดเสี่ยง\nAuth: User\nPagination: No\nRisk: Small\nStatus: Existing\nNotes: แยก finding จาก answer ถ้าต้อง track action",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"example\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/safety-effort/corrective-actions",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/safety-effort/corrective-actions",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "safety-effort",
+                "corrective-actions"
+              ],
+              "query": []
+            },
+            "description": "Purpose: สร้างงานแก้ไข\nCaller: Admin/Finding\nWhen: เมื่อ assign\nAuth: Admin\nPagination: No\nRisk: Small\nStatus: Existing\nNotes: ผูก safety_findings",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"example\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/safety-effort/corrective-actions?status=&assigneeId=&page=&pageSize=",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/safety-effort/corrective-actions",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "safety-effort",
+                "corrective-actions"
+              ],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "assigneeId",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "page",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "pageSize",
+                  "value": "",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Purpose: รายการงานแก้ไข\nCaller: Admin/Dashboard\nWhen: ติดตามงาน\nAuth: User/Admin\nPagination: Required\nRisk: Medium\nStatus: Existing\nNotes: dashboard action"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Assessment",
+      "item": [
+        {
+          "name": "GET /api/safety-effort/assessment-templates?locationType=&activityType=",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/safety-effort/assessment-templates",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "safety-effort",
+                "assessment-templates"
+              ],
+              "query": [
+                {
+                  "key": "locationType",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "activityType",
+                  "value": "",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Purpose: ดึง template แบบประเมิน\nCaller: Linewalk\nWhen: ก่อนเริ่มตอบ\nAuth: User\nPagination: No\nRisk: Medium\nStatus: Existing\nNotes: cache ได้"
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/safety-effort/assessment-runs",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/safety-effort/assessment-runs",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "safety-effort",
+                "assessment-runs"
+              ],
+              "query": []
+            },
+            "description": "Purpose: สร้าง/ส่งแบบประเมิน\nCaller: Assessment Summary\nWhen: เมื่อบันทึก\nAuth: User\nPagination: No\nRisk: Medium\nStatus: Existing\nNotes: payload ไม่ฝัง base64",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"example\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/safety-effort/assessment-runs/:id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/safety-effort/assessment-runs/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "safety-effort",
+                "assessment-runs",
+                "{{id}}"
+              ],
+              "query": []
+            },
+            "description": "Purpose: อ่านผลแบบประเมิน\nCaller: History/Admin\nWhen: เปิด detail\nAuth: User/Admin\nPagination: No\nRisk: Medium\nStatus: Existing\nNotes: รวม answers + media refs"
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/safety-effort/assessment-runs?from=&to=&locationType=&page=&pageSize=",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/safety-effort/assessment-runs",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "safety-effort",
+                "assessment-runs"
+              ],
+              "query": [
+                {
+                  "key": "from",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "to",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "locationType",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "page",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "pageSize",
+                  "value": "",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Purpose: รายงานแบบประเมิน\nCaller: Safety Admin\nWhen: เปิด report\nAuth: Admin\nPagination: Required\nRisk: High\nStatus: Existing\nNotes: export แยก endpoint"
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/safety-effort/assessment-runs/export?from=&to=&format=xlsx",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/safety-effort/assessment-runs/export",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "safety-effort",
+                "assessment-runs",
+                "export"
+              ],
+              "query": [
+                {
+                  "key": "from",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "to",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "format",
+                  "value": "xlsx",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Purpose: export รายงานแบบประเมิน\nCaller: Safety Admin\nWhen: กด export\nAuth: Admin\nPagination: Stream/export job\nRisk: High\nStatus: Existing\nNotes: สำหรับไฟล์ใหญ่ควรใช้ async job"
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/safety-effort/assessment-runs/:id/submit",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/safety-effort/assessment-runs/:id/submit",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "safety-effort",
+                "assessment-runs",
+                "{{id}}",
+                "submit"
+              ],
+              "query": []
+            },
+            "description": "Purpose: submit draft assessment\nCaller: Assessment Summary\nWhen: confirm save\nAuth: User\nPagination: No\nRisk: Small\nStatus: Existing\nNotes: server validates complete answers",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"example\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "PATCH /api/safety-effort/assessment-runs/:id/draft",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/safety-effort/assessment-runs/:id/draft",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "safety-effort",
+                "assessment-runs",
+                "{{id}}",
+                "draft"
+              ],
+              "query": []
+            },
+            "description": "Purpose: save draft\nCaller: Linewalk\nWhen: autosave/manual save\nAuth: User\nPagination: No\nRisk: Medium\nStatus: Existing\nNotes: attachmentIds only",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"example\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/safety-effort/assessment-runs/:id/attachments",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/safety-effort/assessment-runs/:id/attachments",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "safety-effort",
+                "assessment-runs",
+                "{{id}}",
+                "attachments"
+              ],
+              "query": []
+            },
+            "description": "Purpose: ผูกรูปกับ run/answer\nCaller: Linewalk\nWhen: after upload\nAuth: User\nPagination: No\nRisk: Small\nStatus: Existing\nNotes: -",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"example\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Were OK",
+      "item": [
+        {
+          "name": "POST /api/were-ok/health-checks",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/were-ok/health-checks",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "were-ok",
+                "health-checks"
+              ],
+              "query": []
+            },
+            "description": "Purpose: บันทึก Fit to Drive/health check\nCaller: Were OK\nWhen: หลัง submit\nAuth: User\nPagination: No\nRisk: Small\nStatus: Existing\nNotes: รูป BP/Alc ใช้ uploads",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"example\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/were-ok/pretrip-checks",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/were-ok/pretrip-checks",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "were-ok",
+                "pretrip-checks"
+              ],
+              "query": []
+            },
+            "description": "Purpose: บันทึก Pre-trip Check\nCaller: Were OK\nWhen: หลัง submit\nAuth: User\nPagination: No\nRisk: Small\nStatus: Existing\nNotes: payload JSON + activityId",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"example\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/were-ok/kyt-records",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/were-ok/kyt-records",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "were-ok",
+                "kyt-records"
+              ],
+              "query": []
+            },
+            "description": "Purpose: บันทึก KYT\nCaller: Were OK\nWhen: หลัง submit\nAuth: User\nPagination: No\nRisk: Small\nStatus: Existing\nNotes: รูป KYT ใช้ uploads",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"example\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/were-ok/sos-events",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/were-ok/sos-events",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "were-ok",
+                "sos-events"
+              ],
+              "query": []
+            },
+            "description": "Purpose: บันทึก SOS\nCaller: Were OK\nWhen: หลัง submit\nAuth: User\nPagination: No\nRisk: Small\nStatus: Existing\nNotes: แจ้งเตือน admin",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"example\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Safety Culture",
+      "item": [
+        {
+          "name": "GET /api/safety-culture/posts?category=&cursor=&limit=",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/safety-culture/posts",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "safety-culture",
+                "posts"
+              ],
+              "query": [
+                {
+                  "key": "category",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "cursor",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "limit",
+                  "value": "",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Purpose: feed posts\nCaller: Safety Culture feed\nWhen: เปิด feed/scroll\nAuth: User\nPagination: Cursor required\nRisk: High if unpaged\nStatus: Existing\nNotes: แทน localStorage posts"
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/safety-culture/posts",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/safety-culture/posts",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "safety-culture",
+                "posts"
+              ],
+              "query": []
+            },
+            "description": "Purpose: สร้าง post\nCaller: Post page\nWhen: กดโพสต์\nAuth: User\nPagination: No\nRisk: Small\nStatus: Existing\nNotes: ส่ง attachmentIds ไม่ส่ง base64",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"content\": \"Post from Postman\",\n  \"category\": \"ทั่วไป\",\n  \"attachmentIds\": [],\n  \"eventId\": null\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/safety-culture/posts/:id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/safety-culture/posts/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "safety-culture",
+                "posts",
+                "{{id}}"
+              ],
+              "query": []
+            },
+            "description": "Purpose: รายละเอียด post\nCaller: Post detail/notification\nWhen: เปิดจาก notification\nAuth: User\nPagination: No\nRisk: Medium\nStatus: Existing\nNotes: รวม comments page แรก"
+          },
+          "response": []
+        },
+        {
+          "name": "PATCH /api/safety-culture/posts/:id",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/safety-culture/posts/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "safety-culture",
+                "posts",
+                "{{id}}"
+              ],
+              "query": []
+            },
+            "description": "Purpose: แก้ post\nCaller: My post/admin\nWhen: save edit\nAuth: Owner/Admin\nPagination: No\nRisk: Small\nStatus: Existing\nNotes: optional",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"example\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "DELETE /api/safety-culture/posts/:id",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/safety-culture/posts/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "safety-culture",
+                "posts",
+                "{{id}}"
+              ],
+              "query": []
+            },
+            "description": "Purpose: soft delete post\nCaller: My post/admin\nWhen: delete\nAuth: Owner/Admin\nPagination: No\nRisk: Small\nStatus: Existing\nNotes: soft delete",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"example\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/safety-culture/posts/:id/comments",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/safety-culture/posts/:id/comments",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "safety-culture",
+                "posts",
+                "{{id}}",
+                "comments"
+              ],
+              "query": []
+            },
+            "description": "Purpose: เพิ่ม comment\nCaller: Feed/Post detail\nWhen: ส่ง comment\nAuth: User\nPagination: No\nRisk: Small\nStatus: Existing\nNotes: ให้คะแนนตาม rule",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"content\": \"Post from Postman\",\n  \"category\": \"ทั่วไป\",\n  \"attachmentIds\": [],\n  \"eventId\": null\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/safety-culture/posts/:id/comments?cursor=&limit=",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/safety-culture/posts/:id/comments",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "safety-culture",
+                "posts",
+                "{{id}}",
+                "comments"
+              ],
+              "query": [
+                {
+                  "key": "cursor",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "limit",
+                  "value": "",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Purpose: โหลด comments เพิ่ม\nCaller: Post detail\nWhen: scroll comments\nAuth: User\nPagination: Cursor required\nRisk: Medium\nStatus: Existing\nNotes: แยกจาก feed"
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/safety-culture/posts/:id/reactions",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/safety-culture/posts/:id/reactions",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "safety-culture",
+                "posts",
+                "{{id}}",
+                "reactions"
+              ],
+              "query": []
+            },
+            "description": "Purpose: like/reaction\nCaller: Feed\nWhen: กด reaction\nAuth: User\nPagination: No\nRisk: Small\nStatus: Existing\nNotes: upsert reaction",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"content\": \"Post from Postman\",\n  \"category\": \"ทั่วไป\",\n  \"attachmentIds\": [],\n  \"eventId\": null\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "DELETE /api/safety-culture/posts/:id/reactions",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/safety-culture/posts/:id/reactions",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "safety-culture",
+                "posts",
+                "{{id}}",
+                "reactions"
+              ],
+              "query": []
+            },
+            "description": "Purpose: ยกเลิก reaction\nCaller: Feed\nWhen: unlike\nAuth: User\nPagination: No\nRisk: Small\nStatus: Existing\nNotes: delete reaction",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"example\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/safety-culture/events?status=&page=&pageSize=",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/safety-culture/events",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "safety-culture",
+                "events"
+              ],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "page",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "pageSize",
+                  "value": "",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Purpose: รายการกิจกรรม culture\nCaller: Feed/Admin Event\nWhen: เปิดกิจกรรม\nAuth: User\nPagination: Required\nRisk: Medium\nStatus: Existing\nNotes: live/scheduled/closed"
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/safety-culture/events",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/safety-culture/events",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "safety-culture",
+                "events"
+              ],
+              "query": []
+            },
+            "description": "Purpose: สร้างกิจกรรม\nCaller: Admin Event\nWhen: admin save\nAuth: Admin\nPagination: No\nRisk: Small\nStatus: Existing\nNotes: แทน localStorage",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"example\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "PATCH /api/safety-culture/events/:id",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/safety-culture/events/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "safety-culture",
+                "events",
+                "{{id}}"
+              ],
+              "query": []
+            },
+            "description": "Purpose: แก้กิจกรรม\nCaller: Admin Event\nWhen: admin save\nAuth: Admin\nPagination: No\nRisk: Small\nStatus: Existing\nNotes: audit",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"example\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/safety-culture/leaderboard?scope=&period=",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/safety-culture/leaderboard",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "safety-culture",
+                "leaderboard"
+              ],
+              "query": [
+                {
+                  "key": "scope",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "period",
+                  "value": "",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Purpose: leaderboard\nCaller: Leaderboard\nWhen: เปิดหน้า\nAuth: User\nPagination: Limit/cached\nRisk: Medium\nStatus: Existing\nNotes: cache รายช่วงเวลา"
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/safety-culture/rewards",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/safety-culture/rewards",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "safety-culture",
+                "rewards"
+              ],
+              "query": []
+            },
+            "description": "Purpose: catalog ของรางวัล\nCaller: Rewards\nWhen: เปิดหน้า\nAuth: User\nPagination: No or page\nRisk: Medium\nStatus: Existing\nNotes: cache ได้"
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/safety-culture/rewards/:id/redeem",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/safety-culture/rewards/:id/redeem",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "safety-culture",
+                "rewards",
+                "{{id}}",
+                "redeem"
+              ],
+              "query": []
+            },
+            "description": "Purpose: แลกรางวัล\nCaller: Rewards\nWhen: กด redeem\nAuth: User\nPagination: No\nRisk: Small\nStatus: Existing\nNotes: transactional",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"example\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/safety-culture/events/:id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/safety-culture/events/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "safety-culture",
+                "events",
+                "{{id}}"
+              ],
+              "query": []
+            },
+            "description": "Purpose: รายละเอียดกิจกรรม\nCaller: Feed/Admin\nWhen: open event\nAuth: User\nPagination: No\nRisk: Medium\nStatus: Existing\nNotes: -"
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/safety-culture/events/:id/notify",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/safety-culture/events/:id/notify",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "safety-culture",
+                "events",
+                "{{id}}",
+                "notify"
+              ],
+              "query": []
+            },
+            "description": "Purpose: ส่ง notification กิจกรรม\nCaller: Admin Event\nWhen: กดส่งแจ้งเตือน\nAuth: Admin\nPagination: Batch/queue\nRisk: Medium\nStatus: Existing\nNotes: -",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"example\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/safety-culture/points/me",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/safety-culture/points/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "safety-culture",
+                "points",
+                "me"
+              ],
+              "query": []
+            },
+            "description": "Purpose: คะแนนของฉัน\nCaller: Profile/Rewards\nWhen: เปิดหน้า\nAuth: User\nPagination: No\nRisk: Small\nStatus: Existing\nNotes: -"
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/safety-culture/points/me/transactions?cursor=&limit=",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/safety-culture/points/me/transactions",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "safety-culture",
+                "points",
+                "me",
+                "transactions"
+              ],
+              "query": [
+                {
+                  "key": "cursor",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "limit",
+                  "value": "",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Purpose: ledger คะแนนของฉัน\nCaller: Profile history\nWhen: scroll\nAuth: User\nPagination: Cursor\nRisk: Medium\nStatus: Existing\nNotes: -"
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/safety-culture/teams",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/safety-culture/teams",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "safety-culture",
+                "teams"
+              ],
+              "query": []
+            },
+            "description": "Purpose: อ่านทีมสำหรับหน้า admin leaderboard\nCaller: Admin Leaderboard\nWhen: เปิดหน้าจัดการทีม\nAuth: User\nPagination: No\nRisk: Small\nStatus: Existing\nNotes: อ่านจาก teams และ team_members"
+          },
+          "response": []
+        },
+        {
+          "name": "PUT /api/safety-culture/teams",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/safety-culture/teams",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "safety-culture",
+                "teams"
+              ],
+              "query": []
+            },
+            "description": "Purpose: บันทึกรายการทีมสำหรับ leaderboard\nCaller: Admin Leaderboard\nWhen: เมื่อ admin บันทึกทีม\nAuth: Admin\nPagination: No\nRisk: Small\nStatus: Existing\nNotes: upsert/soft-delete teams",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"example\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Safety Awareness",
+      "item": [
+        {
+          "name": "GET /api/safety-awareness/questions?date=",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/safety-awareness/questions",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "safety-awareness",
+                "questions"
+              ],
+              "query": [
+                {
+                  "key": "date",
+                  "value": "",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Purpose: คำถาม awareness ของวัน\nCaller: Popup/Admin\nWhen: เปิด popup\nAuth: User\nPagination: No\nRisk: Small\nStatus: Existing\nNotes: cache by date"
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/safety-awareness/attempts",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/safety-awareness/attempts",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "safety-awareness",
+                "attempts"
+              ],
+              "query": []
+            },
+            "description": "Purpose: ส่งคำตอบ awareness\nCaller: Popup\nWhen: submit\nAuth: User\nPagination: No\nRisk: Small\nStatus: Existing\nNotes: บันทึก attempt",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"example\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Notifications",
+      "item": [
+        {
+          "name": "GET /api/notifications?cursor=&limit=",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/notifications",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "notifications"
+              ],
+              "query": [
+                {
+                  "key": "cursor",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "limit",
+                  "value": "",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Purpose: inbox notifications\nCaller: Notifications\nWhen: เปิด inbox\nAuth: User\nPagination: Cursor required\nRisk: Medium\nStatus: Existing\nNotes: แทน in-memory/localStorage"
+          },
+          "response": []
+        },
+        {
+          "name": "PATCH /api/notifications/:id/read",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/notifications/:id/read",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "notifications",
+                "{{id}}",
+                "read"
+              ],
+              "query": []
+            },
+            "description": "Purpose: mark read\nCaller: Notifications\nWhen: อ่านรายการ\nAuth: User\nPagination: No\nRisk: Small\nStatus: Existing\nNotes: -",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"example\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/notifications/broadcast",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/notifications/broadcast",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "notifications",
+                "broadcast"
+              ],
+              "query": []
+            },
+            "description": "Purpose: ส่ง notification จาก admin/event\nCaller: Admin\nWhen: กดส่ง\nAuth: Admin\nPagination: No\nRisk: Small\nStatus: Existing\nNotes: อาจ queue",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"example\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/notifications/:id/archive",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/notifications/:id/archive",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "notifications",
+                "{{id}}",
+                "archive"
+              ],
+              "query": []
+            },
+            "description": "Purpose: archive notification\nCaller: Notifications\nWhen: archive\nAuth: User\nPagination: No\nRisk: Small\nStatus: Existing\nNotes: -",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"example\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "PATCH /api/notifications/read-all",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/notifications/read-all",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "notifications",
+                "read-all"
+              ],
+              "query": []
+            },
+            "description": "Purpose: mark all read\nCaller: Notifications\nWhen: กดอ่านทั้งหมด\nAuth: User\nPagination: No\nRisk: Small\nStatus: Existing\nNotes: -",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"example\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/notifications/preferences",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/notifications/preferences",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "notifications",
+                "preferences"
+              ],
+              "query": []
+            },
+            "description": "Purpose: notification preferences\nCaller: Profile\nWhen: open settings\nAuth: User\nPagination: No\nRisk: Small\nStatus: Existing\nNotes: -"
+          },
+          "response": []
+        },
+        {
+          "name": "PATCH /api/notifications/preferences",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/notifications/preferences",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "notifications",
+                "preferences"
+              ],
+              "query": []
+            },
+            "description": "Purpose: แก้ notification preferences\nCaller: Profile\nWhen: save settings\nAuth: User\nPagination: No\nRisk: Small\nStatus: Existing\nNotes: -",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"example\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Uploads",
+      "item": [
+        {
+          "name": "POST /api/uploads",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/uploads",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "uploads"
+              ],
+              "query": []
+            },
+            "description": "Purpose: upload รูป/ไฟล์กลางระบบ\nCaller: Safety Effort, Culture, Profile\nWhen: เลือก/ถ่ายรูป\nAuth: User\nPagination: No\nRisk: Upload size limit\nStatus: Existing\nNotes: multipart/form-data",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": []
+                },
+                {
+                  "key": "module",
+                  "type": "text",
+                  "value": "safety-culture"
+                },
+                {
+                  "key": "ownerType",
+                  "type": "text",
+                  "value": "post"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/uploads/:id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/uploads/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "uploads",
+                "{{id}}"
+              ],
+              "query": []
+            },
+            "description": "Purpose: อ่าน metadata ไฟล์\nCaller: Any detail page\nWhen: เมื่อโหลด owner\nAuth: User\nPagination: No\nRisk: Small\nStatus: Existing\nNotes: ตรวจสิทธิ์",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": []
+                },
+                {
+                  "key": "module",
+                  "type": "text",
+                  "value": "safety-culture"
+                },
+                {
+                  "key": "ownerType",
+                  "type": "text",
+                  "value": "post"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/uploads/:id/download",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/uploads/:id/download",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "uploads",
+                "{{id}}",
+                "download"
+              ],
+              "query": []
+            },
+            "description": "Purpose: download/private signed URL\nCaller: Image viewer/report\nWhen: เมื่อเปิดรูป\nAuth: User\nPagination: No\nRisk: File\nStatus: Existing\nNotes: ใช้ signed URL/private URL",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": []
+                },
+                {
+                  "key": "module",
+                  "type": "text",
+                  "value": "safety-culture"
+                },
+                {
+                  "key": "ownerType",
+                  "type": "text",
+                  "value": "post"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "DELETE /api/uploads/:id",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/uploads/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "uploads",
+                "{{id}}"
+              ],
+              "query": []
+            },
+            "description": "Purpose: ลบ/ยกเลิก attachment\nCaller: Draft/Admin\nWhen: ลบรูป\nAuth: Owner/Admin\nPagination: No\nRisk: Small\nStatus: Existing\nNotes: soft delete + object lifecycle",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": []
+                },
+                {
+                  "key": "module",
+                  "type": "text",
+                  "value": "safety-culture"
+                },
+                {
+                  "key": "ownerType",
+                  "type": "text",
+                  "value": "post"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/uploads/cleanup-drafts",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/uploads/cleanup-drafts",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "uploads",
+                "cleanup-drafts"
+              ],
+              "query": []
+            },
+            "description": "Purpose: cleanup draft media\nCaller: Scheduled job\nWhen: ตามรอบเวลา\nAuth: System/Admin\nPagination: Batch cap\nRisk: Medium\nStatus: Existing\nNotes: ลบรูปที่ไม่ถูกผูกกับ owner",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": []
+                },
+                {
+                  "key": "module",
+                  "type": "text",
+                  "value": "safety-culture"
+                },
+                {
+                  "key": "ownerType",
+                  "type": "text",
+                  "value": "post"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Organizations",
+      "item": [
+        {
+          "name": "GET /api/organizations/tree",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/organizations/tree",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "organizations",
+                "tree"
+              ],
+              "query": []
+            },
+            "description": "Purpose: อ่านโครงสร้างองค์กรแบบ tree\nCaller: Admin, Profile, Location admin\nWhen: เปิดตัวกรององค์กร\nAuth: Admin/User scoped\nPagination: No or shallow depth\nRisk: Medium\nStatus: Existing\nNotes: ใช้กับ company/division/fact/section"
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/organizations?parentId=&type=&page=&pageSize=",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/organizations",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "organizations"
+              ],
+              "query": [
+                {
+                  "key": "parentId",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "type",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "page",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "pageSize",
+                  "value": "",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Purpose: รายการองค์กรแบบแบ่งหน้า\nCaller: Admin\nWhen: ค้น/จัดการองค์กร\nAuth: Admin\nPagination: Required\nRisk: Medium\nStatus: Existing\nNotes: ไม่โหลด tree ใหญ่ทุกครั้ง"
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/organizations/:id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/organizations/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "organizations",
+                "{{id}}"
+              ],
+              "query": []
+            },
+            "description": "Purpose: รายละเอียดองค์กร\nCaller: Admin/Profile\nWhen: เปิด detail\nAuth: Admin/User scoped\nPagination: No\nRisk: Small\nStatus: Existing\nNotes: -"
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/organizations",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/organizations",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "organizations"
+              ],
+              "query": []
+            },
+            "description": "Purpose: สร้างองค์กร\nCaller: Admin\nWhen: admin submit\nAuth: Admin\nPagination: No\nRisk: Small\nStatus: Existing\nNotes: audit required",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"example\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "PATCH /api/organizations/:id",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/organizations/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "organizations",
+                "{{id}}"
+              ],
+              "query": []
+            },
+            "description": "Purpose: แก้ข้อมูลองค์กร\nCaller: Admin\nWhen: admin save\nAuth: Admin\nPagination: No\nRisk: Small\nStatus: Existing\nNotes: audit required",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"example\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "DELETE /api/organizations/:id",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/organizations/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "organizations",
+                "{{id}}"
+              ],
+              "query": []
+            },
+            "description": "Purpose: soft delete องค์กร\nCaller: Admin\nWhen: admin delete\nAuth: Admin\nPagination: No\nRisk: Small\nStatus: Existing\nNotes: ต้องตรวจ child ก่อนลบ",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"example\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Users/IAM",
+      "item": [
+        {
+          "name": "GET /api/users/me",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/users/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "users",
+                "me"
+              ],
+              "query": []
+            },
+            "description": "Purpose: โปรไฟล์ผู้ใช้ปัจจุบัน\nCaller: Profile/Header\nWhen: หลัง login\nAuth: User\nPagination: No\nRisk: Small\nStatus: Existing\nNotes: merge SSO + app profile"
+          },
+          "response": []
+        },
+        {
+          "name": "PATCH /api/users/me",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/users/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "users",
+                "me"
+              ],
+              "query": []
+            },
+            "description": "Purpose: แก้ profile ผู้ใช้\nCaller: Profile\nWhen: save profile\nAuth: User\nPagination: No\nRisk: Small\nStatus: Existing\nNotes: profile image ใช้ mediaId",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"example\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/users?search=&organizationId=&role=&page=&pageSize=",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/users",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "users"
+              ],
+              "query": [
+                {
+                  "key": "search",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "organizationId",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "role",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "page",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "pageSize",
+                  "value": "",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Purpose: ค้นผู้ใช้\nCaller: Admin, Assign action\nWhen: search/assign\nAuth: Admin\nPagination: Required\nRisk: Medium\nStatus: Existing\nNotes: ต้อง limit search"
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/users/:id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/users/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "users",
+                "{{id}}"
+              ],
+              "query": []
+            },
+            "description": "Purpose: รายละเอียดผู้ใช้\nCaller: Admin\nWhen: open detail\nAuth: Admin\nPagination: No\nRisk: Small\nStatus: Existing\nNotes: -"
+          },
+          "response": []
+        },
+        {
+          "name": "PATCH /api/users/:id/status",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/users/:id/status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "users",
+                "{{id}}",
+                "status"
+              ],
+              "query": []
+            },
+            "description": "Purpose: เปลี่ยนสถานะ user\nCaller: Admin\nWhen: active/inactive\nAuth: Admin\nPagination: No\nRisk: Small\nStatus: Existing\nNotes: audit required",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"example\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/roles",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/roles",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "roles"
+              ],
+              "query": []
+            },
+            "description": "Purpose: รายการ role\nCaller: Admin\nWhen: เปิด role admin\nAuth: Admin\nPagination: No\nRisk: Small\nStatus: Existing\nNotes: -"
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/roles",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/roles",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "roles"
+              ],
+              "query": []
+            },
+            "description": "Purpose: สร้าง role\nCaller: Admin\nWhen: save\nAuth: Admin\nPagination: No\nRisk: Small\nStatus: Existing\nNotes: -",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"example\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "PATCH /api/roles/:id",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/roles/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "roles",
+                "{{id}}"
+              ],
+              "query": []
+            },
+            "description": "Purpose: แก้ role\nCaller: Admin\nWhen: save\nAuth: Admin\nPagination: No\nRisk: Small\nStatus: Existing\nNotes: -",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"example\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/permissions",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/permissions",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "permissions"
+              ],
+              "query": []
+            },
+            "description": "Purpose: รายการ permission\nCaller: Admin\nWhen: role setup\nAuth: Admin\nPagination: No\nRisk: Small\nStatus: Existing\nNotes: -"
+          },
+          "response": []
+        },
+        {
+          "name": "PUT /api/users/:id/roles",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/users/:id/roles",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "users",
+                "{{id}}",
+                "roles"
+              ],
+              "query": []
+            },
+            "description": "Purpose: กำหนด roles ให้ user\nCaller: Admin\nWhen: assign role\nAuth: Admin\nPagination: No\nRisk: Small\nStatus: Existing\nNotes: transactional",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"example\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "PUT /api/roles/:id/permissions",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/roles/:id/permissions",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "roles",
+                "{{id}}",
+                "permissions"
+              ],
+              "query": []
+            },
+            "description": "Purpose: กำหนด permissions ให้ role\nCaller: Admin\nWhen: assign permission\nAuth: Admin\nPagination: No\nRisk: Small\nStatus: Existing\nNotes: transactional",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"example\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Location Import",
+      "item": [
+        {
+          "name": "POST /api/location-imports",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/location-imports",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "location-imports"
+              ],
+              "query": []
+            },
+            "description": "Purpose: upload/import master location file\nCaller: Admin\nWhen: admin import DataOcean/Excel\nAuth: Admin\nPagination: Upload/job\nRisk: High\nStatus: Existing\nNotes: สร้าง batch",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"example\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/location-imports?status=&page=&pageSize=",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/location-imports",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "location-imports"
+              ],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "page",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "pageSize",
+                  "value": "",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Purpose: รายการ import batch\nCaller: Admin\nWhen: เปิด import history\nAuth: Admin\nPagination: Required\nRisk: Medium\nStatus: Existing\nNotes: -"
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/location-imports/:id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/location-imports/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "location-imports",
+                "{{id}}"
+              ],
+              "query": []
+            },
+            "description": "Purpose: รายละเอียด import batch\nCaller: Admin\nWhen: เปิด detail\nAuth: Admin\nPagination: No\nRisk: Medium\nStatus: Existing\nNotes: รวม summary success/fail"
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/location-imports/:id/rows?page=&pageSize=&status=",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/location-imports/:id/rows",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "location-imports",
+                "{{id}}",
+                "rows"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "pageSize",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "status",
+                  "value": "",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Purpose: แถว import\nCaller: Admin\nWhen: ดู error rows\nAuth: Admin\nPagination: Required\nRisk: High\nStatus: Existing\nNotes: จำเป็นต้องแบ่งหน้า"
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/location-imports/:id/retry",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/location-imports/:id/retry",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "location-imports",
+                "{{id}}",
+                "retry"
+              ],
+              "query": []
+            },
+            "description": "Purpose: retry failed rows\nCaller: Admin\nWhen: กด retry\nAuth: Admin\nPagination: Batch cap\nRisk: Medium\nStatus: Existing\nNotes: -",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"example\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/location-imports/:id/apply",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/location-imports/:id/apply",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "location-imports",
+                "{{id}}",
+                "apply"
+              ],
+              "query": []
+            },
+            "description": "Purpose: apply staged import\nCaller: Admin\nWhen: confirm import\nAuth: Admin\nPagination: Async job\nRisk: High\nStatus: Existing\nNotes: upsert locations",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"example\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Assessment Admin",
+      "item": [
+        {
+          "name": "GET /api/safety-effort/assessment-templates/:id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/safety-effort/assessment-templates/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "safety-effort",
+                "assessment-templates",
+                "{{id}}"
+              ],
+              "query": []
+            },
+            "description": "Purpose: รายละเอียด template\nCaller: Safety Admin\nWhen: open template\nAuth: Admin\nPagination: No\nRisk: Medium\nStatus: Existing\nNotes: -"
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/safety-effort/assessment-templates",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/safety-effort/assessment-templates",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "safety-effort",
+                "assessment-templates"
+              ],
+              "query": []
+            },
+            "description": "Purpose: สร้าง template\nCaller: Safety Admin\nWhen: save template\nAuth: Admin\nPagination: No\nRisk: Medium\nStatus: Existing\nNotes: versioned",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"example\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "PATCH /api/safety-effort/assessment-templates/:id",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/safety-effort/assessment-templates/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "safety-effort",
+                "assessment-templates",
+                "{{id}}"
+              ],
+              "query": []
+            },
+            "description": "Purpose: แก้ template metadata\nCaller: Safety Admin\nWhen: save\nAuth: Admin\nPagination: No\nRisk: Small\nStatus: Existing\nNotes: -",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"example\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/safety-effort/assessment-templates/:id/publish",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/safety-effort/assessment-templates/:id/publish",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "safety-effort",
+                "assessment-templates",
+                "{{id}}",
+                "publish"
+              ],
+              "query": []
+            },
+            "description": "Purpose: publish template version\nCaller: Safety Admin\nWhen: publish\nAuth: Admin\nPagination: No\nRisk: Small\nStatus: Existing\nNotes: lock questions",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"example\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/safety-effort/assessment-templates/:id/archive",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/safety-effort/assessment-templates/:id/archive",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "safety-effort",
+                "assessment-templates",
+                "{{id}}",
+                "archive"
+              ],
+              "query": []
+            },
+            "description": "Purpose: archive template\nCaller: Safety Admin\nWhen: archive\nAuth: Admin\nPagination: No\nRisk: Small\nStatus: Existing\nNotes: -",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"example\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/safety-effort/assessment-templates/:id/questions",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/safety-effort/assessment-templates/:id/questions",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "safety-effort",
+                "assessment-templates",
+                "{{id}}",
+                "questions"
+              ],
+              "query": []
+            },
+            "description": "Purpose: รายการคำถามใน template\nCaller: Safety Admin/Linewalk\nWhen: load questions\nAuth: User/Admin\nPagination: No\nRisk: Medium\nStatus: Existing\nNotes: -"
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/safety-effort/assessment-templates/:id/questions",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/safety-effort/assessment-templates/:id/questions",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "safety-effort",
+                "assessment-templates",
+                "{{id}}",
+                "questions"
+              ],
+              "query": []
+            },
+            "description": "Purpose: เพิ่มคำถาม\nCaller: Safety Admin\nWhen: save question\nAuth: Admin\nPagination: No\nRisk: Small\nStatus: Existing\nNotes: -",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"example\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "PATCH /api/safety-effort/questions/:id",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/safety-effort/questions/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "safety-effort",
+                "questions",
+                "{{id}}"
+              ],
+              "query": []
+            },
+            "description": "Purpose: แก้คำถาม\nCaller: Safety Admin\nWhen: save question\nAuth: Admin\nPagination: No\nRisk: Small\nStatus: Existing\nNotes: -",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"example\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "DELETE /api/safety-effort/questions/:id",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/safety-effort/questions/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "safety-effort",
+                "questions",
+                "{{id}}"
+              ],
+              "query": []
+            },
+            "description": "Purpose: ลบ/disable คำถาม\nCaller: Safety Admin\nWhen: delete\nAuth: Admin\nPagination: No\nRisk: Small\nStatus: Existing\nNotes: soft disable if published",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"example\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Reports",
+      "item": [
+        {
+          "name": "GET /api/safety-effort/reports/summary?from=&to=&locationType=",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/safety-effort/reports/summary",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "safety-effort",
+                "reports",
+                "summary"
+              ],
+              "query": [
+                {
+                  "key": "from",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "to",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "locationType",
+                  "value": "",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Purpose: summary cards สำหรับ admin\nCaller: Safety Admin\nWhen: เปิด dashboard\nAuth: Admin\nPagination: Aggregate\nRisk: Medium\nStatus: Existing\nNotes: cache by filter"
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/safety-effort/reports/by-location?from=&to=&type=&page=&pageSize=",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/safety-effort/reports/by-location",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "safety-effort",
+                "reports",
+                "by-location"
+              ],
+              "query": [
+                {
+                  "key": "from",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "to",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "type",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "page",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "pageSize",
+                  "value": "",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Purpose: รายงานแยก location\nCaller: Safety Admin\nWhen: open report\nAuth: Admin\nPagination: Required\nRisk: High\nStatus: Existing\nNotes: -"
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/safety-effort/reports/by-user?from=&to=&page=&pageSize=",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/safety-effort/reports/by-user",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "safety-effort",
+                "reports",
+                "by-user"
+              ],
+              "query": [
+                {
+                  "key": "from",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "to",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "page",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "pageSize",
+                  "value": "",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Purpose: รายงานแยกผู้ประเมิน\nCaller: Safety Admin\nWhen: open report\nAuth: Admin\nPagination: Required\nRisk: High\nStatus: Existing\nNotes: -"
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/safety-effort/reports/findings?from=&to=&status=&page=&pageSize=",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/safety-effort/reports/findings",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "safety-effort",
+                "reports",
+                "findings"
+              ],
+              "query": [
+                {
+                  "key": "from",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "to",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "status",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "page",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "pageSize",
+                  "value": "",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Purpose: รายงาน finding\nCaller: Safety Admin\nWhen: open report\nAuth: Admin\nPagination: Required\nRisk: High\nStatus: Existing\nNotes: -"
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/exports",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/exports",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "exports"
+              ],
+              "query": []
+            },
+            "description": "Purpose: สร้าง export job\nCaller: Admin\nWhen: กด export ใหญ่\nAuth: Admin\nPagination: Async\nRisk: High\nStatus: Existing\nNotes: ใช้ได้หลาย module",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"example\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/exports/:id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/exports/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "exports",
+                "{{id}}"
+              ],
+              "query": []
+            },
+            "description": "Purpose: สถานะ export job\nCaller: Admin\nWhen: poll status\nAuth: Admin\nPagination: No\nRisk: Small\nStatus: Existing\nNotes: -"
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/exports/:id/download",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/exports/:id/download",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "exports",
+                "{{id}}",
+                "download"
+              ],
+              "query": []
+            },
+            "description": "Purpose: download export file\nCaller: Admin\nWhen: download\nAuth: Admin\nPagination: File\nRisk: File\nStatus: Existing\nNotes: signed URL or stream"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Corrective Action",
+      "item": [
+        {
+          "name": "GET /api/safety-effort/findings?status=&severity=&page=&pageSize=",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/safety-effort/findings",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "safety-effort",
+                "findings"
+              ],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "severity",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "page",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "pageSize",
+                  "value": "",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Purpose: รายการ findings\nCaller: Admin/Dashboard\nWhen: ติดตามจุดเสี่ยง\nAuth: User/Admin\nPagination: Required\nRisk: High\nStatus: Existing\nNotes: -"
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/safety-effort/findings/:id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/safety-effort/findings/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "safety-effort",
+                "findings",
+                "{{id}}"
+              ],
+              "query": []
+            },
+            "description": "Purpose: รายละเอียด finding\nCaller: Admin/Assignee\nWhen: open detail\nAuth: User/Admin\nPagination: No\nRisk: Medium\nStatus: Existing\nNotes: รวม action/media"
+          },
+          "response": []
+        },
+        {
+          "name": "PATCH /api/safety-effort/findings/:id",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/safety-effort/findings/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "safety-effort",
+                "findings",
+                "{{id}}"
+              ],
+              "query": []
+            },
+            "description": "Purpose: แก้ finding\nCaller: Admin/Reporter\nWhen: save\nAuth: Owner/Admin\nPagination: No\nRisk: Small\nStatus: Existing\nNotes: -",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"example\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "PATCH /api/safety-effort/corrective-actions/:id",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/safety-effort/corrective-actions/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "safety-effort",
+                "corrective-actions",
+                "{{id}}"
+              ],
+              "query": []
+            },
+            "description": "Purpose: อัปเดต action\nCaller: Assignee/Admin\nWhen: update status\nAuth: Assignee/Admin\nPagination: No\nRisk: Small\nStatus: Existing\nNotes: -",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"example\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/safety-effort/corrective-actions/:id/complete",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/safety-effort/corrective-actions/:id/complete",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "safety-effort",
+                "corrective-actions",
+                "{{id}}",
+                "complete"
+              ],
+              "query": []
+            },
+            "description": "Purpose: ปิดงานแก้ไข\nCaller: Assignee/Admin\nWhen: complete\nAuth: Assignee/Admin\nPagination: No\nRisk: Small\nStatus: Existing\nNotes: require evidence optional",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"example\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/safety-effort/corrective-actions/:id/comments",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/safety-effort/corrective-actions/:id/comments",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "safety-effort",
+                "corrective-actions",
+                "{{id}}",
+                "comments"
+              ],
+              "query": []
+            },
+            "description": "Purpose: comment ใน action\nCaller: Assignee/Admin\nWhen: add comment\nAuth: User\nPagination: No\nRisk: Small\nStatus: Existing\nNotes: -",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"content\": \"Comment from Postman\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Safety Culture Admin",
+      "item": [
+        {
+          "name": "GET /api/safety-culture/posts/admin?status=&page=&pageSize=",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/safety-culture/posts/admin",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "safety-culture",
+                "posts",
+                "admin"
+              ],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "page",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "pageSize",
+                  "value": "",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Purpose: admin moderation list\nCaller: Admin Culture\nWhen: เปิดจัดการโพสต์\nAuth: Admin\nPagination: Required\nRisk: High\nStatus: Existing\nNotes: -"
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/safety-culture/posts/:id/approve",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/safety-culture/posts/:id/approve",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "safety-culture",
+                "posts",
+                "{{id}}",
+                "approve"
+              ],
+              "query": []
+            },
+            "description": "Purpose: approve post\nCaller: Admin Culture\nWhen: approve\nAuth: Admin\nPagination: No\nRisk: Small\nStatus: Existing\nNotes: optional if moderation enabled",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"content\": \"Post from Postman\",\n  \"category\": \"ทั่วไป\",\n  \"attachmentIds\": [],\n  \"eventId\": null\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/safety-culture/posts/:id/reject",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/safety-culture/posts/:id/reject",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "safety-culture",
+                "posts",
+                "{{id}}",
+                "reject"
+              ],
+              "query": []
+            },
+            "description": "Purpose: reject post\nCaller: Admin Culture\nWhen: reject\nAuth: Admin\nPagination: No\nRisk: Small\nStatus: Existing\nNotes: with reason",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"content\": \"Post from Postman\",\n  \"category\": \"ทั่วไป\",\n  \"attachmentIds\": [],\n  \"eventId\": null\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/safety-culture/points/rules",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/safety-culture/points/rules",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "safety-culture",
+                "points",
+                "rules"
+              ],
+              "query": []
+            },
+            "description": "Purpose: กติกาคะแนน\nCaller: Admin\nWhen: open settings\nAuth: Admin\nPagination: No\nRisk: Small\nStatus: Existing\nNotes: -"
+          },
+          "response": []
+        },
+        {
+          "name": "PATCH /api/safety-culture/points/rules/:id",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/safety-culture/points/rules/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "safety-culture",
+                "points",
+                "rules",
+                "{{id}}"
+              ],
+              "query": []
+            },
+            "description": "Purpose: แก้กติกาคะแนน\nCaller: Admin\nWhen: save rule\nAuth: Admin\nPagination: No\nRisk: Small\nStatus: Existing\nNotes: audit required",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"example\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/safety-culture/points/adjustments",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/safety-culture/points/adjustments",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "safety-culture",
+                "points",
+                "adjustments"
+              ],
+              "query": []
+            },
+            "description": "Purpose: ปรับคะแนน manual\nCaller: Admin\nWhen: manual adjustment\nAuth: Admin\nPagination: No\nRisk: Small\nStatus: Existing\nNotes: audit + reason required",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"example\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Rewards Admin",
+      "item": [
+        {
+          "name": "POST /api/safety-culture/rewards",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/safety-culture/rewards",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "safety-culture",
+                "rewards"
+              ],
+              "query": []
+            },
+            "description": "Purpose: สร้างของรางวัล\nCaller: Admin Reward\nWhen: save\nAuth: Admin\nPagination: No\nRisk: Small\nStatus: Existing\nNotes: reward image mediaId",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"example\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "PATCH /api/safety-culture/rewards/:id",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/safety-culture/rewards/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "safety-culture",
+                "rewards",
+                "{{id}}"
+              ],
+              "query": []
+            },
+            "description": "Purpose: แก้ของรางวัล\nCaller: Admin Reward\nWhen: save\nAuth: Admin\nPagination: No\nRisk: Small\nStatus: Existing\nNotes: -",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"example\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "DELETE /api/safety-culture/rewards/:id",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/safety-culture/rewards/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "safety-culture",
+                "rewards",
+                "{{id}}"
+              ],
+              "query": []
+            },
+            "description": "Purpose: ซ่อน/ลบของรางวัล\nCaller: Admin Reward\nWhen: delete\nAuth: Admin\nPagination: No\nRisk: Small\nStatus: Existing\nNotes: soft delete",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"example\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/safety-culture/reward-redemptions?status=&page=&pageSize=",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/safety-culture/reward-redemptions",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "safety-culture",
+                "reward-redemptions"
+              ],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "page",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "pageSize",
+                  "value": "",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Purpose: รายการแลกรางวัล\nCaller: Admin Reward\nWhen: เปิด admin\nAuth: Admin\nPagination: Required\nRisk: High\nStatus: Existing\nNotes: -"
+          },
+          "response": []
+        },
+        {
+          "name": "PATCH /api/safety-culture/reward-redemptions/:id/status",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/safety-culture/reward-redemptions/:id/status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "safety-culture",
+                "reward-redemptions",
+                "{{id}}",
+                "status"
+              ],
+              "query": []
+            },
+            "description": "Purpose: อัปเดตสถานะแลกรางวัล\nCaller: Admin Reward\nWhen: approve/fulfill/cancel\nAuth: Admin\nPagination: No\nRisk: Small\nStatus: Existing\nNotes: transaction-safe",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"example\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/safety-culture/rewards/:id/inventory-transactions",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/safety-culture/rewards/:id/inventory-transactions",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "safety-culture",
+                "rewards",
+                "{{id}}",
+                "inventory-transactions"
+              ],
+              "query": []
+            },
+            "description": "Purpose: ปรับ stock ของรางวัล\nCaller: Admin Reward\nWhen: stock in/out\nAuth: Admin\nPagination: No\nRisk: Small\nStatus: Existing\nNotes: ledger",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"example\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Awareness Admin",
+      "item": [
+        {
+          "name": "GET /api/safety-awareness/questions/admin?page=&pageSize=&category=",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/safety-awareness/questions/admin",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "safety-awareness",
+                "questions",
+                "admin"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "pageSize",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "category",
+                  "value": "",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Purpose: คลังคำถาม awareness\nCaller: Admin Awareness\nWhen: open admin\nAuth: Admin\nPagination: Required\nRisk: Medium\nStatus: Existing\nNotes: -"
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/safety-awareness/questions",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/safety-awareness/questions",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "safety-awareness",
+                "questions"
+              ],
+              "query": []
+            },
+            "description": "Purpose: สร้างคำถาม awareness\nCaller: Admin Awareness\nWhen: save\nAuth: Admin\nPagination: No\nRisk: Small\nStatus: Existing\nNotes: -",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"example\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "PATCH /api/safety-awareness/questions/:id",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/safety-awareness/questions/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "safety-awareness",
+                "questions",
+                "{{id}}"
+              ],
+              "query": []
+            },
+            "description": "Purpose: แก้คำถาม awareness\nCaller: Admin Awareness\nWhen: save\nAuth: Admin\nPagination: No\nRisk: Small\nStatus: Existing\nNotes: -",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"example\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "DELETE /api/safety-awareness/questions/:id",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/safety-awareness/questions/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "safety-awareness",
+                "questions",
+                "{{id}}"
+              ],
+              "query": []
+            },
+            "description": "Purpose: disable คำถาม awareness\nCaller: Admin Awareness\nWhen: delete\nAuth: Admin\nPagination: No\nRisk: Small\nStatus: Existing\nNotes: soft disable",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"example\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/safety-awareness/attempts?from=&to=&userId=&page=&pageSize=",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/safety-awareness/attempts",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "safety-awareness",
+                "attempts"
+              ],
+              "query": [
+                {
+                  "key": "from",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "to",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "userId",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "page",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "pageSize",
+                  "value": "",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Purpose: รายงาน awareness\nCaller: Admin Awareness\nWhen: open report\nAuth: Admin\nPagination: Required\nRisk: High\nStatus: Existing\nNotes: -"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Awareness",
+      "item": [
+        {
+          "name": "GET /api/safety-awareness/attempts/me?from=&to=&page=&pageSize=",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/safety-awareness/attempts/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "safety-awareness",
+                "attempts",
+                "me"
+              ],
+              "query": [
+                {
+                  "key": "from",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "to",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "page",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "pageSize",
+                  "value": "",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Purpose: ประวัติ awareness ของฉัน\nCaller: Profile\nWhen: open history\nAuth: User\nPagination: Required\nRisk: Medium\nStatus: Existing\nNotes: -"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Holidays",
+      "item": [
+        {
+          "name": "GET /api/holidays?year=",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/holidays",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "holidays"
+              ],
+              "query": [
+                {
+                  "key": "year",
+                  "value": "",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Purpose: รายการวันหยุด\nCaller: Admin Awareness/Effort\nWhen: เปิด settings/date rules\nAuth: User/Admin\nPagination: No\nRisk: Small\nStatus: Existing\nNotes: cache yearly"
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/holidays",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/holidays",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "holidays"
+              ],
+              "query": []
+            },
+            "description": "Purpose: เพิ่มวันหยุด\nCaller: Admin\nWhen: save\nAuth: Admin\nPagination: No\nRisk: Small\nStatus: Existing\nNotes: -",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"example\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "DELETE /api/holidays/:id",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/holidays/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "holidays",
+                "{{id}}"
+              ],
+              "query": []
+            },
+            "description": "Purpose: ลบวันหยุด\nCaller: Admin\nWhen: delete\nAuth: Admin\nPagination: No\nRisk: Small\nStatus: Existing\nNotes: -",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"example\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Media",
+      "item": [
+        {
+          "name": "POST /api/uploads/:id/link",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/uploads/:id/link",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "uploads",
+                "{{id}}",
+                "link"
+              ],
+              "query": []
+            },
+            "description": "Purpose: ผูก media กับ owner\nCaller: Any module\nWhen: หลังสร้าง owner หรือ attach เพิ่ม\nAuth: Owner/Admin\nPagination: No\nRisk: Small\nStatus: Existing\nNotes: ownerType/ownerId/linkType",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": []
+                },
+                {
+                  "key": "module",
+                  "type": "text",
+                  "value": "safety-culture"
+                },
+                {
+                  "key": "ownerType",
+                  "type": "text",
+                  "value": "post"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "DELETE /api/uploads/:id/link",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/uploads/:id/link",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "uploads",
+                "{{id}}",
+                "link"
+              ],
+              "query": []
+            },
+            "description": "Purpose: ถอด media จาก owner\nCaller: Any module\nWhen: remove attachment\nAuth: Owner/Admin\nPagination: No\nRisk: Small\nStatus: Existing\nNotes: -",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": []
+                },
+                {
+                  "key": "module",
+                  "type": "text",
+                  "value": "safety-culture"
+                },
+                {
+                  "key": "ownerType",
+                  "type": "text",
+                  "value": "post"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/media?ownerType=&ownerId=",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/media",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "media"
+              ],
+              "query": [
+                {
+                  "key": "ownerType",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "ownerId",
+                  "value": "",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Purpose: อ่าน media ของ owner\nCaller: Detail/report\nWhen: โหลด detail\nAuth: User\nPagination: Limit\nRisk: Medium\nStatus: Existing\nNotes: ตรวจสิทธิ์ตาม owner"
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/uploads/presign",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/uploads/presign",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "uploads",
+                "presign"
+              ],
+              "query": []
+            },
+            "description": "Purpose: ขอ signed upload URL\nCaller: Mobile/Web\nWhen: ก่อน upload direct-to-storage\nAuth: User\nPagination: No\nRisk: Small\nStatus: Existing\nNotes: optional for scale",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": []
+                },
+                {
+                  "key": "module",
+                  "type": "text",
+                  "value": "safety-culture"
+                },
+                {
+                  "key": "ownerType",
+                  "type": "text",
+                  "value": "post"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/uploads/:id/complete",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/uploads/:id/complete",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "uploads",
+                "{{id}}",
+                "complete"
+              ],
+              "query": []
+            },
+            "description": "Purpose: ยืนยัน upload direct-to-storage\nCaller: Mobile/Web\nWhen: หลัง upload สำเร็จ\nAuth: User\nPagination: No\nRisk: Small\nStatus: Existing\nNotes: verify object exists",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": []
+                },
+                {
+                  "key": "module",
+                  "type": "text",
+                  "value": "safety-culture"
+                },
+                {
+                  "key": "ownerType",
+                  "type": "text",
+                  "value": "post"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Settings",
+      "item": [
+        {
+          "name": "GET /api/safety-settings?key=",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/safety-settings",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "safety-settings"
+              ],
+              "query": [
+                {
+                  "key": "key",
+                  "value": "",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Purpose: อ่านค่า safety settings จากฐานจริง\nCaller: Safety Admin/DatePicker\nWhen: โหลดหน้าหรือเปิด setting\nAuth: User\nPagination: No\nRisk: Small\nStatus: Existing\nNotes: ใช้ safety_settings ไม่ใช้ localStorage"
+          },
+          "response": []
+        },
+        {
+          "name": "PUT /api/safety-settings",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/safety-settings",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "safety-settings"
+              ],
+              "query": []
+            },
+            "description": "Purpose: บันทึกค่า safety settings ลงฐานจริง\nCaller: Safety Admin\nWhen: เมื่อ admin save settings\nAuth: Admin\nPagination: No\nRisk: Small\nStatus: Existing\nNotes: upsert safety_settings",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"example\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Audit",
+      "item": [
+        {
+          "name": "GET /api/audit-logs?actor=&entity=&from=&to=&page=&pageSize=",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/audit-logs",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "audit-logs"
+              ],
+              "query": [
+                {
+                  "key": "actor",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "entity",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "from",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "to",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "page",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "pageSize",
+                  "value": "",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Purpose: audit trail\nCaller: Admin/Security\nWhen: ตรวจสอบการแก้ไข\nAuth: Admin\nPagination: Required\nRisk: High\nStatus: Existing\nNotes: ห้ามเปิด public"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "System",
+      "item": [
+        {
+          "name": "GET /api/health",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/health",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "health"
+              ],
+              "query": []
+            },
+            "description": "Purpose: health check\nCaller: Infra\nWhen: monitoring\nAuth: Public/Internal\nPagination: No\nRisk: Small\nStatus: Existing\nNotes: -"
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/version",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/version",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "version"
+              ],
+              "query": []
+            },
+            "description": "Purpose: app/api version\nCaller: Infra/Debug\nWhen: debug\nAuth: Public/Internal\nPagination: No\nRisk: Small\nStatus: Existing\nNotes: -"
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}
