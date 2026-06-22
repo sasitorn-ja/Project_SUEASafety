@@ -1484,8 +1484,26 @@ export function AppProviders({ children }: { children: ReactNode }) {
     }
     if (isAuthenticatedRef.current) {
       void apiFetch(`/api/safety-culture/posts/${postId}/reactions`, apiJson(currentDelta > 0 ? "POST" : "DELETE", { reactionType: "LIKE" }))
-        .then((result) => {
-          if (result.ok) return;
+        .then(async (result) => {
+          if (result.ok) {
+            const syncedPostResult = await apiFetch<{ post: ApiPost }>(`/api/safety-culture/posts/${postId}`);
+            if (!syncedPostResult.ok || !syncedPostResult.data?.post) return;
+
+            const viewerId = currentUserRef.current?.id ? String(currentUserRef.current.id) : null;
+            const syncedPostBase = postFromApi(syncedPostResult.data.post);
+            const syncedComments = await loadPostComments(syncedPostBase.id, viewerId).catch(() => null);
+            const syncedPost = {
+              ...syncedPostBase,
+              isYou: Boolean(viewerId && syncedPostBase.authorId && syncedPostBase.authorId === viewerId),
+              comments: syncedComments ?? syncedPostBase.comments,
+            };
+
+            setPosts((current) =>
+              current.map((post) => (post.id === postId ? { ...post, ...syncedPost } : post))
+            );
+            return;
+          }
+
           const rollbackPost = previousPost;
           if (rollbackPost) {
             setPosts((current) => current.map((post) => (post.id === postId ? rollbackPost : post)));
@@ -1493,7 +1511,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
           }
         });
     }
-  }, [getLinkedFeedEvent, safetyCultureEvent]);
+  }, [getLinkedFeedEvent, loadPostComments, safetyCultureEvent]);
 
   const fetchComments = useCallback(async (postId: number) => {
     const comments = await loadPostComments(postId);

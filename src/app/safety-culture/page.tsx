@@ -350,6 +350,15 @@ export default function Page() {
     };
   }, [activeCategory, fetchPosts, sessionUser?.id]);
 
+  useEffect(() => {
+    setMyTeamPosts((current) =>
+      current.map((teamPost) => {
+        const syncedPost = posts.find((post) => post.id === teamPost.id);
+        return syncedPost ? { ...teamPost, ...syncedPost } : teamPost;
+      }),
+    );
+  }, [posts]);
+
   const filtered = activeCategory === "ทั้งหมด"
     ? posts
     : activeCategory === "ทีมของฉัน"

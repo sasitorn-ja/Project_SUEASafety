@@ -112,6 +112,9 @@ export default function SafetyAdminReportHistory() {
       isSafetyContact,
       safetyContactText: meta.safetyContactText || "",
       answeredItems: Array.isArray(meta.answers) ? meta.answers : [],
+      actorName: row.name || meta.name || "-",
+      actorEmail: row.email || meta.email || "",
+      actorCode: row.pms || meta.pms || "",
     };
   };
 
@@ -145,7 +148,10 @@ export default function SafetyAdminReportHistory() {
 
   const filtered = submissions.filter(item => {
     const matchesSearch = item.locationName.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                         (item.safetyContactText && item.safetyContactText.toLowerCase().includes(searchQuery.toLowerCase()));
+                         (item.safetyContactText && item.safetyContactText.toLowerCase().includes(searchQuery.toLowerCase())) ||
+                         (item.actorName && item.actorName.toLowerCase().includes(searchQuery.toLowerCase())) ||
+                         (item.actorEmail && item.actorEmail.toLowerCase().includes(searchQuery.toLowerCase())) ||
+                         (item.actorCode && item.actorCode.toLowerCase().includes(searchQuery.toLowerCase()));
     const matchesActivity = activityFilter === "all" || item.activityId === activityFilter;
     const matchesLoc = locTypeFilter === "all" || item.locType === locTypeFilter;
     return matchesSearch && matchesActivity && matchesLoc;
@@ -223,7 +229,7 @@ export default function SafetyAdminReportHistory() {
               <div style={{ position: "relative", width: isMobile ? "100%" : 240 }}>
                 <input
                   type="text"
-                  placeholder="ค้นหาชื่อสถานที่..."
+                  placeholder="ค้นหาสถานที่ / ผู้ทำ / อีเมล..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   style={{
@@ -309,6 +315,7 @@ export default function SafetyAdminReportHistory() {
                       <th style={{ padding: "10px 16px", fontWeight: 800, color: T.sub, width: 140 }}>วันที่ทำรายการ</th>
                       <th style={{ padding: "10px 16px", fontWeight: 800, color: T.sub, width: 130 }}>กิจกรรม</th>
                       <th style={{ padding: "10px 16px", fontWeight: 800, color: T.sub, width: 220 }}>สถานที่ตรวจ</th>
+                      <th style={{ padding: "10px 16px", fontWeight: 800, color: T.sub, width: 220 }}>ผู้ทำกิจกรรม</th>
                       <th style={{ padding: "10px 16px", fontWeight: 800, color: T.sub, width: 120 }}>ประเภทสถานที่</th>
                       <th style={{ padding: "10px 16px", fontWeight: 800, color: T.sub }}>ผลประเมิน / รายละเอียด</th>
                       <th style={{ padding: "10px 16px", fontWeight: 800, color: T.sub, width: 100, textAlign: "center" }}>จัดการ</th>
@@ -365,6 +372,12 @@ export default function SafetyAdminReportHistory() {
                           <td style={{ padding: "8px 16px" }}>
                             <div style={{ fontWeight: 700 }}>{item.locationName}</div>
                             <div style={{ fontSize: 11, color: T.sub }}>{item.locationTag}</div>
+                          </td>
+                          <td style={{ padding: "8px 16px" }}>
+                            <div style={{ fontWeight: 700 }}>{item.actorName || "-"}</div>
+                            <div style={{ fontSize: 11, color: T.sub }}>
+                              {[item.actorCode, item.actorEmail].filter(Boolean).join(" · ") || "-"}
+                            </div>
                           </td>
                           <td style={{ padding: "8px 16px" }}>
                             {LOCATION_TYPE_LABELS[item.locType] || item.locType}
@@ -476,6 +489,7 @@ export default function SafetyAdminReportHistory() {
                       </div>
                       <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
                         <div><strong style={{ color: T.sub }}>สถานที่:</strong> {item.locationName} <span style={{ fontSize: 11, color: T.sub }}>({item.locationTag})</span></div>
+                        <div><strong style={{ color: T.sub }}>ผู้ทำ:</strong> {item.actorName || "-"} <span style={{ fontSize: 11, color: T.sub }}>({[item.actorCode, item.actorEmail].filter(Boolean).join(" · ") || "-"})</span></div>
                         <div><strong style={{ color: T.sub }}>ประเภท:</strong> {LOCATION_TYPE_LABELS[item.locType] || item.locType}</div>
                         <div style={{ marginTop: 4, background: "#fcfcfb", padding: "6px 10px", borderRadius: 8, width: "100%", border: `1px solid ${T.line}` }}>
                           <strong style={{ color: T.sub, display: "block", fontSize: 11 }}>{isContact ? "ข้อความสื่อสาร:" : "ผลการตรวจ:"}</strong>
@@ -593,6 +607,13 @@ export default function SafetyAdminReportHistory() {
               <div>
                 <div style={{ fontSize: 11, color: T.sub, fontWeight: 800 }}>สถานที่ / รหัส</div>
                 <div style={{ fontSize: 14, fontWeight: 800 }}>{selectedSub.locationName} ({selectedSub.locationTag})</div>
+              </div>
+              <div>
+                <div style={{ fontSize: 11, color: T.sub, fontWeight: 800 }}>ผู้ทำกิจกรรม</div>
+                <div style={{ fontSize: 14, fontWeight: 800 }}>{selectedSub.actorName || "-"}</div>
+                <div style={{ fontSize: 12, color: T.sub }}>
+                  {[selectedSub.actorCode, selectedSub.actorEmail].filter(Boolean).join(" · ") || "-"}
+                </div>
               </div>
               <div>
                 <div style={{ fontSize: 11, color: T.sub, fontWeight: 800 }}>เวลาบันทึกระบบ</div>

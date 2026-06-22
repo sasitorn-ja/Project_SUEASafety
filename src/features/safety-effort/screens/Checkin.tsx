@@ -1415,7 +1415,7 @@ export default function Checkin() {
   const location = useLocation();
   const activity = location.state?.activity ?? null;
 
-  const [selected,  setSelected]  = useState(location.state?.checkin ?? null);
+  const [selected,  setSelected]  = useState(null);
   const [userPos,   setUserPos]   = useState(null);
   const [locating,  setLocating]  = useState(false);
   const [showModal, setShowModal] = useState(false);
@@ -1450,16 +1450,16 @@ export default function Checkin() {
     return () => setMapMounted(false);
   }, []);
 
-  useEffect(() => {
-    if (location.state?.checkin) {
-      setSelected(location.state.checkin);
-    }
-  }, [location.state?.checkin]);
-
   const isMobile = width < 768;
   const center   = userPos ?? DEFAULT_CENTER;
 
-  useEffect(() => { locateUser(); }, []);
+  useEffect(() => {
+    setSelected(null);
+    setSearchQuery("");
+    setSelectedType("ทั้งหมด");
+    setApiError("");
+    locateUser();
+  }, [location.pathname, location.state]);
 
   useEffect(() => {
     let cancelled = false;
