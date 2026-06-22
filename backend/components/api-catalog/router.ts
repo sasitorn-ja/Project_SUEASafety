@@ -399,6 +399,8 @@ async function tryHandleConcreteRoute(
       const checkin = await createCheckin({
         userId,
         locationId: String(input.locationId || input.selectedLocationId || ""),
+        locationCode: optionalScalar(input.locationCode || input.code || input.tag)?.toString() || null,
+        locationName: optionalScalar(input.locationName || input.name || input.selectedLocationName)?.toString() || null,
         actualLat: Number(input.actualLat ?? input.lat),
         actualLng: Number(input.actualLng ?? input.lng),
         actualAccuracyM: input.actualAccuracyM === undefined ? null : Number(input.actualAccuracyM),

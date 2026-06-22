@@ -386,42 +386,6 @@ export async function deletePost(id: string, userId: string) {
     const post = postRows[0] as (RowDataPacket & { points_awarded: number | string | null }) | undefined;
     if (!post) return { deleted: false, pointsReversed: 0, balance: null };
 
-    const [earnedRows] = await connection.execute<RowDataPacket[]>(
-      `SELECT id, point_rule_id, amount
-       FROM point_transactions
-       WHERE user_id = :userId AND idempotency_key = :earnKey
-       LIMIT 1 FOR UPDATE`,
-      { userId, earnKey: `post:${id}:approved` },
-    );
-    const earned = earnedRows[0] as (RowDataPacket & { point_rule_id: string | null; amount: number | string }) | undefined;
-    const pointsToReverse = Math.max(0, Number(earned?.amount ?? post.points_awarded ?? 0));
-
-    let pointsReversed = 0;
-    if (pointsToReverse > 0) {
-      const [reversal] = await connection.execute<ResultSetHeader>(
-        `INSERT IGNORE INTO point_transactions
-         (user_id, point_rule_id, transaction_type, amount, source_type, source_id, idempotency_key, description)
-         VALUES (:userId, :pointRuleId, 'SPEND', :amount, 'POST_DELETION', :postId, :reversalKey, :description)`,
-        {
-          userId,
-          pointRuleId: earned?.point_rule_id || null,
-          amount: -pointsToReverse,
-          postId: id,
-          reversalKey: `post:${id}:delete-reversal`,
-          description: `Reverse points for deleted Safety Post #${id}`,
-        },
-      );
-      if (reversal.affectedRows > 0) {
-        pointsReversed = pointsToReverse;
-        await connection.execute<ResultSetHeader>(
-          `INSERT INTO point_balances (user_id, balance)
-           VALUES (:userId, :amount)
-           ON DUPLICATE KEY UPDATE balance = balance + :amount, updated_at = UTC_TIMESTAMP(3)`,
-          { userId, amount: -pointsToReverse },
-        );
-      }
-    }
-
     const [deleteResult] = await connection.execute<ResultSetHeader>(
       `
         UPDATE posts
@@ -430,6 +394,48 @@ export async function deletePost(id: string, userId: string) {
       `,
       { id, userId },
     );
+
+    let pointsReversed = 0;
+    if (deleteResult.affectedRows > 0) {
+      try {
+        const [earnedRows] = await connection.execute<RowDataPacket[]>(
+          `SELECT id, point_rule_id, amount
+           FROM point_transactions
+           WHERE user_id = :userId AND idempotency_key = :earnKey
+           LIMIT 1`,
+          { userId, earnKey: `post:${id}:approved` },
+        );
+        const earned = earnedRows[0] as (RowDataPacket & { point_rule_id: string | null; amount: number | string }) | undefined;
+        const pointsToReverse = Math.max(0, Number(earned?.amount ?? post.points_awarded ?? 0));
+
+        if (pointsToReverse > 0) {
+          const [reversal] = await connection.execute<ResultSetHeader>(
+            `INSERT IGNORE INTO point_transactions
+             (user_id, point_rule_id, transaction_type, amount, source_type, source_id, idempotency_key, description)
+             VALUES (:userId, :pointRuleId, 'SPEND', :amount, 'POST_DELETION', :postId, :reversalKey, :description)`,
+            {
+              userId,
+              pointRuleId: earned?.point_rule_id || null,
+              amount: -pointsToReverse,
+              postId: id,
+              reversalKey: `post:${id}:delete-reversal`,
+              description: `Reverse points for deleted Safety Post #${id}`,
+            },
+          );
+          if (reversal.affectedRows > 0) {
+            pointsReversed = pointsToReverse;
+            await connection.execute<ResultSetHeader>(
+              `INSERT INTO point_balances (user_id, balance)
+               VALUES (:userId, :amount)
+               ON DUPLICATE KEY UPDATE balance = balance + :amount, updated_at = UTC_TIMESTAMP(3)`,
+              { userId, amount: -pointsToReverse },
+            );
+          }
+        }
+      } catch {
+        pointsReversed = 0;
+      }
+    }
     const [balanceRows] = await connection.execute<RowDataPacket[]>(
       "SELECT balance FROM point_balances WHERE user_id = :userId LIMIT 1",
       { userId },

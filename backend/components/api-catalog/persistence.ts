@@ -62,7 +62,7 @@ const TABLE_COLUMNS = {
   awareness_questions: ["question_text", "options_json", "correct_answer_json", "status"],
   holidays: ["holiday_date", "name"],
   point_rules: ["code", "source_type", "points", "status"],
-  rewards: ["code", "name", "points_required", "stock_qty", "status"],
+  rewards: ["code", "name", "points_required", "stock_qty", "status", "metadata"],
 } as const;
 
 const JSON_COLUMNS = new Set([

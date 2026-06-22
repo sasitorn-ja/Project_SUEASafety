@@ -1521,7 +1521,9 @@ export default function Checkin() {
 
   useEffect(() => {
     if (selected) {
-      const fresh = allLocations.find(l => l.id === selected.id);
+      const fresh = allLocations.find(l => l.id === selected.id)
+        || allLocations.find(l => selected.tag && l.tag === selected.tag)
+        || allLocations.find(l => selected.name && l.name === selected.name);
       if (fresh) setSelected(fresh);
     }
   }, [userPos, extraLocs]);
@@ -1556,6 +1558,10 @@ export default function Checkin() {
     setSavingCheckin(true);
     setApiError("");
     try {
+      const selectedForSubmit = allLocations.find(l => l.id === selected.id)
+        || allLocations.find(l => selected.tag && l.tag === selected.tag)
+        || allLocations.find(l => selected.name && l.name === selected.name)
+        || selected;
       let checkinRecord = null;
       if (userPos?.lat && userPos?.lng) {
         const response = await fetch("/api/checkins", {
@@ -1563,7 +1569,9 @@ export default function Checkin() {
           credentials: "include",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            locationId: selected.id,
+            locationId: selectedForSubmit.id,
+            locationCode: selectedForSubmit.tag,
+            locationName: selectedForSubmit.name,
             actualLat: userPos.lat,
             actualLng: userPos.lng,
             locationSource: "GPS",
@@ -1576,12 +1584,12 @@ export default function Checkin() {
       navigate(nextPath, {
         state: {
           checkin: {
-            id: selected.id,
+            id: selectedForSubmit.id,
             checkinId: checkinRecord?.id || null,
-            name: selected.name,
-            tag: selected.tag,
-            type: selected.type,
-            dist: selected.dist,
+            name: selectedForSubmit.name,
+            tag: selectedForSubmit.tag,
+            type: selectedForSubmit.type,
+            dist: selectedForSubmit.dist,
           },
           ...(activity ? { activity, fromActivity: true } : {}),
         },

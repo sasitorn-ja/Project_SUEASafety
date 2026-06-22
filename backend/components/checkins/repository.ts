@@ -3,7 +3,7 @@ import "server-only";
 import type { ResultSetHeader, RowDataPacket } from "mysql2/promise";
 
 import { queryRows, withTransaction } from "@backend/components/core/db";
-import { getSafetyEffortLocation } from "@backend/components/safety-effort/locations/repository";
+import { findSafetyEffortLocationForCheckin, getSafetyEffortLocation } from "@backend/components/safety-effort/locations/repository";
 
 type CheckinRow = RowDataPacket & {
   id: string;
@@ -82,13 +82,21 @@ const SELECT_CHECKINS_SQL = `
 export async function createCheckin(input: {
   userId: string;
   locationId: string;
+  locationCode?: string | null;
+  locationName?: string | null;
   actualLat: number;
   actualLng: number;
   actualAccuracyM?: number | null;
   locationSource?: string | null;
   deviceMetadata?: unknown;
 }) {
-  const selectedLocation = await getSafetyEffortLocation(input.locationId);
+  const selectedLocation =
+    (await getSafetyEffortLocation(input.locationId)) ||
+    (await findSafetyEffortLocationForCheckin({
+      id: input.locationId,
+      code: input.locationCode,
+      name: input.locationName,
+    }));
   if (!selectedLocation?.lat || !selectedLocation.lng) {
     throw new Error("selected_location_not_found");
   }

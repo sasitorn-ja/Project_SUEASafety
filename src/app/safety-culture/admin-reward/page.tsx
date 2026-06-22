@@ -987,13 +987,13 @@ export default function AdminRewardPage() {
 
         <div className="mt-4 flex flex-col gap-4">
           <Card className="overflow-hidden rounded-[20px] border border-[var(--border)] bg-[var(--brand-surface)] p-2.5 shadow-[0_10px_24px_var(--brand-shadow)]">
-            <div className="scrollbar-hide flex gap-2 overflow-x-auto pb-1">
+            <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
               {categorySummary.map((item) => {
                 const Icon = CATEGORY_ICON_MAP[item.icon];
                 return (
                   <div
                     key={item.value}
-                    className="flex min-w-[320px] flex-shrink-0 items-center justify-between gap-3 rounded-[16px] border border-[var(--border)] bg-white px-4 py-3 lg:min-w-[340px]"
+                    className="flex min-w-0 items-center justify-between gap-3 rounded-[16px] border border-[var(--border)] bg-white px-4 py-3"
                   >
                     <div className="flex min-w-0 items-center gap-3">
                       <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-2xl bg-[var(--brand-soft)] text-[var(--brand-text)]">
@@ -1220,7 +1220,7 @@ export default function AdminRewardPage() {
                       className="h-11 rounded-[14px] border-[var(--border)] bg-white pr-4 pl-10 text-[13px] font-bold"
                     />
                   </div>
-                  <div className="scrollbar-hide flex gap-2 overflow-x-auto pb-1">
+                  <div className="flex flex-wrap gap-2">
                     <button
                       type="button"
                       onClick={() => setActiveAdminCategory("all")}

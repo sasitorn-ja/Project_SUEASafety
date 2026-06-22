@@ -200,6 +200,40 @@ export async function getSafetyEffortLocation(id: string) {
   return rows[0] ? mapLocation(rows[0]) : null;
 }
 
+export async function findSafetyEffortLocationForCheckin(input: {
+  id?: string | null;
+  code?: string | null;
+  name?: string | null;
+}) {
+  const clauses = ["l.deleted_at IS NULL"];
+  const params: Record<string, unknown> = {};
+
+  if (input.id) {
+    clauses.push("l.id = :id");
+    params.id = input.id;
+  }
+  if (input.code) {
+    clauses.push("l.code = :code OR l.external_key = :code");
+    params.code = input.code;
+  }
+  if (input.name) {
+    clauses.push("l.name_th = :name OR l.name_en = :name");
+    params.name = input.name;
+  }
+  if (!params.id && !params.code && !params.name) return null;
+
+  const rows = await queryRows<LocationRow>(
+    `
+      ${SELECT_LOCATIONS_SQL}
+      WHERE (${clauses.slice(1).join(" OR ")}) AND l.deleted_at IS NULL
+      ORDER BY l.checkin_enabled DESC, l.updated_at DESC
+      LIMIT 1
+    `,
+    params,
+  );
+  return rows[0] ? mapLocation(rows[0]) : null;
+}
+
 export async function createSafetyEffortLocation(input: SafetyEffortLocationInput) {
   const normalizedInput = {
     ...input,

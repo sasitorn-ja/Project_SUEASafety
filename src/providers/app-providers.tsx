@@ -608,6 +608,29 @@ function normalizeRewardsCatalog(rewards: RewardCatalogItem[]): RewardCatalogIte
   });
 }
 
+function rewardFromApi(item: Record<string, unknown>, index: number): RewardCatalogItem {
+  const metadata = metadataRecord(item.metadata);
+  const stockQty = Number(item.stock_qty || 0);
+  const stockMode = metadata.stockMode === "unlimited" ? "unlimited" : "limited";
+  return normalizeRewardsCatalog([
+    {
+      id: Number(item.id) || index + 1,
+      name: String(metadata.name || item.name || ""),
+      category: String(metadata.category || "merch"),
+      description: String(metadata.description || ""),
+      imageText: String(metadata.imageText || item.code || item.name || ""),
+      imageSrc: typeof metadata.imageSrc === "string" ? metadata.imageSrc : null,
+      points: Number(metadata.points || item.points_required || 0),
+      isHot: Boolean(metadata.isHot),
+      redeemStartAt: metadata.redeemStartAt || null,
+      redeemEndAt: metadata.redeemEndAt || null,
+      stockMode,
+      stockTotal: stockMode === "limited" ? Number(metadata.stockTotal ?? stockQty) : null,
+      stockRemaining: stockMode === "limited" ? Number(metadata.stockRemaining ?? stockQty) : null,
+    },
+  ])[0];
+}
+
 function getRewardAvailabilityState(reward: RewardCatalogItem, now = Date.now()) {
   const startAt = reward.redeemStartAt ? Date.parse(reward.redeemStartAt) : NaN;
   const endAt = reward.redeemEndAt ? Date.parse(reward.redeemEndAt) : NaN;
@@ -986,7 +1009,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
   const [teamStandings, setTeamStandings] = useState<LeaderboardTeam[]>([]);
   const [personalRankings, setPersonalRankings] = useState<LeaderboardPerson[]>([]);
   const [rewardsCatalog, setRewardsCatalog] = useState<RewardCatalogItem[]>([]);
-  const [rewardCategories, setRewardCategories] = useState<RewardCategory[]>([]);
+  const [rewardCategories, setRewardCategories] = useState<RewardCategory[]>(() => createDefaultRewardCategories());
   const [rewardRedemptions, setRewardRedemptions] = useState<RewardRedemptionRecord[]>([]);
   const [awarenessQuestions, setAwarenessQuestions] = useState<SafetyAwarenessQuestion[]>([]);
   const [awarenessDoneDate, setAwarenessDoneDate] = useState<string>("");
@@ -1053,11 +1076,12 @@ export function AppProviders({ children }: { children: ReactNode }) {
       currentUserRef.current = sessionUser;
       if (!authed) return;
 
-      const [postsResult, balanceResult, notificationsResult, rewardsResult, leaderboardResult, teamsResult, awarenessResult, attemptsResult, holidaysResult, eventsResult] = await Promise.all([
+      const [postsResult, balanceResult, notificationsResult, rewardsResult, rewardCategoriesResult, leaderboardResult, teamsResult, awarenessResult, attemptsResult, holidaysResult, eventsResult] = await Promise.all([
         apiFetch<{ items: ApiPost[] }>("/api/safety-culture/posts?limit=50"),
         apiFetch<{ balance: { balance: number } }>("/api/safety-culture/points/me"),
         apiFetch<{ items: Array<Record<string, unknown>> }>("/api/notifications?limit=100"),
         apiFetch<{ items: Array<Record<string, unknown>> }>("/api/safety-culture/rewards?pageSize=100"),
+        apiFetch<{ setting: { setting_value?: unknown } | null }>("/api/safety-settings?key=safety_reward_categories"),
         apiFetch<{ items: Array<Record<string, unknown>> }>("/api/safety-culture/leaderboard"),
         apiFetch<{ items: Array<Record<string, unknown>> }>("/api/safety-culture/teams"),
         apiFetch<{ items: Array<Record<string, unknown>> }>("/api/safety-awareness/questions/admin?pageSize=1000"),
@@ -1100,17 +1124,16 @@ export function AppProviders({ children }: { children: ReactNode }) {
       }
 
       if (rewardsResult.ok && Array.isArray(rewardsResult.data?.items)) {
-        setRewardsCatalog(rewardsResult.data.items.map((item) => ({
-          id: Number(item.id),
-          name: String(item.name || ""),
-          category: "reward",
-          description: String(item.description || ""),
-          imageText: String(item.code || item.name || ""),
-          points: Number(item.points_required || 0),
-          stockMode: "limited",
-          stockTotal: Number(item.stock_qty || 0),
-          stockRemaining: Number(item.stock_qty || 0),
-        })));
+        setRewardsCatalog(rewardsResult.data.items.map(rewardFromApi));
+      }
+
+      if (rewardCategoriesResult.ok) {
+        const settingValue = rewardCategoriesResult.data?.setting?.setting_value;
+        const parsed = metadataRecord(settingValue);
+        const categories = Array.isArray(parsed.categories) ? parsed.categories : Array.isArray(settingValue) ? settingValue : [];
+        if (categories.length > 0) {
+          setRewardCategories(normalizeRewardCategories(categories as RewardCategory[]));
+        }
       }
 
       if (leaderboardResult.ok && Array.isArray(leaderboardResult.data?.items)) {
@@ -1705,6 +1728,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
             pointsRequired: reward.points,
             stockQty: reward.stockRemaining ?? 0,
             status: "ACTIVE",
+            metadata: reward,
           }),
         );
       }
@@ -1715,7 +1739,13 @@ export function AppProviders({ children }: { children: ReactNode }) {
   }, [rewardsCatalog]);
 
   const updateRewardCategories = useCallback((categories: RewardCategory[]) => {
-    setRewardCategories(normalizeRewardCategories(categories));
+    const normalized = normalizeRewardCategories(categories);
+    setRewardCategories(normalized);
+    if (isAuthenticatedRef.current) {
+      void apiFetch("/api/safety-settings?key=safety_reward_categories", apiJson("PUT", {
+        value: { categories: normalized },
+      }));
+    }
   }, []);
 
   const updateAwarenessQuestions = useCallback((questions: SafetyAwarenessQuestion[]) => {

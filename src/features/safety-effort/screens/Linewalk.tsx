@@ -487,8 +487,14 @@ export default function Linewalk() {
       });
       return;
     }
+    if (checkin) {
+      navigate("/checkin", {
+        state: { activity, checkin },
+      });
+      return;
+    }
     navigate(fromActivity ? "/checkin" : "/category", {
-      state: fromActivity ? { activity, checkin } : undefined,
+      state: fromActivity ? { activity } : undefined,
     });
   }
 
