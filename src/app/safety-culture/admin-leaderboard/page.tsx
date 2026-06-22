@@ -15,7 +15,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import {
@@ -475,12 +474,6 @@ export default function AdminLeaderboardPage() {
                   </div>
                   <div className="flex flex-col gap-2">
                     <Label className="text-[12px] font-black text-[var(--brand-text)]">หัวหน้าหน่วยงาน</Label>
-                    <Input
-                      value={editingTeam.leader}
-                      onChange={(event) => updateEditingTeam("leader", event.target.value)}
-                      placeholder="พิมพ์ชื่อหัวหน้าหน่วยงาน"
-                      className="h-11 rounded-[18px] border-[var(--border)] bg-white px-4 text-[14px] font-bold text-[var(--foreground)] focus-visible:border-[var(--brand-accent)] focus-visible:ring-0 sm:h-12 sm:text-[15px]"
-                    />
                     <Combobox
                       value={editingTeam.leaderUserId}
                       onValueChange={(userId) => {
@@ -494,14 +487,14 @@ export default function AdminLeaderboardPage() {
                       }}
                       onSearchValueChange={setLeaderSearch}
                       options={leaderOptions}
-                      placeholder="หรือเลือกจากรายชื่อผู้ใช้ (ถ้ามี)"
+                      placeholder="เลือกหัวหน้าหน่วยงานจากรายชื่อผู้ใช้"
                       searchPlaceholder="พิมพ์ชื่อ อีเมล หรือรหัสพนักงาน"
                       emptyText={leaderUsersLoading ? "กำลังค้นหาผู้ใช้..." : "ไม่พบผู้ใช้"}
                       className="h-11 rounded-[18px] border-[var(--border)] bg-white px-4 text-[14px] font-bold text-[var(--foreground)] sm:h-12 sm:text-[15px]"
                       contentClassName="min-w-[360px]"
                     />
                     <p className="px-1 text-[11px] font-bold text-[#8E8A81]">
-                      พิมพ์ชื่อได้เอง หรือเลือกจากรายชื่อผู้ใช้เพื่อเติมให้อัตโนมัติ
+                      เลือกหัวหน้าหน่วยงานจากรายชื่อผู้ใช้ในระบบ
                       {editingTeam.leaderEmail ? ` · ${editingTeam.leaderEmail}` : ""}
                     </p>
                   </div>
