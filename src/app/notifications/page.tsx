@@ -59,21 +59,20 @@ export default function NotificationsPage() {
 
   const openMobilePost = useCallback(
     (notification: AppInboxNotification) => {
-      const linkedPost = notification.postId ? posts.find((post) => post.id === notification.postId) : null;
-      const linkedActivity = notification.feedEventId ? feedEvents.find((event) => event.id === notification.feedEventId) : null;
-      if (!linkedPost && !linkedActivity) return true;
+      const targetHref = notification.postId
+        ? `/safety-culture?postId=${notification.postId}`
+        : notification.feedEventId
+          ? `/safety-culture?activityId=${encodeURIComponent(notification.feedEventId)}`
+          : notification.href && notification.href !== "/notifications"
+            ? notification.href
+            : null;
+      if (!targetHref) return true;
 
       markInboxNotificationRead(notification.id);
-      setSelectedNotificationId(notification.id);
-
-      if (linkedPost && notification.postId) {
-        router.push(`/notifications?postId=${notification.postId}`, { scroll: false });
-      } else if (linkedActivity && notification.feedEventId) {
-        router.push(`/notifications?activityId=${encodeURIComponent(notification.feedEventId)}`, { scroll: false });
-      }
+      router.push(targetHref, { scroll: false });
       return false;
     },
-    [feedEvents, markInboxNotificationRead, posts, router]
+    [markInboxNotificationRead, router]
   );
 
   return (

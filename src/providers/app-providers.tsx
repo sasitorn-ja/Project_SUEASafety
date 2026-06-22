@@ -63,6 +63,7 @@ export type Comment = {
   reactions?: Record<string, number>;
   viewerReaction?: string | null;
   isYou?: boolean;
+  createdAt?: number;
 };
 
 export type Post = {
@@ -356,10 +357,24 @@ function repairMojibakeText(value?: string | null) {
   }
 }
 
-function buildNotificationHref(notification: Pick<AppInboxNotification, "postId" | "feedEventId" | "href">) {
+function buildNotificationHref(
+  notification: Pick<AppInboxNotification, "postId" | "feedEventId" | "href" | "kind">,
+) {
   if (notification.postId) return `/safety-culture?postId=${notification.postId}`;
   if (notification.feedEventId) return `/safety-culture?activityId=${encodeURIComponent(notification.feedEventId)}`;
-  return notification.href || "/notifications";
+  if (notification.href) return notification.href;
+  // Send each notification kind to its relevant area instead of looping back to
+  // the notifications menu when no specific target is attached.
+  switch (notification.kind) {
+    case "reward":
+      return "/safety-culture/rewards";
+    case "activity":
+    case "like":
+    case "comment":
+      return "/safety-culture";
+    default:
+      return "/notifications";
+  }
 }
 
 function createDefaultSafetyCultureEvent(): SafetyCultureEventConfig {
@@ -405,6 +420,7 @@ function normalizePosts(posts: Post[]) {
           avatarImageUrl: comment.avatarImageUrl || null,
           text: repairMojibakeText(comment.text) || "",
           isYou: Boolean(comment.isYou),
+          createdAt: parseTimestamp(comment.createdAt) ?? undefined,
         }))
       : Math.max(0, Number(post.comments) || 0),
     likes: Math.max(0, Number(post.likes) || 0),
@@ -990,7 +1006,14 @@ function commentFromApi(comment: ApiComment, viewerId?: string | null): Comment 
     reactions: comment.reactions || {},
     viewerReaction: comment.viewerReaction || null,
     isYou: Boolean(viewerId && authorId && String(authorId) === String(viewerId)),
+    createdAt: parseTimestamp(comment.createdAt) ?? Date.now(),
   };
+}
+
+function parseTimestamp(value?: string | number | null) {
+  if (value == null) return null;
+  const time = typeof value === "number" ? value : new Date(value).getTime();
+  return Number.isFinite(time) ? time : null;
 }
 
 export function AppProviders({ children }: { children: ReactNode }) {
@@ -1098,6 +1121,9 @@ export function AppProviders({ children }: { children: ReactNode }) {
       ]);
 
       if (cancelled) return;
+      const backendFeedEvents = eventsResult.ok && Array.isArray(eventsResult.data?.items)
+        ? eventsResult.data.items.map(feedEventFromApi)
+        : [];
 
       if (postsResult.ok && Array.isArray(postsResult.data?.items)) {
         const viewerId = sessionUser?.id ? String(sessionUser.id) : null;
@@ -1147,16 +1173,23 @@ export function AppProviders({ children }: { children: ReactNode }) {
           const type = String(item.notification_type || "").toUpperCase();
           const kind: AppInboxNotificationKind = type === "LIKE" || type === "COMMENT_REACTION"
             ? "like" : type === "COMMENT" ? "comment" : type === "REWARD" ? "reward" : "activity";
-          const postId = Number(metadata.postId);
-          const feedEventId = metadata.eventId ? String(metadata.eventId) : undefined;
+          const postId = Number(metadata.postId ?? metadata.post_id);
+          const rawEventId = metadata.eventId ?? metadata.event_id ?? metadata.activityId ?? metadata.feedEventId;
+          const notificationTitle = String(item.title || "Notification");
+          const fallbackEvent = kind === "activity"
+            ? backendFeedEvents.find((event) => event.title.trim() === notificationTitle.trim())
+            : undefined;
+          const feedEventId = rawEventId != null && String(rawEventId).length > 0 ? String(rawEventId) : fallbackEvent?.id;
+          const resolvedPostId = Number.isFinite(postId) && postId > 0 ? postId : undefined;
+          const metadataHref = metadata.href && String(metadata.href) !== "/notifications" ? String(metadata.href) : undefined;
           return {
             id: String(item.id), kind,
-            title: String(item.title || "Notification"), body: String(item.body || ""),
+            title: notificationTitle, body: String(item.body || ""),
             actorName: metadata.actorName ? String(metadata.actorName) : undefined,
             createdAt: new Date(String(item.created_at || Date.now())).getTime(), read: Boolean(item.read_at),
-            postId: Number.isFinite(postId) && postId > 0 ? postId : undefined,
+            postId: resolvedPostId,
             feedEventId,
-            href: String(metadata.href || buildNotificationHref({ postId: Number.isFinite(postId) ? postId : undefined, feedEventId })),
+            href: buildNotificationHref({ postId: resolvedPostId, feedEventId, href: metadataHref, kind }),
           };
         }));
       }
@@ -1240,7 +1273,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
       }
 
       if (eventsResult.ok && Array.isArray(eventsResult.data?.items)) {
-        setFeedEvents(eventsResult.data.items.map(feedEventFromApi));
+        setFeedEvents(backendFeedEvents);
       }
     }
 
@@ -1501,6 +1534,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
               avatarImageUrl: actorImage,
               text,
               isYou: true,
+              createdAt: occurredAt,
             },
           ],
         };

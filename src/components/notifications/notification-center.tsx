@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useMemo, useState, type CSSProperties } from "react";
 import { Bell, CalendarClock, Gift, Heart, MessageCircle, MoreHorizontal } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { formatThaiDateTime } from "@/lib/safety-culture";
 import { useAppActions, useAppState, type AppInboxNotification } from "@/providers/app-providers";
 import { useAppTheme } from "@/providers/theme-provider";
 
@@ -46,16 +47,6 @@ const HIDE_SCROLLBAR_STYLE: CSSProperties = {
   scrollbarWidth: "none",
   msOverflowStyle: "none",
 };
-
-function formatRelativeTime(createdAt: number) {
-  const diffMinutes = Math.max(0, Math.round((Date.now() - createdAt) / 60000));
-  if (diffMinutes < 1) return TH.justNow;
-  if (diffMinutes < 60) return `${diffMinutes} ${TH.minutesAgo}`;
-  const diffHours = Math.round(diffMinutes / 60);
-  if (diffHours < 24) return `${diffHours} ${TH.hoursAgo}`;
-  const diffDays = Math.round(diffHours / 24);
-  return `${diffDays} ${TH.daysAgo}`;
-}
 
 function getNotificationMeta(kind: AppInboxNotification["kind"], isWangjai: boolean) {
   if (kind === "activity") {
@@ -328,7 +319,7 @@ export function NotificationCenter({ compact = false, onItemClick, onNotificatio
                           <div className={cn("font-semibold", compact ? "mt-0.5 line-clamp-2 text-[10.5px] leading-[1.45] text-[#4b5563]" : bodyTextClass, compact ? "" : "mt-1.5 text-[12.5px] leading-6")}>{item.body}</div>
 
                           <div className={cn("flex flex-wrap items-center gap-1.5 font-black", compact ? "mt-1.5 text-[10px] text-[#1168d8]" : accentTextClass, compact ? "" : "mt-3 text-[10.5px]")}>
-                            <span>{formatRelativeTime(item.createdAt)}</span>
+                            <span>{formatThaiDateTime(item.createdAt) || TH.justNow}</span>
                             {item.actorName ? (
                               <>
                                 <span className={compact ? "text-[#9ca3af]" : actorDividerClass}>•</span>
@@ -357,5 +348,4 @@ export function NotificationCenter({ compact = false, onItemClick, onNotificatio
     </div>
   );
 }
-
 

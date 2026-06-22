@@ -6,7 +6,7 @@ import { ChevronLeft, ImageIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
-import { COMMENT_REACTION_CHOICES, formatPostSubtext } from "@/lib/safety-culture";
+import { COMMENT_REACTION_CHOICES, formatPostSubtext, formatThaiDateTime } from "@/lib/safety-culture";
 import { type Comment as CommentType, type Post } from "@/providers/app-providers";
 import { useAppTheme } from "@/providers/theme-provider";
 
@@ -249,7 +249,12 @@ export function MobileNotificationPostView({
                         </div>
                         <div className="flex min-w-0 flex-col items-start gap-1">
                           <div className={cn("min-w-0 rounded-[12px] border-[1.5px] px-2.5 py-1.5 text-[13px] font-bold leading-relaxed", commentBubbleClass)}>
-                            <span className={cn("mb-0.5 block text-[11.5px] font-black", isWangjai ? "text-[#183b5e]" : "text-[#1A1A1A]")}>{comment.author}</span>
+                            <span className={cn("mb-0.5 flex flex-wrap items-baseline gap-x-1.5 text-[11.5px] font-black", isWangjai ? "text-[#183b5e]" : "text-[#1A1A1A]")}>
+                              {comment.author}
+                              {formatThaiDateTime(comment.createdAt) && (
+                                <span className={cn("text-[10.5px] font-bold", metaTextClass)}>{formatThaiDateTime(comment.createdAt)}</span>
+                              )}
+                            </span>
                             {comment.text}
                           </div>
                           <div className="relative flex items-center gap-1 pl-0.5">

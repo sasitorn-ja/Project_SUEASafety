@@ -87,17 +87,44 @@ export function formatRelativeTime(createdAt?: number) {
   return `${elapsedDays} วัน`;
 }
 
+const THAI_DATE_TIME_FORMATTER =
+  typeof Intl !== "undefined"
+    ? new Intl.DateTimeFormat("th-TH-u-ca-buddhist", {
+        day: "numeric",
+        month: "short",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: false,
+        timeZone: "Asia/Bangkok",
+      })
+    : null;
+
+// Absolute date + time in Thai (Buddhist era), e.g. "22 มิ.ย. 2569 14:30 น."
+export function formatThaiDateTime(createdAt?: number) {
+  if (!createdAt) return null;
+  const date = new Date(createdAt);
+  if (Number.isNaN(date.getTime())) return null;
+
+  if (THAI_DATE_TIME_FORMATTER) {
+    return `${THAI_DATE_TIME_FORMATTER.format(date)} น.`;
+  }
+
+  const pad = (value: number) => String(value).padStart(2, "0");
+  return `${date.getDate()}/${pad(date.getMonth() + 1)}/${date.getFullYear() + 543} ${pad(date.getHours())}:${pad(date.getMinutes())} น.`;
+}
+
 export function formatPostSubtext(post: {
   subtext: string;
   createdAt?: number;
   location?: string;
   team?: string;
 }) {
-  const relativeTime = formatRelativeTime(post.createdAt);
-  if (!relativeTime) return post.subtext;
+  const dateTime = formatThaiDateTime(post.createdAt);
+  if (!dateTime) return post.subtext;
 
   const parts = (post.subtext || "").split(/\s*·\s*/);
   const location = post.location || parts[0] || "BPI-04";
   const team = post.team || parts[2] || "Yellow";
-  return `${location} · ${relativeTime} · ${team}`;
+  return `${location} · ${dateTime} · ${team}`;
 }

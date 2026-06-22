@@ -20,6 +20,7 @@ import {
   SAFETY_CULTURE_CATEGORIES,
   COMMENT_REACTION_CHOICES,
   formatPostSubtext,
+  formatThaiDateTime,
 } from "@/lib/safety-culture";
 import { CalendarDays, ChevronLeft, ChevronRight, Clock3, Heart, ImageIcon, Pencil, Sparkles, Trash2, Trophy, UsersRound, X } from "lucide-react";
 import { SafetyCultureHero } from "@/components/safety-culture/safety-culture-hero";
@@ -1019,7 +1020,12 @@ export default function Page() {
                                   />
                                   <div className="flex min-w-0 flex-col items-start gap-1">
                                     <div className="min-w-0 rounded-[12px] border-[1.5px] border-[var(--c-ddd9cd)] bg-[var(--c-faf8f2)] px-2 py-1 text-[13px] font-bold leading-relaxed text-[#33312C]">
-                                      <span className="mb-0.5 block text-[11.5px] font-black text-[#1A1A1A]">{comment.author}</span>
+                                      <span className="mb-0.5 flex flex-wrap items-baseline gap-x-1.5 text-[11.5px] font-black text-[#1A1A1A]">
+                                        {comment.author}
+                                        {formatThaiDateTime(comment.createdAt) && (
+                                          <span className="text-[10.5px] font-bold text-[var(--c-9f988d)]">{formatThaiDateTime(comment.createdAt)}</span>
+                                        )}
+                                      </span>
                                       {editingComment?.postId === post.id && editingComment.commentId === comment.id ? (
                                         <div className="flex min-w-[220px] flex-col gap-1.5">
                                           <Input
@@ -1365,7 +1371,12 @@ export default function Page() {
                               />
                               <div className="flex min-w-0 flex-col items-start gap-1">
                                 <div className="min-w-0 rounded-[12px] border-[1.5px] border-[var(--c-ddd9cd)] bg-[var(--c-faf8f2)] px-2.5 py-1.5 text-[13px] font-bold leading-relaxed text-[#33312C]">
-                                  <span className="mb-0.5 block text-[11.5px] font-black text-[#1A1A1A]">{comment.author}</span>
+                                  <span className="mb-0.5 flex flex-wrap items-baseline gap-x-1.5 text-[11.5px] font-black text-[#1A1A1A]">
+                                    {comment.author}
+                                    {formatThaiDateTime(comment.createdAt) && (
+                                      <span className="text-[10.5px] font-bold text-[var(--c-9f988d)]">{formatThaiDateTime(comment.createdAt)}</span>
+                                    )}
+                                  </span>
                                   {editingComment?.postId === expandedPost.id && editingComment.commentId === comment.id ? (
                                     <div className="flex min-w-[220px] flex-col gap-1.5">
                                       <Input
