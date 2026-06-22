@@ -45,7 +45,7 @@ export function MobileBottomNav({ hidden = false }: { hidden?: boolean }) {
       }}
       aria-label="Mobile main navigation"
     >
-      <div className="grid h-[60px] w-full grid-cols-5 px-1 pt-[5px]">
+      <div className="grid min-h-[60px] w-full grid-cols-5 px-1 pt-[5px]">
         {NAV_ITEMS.map((item) => {
           const Icon = item.icon;
           const active = isActive(item.href);

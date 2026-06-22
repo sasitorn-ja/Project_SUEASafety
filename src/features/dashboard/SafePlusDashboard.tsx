@@ -163,13 +163,6 @@ export default function SafePlusDashboard() {
           </div>
         </div>
 
-        <div className={styles.trendCard}>
-          <div className={styles.trendStats}>
-            <div><Award /><b>{currentUserPoints.toLocaleString()}</b><span>คะแนนปัจจุบัน</span></div>
-            <div><Flame /><b>{dashboardData.done}</b><span>ทำ KPI ใน 14 วัน</span></div>
-          </div>
-        </div>
-
         <div className={styles.rewardPanel}>
           <div><Award /><span>ยังไม่มีรางวัลในระบบ</span></div>
           <Link href="/safety-culture/rewards"><Gift />แลกรางวัล</Link>

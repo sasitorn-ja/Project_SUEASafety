@@ -555,7 +555,7 @@ function AddModal({ onAdd, onClose, userPos }) {
           <button className="ci-modal-close" onClick={onClose}><IcoX /></button>
         </div>
 
-        <div style={{ position: "relative", borderRadius: 16, overflow: "hidden", marginBottom: 10, border: `1px solid ${T.border}`, boxShadow: "0 6px 20px rgba(0,0,0,0.05)" }}>
+        <div style={{ position: "relative", borderRadius: 16, overflow: "hidden", marginBottom: 10, border: `1px solid ${T.border}`, boxShadow: "0 6px 20px rgba(0,0,0,0.05)", isolation: "isolate", zIndex: 0 }}>
           <MapContainer
             key="modal-map"
             center={pointToArray(seed)}
@@ -1245,7 +1245,7 @@ const STYLES = `
     box-shadow: 0 4px 16px rgba(0,0,0,0.06);
   }
 
-  .ci-map-wrap { position: relative; overflow: hidden; background: ${T.surface2}; }
+  .ci-map-wrap { position: relative; overflow: hidden; background: ${T.surface2}; isolation: isolate; z-index: 0; }
   .ci-map-wrap .leaflet-container { background: ${T.surface2}; }
   .ci-map-wrap::after {
     content: '';

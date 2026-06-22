@@ -103,7 +103,7 @@
   --font-sans: var(--font-sarabun), "TH Sarabun New", sans-serif;
   --topbar-h: 66px;
   --mobile-topbar-h: 66px;
-  --mobile-bottomnav-h: 66px;
+  --mobile-bottomnav-h: 72px;
   --nav-brown: #3b1d07;
   --brand-accent: #f5bb00;
   --brand-accent-strong: #ffb000;
@@ -315,6 +315,14 @@ body {
 
 .mobile-bottom-nav.is-hidden {
   transform: translateY(calc(100% + env(safe-area-inset-bottom)));
+}
+
+/* Leaflet maps set z-index up to 1000 on their panes/controls. Without a local
+   stacking context those values escape and cover the fixed top nav and its
+   dropdown menus. Isolating the map container keeps that z-index contained. */
+.leaflet-container {
+  isolation: isolate;
+  z-index: 0;
 }
 
 /* Shared CPAC Safe+ page language. Dashboard intentionally owns its own scale. */
@@ -685,8 +693,8 @@ body {
     right: 0 !important;
     bottom: 0;
     left: 0 !important;
-    min-height: calc(66px + env(safe-area-inset-bottom)) !important;
-    overflow: hidden;
+    min-height: calc(var(--mobile-bottomnav-h) + env(safe-area-inset-bottom)) !important;
+    overflow: visible;
     border: 1px solid rgba(42, 190, 255, 0.38) !important;
     border-bottom: 0 !important;
     border-radius: 0;
@@ -695,8 +703,9 @@ body {
   }
 
   .home-mobile-bottom-nav > div {
-    height: 60px !important;
-    padding: 3px 5px 0 !important;
+    height: auto !important;
+    min-height: 60px !important;
+    padding: 4px 5px 2px !important;
     gap: 2px;
   }
 
