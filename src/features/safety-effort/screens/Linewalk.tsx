@@ -796,15 +796,13 @@ export default function Linewalk() {
                       }}
                     >
                       {/* fromActivity → go to CreatePost; otherwise → back to Category */}
-                      {fromActivity ? "ดำเนินการต่อ →" : "บันทึก"}
+                      ดูสรุปก่อนส่ง →
                     </button>
 
                     {/* Helper hint */}
-                    {!fromActivity && (
-                      <p style={{ margin:0, fontSize:11.5, color:T.foreground3, fontFamily:"'Prompt',sans-serif" }}>
-                        กดบันทึกเพื่อกลับสู่หน้าหมวดหมู่
-                      </p>
-                    )}
+                    <p style={{ margin:0, fontSize:11.5, color:T.foreground3, fontFamily:"'Prompt',sans-serif" }}>
+                      ระบบจะพาไปหน้าสรุปก่อนยืนยันส่งข้อมูล
+                    </p>
                   </div>
                 </FadeSlide>
               )}
@@ -933,7 +931,7 @@ export default function Linewalk() {
                   }}
                 >
                   <IcoShield />
-                  ถัดไป
+                  ดูสรุปก่อนส่ง
                   <IcoArrow />
                 </button>
               </div>

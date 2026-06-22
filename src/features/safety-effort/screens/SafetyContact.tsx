@@ -308,7 +308,7 @@ export default function SafetyContact() {
                   }}
                 >
                   <IcoShield />
-                  ถัดไป
+                  ดูสรุปก่อนส่ง
                   <IcoArrow />
                 </button>
               </div>

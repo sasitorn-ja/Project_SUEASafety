@@ -226,15 +226,20 @@ export default function AdminLeaderboardPage() {
     return options;
   }, [divisions, editingTeam?.name]);
 
-  const commitTeams = (teams: LeaderboardTeam[]) => {
+  const commitTeams = async (teams: LeaderboardTeam[]) => {
     const normalizedTeams = teams.map((team, index) => ({
       ...team,
       rank: index + 1,
     }));
 
     setDraftTeams(normalizedTeams);
-    updateTeamStandings(normalizedTeams);
+    const saved = await updateTeamStandings(normalizedTeams);
+    if (!saved) {
+      window.alert("บันทึกข้อมูล Leaderboard ไม่สำเร็จ กรุณาลองใหม่อีกครั้ง");
+      return false;
+    }
     setSaveState("saved");
+    return true;
   };
 
   const addTeam = () => {
@@ -246,11 +251,12 @@ export default function AdminLeaderboardPage() {
     setSaveState("idle");
   };
 
-  const confirmDeleteTeam = () => {
+  const confirmDeleteTeam = async () => {
     if (!deletingTeam) return;
 
-    commitTeams(draftTeams.filter((team) => team.id !== deletingTeam.id));
-    setDeletingTeam(null);
+    if (await commitTeams(draftTeams.filter((team) => team.id !== deletingTeam.id))) {
+      setDeletingTeam(null);
+    }
   };
 
   const openEditTeam = (team: LeaderboardTeam) => {
@@ -261,11 +267,12 @@ export default function AdminLeaderboardPage() {
     setEditingTeam((current) => (current ? { ...current, [key]: value } : current));
   };
 
-  const confirmTeamEdit = () => {
+  const confirmTeamEdit = async () => {
     if (!editingTeam) return;
 
+    let saved = false;
     if (editingTeam.mode === "create") {
-      commitTeams([
+      saved = await commitTeams([
         ...draftTeams,
         {
           id: editingTeam.id,
@@ -283,7 +290,7 @@ export default function AdminLeaderboardPage() {
         },
       ]);
     } else {
-      commitTeams(
+      saved = await commitTeams(
         draftTeams.map((team) =>
           team.id === editingTeam.id
             ? {
@@ -299,7 +306,7 @@ export default function AdminLeaderboardPage() {
       );
     }
 
-    setEditingTeam(null);
+    if (saved) setEditingTeam(null);
   };
 
   return (
@@ -312,7 +319,7 @@ export default function AdminLeaderboardPage() {
               จัดการ <span className="text-[var(--brand-accent)]">Leaderboard</span>
             </>
           }
-          description="โฟกัสเฉพาะการจัดการหน่วยงานและคะแนนให้พร้อมใช้งานจริง โดยแก้ผ่าน modal แล้วค่อยยืนยันก่อนบันทึก"
+          description="จัดการหน่วยงานที่ใช้บน Leaderboard โดยอ้างอิงข้อมูลจริงจากระบบ และรีเฟรชกลับจากฐานข้อมูลหลังบันทึก"
           mascotSrc="/images/mascots/suea-mascot.png"
           mascotAlt="SUEA Admin Mascot"
           mascotAction="clipboard"
@@ -342,7 +349,7 @@ export default function AdminLeaderboardPage() {
         <div className="mt-4 flex flex-col gap-4">
           <SectionCard
             title="จัดการหน่วยงาน (Teams)"
-            description="จัดการหน่วยงานในมุมมองเดียวแบบอ่านง่ายขึ้น เน้นตารางหลักที่สะอาดตาและ modal แก้ไขที่ใช้งานง่าย"
+            description="จัดการหน่วยงานที่จะแสดงบน Leaderboard จากข้อมูลจริงในระบบ พร้อมแก้ไขหัวหน้าหน่วยงานได้จากหน้านี้"
             icon={<LayoutList className="h-5 w-5" strokeWidth={2.3} />}
             actions={
               <Button
@@ -426,8 +433,8 @@ export default function AdminLeaderboardPage() {
               </DialogTitle>
               <DialogDescription className="max-w-[460px] text-[12px] font-bold leading-relaxed text-[#8E8A81] sm:text-[14px]">
                 {editingTeam?.mode === "create"
-                  ? "กรอกข้อมูลหน่วยงานใหม่ใน mockup นี้ แล้วกดยืนยันเพื่อเพิ่มหน่วยงานลงตาราง"
-                  : "ปรับข้อมูลใน mockup นี้ แล้วกดยืนยันเพื่ออัปเดตกลับไปยังตารางหลัก"}
+                  ? "กรอกข้อมูลหน่วยงานใหม่ แล้วกดยืนยันเพื่อบันทึกลงระบบ"
+                  : "ปรับข้อมูลหน่วยงาน แล้วกดยืนยันเพื่ออัปเดตกลับไปยังระบบ"}
               </DialogDescription>
             </DialogHeader>
 

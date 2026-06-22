@@ -280,8 +280,8 @@ type AppActions = {
   updateSafetyCultureEvent: (data: SafetyCultureEventConfig) => void;
   updateFeedEvents: (events: SafetyCultureFeedEvent[]) => Promise<boolean>;
   sendFeedEventNotification: (feedEventId: string) => boolean;
-  updateTeamStandings: (teams: LeaderboardTeam[]) => void;
-  updatePersonalRankings: (rankings: LeaderboardPerson[]) => void;
+  updateTeamStandings: (teams: LeaderboardTeam[]) => Promise<boolean>;
+  updatePersonalRankings: (rankings: LeaderboardPerson[]) => Promise<boolean>;
   updateRewardsCatalog: (rewards: RewardCatalogItem[]) => Promise<boolean>;
   updateRewardCategories: (categories: RewardCategory[]) => Promise<boolean>;
   updateAwarenessQuestions: (questions: SafetyAwarenessQuestion[]) => void;
@@ -627,7 +627,7 @@ function normalizeRewardsCatalog(rewards: RewardCatalogItem[]): RewardCatalogIte
 
 function rewardFromApi(item: Record<string, unknown>, index: number): RewardCatalogItem {
   const metadata = metadataRecord(item.metadata);
-  const stockQty = Number(item.stock_qty || 0);
+  const stockQty = Number(item.stock_qty ?? item.stockQty ?? metadata.stockQty ?? 0);
   const stockMode = metadata.stockMode === "unlimited" ? "unlimited" : "limited";
   return normalizeRewardsCatalog([
     {
@@ -637,7 +637,7 @@ function rewardFromApi(item: Record<string, unknown>, index: number): RewardCata
       description: String(metadata.description || ""),
       imageText: String(metadata.imageText || item.code || item.name || ""),
       imageSrc: typeof metadata.imageSrc === "string" ? metadata.imageSrc : null,
-      points: Number(metadata.points || item.points_required || 0),
+      points: Number(metadata.points ?? item.points_required ?? item.pointsRequired ?? 0),
       isHot: Boolean(metadata.isHot),
       redeemStartAt: metadata.redeemStartAt || null,
       redeemEndAt: metadata.redeemEndAt || null,
@@ -863,6 +863,37 @@ function createDefaultInboxNotifications() {
   return mergeInboxNotificationsWithSeed(INITIAL_INBOX_NOTIFICATIONS);
 }
 
+function inboxNotificationFromApi(
+  item: Record<string, unknown>,
+  backendFeedEvents: SafetyCultureFeedEvent[] = [],
+): AppInboxNotification {
+  const metadata = metadataRecord(item.metadata);
+  const type = String(item.notification_type || "").toUpperCase();
+  const kind: AppInboxNotificationKind = type === "LIKE" || type === "COMMENT_REACTION"
+    ? "like" : type === "COMMENT" ? "comment" : type === "REWARD" ? "reward" : "activity";
+  const postId = Number(metadata.postId ?? metadata.post_id);
+  const rawEventId = metadata.eventId ?? metadata.event_id ?? metadata.activityId ?? metadata.feedEventId ?? item.target_event_id;
+  const notificationTitle = String(item.title || "Notification");
+  const fallbackEvent = kind === "activity"
+    ? backendFeedEvents.find((event) => event.title.trim() === notificationTitle.trim())
+    : undefined;
+  const feedEventId = rawEventId != null && String(rawEventId).length > 0 ? String(rawEventId) : fallbackEvent?.id;
+  const resolvedPostId = Number.isFinite(postId) && postId > 0 ? postId : undefined;
+  const metadataHref = metadata.href && String(metadata.href) !== "/notifications" ? String(metadata.href) : undefined;
+  return {
+    id: String(item.id),
+    kind,
+    title: notificationTitle,
+    body: String(item.body || ""),
+    actorName: metadata.actorName ? String(metadata.actorName) : undefined,
+    createdAt: new Date(String(item.created_at || Date.now())).getTime(),
+    read: Boolean(item.read_at),
+    postId: resolvedPostId,
+    feedEventId,
+    href: buildNotificationHref({ postId: resolvedPostId, feedEventId, href: metadataHref, kind }),
+  };
+}
+
 type ApiPost = {
   id: string;
   authorId?: string;
@@ -1044,6 +1075,11 @@ export function AppProviders({ children }: { children: ReactNode }) {
   const [awarenessHistory, setAwarenessHistory] = useState<AwarenessCompletion[]>([]);
   const [awarenessHolidays, setAwarenessHolidays] = useState<AwarenessHoliday[]>([]);
   const [eventNow, setEventNow] = useState(0);
+  const postsRef = useRef<Post[]>([]);
+
+  useEffect(() => {
+    postsRef.current = posts;
+  }, [posts]);
 
   const getLinkedFeedEvent = useCallback(
     (feedEventId?: string) => {
@@ -1063,11 +1099,102 @@ export function AppProviders({ children }: { children: ReactNode }) {
     return result.data.items.map((item) => commentFromApi(item, viewerId ?? currentUserRef.current?.id ?? null));
   }, []);
 
+  const refreshInboxNotifications = useCallback(async (events: SafetyCultureFeedEvent[] = feedEvents) => {
+    if (!isAuthenticatedRef.current) return;
+    const notificationsResult = await apiFetch<{ items: Array<Record<string, unknown>> }>("/api/notifications?limit=100");
+    if (!notificationsResult.ok || !Array.isArray(notificationsResult.data?.items)) return;
+    setInboxNotifications(notificationsResult.data.items.map((item) => inboxNotificationFromApi(item, events)));
+  }, [feedEvents]);
+
+  const refreshPostsSnapshot = useCallback(async () => {
+    if (!isAuthenticatedRef.current) return;
+    const viewerId = currentUserRef.current?.id ? String(currentUserRef.current.id) : null;
+    const result = await apiFetch<{ items: ApiPost[] }>("/api/safety-culture/posts?limit=50&scope=all");
+    if (!result.ok || !Array.isArray(result.data?.items)) return;
+
+    const mappedPosts = result.data.items.map((item) => {
+      const mapped = postFromApi(item);
+      return { ...mapped, isYou: Boolean(viewerId && mapped.authorId && mapped.authorId === viewerId) };
+    });
+
+    const currentPosts = postsRef.current;
+    const postsWithComments = await Promise.all(
+      mappedPosts.map(async (post) => {
+        const existing = currentPosts.find((item) => item.id === post.id);
+        if (!Array.isArray(existing?.comments)) return post;
+        const comments = await loadPostComments(post.id, viewerId).catch(() => null);
+        return comments ? { ...post, comments } : post;
+      }),
+    );
+
+    setPosts(postsWithComments);
+  }, [loadPostComments]);
+
   const refreshPointBalance = useCallback(async () => {
     const balance = await apiFetch<{ balance: { balance: number } }>("/api/safety-culture/points/me");
     if (balance.ok && typeof balance.data?.balance?.balance === "number") {
       setCurrentUserPoints(Math.max(0, balance.data.balance.balance));
     }
+  }, []);
+
+  const refreshRewardsState = useCallback(async () => {
+    const [rewardsResult, rewardCategoriesResult] = await Promise.all([
+      apiFetch<{ items: Array<Record<string, unknown>> }>("/api/safety-culture/rewards?pageSize=100"),
+      apiFetch<{ setting: { setting_value?: unknown } | null }>("/api/safety-settings?key=safety_reward_categories"),
+    ]);
+
+    if (rewardsResult.ok && Array.isArray(rewardsResult.data?.items)) {
+      setRewardsCatalog(rewardsResult.data.items.map(rewardFromApi));
+    }
+
+    if (rewardCategoriesResult.ok) {
+      const settingValue = rewardCategoriesResult.data?.setting?.setting_value;
+      const parsed = metadataRecord(settingValue);
+      const categories = Array.isArray(parsed.categories) ? parsed.categories : Array.isArray(settingValue) ? settingValue : [];
+      if (categories.length > 0) {
+        setRewardCategories(normalizeRewardCategories(categories as RewardCategory[]));
+      }
+    }
+
+    return rewardsResult.ok && rewardCategoriesResult.ok;
+  }, []);
+
+  const refreshLeaderboardState = useCallback(async (sessionUser?: SessionUser | null) => {
+    const [leaderboardResult, teamsResult] = await Promise.all([
+      apiFetch<{ items: Array<Record<string, unknown>> }>("/api/safety-culture/leaderboard"),
+      apiFetch<{ items: Array<Record<string, unknown>> }>("/api/safety-culture/teams"),
+    ]);
+
+    if (leaderboardResult.ok && Array.isArray(leaderboardResult.data?.items)) {
+      setPersonalRankings(leaderboardResult.data.items.map((item, index) => ({
+        id: String(item.user_id || item.userId || item.id),
+        rank: `#${index + 1}`,
+        name: String(item.name_th || item.nameTh || item.name || "Unknown user"),
+        points: Number(item.points || 0),
+        team: String(item.team || item.team_name || item.teamName || ""),
+        active: Boolean(sessionUser?.id && String(item.user_id || item.userId || item.id) === String(sessionUser.id)),
+      })));
+    }
+
+    if (teamsResult.ok && Array.isArray(teamsResult.data?.items)) {
+      const maxPoints = Math.max(1, ...teamsResult.data.items.map((item) => Number(item.points || 0)));
+      setTeamStandings(teamsResult.data.items.map((item, index) => ({
+        id: String(item.id),
+        rank: index + 1,
+        name: String(item.name || item.team_name || item.teamName || ""),
+        leaderUserId: String(item.leader_user_id || item.leaderUserId || ""),
+        leaderEmail: String(item.leader_email || item.leaderEmail || ""),
+        leader: String(item.leader_name_th || item.leaderNameTh || item.leader_name_en || item.leaderNameEn || item.leader_email || item.leaderEmail || ""),
+        members: Number(item.members || item.member_count || item.memberCount || 0),
+        color: String(item.color || "var(--brand-accent)"),
+        points: Number(item.points || 0),
+        percent: (Number(item.points || 0) / maxPoints) * 100,
+        streak: Number(item.streak || 0),
+        awards: Number(item.awards || 0),
+      })));
+    }
+
+    return leaderboardResult.ok && teamsResult.ok;
   }, []);
 
   const refreshAwarenessAttempts = useCallback(async () => {
@@ -1168,30 +1295,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
       }
 
       if (notificationsResult.ok && Array.isArray(notificationsResult.data?.items)) {
-        setInboxNotifications(notificationsResult.data.items.map((item) => {
-          const metadata = metadataRecord(item.metadata);
-          const type = String(item.notification_type || "").toUpperCase();
-          const kind: AppInboxNotificationKind = type === "LIKE" || type === "COMMENT_REACTION"
-            ? "like" : type === "COMMENT" ? "comment" : type === "REWARD" ? "reward" : "activity";
-          const postId = Number(metadata.postId ?? metadata.post_id);
-          const rawEventId = metadata.eventId ?? metadata.event_id ?? metadata.activityId ?? metadata.feedEventId ?? item.target_event_id;
-          const notificationTitle = String(item.title || "Notification");
-          const fallbackEvent = kind === "activity"
-            ? backendFeedEvents.find((event) => event.title.trim() === notificationTitle.trim())
-            : undefined;
-          const feedEventId = rawEventId != null && String(rawEventId).length > 0 ? String(rawEventId) : fallbackEvent?.id;
-          const resolvedPostId = Number.isFinite(postId) && postId > 0 ? postId : undefined;
-          const metadataHref = metadata.href && String(metadata.href) !== "/notifications" ? String(metadata.href) : undefined;
-          return {
-            id: String(item.id), kind,
-            title: notificationTitle, body: String(item.body || ""),
-            actorName: metadata.actorName ? String(metadata.actorName) : undefined,
-            createdAt: new Date(String(item.created_at || Date.now())).getTime(), read: Boolean(item.read_at),
-            postId: resolvedPostId,
-            feedEventId,
-            href: buildNotificationHref({ postId: resolvedPostId, feedEventId, href: metadataHref, kind }),
-          };
-        }));
+        setInboxNotifications(notificationsResult.data.items.map((item) => inboxNotificationFromApi(item, backendFeedEvents)));
       }
 
       if (rewardsResult.ok && Array.isArray(rewardsResult.data?.items)) {
@@ -1209,12 +1313,12 @@ export function AppProviders({ children }: { children: ReactNode }) {
 
       if (leaderboardResult.ok && Array.isArray(leaderboardResult.data?.items)) {
         setPersonalRankings(leaderboardResult.data.items.map((item, index) => ({
-          id: String(item.user_id || item.id),
+          id: String(item.user_id || item.userId || item.id),
           rank: `#${index + 1}`,
-          name: String(item.name_th || item.name || "Unknown user"),
+          name: String(item.name_th || item.nameTh || item.name || "Unknown user"),
           points: Number(item.points || 0),
-          team: String(item.team || ""),
-          active: Boolean(sessionUser?.id && String(item.user_id || item.id) === String(sessionUser.id)),
+          team: String(item.team || item.team_name || item.teamName || ""),
+          active: Boolean(sessionUser?.id && String(item.user_id || item.userId || item.id) === String(sessionUser.id)),
         })));
       }
 
@@ -1223,16 +1327,16 @@ export function AppProviders({ children }: { children: ReactNode }) {
         setTeamStandings(teamsResult.data.items.map((item, index) => ({
           id: String(item.id),
           rank: index + 1,
-          name: String(item.name || ""),
-          leaderUserId: String(item.leader_user_id || ""),
-          leaderEmail: String(item.leader_email || ""),
-          leader: String(item.leader_name_th || item.leader_name_en || item.leader_email || ""),
-          members: Number(item.members || 0),
-          color: "var(--brand-accent)",
+          name: String(item.name || item.team_name || item.teamName || ""),
+          leaderUserId: String(item.leader_user_id || item.leaderUserId || ""),
+          leaderEmail: String(item.leader_email || item.leaderEmail || ""),
+          leader: String(item.leader_name_th || item.leaderNameTh || item.leader_name_en || item.leaderNameEn || item.leader_email || item.leaderEmail || ""),
+          members: Number(item.members || item.member_count || item.memberCount || 0),
+          color: String(item.color || "var(--brand-accent)"),
           points: Number(item.points || 0),
           percent: (Number(item.points || 0) / maxPoints) * 100,
-          streak: 0,
-          awards: 0,
+          streak: Number(item.streak || 0),
+          awards: Number(item.awards || 0),
         })));
       }
 
@@ -1282,6 +1386,33 @@ export function AppProviders({ children }: { children: ReactNode }) {
       cancelled = true;
     };
   }, [loadPostComments]);
+
+  useEffect(() => {
+    if (!isAuthenticatedRef.current) return;
+
+    const refreshLiveSafetyCultureState = () => {
+      void refreshInboxNotifications();
+      void refreshPostsSnapshot();
+      void refreshRewardsState();
+      void refreshLeaderboardState(currentUserRef.current);
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        refreshLiveSafetyCultureState();
+      }
+    };
+
+    window.addEventListener("focus", refreshLiveSafetyCultureState);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    const intervalId = window.setInterval(refreshLiveSafetyCultureState, 30000);
+
+    return () => {
+      window.removeEventListener("focus", refreshLiveSafetyCultureState);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      window.clearInterval(intervalId);
+    };
+  }, [refreshInboxNotifications, refreshLeaderboardState, refreshPostsSnapshot, refreshRewardsState]);
 
   useEffect(() => {
     setEventNow(Date.now());
@@ -1811,23 +1942,26 @@ export function AppProviders({ children }: { children: ReactNode }) {
     return true;
   }, [feedEvents]);
 
-  const updateTeamStandings = useCallback((teams: LeaderboardTeam[]) => {
+  const updateTeamStandings = useCallback(async (teams: LeaderboardTeam[]) => {
     const normalized = normalizeTeamStandings(teams);
     setTeamStandings(normalized);
-    if (isAuthenticatedRef.current) {
-      void apiFetch("/api/safety-culture/teams", apiJson("PUT", {
-        teams: normalized.map((team) => ({
-          id: /^\d+$/.test(team.id) ? team.id : null,
-          name: team.name,
-          leaderUserId: team.leaderUserId || null,
-          status: "ACTIVE",
-        })),
-      }));
-    }
-  }, []);
+    if (!isAuthenticatedRef.current) return false;
+    const result = await apiFetch("/api/safety-culture/teams", apiJson("PUT", {
+      teams: normalized.map((team) => ({
+        id: /^\d+$/.test(team.id) ? team.id : null,
+        name: team.name,
+        leaderUserId: team.leaderUserId || null,
+        status: "ACTIVE",
+      })),
+    }));
+    if (!result.ok) return false;
+    await refreshLeaderboardState(currentUserRef.current);
+    return true;
+  }, [refreshLeaderboardState]);
 
-  const updatePersonalRankings = useCallback((rankings: LeaderboardPerson[]) => {
+  const updatePersonalRankings = useCallback(async (rankings: LeaderboardPerson[]) => {
     setPersonalRankings(normalizePersonalRankings(rankings));
+    return true;
   }, []);
 
   const updateRewardsCatalog = useCallback(async (rewards: RewardCatalogItem[]) => {
@@ -1857,12 +1991,9 @@ export function AppProviders({ children }: { children: ReactNode }) {
           if (!result.ok) return false;
         }
       }
-      const refreshed = await apiFetch<{ items: Array<Record<string, unknown>> }>("/api/safety-culture/rewards?pageSize=100");
-      if (!refreshed.ok || !Array.isArray(refreshed.data?.items)) return false;
-      setRewardsCatalog(refreshed.data.items.map(rewardFromApi));
-      return true;
+      return await refreshRewardsState();
     } catch { return false; }
-  }, [rewardsCatalog]);
+  }, [refreshRewardsState, rewardsCatalog]);
 
   const updateRewardCategories = useCallback(async (categories: RewardCategory[]) => {
     const normalized = normalizeRewardCategories(categories);

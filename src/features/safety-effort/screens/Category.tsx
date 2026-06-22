@@ -60,15 +60,20 @@ export default function Category() {
     const to = `${toDate.getFullYear()}-${String(toDate.getMonth() + 1).padStart(2, "0")}-${String(toDate.getDate()).padStart(2, "0")}`;
 
     setMonthlyStats((current) => ({ ...current, loading: true }));
-    fetch(`/api/safety-effort/submissions/me?from=${from}&to=${to}&pageSize=1`, {
+    fetch(`/api/safety-effort/submissions/me?from=${from}&to=${to}&pageSize=500`, {
       credentials: "include",
       cache: "no-store",
     })
       .then((response) => (response.ok ? response.json() : null))
       .then((payload) => {
         if (cancelled) return;
-        const total = Number(payload?.data?.total);
-        setMonthlyStats({ count: Number.isFinite(total) ? total : 0, loading: false });
+        const items = Array.isArray(payload?.data?.items) ? payload.data.items : [];
+        const countedItems = items.filter((item) => {
+          const activityType = String(item?.activityType || item?.activity_type || "").toUpperCase();
+          return activityType === "LINE_WALK" || activityType === "SAFETY_CONTACT";
+        });
+        const total = countedItems.length;
+        setMonthlyStats({ count: total, loading: false });
       })
       .catch(() => {
         if (!cancelled) setMonthlyStats({ count: 0, loading: false });
@@ -148,7 +153,7 @@ export default function Category() {
               <div className={styles.statusRows}>
                 <div>
                   <span className={styles.rowIcon}><ClipboardCheck /></span>
-                  <strong>จำนวนการตรวจเดือนนี้</strong>
+                  <strong>จำนวน Line Walk / Safety Contact เดือนนี้</strong>
                   <b>{monthlyStats.loading ? "..." : monthlyStats.count?.toLocaleString("th-TH") ?? "0"} ครั้ง</b>
                 </div>
                 <div>

@@ -306,12 +306,17 @@ export default function Page() {
     index: number;
   } | null>(null);
   const [expandedPostId, setExpandedPostId] = useState<number | null>(null);
+  const [liveExpandedPost, setLiveExpandedPost] = useState<Post | null>(null);
   const [expandedActivity, setExpandedActivity] = useState<SafetyCultureFeedEvent | null>(null);
   const [mobileActivityStartIndex, setMobileActivityStartIndex] = useState(0);
   const [desktopActivityStartIndex, setDesktopActivityStartIndex] = useState(0);
   const [commentReactionState, setCommentReactionState] = useState<Record<string, { selected: string | null; counts: Record<string, number> }>>({});
   const [openCommentReactionPicker, setOpenCommentReactionPicker] = useState<string | null>(null);
-  const expandedPost = expandedPostId ? posts.find((post) => post.id === expandedPostId) ?? null : null;
+  const expandedPost = expandedPostId
+    ? (liveExpandedPost && liveExpandedPost.id === expandedPostId
+        ? liveExpandedPost
+        : posts.find((post) => post.id === expandedPostId) ?? null)
+    : null;
   const isNotificationPostPopup = Boolean(searchParams?.get("postId"));
 
   const animStyle = (delay: number) => ({
@@ -432,6 +437,58 @@ export default function Page() {
           setExpandedPostId(targetPost.id);
           setExpandedActivity(null);
         }
+        void (async () => {
+          try {
+            const [postRes, comments] = await Promise.all([
+              fetch(`/api/safety-culture/posts/${numericPostId}`, {
+                credentials: "include",
+                cache: "no-store",
+              }).then((response) => response.ok ? response.json() : null),
+              fetchComments(numericPostId).catch(() => []),
+            ]);
+
+            const apiPost = postRes?.data?.post;
+            if (!apiPost) return;
+
+            const latestPost: Post = {
+              id: Number(apiPost.id),
+              author: String(apiPost.authorName || targetPost?.author || "Unknown user"),
+              avatarBg: targetPost?.avatarBg || "var(--brand-accent)",
+              avatarColor: targetPost?.avatarColor || "#1A1A1A",
+              avatarText: String(apiPost.authorName || targetPost?.author || "U").charAt(0).toUpperCase(),
+              avatarImageUrl: apiPost.authorProfileImageUrl || targetPost?.avatarImageUrl || null,
+              subtext: targetPost?.subtext || "",
+              category: String(apiPost.category || targetPost?.category || "ทั่วไป"),
+              body: String(apiPost.content || targetPost?.body || ""),
+              photos: Array.isArray(apiPost.photos)
+                ? apiPost.photos.map((photo: { id?: string; url?: string; dataUrl?: string; type?: string }, index: number) => ({
+                    id: String(photo.id || `${apiPost.id}-photo-${index + 1}`),
+                    dataUrl: photo.url || photo.dataUrl || "",
+                    type: String(photo.type || "upload"),
+                  })).filter((photo: { dataUrl: string }) => photo.dataUrl)
+                : (targetPost?.photos || []),
+              likes: Math.max(0, Number(apiPost.likeCount) || 0),
+              comments: Array.isArray(comments) && comments.length > 0 ? comments : Math.max(0, Number(apiPost.commentCount) || 0),
+              points: Math.max(0, Number(apiPost.pointsAwarded) || targetPost?.points || 0),
+              hasLiked: Boolean(apiPost.hasLiked),
+              isYou: targetPost?.isYou,
+              createdAt: new Date(apiPost.createdAt).getTime() || targetPost?.createdAt,
+              imageData: targetPost?.imageData || null,
+              feedEventId: apiPost.eventId ? String(apiPost.eventId) : targetPost?.feedEventId,
+              authorId: apiPost.authorId ? String(apiPost.authorId) : targetPost?.authorId,
+              authorEmail: apiPost.authorEmail ?? targetPost?.authorEmail ?? null,
+              organizationId: apiPost.organizationId ? String(apiPost.organizationId) : targetPost?.organizationId ?? null,
+              organizationName: apiPost.organizationName || targetPost?.organizationName || null,
+              teamId: apiPost.teamId ? String(apiPost.teamId) : targetPost?.teamId ?? null,
+              teamName: apiPost.teamName || targetPost?.teamName || null,
+              location: targetPost?.location,
+              team: targetPost?.team,
+            };
+            setLiveExpandedPost(latestPost);
+          } catch {
+            // Keep the currently rendered post if the refresh fails.
+          }
+        })();
       }
     } else if (activityIdParam) {
       const targetActivity = feedEvents.find((event) => event.id === activityIdParam);
@@ -439,8 +496,18 @@ export default function Page() {
         setExpandedActivity(targetActivity);
         setExpandedPostId(null);
       }
+      setLiveExpandedPost(null);
+    } else {
+      setLiveExpandedPost(null);
     }
-  }, [feedEvents, posts, searchParams]);
+  }, [feedEvents, fetchComments, posts, searchParams]);
+
+  useEffect(() => {
+    if (!liveExpandedPost || !expandedPostId || liveExpandedPost.id !== expandedPostId) return;
+    const syncedPost = posts.find((post) => post.id === expandedPostId);
+    if (!syncedPost) return;
+    setLiveExpandedPost((current) => current && current.id === expandedPostId ? { ...current, ...syncedPost } : current);
+  }, [expandedPostId, liveExpandedPost, posts]);
 
   useEffect(() => {
     if (!expandedPostId) return;
