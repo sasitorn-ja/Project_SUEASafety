@@ -1,6 +1,6 @@
 // @ts-nocheck
 import { useState, useEffect } from "react";
-import { useNavigate, useLocation } from "@/lib/router-compat";
+import { useNavigate, useLocation } from "@/lib/app-navigation";
 import { useAppTheme } from "@/providers/theme-provider";
 
 // ฤฤฤ Design tokens ฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤ
@@ -1063,7 +1063,7 @@ export default function Activity() {
             </div>
           </div>
 
-          <img className="ac-hdr-mascot-compact" src={mascot("cheer")} alt={theme === "wangjai" ? "น้องวางใจ Safety mascot" : "SUEA tiger mascot"} />
+          <img className="ac-hdr-mascot-compact mascot-motion mascot-motion-compact" src={mascot("cheer")} alt={theme === "wangjai" ? "น้องวางใจ Safety mascot" : "SUEA tiger mascot"} />
         </div>
       </div>
       <div

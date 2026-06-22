@@ -7,6 +7,15 @@ import type { ResultSetHeader, RowDataPacket } from "mysql2/promise";
 import { NextRequest, NextResponse } from "next/server";
 
 import { queryRows, withTransaction } from "@backend/components/core/db";
+import {
+  createSafetyEffortLocation,
+  deleteSafetyEffortLocation,
+  getSafetyEffortLocation,
+  listSafetyEffortLocations,
+  normalizeLocationType,
+  parseLocationInput,
+  updateSafetyEffortLocation,
+} from "@backend/components/safety-effort/locations/repository";
 import { syncRmrPlants } from "@backend/components/safety-effort/locations/rmr-plant-sync";
 
 type CatalogSession = {
@@ -59,6 +68,7 @@ const TABLE_COLUMNS = {
 const JSON_COLUMNS = new Set([
   "options_json",
   "answer_json",
+  "answers_json",
   "correct_answer_json",
   "payload",
   "metadata",
@@ -84,6 +94,17 @@ function jsonError(error: unknown, status = 400) {
     { ok: false, error: error instanceof Error ? error.message : String(error || "error") },
     { status },
   );
+}
+
+function parseJson(value: unknown) {
+  if (!value) return null;
+  if (typeof value === "object") return value;
+  if (typeof value !== "string") return null;
+  try {
+    return JSON.parse(value);
+  } catch {
+    return null;
+  }
 }
 
 function bodyJson(body: unknown): JsonInput {
@@ -432,6 +453,35 @@ async function updateMediaAsset(id: string, input: JsonInput) {
   return getRow("media_assets", id);
 }
 
+function mediaAssetDto(row: Record<string, unknown> | null | undefined) {
+  if (!row) return null;
+  const id = String(row.id);
+  const publicUrl = row.public_url ? String(row.public_url) : null;
+  return {
+    id,
+    url: publicUrl || `/api/uploads/${id}/download`,
+    originalName: row.original_name ? String(row.original_name) : null,
+    mimeType: row.mime_type ? String(row.mime_type) : null,
+    sizeBytes: Number(row.size_bytes || 0),
+    status: row.status ? String(row.status) : "READY",
+    module: row.module ? String(row.module) : null,
+    ownerType: row.owner_type ? String(row.owner_type) : null,
+    ownerId: row.owner_id ? String(row.owner_id) : null,
+    linkType: row.link_type ? String(row.link_type) : null,
+    uploadMode: row.upload_mode ? String(row.upload_mode) : "server",
+    provider: row.provider ? String(row.provider) : "local",
+    widthPx: row.width_px == null ? null : Number(row.width_px),
+    heightPx: row.height_px == null ? null : Number(row.height_px),
+    format: row.format ? String(row.format) : null,
+    createdAt: row.created_at instanceof Date ? row.created_at.toISOString() : row.created_at ? String(row.created_at) : null,
+    updatedAt: row.updated_at instanceof Date ? row.updated_at.toISOString() : row.updated_at ? String(row.updated_at) : null,
+  };
+}
+
+function mediaListDto(rows: DbRow[]) {
+  return rows.map(mediaAssetDto).filter(Boolean);
+}
+
 async function createExportJob(input: JsonInput, userId?: string | null) {
   const jobType = String(input.jobType || input.type || "GENERIC_EXPORT");
   const id = await withTransaction(async (connection) => {
@@ -597,6 +647,36 @@ async function handleUsersIam(request: NextRequest, method: string, match: Route
 
 async function handleCheckinExtras(request: NextRequest, method: string, match: RouteMatch, input: JsonInput, userId?: string) {
   const route = match.route.path;
+  if (route === "/api/safety-effort/locations") {
+    if (method === "GET") {
+      const type = normalizeLocationType(request.nextUrl.searchParams.get("type"));
+      const search = request.nextUrl.searchParams.get("search") || request.nextUrl.searchParams.get("q");
+      const limit = Number(request.nextUrl.searchParams.get("limit") || 200);
+      return jsonData({
+        items: await listSafetyEffortLocations({ type, search, limit }),
+      });
+    }
+    if (method === "POST") {
+      return jsonData({
+        location: await createSafetyEffortLocation(parseLocationInput(input, userId)),
+      }, { status: 201 });
+    }
+  }
+  if (route === "/api/safety-effort/locations/:id") {
+    if (method === "GET") {
+      const location = await getSafetyEffortLocation(match.params.id);
+      return location ? jsonData({ location }) : jsonError("location_not_found", 404);
+    }
+    if (method === "PATCH") {
+      return jsonData({
+        location: await updateSafetyEffortLocationFromPayload(match.params.id, input, userId),
+      });
+    }
+    if (method === "DELETE") {
+      await deleteSafetyEffortLocation(match.params.id);
+      return jsonData({ deleted: true });
+    }
+  }
   if (method === "GET" && route === "/api/checkins/nearby") {
     const lat = Number(request.nextUrl.searchParams.get("lat"));
     const lng = Number(request.nextUrl.searchParams.get("lng"));
@@ -660,8 +740,139 @@ async function handleCheckinExtras(request: NextRequest, method: string, match: 
   return null;
 }
 
+async function updateSafetyEffortLocationFromPayload(id: string, input: JsonInput, userId?: string) {
+  const current = await getSafetyEffortLocation(id);
+  if (!current) throw new Error("location_not_found");
+
+  return updateSafetyEffortLocation(id, {
+    ...parseLocationInput({
+      locationType: input.locationType || input.type || current.locationType,
+      nameTh: input.nameTh || input.name || current.nameTh,
+      lat: input.lat ?? current.lat,
+      lng: input.lng ?? current.lng,
+      code: input.code ?? current.code,
+      externalKey: input.externalKey ?? current.externalKey,
+      source: input.source ?? current.source,
+      nameEn: input.nameEn ?? current.nameEn,
+      provinceName: input.provinceName ?? current.provinceName,
+      districtName: input.districtName ?? current.districtName,
+      status: input.status ?? current.status,
+      mapVisible: input.mapVisible ?? current.mapVisible,
+      checkinEnabled: input.checkinEnabled ?? current.checkinEnabled,
+      organizationId: input.organizationId ?? current.organizationId,
+    }, userId),
+  });
+}
+
+function safetyEffortSubmissionDto(row: Record<string, unknown> | null | undefined) {
+  if (!row) return null;
+  return {
+    id: String(row.id),
+    timestamp: row.created_at instanceof Date ? row.created_at.toISOString() : String(row.created_at || ""),
+    checkinId: row.checkin_id == null ? null : String(row.checkin_id),
+    activityDbId: row.activity_id == null ? null : String(row.activity_id),
+    activityType: String(row.activity_type || "LINE_WALK"),
+    activityLabel: String(row.activity_label || ""),
+    locType: String(row.loc_type || "factory"),
+    locationName: String(row.location_name || "-"),
+    locationTag: String(row.location_tag || "-"),
+    date: row.submission_date instanceof Date
+      ? row.submission_date.toISOString().slice(0, 10)
+      : String(row.submission_date || "").slice(0, 10),
+    pms: row.pms ? String(row.pms) : "",
+    name: row.name ? String(row.name) : "",
+    email: row.email ? String(row.email) : "",
+    isSafetyContact: String(row.activity_type || "").toUpperCase() === "SAFETY_CONTACT",
+    safetyContactText: String(row.safety_contact_text || ""),
+    answeredItems: Array.isArray(row.answers_json) ? row.answers_json : parseJson(row.answers_json) || [],
+    metadata: parseJson(row.metadata) || {},
+  };
+}
+
 async function handleActivitiesAssessments(request: NextRequest, method: string, match: RouteMatch, input: JsonInput, userId?: string) {
   const route = match.route.path;
+  if (method === "POST" && route === "/api/safety-effort/submissions") {
+    if (!userId) return jsonError("unauthorized", 401);
+    const answers = Array.isArray(input.answeredItems || input.answers) ? (input.answeredItems || input.answers) : [];
+    const id = await withTransaction(async (connection) => {
+      const [result] = await connection.execute<ResultSetHeader>(
+        `INSERT INTO safety_effort_submissions
+         (user_id, checkin_id, activity_id, activity_type, activity_label, loc_type,
+          location_name, location_tag, submission_date, pms, name, email,
+          safety_contact_text, answers_json, metadata)
+         VALUES (:userId, :checkinId, :activityId, :activityType, :activityLabel, :locType,
+          :locationName, :locationTag, :submissionDate, :pms, :name, :email,
+          :safetyContactText, :answersJson, :metadata)`,
+        {
+          userId,
+          checkinId: input.checkinId || input.checkin_id || null,
+          activityId: input.activityDbId || input.activity_db_id || null,
+          activityType: input.activityType || input.activity_type || "LINE_WALK",
+          activityLabel: input.activityLabel || input.activity_label || null,
+          locType: input.locType || input.loc_type || null,
+          locationName: input.locationName || input.location_name || null,
+          locationTag: input.locationTag || input.location_tag || null,
+          submissionDate: input.date || input.submissionDate || input.submission_date || null,
+          pms: input.pms || null,
+          name: input.name || null,
+          email: input.email || null,
+          safetyContactText: input.safetyContactText || input.safety_contact_text || null,
+          answersJson: JSON.stringify(answers),
+          metadata: JSON.stringify(input.metadata || {}),
+        },
+      );
+      return String(result.insertId);
+    });
+    return jsonData({ submission: safetyEffortSubmissionDto(await getRow("safety_effort_submissions", id)) }, { status: 201 });
+  }
+  if (method === "GET" && ["/api/safety-effort/submissions", "/api/safety-effort/submissions/me"].includes(route)) {
+    const where = ["deleted_at IS NULL"];
+    const params: Record<string, unknown> = {};
+    if (route.endsWith("/me")) {
+      where.push("user_id = :userId");
+      params.userId = userId;
+    }
+    const from = request.nextUrl.searchParams.get("from");
+    const to = request.nextUrl.searchParams.get("to");
+    const activityType = request.nextUrl.searchParams.get("activityType");
+    if (from) { where.push("submission_date >= :from"); params.from = from; }
+    if (to) { where.push("submission_date <= :to"); params.to = to; }
+    if (activityType) { where.push("activity_type = :activityType"); params.activityType = activityType; }
+    const result = await listRows("safety_effort_submissions", request, {
+      where,
+      params,
+      orderBy: "created_at DESC, id DESC",
+      maxPageSize: 500,
+    });
+    return jsonData({ ...result, items: result.items.map(safetyEffortSubmissionDto) });
+  }
+  if (method === "PATCH" && route === "/api/safety-effort/submissions/:id") {
+    await withTransaction(async (connection) => connection.execute(
+      `UPDATE safety_effort_submissions SET
+       pms = COALESCE(:pms, pms),
+       name = COALESCE(:name, name),
+       email = COALESCE(:email, email),
+       activity_type = COALESCE(:activityType, activity_type),
+       submission_date = COALESCE(:submissionDate, submission_date)
+       WHERE id = :id AND deleted_at IS NULL`,
+      {
+        id: match.params.id,
+        pms: input.pms ?? null,
+        name: input.name ?? input.fullName ?? null,
+        email: input.email ?? null,
+        activityType: input.activityType ?? input.activity_type ?? null,
+        submissionDate: input.date ?? input.createDate ?? input.submissionDate ?? null,
+      },
+    ));
+    return jsonData({ submission: safetyEffortSubmissionDto(await getRow("safety_effort_submissions", match.params.id)) });
+  }
+  if (method === "DELETE" && route === "/api/safety-effort/submissions/:id") {
+    const result = await withTransaction(async (connection) => connection.execute<ResultSetHeader>(
+      "UPDATE safety_effort_submissions SET deleted_at = UTC_TIMESTAMP(3) WHERE id = :id AND deleted_at IS NULL",
+      { id: match.params.id },
+    ));
+    return jsonData({ deleted: result[0].affectedRows > 0 });
+  }
   if (route === "/api/safety-effort/activities") {
     if (method === "POST") return jsonData({ activity: await insertRow("safety_activities", input, { status: "DRAFT", started_at: new Date() }) }, { status: 201 });
   }
@@ -865,6 +1076,34 @@ async function handleFindingsActions(request: NextRequest, method: string, match
 }
 
 async function handleWereOk(method: string, match: RouteMatch, input: JsonInput, userId?: string) {
+  const route = match.route.path;
+  if (method === "GET" && route === "/api/were-ok/jobs/current") {
+    if (!userId) return jsonError("unauthorized", 401);
+    return jsonData({ job: await getCurrentWereOkJob(userId) });
+  }
+  if (method === "POST" && route === "/api/were-ok/jobs") {
+    if (!userId) return jsonError("unauthorized", 401);
+    return jsonData({ job: await createWereOkJob(input, userId) }, { status: 201 });
+  }
+  if (method === "GET" && route === "/api/were-ok/jobs/:id") {
+    if (!userId) return jsonError("unauthorized", 401);
+    const job = await getWereOkJob(match.params.id, userId);
+    return job ? jsonData({ job }) : jsonError("job_not_found", 404);
+  }
+  if (method === "POST" && route === "/api/were-ok/jobs/:id/acknowledge") {
+    if (!userId) return jsonError("unauthorized", 401);
+    await withTransaction(async (connection) => {
+      await connection.execute(
+        `UPDATE were_ok_jobs
+         SET status = 'ACKNOWLEDGED', acknowledged_at = UTC_TIMESTAMP(3)
+         WHERE id = :id AND (user_id = :userId OR user_id IS NULL) AND deleted_at IS NULL`,
+        { id: match.params.id, userId },
+      );
+    });
+    const job = await getWereOkJob(match.params.id, userId);
+    return job ? jsonData({ job }) : jsonError("job_not_found", 404);
+  }
+
   if (method !== "POST") return null;
   const tableByRoute: Record<string, string> = {
     "/api/were-ok/health-checks": "health_checks",
@@ -889,6 +1128,156 @@ async function handleWereOk(method: string, match: RouteMatch, input: JsonInput,
     return String(result.insertId);
   });
   return jsonData({ record: await getRow(table, id) }, { status: 201 });
+}
+
+function wereOkJobDto(row: DbRow | null | undefined, warnings: DbRow[] = [], sleep?: DbRow | null) {
+  if (!row) return null;
+  const payload = parseJson(row.payload) || {};
+  const sleepPayload = sleep ? parseJson(sleep.payload) || {} : {};
+  return {
+    id: String(row.id),
+    userId: row.user_id == null ? null : String(row.user_id),
+    jobCode: String(row.job_code),
+    jobLabel: row.job_label ? String(row.job_label) : null,
+    startNode: row.start_node ? String(row.start_node) : null,
+    endNode: row.end_node ? String(row.end_node) : null,
+    distanceKm: row.distance_km == null ? null : Number(row.distance_km),
+    estimatedMinutes: row.estimated_minutes == null ? null : Number(row.estimated_minutes),
+    slump: row.slump ? String(row.slump) : null,
+    status: row.status ? String(row.status) : "ASSIGNED",
+    scheduledAt: row.scheduled_at instanceof Date ? row.scheduled_at.toISOString() : row.scheduled_at ? String(row.scheduled_at) : null,
+    acknowledgedAt: row.acknowledged_at instanceof Date ? row.acknowledged_at.toISOString() : row.acknowledged_at ? String(row.acknowledged_at) : null,
+    routeWarnings: warnings.map((warning) => ({
+      id: String(warning.id),
+      type: warning.warning_type ? String(warning.warning_type) : "warning",
+      title: warning.title ? String(warning.title) : "",
+      desc: warning.description ? String(warning.description) : "",
+      km: warning.km_label ? String(warning.km_label) : "",
+      sortOrder: Number(warning.sort_order || 0),
+    })),
+    sleepSummary: sleep ? {
+      sleepMinutes: sleep.sleep_minutes == null ? null : Number(sleep.sleep_minutes),
+      summaryText: sleep.summary_text ? String(sleep.summary_text) : null,
+      description: sleep.description ? String(sleep.description) : null,
+      payload: sleepPayload,
+    } : null,
+    payload,
+  };
+}
+
+async function getWereOkJob(id: string, userId?: string) {
+  const rows = await queryRows<DbRow>(
+    `SELECT * FROM were_ok_jobs
+     WHERE id = :id AND deleted_at IS NULL AND (:userId IS NULL OR user_id = :userId OR user_id IS NULL)
+     LIMIT 1`,
+    { id, userId: userId || null },
+  );
+  const row = rows[0];
+  if (!row) return null;
+  const warnings = await queryRows<DbRow>(
+    `SELECT * FROM were_ok_route_warnings WHERE job_id = :id ORDER BY sort_order, id`,
+    { id: row.id },
+  );
+  const sleepRows = await queryRows<DbRow>(
+    `SELECT * FROM were_ok_sleep_summaries WHERE job_id = :id LIMIT 1`,
+    { id: row.id },
+  );
+  return wereOkJobDto(row, warnings, sleepRows[0]);
+}
+
+async function getCurrentWereOkJob(userId: string) {
+  const rows = await queryRows<DbRow>(
+    `SELECT * FROM were_ok_jobs
+     WHERE deleted_at IS NULL
+       AND status IN ('ASSIGNED', 'ACKNOWLEDGED', 'IN_PROGRESS')
+       AND (user_id = :userId OR user_id IS NULL)
+     ORDER BY CASE WHEN user_id = :userId THEN 0 ELSE 1 END, scheduled_at DESC, id DESC
+     LIMIT 1`,
+    { userId },
+  );
+  return rows[0] ? getWereOkJob(String(rows[0].id), userId) : null;
+}
+
+async function createWereOkJob(input: JsonInput, userId?: string) {
+  const jobCode = String(input.jobCode || input.job_code || "").trim();
+  if (!jobCode) throw new Error("job_code_required");
+  const targetUserId = input.userId || input.user_id || null;
+  const warnings = Array.isArray(input.routeWarnings || input.warnings)
+    ? (input.routeWarnings || input.warnings) as JsonInput[]
+    : [];
+  const sleepSummary = input.sleepSummary && typeof input.sleepSummary === "object" ? input.sleepSummary as JsonInput : null;
+
+  const id = await withTransaction(async (connection) => {
+    const [result] = await connection.execute<ResultSetHeader>(
+      `INSERT INTO were_ok_jobs
+       (user_id, job_code, job_label, start_node, end_node, distance_km, estimated_minutes, slump, status, scheduled_at, payload, created_by)
+       VALUES (:userId, :jobCode, :jobLabel, :startNode, :endNode, :distanceKm, :estimatedMinutes, :slump, :status, :scheduledAt, :payload, :createdBy)
+       ON DUPLICATE KEY UPDATE
+         user_id = VALUES(user_id),
+         job_label = VALUES(job_label),
+         start_node = VALUES(start_node),
+         end_node = VALUES(end_node),
+         distance_km = VALUES(distance_km),
+         estimated_minutes = VALUES(estimated_minutes),
+         slump = VALUES(slump),
+         status = VALUES(status),
+         scheduled_at = VALUES(scheduled_at),
+         payload = VALUES(payload),
+         deleted_at = NULL`,
+      {
+        userId: targetUserId || null,
+        jobCode,
+        jobLabel: input.jobLabel || input.job_label || null,
+        startNode: input.startNode || input.start_node || null,
+        endNode: input.endNode || input.end_node || null,
+        distanceKm: input.distanceKm ?? input.distance_km ?? null,
+        estimatedMinutes: input.estimatedMinutes ?? input.estimated_minutes ?? null,
+        slump: input.slump || null,
+        status: input.status || "ASSIGNED",
+        scheduledAt: input.scheduledAt || input.scheduled_at || null,
+        payload: JSON.stringify(input.payload || {}),
+        createdBy: userId || null,
+      },
+    );
+    const jobRows = await connection.query<RowDataPacket[]>(
+      "SELECT id FROM were_ok_jobs WHERE job_code = :jobCode LIMIT 1",
+      { jobCode },
+    );
+    const insertedId = String((jobRows[0] as DbRow[])[0]?.id || result.insertId);
+    await connection.execute("DELETE FROM were_ok_route_warnings WHERE job_id = :jobId", { jobId: insertedId });
+    for (let index = 0; index < warnings.length; index += 1) {
+      const warning = warnings[index];
+      await connection.execute(
+        `INSERT INTO were_ok_route_warnings (job_id, warning_type, title, description, km_label, sort_order)
+         VALUES (:jobId, :type, :title, :description, :kmLabel, :sortOrder)`,
+        {
+          jobId: insertedId,
+          type: warning.type || warning.warningType || "warning",
+          title: warning.title || "",
+          description: warning.desc || warning.description || null,
+          kmLabel: warning.km || warning.kmLabel || null,
+          sortOrder: warning.sortOrder ?? index,
+        },
+      );
+    }
+    await connection.execute("DELETE FROM were_ok_sleep_summaries WHERE job_id = :jobId", { jobId: insertedId });
+    if (sleepSummary) {
+      await connection.execute(
+        `INSERT INTO were_ok_sleep_summaries (job_id, sleep_minutes, summary_text, description, payload)
+         VALUES (:jobId, :sleepMinutes, :summaryText, :description, :payload)`,
+        {
+          jobId: insertedId,
+          sleepMinutes: sleepSummary.sleepMinutes ?? sleepSummary.sleep_minutes ?? null,
+          summaryText: sleepSummary.summaryText || sleepSummary.summary_text || null,
+          description: sleepSummary.description || null,
+          payload: JSON.stringify(sleepSummary.payload || sleepSummary),
+        },
+      );
+    }
+    return insertedId;
+  });
+
+  return getWereOkJob(id, targetUserId ? String(targetUserId) : userId);
 }
 
 async function handleCultureRewards(request: NextRequest, method: string, match: RouteMatch, input: JsonInput, userId?: string) {
@@ -1135,6 +1524,41 @@ async function redeemReward(rewardId: string, userId: string) {
   });
 }
 
+// Attach per-question answers (from awareness_answers.answer_json) to each attempt
+// row so the client can show the question breakdown, not just the score.
+async function attachAwarenessAnswers(result: { items: Array<Record<string, unknown>> } & Record<string, unknown>) {
+  const items = Array.isArray(result.items) ? result.items : [];
+  if (!items.length) return result;
+  const ids = items.map((row) => row.id).filter((id) => id != null);
+  if (!ids.length) return result;
+  const placeholders = ids.map((_, i) => `:id${i}`).join(", ");
+  const params: Record<string, unknown> = {};
+  ids.forEach((id, i) => { params[`id${i}`] = id; });
+  const answerRows = await queryRows<DbRow>(
+    `SELECT attempt_id, question_id, answer_json, is_correct
+     FROM awareness_answers WHERE attempt_id IN (${placeholders}) ORDER BY id`,
+    params,
+  );
+  const byAttempt = new Map<string, Array<Record<string, unknown>>>();
+  for (const row of answerRows) {
+    let parsed: Record<string, unknown> = {};
+    try { parsed = row.answer_json ? JSON.parse(String(row.answer_json)) : {}; } catch { parsed = {}; }
+    const key = String(row.attempt_id);
+    const list = byAttempt.get(key) || [];
+    list.push({
+      id: String(parsed.id ?? row.question_id ?? ""),
+      category: parsed.category ?? "",
+      text: parsed.text ?? "",
+      correct: Boolean(row.is_correct),
+    });
+    byAttempt.set(key, list);
+  }
+  return {
+    ...result,
+    items: items.map((row) => ({ ...row, answers: byAttempt.get(String(row.id)) || [] })),
+  };
+}
+
 async function handleAwarenessHolidays(request: NextRequest, method: string, match: RouteMatch, input: JsonInput, userId?: string) {
   const route = match.route.path;
   if (method === "GET" && route === "/api/safety-awareness/questions") {
@@ -1159,23 +1583,105 @@ async function handleAwarenessHolidays(request: NextRequest, method: string, mat
     return jsonData({ question: await updateRow("awareness_questions", match.params.id, { status: "INACTIVE" }) });
   }
   if (method === "GET" && route === "/api/safety-awareness/attempts/me") {
-    return jsonData(await listRows("awareness_attempts", request, { where: ["user_id = :userId"], params: { userId }, orderBy: "attempt_date DESC, id DESC" }));
+    const result = await listRows("awareness_attempts", request, { where: ["user_id = :userId"], params: { userId }, orderBy: "attempt_date DESC, id DESC" });
+    return jsonData(await attachAwarenessAnswers(result));
   }
   if (method === "GET" && route === "/api/safety-awareness/attempts") {
     const where: string[] = [];
     const params: Record<string, unknown> = {};
     const requestedUserId = request.nextUrl.searchParams.get("userId");
     if (requestedUserId) { where.push("user_id = :userId"); params.userId = requestedUserId; }
-    return jsonData(await listRows("awareness_attempts", request, { where, params, orderBy: "attempt_date DESC, id DESC" }));
+    const result = await listRows("awareness_attempts", request, { where, params, orderBy: "attempt_date DESC, id DESC" });
+    return jsonData(await attachAwarenessAnswers(result));
   }
   if (route === "/api/holidays") {
     if (method === "GET") {
       const year = Number(request.nextUrl.searchParams.get("year") || new Date().getFullYear());
       return jsonData(await listRows("holidays", request, { where: ["YEAR(holiday_date) = :year"], params: { year }, orderBy: "holiday_date", maxPageSize: 500 }));
     }
-    if (method === "POST") return jsonData({ holiday: await insertRow("holidays", input) }, { status: 201 });
+    if (method === "POST") {
+      const holidayDate = String(input.holidayDate || input.holiday_date || "").slice(0, 10);
+      const name = String(input.name || "").trim();
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(holidayDate)) return jsonError("holiday_date_required", 422);
+      if (!name) return jsonError("holiday_name_required", 422);
+      const result = await withTransaction(async (connection) => {
+        const [existingRows] = await connection.execute<RowDataPacket[]>(
+          "SELECT id FROM holidays WHERE holiday_date = :holidayDate ORDER BY id LIMIT 1 FOR UPDATE",
+          { holidayDate },
+        );
+        let holidayId = String((existingRows[0] as DbRow | undefined)?.id || "");
+        if (holidayId) {
+          await connection.execute(
+            "UPDATE holidays SET name = :name WHERE id = :id",
+            { id: holidayId, name },
+          );
+        } else {
+          const [inserted] = await connection.execute<ResultSetHeader>(
+            "INSERT INTO holidays (holiday_date, name) VALUES (:holidayDate, :name)",
+            { holidayDate, name },
+          );
+          holidayId = String(inserted.insertId);
+        }
+
+        const [reversed] = await connection.execute<ResultSetHeader>(
+          `INSERT IGNORE INTO point_transactions
+           (user_id, point_rule_id, transaction_type, amount, source_type, source_id, idempotency_key, description, occurred_at)
+           SELECT aa.user_id, earn.point_rule_id, 'SPEND', -ABS(earn.amount),
+                  'AWARENESS_EXCLUDED', aa.id,
+                  CONCAT('awareness:', aa.user_id, ':', DATE_FORMAT(aa.attempt_date, '%Y-%m-%d'), ':excluded:', :holidayId),
+                  CONCAT('Reverse Awareness points for excluded date ', :holidayDate),
+                  UTC_TIMESTAMP(3)
+           FROM awareness_attempts aa
+           JOIN point_transactions earn
+             ON earn.user_id = aa.user_id
+            AND earn.idempotency_key = CONCAT('awareness:', aa.user_id, ':', DATE_FORMAT(aa.attempt_date, '%Y-%m-%d'))
+           WHERE aa.attempt_date = :holidayDate AND earn.amount > 0`,
+          { holidayId, holidayDate },
+        );
+        await connection.execute(
+          `INSERT INTO point_balances (user_id, balance)
+           SELECT user_id, SUM(amount) FROM point_transactions GROUP BY user_id
+           ON DUPLICATE KEY UPDATE balance = VALUES(balance), updated_at = UTC_TIMESTAMP(3)`,
+        );
+        return { holidayId, pointsReversedForUsers: reversed.affectedRows };
+      });
+      return jsonData({ holiday: await getRow("holidays", result.holidayId), pointsReversedForUsers: result.pointsReversedForUsers }, { status: 201 });
+    }
   }
-  if (method === "DELETE" && route === "/api/holidays/:id") return jsonData(await deleteRow("holidays", match.params.id));
+  if (method === "DELETE" && route === "/api/holidays/:id") {
+    const result = await withTransaction(async (connection) => {
+      const [holidayRows] = await connection.execute<RowDataPacket[]>(
+        "SELECT id, holiday_date FROM holidays WHERE id = :id LIMIT 1 FOR UPDATE",
+        { id: match.params.id },
+      );
+      const holiday = holidayRows[0] as (DbRow & { holiday_date?: Date | string }) | undefined;
+      if (!holiday) return { deleted: false, pointsRestoredForUsers: 0 };
+      const holidayDate = holiday.holiday_date instanceof Date
+        ? holiday.holiday_date.toISOString().slice(0, 10)
+        : String(holiday.holiday_date || "").slice(0, 10);
+      const [restored] = await connection.execute<ResultSetHeader>(
+        `INSERT IGNORE INTO point_transactions
+         (user_id, point_rule_id, transaction_type, amount, source_type, source_id, idempotency_key, description, occurred_at)
+         SELECT reversal.user_id, reversal.point_rule_id, 'EARN', ABS(reversal.amount),
+                'AWARENESS_EXCLUDED_RESTORE', reversal.source_id,
+                CONCAT(reversal.idempotency_key, ':restore'),
+                CONCAT('Restore Awareness points after removing excluded date ', :holidayDate),
+                UTC_TIMESTAMP(3)
+         FROM point_transactions reversal
+         WHERE reversal.idempotency_key LIKE CONCAT('awareness:%:', :holidayDate, ':excluded:', :holidayId)
+           AND reversal.amount < 0`,
+        { holidayDate, holidayId: match.params.id },
+      );
+      await connection.execute("DELETE FROM holidays WHERE id = :id", { id: match.params.id });
+      await connection.execute(
+        `INSERT INTO point_balances (user_id, balance)
+         SELECT user_id, SUM(amount) FROM point_transactions GROUP BY user_id
+         ON DUPLICATE KEY UPDATE balance = VALUES(balance), updated_at = UTC_TIMESTAMP(3)`,
+      );
+      return { deleted: true, pointsRestoredForUsers: restored.affectedRows };
+    });
+    return jsonData(result);
+  }
   return null;
 }
 
@@ -1374,11 +1880,12 @@ async function handleUploadsMedia(request: NextRequest, method: string, match: R
       heightPx,
       format,
     }, userId);
-    return jsonData({ attachment: media, media }, { status: 201 });
+    const dto = mediaAssetDto(media);
+    return jsonData({ attachment: dto, media: dto }, { status: 201 });
   }
   if (route === "/api/uploads/:id") {
     const media = await getRow("media_assets", match.params.id);
-    if (method === "GET") return media ? jsonData({ media }) : jsonError("media_not_found", 404);
+    if (method === "GET") return media ? jsonData({ media: mediaAssetDto(media) }) : jsonError("media_not_found", 404);
     if (method === "DELETE") {
       await assertMediaAccess(match.params.id, userId);
       if (media?.file_name) await fs.unlink(String(media.storage_path || path.join(uploadRoot(), String(media.file_name)))).catch(() => undefined);
@@ -1411,13 +1918,13 @@ async function handleUploadsMedia(request: NextRequest, method: string, match: R
   }
   if (route === "/api/uploads/:id/link") {
     await assertMediaAccess(match.params.id, userId);
-    if (method === "POST") return jsonData({ media: await updateMediaAsset(match.params.id, { ...input, status: "LINKED" }) });
-    if (method === "DELETE") return jsonData({ media: await updateMediaAsset(match.params.id, { ownerType: null, ownerId: null, linkType: null, status: "READY" }) });
+    if (method === "POST") return jsonData({ media: mediaAssetDto(await updateMediaAsset(match.params.id, { ...input, status: "LINKED" })) });
+    if (method === "DELETE") return jsonData({ media: mediaAssetDto(await updateMediaAsset(match.params.id, { ownerType: null, ownerId: null, linkType: null, status: "READY" })) });
   }
   if (method === "GET" && route === "/api/media") {
     const ownerType = request.nextUrl.searchParams.get("ownerType");
     const ownerId = request.nextUrl.searchParams.get("ownerId");
-    return jsonData(await listRows("media_assets", request, {
+    const result = await listRows("media_assets", request, {
       where: [
         "deleted_at IS NULL",
         ...(ownerType ? ["owner_type = :ownerType"] : []),
@@ -1425,7 +1932,8 @@ async function handleUploadsMedia(request: NextRequest, method: string, match: R
       ],
       params: { ...(ownerType ? { ownerType } : {}), ...(ownerId ? { ownerId } : {}) },
       orderBy: "id DESC",
-    }));
+    });
+    return jsonData({ ...result, items: mediaListDto(result.items as DbRow[]) });
   }
   if (method === "POST" && route === "/api/uploads/presign") {
     const draft = await createMediaAsset({
@@ -1440,7 +1948,7 @@ async function handleUploadsMedia(request: NextRequest, method: string, match: R
     return jsonData({ id: draft?.id, uploadUrl: "/api/uploads", method: "POST", fields: { draftId: draft?.id } }, { status: 201 });
   }
   if (method === "POST" && route === "/api/uploads/:id/complete") {
-    return jsonData({ media: await updateMediaAsset(match.params.id, { ...input, status: "READY" }) });
+    return jsonData({ media: mediaAssetDto(await updateMediaAsset(match.params.id, { ...input, status: "READY" })) });
   }
   return null;
 }

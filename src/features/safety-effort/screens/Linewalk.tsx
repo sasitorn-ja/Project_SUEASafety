@@ -1,12 +1,13 @@
 // @ts-nocheck
 import { useState, useEffect, useRef } from "react";
-import { useNavigate, useLocation } from "@/lib/router-compat";
+import { useNavigate, useLocation } from "@/lib/app-navigation";
 import RestrictedDatePicker from "@/components/RestrictedDatePicker";
 import TigerMascot from "@/components/TigerMascot";
 import {
   createInitialItemStates,
   getChecklistForType,
 } from "@/features/safety-effort/config/checklists";
+import { uploadSafetyEffortMedia } from "@/features/safety-effort/lib/upload-media";
 
 // ─── Design tokens ─────────────────────────────────────────────────────────
 const T = {
@@ -529,11 +530,21 @@ export default function Linewalk() {
   function handleNoteChange(id, text) {
     setItemStates(p => ({ ...p, [id]: { ...p[id], note: text } }));
   }
-  function handlePhotoUpload(id, e) {
+  async function handlePhotoUpload(id, e) {
     const file = e.target.files[0]; if (!file) return;
-    const reader = new FileReader();
-    reader.onloadend = () => setItemStates(p => ({ ...p, [id]: { ...p[id], photos: [...p[id].photos, reader.result] } }));
-    reader.readAsDataURL(file);
+    try {
+      const media = await uploadSafetyEffortMedia(file, {
+        ownerType: "assessment_answer",
+        ownerId: id,
+        linkType: "evidence",
+      });
+      setItemStates(p => ({ ...p, [id]: { ...p[id], photos: [...p[id].photos, media.url] } }));
+    } catch (error) {
+      console.error("Failed to upload answer photo", error);
+      window.alert("อัปโหลดรูปภาพไม่สำเร็จ กรุณาลองใหม่อีกครั้ง");
+    } finally {
+      e.target.value = "";
+    }
   }
   function handleDeletePhoto(id, idx) {
     setItemStates(p => ({ ...p, [id]: { ...p[id], photos: p[id].photos.filter((_,i)=>i!==idx) } }));

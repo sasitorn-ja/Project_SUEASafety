@@ -27,7 +27,7 @@ export function ThemeToggle({ compact = false, className }: { compact?: boolean;
         src={
           theme === "wangjai"
             ? "/images/mascots/suea-mascot-transparent.png"
-            : "/images/mascots/Transparent น้องวางใจ/8.png"
+            : "/images/mascots/wangjai/8.png"
         }
         alt=""
         width={size}

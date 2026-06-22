@@ -11,7 +11,6 @@ import { isExactNavActive, isMainNavActive } from "@/lib/navigation";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useAppState } from "@/providers/app-providers";
 import { useAppTheme } from "@/providers/theme-provider";
-import { getProfileDisplayName } from "@/lib/profile";
 import { getSessionDisplayName, getSessionProfileImage, hasAdminAccess, useSessionUser } from "@/lib/session-user";
 import {
   MENU_STORAGE_KEY,
@@ -86,17 +85,21 @@ function ConfiguredMenuLink({
   const Icon = getMenuIcon(node.icon);
   const content = (
     <>
-      {Icon && <Icon className={compact ? "h-3.5 w-3.5 flex-shrink-0 text-[var(--brand-accent)]" : "h-4 w-4 flex-shrink-0 text-[var(--brand-hero-label)]"} strokeWidth={2.35} />}
+      {Icon && (
+        <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full border border-white/10 bg-[rgba(var(--brand-accent-rgb),0.18)] text-[var(--brand-hero-label)]">
+          <Icon className="h-[17px] w-[17px]" strokeWidth={2.35} />
+        </span>
+      )}
       <span className="min-w-0">
-        <span className={cn("block font-extrabold text-white", compact ? "text-[11px]" : "text-[11.5px]")}>{node.label}</span>
-        {!compact && node.description && <span className="mt-0.5 block text-[9px] font-semibold leading-[11px] text-white/[0.62]">{node.description}</span>}
+        <span className="block text-[12.5px] font-extrabold leading-[16px] text-white">{node.label}</span>
+        {node.description && <span className="mt-0.5 block text-[10.5px] font-semibold leading-[14px] text-white/[0.68]">{node.description}</span>}
       </span>
     </>
   );
 
   // asLabel: หัวข้อหมวด (เช่น Safety Effort / Safety Culture) — แสดงเป็นชื่อหมวดเฉยๆ ไม่ลิงก์ไปหน้า
   if (asLabel || !node.href) {
-    return <div className="flex items-center gap-2 rounded-md px-2.5 py-1.5 text-white">{content}</div>;
+    return <div className="flex items-center gap-2.5 rounded-lg p-2 text-white">{content}</div>;
   }
 
   return (
@@ -104,7 +107,7 @@ function ConfiguredMenuLink({
       href={node.href}
       onClick={onClick}
       className={cn(
-        "flex items-center gap-2 rounded-md px-2.5 py-1.5 text-white transition-colors hover:bg-white/10",
+        "flex items-center gap-2.5 rounded-lg p-2 text-white transition-colors hover:bg-white/10",
         isExactNavActive(pathname, node.href) && "bg-white/10"
       )}
     >
@@ -129,8 +132,8 @@ function AdminFlyoutSection({ section, pathname }: { section: MenuNode; pathname
         {children.length > 0 && <ChevronDown className="mr-1.5 h-3 w-3 -rotate-90 text-white/70" strokeWidth={2.5} />}
       </div>
       {children.length > 0 && (
-        <div className="invisible absolute left-full top-0 z-50 w-[min(245px,calc(100vw-32px))] -translate-x-1 pl-1.5 opacity-0 transition-all duration-150 group-hover/admin-section:visible group-hover/admin-section:translate-x-0 group-hover/admin-section:opacity-100">
-          <div className="max-h-[calc(100vh-var(--topbar-h)-24px)] overflow-y-auto rounded-lg border border-white/[0.14] bg-[rgba(var(--brand-nav-rgb),0.98)] p-1 shadow-[0_14px_32px_var(--brand-shadow)] backdrop-blur-xl">
+        <div className="invisible absolute left-full top-0 z-50 w-[min(300px,calc(100vw-32px))] -translate-x-1 pl-1.5 opacity-0 transition-all duration-150 group-hover/admin-section:visible group-hover/admin-section:translate-x-0 group-hover/admin-section:opacity-100">
+          <div className="max-h-[calc(100vh-var(--topbar-h)-24px)] overflow-y-auto rounded-xl border border-white/[0.14] bg-[rgba(var(--brand-nav-rgb),0.98)] p-1.5 shadow-[0_18px_44px_var(--brand-shadow)] backdrop-blur-xl">
             {children.map((child) => (
               <ConfiguredMenuLink key={child.id} node={child} pathname={pathname} />
             ))}
@@ -192,7 +195,7 @@ export function DesktopTopbar() {
   const canUseAdmin = hasAdminAccess(sessionUser);
   const navItems = canUseAdmin ? NAV_ITEMS : NAV_ITEMS.filter((item) => item.id !== "admin");
   const adminSections = canUseAdmin ? configuredAdmin?.children.filter((node) => node.enabled) ?? [] : [];
-  const displayName = sessionUser ? getSessionDisplayName(sessionUser) : getProfileDisplayName();
+  const displayName = sessionUser ? getSessionDisplayName(sessionUser) : "ผู้ใช้งาน";
   const displayImage = getSessionProfileImage(sessionUser);
 
   useEffect(() => {
@@ -203,6 +206,7 @@ export function DesktopTopbar() {
     <header
       className={cn(
         "hidden min-[1100px]:flex fixed top-0 left-0 right-0 z-40 items-center",
+        "home-desktop-topbar",
         "bg-[rgba(var(--brand-nav-rgb),0.92)] border-b border-white/10",
         "shadow-[0_10px_30px_var(--brand-shadow)] backdrop-blur-[16px]",
         "[transition:margin-left_200ms_ease-out]",
@@ -211,12 +215,12 @@ export function DesktopTopbar() {
       style={{ fontFamily: "var(--font-sans)", height: "var(--topbar-h)" }}
     >
       <div className="desktop-topbar-inner mx-auto flex h-full w-full max-w-[1540px] items-center justify-between gap-[22px] px-6 xl:px-12">
-        <NavTo href="/" className="desktop-brand flex min-w-[270px] items-center gap-3">
-          <div className="desktop-brand-logo flex h-[46px] w-[46px] flex-shrink-0 items-center justify-center overflow-hidden rounded-md">
-            <Image src={mascot("logo")} alt="SUEA Safety Logo" width={46} height={46} className="h-full w-full object-contain" />
+        <NavTo href="/" className="desktop-brand flex min-w-[300px] items-center gap-3.5">
+          <div className="desktop-brand-logo flex h-[54px] w-[54px] flex-shrink-0 items-center justify-center overflow-hidden rounded-md">
+            <Image src={mascot("logo")} alt="SUEA Safety Logo" width={54} height={54} className="h-full w-full object-contain" />
           </div>
           <div className="desktop-brand-copy overflow-hidden">
-            <div className="desktop-brand-title whitespace-nowrap text-2xl font-extrabold leading-none tracking-normal text-white">
+            <div className="desktop-brand-title whitespace-nowrap text-3xl font-extrabold leading-none tracking-normal text-white">
               {isWangjai ? (
                 <>
                   <span className="text-[var(--brand-accent)]">CPAC</span> Safe +
@@ -227,7 +231,7 @@ export function DesktopTopbar() {
                 </>
               )}
             </div>
-            <div className="desktop-brand-subtitle mt-1 whitespace-nowrap text-[10px] font-semibold text-white/[0.62]">
+            <div className="desktop-brand-subtitle mt-1 whitespace-nowrap text-[11.5px] font-semibold text-white/[0.62]">
               {isWangjai ? "Creating Protection And Care" : "Safety User Environment Awareness"}
             </div>
           </div>
@@ -336,13 +340,13 @@ export function DesktopTopbar() {
             if (item.id === "admin") {
               return (
                 <div key={item.id} className="relative" onMouseEnter={() => setDesktopMenu("admin")} onMouseLeave={() => setDesktopMenu(null)} onFocus={() => setDesktopMenu("admin")}>
-                  <NavTo href={item.href} className={cn("desktop-nav-item inline-flex h-11 items-center justify-center gap-2 rounded-full px-4 text-sm font-bold whitespace-nowrap transition-all", active ? "bg-[var(--brand-nav-active)] text-white" : "bg-transparent text-white/[0.82] hover:bg-white/10 hover:text-white")}>
+                  <NavTo href={item.href} className={cn("desktop-nav-item home-desktop-nav-item inline-flex h-11 items-center justify-center gap-2 rounded-full px-4 text-[15px] font-bold whitespace-nowrap transition-all", active && "is-home-active", active ? "bg-[var(--brand-nav-active)] text-white" : "bg-transparent text-white/[0.82] hover:bg-white/10 hover:text-white")}>
                     <Icon className="h-[17px] w-[17px]" strokeWidth={2.35} />
                     <span className="desktop-nav-label">{item.label}</span>
                     <ChevronDown className={cn("h-3.5 w-3.5 transition-transform", desktopMenu === "admin" && "rotate-180")} />
                   </NavTo>
-                  <div className={cn("absolute right-0 top-full z-50 w-[220px] pt-1.5 transition-all duration-150", desktopMenu === "admin" ? "visible translate-y-0 opacity-100" : "invisible -translate-y-1 opacity-0")}>
-                    <div className="overflow-visible rounded-lg border border-white/[0.14] bg-[rgba(var(--brand-nav-rgb),0.96)] p-1 text-white shadow-[0_14px_32px_var(--brand-shadow)] backdrop-blur-xl">
+                  <div className={cn("absolute right-0 top-full z-50 w-[320px] pt-2 transition-all duration-150", desktopMenu === "admin" ? "visible translate-y-0 opacity-100" : "invisible -translate-y-1 opacity-0")}>
+                    <div className="overflow-visible rounded-xl border border-white/[0.14] bg-[rgba(var(--brand-nav-rgb),0.96)] p-1.5 text-white shadow-[0_18px_44px_var(--brand-shadow)] backdrop-blur-xl">
                       {adminSections.map((section) => (
                         <AdminFlyoutSection key={section.id} section={section} pathname={pathname} />
                       ))}
@@ -369,7 +373,9 @@ export function DesktopTopbar() {
                   <NavTo
                     href={item.href}
                     className={cn(
-                      "desktop-nav-item inline-flex h-11 items-center justify-center gap-2 rounded-full px-4 text-sm font-bold whitespace-nowrap transition-all",
+                      "desktop-nav-item inline-flex h-11 items-center justify-center gap-2 rounded-full px-4 text-[15px] font-bold whitespace-nowrap transition-all",
+                      "home-desktop-nav-item",
+                      active && "is-home-active",
                       active ? "bg-[var(--brand-nav-active)] text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.18),0_8px_18px_rgba(0,0,0,0.18)]" : "bg-transparent text-white/[0.82] hover:bg-white/10 hover:text-white"
                     )}
                   >
@@ -417,7 +423,9 @@ export function DesktopTopbar() {
                 key={item.id}
                 href={enabled ? item.href : "#"}
                 className={cn(
-                  "desktop-nav-item inline-flex h-11 items-center justify-center gap-2 rounded-full px-4 text-sm font-bold whitespace-nowrap transition-all",
+                  "desktop-nav-item inline-flex h-11 items-center justify-center gap-2 rounded-full px-4 text-[15px] font-bold whitespace-nowrap transition-all",
+                  "home-desktop-nav-item",
+                  active && "is-home-active",
                   active && enabled ? "bg-[var(--brand-nav-active)] text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.18),0_8px_18px_rgba(0,0,0,0.18)]" : "bg-transparent text-white/[0.82] hover:bg-white/10",
                   !enabled && "cursor-not-allowed opacity-[0.62] hover:bg-transparent"
                 )}

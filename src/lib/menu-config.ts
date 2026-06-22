@@ -203,19 +203,6 @@ export function getDefaultMenu(): MenuNode[] {
           ],
         }),
         n({
-          label: "Role",
-          href: "/safety-admin/role",
-          icon: "UsersRound",
-          children: [
-            n({
-              label: "User Roles",
-              href: "/safety-admin/role",
-              icon: "UserRound",
-              description: "จัดการบทบาทและสิทธิ์การใช้งานของบุคลากร",
-            }),
-          ],
-        }),
-        n({
           label: "จัดการผู้ใช้และสิทธิ์ Admin",
           href: "/safety-culture/admin-users",
           icon: "UserCog",
@@ -263,25 +250,13 @@ export function loadMenu(): MenuNode[] {
           const n = (p: Partial<MenuNode>) => createMenuNode(p);
           let updated = false;
 
-          const hasRole = adminNode.children.some(
-            (child) => child.href === "/safety-admin/role" || child.label.trim().toLowerCase() === "role"
+          // Migration: remove the deprecated "Role" (User Role Management) node.
+          // Replaced by DB-backed "จัดการผู้ใช้และสิทธิ์ Admin" (/safety-culture/admin-users).
+          const beforeRoleRemoval = adminNode.children.length;
+          adminNode.children = adminNode.children.filter(
+            (child) => child.href !== "/safety-admin/role" && child.label.trim().toLowerCase() !== "role"
           );
-          if (!hasRole) {
-            adminNode.children.push(
-              n({
-                label: "Role",
-                href: "/safety-admin/role",
-                icon: "UsersRound",
-                children: [
-                  n({
-                    label: "User Roles",
-                    href: "/safety-admin/role",
-                    icon: "UserRound",
-                    description: "จัดการบทบาทและสิทธิ์การใช้งานของบุคลากร",
-                  }),
-                ],
-              })
-            );
+          if (adminNode.children.length !== beforeRoleRemoval) {
             updated = true;
           }
 

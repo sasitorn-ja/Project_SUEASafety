@@ -18,5 +18,9 @@ yarn-error.log*
 .DS_Store
 Thumbs.db
 
+# local scratch / temp tooling
+.codex-tmp/
+logs/
+
 # local confidential handoff documents
 capc_safety-sso-handoff*.md

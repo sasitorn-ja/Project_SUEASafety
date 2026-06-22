@@ -10,6 +10,7 @@ type PostRow = RowDataPacket & {
   author_id: string;
   author_name: string | null;
   author_email: string | null;
+  author_profile_image_url: string | null;
   organization_id: string | null;
   organization_name: string | null;
   team_id: string | null;
@@ -24,7 +25,7 @@ type PostRow = RowDataPacket & {
   updated_at: Date | string;
   like_count: number | string;
   comment_count: number | string;
-  has_liked: 0 | 1 | boolean;
+  has_liked: 0 | 1 | "0" | "1" | boolean;
   photos_json: string | null;
 };
 
@@ -33,9 +34,14 @@ type CommentRow = RowDataPacket & {
   post_id: string;
   author_id: string;
   author_name: string | null;
+  author_profile_image_url: string | null;
   content: string;
   created_at: Date | string;
 };
+
+function mapHasLiked(value: PostRow["has_liked"]) {
+  return value === true || value === 1 || value === "1";
+}
 
 function mapPost(row: PostRow) {
   let photos: Array<{ id: string; dataUrl: string; type: string; url: string }> = [];
@@ -63,10 +69,12 @@ function mapPost(row: PostRow) {
     authorId: String(row.author_id),
     authorName: row.author_name || "Unknown user",
     authorEmail: row.author_email,
+    authorProfileImageUrl: row.author_profile_image_url || null,
     organizationId: row.organization_id ? String(row.organization_id) : null,
     organizationName: row.organization_name,
     teamId: row.team_id ? String(row.team_id) : null,
     teamName: row.team_name,
+    teamScope: row.team_id ? "team" : "unassigned",
     eventId: row.event_id ? String(row.event_id) : null,
     category: row.category || "ทั่วไป",
     content: row.content,
@@ -77,7 +85,7 @@ function mapPost(row: PostRow) {
     updatedAt: new Date(row.updated_at).toISOString(),
     likeCount: Number(row.like_count || 0),
     commentCount: Number(row.comment_count || 0),
-    hasLiked: Boolean(row.has_liked),
+    hasLiked: mapHasLiked(row.has_liked),
     photos,
   };
 }
@@ -88,6 +96,7 @@ function mapComment(row: CommentRow) {
     postId: String(row.post_id),
     authorId: String(row.author_id),
     authorName: row.author_name || "Unknown user",
+    authorProfileImageUrl: row.author_profile_image_url || null,
     content: row.content,
     createdAt: new Date(row.created_at).toISOString(),
   };
@@ -103,6 +112,7 @@ const SELECT_POSTS_SQL = `
     p.category,
     u.name_th AS author_name,
     u.email AS author_email,
+    u.profile_image_url AS author_profile_image_url,
     o.name_th AS organization_name,
     t.name AS team_name,
     p.content,
@@ -365,8 +375,54 @@ export async function updatePost(id: string, userId: string, input: { content?: 
 }
 
 export async function deletePost(id: string, userId: string) {
-  await withTransaction(async (connection) => {
-    await connection.execute<ResultSetHeader>(
+  return withTransaction(async (connection) => {
+    const [postRows] = await connection.execute<RowDataPacket[]>(
+      `SELECT id, author_id, points_awarded
+       FROM posts
+       WHERE id = :id AND author_id = :userId AND deleted_at IS NULL
+       FOR UPDATE`,
+      { id, userId },
+    );
+    const post = postRows[0] as (RowDataPacket & { points_awarded: number | string | null }) | undefined;
+    if (!post) return { deleted: false, pointsReversed: 0, balance: null };
+
+    const [earnedRows] = await connection.execute<RowDataPacket[]>(
+      `SELECT id, point_rule_id, amount
+       FROM point_transactions
+       WHERE user_id = :userId AND idempotency_key = :earnKey
+       LIMIT 1 FOR UPDATE`,
+      { userId, earnKey: `post:${id}:approved` },
+    );
+    const earned = earnedRows[0] as (RowDataPacket & { point_rule_id: string | null; amount: number | string }) | undefined;
+    const pointsToReverse = Math.max(0, Number(earned?.amount ?? post.points_awarded ?? 0));
+
+    let pointsReversed = 0;
+    if (pointsToReverse > 0) {
+      const [reversal] = await connection.execute<ResultSetHeader>(
+        `INSERT IGNORE INTO point_transactions
+         (user_id, point_rule_id, transaction_type, amount, source_type, source_id, idempotency_key, description)
+         VALUES (:userId, :pointRuleId, 'SPEND', :amount, 'POST_DELETION', :postId, :reversalKey, :description)`,
+        {
+          userId,
+          pointRuleId: earned?.point_rule_id || null,
+          amount: -pointsToReverse,
+          postId: id,
+          reversalKey: `post:${id}:delete-reversal`,
+          description: `Reverse points for deleted Safety Post #${id}`,
+        },
+      );
+      if (reversal.affectedRows > 0) {
+        pointsReversed = pointsToReverse;
+        await connection.execute<ResultSetHeader>(
+          `INSERT INTO point_balances (user_id, balance)
+           VALUES (:userId, :amount)
+           ON DUPLICATE KEY UPDATE balance = balance + :amount, updated_at = UTC_TIMESTAMP(3)`,
+          { userId, amount: -pointsToReverse },
+        );
+      }
+    }
+
+    const [deleteResult] = await connection.execute<ResultSetHeader>(
       `
         UPDATE posts
         SET deleted_at = UTC_TIMESTAMP(3), status = 'DELETED'
@@ -374,8 +430,13 @@ export async function deletePost(id: string, userId: string) {
       `,
       { id, userId },
     );
+    const [balanceRows] = await connection.execute<RowDataPacket[]>(
+      "SELECT balance FROM point_balances WHERE user_id = :userId LIMIT 1",
+      { userId },
+    );
+    const balance = Number((balanceRows[0] as RowDataPacket & { balance?: number | string } | undefined)?.balance || 0);
+    return { deleted: deleteResult.affectedRows > 0, pointsReversed, balance };
   });
-  return { deleted: true };
 }
 
 export async function listComments(postId: string, options: { limit?: number; cursor?: string | null } = {}) {
@@ -389,7 +450,7 @@ export async function listComments(postId: string, options: { limit?: number; cu
 
   const rows = await queryRows<CommentRow>(
     `
-      SELECT c.id, c.post_id, c.author_id, u.name_th AS author_name, c.content, c.created_at
+      SELECT c.id, c.post_id, c.author_id, u.name_th AS author_name, u.profile_image_url AS author_profile_image_url, c.content, c.created_at
       FROM comments c
       LEFT JOIN users u ON u.id = c.author_id
       WHERE ${where.join(" AND ")}
@@ -431,7 +492,7 @@ export async function createComment(postId: string, authorId: string, content: s
 
   const rows = await queryRows<CommentRow>(
     `
-      SELECT c.id, c.post_id, c.author_id, u.name_th AS author_name, c.content, c.created_at
+      SELECT c.id, c.post_id, c.author_id, u.name_th AS author_name, u.profile_image_url AS author_profile_image_url, c.content, c.created_at
       FROM comments c
       LEFT JOIN users u ON u.id = c.author_id
       WHERE c.id = :id
@@ -440,6 +501,48 @@ export async function createComment(postId: string, authorId: string, content: s
     { id },
   );
   return rows[0] ? mapComment(rows[0]) : null;
+}
+
+export async function updateComment(commentId: string, authorId: string, content: string) {
+  const text = content.trim();
+  if (!text) throw new Error("content_required");
+
+  await withTransaction(async (connection) => {
+    await connection.execute<ResultSetHeader>(
+      `
+        UPDATE comments
+        SET content = :content
+        WHERE id = :commentId AND author_id = :authorId AND deleted_at IS NULL
+      `,
+      { commentId, authorId, content: text },
+    );
+  });
+
+  const rows = await queryRows<CommentRow>(
+    `
+      SELECT c.id, c.post_id, c.author_id, u.name_th AS author_name, u.profile_image_url AS author_profile_image_url, c.content, c.created_at
+      FROM comments c
+      LEFT JOIN users u ON u.id = c.author_id
+      WHERE c.id = :commentId AND c.author_id = :authorId AND c.deleted_at IS NULL
+      LIMIT 1
+    `,
+    { commentId, authorId },
+  );
+  return rows[0] ? mapComment(rows[0]) : null;
+}
+
+export async function deleteComment(commentId: string, authorId: string) {
+  return withTransaction(async (connection) => {
+    const [result] = await connection.execute<ResultSetHeader>(
+      `
+        UPDATE comments
+        SET deleted_at = UTC_TIMESTAMP(3)
+        WHERE id = :commentId AND author_id = :authorId AND deleted_at IS NULL
+      `,
+      { commentId, authorId },
+    );
+    return { deleted: result.affectedRows > 0 };
+  });
 }
 
 export async function setReaction(postId: string, userId: string, reactionType = "LIKE") {

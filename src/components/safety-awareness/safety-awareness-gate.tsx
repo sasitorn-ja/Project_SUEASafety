@@ -22,6 +22,9 @@ export function SafetyAwarenessGate() {
   const [mounted, setMounted] = useState(false);
   const [quiz, setQuiz] = useState<SafetyAwarenessQuestion[]>([]);
   const [answers, setAnswers] = useState<Record<string, boolean>>({});
+  // Answers stay editable until the user presses "ตรวจคำตอบ"; only then is the
+  // เฉลย (answer key) revealed — so changing a pick beforehand can't be used to copy it.
+  const [submitted, setSubmitted] = useState(false);
 
   useEffect(() => setMounted(true), []);
 
@@ -55,7 +58,9 @@ export function SafetyAwarenessGate() {
   const correctCount = quiz.filter((q) => answers[q.id] === q.answer).length;
 
   const choose = (question: SafetyAwarenessQuestion, value: boolean) => {
-    setAnswers((prev) => (question.id in prev ? prev : { ...prev, [question.id]: value }));
+    // Freely selectable / changeable until the answers are checked.
+    if (submitted) return;
+    setAnswers((prev) => ({ ...prev, [question.id]: value }));
   };
 
   return (
@@ -84,7 +89,7 @@ export function SafetyAwarenessGate() {
               alt=""
               width={66}
               height={66}
-              className="pointer-events-none hidden h-[66px] w-[66px] object-contain sm:block"
+              className="mascot-motion mascot-motion-compact pointer-events-none hidden h-[66px] w-[66px] object-contain sm:block"
             />
           </div>
           <p className="relative mt-2 text-[12.5px] font-bold leading-relaxed text-white/85">
@@ -107,9 +112,8 @@ export function SafetyAwarenessGate() {
         <div className="max-h-[58vh] overflow-y-auto px-4 py-4 md:px-5">
           <div className="flex flex-col gap-3">
             {quiz.map((question, index) => {
-              const answered = question.id in answers;
               const picked = answers[question.id];
-              const isCorrect = answered && picked === question.answer;
+              const isCorrect = submitted && picked === question.answer;
 
               return (
                 <div
@@ -133,16 +137,21 @@ export function SafetyAwarenessGate() {
                   <div className="mt-3 grid grid-cols-2 gap-2">
                     {([true, false] as const).map((value) => {
                       const label = value ? "ถูก" : "ผิด";
-                      const selected = answered && picked === value;
+                      const selected = picked === value;
                       const isAnswerOption = question.answer === value;
 
                       let cls =
                         "flex h-10 items-center justify-center gap-1.5 rounded-xl border-[1.5px] text-[14px] font-black transition-colors";
-                      if (!answered) {
-                        cls +=
-                          " border-[var(--border)] bg-[var(--background)] text-[var(--brand-text)] hover:border-[var(--brand-accent)] hover:bg-[var(--brand-soft)]";
+                      if (!submitted) {
+                        // Pre-check: just highlight the user's current pick (changeable).
+                        if (selected) {
+                          cls += " border-[var(--brand-accent)] bg-[var(--brand-soft)] text-[var(--brand-text)]";
+                        } else {
+                          cls +=
+                            " border-[var(--border)] bg-[var(--background)] text-[var(--brand-text)] hover:border-[var(--brand-accent)] hover:bg-[var(--brand-soft)]";
+                        }
                       } else if (isAnswerOption) {
-                        // The correct answer is always highlighted green after answering.
+                        // After checking, the correct answer is highlighted green.
                         cls += " border-[#1f7a55] bg-[#daf5e6] text-[#19734a]";
                       } else if (selected) {
                         // User picked this and it's wrong.
@@ -155,7 +164,7 @@ export function SafetyAwarenessGate() {
                         <button
                           key={label}
                           type="button"
-                          disabled={answered}
+                          disabled={submitted}
                           onClick={() => choose(question, value)}
                           className={cls}
                         >
@@ -166,7 +175,7 @@ export function SafetyAwarenessGate() {
                     })}
                   </div>
 
-                  {answered && (
+                  {submitted && (
                     <div
                       className={
                         "mt-2.5 rounded-xl px-3 py-2 text-[12.5px] font-bold leading-relaxed " +
@@ -186,7 +195,23 @@ export function SafetyAwarenessGate() {
 
         {/* Footer */}
         <div className="border-t border-[var(--border)] bg-[var(--background)] px-4 py-3 md:px-5">
-          {allAnswered ? (
+          {!submitted ? (
+            <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between">
+              <p className="text-[12.5px] font-bold text-[var(--brand-text)]/60">
+                {allAnswered
+                  ? "ตรวจสอบคำตอบของคุณ แก้ไขได้ก่อนกดตรวจคำตอบ"
+                  : `ตอบให้ครบทั้ง ${quiz.length} ข้อ — เปลี่ยนคำตอบได้ก่อนตรวจ`}
+              </p>
+              <button
+                type="button"
+                disabled={!allAnswered}
+                onClick={() => setSubmitted(true)}
+                className="flex h-11 items-center justify-center gap-2 rounded-xl bg-[var(--brand-nav)] px-5 text-[14px] font-black text-[var(--brand-accent)] transition-transform enabled:hover:scale-[1.02] disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                ตรวจคำตอบ
+              </button>
+            </div>
+          ) : (
             <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between">
               <p className="text-[13px] font-black text-[var(--brand-text)]">
                 คะแนนของคุณ:{" "}
@@ -211,13 +236,9 @@ export function SafetyAwarenessGate() {
                 }
                 className="flex h-11 items-center justify-center gap-2 rounded-xl bg-[var(--brand-nav)] px-5 text-[14px] font-black text-[var(--brand-accent)] transition-transform hover:scale-[1.02]"
               >
-                เริ่มใช้งาน
+                เข้าสู่เว็บไซต์
               </button>
             </div>
-          ) : (
-            <p className="text-center text-[12.5px] font-bold text-[var(--brand-text)]/60">
-              ตอบให้ครบทั้ง {quiz.length} ข้อ เพื่อปิดหน้าต่างและเข้าใช้งาน
-            </p>
           )}
         </div>
       </div>

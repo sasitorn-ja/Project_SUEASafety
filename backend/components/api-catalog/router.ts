@@ -23,12 +23,14 @@ import { syncRmrPlants } from "@backend/components/safety-effort/locations/rmr-p
 import {
   createComment,
   createPost,
+  deleteComment,
   deletePost,
   deleteReaction,
   getPost,
   listComments,
   listPosts,
   setReaction,
+  updateComment,
   updatePost,
 } from "@backend/components/safety-culture/posts/repository";
 
@@ -503,6 +505,17 @@ async function tryHandleConcreteRoute(
       if (method === "POST") {
         const comment = await createComment(match.params.id, userId, String(jsonBody(body).content || jsonBody(body).text || ""));
         return jsonData({ comment }, { status: 201 });
+      }
+    }
+
+    if (match.route.path === "/api/safety-culture/comments/:id" && userId) {
+      if (method === "PATCH") {
+        const input = jsonBody(body);
+        const comment = await updateComment(match.params.id, userId, String(input.content || input.text || ""));
+        return comment ? jsonData({ comment }) : jsonError("comment_not_found", 404);
+      }
+      if (method === "DELETE") {
+        return jsonData(await deleteComment(match.params.id, userId));
       }
     }
 

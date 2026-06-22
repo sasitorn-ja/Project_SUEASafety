@@ -7,6 +7,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
+    "qa:e2e": "playwright test",
+    "qa:e2e:headed": "playwright test --headed",
     "start:standalone": "node scripts/run-with-env.cjs node .next/standalone/server.js"
   },
   "dependencies": {
@@ -29,6 +31,7 @@
     "xlsx": "^0.18.5"
   },
   "devDependencies": {
+    "@playwright/test": "^1.61.0",
     "@tailwindcss/postcss": "^4",
     "@types/leaflet": "^1.9.16",
     "@types/node": "20.17.6",

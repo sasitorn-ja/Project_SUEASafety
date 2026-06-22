@@ -7,6 +7,7 @@ export type ChecklistQuestion = {
   guidelines: string[];
   format?: "original" | "text_box";
   image?: string;
+  imageMediaId?: string;
   active?: boolean;
 };
 
@@ -79,6 +80,7 @@ function sanitizeQuestion(raw: any, fallbackIndex: number): ChecklistQuestion {
       : [],
     format: raw?.format === "text_box" ? "text_box" : "original",
     image: raw?.image ? String(raw.image) : undefined,
+    imageMediaId: raw?.imageMediaId ? String(raw.imageMediaId) : undefined,
     active: raw?.active === false ? false : true,
   };
 }

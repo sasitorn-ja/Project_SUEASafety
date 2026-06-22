@@ -32,6 +32,7 @@ export function MobileBottomNav({ hidden = false }: { hidden?: boolean }) {
     <nav
       className={cn(
         "min-[1100px]:hidden fixed bottom-0 left-0 right-0 z-50",
+        "home-mobile-bottom-nav",
         "bg-[rgba(var(--brand-nav-rgb),0.96)] border-t border-white/[0.08]",
         "shadow-[0_-10px_28px_var(--brand-shadow)] backdrop-blur-[16px]",
         "mobile-bottom-nav",
@@ -57,6 +58,8 @@ export function MobileBottomNav({ hidden = false }: { hidden?: boolean }) {
               href={enabled ? item.href : "#"}
               className={cn(
                 "relative flex min-h-[54px] cursor-pointer select-none flex-col items-center gap-[2px] rounded-[10px] pt-1 pb-0 text-center",
+                "home-bottom-nav-item",
+                active && "is-home-active",
                 "[-webkit-tap-highlight-color:transparent]",
                 active && enabled ? "font-black text-[var(--brand-accent)]" : "font-bold text-white/[0.62]",
                 !enabled && "cursor-not-allowed opacity-[0.56]",

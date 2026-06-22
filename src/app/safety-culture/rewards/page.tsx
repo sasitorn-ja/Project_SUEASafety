@@ -335,7 +335,7 @@ export default function RewardsPage() {
                   alt="SUEA Mascot"
                   width={120}
                   height={120}
-                  className="h-auto w-full"
+                  className="mascot-motion h-auto w-full"
                 />
               </div>
               ยืนยันการแลกรางวัล
@@ -383,4 +383,3 @@ export default function RewardsPage() {
     </>
   );
 }
-

@@ -1,6 +1,6 @@
 // @ts-nocheck
 import { useState, useEffect } from "react";
-import { useLocation, useNavigate } from "@/lib/router-compat";
+import { useLocation, useNavigate } from "@/lib/app-navigation";
 import RestrictedDatePicker from "@/components/RestrictedDatePicker";
 
 const T = {

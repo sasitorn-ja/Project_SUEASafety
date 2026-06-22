@@ -313,8 +313,8 @@ export default function AdminAwarenessPage() {
 
       <div className="mt-4">
         <SectionCard
-          title="วันที่ไม่นับ Safety Awareness KPI"
-          description="วันเสาร์และวันอาทิตย์ไม่นับอัตโนมัติ เพิ่มวันหยุดบริษัทหรือวันหยุดพิเศษที่ตรงกับวันทำงานได้ที่นี่"
+          title="วันที่ไม่นับคะแนน Safety Awareness KPI"
+          description="วันเสาร์และวันอาทิตย์ไม่นับอัตโนมัติ เพิ่มวันหยุดบริษัทหรือวันหยุดพิเศษที่ตรงกับวันทำงานได้ที่นี่ ระบบจะหักคะแนน Awareness ของวันที่ถูกเพิ่มย้อนหลังถ้ามีคนทำไว้แล้ว"
           icon={<CalendarOff className="h-6 w-6" strokeWidth={2.2} />}
         >
           <div className="rounded-xl border border-[#cfe3f4] bg-[#f1f8fe] px-3.5 py-3 text-[12.5px] font-bold text-[#24567f]">
@@ -346,7 +346,7 @@ export default function AdminAwarenessPage() {
               disabled={!holidayDate || !holidayName.trim()}
               className="h-10 rounded-xl bg-[var(--c-5c3214)] px-4 text-[12.5px] font-black text-white hover:bg-[var(--c-4a280f)] disabled:opacity-50"
             >
-              <Plus className="h-4 w-4" /> เพิ่มวันไม่นับ
+              <Plus className="h-4 w-4" /> เพิ่มวันไม่นับคะแนน
             </Button>
           </div>
 

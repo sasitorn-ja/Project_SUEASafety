@@ -2,12 +2,29 @@ import "server-only";
 
 import type { ResultSetHeader, RowDataPacket } from "mysql2/promise";
 
-import { withTransaction } from "@backend/components/core/db";
+import { queryRows, withTransaction } from "@backend/components/core/db";
 import { awardPoints } from "@backend/components/points/repository";
 
 function bangkokDateKey(date = new Date()) {
   const bangkok = new Date(date.getTime() + 7 * 60 * 60 * 1000);
   return bangkok.toISOString().slice(0, 10);
+}
+
+async function isExcludedAwarenessDate(dateKey: string) {
+  const day = new Date(`${dateKey}T00:00:00+07:00`).getDay();
+  if (day === 0 || day === 6) return true;
+
+  const rows = await queryRows<RowDataPacket & { id: number | string }>(
+    `
+      SELECT id
+      FROM holidays
+      WHERE holiday_date = :dateKey
+      LIMIT 1
+    `,
+    { dateKey },
+  ).catch(() => []);
+
+  return rows.length > 0;
 }
 
 export async function createAwarenessAttempt(input: {
@@ -92,14 +109,17 @@ export async function createAwarenessAttempt(input: {
     return attemptId;
   });
 
-  await awardPoints({
-    userId: input.userId,
-    action: "safetyAwarenessCompleted",
-    sourceType: "AWARENESS_ATTEMPT",
-    sourceId: attemptId,
-    idempotencyKey: `awareness:${input.userId}:${today}`,
-    description: "ผ่าน Safety Awareness",
-  }).catch(() => null);
+  const excluded = await isExcludedAwarenessDate(today);
+  if (!excluded) {
+    await awardPoints({
+      userId: input.userId,
+      action: "safetyAwarenessCompleted",
+      sourceType: "AWARENESS_ATTEMPT",
+      sourceId: attemptId,
+      idempotencyKey: `awareness:${input.userId}:${today}`,
+      description: "ผ่าน Safety Awareness",
+    }).catch(() => null);
+  }
 
   return {
     id: attemptId,

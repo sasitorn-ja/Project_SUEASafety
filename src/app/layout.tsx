@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "@/components/ui/sonner";
 import { AppProviders } from "@/providers/app-providers";
 import { AppShell } from "@/components/layout/app-shell";
+import { NavigationProvider } from "@/lib/app-navigation";
 import { AppThemeProvider } from "@/providers/theme-provider";
 
 const sarabun = Sarabun({
@@ -18,9 +19,9 @@ export const metadata: Metadata = {
   title: "CPAC Safety",
   description: "CPAC Safety — Safety Effort & Safety Culture",
   icons: {
-    icon: "/images/mascots/Transparent น้องวางใจ/41.png",
-    shortcut: "/images/mascots/Transparent น้องวางใจ/41.png",
-    apple: "/images/mascots/Transparent น้องวางใจ/41.png",
+    icon: "/images/mascots/wangjai/41.png",
+    shortcut: "/images/mascots/wangjai/41.png",
+    apple: "/images/mascots/wangjai/41.png",
   },
 };
 
@@ -44,7 +45,9 @@ export default function RootLayout({
         <AppThemeProvider>
           <TooltipProvider>
             <AppProviders>
-              <AppShell>{children}</AppShell>
+              <AppShell>
+                <NavigationProvider>{children}</NavigationProvider>
+              </AppShell>
             </AppProviders>
             <Toaster position="top-center" richColors />
           </TooltipProvider>

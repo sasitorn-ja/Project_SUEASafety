@@ -23,6 +23,7 @@ import {
 import { Card } from "@/components/ui/card";
 import { useAppState } from "@/providers/app-providers";
 import { useAppTheme } from "@/providers/theme-provider";
+import SafePlusDashboard from "@/features/dashboard/SafePlusDashboard";
 
 const THAI_WEEKDAYS_SHORT = ["อา.", "จ.", "อ.", "พ.", "พฤ.", "ศ.", "ส."];
 const THAI_MONTHS_SHORT = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.ค.", "มิ.ย.", "ก.ค.", "ส.ค.", "ก.ย.", "ต.ค.", "พ.ย.", "ธ.ค."];
@@ -45,7 +46,7 @@ function getDateTimestamp(date?: string, endOfDay = false) {
   return Number.isNaN(timestamp) ? null : timestamp;
 }
 
-export default function HomePage() {
+function LegacyHomePage() {
   const { mascot } = useAppTheme();
   const {
     currentUserPoints,
@@ -59,6 +60,7 @@ export default function HomePage() {
     awarenessHolidays,
     awarenessRequiredToday,
     awarenessStartDate,
+    userActivityHistory,
   } = useAppState();
 
   const me = personalRankings.find((person) => person.active);
@@ -132,75 +134,134 @@ export default function HomePage() {
     : 0;
   const latestAwareness = [...awarenessHistory].sort((a, b) => b.completedAt.localeCompare(a.completedAt))[0];
 
+  // ===== Derived gamification data (real where available, see TODOs) =====
+  // Consecutive completed KPI days (streak), walking back over counted days.
+  const awarenessStreak = (() => {
+    let streak = 0;
+    for (let i = awarenessDays.length - 1; i >= 0; i -= 1) {
+      const day = awarenessDays[i];
+      if (day.excludedReason) continue;        // weekends/holidays don't break streak
+      if (day.completion) streak += 1;
+      else if (day.key === todayDateKey) continue; // today not done yet — not a miss
+      else break;
+    }
+    return streak;
+  })();
+
+  // จำนวนครั้งร่วมกิจกรรม (จาก activity history จริง)
+  const activityCount = Array.isArray(userActivityHistory) ? userActivityHistory.length : 0;
+
+  // เทรนด์คะแนน 8 สัปดาห์ — รวม pointsDelta จาก userActivityHistory ตามสัปดาห์ (ของจริง)
+  // TODO(API): ถ้ามี endpoint สรุปคะแนนรายสัปดาห์โดยตรง ให้ใช้แทนการ derive ฝั่ง client
+  const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
+  const currentWeekStart = (() => {
+    const d = bangkokDate(eventNow);
+    const dayOfWeek = d.getUTCDay(); // 0 = Sunday
+    const startUtc = Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()) - dayOfWeek * 24 * 60 * 60 * 1000;
+    return startUtc - BANGKOK_OFFSET_MS; // convert back to real epoch for comparison with occurredAt
+  })();
+  const weeklyTrend = (() => {
+    const buckets = new Array(8).fill(0);
+    for (const activity of userActivityHistory || []) {
+      const ts = Number(activity?.occurredAt) || 0;
+      if (!ts) continue;
+      const weeksAgo = Math.floor((currentWeekStart + WEEK_MS - ts) / WEEK_MS);
+      if (weeksAgo < 0 || weeksAgo > 7) continue;
+      buckets[7 - weeksAgo] += Math.max(0, Number(activity?.pointsDelta) || 0);
+    }
+    return buckets;
+  })();
+  const weeklyTrendMax = Math.max(1, ...weeklyTrend);
+  const hasWeeklyTrend = weeklyTrend.some((value) => value > 0);
+  const isoWeekNumber = (() => {
+    const d = bangkokDate(eventNow);
+    const target = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
+    const dayNr = (target.getUTCDay() + 6) % 7;
+    target.setUTCDate(target.getUTCDate() - dayNr + 3);
+    const firstThursday = new Date(Date.UTC(target.getUTCFullYear(), 0, 4));
+    const firstDayNr = (firstThursday.getUTCDay() + 6) % 7;
+    firstThursday.setUTCDate(firstThursday.getUTCDate() - firstDayNr + 3);
+    return 1 + Math.round((target.getTime() - firstThursday.getTime()) / WEEK_MS);
+  })();
+
+  // เลเวล/XP — derive จากคะแนนรวมจริง (currentUserPoints)
+  // TODO(API): ถ้ามีระบบ XP/level จริงใน backend ให้ผูกแทนสูตร derive นี้
+  const LEVEL_TITLES = ["Safety Rookie", "Safety Cadet", "Safety Guard", "Safety Pro", "Safety Master", "Safety Legend"];
+  const XP_PER_LEVEL = 2000;
+  const totalXp = Math.max(0, currentUserPoints);
+  const level = Math.min(LEVEL_TITLES.length, Math.floor(totalXp / XP_PER_LEVEL) + 1);
+  const levelTitle = LEVEL_TITLES[Math.min(LEVEL_TITLES.length - 1, level - 1)];
+  const levelFloorXp = (level - 1) * XP_PER_LEVEL;
+  const levelCeilXp = level * XP_PER_LEVEL;
+  const xpIntoLevel = totalXp - levelFloorXp;
+  const xpToNext = Math.max(0, levelCeilXp - totalXp);
+  const levelProgress = Math.min(100, Math.round((xpIntoLevel / XP_PER_LEVEL) * 100));
+
+  // Hero "เลื่อนระดับ" meter — points within the current 100-point tier (matches mockup 35/100).
+  const TIER_SIZE = 100;
+  const tierInto = totalXp % TIER_SIZE;
+  const tierToNext = TIER_SIZE - tierInto;
+  const tierProgress = Math.round((tierInto / TIER_SIZE) * 100);
+
+  // mascot น้องวางใจ (CPAC) — ใช้ asset ที่มีอยู่ ให้ตรงกับดีไซน์ที่ส่งมา
+  const NONG = "/images/mascots/wangjai/scenes";
+
   return (
-    <div className="mx-auto w-full max-w-[1500px] px-3.5 pt-2 pb-8 font-sarabun sm:px-5 lg:px-8 2xl:px-10">
+    <div className="mx-auto w-full max-w-[1500px] px-3.5 pt-0 pb-8 font-sarabun sm:px-5 lg:px-8 2xl:px-10">
       {/* ===== HERO: แดชบอร์ดคะแนน ===== */}
       <section className="relative overflow-hidden rounded-[16px] bg-[linear-gradient(135deg,var(--brand-hero-start),var(--brand-hero-end))] px-3.5 py-3.5 text-white shadow-[0_12px_28px_var(--brand-shadow)] md:px-7 md:py-6 xl:px-8">
         <div className="absolute inset-x-0 top-0 h-2 bg-[repeating-linear-gradient(-45deg,var(--brand-accent),var(--brand-accent)_10px,#1a1a1a_10px,#1a1a1a_20px)]" />
-        <Image
-          src={mascot("big")}
-          alt=""
-          width={150}
-          height={150}
-          className="pointer-events-none absolute -bottom-3 right-3 hidden h-[150px] w-[150px] object-contain opacity-90 md:block"
-        />
+
+        {/* cyan glow ตามดีไซน์ CPAC */}
+        <div className="pointer-events-none absolute -right-10 -top-16 h-56 w-56 rounded-full bg-[radial-gradient(circle,rgba(39,215,255,0.32),transparent_70%)]" />
 
         <div className="relative md:hidden">
-          <p className="flex items-center gap-1.5 text-[10px] font-extrabold uppercase tracking-[0.14em] text-[var(--brand-hero-label)]">
-            <Sparkles className="h-3.5 w-3.5" strokeWidth={2.4} />
+          <Image
+            src={`${NONG}/thumbsup-cool.png`}
+            alt="น้องวางใจ"
+            width={120}
+            height={130}
+            className="pointer-events-none absolute -top-2 -right-1 h-[112px] w-[104px] object-contain object-top drop-shadow-[0_10px_20px_rgba(0,0,0,0.35)]"
+          />
+          <p className="flex items-center gap-1.5 pr-[112px] text-[10.5px] font-extrabold uppercase tracking-[0.14em] text-[var(--brand-hero-label)]">
+            <ShieldCheck className="h-4 w-4" strokeWidth={2.4} />
             คะแนน Safety ของฉัน
           </p>
 
-          <div className="mt-1.5 grid grid-cols-[auto_minmax(0,1fr)] items-center gap-3">
-            <div className="flex items-end gap-1.5">
-              <span className="text-[40px] font-black leading-none tracking-tight">
-                {currentUserPoints.toLocaleString()}
-              </span>
-              <span className="mb-1 text-[12px] font-extrabold text-white/75">แต้ม</span>
-            </div>
-
-            {nextReward && (
-              <div className="min-w-0 border-l border-white/15 pl-3">
-                <div className="flex items-center justify-between gap-1">
-                  <span className="text-[9px] font-extrabold text-[var(--brand-hero-label)]">รางวัลถัดไป</span>
-                  <span className="text-[9px] font-black text-white/75">{nextReward.points} แต้ม</span>
-                </div>
-                <p className="truncate text-[12px] font-black">{nextReward.name}</p>
-                <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-white/20">
-                  <div
-                    className="h-full rounded-full bg-[var(--brand-accent)]"
-                    style={{ width: `${progress}%` }}
-                  />
-                </div>
-              </div>
-            )}
+          <div className="mt-1 flex items-end gap-1.5 pr-[112px]">
+            <span className="text-[46px] font-black leading-none tracking-tight">
+              {currentUserPoints.toLocaleString()}
+            </span>
+            <span className="mb-1.5 text-[13px] font-extrabold text-white/75">แต้ม</span>
           </div>
 
-          <div className="mt-2 flex items-center gap-1.5">
-            {me && (
-              <span className="inline-flex items-center gap-1 rounded-full bg-white/12 px-2 py-0.5 text-[9.5px] font-black">
-                <Trophy className="h-3 w-3 text-[var(--brand-hero-label)]" strokeWidth={2.5} />
-                #{me.rank} ในทีม
-              </span>
-            )}
-            {myTeam && (
-              <span className="inline-flex items-center gap-1 rounded-full bg-white/12 px-2 py-0.5 text-[9.5px] font-black">
-                <UsersRound className="h-3 w-3 text-[var(--brand-hero-label)]" strokeWidth={2.5} />
-                {myTeam.name}
-              </span>
-            )}
+          <div className="mt-3 pr-[100px]">
+            <div className="flex items-center justify-between gap-2 text-[10.5px] font-bold text-white/80">
+              <span>ทำต่ออีก <span className="font-black text-white">{tierToNext}</span> แต้ม เพื่อเลื่อนระดับ</span>
+              <span className="font-black text-white/85">{tierInto} / {TIER_SIZE}</span>
+            </div>
+            <div className="mt-1 h-2 overflow-hidden rounded-full bg-white/20">
+              <div className="h-full rounded-full bg-[var(--brand-accent)] transition-[width] duration-700" style={{ width: `${tierProgress}%` }} />
+            </div>
+          </div>
+
+          <div className="mt-3 flex items-center gap-2">
+            <span className="inline-flex items-center gap-1.5 rounded-xl border border-white/15 bg-white/10 px-3 py-2 text-[11px] font-black">
+              <Flame className="h-3.5 w-3.5 text-[#ff9f43]" strokeWidth={2.5} />
+              ทำต่อเนื่อง {awarenessStreak} วัน
+            </span>
             <Link
               href="/safety-culture/rewards"
-              className="ml-auto inline-flex h-6 items-center gap-1 rounded-lg bg-[var(--brand-accent)] px-2 text-[9.5px] font-black text-[var(--brand-accent-contrast)]"
+              className="ml-auto inline-flex items-center gap-1.5 rounded-xl bg-[var(--brand-accent)] px-4 py-2 text-[12px] font-black text-[var(--brand-accent-contrast)] shadow-[0_8px_18px_rgba(var(--brand-accent-rgb),0.3)]"
             >
-              <Gift className="h-3 w-3" strokeWidth={2.5} />
+              <Gift className="h-4 w-4" strokeWidth={2.5} />
               แลกรางวัล
             </Link>
           </div>
         </div>
 
         <div className="relative hidden gap-4 md:grid md:grid-cols-[minmax(220px,0.9fr)_minmax(260px,1fr)_minmax(260px,330px)] md:items-stretch xl:grid-cols-[minmax(260px,0.85fr)_minmax(380px,1.1fr)_minmax(340px,420px)] xl:gap-6">
-          {/* คะแนน */}
+          {/* คะแนน + เลื่อนระดับ */}
           <div className="flex flex-col justify-center">
             <p className="flex items-center gap-2 text-xs font-extrabold uppercase tracking-[0.18em] text-[var(--brand-hero-label)]">
               <Sparkles className="h-4 w-4" strokeWidth={2.4} />
@@ -212,56 +273,94 @@ export default function HomePage() {
               </span>
               <span className="mb-1.5 text-base font-extrabold text-white/75">แต้ม</span>
             </div>
-            <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
-              {me && (
-                <span className="inline-flex items-center gap-1.5 rounded-full bg-white/12 px-2.5 py-1 text-[11.5px] font-black md:px-3 md:text-[12.5px]">
-                  <Trophy className="h-3.5 w-3.5 text-[var(--brand-hero-label)]" strokeWidth={2.5} />
-                  อันดับ {me.rank} ในทีม
-                </span>
-              )}
-              {myTeam && (
-                <span className="inline-flex items-center gap-1.5 rounded-full bg-white/12 px-2.5 py-1 text-[11.5px] font-black md:px-3 md:text-[12.5px]">
-                  <UsersRound className="h-3.5 w-3.5 text-[var(--brand-hero-label)]" strokeWidth={2.5} />
-                  {myTeam.name}
-                </span>
-              )}
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-white/12 px-2.5 py-1 text-[11.5px] font-black md:px-3 md:text-[12.5px]">
-                <Gift className="h-3.5 w-3.5 text-[var(--brand-hero-label)]" strokeWidth={2.5} />
-                แลกได้แล้ว {redeemableCount} รางวัล
-              </span>
+            <p className="mt-2 text-[12px] font-bold text-white/80">
+              ทำต่ออีก <span className="font-black text-white">{tierToNext.toLocaleString()}</span> แต้ม เพื่อเลื่อนระดับ
+            </p>
+            <div className="mt-1.5 flex items-center gap-2">
+              <div className="h-2 flex-1 overflow-hidden rounded-full bg-white/20">
+                <div className="h-full rounded-full bg-[var(--brand-accent)] transition-[width] duration-700" style={{ width: `${tierProgress}%` }} />
+              </div>
+              <span className="text-[11px] font-black text-white/80">{tierInto} / {TIER_SIZE}</span>
             </div>
+            <Link
+              href="/safety-culture/rewards"
+              className="mt-3 inline-flex h-8 w-fit items-center gap-1.5 rounded-xl bg-white/12 px-3 text-[12px] font-black text-white transition-colors hover:bg-white/20"
+            >
+              <Gift className="h-3.5 w-3.5 text-[var(--brand-hero-label)]" strokeWidth={2.5} />
+              แลกได้แล้ว {redeemableCount} รางวัล
+            </Link>
           </div>
 
           <div className="flex flex-col justify-center border-white/10 md:border-l md:pl-4 xl:pl-6">
-            <div>
+            <div className="flex items-center justify-between gap-2">
               <p className="text-[12px] font-extrabold uppercase tracking-[0.14em] text-[var(--brand-hero-label)]">
                 เทรนด์คะแนน 8 สัปดาห์
               </p>
-              <div className="mt-4 rounded-[12px] border border-dashed border-white/25 bg-white/8 px-3 py-3">
-                <p className="text-[12px] font-black text-white/80">ยังไม่มีข้อมูลเทรนด์คะแนน</p>
-                <p className="mt-1 text-[10.5px] font-bold text-white/60">ระบบจะแสดงกราฟเมื่อ API มีประวัติคะแนนรายสัปดาห์</p>
+              <span className="rounded-lg border border-white/20 bg-white/10 px-2 py-0.5 text-[10.5px] font-black text-white/85">
+                สัปดาห์ที่ {isoWeekNumber}
+              </span>
+            </div>
+
+            {/* SVG line chart — derived from real weekly points */}
+            <div className="mt-3">
+              {hasWeeklyTrend ? (
+                <svg viewBox="0 0 320 90" preserveAspectRatio="none" className="h-[78px] w-full overflow-visible">
+                  {[0, 0.5, 1].map((g) => (
+                    <line key={g} x1="0" x2="320" y1={6 + g * 72} y2={6 + g * 72} stroke="rgba(255,255,255,0.14)" strokeWidth="1" />
+                  ))}
+                  {(() => {
+                    const pts = weeklyTrend.map((v, i) => {
+                      const x = (i / 7) * 320;
+                      const y = 78 - (v / weeklyTrendMax) * 66;
+                      return [x, y] as const;
+                    });
+                    const path = pts.map(([x, y], i) => `${i === 0 ? "M" : "L"}${x.toFixed(1)},${y.toFixed(1)}`).join(" ");
+                    const area = `${path} L320,84 L0,84 Z`;
+                    return (
+                      <>
+                        <path d={area} fill="rgba(255,255,255,0.10)" />
+                        <path d={path} fill="none" stroke="var(--brand-accent)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+                        {pts.map(([x, y], i) => (
+                          <circle key={i} cx={x} cy={y} r="3.2" fill="#fff" stroke="var(--brand-accent)" strokeWidth="2" />
+                        ))}
+                      </>
+                    );
+                  })()}
+                </svg>
+              ) : (
+                <div className="rounded-[12px] border border-dashed border-white/25 bg-white/8 px-3 py-4 text-center">
+                  <p className="text-[11.5px] font-black text-white/80">ยังไม่มีคะแนนในช่วง 8 สัปดาห์</p>
+                  <p className="mt-1 text-[10px] font-bold text-white/55">เริ่มทำกิจกรรมเพื่อสร้างกราฟเทรนด์</p>
+                </div>
+              )}
+              <div className="mt-1 flex justify-between text-[8.5px] font-bold text-white/50">
+                {weeklyTrend.map((_, i) => (
+                  <span key={i}>สัปดาห์ {i + 1}</span>
+                ))}
               </div>
             </div>
-            <div className="mt-4 grid grid-cols-2 gap-2.5">
+
+            <div className="mt-3 grid grid-cols-2 gap-2.5">
               <div className="rounded-[10px] border border-white/20 bg-white/10 px-3 py-2">
-                <div className="flex items-center gap-1.5 text-[12px] font-black">
+                <div className="flex items-center gap-1.5 text-[15px] font-black">
                   <Medal className="h-4 w-4 text-[var(--brand-hero-label)]" strokeWidth={2.4} />
                   {currentUserPoints.toLocaleString()}
                 </div>
-                <p className="mt-0.5 text-[10px] font-bold text-white/65">วันนี้แต้มทั้งหมด</p>
+                <p className="mt-0.5 text-[10px] font-bold text-white/65">คะแนนปัจจุบัน</p>
               </div>
               <div className="rounded-[10px] border border-white/20 bg-white/10 px-3 py-2">
-                <div className="flex items-center gap-1.5 text-[12px] font-black">
+                <div className="flex items-center gap-1.5 text-[15px] font-black">
                   <Flame className="h-4 w-4 text-[#ff9f43]" strokeWidth={2.4} />
-                  {awarenessCompletedCount}
+                  {awarenessStreak}
                 </div>
-                <p className="mt-0.5 text-[10px] font-bold text-white/65">ทำต่อเนื่อง KPI</p>
+                <p className="mt-0.5 text-[10px] font-bold text-white/65">ทำต่อเนื่อง KPI (วัน)</p>
               </div>
             </div>
           </div>
 
-          {/* ความคืบหน้าสู่รางวัล */}
-          <div className="rounded-[14px] border border-white/15 bg-white/10 p-3 backdrop-blur-[6px] md:rounded-[16px] md:p-4 xl:p-5">
+          {/* ความคืบหน้าสู่รางวัล + น้องวางใจ */}
+          <div className="flex items-end gap-1">
+            <div className="flex-1 rounded-[14px] border border-white/15 bg-white/10 p-3 md:rounded-[16px] md:p-4 xl:p-5">
             {nextReward ? (
               <>
                 <div className="flex items-center justify-between gap-2">
@@ -315,6 +414,14 @@ export default function HomePage() {
                 ดูอันดับ
               </Link>
             </div>
+            </div>
+            <Image
+              src={`${NONG}/thumbsup-cool.png`}
+              alt="น้องวางใจ"
+              width={150}
+              height={170}
+              className="pointer-events-none -mb-2 hidden h-[150px] w-[118px] flex-shrink-0 object-contain object-bottom drop-shadow-[0_10px_22px_rgba(0,0,0,0.3)] lg:block xl:h-[172px] xl:w-[138px]"
+            />
           </div>
         </div>
       </section>
@@ -388,7 +495,7 @@ export default function HomePage() {
                   >
                     <span className="text-[8.5px] font-extrabold opacity-65">{THAI_WEEKDAYS_SHORT[date.getUTCDay()]}</span>
                     <span className="text-[13px] font-black">{date.getUTCDate()}</span>
-                    {status === "excluded" ? <span className="text-[8px] font-black">ไม่นับ</span> : status === "done" ? <CheckCircle2 className="h-3.5 w-3.5" strokeWidth={2.8} /> : status === "pending" ? <Clock3 className="h-3.5 w-3.5" strokeWidth={2.6} /> : <XCircle className="h-3.5 w-3.5" strokeWidth={2.6} />}
+                    {status === "excluded" ? <span className="text-[8px] font-black">ไม่นับ KPI</span> : status === "done" ? <CheckCircle2 className="h-3.5 w-3.5" strokeWidth={2.8} /> : status === "pending" ? <Clock3 className="h-3.5 w-3.5" strokeWidth={2.6} /> : <XCircle className="h-3.5 w-3.5" strokeWidth={2.6} />}
                   </div>
                 );
               })}
@@ -428,27 +535,40 @@ export default function HomePage() {
         </div>
 
         <aside className="grid gap-3 lg:content-start">
-          <Card className="rounded-[16px] border border-[var(--border)] bg-[var(--brand-surface)] p-3.5 shadow-[0_8px_20px_var(--brand-shadow)]">
+          <Card className="relative overflow-hidden rounded-[16px] border border-[var(--border)] bg-[var(--brand-surface)] p-3.5 shadow-[0_8px_20px_var(--brand-shadow)]">
             <div className="flex items-center justify-between gap-3">
               <h2 className="text-[13px] font-black text-[var(--brand-nav)]">เลเวลของฉัน</h2>
-              <span className="text-[10px] font-black text-[var(--brand-accent-strong)]">Lv.4 Safety Pro</span>
+              <span className="text-[10px] font-black text-[var(--brand-accent-strong)]">Lv.{level} {levelTitle}</span>
             </div>
-            <div className="mt-3 h-2 overflow-hidden rounded-full bg-[var(--secondary)]">
-              <div className="h-full rounded-full bg-[var(--brand-accent-strong)]" style={{ width: `${progress}%` }} />
+
+            <div className="mt-2.5 flex items-center gap-3">
+              <div className="relative flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl bg-[var(--brand-nav)] text-[var(--brand-accent)] shadow-[0_6px_14px_var(--brand-shadow)]">
+                <ShieldCheck className="h-6 w-6" strokeWidth={2.4} />
+                <span className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 rounded-full bg-[var(--brand-accent)] px-1.5 text-[9px] font-black text-[var(--brand-accent-contrast)]">{level}</span>
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="h-2 overflow-hidden rounded-full bg-[var(--secondary)]">
+                  <div className="h-full rounded-full bg-[var(--brand-accent-strong)] transition-[width] duration-700" style={{ width: `${levelProgress}%` }} />
+                </div>
+                <p className="mt-1 text-[10px] font-black text-[var(--brand-nav)]">
+                  {xpIntoLevel.toLocaleString()} / {XP_PER_LEVEL.toLocaleString()} XP
+                </p>
+                <p className="text-[9.5px] font-bold text-[var(--brand-muted-text)]">
+                  {level >= LEVEL_TITLES.length ? "ถึงระดับสูงสุดแล้ว!" : `ใกล้เลื่อนระดับ! ทำอีก ${xpToNext.toLocaleString()} XP`}
+                </p>
+              </div>
             </div>
-            <p className="mt-2 text-[10.5px] font-bold text-[var(--brand-muted-text)]">
-              {hasRewards ? `อีก ${remaining.toLocaleString()} แต้ม ไป Lv.5` : "ยังไม่มีข้อมูลรางวัลสำหรับคำนวณเลเวลถัดไป"}
-            </p>
+
             <div className="mt-3 grid grid-cols-4 gap-2">
               {[
-                { label: "รางวัล", value: redeemableCount, Icon: Trophy },
-                { label: "แต้ม", value: currentUserPoints, Icon: Medal },
-                { label: "สตรีค", value: awarenessCompletedCount, Icon: Flame },
-                { label: "พลาด", value: awarenessMissedCount, Icon: ShieldCheck },
+                { label: "ทำต่อเนื่อง", value: `${awarenessStreak} วัน`, Icon: Trophy },
+                { label: "คะแนนรวม", value: `${currentUserPoints.toLocaleString()} แต้ม`, Icon: Medal },
+                { label: "แบบทดสอบ", value: hasAwarenessRate ? `${awarenessRate}%` : "–", Icon: ShieldCheck },
+                { label: "ร่วมกิจกรรม", value: `${activityCount} ครั้ง`, Icon: UsersRound },
               ].map(({ label, value, Icon }) => (
-                <div key={label} className="rounded-xl border border-[var(--border)] bg-background px-2 py-2 text-center">
+                <div key={label} className="rounded-xl border border-[var(--border)] bg-background px-1.5 py-2 text-center">
                   <Icon className="mx-auto h-4 w-4 text-[var(--brand-accent-strong)]" strokeWidth={2.4} />
-                  <div className="mt-1 truncate text-[10px] font-black text-[var(--brand-nav)]">{value.toLocaleString()}</div>
+                  <div className="mt-1 truncate text-[10px] font-black text-[var(--brand-nav)]">{value}</div>
                   <div className="text-[8.5px] font-bold text-[var(--brand-muted-text)]">{label}</div>
                 </div>
               ))}
@@ -501,11 +621,22 @@ export default function HomePage() {
                 </Card>
               </Link>
             ) : (
-              <Card className="rounded-[16px] border border-dashed border-[var(--border)] bg-[var(--brand-surface)] px-5 py-5 text-center">
-                <Zap className="mx-auto h-8 w-8 text-[var(--brand-muted-text)]" strokeWidth={1.8} />
-                <p className="mt-2 text-[14px] font-extrabold text-[var(--brand-text)]/70">
-                  ยังไม่มีกิจกรรมในตอนนี้
-                </p>
+              <Card className="relative overflow-hidden rounded-[16px] border border-[var(--border)] bg-[linear-gradient(135deg,var(--brand-hero-start),var(--brand-hero-end))] px-4 py-4 text-white shadow-[0_8px_20px_var(--brand-shadow)]">
+                <div className="relative z-10 max-w-[62%]">
+                  <span className="inline-flex items-center gap-1 rounded-full bg-white/15 px-2 py-0.5 text-[9.5px] font-black text-[var(--brand-hero-label)]">
+                    <Zap className="h-3 w-3" strokeWidth={2.6} />
+                    เร็วๆ นี้!
+                  </span>
+                  <p className="mt-2 text-[14px] font-black leading-snug">มีกิจกรรมสนุกๆ รอคุณอยู่</p>
+                  <p className="mt-1 text-[10.5px] font-bold text-white/75">ติดตามกิจกรรม Safety Culture เพื่อรับแต้มและรางวัลพิเศษ</p>
+                </div>
+                <Image
+                  src={`${NONG}/cheer.png`}
+                  alt="น้องวางใจ"
+                  width={120}
+                  height={120}
+                  className="pointer-events-none absolute -bottom-2 right-1 h-[110px] w-[110px] object-contain drop-shadow-[0_8px_18px_rgba(0,0,0,0.3)]"
+                />
               </Card>
             )}
           </section>
@@ -514,4 +645,8 @@ export default function HomePage() {
 
     </div>
   );
+}
+
+export default function HomePage() {
+  return <SafePlusDashboard />;
 }

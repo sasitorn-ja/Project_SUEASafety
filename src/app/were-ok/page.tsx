@@ -28,16 +28,6 @@ const ROUTE_STEPS = [
   { id: 6, key: "route-briefing", num: "02", title: "รับทราบและยืนยันงานวิ่ง", getSubtext: (d: any) => d ? "ยืนยันเรียบร้อย" : "เปิดเมื่อครบทุกขั้นตอน" },
 ];
 
-const MOCK_JOB_DATA = {
-  jobCode: "DP-2410",
-  jobLabel: "งานแรก",
-  startNode: "BPI-04",
-  endNode: "OBK-C2",
-  distance: 38.4,
-  estTime: 62,
-  slump: "10±2",
-};
-
 export default function WereOkPage() {
   const state = useAppState();
   const actions = useAppActions();
@@ -45,12 +35,37 @@ export default function WereOkPage() {
   const [sosOpen, setSosOpen] = useState(false);
   const [sosHours, setSosHours] = useState(8);
   const [sosReason, setSosReason] = useState("");
+  const [currentJob, setCurrentJob] = useState<any>(null);
+  const [jobLoading, setJobLoading] = useState(false);
 
   const { completedSteps, healthData, preTripData, queueConfirmed, sosData } = state;
 
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    const loadCurrentJob = async () => {
+      setJobLoading(true);
+      try {
+        const response = await fetch("/api/were-ok/jobs/current", {
+          credentials: "include",
+          cache: "no-store",
+        });
+        const payload = await response.json().catch(() => null);
+        if (!cancelled && response.ok && payload?.ok) setCurrentJob(payload.data?.job || null);
+      } catch {
+        if (!cancelled) setCurrentJob(null);
+      } finally {
+        if (!cancelled) setJobLoading(false);
+      }
+    };
+    void loadCurrentJob();
+    return () => {
+      cancelled = true;
+    };
+  }, [queueConfirmed]);
 
   const totalDone = completedSteps.filter((id) => id <= 4).length;
   const isBPFailed = healthData?.bpStatus?.includes("HIGH RISK");
@@ -267,19 +282,32 @@ export default function WereOkPage() {
                   <div className="text-xs text-[#8E8A81] font-semibold mb-1.5 tracking-wide">
                     คิวงานล่าสุด · ระบบจ่ายงานอัตโนมัติ
                   </div>
-                  <div className="text-lg md:text-xl font-extrabold mb-2" style={{ fontSize: "20px", fontWeight: 800, color: "#FFFFFF", marginBottom: "8px" }}>
-                    {MOCK_JOB_DATA.jobLabel} · {MOCK_JOB_DATA.jobCode}
-                  </div>
-                  <div className="flex flex-col gap-1.5 mt-auto">
-                    <div className="flex items-center gap-2 text-sm font-extrabold text-[var(--brand-accent)] mt-1.5">
-                      <span>{MOCK_JOB_DATA.startNode}</span>
-                      <span className="text-xs opacity-80">🚚</span>
-                      <span>{MOCK_JOB_DATA.endNode}</span>
-                    </div>
-                    <div className="text-xs text-[#8E8A81] font-semibold">
-                      {MOCK_JOB_DATA.distance} กม. · {MOCK_JOB_DATA.estTime} นาที · Slump {MOCK_JOB_DATA.slump}
-                    </div>
-                  </div>
+                  {currentJob ? (
+                    <>
+                      <div className="text-lg md:text-xl font-extrabold mb-2" style={{ fontSize: "20px", fontWeight: 800, color: "#FFFFFF", marginBottom: "8px" }}>
+                        {(currentJob.jobLabel || "งานวิ่ง") + " · " + currentJob.jobCode}
+                      </div>
+                      <div className="flex flex-col gap-1.5 mt-auto">
+                        <div className="flex items-center gap-2 text-sm font-extrabold text-[var(--brand-accent)] mt-1.5">
+                          <span>{currentJob.startNode || "-"}</span>
+                          <span className="text-xs opacity-80">→</span>
+                          <span>{currentJob.endNode || "-"}</span>
+                        </div>
+                        <div className="text-xs text-[#8E8A81] font-semibold">
+                          {currentJob.distanceKm ?? "-"} กม. · {currentJob.estimatedMinutes ?? "-"} นาที · Slump {currentJob.slump || "-"}
+                        </div>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div className="text-lg md:text-xl font-extrabold mb-2" style={{ fontSize: "20px", fontWeight: 800, color: "#FFFFFF", marginBottom: "8px" }}>
+                        {jobLoading ? "กำลังตรวจสอบงานวิ่ง..." : "ยังไม่มีงานวิ่งจากระบบจ่ายงานจริง"}
+                      </div>
+                      <div className="text-xs text-[#8E8A81] font-semibold leading-relaxed">
+                        ระบบไม่แสดงเลขงาน เส้นทาง หรือค่า slump จำลอง ต้องมีงานจาก API dispatch ก่อน
+                      </div>
+                    </>
+                  )}
 
                   {sosData ? (
                     <div className="mt-4 bg-[rgba(217,56,58,0.08)] border-[1.5px] border-[#D9383A] text-[#D9383A] rounded-xl px-3 py-2.5 text-[11.5px] font-extrabold flex items-center gap-2">

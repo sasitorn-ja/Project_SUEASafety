@@ -8,8 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAppState, type SafetyCultureUserActivity } from "@/providers/app-providers";
 import { useAppTheme } from "@/providers/theme-provider";
-import { getProfileDisplayName } from "@/lib/profile";
-import { getSessionProfileImage, useSessionUser } from "@/lib/session-user";
+import { getSessionDisplayName, getSessionProfileImage, useSessionUser } from "@/lib/session-user";
 import { cn } from "@/lib/utils";
 
 function formatDateInput(date: Date) {
@@ -95,6 +94,7 @@ export default function ProfileActivityHistoryPage() {
   const { theme } = useAppTheme();
   const { user: sessionUser } = useSessionUser();
   const profileImage = getSessionProfileImage(sessionUser);
+  const displayName = sessionUser ? getSessionDisplayName(sessionUser) : "ผู้ใช้งาน";
   const [fromDate, setFromDate] = useState(() => getDateDaysAgo(30));
   const [toDate, setToDate] = useState(() => formatDateInput(new Date()));
   const isWangjai = theme === "wangjai";
@@ -150,12 +150,12 @@ export default function ProfileActivityHistoryPage() {
                 </div>
               </div>
               <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center overflow-hidden rounded-full border-[3px] border-white/30 bg-white/10 shadow-[0_10px_20px_rgba(0,0,0,0.12)] md:h-14 md:w-14">
-                {profileImage ? <img src={profileImage} alt={getProfileDisplayName()} className="h-full w-full object-cover" /> : <UserRound className="h-7 w-7 text-white/80" />}
+                {profileImage ? <img src={profileImage} alt={displayName} className="h-full w-full object-cover" /> : <UserRound className="h-7 w-7 text-white/80" />}
               </div>
             </div>
 
             <div className="rounded-[16px] border border-white/12 bg-white/10 px-3 py-2.5 text-[12px] font-bold text-white/88 backdrop-blur-sm">
-              {getProfileDisplayName()}
+              {displayName}
             </div>
           </div>
         </section>

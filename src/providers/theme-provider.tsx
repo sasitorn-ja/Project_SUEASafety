@@ -74,7 +74,7 @@ const TIGER_MASCOTS: Record<MascotAction, string> = {
   firstaid: "/images/mascots/suea-shield.png",
 };
 
-const WANGJAI_TRANSPARENT_BASE = "/images/mascots/Transparent น้องวางใจ";
+const WANGJAI_TRANSPARENT_BASE = "/images/mascots/wangjai";
 
 // น้องวางใจ (CPAC) set — every display spot uses a UNIQUE image (no duplicates).
 const WANGJAI_MASCOTS: Record<MascotAction, string> = {

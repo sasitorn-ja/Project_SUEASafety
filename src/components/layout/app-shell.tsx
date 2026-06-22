@@ -27,7 +27,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   const pathname = usePathname() ?? "";
   const router = useRouter();
   const isSafetyEffort = SAFETY_EFFORT_ROUTES.has(pathname) || pathname.startsWith("/safety-admin");
-  console.log("DEBUG AppShell path:", pathname, "isSafetyEffort:", isSafetyEffort);
+  const usesStandardPageUi = pathname !== "/" && pathname !== "/dashboard" && pathname !== "/login";
   const [loginChecked, setLoginChecked] = useState(false);
   const isSafetyCulturePost = pathname === "/safety-culture/post";
   const [sessionUser, setSessionUser] = useState<SessionUser | null>(null);
@@ -221,7 +221,10 @@ export function AppShell({ children }: { children: ReactNode }) {
       <MobileTopbar hidden={topHidden} />
       <DesktopTopbar />
 
-      <main className={cn(isSafetyEffort ? "legacy-page-content" : "page-content")}>{children}</main>
+      <main className={cn(
+        isSafetyEffort ? "legacy-page-content" : "page-content",
+        usesStandardPageUi && "app-standard-page"
+      )}>{children}</main>
 
       {!isSafetyCulturePost && <MobileBottomNav hidden={btmHidden} />}
 

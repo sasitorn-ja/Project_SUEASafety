@@ -1,6 +1,6 @@
 // @ts-nocheck
 import { useState } from "react";
-import { useLocation, useNavigate } from "@/lib/router-compat";
+import { useLocation, useNavigate } from "@/lib/app-navigation";
 import TigerMascot from "@/components/TigerMascot";
 
 const T = {

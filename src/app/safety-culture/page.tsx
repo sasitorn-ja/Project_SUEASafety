@@ -21,10 +21,11 @@ import {
   COMMENT_REACTION_CHOICES,
   formatPostSubtext,
 } from "@/lib/safety-culture";
-import { CalendarDays, ChevronLeft, ChevronRight, Clock3, Heart, ImageIcon, Sparkles, Trophy, UsersRound, X } from "lucide-react";
+import { CalendarDays, ChevronLeft, ChevronRight, Clock3, Heart, ImageIcon, Pencil, Sparkles, Trash2, Trophy, UsersRound, X } from "lucide-react";
 import { SafetyCultureHero } from "@/components/safety-culture/safety-culture-hero";
 import { SafetyCultureTabs } from "@/components/safety-culture/safety-culture-tabs";
 import { useAppTheme } from "@/providers/theme-provider";
+import styles from "./safety-culture-community.module.css";
 
 function getPostComments(post: { comments: number | CommentType[] }): CommentType[] {
   if (Array.isArray(post.comments)) return post.comments;
@@ -35,6 +36,34 @@ function getCommentCount(post: { comments: number | CommentType[] }) {
   return Array.isArray(post.comments) ? post.comments.length : post.comments || 0;
 }
 
+function ProfileAvatar({
+  imageUrl,
+  text,
+  sizeClassName = "h-[36px] w-[36px]",
+  textClassName = "text-[16px]",
+}: {
+  imageUrl?: string | null;
+  text: string;
+  sizeClassName?: string;
+  textClassName?: string;
+}) {
+  return (
+    <div
+      className={cn(
+        "flex flex-shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-[#1A1A1A] bg-[var(--brand-accent)] font-black text-[#1A1A1A]",
+        sizeClassName,
+        textClassName,
+      )}
+    >
+      {imageUrl ? (
+        <Image src={imageUrl} alt="" width={48} height={48} className="h-full w-full object-cover" />
+      ) : (
+        text
+      )}
+    </div>
+  );
+}
+
 function LeadingTeamCard({ className, style }: { className?: string; style?: CSSProperties }) {
   const { teamStandings } = useAppState();
   const leadingTeam = teamStandings[0];
@@ -43,28 +72,28 @@ function LeadingTeamCard({ className, style }: { className?: string; style?: CSS
   return (
     <Card
       className={cn(
-        "relative overflow-hidden rounded-[24px] p-5 text-white shadow-[0_10px_25px_rgba(0,0,0,0.12)] md:p-6 font-sarabun",
+        "relative overflow-hidden rounded-[16px] p-3 text-white shadow-[0_8px_20px_rgba(0,0,0,0.12)] md:p-3.5 font-sarabun",
         className
       )}
       style={{ background: "linear-gradient(135deg, var(--c-3b210b), var(--c-5c3214))", ...style }}
     >
       <div className="absolute top-0 left-0 right-0 h-2 bg-[repeating-linear-gradient(-45deg,var(--c-f5bb00),var(--c-f5bb00)_10px,#1A1A1A_10px,#1A1A1A_20px)]" />
-      <div className="relative flex items-center gap-4">
-        <div className="flex h-[60px] w-[60px] flex-shrink-0 items-center justify-center rounded-full border-[3px] border-white text-3xl shadow-[0_0_16px_rgba(245,187,0,0.35)] md:h-[68px] md:w-[68px]" style={{ backgroundColor: leadingTeam?.color ?? "var(--c-f5bb00)" }}>
+      <div className="relative flex items-center gap-3">
+        <div className="flex h-[42px] w-[42px] flex-shrink-0 items-center justify-center rounded-full border-2 border-white text-xl shadow-[0_0_14px_rgba(45,174,255,0.3)]" style={{ backgroundColor: leadingTeam?.color ?? "var(--c-f5bb00)" }}>
           🏆
         </div>
         <div className="min-w-0 flex-1">
           {leadingTeam ? (
             <>
-              <span className="text-[12px] font-bold uppercase tracking-wider text-[#bcaaa4] md:text-[13px]">นำอยู่ตอนนี้</span>
-              <div className="mt-0.5 text-[26px] leading-none font-black tracking-tight text-white md:text-[30px]">{leadingTeam.name}</div>
-              <span className="mt-1.5 block text-[13.5px] font-black md:text-[14.5px]" style={{ color: leadingTeam.color ?? "var(--c-f5bb00)" }}>+ {leadPoints.toLocaleString()} คะแนน เหนือกว่า {runnerUpTeam?.name ?? "-"}</span>
+              <span className="text-[10px] font-bold uppercase tracking-wider text-white/65">นำอยู่ตอนนี้</span>
+              <div className="mt-0.5 text-[17px] leading-none font-black tracking-tight text-white">{leadingTeam.name}</div>
+              <span className="mt-1 block text-[11px] font-black" style={{ color: leadingTeam.color ?? "var(--c-f5bb00)" }}>+ {leadPoints.toLocaleString()} คะแนน เหนือกว่า {runnerUpTeam?.name ?? "-"}</span>
             </>
           ) : (
             <>
-              <span className="text-[12px] font-bold uppercase tracking-wider text-[#bcaaa4] md:text-[13px]">ลำดับทีม</span>
-              <div className="mt-0.5 text-[24px] leading-none font-black tracking-tight text-white md:text-[28px]">ยังไม่มีข้อมูลทีม</div>
-              <span className="mt-1.5 block text-[13px] font-bold text-white/70 md:text-[14px]">ระบบจะแสดงข้อมูลเมื่อ DB มีคะแนนทีมจริง</span>
+              <span className="text-[10px] font-bold uppercase tracking-wider text-white/65">ลำดับทีม</span>
+              <div className="mt-0.5 text-[17px] leading-none font-black tracking-tight text-white">ยังไม่มีข้อมูลทีม</div>
+              <span className="mt-1 block text-[11px] font-bold text-white/70">ระบบจะแสดงข้อมูลเมื่อ DB มีคะแนนทีมจริง</span>
             </>
           )}
         </div>
@@ -79,16 +108,16 @@ function TeamStandingsCard({ className, style }: { className?: string; style?: C
   return (
     <Card
       className={cn(
-        "overflow-hidden rounded-[24px] border-[1.5px] border-[var(--border)] bg-[linear-gradient(180deg,rgba(255,255,255,0.82),rgba(255,255,255,0.62))] shadow-[0_16px_36px_var(--brand-shadow)] backdrop-blur-sm font-sarabun",
+        "overflow-hidden rounded-[18px] border border-[var(--border)] bg-[linear-gradient(180deg,rgba(255,255,255,0.82),rgba(255,255,255,0.62))] shadow-[0_10px_24px_var(--brand-shadow)] backdrop-blur-sm font-sarabun",
         className
       )}
       style={style}
     >
-      <div className="border-b border-[var(--border)] px-3.5 py-3.5 xl:px-4 xl:py-4">
-        <p className="text-[12.5px] font-black tracking-[0.01em] text-[var(--foreground)] xl:text-[13px]">ลำดับทีม · YTD</p>
+      <div className="border-b border-[var(--border)] px-3 py-3">
+        <p className="text-[11px] font-black tracking-[0.01em] text-[var(--foreground)]">ลำดับทีม · YTD</p>
       </div>
 
-      <div className="space-y-2.5 p-2.5 xl:space-y-3 xl:p-4">
+      <div className="space-y-2 p-2.5 xl:space-y-2.5 xl:p-3">
         {teamStandings.length === 0 ? (
           <div className="rounded-[18px] border border-dashed border-[var(--border)] bg-[var(--brand-surface)] px-4 py-7 text-center">
             <p className="text-[13.5px] font-black text-[var(--foreground)]">ยังไม่มีข้อมูลทีม</p>
@@ -97,7 +126,7 @@ function TeamStandingsCard({ className, style }: { className?: string; style?: C
         ) : teamStandings.map((team, idx) => (
           <article
             key={team.id}
-            className="rounded-[18px] border border-[var(--border)] bg-[var(--brand-surface)] px-2.5 py-2.5 shadow-[0_8px_22px_var(--brand-shadow)] transition-all duration-200 hover:-translate-y-[1px] hover:border-[rgba(var(--brand-accent-rgb),0.45)] xl:rounded-[20px] xl:px-4 xl:py-3"
+            className="rounded-[14px] border border-[var(--border)] bg-[var(--brand-surface)] px-2.5 py-2 shadow-[0_8px_22px_var(--brand-shadow)] transition-all duration-200 hover:-translate-y-[1px] hover:border-[rgba(var(--brand-accent-rgb),0.45)] xl:px-3 xl:py-2.5"
           >
             <div className="flex items-center gap-2.5 xl:gap-3">
               <div className="flex min-w-0 flex-1 items-center gap-2.5 xl:gap-3.5">
@@ -125,7 +154,7 @@ function TeamStandingsCard({ className, style }: { className?: string; style?: C
               </div>
 
               <div className="flex-shrink-0 text-right">
-                <p className="text-[16px] leading-none font-black text-[var(--foreground)] xl:text-[20px]">{team.points.toLocaleString()}</p>
+                <p className="text-[15px] leading-none font-black text-[var(--foreground)] xl:text-[17px]">{team.points.toLocaleString()}</p>
                 <p className="mt-1 text-[8px] font-bold uppercase tracking-[0.1em] text-[var(--brand-muted-text)] xl:text-[9px] xl:tracking-[0.12em]">คะแนน</p>
               </div>
             </div>
@@ -154,16 +183,16 @@ function PersonalRankingsCard({ className, style }: { className?: string; style?
   return (
     <Card
       className={cn(
-        "overflow-hidden rounded-[24px] border-[1.5px] border-[var(--border)] bg-[linear-gradient(180deg,rgba(255,255,255,0.92),rgba(255,255,255,0.70))] shadow-[0_16px_36px_var(--brand-shadow)] backdrop-blur-sm font-sarabun",
+        "overflow-hidden rounded-[18px] border border-[var(--border)] bg-[linear-gradient(180deg,rgba(255,255,255,0.92),rgba(255,255,255,0.70))] shadow-[0_10px_24px_var(--brand-shadow)] backdrop-blur-sm font-sarabun",
         className
       )}
       style={style}
     >
-      <div className="border-b border-[var(--border)] px-4 py-4">
-        <p className="text-[14px] font-black tracking-[0.01em] text-[var(--foreground)]">อันดับในทีมของฉัน · เดือนนี้</p>
+      <div className="border-b border-[var(--border)] px-3 py-3">
+        <p className="text-[11px] font-black tracking-[0.01em] text-[var(--foreground)]">อันดับในทีมของฉัน · เดือนนี้</p>
       </div>
 
-      <div className="space-y-2.5 p-3 md:p-4">
+      <div className="space-y-2 p-3">
         {personalRankings.length === 0 ? (
           <div className="rounded-[18px] border border-dashed border-[var(--border)] bg-[var(--brand-surface)] px-4 py-7 text-center">
             <p className="text-[13.5px] font-black text-[var(--foreground)]">ยังไม่มีอันดับในทีม</p>
@@ -173,7 +202,7 @@ function PersonalRankingsCard({ className, style }: { className?: string; style?
           <article
             key={user.id}
             className={cn(
-              "flex items-center justify-between gap-3 rounded-[18px] border px-3 py-3 shadow-[0_8px_22px_var(--brand-shadow)] transition-all duration-200 md:px-4",
+              "flex items-center justify-between gap-3 rounded-[14px] border px-3 py-2.5 shadow-[0_8px_22px_var(--brand-shadow)] transition-all duration-200",
               user.active
                 ? "border-[rgba(var(--brand-accent-rgb),0.55)] bg-[linear-gradient(180deg,rgba(var(--brand-accent-rgb),0.10),rgba(var(--brand-accent-rgb),0.03))]"
                 : "border-[var(--border)] bg-[var(--brand-surface)] hover:border-[rgba(var(--brand-accent-rgb),0.4)]"
@@ -192,15 +221,15 @@ function PersonalRankingsCard({ className, style }: { className?: string; style?
               </div>
 
               <div className="min-w-0">
-                <p className="truncate text-[18px] leading-tight font-black text-[var(--foreground)]">{user.name}</p>
-                <p className="mt-0.5 text-[12px] font-bold text-[var(--brand-muted-text)]">
+                <p className="truncate text-[15px] leading-tight font-black text-[var(--foreground)]">{user.name}</p>
+                <p className="mt-0.5 text-[10.5px] font-bold text-[var(--brand-muted-text)]">
                   {user.active ? "ลำดับของคุณในทีม" : "สมาชิกในทีม"}
                 </p>
               </div>
             </div>
 
             <div className="flex-shrink-0 text-right">
-              <p className="text-[24px] leading-none font-black text-[var(--foreground)]">{user.points}</p>
+              <p className="text-[20px] leading-none font-black text-[var(--foreground)]">{user.points}</p>
               <p className="mt-1 text-[10px] font-bold uppercase tracking-[0.12em] text-[var(--brand-muted-text)]">แต้ม</p>
             </div>
           </article>
@@ -212,11 +241,11 @@ function PersonalRankingsCard({ className, style }: { className?: string; style?
 
 function SUEATipCard({ className, style, tipText }: { className?: string; style?: CSSProperties; tipText: string }) {
   return (
-    <Card className={cn("flex items-start gap-3 rounded-[24px] border-2 border-[var(--c-f5bb00)] bg-[var(--c-fff9e6)] p-3.5 font-sarabun", className)} style={style}>
+    <Card className={cn("flex items-start gap-2.5 rounded-[16px] border-2 border-[var(--c-f5bb00)] bg-[var(--c-fff9e6)] p-3 font-sarabun", className)} style={style}>
       <span className="text-xl animate-[pulse_2s_infinite]">💡</span>
       <div className="flex flex-col gap-1">
-        <span className="text-[15.5px] font-[850] text-[#1A1A1A]">เคล็ดลับจากพี่ SUEA</span>
-        <span className="text-[13.5px] font-bold leading-relaxed text-[#555149]">{tipText}</span>
+        <span className="text-[13.5px] font-[850] text-[#1A1A1A]">เคล็ดลับจากพี่ SUEA</span>
+        <span className="text-[11.5px] font-bold leading-relaxed text-[#555149]">{tipText}</span>
       </div>
     </Card>
   );
@@ -244,7 +273,7 @@ function getActivityCardCopy(activity: Pick<SafetyCultureFeedEvent, "details" | 
 
 export default function Page() {
   const { posts, feedEvents } = useAppState();
-  const { toggleLike, addComment, fetchPosts } = useAppActions();
+  const { toggleLike, addComment, fetchComments, fetchPosts, updatePost, deletePost, updateComment, deleteComment } = useAppActions();
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user: sessionUser } = useSessionUser();
@@ -259,6 +288,13 @@ export default function Page() {
   const [myTeamPosts, setMyTeamPosts] = useState<Post[]>([]);
   const [myTeamLoading, setMyTeamLoading] = useState(false);
   const [myTeamLoaded, setMyTeamLoaded] = useState(false);
+  const [editingPostId, setEditingPostId] = useState<number | null>(null);
+  const [editDraft, setEditDraft] = useState("");
+  const [editSaving, setEditSaving] = useState(false);
+  const [deletingPostId, setDeletingPostId] = useState<number | null>(null);
+  const [editingComment, setEditingComment] = useState<{ postId: number; commentId: string } | null>(null);
+  const [commentEditDraft, setCommentEditDraft] = useState("");
+  const [commentSaving, setCommentSaving] = useState(false);
   const [commentDrafts, setCommentDrafts] = useState<Record<number, string>>({});
   const [expandedComments, setExpandedComments] = useState<Record<number, boolean>>({});
   const [activePhotoByPost, setActivePhotoByPost] = useState<Record<number, number>>({});
@@ -416,12 +452,82 @@ export default function Page() {
   }, [router, searchParams]);
 
 
-  const handleCommentSubmit = (postId: number) => {
+  const handleToggleComments = (post: Post) => {
+    const nextOpen = !expandedComments[post.id];
+    setExpandedComments((prev) => ({ ...prev, [post.id]: nextOpen }));
+    if (nextOpen) void fetchComments(post.id);
+  };
+
+  const handleCommentSubmit = async (postId: number) => {
     const text = (commentDrafts[postId] || "").trim();
     if (!text) return;
-    addComment(postId, text);
+    const ok = await addComment(postId, text);
+    if (!ok) {
+      window.alert("ไม่สามารถบันทึกความคิดเห็นได้ กรุณาลองใหม่อีกครั้ง");
+      return;
+    }
     setCommentDrafts((prev) => ({ ...prev, [postId]: "" }));
     setExpandedComments((prev) => ({ ...prev, [postId]: true }));
+  };
+
+  const startEditComment = (postId: number, comment: CommentType) => {
+    setEditingComment({ postId, commentId: comment.id });
+    setCommentEditDraft(comment.text);
+  };
+
+  const cancelEditComment = () => {
+    setEditingComment(null);
+    setCommentEditDraft("");
+  };
+
+  const handleSaveComment = async () => {
+    if (!editingComment || commentSaving) return;
+    const text = commentEditDraft.trim();
+    if (!text) return;
+    setCommentSaving(true);
+    const ok = await updateComment(editingComment.postId, editingComment.commentId, text);
+    setCommentSaving(false);
+    if (ok) {
+      cancelEditComment();
+    } else {
+      window.alert("ไม่สามารถแก้ไขความคิดเห็นได้ กรุณาลองใหม่อีกครั้ง");
+    }
+  };
+
+  const handleDeleteComment = async (postId: number, commentId: string) => {
+    const ok = await deleteComment(postId, commentId);
+    if (!ok) window.alert("ไม่สามารถลบความคิดเห็นได้ กรุณาลองใหม่อีกครั้ง");
+  };
+
+  const startEditPost = (post: Post) => {
+    setEditingPostId(post.id);
+    setEditDraft(post.body || "");
+  };
+
+  const cancelEditPost = () => {
+    setEditingPostId(null);
+    setEditDraft("");
+  };
+
+  const handleSaveEditPost = async (postId: number) => {
+    const text = editDraft.trim();
+    if (!text || editSaving) return;
+    setEditSaving(true);
+    const ok = await updatePost(postId, text);
+    setEditSaving(false);
+    if (ok) {
+      setEditingPostId(null);
+      setEditDraft("");
+    } else {
+      window.alert("ไม่สามารถแก้ไขโพสได้ กรุณาลองใหม่อีกครั้ง");
+    }
+  };
+
+  const handleConfirmDeletePost = async () => {
+    if (deletingPostId == null) return;
+    const ok = await deletePost(deletingPostId);
+    setDeletingPostId(null);
+    if (!ok) window.alert("ไม่สามารถลบโพสได้ กรุณาลองใหม่อีกครั้ง");
   };
 
   const getCommentReactionKey = (postId: number, commentId: string) => `${postId}:${commentId}`;
@@ -484,30 +590,31 @@ export default function Page() {
 
   return (
     <>
-      <div className="mx-auto w-full max-w-[1180px] bg-[var(--background)] px-3.5 pt-2 pb-8 md:px-4 font-sarabun">
+      <div className={cn("mx-auto w-full max-w-[1480px] px-3.5 pt-2.5 pb-7 md:px-5 font-sarabun", styles.page)}>
         <div className="anim-fade" style={animStyle(0)}>
           <SafetyCultureHero
             eyebrow="SAFETY CULTURE COMMUNITY"
             title={<>Safety Culture</>}
             description="พื้นที่แชร์เรื่องความปลอดภัย และช่วยกันต่อยอดพฤติกรรมปลอดภัยในทุกวัน"
-            mascotSrc="/images/mascots/gallery/line-walk-3.png"
-            mascotAlt="SUEA Mascot"
-            mascotAction="announce2"
+            mascotSrc="/images/mascots/wangjai/scenes/safety-culture-mascot-new.png"
+            mascotAlt="น้องวางใจถือโทรโข่งและมือถือโซเชียล"
+            mascotAction="announce"
+            variant="community"
           />
         </div>
 
-        <div className="mt-[13px] mb-[20px] anim-fade" style={animStyle(0.02)}>
+        <div className={cn("mt-[13px] mb-[20px] anim-fade", styles.topTabs)} style={animStyle(0.02)}>
           <SafetyCultureTabs />
         </div>
 
         {visibleFeedEvents.length > 0 ? (
-          <Card className="mb-4 overflow-hidden rounded-[24px] border border-[var(--c-e4d3b3)] bg-[var(--c-fffdfa)] p-4 shadow-[0_8px_18px_rgba(62,36,13,0.04)] anim-fade md:p-5" style={animStyle(0.03)}>
+          <Card className="mb-3 overflow-hidden rounded-[18px] border border-[var(--c-e4d3b3)] bg-[var(--c-fffdfa)] p-3 shadow-[0_8px_18px_rgba(62,36,13,0.04)] anim-fade md:p-4" style={animStyle(0.03)}>
             <div className="mb-1 flex items-start gap-3 text-[var(--c-5c3214)]">
               <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[var(--c-fff1c9)] text-[var(--c-f0a400)] shadow-[0_6px_14px_rgba(240,164,0,0.15)]">
                 <Sparkles className="h-5 w-5" strokeWidth={2.2} />
               </div>
               <div className="flex-1 pt-0.5">
-                <h2 className="text-[20px] font-black">กิจกรรมปัจจุบัน</h2>
+                <h2 className="text-[17px] font-black">กิจกรรมปัจจุบัน</h2>
               </div>
             </div>
 
@@ -543,7 +650,7 @@ export default function Page() {
                 return (
                   <article
                     key={activity.id}
-                    className="flex min-w-full flex-[0_0_100%] flex-col rounded-[22px] border border-[var(--c-e4d3b3)] bg-white shadow-[0_10px_20px_rgba(62,36,13,0.05)]"
+                    className="flex min-w-full flex-[0_0_100%] flex-col rounded-[16px] border border-[var(--c-e4d3b3)] bg-white shadow-[0_10px_20px_rgba(62,36,13,0.05)]"
                   >
                       <div className="relative aspect-[1.42/1] overflow-hidden rounded-t-[22px] bg-[var(--c-f7e7cf)] sm:aspect-[1.3/1]">
                         {activity.imageSrc ? (
@@ -559,8 +666,8 @@ export default function Page() {
                     </div>
 
                     <div className="flex flex-1 flex-col px-4 pt-4 pb-3">
-                      <h3 className="text-[18px] font-black text-[var(--c-2f261d)]">{activity.title}</h3>
-                      <p className="mt-2 line-clamp-2 text-[13.5px] font-bold leading-relaxed text-[#667085]">{getActivityCardCopy(activity)}</p>
+                      <h3 className="text-[15.5px] font-black text-[var(--c-2f261d)]">{activity.title}</h3>
+                      <p className="mt-1.5 line-clamp-2 text-[12px] font-bold leading-relaxed text-[#667085]">{getActivityCardCopy(activity)}</p>
 
                       <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-[12px] font-black">
                         <span className="inline-flex items-center gap-1.5 text-[#7d776c]">
@@ -618,7 +725,7 @@ export default function Page() {
                   return (
                     <article
                       key={activity.id}
-                      className="flex min-w-[calc((100%-2rem)/3)] flex-[0_0_calc((100%-2rem)/3)] flex-col rounded-[22px] border border-[var(--c-e4d3b3)] bg-white shadow-[0_10px_20px_rgba(62,36,13,0.05)] transition-transform duration-300 hover:-translate-y-1"
+                      className="flex min-w-[calc((100%-1.5rem)/3)] flex-[0_0_calc((100%-1.5rem)/3)] flex-col rounded-[16px] border border-[var(--c-e4d3b3)] bg-white shadow-[0_10px_20px_rgba(62,36,13,0.05)] transition-transform duration-300 hover:-translate-y-1"
                     >
                       <div className="relative aspect-[1.2/1] overflow-hidden rounded-t-[22px] bg-[var(--c-f7e7cf)]">
                         {activity.imageSrc ? (
@@ -633,8 +740,8 @@ export default function Page() {
                         </span>
                       </div>
 
-                      <div className="flex flex-1 flex-col p-4">
-                        <h3 className="text-[18px] font-black text-[var(--c-2f261d)]">{activity.title}</h3>
+                      <div className="flex flex-1 flex-col p-3">
+                        <h3 className="text-[15.5px] font-black text-[var(--c-2f261d)]">{activity.title}</h3>
                         <p className="mt-2 line-clamp-2 text-[13.5px] font-bold leading-relaxed text-[#667085]">{getActivityCardCopy(activity)}</p>
 
                         <div className="mt-4 flex flex-wrap items-center justify-between gap-2 text-[12px] font-black">
@@ -663,23 +770,23 @@ export default function Page() {
           </Card>
         ) : null}
 
-<div className="grid grid-cols-1 gap-4 md:gap-5 xl:grid-cols-[minmax(0,1.45fr)_minmax(320px,0.82fr)]">
+<div className={cn("grid grid-cols-1 gap-3 md:gap-4 xl:grid-cols-[minmax(0,1.82fr)_minmax(310px,0.88fr)]", styles.communityGrid)}>
           <div className="flex flex-col gap-3">
-            <Card className="rounded-[16px] border border-[var(--c-e5d6be)] bg-[var(--c-fff8eb)] px-3 py-2 shadow-[0_4px_8px_rgba(62,36,13,0.03)] anim-fade md:rounded-[18px] md:px-3.5 md:py-2.5" style={animStyle(0.04)}>
+            <Card className={cn("rounded-[16px] px-3 py-2 anim-fade md:rounded-[18px] md:px-3.5 md:py-2.5", styles.composer)} style={animStyle(0.04)}>
               <div className="flex items-center gap-2 sm:gap-2.5">
                 <div className="flex min-w-0 flex-1 items-center gap-[8px]">
-                  <div className="flex h-[32px] w-[32px] flex-shrink-0 items-center justify-center rounded-full border-2 border-[var(--c-2a2118)] bg-[var(--c-f5bb00)] text-[16px] leading-none font-black text-[#1A1A1A] md:h-[36px] md:w-[36px] md:text-[18px]">
+                  <div className={cn("flex h-[32px] w-[32px] flex-shrink-0 items-center justify-center rounded-full border-2 text-[16px] leading-none font-black md:h-[36px] md:w-[36px] md:text-[18px]", styles.composerAvatar)}>
                     C
                   </div>
                   <Link href="/safety-culture/post" className="min-w-0 flex-1">
-                    <div className="flex h-[32px] items-center rounded-full border border-[var(--c-e4cdac)] bg-[var(--c-fbf1df)] px-[12px] text-[13.5px] font-bold text-[var(--c-978d7c)] sm:whitespace-nowrap md:h-[36px]">
+                    <div className={cn("flex h-[32px] items-center rounded-full border px-[12px] text-[13.5px] font-bold sm:whitespace-nowrap md:h-[36px]", styles.composerInput)}>
                       <span className="truncate">คุณกำลังคิดอะไรอยู่</span>
                     </div>
                   </Link>
                 </div>
                 <Link href="/safety-culture/post" className="flex-shrink-0">
                   <button
-                    className="flex h-[32px] w-[32px] items-center justify-center rounded-[8px] border border-[var(--c-e4cdac)] bg-[var(--c-fff8eb)] text-[#8d877b] md:h-[36px] md:w-[36px] md:rounded-[10px]"
+                    className={cn("flex h-[32px] w-[32px] items-center justify-center rounded-[8px] border md:h-[36px] md:w-[36px] md:rounded-[10px]", styles.composerImage)}
                     aria-label="เพิ่มรูปภาพ"
                   >
                     <ImageIcon className="h-[16px] w-[16px]" strokeWidth={2} />
@@ -697,16 +804,17 @@ export default function Page() {
               <SUEATipCard className="anim-fade" style={animStyle(0.06)} tipText={tipText} />
             </div>
 
-            <div className="scrollbar-hide flex gap-2 overflow-x-auto py-0.5 anim-fade" style={animStyle(0.05)}>
+            <div className={cn("scrollbar-hide flex gap-2 overflow-x-auto py-0.5 anim-fade", styles.categories)} style={animStyle(0.05)}>
               {visibleCategories.map((category) => (
                 <button
                   key={category}
                   onClick={() => setActiveCategory(category)}
                   className={cn(
                     "flex-shrink-0 whitespace-nowrap rounded-full border-[1.5px] px-4 py-2 text-[14px] font-extrabold transition-all md:px-[18px] md:py-[10px] md:text-[15px]",
+                    styles.categoryButton,
                     activeCategory === category
-                      ? "border-[var(--c-6a3f13)] bg-[var(--c-6a3f13)] text-white shadow-[0_4px_10px_rgba(92,53,12,0.16)]"
-                      : "border-[var(--c-eadcc7)] bg-white text-[var(--c-706557)] hover:border-[var(--c-b78922)] hover:bg-[var(--c-fff7e8)]"
+                      ? styles.categoryActive
+                      : styles.categoryIdle
                   )}
                 >
                   {category}
@@ -725,17 +833,12 @@ export default function Page() {
               return (
                 <Card
                   key={post.id}
-                  className="anim-fade flex flex-col gap-2.5 rounded-[20px] border-[var(--c-e3d0ae)] bg-[var(--c-fffdfa)] p-3.5 shadow-[0_10px_24px_rgba(62,36,13,0.045)] transition-all hover:-translate-y-px hover:border-[var(--c-c49a45)] hover:shadow-[0_12px_28px_rgba(62,36,13,0.08)] md:gap-3 md:p-4"
+                  className={cn("anim-fade flex flex-col gap-2 rounded-[16px] p-3 transition-all hover:-translate-y-px md:gap-2.5 md:p-3.5", styles.postCard)}
                   style={animStyle(0.05 + idx * 0.05)}
                 >
                   <div className="flex items-start justify-between gap-2.5 font-sarabun">
                     <div className="flex min-w-0 items-center gap-2.5">
-                      <div
-                        className="flex h-[36px] w-[36px] flex-shrink-0 items-center justify-center rounded-full border-2 border-[#1A1A1A] text-[16px] font-black"
-                        style={{ backgroundColor: post.avatarBg, color: post.avatarColor }}
-                      >
-                        {post.avatarText}
-                      </div>
+                      <ProfileAvatar imageUrl={post.avatarImageUrl} text={post.avatarText} />
                       <div className="min-w-0 flex flex-col gap-0">
                         <div className="flex flex-wrap items-center gap-1">
                           <span className="truncate text-[14.5px] font-extrabold text-[#1A1A1A]">{post.author}</span>
@@ -748,12 +851,66 @@ export default function Page() {
                         <span className="text-[11.5px] font-bold text-[var(--c-9f988d)]">{formatPostSubtext(post)}</span>
                       </div>
                     </div>
-                    <span className="mt-0.5 w-fit rounded-full border border-[var(--c-e8cda4)] bg-[var(--c-fff7e8)] px-2 py-0.5 text-[10.5px] font-black tracking-wide text-[var(--c-7b5625)]">
-                      {post.category}
-                    </span>
+                    <div className="flex items-center gap-1.5">
+                      <span className="mt-0.5 w-fit rounded-full border border-[var(--c-e8cda4)] bg-[var(--c-fff7e8)] px-2 py-0.5 text-[10.5px] font-black tracking-wide text-[var(--c-7b5625)]">
+                        {post.category}
+                      </span>
+                      {post.isYou && editingPostId !== post.id && (
+                        <>
+                          <button
+                            type="button"
+                            onClick={() => startEditPost(post)}
+                            title="แก้ไขโพส"
+                            aria-label="แก้ไขโพส"
+                            className="flex h-7 w-7 items-center justify-center rounded-full text-[var(--c-9f988d)] transition-colors hover:bg-[var(--c-f1e7d4)] hover:text-[var(--c-7b5625)]"
+                          >
+                            <Pencil className="h-[15px] w-[15px]" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setDeletingPostId(post.id)}
+                            title="ลบโพส"
+                            aria-label="ลบโพส"
+                            className="flex h-7 w-7 items-center justify-center rounded-full text-[var(--c-9f988d)] transition-colors hover:bg-[#fbe9e4] hover:text-[#c73a21]"
+                          >
+                            <Trash2 className="h-[15px] w-[15px]" />
+                          </button>
+                        </>
+                      )}
+                    </div>
                   </div>
 
-                  <p className="text-[14.5px] md:text-[15.5px] font-bold leading-relaxed text-[var(--c-33271a)] font-sarabun">{post.body}</p>
+                  {editingPostId === post.id ? (
+                    <div className="flex flex-col gap-2 font-sarabun">
+                      <textarea
+                        value={editDraft}
+                        onChange={(e) => setEditDraft(e.target.value)}
+                        rows={4}
+                        autoFocus
+                        className="w-full resize-y rounded-[14px] border-[1.5px] border-[var(--c-e3d0ae)] bg-white p-3 text-[14.5px] font-bold leading-relaxed text-[var(--c-33271a)] outline-none focus:border-[var(--c-c49a45)]"
+                      />
+                      <div className="flex justify-end gap-2">
+                        <button
+                          type="button"
+                          onClick={cancelEditPost}
+                          disabled={editSaving}
+                          className="rounded-full border border-[var(--c-e3d0ae)] bg-white px-4 py-1.5 text-[13px] font-extrabold text-[var(--c-706557)] hover:bg-[var(--c-fff7e8)] disabled:opacity-50"
+                        >
+                          ยกเลิก
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleSaveEditPost(post.id)}
+                          disabled={editSaving || !editDraft.trim()}
+                          className="rounded-full bg-[var(--c-6a3f13)] px-4 py-1.5 text-[13px] font-extrabold text-white hover:bg-[var(--c-7b5625)] disabled:opacity-50"
+                        >
+                          {editSaving ? "กำลังบันทึก..." : "บันทึก"}
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="text-[13px] md:text-[14px] font-bold leading-relaxed text-[var(--c-33271a)] font-sarabun">{post.body}</p>
+                  )}
 
                   {(postPhotos.length > 0 || post.imageText) && (
                     <div className="flex flex-col gap-2 font-sarabun">
@@ -821,7 +978,7 @@ export default function Page() {
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => setExpandedComments((prev) => ({ ...prev, [post.id]: !prev[post.id] }))}
+                        onClick={() => handleToggleComments(post)}
                         className="h-auto gap-1.5 rounded-lg px-0 py-0 text-[13.5px] font-black text-[#7d776c] hover:bg-transparent hover:text-foreground"
                       >
                         <span style={{ color: "#8E8A81" }}>💬</span>
@@ -850,15 +1007,55 @@ export default function Page() {
 
                               return (
                                 <div key={comment.id} className="flex items-start gap-2">
-                                  <div className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full border-[1.5px] border-[#1A1A1A] bg-[var(--c-f5bb00)] text-[11px] font-black text-[#1A1A1A]">
-                                    {comment.avatarText || comment.author.charAt(0) || "C"}
-                                  </div>
+                                  <ProfileAvatar
+                                    imageUrl={comment.avatarImageUrl}
+                                    text={comment.avatarText || comment.author.charAt(0) || "C"}
+                                    sizeClassName="h-6 w-6"
+                                    textClassName="text-[11px]"
+                                  />
                                   <div className="flex min-w-0 flex-col items-start gap-1">
                                     <div className="min-w-0 rounded-[12px] border-[1.5px] border-[var(--c-ddd9cd)] bg-[var(--c-faf8f2)] px-2 py-1 text-[13px] font-bold leading-relaxed text-[#33312C]">
                                       <span className="mb-0.5 block text-[11.5px] font-black text-[#1A1A1A]">{comment.author}</span>
-                                      {comment.text}
+                                      {editingComment?.postId === post.id && editingComment.commentId === comment.id ? (
+                                        <div className="flex min-w-[220px] flex-col gap-1.5">
+                                          <Input
+                                            value={commentEditDraft}
+                                            onChange={(event) => setCommentEditDraft(event.target.value)}
+                                            onKeyDown={(event) => {
+                                              if (event.key === "Enter") void handleSaveComment();
+                                              if (event.key === "Escape") cancelEditComment();
+                                            }}
+                                            className="h-8 rounded-lg bg-white text-[13px] font-bold"
+                                            autoFocus
+                                          />
+                                          <div className="flex gap-1.5">
+                                            <button type="button" onClick={cancelEditComment} className="text-[11px] font-black text-[#7d776c]">ยกเลิก</button>
+                                            <button type="button" disabled={commentSaving || !commentEditDraft.trim()} onClick={() => void handleSaveComment()} className="text-[11px] font-black text-[#0b69c7] disabled:opacity-50">บันทึก</button>
+                                          </div>
+                                        </div>
+                                      ) : (
+                                        comment.text
+                                      )}
                                     </div>
                                     <div className="relative flex items-center gap-1 pl-0.5">
+                                      {comment.isYou && !(editingComment?.postId === post.id && editingComment.commentId === comment.id) && (
+                                        <>
+                                          <button
+                                            type="button"
+                                            onClick={() => startEditComment(post.id, comment)}
+                                            className="px-1.5 py-[3px] text-[11.5px] font-[850] text-[#555149] hover:text-[#1A1A1A]"
+                                          >
+                                            แก้ไข
+                                          </button>
+                                          <button
+                                            type="button"
+                                            onClick={() => void handleDeleteComment(post.id, comment.id)}
+                                            className="px-1.5 py-[3px] text-[11.5px] font-[850] text-[#b3271a] hover:text-[#7f1d1d]"
+                                          >
+                                            ลบ
+                                          </button>
+                                        </>
+                                      )}
                                       <button
                                         className={cn(
                                           "inline-flex cursor-pointer items-center gap-1 rounded-full bg-transparent px-1.5 py-[3px] text-[11.5px] font-[850] leading-none text-[#555149] transition-all hover:bg-[var(--c-faf8f2)] hover:text-[#1A1A1A]",
@@ -903,7 +1100,7 @@ export default function Page() {
                           value={commentDrafts[post.id] || ""}
                           onChange={(e) => setCommentDrafts((prev) => ({ ...prev, [post.id]: e.target.value }))}
                           onKeyDown={(e) => {
-                            if (e.key === "Enter") handleCommentSubmit(post.id);
+                            if (e.key === "Enter") void handleCommentSubmit(post.id);
                           }}
                           placeholder="เขียนคอมเมนต์..."
                           className="h-[34px] min-w-0 flex-1 rounded-full border border-[var(--c-2a2118)] bg-white px-3.5 text-[13.5px] font-bold placeholder:text-[var(--c-9f988d)] focus-visible:border-[var(--c-2a2118)] focus-visible:ring-0"
@@ -916,7 +1113,7 @@ export default function Page() {
                               ? "bg-[var(--c-5c3214)] hover:bg-[var(--c-45250f)] active:bg-[var(--c-341b0b)]"
                               : "bg-[#A39E96] cursor-not-allowed hover:bg-[#A39E96]"
                           )}
-                          onClick={() => handleCommentSubmit(post.id)}
+                          onClick={() => void handleCommentSubmit(post.id)}
                           disabled={!(commentDrafts[post.id] || "").trim()}
                         >
                           ส่ง
@@ -941,11 +1138,11 @@ export default function Page() {
             )}
           </div>
 
-          <div className="hidden flex-col gap-4 xl:flex">
-            <LeadingTeamCard className="anim-fade" style={animStyle(0.1)} />
-            <TeamStandingsCard className="anim-fade" style={animStyle(0.15)} />
-            <PersonalRankingsCard className="anim-fade" style={animStyle(0.2)} />
-            <SUEATipCard className="anim-fade" style={animStyle(0.25)} tipText={tipText} />
+          <div className={cn("hidden flex-col gap-3 xl:flex", styles.sidebar)}>
+            <LeadingTeamCard className={cn("anim-fade", styles.leadingCard)} style={animStyle(0.1)} />
+            <TeamStandingsCard className={cn("anim-fade", styles.rankingCard)} style={animStyle(0.15)} />
+            <PersonalRankingsCard className={cn("anim-fade", styles.rankingCard)} style={animStyle(0.2)} />
+            <SUEATipCard className={cn("anim-fade", styles.tipCard)} style={animStyle(0.25)} tipText={tipText} />
           </div>
         </div>
       </div>
@@ -1025,12 +1222,12 @@ export default function Page() {
             <div className="flex items-start justify-between gap-3 border-b border-[var(--c-eee2cb)] px-4 py-3 md:gap-4 md:px-5 md:py-3.5">
               <div className="min-w-0">
                 <div className="flex items-center gap-2.5 md:gap-3">
-                  <div
-                    className="flex h-[40px] w-[40px] flex-shrink-0 items-center justify-center rounded-full border-2 border-[#1A1A1A] text-[15px] font-black md:h-[36px] md:w-[36px] md:text-[14px]"
-                    style={{ backgroundColor: expandedPost.avatarBg, color: expandedPost.avatarColor }}
-                  >
-                    {expandedPost.avatarText}
-                  </div>
+                  <ProfileAvatar
+                    imageUrl={expandedPost.avatarImageUrl}
+                    text={expandedPost.avatarText}
+                    sizeClassName="h-[40px] w-[40px] md:h-[36px] md:w-[36px]"
+                    textClassName="text-[15px] md:text-[14px]"
+                  />
                   <div className="min-w-0">
                     <h3 className="truncate text-[16px] font-black text-[var(--c-2f261d)] md:text-[18px]">{expandedPost.author}</h3>
                     <p className="text-[11px] font-bold text-[#667085] md:text-[11px]">{formatPostSubtext(expandedPost)}</p>
@@ -1136,7 +1333,7 @@ export default function Page() {
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => setExpandedComments((prev) => ({ ...prev, [expandedPost.id]: !prev[expandedPost.id] }))}
+                      onClick={() => handleToggleComments(expandedPost)}
                       className="h-auto gap-1.5 rounded-lg px-0 py-0 text-[13.5px] font-black text-[#7d776c] hover:bg-transparent hover:text-foreground"
                     >
                       <span style={{ color: "#8E8A81" }}>💬</span>
@@ -1156,15 +1353,55 @@ export default function Page() {
 
                           return (
                             <div key={comment.id} className="flex items-start gap-2">
-                              <div className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full border-[1.5px] border-[#1A1A1A] bg-[var(--c-f5bb00)] text-[11px] font-black text-[#1A1A1A]">
-                                {comment.avatarText || comment.author.charAt(0) || "C"}
-                              </div>
+                              <ProfileAvatar
+                                imageUrl={comment.avatarImageUrl}
+                                text={comment.avatarText || comment.author.charAt(0) || "C"}
+                                sizeClassName="h-6 w-6"
+                                textClassName="text-[11px]"
+                              />
                               <div className="flex min-w-0 flex-col items-start gap-1">
                                 <div className="min-w-0 rounded-[12px] border-[1.5px] border-[var(--c-ddd9cd)] bg-[var(--c-faf8f2)] px-2.5 py-1.5 text-[13px] font-bold leading-relaxed text-[#33312C]">
                                   <span className="mb-0.5 block text-[11.5px] font-black text-[#1A1A1A]">{comment.author}</span>
-                                  {comment.text}
+                                  {editingComment?.postId === expandedPost.id && editingComment.commentId === comment.id ? (
+                                    <div className="flex min-w-[220px] flex-col gap-1.5">
+                                      <Input
+                                        value={commentEditDraft}
+                                        onChange={(event) => setCommentEditDraft(event.target.value)}
+                                        onKeyDown={(event) => {
+                                          if (event.key === "Enter") void handleSaveComment();
+                                          if (event.key === "Escape") cancelEditComment();
+                                        }}
+                                        className="h-8 rounded-lg bg-white text-[13px] font-bold"
+                                        autoFocus
+                                      />
+                                      <div className="flex gap-1.5">
+                                        <button type="button" onClick={cancelEditComment} className="text-[11px] font-black text-[#7d776c]">ยกเลิก</button>
+                                        <button type="button" disabled={commentSaving || !commentEditDraft.trim()} onClick={() => void handleSaveComment()} className="text-[11px] font-black text-[#0b69c7] disabled:opacity-50">บันทึก</button>
+                                      </div>
+                                    </div>
+                                  ) : (
+                                    comment.text
+                                  )}
                                 </div>
                                 <div className="relative flex items-center gap-1 pl-0.5">
+                                  {comment.isYou && !(editingComment?.postId === expandedPost.id && editingComment.commentId === comment.id) && (
+                                    <>
+                                      <button
+                                        type="button"
+                                        onClick={() => startEditComment(expandedPost.id, comment)}
+                                        className="px-1.5 py-[3px] text-[11.5px] font-[850] text-[#555149] hover:text-[#1A1A1A]"
+                                      >
+                                        แก้ไข
+                                      </button>
+                                      <button
+                                        type="button"
+                                        onClick={() => void handleDeleteComment(expandedPost.id, comment.id)}
+                                        className="px-1.5 py-[3px] text-[11.5px] font-[850] text-[#b3271a] hover:text-[#7f1d1d]"
+                                      >
+                                        ลบ
+                                      </button>
+                                    </>
+                                  )}
                                   <button
                                     className={cn(
                                       "inline-flex cursor-pointer items-center gap-1 rounded-full bg-transparent px-1.5 py-[3px] text-[11.5px] font-[850] leading-none text-[#555149] transition-all hover:bg-[var(--c-faf8f2)] hover:text-[#1A1A1A]",
@@ -1214,7 +1451,7 @@ export default function Page() {
                   onChange={(e) => setCommentDrafts((prev) => ({ ...prev, [expandedPost.id]: e.target.value }))}
                   onFocus={() => setExpandedComments((prev) => ({ ...prev, [expandedPost.id]: true }))}
                   onKeyDown={(e) => {
-                    if (e.key === "Enter") handleCommentSubmit(expandedPost.id);
+                    if (e.key === "Enter") void handleCommentSubmit(expandedPost.id);
                   }}
                   placeholder="เขียนคอมเมนต์..."
                   className="h-[44px] min-w-0 flex-1 rounded-full border border-[var(--c-2a2118)] bg-white px-4 text-[14px] font-bold placeholder:text-[var(--c-9f988d)] focus-visible:border-[var(--c-2a2118)] focus-visible:ring-0"
@@ -1228,12 +1465,45 @@ export default function Page() {
                       ? "bg-[var(--c-5c3214)] hover:bg-[var(--c-45250f)] active:bg-[var(--c-341b0b)]"
                       : "bg-[#A39E96] cursor-not-allowed hover:bg-[#A39E96]"
                   )}
-                  onClick={() => handleCommentSubmit(expandedPost.id)}
+                  onClick={() => void handleCommentSubmit(expandedPost.id)}
                   disabled={!(commentDrafts[expandedPost.id] || "").trim()}
                 >
                   ส่ง
                 </Button>
               </div>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {deletingPostId != null ? (
+        <div
+          className="fixed inset-0 z-[95] flex items-center justify-center bg-[rgba(20,13,7,0.55)] p-4 animate-[fadeIn_0.2s_ease-out_both]"
+          onClick={() => setDeletingPostId(null)}
+        >
+          <div
+            className="w-full max-w-[360px] rounded-[20px] bg-white p-6 shadow-[0_20px_48px_rgba(34,25,11,0.2)]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="text-[17px] font-black text-[#c73a21]">ยืนยันการลบโพส</h3>
+            <p className="mt-2 text-[14px] font-bold leading-relaxed text-[var(--c-33271a)]">
+              คุณแน่ใจหรือไม่ว่าต้องการลบโพสนี้? การลบจะไม่สามารถกู้คืนได้
+            </p>
+            <div className="mt-5 flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setDeletingPostId(null)}
+                className="rounded-full border border-[var(--c-e3d0ae)] bg-white px-4 py-2 text-[13px] font-extrabold text-[var(--c-706557)] hover:bg-[var(--c-fff7e8)]"
+              >
+                ยกเลิก
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmDeletePost}
+                className="rounded-full bg-[#c73a21] px-4 py-2 text-[13px] font-extrabold text-white hover:bg-[#a82e19]"
+              >
+                ยืนยันลบ
+              </button>
             </div>
           </div>
         </div>

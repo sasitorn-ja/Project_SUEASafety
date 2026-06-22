@@ -9,6 +9,7 @@ import {
   restoreChecklistDefaults,
   saveChecklistDraft,
 } from "@/features/safety-effort/config/checklists";
+import { uploadSafetyEffortMedia } from "@/features/safety-effort/lib/upload-media";
 import { GripVertical, Eye, Trash2, Search, X, Check, Settings, ChevronDown, ChevronUp, Pencil, ClipboardList } from "lucide-react";
 
 
@@ -347,6 +348,7 @@ export default function SafetyAdmin() {
       if (typeof window !== "undefined") {
         localStorage.setItem("safety_backdate_mode", "today");
       }
+      void persistBackdateSettings("today");
     }
   };
 
@@ -370,6 +372,7 @@ export default function SafetyAdmin() {
     }
     setBackdateMode("backdate");
     setShowBackdateLimitModal(false);
+    void persistBackdateSettings("backdate");
   };
 
   const [width, setWidth] = useState(typeof window !== "undefined" ? window.innerWidth : 1024);
@@ -381,6 +384,59 @@ export default function SafetyAdmin() {
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
+
+  // Load backdate settings from real DB (safety_settings). localStorage is kept
+  // as a mirror so other screens (Checkin/Linewalk) that read these keys still work.
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch("/api/safety-settings?key=safety_backdate", { credentials: "include", cache: "no-store" });
+        if (!res.ok) return;
+        const payload = await res.json();
+        const raw = payload?.data?.setting?.setting_value;
+        if (!raw) return;
+        const value = typeof raw === "string" ? JSON.parse(raw) : raw;
+        if (cancelled || !value || typeof value !== "object") return;
+        if (typeof window !== "undefined") {
+          if (value.limit != null) localStorage.setItem("safety_backdate_limit", String(value.limit));
+          if (value.mode) localStorage.setItem("safety_allowed_mode", value.mode);
+          if (value.weekdays) localStorage.setItem("safety_allowed_weekdays", JSON.stringify(value.weekdays));
+          if (value.dates) localStorage.setItem("safety_allowed_dates", JSON.stringify(value.dates));
+          if (value.backdateMode) localStorage.setItem("safety_backdate_mode", value.backdateMode);
+        }
+        if (value.limit != null) setTempBackdateLimit(parseInt(String(value.limit), 10));
+        if (value.mode) setAllowedMode(value.mode);
+        if (Array.isArray(value.weekdays)) setAllowedWeekdays(value.weekdays);
+        if (Array.isArray(value.dates)) setAllowedDates(value.dates);
+        if (value.backdateMode) setBackdateMode(value.backdateMode);
+      } catch {
+        /* keep localStorage fallback */
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
+  // Persist backdate settings to the real DB (best-effort) alongside localStorage.
+  const persistBackdateSettings = async (mode) => {
+    const value = {
+      limit: tempBackdateLimit,
+      mode: allowedMode,
+      weekdays: allowedWeekdays,
+      dates: allowedDates,
+      backdateMode: mode,
+    };
+    try {
+      await fetch("/api/safety-settings?key=safety_backdate", {
+        method: "PUT",
+        credentials: "include",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ value }),
+      });
+    } catch {
+      /* localStorage already updated; ignore network errors */
+    }
+  };
 
   useEffect(() => {
     const currentList = draft[selectedType];
@@ -1239,14 +1295,22 @@ export default function SafetyAdmin() {
                         type="file"
                         accept="image/*"
                         style={{ display: "none" }}
-                        onChange={(e) => {
+                        onChange={async (e) => {
                           const file = e.target.files?.[0];
                           if (!file) return;
-                          const reader = new FileReader();
-                          reader.onloadend = () => {
-                            setTempQuestion(prev => ({ ...prev, image: reader.result }));
-                          };
-                          reader.readAsDataURL(file);
+                          try {
+                            const media = await uploadSafetyEffortMedia(file, {
+                              ownerType: "assessment_question",
+                              ownerId: tempQuestion.id || null,
+                              linkType: "question_image",
+                            });
+                            setTempQuestion(prev => ({ ...prev, image: media.url, imageMediaId: media.id }));
+                          } catch (error) {
+                            console.error("Failed to upload question image", error);
+                            window.alert("อัปโหลดรูปภาพไม่สำเร็จ กรุณาลองใหม่อีกครั้ง");
+                          } finally {
+                            e.target.value = "";
+                          }
                         }}
                       />
                     </label>

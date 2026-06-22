@@ -1,6 +1,6 @@
 // @ts-nocheck
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "@/lib/router-compat";
+import { useNavigate } from "@/lib/app-navigation";
 import {
   ArrowLeft,
   Search,
@@ -12,7 +12,6 @@ import {
 } from "lucide-react";
 import * as XLSX from "xlsx";
 import { Combobox } from "@/components/ui/combobox";
-import mockExcelRecords from "@/features/safety-effort/config/mock_excel_records.json";
 
 const T = {
   page: "var(--background)",
@@ -91,17 +90,10 @@ const buttonDangerStyle = {
   cursor: "pointer",
 };
 
-const REPORT_STORAGE_KEYS = {
-  submissions: "suea-safety-submissions-v1",
-  pms: "suea-safety-user-pms",
-  name: "suea-safety-user-name",
-  email: "suea-safety-user-email",
-};
-
 const REPORT_DEFAULT_PROFILE = {
-  pms: "24518",
-  name: "ศศิธร จรุงจรรยาพงศ์",
-  email: "SASITOJA@SCG.COM",
+  pms: "",
+  name: "",
+  email: "",
 };
 
 const REPORT_MONTH_OPTIONS = [
@@ -127,18 +119,6 @@ const REPORT_ACTIVITY_OPTIONS = [
 ];
 
 const REPORT_EXPORT_HEADERS = ["Status", "Linewalk ID", "Ref ID", "Create Date", "Username", "Full Name", "Email"];
-
-function readStoredProfile() {
-  if (typeof window === "undefined") {
-    return { ...REPORT_DEFAULT_PROFILE };
-  }
-
-  return {
-    pms: localStorage.getItem(REPORT_STORAGE_KEYS.pms) || REPORT_DEFAULT_PROFILE.pms,
-    name: localStorage.getItem(REPORT_STORAGE_KEYS.name) || REPORT_DEFAULT_PROFILE.name,
-    email: localStorage.getItem(REPORT_STORAGE_KEYS.email) || REPORT_DEFAULT_PROFILE.email,
-  };
-}
 
 function toNumberOrFallback(value, fallback) {
   const parsed = Number(value);
@@ -273,24 +253,26 @@ export default function SafetyAdminExportReport() {
   const [reportMonthFilter, setReportMonthFilter] = useState("all");
   const [reportActivityFilter, setReportActivityFilter] = useState("all");
 
-  const [submissions, setSubmissions] = useState(() => {
-    if (typeof window !== "undefined") {
-      const stored = localStorage.getItem(REPORT_STORAGE_KEYS.submissions);
-      if (stored) {
-        try {
-          return JSON.parse(stored);
-        } catch {
-          return [];
-        }
-      }
-    }
-    return [];
-  });
+  const [submissions, setSubmissions] = useState([]);
+
+  // Prefer real DB submissions (safety_activities). The richer report fields
+  // (pms/year/month/name/email/activityType + answers) are carried in the
+  // activity `notes` JSON written at submission time, so nothing is lost.
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch("/api/safety-effort/submissions?pageSize=500", { credentials: "include", cache: "no-store" });
+        if (!res.ok) return;
+        const payload = await res.json().catch(() => null);
+        const items = payload?.data?.items;
+        if (Array.isArray(items) && !cancelled) setSubmissions(items);
+      } catch { if (!cancelled) setSubmissions([]); }
+    })();
+    return () => { cancelled = true; };
+  }, []);
 
   const [uploadedReportRecords, setUploadedReportRecords] = useState([]);
-  const [templateReportRecords, setTemplateReportRecords] = useState(() =>
-    mockExcelRecords.map((record, index) => normalizeReportRecord(record, index, "template")).filter(Boolean)
-  );
   
   const [editingReport, setEditingReport] = useState(null);
 
@@ -300,8 +282,8 @@ export default function SafetyAdminExportReport() {
   );
 
   const mergedReportRecords = useMemo(
-    () => [...submissionReportRecords, ...uploadedReportRecords, ...templateReportRecords],
-    [submissionReportRecords, templateReportRecords, uploadedReportRecords]
+    () => [...submissionReportRecords, ...uploadedReportRecords],
+    [submissionReportRecords, uploadedReportRecords]
   );
 
   const reportYearOptions = useMemo(() => {
@@ -369,7 +351,7 @@ export default function SafetyAdminExportReport() {
     setEditingReport(createEditableReportDraft(item));
   };
 
-  const handleSaveEditedReport = () => {
+  const handleSaveEditedReport = async () => {
     if (!editingReport) return;
 
     const normalizedRecord = {
@@ -387,23 +369,31 @@ export default function SafetyAdminExportReport() {
     };
 
     if (editingReport.source === "submission" && editingReport.submissionId) {
+      const response = await fetch(`/api/safety-effort/submissions/${editingReport.submissionId}`, {
+        method: "PATCH",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          pms: normalizedRecord.pms,
+          name: normalizedRecord.name,
+          email: normalizedRecord.email,
+          activityType: normalizedRecord.activityType === "Safety_Contact" ? "SAFETY_CONTACT" : "LINE_WALK",
+          date: normalizedRecord.createDate || null,
+        }),
+      });
+      const payload = await response.json().catch(() => null);
+      if (!response.ok || !payload?.ok) {
+        window.alert("บันทึกการแก้ไขไม่สำเร็จ");
+        return;
+      }
       const next = submissions.map((submission) =>
-        submission.id === editingReport.submissionId
+        String(submission.id) === String(editingReport.submissionId)
           ? { ...submission, ...normalizedRecord }
           : submission
       );
       setSubmissions(next);
-      if (typeof window !== "undefined") {
-        localStorage.setItem(REPORT_STORAGE_KEYS.submissions, JSON.stringify(next));
-      }
     } else if (editingReport.source === "upload") {
       setUploadedReportRecords((prev) =>
-        prev.map((record) =>
-          record.id === editingReport.id ? { ...record, ...normalizedRecord } : record
-        )
-      );
-    } else {
-      setTemplateReportRecords((prev) =>
         prev.map((record) =>
           record.id === editingReport.id ? { ...record, ...normalizedRecord } : record
         )
@@ -413,25 +403,28 @@ export default function SafetyAdminExportReport() {
     setEditingReport(null);
   };
 
-  const handleDeleteSubmission = (submissionId) => {
-    const next = submissions.filter((sub) => sub.id !== submissionId);
-    setSubmissions(next);
-    if (typeof window !== "undefined") {
-      localStorage.setItem(REPORT_STORAGE_KEYS.submissions, JSON.stringify(next));
+  const handleDeleteSubmission = async (submissionId) => {
+    const response = await fetch(`/api/safety-effort/submissions/${submissionId}`, {
+      method: "DELETE",
+      credentials: "include",
+    });
+    const payload = await response.json().catch(() => null);
+    if (!response.ok || !payload?.ok || !payload.data?.deleted) {
+      window.alert("ลบรายการไม่สำเร็จ");
+      return;
     }
+    setSubmissions((current) => current.filter((submission) => String(submission.id) !== String(submissionId)));
   };
 
-  const handleDeleteReportRecord = (item) => {
+  const handleDeleteReportRecord = async (item) => {
     if (typeof window !== "undefined" && !window.confirm("ต้องการลบรายการนี้ใช่หรือไม่?")) {
       return;
     }
 
     if (item.source === "submission" && item.submissionId) {
-      handleDeleteSubmission(item.submissionId);
+      await handleDeleteSubmission(item.submissionId);
     } else if (item.source === "upload") {
       setUploadedReportRecords((prev) => prev.filter((record) => record.id !== item.id));
-    } else {
-      setTemplateReportRecords((prev) => prev.filter((record) => record.id !== item.id));
     }
   };
 
@@ -853,7 +846,7 @@ export default function SafetyAdminExportReport() {
                           ? "รายการที่บันทึก"
                           : item.source === "upload"
                           ? "ไฟล์อัปโหลด"
-                          : "mock records"}
+                          : "ข้อมูลภายนอก"}
                       </div>
                     </div>
                     <div
@@ -1068,7 +1061,7 @@ export default function SafetyAdminExportReport() {
                 ? "รายการที่บันทึกในระบบ"
                 : editingReport.source === "upload"
                 ? "ไฟล์ Excel ที่อัปโหลด"
-                : "mock records"}
+                : "ข้อมูลภายนอก"}
             </div>
 
             <div style={{ display: "flex", justifyContent: "flex-end", gap: 10 }}>

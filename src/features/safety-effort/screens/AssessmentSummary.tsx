@@ -1,9 +1,10 @@
 // @ts-nocheck
 import { useEffect, useMemo, useState } from "react";
-import { useLocation, useNavigate } from "@/lib/router-compat";
+import { useLocation, useNavigate } from "@/lib/app-navigation";
 import TigerMascot from "@/components/TigerMascot";
 import { getChecklistForType } from "@/features/safety-effort/config/checklists";
 import { useAppActions } from "@/providers/app-providers";
+import { getSessionDisplayName, useSessionUser } from "@/lib/session-user";
 
 const T = {
   background: "var(--background)",
@@ -48,6 +49,7 @@ export default function AssessmentSummary() {
   const navigate = useNavigate();
   const location = useLocation();
   const actions = useAppActions();
+  const { user: sessionUser } = useSessionUser();
   const [showSuccessPopup, setShowSuccessPopup] = useState(false);
   const checkin = location.state?.checkin ?? null;
   const activity = location.state?.activity ?? null;
@@ -91,57 +93,83 @@ export default function AssessmentSummary() {
     }
   };
 
-  const handleConfirmSave = () => {
-    if (typeof window !== "undefined") {
-      try {
-        const stored = localStorage.getItem("suea-safety-submissions-v1");
-        const submissions = stored ? JSON.parse(stored) : [];
-        
-        // Retrieve or default profile info
-        const pmsCode = localStorage.getItem("suea-safety-user-pms") || "24518";
-        const userName = localStorage.getItem("suea-safety-user-name") || "ศศิธร จรุงจรรยาพงศ์";
-        const userEmail = localStorage.getItem("suea-safety-user-email") || "SASITOJA@SCG.COM";
-        
-        const submissionDate = linewalkData?.date || new Date().toISOString().split("T")[0];
-        const dateObj = new Date(submissionDate);
-        const yearVal = isNaN(dateObj.getTime()) ? new Date().getFullYear() : dateObj.getFullYear();
-        const monthVal = isNaN(dateObj.getTime()) ? (new Date().getMonth() + 1) : (dateObj.getMonth() + 1);
-        const activityTypeVal = !!linewalkData?.isSafetyContact ? "Safety_Contact" : "Safety_Observation/Line_Walk";
+  const persistActivityToDb = async (submission) => {
+    const checkinId = checkin?.checkinId ?? null;
+    if (!checkinId) return; // no DB checkin → cannot satisfy safety_activities FK yet
+    try {
+      await fetch("/api/safety-effort/activities", {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          checkinId,
+          activityType: submission.isSafetyContact ? "SAFETY_CONTACT" : "LINE_WALK",
+          title: submission.activityLabel,
+          status: "COMPLETED",
+          completedAt: new Date().toISOString(),
+          notes: JSON.stringify({
+            locType: submission.locType,
+            locationName: submission.locationName,
+            locationTag: submission.locationTag,
+            date: submission.date,
+            safetyContactText: submission.safetyContactText,
+            answers: submission.answeredItems,
+            // report fields (used by Export Report) — not first-class activity columns
+            pms: submission.pms,
+            year: submission.year,
+            month: submission.month,
+            name: submission.name,
+            email: submission.email,
+            activityType: submission.activityType,
+          }),
+        }),
+      });
+    } catch { /* structured submission remains the canonical record */ }
+  };
 
-        const newSubmission = {
-          id: `sub-${Date.now()}`,
-          timestamp: new Date().toISOString(),
-          activityId: activity?.id || "line-walk",
-          activityLabel: activity?.label || (linewalkData?.isSafetyContact ? "Safety Contact" : "Line Walk"),
-          locType: linewalkData?.locType || "factory",
-          locationName: checkin?.name || "-",
-          locationTag: checkin?.tag || "-",
-          date: submissionDate,
-          isSafetyContact: !!linewalkData?.isSafetyContact,
-          safetyContactText: linewalkData?.safetyContactText || "",
-          answeredItems: answeredItems.map(item => ({
-            id: item.id,
-            title: item.title,
-            status: item.status,
-            note: item.note,
-            photos: item.photos
-          })),
-          // Storing the fields required for the evaluation report matching the Excel template
-          pms: pmsCode,
-          year: yearVal,
-          month: monthVal,
-          name: userName,
-          email: userEmail,
-          activityType: activityTypeVal
-        };
-        submissions.unshift(newSubmission);
-        localStorage.setItem("suea-safety-submissions-v1", JSON.stringify(submissions));
-        actions.awardSafetyEffortCompletion(newSubmission.id, `${newSubmission.activityLabel} สำเร็จ`);
-      } catch (e) {
-        console.error("Error saving submission", e);
+  const handleConfirmSave = async () => {
+    const submissionDate = linewalkData?.date || new Date().toISOString().split("T")[0];
+    const newSubmission = {
+      timestamp: new Date().toISOString(),
+      activityLabel: activity?.label || (linewalkData?.isSafetyContact ? "Safety Contact" : "Line Walk"),
+      locType: linewalkData?.locType || "factory",
+      locationName: checkin?.name || "-",
+      locationTag: checkin?.tag || "-",
+      date: submissionDate,
+      isSafetyContact: !!linewalkData?.isSafetyContact,
+      safetyContactText: linewalkData?.safetyContactText || "",
+      answeredItems: answeredItems.map(item => ({
+        id: item.id,
+        title: item.title,
+        status: item.status,
+        note: item.note,
+        photos: item.photos,
+      })),
+      pms: sessionUser?.username || sessionUser?.id || "",
+      name: getSessionDisplayName(sessionUser),
+      email: sessionUser?.email || "",
+      activityType: linewalkData?.isSafetyContact ? "SAFETY_CONTACT" : "LINE_WALK",
+      checkinId: checkin?.checkinId || null,
+    };
+    try {
+      const response = await fetch("/api/safety-effort/submissions", {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(newSubmission),
+      });
+      const payload = await response.json().catch(() => null);
+      if (!response.ok || !payload?.ok || !payload.data?.submission?.id) {
+        throw new Error(payload?.error || "submission_save_failed");
       }
+      const savedId = String(payload.data.submission.id);
+      actions.awardSafetyEffortCompletion(savedId, `${newSubmission.activityLabel} สำเร็จ`);
+      void persistActivityToDb(newSubmission);
+      setShowSuccessPopup(true);
+    } catch (error) {
+      console.error("Error saving submission", error);
+      window.alert("บันทึกข้อมูลไม่สำเร็จ กรุณาตรวจสอบการเชื่อมต่อแล้วลองใหม่");
     }
-    setShowSuccessPopup(true);
   };
 
   const answeredItems = useMemo(() => {

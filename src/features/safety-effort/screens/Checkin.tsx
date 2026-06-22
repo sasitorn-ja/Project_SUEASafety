@@ -1,6 +1,6 @@
 // @ts-nocheck
 import { useState, useEffect, useRef } from "react";
-import { useLocation, useNavigate } from "@/lib/router-compat";
+import { useLocation, useNavigate } from "@/lib/app-navigation";
 import { MapContainer, TileLayer, Marker, Popup, useMap, useMapEvents } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
@@ -1310,6 +1310,36 @@ const STYLES = `
     -webkit-backdrop-filter: blur(20px);
   }
 
+  .ci-show-more {
+    margin-top: 4px;
+    width: 100%;
+    padding: 11px 14px;
+    border-radius: 12px;
+    border: 1px solid rgba(14,15,18,0.12);
+    background: var(--brand-surface, #fff);
+    color: var(--brand-text, #5c3214);
+    font-family: 'Prompt', sans-serif;
+    font-size: 13px;
+    font-weight: 800;
+    cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease;
+  }
+  .ci-show-more:hover {
+    background: var(--brand-soft, #fff4cf);
+    border-color: var(--brand-accent, #f5bb00);
+  }
+
+  @media (max-width: 767px) {
+    /* Keep the "next" action pinned to the bottom of the viewport on mobile
+       so users never have to scroll past the whole location list to reach it. */
+    .ci-footer-panel {
+      position: sticky;
+      bottom: 0;
+      z-index: 6;
+      box-shadow: 0 -6px 18px rgba(14,15,18,0.08);
+    }
+  }
+
   @media (max-width: 767px) {
     .ci-workspace {
       display: block;
@@ -1377,6 +1407,14 @@ export default function Checkin() {
   // Instant Search and Quick Filter state
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedType, setSelectedType] = useState("ทั้งหมด");
+
+  // How many location cards to render at once (avoid rendering the entire list).
+  const LOCATIONS_PAGE_SIZE = 20;
+  const [visibleCount, setVisibleCount] = useState(LOCATIONS_PAGE_SIZE);
+  // Reset paging whenever the result set changes (new search / filter).
+  useEffect(() => {
+    setVisibleCount(LOCATIONS_PAGE_SIZE);
+  }, [searchQuery, selectedType]);
 
   useEffect(() => {
     setWidth(window.innerWidth);
@@ -1475,6 +1513,11 @@ export default function Checkin() {
 
     return true;
   });
+
+  // Only render the first `visibleCount` results; "show more" reveals the rest.
+  const pagedLocations = visibleLocations.slice(0, visibleCount);
+  const hasMoreLocations = visibleLocations.length > visibleCount;
+  const remainingLocations = visibleLocations.length - visibleCount;
 
   useEffect(() => {
     if (selected) {
@@ -1619,7 +1662,7 @@ export default function Checkin() {
             </div>
           </div>
 
-          <img className="ci-hdr-mascot-compact" src={mascot("idea")} alt={theme === "wangjai" ? "น้องวางใจ Safety mascot" : "SUEA tiger mascot"} />
+          <img className="ci-hdr-mascot-compact mascot-motion mascot-motion-compact" src={mascot("idea")} alt={theme === "wangjai" ? "น้องวางใจ Safety mascot" : "SUEA tiger mascot"} />
         </div>
       </div>
       <div
@@ -1774,14 +1817,25 @@ export default function Checkin() {
                 }}
               >
                 {visibleLocations.length > 0 ? (
-                    visibleLocations.map(loc => (
+                  <>
+                    {pagedLocations.map(loc => (
                       <FilteredLocCard
-                      key={loc.id}
-                      loc={loc}
-                      isSelected={selected?.id === loc.id}
-                      onClick={() => setSelected(loc)}
-                    />
-                  ))
+                        key={loc.id}
+                        loc={loc}
+                        isSelected={selected?.id === loc.id}
+                        onClick={() => setSelected(loc)}
+                      />
+                    ))}
+                    {hasMoreLocations && (
+                      <button
+                        type="button"
+                        className="ci-show-more"
+                        onClick={() => setVisibleCount(c => c + LOCATIONS_PAGE_SIZE)}
+                      >
+                        แสดงเพิ่มเติม (เหลืออีก {remainingLocations})
+                      </button>
+                    )}
+                  </>
                 ) : (
                   <div style={{
                     padding: "36px 16px", textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 10,
@@ -1887,14 +1941,25 @@ export default function Checkin() {
 
           <div style={{ padding: "12px 16px", display: "flex", flexDirection: "column", gap: 9, flex: 1 }}>
             {visibleLocations.length > 0 ? (
-              visibleLocations.map(loc => (
-                <FilteredLocCard
-                  key={loc.id}
-                  loc={loc}
-                  isSelected={selected?.id === loc.id}
-                  onClick={() => setSelected(loc)}
-                />
-              ))
+              <>
+                {pagedLocations.map(loc => (
+                  <FilteredLocCard
+                    key={loc.id}
+                    loc={loc}
+                    isSelected={selected?.id === loc.id}
+                    onClick={() => setSelected(loc)}
+                  />
+                ))}
+                {hasMoreLocations && (
+                  <button
+                    type="button"
+                    className="ci-show-more"
+                    onClick={() => setVisibleCount(c => c + LOCATIONS_PAGE_SIZE)}
+                  >
+                    แสดงเพิ่มเติม (เหลืออีก {remainingLocations})
+                  </button>
+                )}
+              </>
             ) : (
               <div style={{
                 padding: "36px 16px", textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 10,

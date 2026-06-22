@@ -1,0 +1,132 @@
+.page {
+  font-size: 11px;
+  color: #112f59;
+  /* Match the shared app background language (same direction as Home) */
+  background: linear-gradient(180deg, #edf5ff 0, var(--background) 280px, var(--background) 100%);
+}
+
+.communityGrid {
+  align-items: start;
+}
+
+.topTabs {
+  display: none;
+}
+
+.composer,
+.postCard,
+.rankingCard {
+  border: 1px solid #d7e5f5;
+  background: rgba(255, 255, 255, .94);
+  box-shadow: 0 7px 18px rgba(23, 73, 131, .07);
+}
+
+.composerAvatar {
+  border-color: #062b63;
+  color: #062b63;
+  background: #2b9cff;
+}
+
+.composerInput {
+  border-color: #d5e4f4;
+  color: #8292a8;
+  background: #fbfdff;
+}
+
+.composerImage {
+  border-color: #d5e4f4;
+  color: #8292a8;
+  background: #fbfdff;
+}
+
+.categories {
+  padding: 3px 2px;
+}
+
+.categoryButton {
+  min-width: 68px;
+  padding-block: 5px;
+  font-size: 11px;
+  color: #173b68;
+}
+
+.categoryActive {
+  border-color: #168fff;
+  color: white;
+  background: linear-gradient(180deg, #188fff, #0663d2);
+  box-shadow: 0 5px 13px rgba(0, 108, 223, .25);
+}
+
+.categoryIdle {
+  border-color: #d4e1f0;
+  background: #fff;
+}
+
+.postCard {
+  border-color: #d8e5f3 !important;
+  color: #102b50;
+  box-shadow: 0 7px 18px rgba(23, 73, 131, .07);
+}
+
+.postCard:hover {
+  border-color: #80bff2 !important;
+  box-shadow: 0 10px 24px rgba(23, 73, 131, .11);
+}
+
+.leadingCard {
+  border: 1px solid #25bfff !important;
+  color: white;
+  background: linear-gradient(135deg, #052551, #074d92) !important;
+  box-shadow: 0 10px 24px rgba(0, 57, 119, .2) !important;
+}
+
+.leadingCard > div:first-child {
+  display: none;
+}
+
+.rankingCard {
+  border-color: #d8e5f3 !important;
+  background: rgba(255,255,255,.96) !important;
+}
+
+.tipCard {
+  border-color: #7fc8f6 !important;
+  background: #eef8ff !important;
+}
+
+@media (max-width: 1099px) {
+  .page {
+    padding-inline: 8px;
+    padding-top: 8px;
+  }
+
+  .communityGrid {
+    gap: 9px;
+  }
+}
+
+@media (max-width: 620px) {
+  .page {
+    padding-inline: 8px;
+    padding-top: 8px;
+  }
+
+  .composer {
+    border-radius: 14px;
+  }
+
+  .categoryButton {
+    min-width: auto;
+    padding: 5px 10px;
+    font-size: 10px;
+  }
+
+  .postCard {
+    border-radius: 14px;
+    padding: 10px;
+  }
+
+  .sidebar {
+    margin-top: 2px;
+  }
+}

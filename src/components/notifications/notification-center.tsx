@@ -209,8 +209,7 @@ export function NotificationCenter({ compact = false, onItemClick, onNotificatio
                 alt="Safety mascot"
                 width={108}
                 height={108}
-                className="relative h-auto w-[108px] max-w-none object-contain drop-shadow-[0_12px_24px_rgba(7,22,40,0.28)]"
-                style={{ animation: "notificationMascotFloat 3.2s ease-in-out infinite" }}
+                className="mascot-motion mascot-motion-compact relative h-auto w-[108px] max-w-none object-contain drop-shadow-[0_12px_24px_rgba(7,22,40,0.28)]"
               />
             </div>
           </div>
@@ -358,6 +357,5 @@ export function NotificationCenter({ compact = false, onItemClick, onNotificatio
     </div>
   );
 }
-
 
 

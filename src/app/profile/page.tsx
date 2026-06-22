@@ -13,36 +13,42 @@ import {
   Upload,
   UserRound,
 } from "lucide-react";
-import { getProfileDisplayName, MOCK_PROFILE, notifyProfileImageUpdated } from "@/lib/profile";
+import { notifyProfileImageUpdated } from "@/lib/profile";
 import { getSessionDisplayName, getSessionEnglishName, getSessionProfileImage, useSessionUser } from "@/lib/session-user";
 
 const MAX_IMAGE_SIZE = 3 * 1024 * 1024;
 
-const CONNECTIONS = [
-  { label: "Microsoft", status: "Linked", icon: ShieldCheck },
-  { label: "LINE", status: "Linked", icon: Link2 },
-  { label: "Directory Claim", status: "Verified", icon: BadgeCheck },
-];
+// Derive connection/link status from the real SSO session instead of hardcoding it.
+function getConnections(user: ReturnType<typeof useSessionUser>["user"]) {
+  return [
+    { label: "Microsoft", status: user ? "Linked" : "Not linked", icon: ShieldCheck },
+    { label: "LINE", status: user?.lineProfileImageUrl ? "Linked" : "Not linked", icon: Link2 },
+    { label: "Directory Claim", status: user?.email ? "Verified" : "Pending", icon: BadgeCheck },
+  ];
+}
 
 export default function ProfilePage() {
   const inputRef = useRef<HTMLInputElement>(null);
   const [profileImage, setProfileImage] = useState("");
   const [imageError, setImageError] = useState("");
   const { user: sessionUser } = useSessionUser();
-  const displayName = sessionUser ? getSessionDisplayName(sessionUser) : getProfileDisplayName();
-  const displayNameEn = getSessionEnglishName(sessionUser) || `${MOCK_PROFILE.namePrefixEn} ${MOCK_PROFILE.firstNameEn} ${MOCK_PROFILE.lastNameEn}`;
-  const displayPosition = sessionUser?.positionTh || sessionUser?.positionEn || MOCK_PROFILE.positionTh;
-  const displayDivision = sessionUser?.division || MOCK_PROFILE.divisionTh;
-  const displayEmail = sessionUser?.email || MOCK_PROFILE.email;
-  const displayUsername = sessionUser?.username || MOCK_PROFILE.username;
+  const displayName = sessionUser ? getSessionDisplayName(sessionUser) : "-";
+  const displayNameEn = getSessionEnglishName(sessionUser) || "-";
+  const displayPosition = sessionUser?.positionTh || sessionUser?.positionEn || "-";
+  const displayDivision = sessionUser?.division || "-";
+  const displayEmail = sessionUser?.email || "-";
+  const displayUsername = sessionUser?.username || "-";
   const displayImage = profileImage || getSessionProfileImage(sessionUser);
+  const connections = getConnections(sessionUser);
+  const displayCompany = "-";
+  const displayWorkLocation = "-";
   const profileFields = [
     { label: "ชื่อภาษาไทย", value: displayName, icon: UserRound },
     { label: "ชื่อภาษาอังกฤษ", value: displayNameEn, icon: UserRound },
     { label: "ตำแหน่ง", value: displayPosition, icon: BadgeCheck },
     { label: "หน่วยงาน", value: displayDivision, icon: Building2 },
-    { label: "บริษัท", value: MOCK_PROFILE.company, icon: ShieldCheck },
-    { label: "สถานที่ทำงาน", value: MOCK_PROFILE.workLocation, icon: MapPin },
+    { label: "บริษัท", value: displayCompany, icon: ShieldCheck },
+    { label: "สถานที่ทำงาน", value: displayWorkLocation, icon: MapPin },
     { label: "อีเมล", value: displayEmail, icon: Mail },
     { label: "ชื่อผู้ใช้งาน", value: displayUsername, icon: UserRound },
   ];
@@ -182,7 +188,7 @@ export default function ProfilePage() {
         </section>
 
         <section className="grid gap-3 sm:grid-cols-3">
-          {CONNECTIONS.map(({ label, status, icon: Icon }) => (
+          {connections.map(({ label, status, icon: Icon }) => (
             <article key={label} className="rounded-[18px] border border-[var(--border)] bg-[var(--brand-surface)] p-4 shadow-[0_10px_26px_var(--brand-shadow)]">
               <div className="flex items-center justify-between gap-3">
                 <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[var(--brand-soft)] text-[var(--brand-text)]">

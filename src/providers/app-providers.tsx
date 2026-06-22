@@ -55,10 +55,13 @@ export type PostPhoto = {
 
 export type Comment = {
   id: string;
+  authorId?: string;
   author: string;
   avatarText: string;
+  avatarImageUrl?: string | null;
   text: string;
   reactions?: Record<string, number>;
+  isYou?: boolean;
 };
 
 export type Post = {
@@ -67,6 +70,7 @@ export type Post = {
   avatarBg: string;
   avatarColor: string;
   avatarText: string;
+  avatarImageUrl?: string | null;
   subtext: string;
   category: string;
   body: string;
@@ -215,6 +219,7 @@ export type AwarenessCompletion = {
 };
 
 export type AwarenessHoliday = {
+  id?: string;
   date: string;
   name: string;
 };
@@ -264,7 +269,12 @@ type AppActions = {
   addPost: (post: Post) => Promise<Post>;
   fetchPosts: (options?: { scope?: "all" | "my-team" | "mine"; category?: string | null; limit?: number }) => Promise<Post[]>;
   toggleLike: (postId: number) => void;
-  addComment: (postId: number, text: string) => void;
+  addComment: (postId: number, text: string) => Promise<boolean>;
+  fetchComments: (postId: number) => Promise<Comment[]>;
+  updateComment: (postId: number, commentId: string, text: string) => Promise<boolean>;
+  deleteComment: (postId: number, commentId: string) => Promise<boolean>;
+  updatePost: (postId: number, content: string) => Promise<boolean>;
+  deletePost: (postId: number) => Promise<boolean>;
   updateSafetyCultureEvent: (data: SafetyCultureEventConfig) => void;
   updateFeedEvents: (events: SafetyCultureFeedEvent[]) => void;
   sendFeedEventNotification: (feedEventId: string) => boolean;
@@ -388,9 +398,12 @@ function normalizePosts(posts: Post[]) {
       ? post.comments.map((comment, commentIndex) => ({
           ...comment,
           id: comment.id || `comment-${post.id}-${commentIndex + 1}`,
+          authorId: comment.authorId ? String(comment.authorId) : undefined,
           author: repairMojibakeText(comment.author) || "Unknown author",
           avatarText: repairMojibakeText(comment.avatarText) || "C",
+          avatarImageUrl: comment.avatarImageUrl || null,
           text: repairMojibakeText(comment.text) || "",
+          isYou: Boolean(comment.isYou),
         }))
       : Math.max(0, Number(post.comments) || 0),
     likes: Math.max(0, Number(post.likes) || 0),
@@ -765,6 +778,7 @@ type ApiPost = {
   authorId?: string;
   authorName: string;
   authorEmail?: string | null;
+  authorProfileImageUrl?: string | null;
   organizationId?: string | null;
   organizationName?: string | null;
   teamId?: string | null;
@@ -783,6 +797,17 @@ type ApiPost = {
   photos?: Array<{ id: string; dataUrl?: string; url?: string; type?: string }>;
 };
 
+type ApiComment = {
+  id: string | number;
+  postId?: string | number;
+  authorId?: string | number;
+  authorName?: string | null;
+  authorProfileImageUrl?: string | null;
+  content?: string;
+  text?: string;
+  createdAt?: string;
+};
+
 type ApiAwarenessAttempt = {
   id: string | number;
   attempt_date?: string;
@@ -790,6 +815,7 @@ type ApiAwarenessAttempt = {
   completed_at?: string;
   completedAt?: string;
   score?: string | number;
+  answers?: Array<{ id?: string | number; category?: string; text?: string; correct?: boolean }>;
 };
 
 function normalizeDateKey(value: unknown) {
@@ -806,12 +832,20 @@ function awarenessCompletionFromApi(item: ApiAwarenessAttempt): AwarenessComplet
   if (!date) return null;
   const percent = Math.max(0, Math.min(100, Math.round(Number(item.score || 0))));
   const completedAt = item.completed_at || item.completedAt || `${date}T00:00:00.000Z`;
+  const questions = Array.isArray(item.answers)
+    ? item.answers.map((answer) => ({
+        id: String(answer.id ?? ""),
+        category: String(answer.category ?? ""),
+        text: String(answer.text ?? ""),
+        correct: Boolean(answer.correct),
+      }))
+    : [];
   return {
     date,
     completedAt: String(completedAt),
     score: percent,
     total: 100,
-    questions: [],
+    questions,
   };
 }
 
@@ -845,6 +879,7 @@ function postFromApi(post: ApiPost): Post {
     avatarBg: "var(--brand-accent)",
     avatarColor: "#1A1A1A",
     avatarText: authorName.charAt(0).toUpperCase(),
+    avatarImageUrl: post.authorProfileImageUrl || null,
     subtext: organizationName || teamName || "Safety Culture",
     category: repairMojibakeText(post.category || "") || "ทั่วไป",
     body: repairMojibakeText(post.content) || "",
@@ -863,6 +898,20 @@ function postFromApi(post: ApiPost): Post {
     team: teamName || undefined,
     location: organizationName || undefined,
     feedEventId: post.eventId ? String(post.eventId) : undefined,
+  };
+}
+
+function commentFromApi(comment: ApiComment, viewerId?: string | null): Comment {
+  const authorName = repairMojibakeText(comment.authorName || "") || "Unknown user";
+  const authorId = comment.authorId ? String(comment.authorId) : undefined;
+  return {
+    id: String(comment.id),
+    authorId,
+    author: authorName,
+    avatarText: authorName.charAt(0).toUpperCase() || "C",
+    avatarImageUrl: comment.authorProfileImageUrl || null,
+    text: repairMojibakeText(comment.content || comment.text || "") || "",
+    isYou: Boolean(viewerId && authorId && String(authorId) === String(viewerId)),
   };
 }
 
@@ -907,6 +956,31 @@ export function AppProviders({ children }: { children: ReactNode }) {
   const isAuthenticatedRef = useRef(false);
   const currentUserRef = useRef<SessionUser | null>(null);
 
+  const loadPostComments = useCallback(async (postId: number | string, viewerId?: string | null) => {
+    const result = await apiFetch<{ items: ApiComment[] }>(`/api/safety-culture/posts/${postId}/comments?limit=100`);
+    if (!result.ok || !Array.isArray(result.data?.items)) return null;
+    return result.data.items.map((item) => commentFromApi(item, viewerId ?? currentUserRef.current?.id ?? null));
+  }, []);
+
+  const refreshPointBalance = useCallback(async () => {
+    const balance = await apiFetch<{ balance: { balance: number } }>("/api/safety-culture/points/me");
+    if (balance.ok && typeof balance.data?.balance?.balance === "number") {
+      setCurrentUserPoints(Math.max(0, balance.data.balance.balance));
+    }
+  }, []);
+
+  const refreshAwarenessAttempts = useCallback(async () => {
+    const attemptsResult = await apiFetch<{ items: ApiAwarenessAttempt[] }>("/api/safety-awareness/attempts/me?pageSize=120");
+    if (attemptsResult.ok && Array.isArray(attemptsResult.data?.items)) {
+      const history = attemptsResult.data.items
+        .map(awarenessCompletionFromApi)
+        .filter((item): item is AwarenessCompletion => Boolean(item))
+        .sort((left, right) => left.date.localeCompare(right.date));
+      setAwarenessHistory(history);
+      setAwarenessDoneDate(history.some((item) => item.date === todayKey()) ? todayKey() : "");
+    }
+  }, [loadPostComments]);
+
   useEffect(() => {
     let cancelled = false;
 
@@ -945,8 +1019,18 @@ export function AppProviders({ children }: { children: ReactNode }) {
       if (cancelled) return;
 
       if (postsResult.ok && Array.isArray(postsResult.data?.items)) {
-        const backendPosts = postsResult.data.items.map(postFromApi);
-        setPosts(backendPosts);
+        const viewerId = sessionUser?.id ? String(sessionUser.id) : null;
+        const backendPosts = postsResult.data.items.map((item) => {
+          const mapped = postFromApi(item);
+          return { ...mapped, isYou: Boolean(viewerId && mapped.authorId && mapped.authorId === viewerId) };
+        });
+        const hydratedPosts = await Promise.all(
+          backendPosts.map(async (post) => {
+            const comments = await loadPostComments(post.id, viewerId).catch(() => null);
+            return comments ? { ...post, comments } : post;
+          }),
+        );
+        if (!cancelled) setPosts(hydratedPosts);
       }
 
       if (balanceResult.ok && typeof balanceResult.data?.balance?.balance === "number") {
@@ -1038,7 +1122,8 @@ export function AppProviders({ children }: { children: ReactNode }) {
 
       if (holidaysResult.ok && Array.isArray(holidaysResult.data?.items)) {
         setAwarenessHolidays(holidaysResult.data.items.map((item) => ({
-          date: String(item.holiday_date || ""),
+          id: item.id ? String(item.id) : undefined,
+          date: String(item.holiday_date || "").slice(0, 10),
           name: String(item.name || ""),
         })));
       }
@@ -1070,7 +1155,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [loadPostComments]);
 
   useEffect(() => {
     setEventNow(Date.now());
@@ -1134,8 +1219,18 @@ export function AppProviders({ children }: { children: ReactNode }) {
     if (!result.ok || !Array.isArray(result.data?.items)) {
       throw new Error(result.error || "posts_fetch_failed");
     }
-    return result.data.items.map(postFromApi);
-  }, []);
+    const viewerId = currentUserRef.current?.id ? String(currentUserRef.current.id) : null;
+    const mappedPosts = result.data.items.map((item) => {
+      const mapped = postFromApi(item);
+      return { ...mapped, isYou: Boolean(viewerId && mapped.authorId && mapped.authorId === viewerId) };
+    });
+    return Promise.all(
+      mappedPosts.map(async (post) => {
+        const comments = await loadPostComments(post.id, viewerId).catch(() => null);
+        return comments ? { ...post, comments } : post;
+      }),
+    );
+  }, [loadPostComments]);
 
   const addPost = useCallback(async (post: Post) => {
     const linkedFeedEvent = getLinkedFeedEvent(post.feedEventId);
@@ -1156,7 +1251,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
       if (!result.ok || !result.data?.post) {
         throw new Error(result.error || "post_create_failed");
       }
-      const savedPost = postFromApi(result.data.post);
+      const savedPost = { ...postFromApi(result.data.post), isYou: true };
       const savedPoints = Math.max(0, Number(savedPost.points) || awardedPoints);
       setPosts((prev) => [savedPost, ...prev.filter((item) => item.id !== savedPost.id)]);
       setUserActivityHistory((current) =>
@@ -1201,11 +1296,13 @@ export function AppProviders({ children }: { children: ReactNode }) {
   const toggleLike = useCallback((postId: number) => {
     let currentDelta = 0;
     let likedPost: Post | null = null;
+    let previousPost: Post | null = null;
     const occurredAt = Date.now();
 
     setPosts((prev) =>
       prev.map((p) => {
         if (p.id !== postId) return p;
+        previousPost = p;
         const isAdding = !p.hasLiked;
         const linkedFeedEvent = getLinkedFeedEvent(p.feedEventId);
         const awarded = linkedFeedEvent
@@ -1247,15 +1344,35 @@ export function AppProviders({ children }: { children: ReactNode }) {
     if (currentDelta !== 0) {
       setCurrentUserPoints((prev) => Math.max(0, prev + currentDelta));
     }
-    if (isAuthenticatedRef.current) void apiFetch(`/api/safety-culture/posts/${postId}/reactions`, apiJson(currentDelta > 0 ? "POST" : "DELETE", { reactionType: "LIKE" }));
+    if (isAuthenticatedRef.current) {
+      void apiFetch(`/api/safety-culture/posts/${postId}/reactions`, apiJson(currentDelta > 0 ? "POST" : "DELETE", { reactionType: "LIKE" }))
+        .then((result) => {
+          if (result.ok) return;
+          const rollbackPost = previousPost;
+          if (rollbackPost) {
+            setPosts((current) => current.map((post) => (post.id === postId ? rollbackPost : post)));
+            setCurrentUserPoints((points) => Math.max(0, points - currentDelta));
+          }
+        });
+    }
   }, [getLinkedFeedEvent, safetyCultureEvent]);
 
-  const addComment = useCallback((postId: number, text: string) => {
+  const fetchComments = useCallback(async (postId: number) => {
+    const comments = await loadPostComments(postId);
+    if (!comments) return [];
+    setPosts((current) => current.map((post) => (post.id === postId ? { ...post, comments } : post)));
+    return comments;
+  }, [loadPostComments]);
+
+  const addComment = useCallback(async (postId: number, text: string) => {
     const occurredAt = Date.now();
     let targetPost: Post | null = null;
     let currentAwardedPoints = 0;
     const actorName = userDisplayName(currentUserRef.current);
     const actorInitials = currentUserRef.current ? getSessionInitials(currentUserRef.current) : "U";
+    const actorId = currentUserRef.current?.id ? String(currentUserRef.current.id) : undefined;
+    const actorImage = currentUserRef.current?.profileImageUrl || currentUserRef.current?.lineProfileImageUrl || null;
+    const optimisticId = `pending-${postId}-${occurredAt}`;
 
     setPosts((prev) =>
       prev.map((p) => {
@@ -1272,10 +1389,13 @@ export function AppProviders({ children }: { children: ReactNode }) {
           comments: [
             ...currentComments,
             {
-              id: `${Date.now()}`,
+              id: optimisticId,
+              authorId: actorId,
               author: actorName,
               avatarText: actorInitials,
+              avatarImageUrl: actorImage,
               text,
+              isYou: true,
             },
           ],
         };
@@ -1301,8 +1421,151 @@ export function AppProviders({ children }: { children: ReactNode }) {
       );
     }
     setCurrentUserPoints((prev) => prev + currentAwardedPoints);
-    if (isAuthenticatedRef.current) void apiFetch(`/api/safety-culture/posts/${postId}/comments`, apiJson("POST", { content: text }));
+    if (!isAuthenticatedRef.current) return true;
+
+    const result = await apiFetch<{ comment: ApiComment }>(`/api/safety-culture/posts/${postId}/comments`, apiJson("POST", { content: text }));
+    if (!result.ok || !result.data?.comment) {
+      setPosts((current) => current.map((post) => {
+        if (post.id !== postId || !Array.isArray(post.comments)) return post;
+        return {
+          ...post,
+          comments: post.comments.filter((comment) => comment.id !== optimisticId),
+          points: Math.max(0, (post.points || 0) - currentAwardedPoints),
+        };
+      }));
+      setCurrentUserPoints((prev) => Math.max(0, prev - currentAwardedPoints));
+      return false;
+    }
+    const savedComment = commentFromApi(result.data.comment, actorId);
+    setPosts((current) => current.map((post) => {
+      if (post.id !== postId || !Array.isArray(post.comments)) return post;
+      return {
+        ...post,
+        comments: post.comments.map((comment) => comment.id === optimisticId ? savedComment : comment),
+      };
+    }));
+    return true;
   }, [getLinkedFeedEvent, safetyCultureEvent]);
+
+  const updateComment = useCallback(async (postId: number, commentId: string, text: string) => {
+    const trimmed = text.trim();
+    if (!trimmed) return false;
+    let previousText: string | undefined;
+    setPosts((current) => current.map((post) => {
+      if (post.id !== postId || !Array.isArray(post.comments)) return post;
+      return {
+        ...post,
+        comments: post.comments.map((comment) => {
+          if (comment.id !== commentId) return comment;
+          previousText = comment.text;
+          return { ...comment, text: trimmed };
+        }),
+      };
+    }));
+    if (!isAuthenticatedRef.current) return true;
+    const result = await apiFetch<{ comment: ApiComment }>(`/api/safety-culture/comments/${commentId}`, apiJson("PATCH", { content: trimmed }));
+    if (!result.ok || !result.data?.comment) {
+      setPosts((current) => current.map((post) => {
+        if (post.id !== postId || !Array.isArray(post.comments)) return post;
+        return { ...post, comments: post.comments.map((comment) => comment.id === commentId && previousText !== undefined ? { ...comment, text: previousText } : comment) };
+      }));
+      return false;
+    }
+    const savedComment = commentFromApi(result.data.comment, currentUserRef.current?.id);
+    setPosts((current) => current.map((post) => {
+      if (post.id !== postId || !Array.isArray(post.comments)) return post;
+      return { ...post, comments: post.comments.map((comment) => comment.id === commentId ? savedComment : comment) };
+    }));
+    return true;
+  }, []);
+
+  const deleteComment = useCallback(async (postId: number, commentId: string) => {
+    let removed: Comment | undefined;
+    let removedIndex = -1;
+    setPosts((current) => current.map((post) => {
+      if (post.id !== postId || !Array.isArray(post.comments)) return post;
+      removedIndex = post.comments.findIndex((comment) => comment.id === commentId);
+      removed = removedIndex >= 0 ? post.comments[removedIndex] : undefined;
+      return { ...post, comments: post.comments.filter((comment) => comment.id !== commentId) };
+    }));
+    if (!isAuthenticatedRef.current) return true;
+    const result = await apiFetch<{ deleted: boolean }>(`/api/safety-culture/comments/${commentId}`, { method: "DELETE" });
+    if (!result.ok || !result.data?.deleted) {
+      const restored = removed;
+      setPosts((current) => current.map((post) => {
+        if (post.id !== postId || !restored) return post;
+        const comments = Array.isArray(post.comments) ? [...post.comments] : [];
+        comments.splice(removedIndex >= 0 ? removedIndex : comments.length, 0, restored);
+        return { ...post, comments };
+      }));
+      return false;
+    }
+    return true;
+  }, []);
+
+  // Edit own post (text). Backend enforces author_id = current user.
+  const updatePost = useCallback(async (postId: number, content: string) => {
+    const trimmed = content.trim();
+    if (!trimmed) return false;
+    // optimistic update
+    let previousBody: string | undefined;
+    setPosts((prev) =>
+      prev.map((p) => {
+        if (p.id !== postId) return p;
+        previousBody = p.body;
+        return { ...p, body: trimmed };
+      })
+    );
+    if (!isAuthenticatedRef.current) return true;
+    const result = await apiFetch<{ post: ApiPost }>(
+      `/api/safety-culture/posts/${postId}`,
+      apiJson("PATCH", { content: trimmed })
+    );
+    if (!result.ok || !result.data?.post) {
+      // revert on failure
+      setPosts((prev) => prev.map((p) => (p.id === postId && previousBody !== undefined ? { ...p, body: previousBody } : p)));
+      return false;
+    }
+    const saved = postFromApi(result.data.post);
+    setPosts((prev) => prev.map((p) => (p.id === postId ? { ...p, body: saved.body, isYou: true } : p)));
+    return true;
+  }, []);
+
+  // Delete own post (soft delete server-side). Backend enforces author_id = current user.
+  const deletePost = useCallback(async (postId: number) => {
+    let removed: Post | undefined;
+    let removedIndex = -1;
+    setPosts((prev) => {
+      removedIndex = prev.findIndex((p) => p.id === postId);
+      removed = removedIndex >= 0 ? prev[removedIndex] : undefined;
+      return prev.filter((p) => p.id !== postId);
+    });
+    if (!isAuthenticatedRef.current) return true;
+    const result = await apiFetch<{ deleted: boolean; pointsReversed: number; balance: number | null }>(
+      `/api/safety-culture/posts/${postId}`,
+      apiJson("DELETE")
+    );
+    if (!result.ok) {
+      // revert on failure
+      if (removed) {
+        const restored = removed;
+        const at = removedIndex;
+        setPosts((prev) => {
+          const next = [...prev];
+          next.splice(at >= 0 ? at : 0, 0, restored);
+          return next;
+        });
+      }
+      return false;
+    }
+    if (typeof result.data?.balance === "number") {
+      setCurrentUserPoints(result.data.balance);
+    } else if (removed?.points) {
+      setCurrentUserPoints((current) => current - Math.max(0, removed?.points || 0));
+    }
+    setUserActivityHistory((current) => current.filter((item) => !(item.type === "post" && item.postId === postId)));
+    return true;
+  }, []);
 
   const updateSafetyCultureEvent = useCallback((data: SafetyCultureEventConfig) => {
     setSafetyCultureEvent(data);
@@ -1470,20 +1733,42 @@ export function AppProviders({ children }: { children: ReactNode }) {
   }, [awarenessQuestions]);
 
   const updateAwarenessHolidays = useCallback((holidays: AwarenessHoliday[]) => {
+    const previousByDate = new Map(awarenessHolidays.map((holiday) => [holiday.date, holiday]));
     const normalized = holidays
         .filter((holiday) => holiday.date && holiday.name.trim())
-        .map((holiday) => ({ date: holiday.date, name: holiday.name.trim() }))
+        .map((holiday) => ({
+          id: holiday.id || previousByDate.get(holiday.date)?.id,
+          date: holiday.date.slice(0, 10),
+          name: holiday.name.trim(),
+        }))
         .sort((a, b) => a.date.localeCompare(b.date));
     setAwarenessHolidays(normalized);
     if (isAuthenticatedRef.current) {
-      for (const holiday of normalized) {
-        void apiFetch("/api/holidays", apiJson("POST", {
-          holidayDate: holiday.date,
-          name: holiday.name,
-        }));
-      }
+      void (async () => {
+        const nextDates = new Set(normalized.map((holiday) => holiday.date));
+        for (const previous of awarenessHolidays) {
+          if (!nextDates.has(previous.date) && previous.id) {
+            await apiFetch(`/api/holidays/${previous.id}`, { method: "DELETE" });
+          }
+        }
+        for (const holiday of normalized) {
+          const previous = previousByDate.get(holiday.date);
+          if (previous && previous.name === holiday.name && previous.id) continue;
+          const saved = await apiFetch<{ holiday: { id?: string | number; holiday_date?: string; name?: string } }>(
+            "/api/holidays",
+            apiJson("POST", { holidayDate: holiday.date, name: holiday.name }),
+          );
+          const savedHolidayId = saved.data?.holiday?.id;
+          if (saved.ok && savedHolidayId) {
+            setAwarenessHolidays((current) => current.map((item) => item.date === holiday.date
+              ? { ...item, id: String(savedHolidayId) }
+              : item));
+          }
+        }
+        await Promise.all([refreshPointBalance(), refreshAwarenessAttempts()]);
+      })();
     }
-  }, []);
+  }, [awarenessHolidays, refreshAwarenessAttempts, refreshPointBalance]);
 
   const markAwarenessDone = useCallback((completion: Omit<AwarenessCompletion, "date" | "completedAt">) => {
     const date = todayKey();
@@ -1525,13 +1810,10 @@ export function AppProviders({ children }: { children: ReactNode }) {
           setNotification({ type: "info", message: "บันทึก Safety Awareness ไม่สำเร็จ กรุณารีเฟรชแล้วลองอีกครั้ง" });
           return;
         }
-        const balance = await apiFetch<{ balance: { balance: number } }>("/api/safety-culture/points/me");
-        if (balance.ok && typeof balance.data?.balance?.balance === "number") {
-          setCurrentUserPoints(Math.max(0, balance.data.balance.balance));
-        }
+        await Promise.all([refreshPointBalance(), refreshAwarenessAttempts()]);
       })();
     }
-  }, [awarenessDoneDate, awarenessHistory]);
+  }, [awarenessDoneDate, awarenessHistory, refreshAwarenessAttempts, refreshPointBalance]);
 
   const awardSafetyEffortCompletion = useCallback((sourceId: string, label = "Safety Effort สำเร็จ") => {
     const occurredAt = Date.now();
@@ -1702,6 +1984,11 @@ export function AppProviders({ children }: { children: ReactNode }) {
     fetchPosts,
     toggleLike,
     addComment,
+    fetchComments,
+    updateComment,
+    deleteComment,
+    updatePost,
+    deletePost,
     updateSafetyCultureEvent,
     updateFeedEvents,
     sendFeedEventNotification,

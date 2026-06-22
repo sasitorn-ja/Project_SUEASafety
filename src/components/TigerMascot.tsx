@@ -62,7 +62,7 @@ export default function TigerMascot({
         .anim-wiggle { animation: mascot-wiggle 0.5s ease-in-out infinite; }
       `}</style>
       <img
-        className={`${className} ${animationClass}`.trim()}
+        className={`mascot-motion ${className} ${animationClass}`.trim()}
         src={image}
         alt={theme === "wangjai" ? "น้องวางใจ Safety mascot" : "SUEA tiger mascot"}
         style={{

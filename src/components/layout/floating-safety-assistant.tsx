@@ -503,7 +503,7 @@ export function FloatingSafetyAssistant() {
                   alt="น้องวางใจ AI Safety Buddy"
                   width={200}
                   height={250}
-                  className="absolute -left-2.5 bottom-0 h-[132px] w-[100px] max-w-none object-contain drop-shadow-[0_12px_22px_rgba(0,0,0,0.28)]"
+                  className="mascot-motion mascot-motion-compact absolute -left-2.5 bottom-0 h-[132px] w-[100px] max-w-none object-contain drop-shadow-[0_12px_22px_rgba(0,0,0,0.28)]"
                 />
               </div>
               <div className="min-w-0 pb-4">
@@ -531,7 +531,7 @@ export function FloatingSafetyAssistant() {
         ) : (
           <div className="relative flex items-center gap-2.5 px-3 py-2.5">
             <Image
-              src="/images/mascots/Transparent น้องวางใจ/20.png"
+              src="/images/mascots/wangjai/20.png"
               alt=""
               width={40}
               height={40}
@@ -563,7 +563,7 @@ export function FloatingSafetyAssistant() {
             message.role === "assistant" ? (
               <div key={message.id} className="flex items-start gap-2">
                 <Image
-                  src="/images/mascots/Transparent น้องวางใจ/20.png"
+                  src="/images/mascots/wangjai/20.png"
                   alt=""
                   width={40}
                   height={40}
@@ -672,7 +672,7 @@ export function FloatingSafetyAssistant() {
           {context.urgent ? "!" : "AI"}
         </span>
         <Image
-          src="/images/mascots/Transparent น้องวางใจ/25.png"
+          src="/images/mascots/wangjai/25.png"
           alt="น้องวางใจ AI Safety Buddy"
           width={96}
           height={96}

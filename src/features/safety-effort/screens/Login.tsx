@@ -1,6 +1,6 @@
 // @ts-nocheck
 import React, { useEffect, useMemo } from "react";
-import { useNavigate } from "@/lib/router-compat";
+import { useNavigate } from "@/lib/app-navigation";
 import { Lock, Info } from "lucide-react";
 import { isLocalDemoLoginHost } from "@/lib/session-user";
 
@@ -86,7 +86,7 @@ export default function Login() {
           <div className="mascot-wrap" aria-hidden="true">
             <div className="mascot-halo" />
             <img
-              className="mascot-img"
+              className="mascot-img mascot-motion mascot-motion-hero"
               src="/images/login/Video/WangJaiLogin.gif"
               alt="WangJai Mascot"
             />

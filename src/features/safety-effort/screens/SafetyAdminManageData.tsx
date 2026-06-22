@@ -1,6 +1,6 @@
 // @ts-nocheck
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "@/lib/router-compat";
+import { useNavigate } from "@/lib/app-navigation";
 import {
   ArrowLeft,
   Search,
@@ -18,9 +18,10 @@ import {
 } from "lucide-react";
 import * as XLSX from "xlsx";
 import { Combobox } from "@/components/ui/combobox";
-import mockPlantsData from "@/features/safety-effort/config/mock_plants.json";
-import mockOfficesData from "@/features/safety-effort/config/mock_offices.json";
-import mockSitesData from "@/features/safety-effort/config/mock_sites.json";
+
+// This screen is wired to the real locations API. Fields that do not exist on
+// `locations` yet (customer/contractor/stage/approvedBy) are UI-only until the
+// organization/location schema is extended.
 
 const T = {
   page: "var(--background)",
@@ -137,115 +138,79 @@ const buttonDangerStyle = {
 };
 
 const getInitialOffices = () => {
-  if (typeof window !== "undefined") {
-    const stored = localStorage.getItem("suea-safety-offices-v1");
-    if (stored) {
-      try {
-        return JSON.parse(stored);
-      } catch (e) {}
-    }
-  }
-  
-  const initial = [...mockOfficesData];
-  const officeNames = ["สำนักงานซีแพคบางซ่อน", "สำนักงานใหญ่บางซื่อ", "สำนักงานระยอง", "สำนักงานเชียงใหม่", "สำนักงานหาดใหญ่", "สำนักงานขอนแก่น", "สำนักงานโคราช"];
-  const depts = ["HR", "IT Support", "Accounting & Finance", "Procurement", "Sales & Marketing"];
-  
-  for (let i = 5; i <= 25; i++) {
-    initial.push({
-      id: i,
-      companyCode: "130",
-      companyName: i % 2 === 0 ? "CPAC Group" : "Tiger Safety Co.",
-      divisionCode: String(90000200 + i),
-      divisionName: i % 2 === 0 ? "CPAC Central" : "RMC North",
-      deptCode: String(14320 + i),
-      deptName: depts[i % depts.length],
-      officeCode: `OFF-GEN-${i}`,
-      officeName: officeNames[i % officeNames.length] + ` โซน ${i}`,
-      floor: `ชั้น ${i % 10 + 1}`,
-      status: i % 3 === 0 ? "INACTIVE" : "ACTIVE",
-      lat: i % 5 === 0 ? 13.0 + (i * 0.02) : null,
-      lng: i % 5 === 0 ? 100.0 + (i * 0.02) : null
-    });
-  }
-  return initial;
+  return [];
 };
 
 const getInitialSites = () => {
-  if (typeof window !== "undefined") {
-    const stored = localStorage.getItem("suea-safety-sites-v1");
-    if (stored) {
-      try {
-        return JSON.parse(stored);
-      } catch (e) {}
-    }
-  }
-  
-  const initial = [...mockSitesData];
-  const siteNames = ["Site บางซื่อ", "Site รัชดา", "Site สุขุมวิท", "Site พญาไท", "Site พระราม 9", "Site ลาดพร้าว", "Site ลุมพินี"];
-  const customers = ["Sansiri PLC", "AP Thailand", "Land & Houses", "Origin Property", "Asset Wise"];
-  const contractors = ["Italian-Thai Development", "CH. Karnchang", "Sino-Thai Engineering", "Unique Engineering"];
-  const stages = ["Piling Phase (งานตอกเสาเข็ม)", "Structural Phase (งานโครงสร้าง)", "Finishing Phase (งานตกแต่ง)", "Testing Phase", "Completed (เสร็จสิ้น)"];
-
-  for (let i = 5; i <= 25; i++) {
-    initial.push({
-      id: i,
-      projectCode: `STE-GEN-${i}`,
-      projectName: siteNames[i % siteNames.length] + ` เฟส ${i}`,
-      customer: customers[i % customers.length],
-      contractor: contractors[i % contractors.length],
-      stage: stages[i % stages.length],
-      status: i % 5 === 0 ? "COMPLETED" : "ACTIVE",
-      lat: i % 5 === 0 ? 13.0 + (i * 0.03) : null,
-      lng: i % 5 === 0 ? 100.0 + (i * 0.03) : null
-    });
-  }
-  return initial;
+  return [];
 };
 
 const getInitialPlants = () => {
-  if (typeof window !== "undefined") {
-    const stored = localStorage.getItem("suea-safety-plants-v1");
-    if (stored) {
-      try {
-        return JSON.parse(stored);
-      } catch (e) {}
-    }
-  }
-  
-  const initial = mockPlantsData.map((p, idx) => {
-    const approvers = ["swongg", "", "", "sumrouya", "chaivutr"];
-    return { ...p, approvedBy: approvers[idx % approvers.length] };
-  });
-  const factoryNames = ["หนองแค", "แก่งคอย", "พระประแดง", "ท่าหลวง", "บางซื่อ", "สามเสน", "ดอนเมือง", "ปทุมธานี", "รังสิต", "นครปฐม"];
-  const divisionNames = ["CPAC Metro", "RMC Metro", "RMC East", "RMC West", "SMART Structure"];
-  const statuses = ["CPAC", "ACTIVE", "INACTIVE"];
-  const approverList = ["swongg", "chaivutr", "sumrouya", ""];
-
-  for (let i = 13; i <= 65; i++) {
-    const plantName = `โรงงาน${factoryNames[i % factoryNames.length]} สาขา ${i}`;
-    const divName = divisionNames[i % divisionNames.length];
-    const status = statuses[i % statuses.length];
-    
-    initial.push({
-      id: i,
-      companyCode: "130",
-      companyName: i % 3 === 0 ? "บริษัท ปูนซิเมนต์ไทย (ท่าหลวง) จำกัด" : "No name",
-      divisionCode: String(90000000 + i * 7),
-      divisionName: divName,
-      deptCode: i % 2 === 0 ? String(14300 + i) : "",
-      deptName: i % 2 === 0 ? `Metro ${i}` : "",
-      secCode: i % 4 === 0 ? String(14400 + i) : "",
-      secName: i % 4 === 0 ? `Prod.สาขา ${i}` : "",
-      plantCode: String(1300 + i),
-      plantName: plantName,
-      status: status,
-      lat: i % 5 === 0 ? 13.5 + (i * 0.01) : null,
-      lng: i % 5 === 0 ? 100.5 + (i * 0.01) : null,
-      approvedBy: approverList[i % approverList.length]
-    });
-  }
-  return initial;
+  return [];
 };
+
+function mapLocationToAdminRow(location, selectedType) {
+  if (selectedType === "office") {
+    return {
+      id: location.id,
+      companyCode: "",
+      companyName: location.organizationName || "",
+      divisionCode: location.organizationCode || "",
+      divisionName: location.organizationName || "",
+      deptCode: "",
+      deptName: "",
+      officeCode: location.code || "",
+      officeName: location.nameTh || "",
+      floor: "",
+      status: location.status || "ACTIVE",
+      lat: location.lat,
+      lng: location.lng,
+      apiLocation: location,
+    };
+  }
+  if (selectedType === "site") {
+    return {
+      id: location.id,
+      projectCode: location.code || "",
+      projectName: location.nameTh || "",
+      customer: "",
+      contractor: "",
+      stage: "",
+      status: location.status || "ACTIVE",
+      lat: location.lat,
+      lng: location.lng,
+      apiLocation: location,
+    };
+  }
+  return {
+    id: location.id,
+    companyCode: "",
+    companyName: location.organizationName || "",
+    divisionCode: location.organizationCode || "",
+    divisionName: location.organizationName || "",
+    deptCode: "",
+    deptName: "",
+    secCode: "",
+    secName: "",
+    plantCode: location.code || "",
+    plantName: location.nameTh || "",
+    status: location.status || "ACTIVE",
+    lat: location.lat,
+    lng: location.lng,
+    approvedBy: "",
+    apiLocation: location,
+  };
+}
+
+async function fetchAdminLocations(type, selectedType) {
+  const response = await fetch(`/api/safety-effort/locations?type=${type}&limit=1000`, {
+    credentials: "include",
+    cache: "no-store",
+  });
+  const payload = await response.json().catch(() => null);
+  if (!response.ok || !payload?.ok) throw new Error(payload?.error || "locations_fetch_failed");
+  return (payload.data?.items || []).map((location) => mapLocationToAdminRow(location, selectedType));
+}
 
 export default function SafetyAdminManageData() {
   const navigate = useNavigate();
@@ -268,6 +233,7 @@ export default function SafetyAdminManageData() {
   const [plants, setPlants] = useState(() => getInitialPlants());
   const [offices, setOffices] = useState(() => getInitialOffices());
   const [sites, setSites] = useState(() => getInitialSites());
+  const [locationsLoading, setLocationsLoading] = useState(false);
 
   const [editingPlant, setEditingPlant] = useState(null);
   const [addingPlant, setAddingPlant] = useState(false);
@@ -298,25 +264,53 @@ export default function SafetyAdminManageData() {
     approvedBy: ""
   });
 
-  const savePlants = (newPlants) => {
-    setPlants(newPlants);
-    if (typeof window !== "undefined") {
-      localStorage.setItem("suea-safety-plants-v1", JSON.stringify(newPlants));
+  const refreshLocations = async () => {
+    setLocationsLoading(true);
+    try {
+      const [plantRows, officeRows, siteRows] = await Promise.all([
+        fetchAdminLocations("PLANT", "factory"),
+        fetchAdminLocations("OFFICE", "office"),
+        fetchAdminLocations("SITE", "site"),
+      ]);
+      setPlants(plantRows);
+      setOffices(officeRows);
+      setSites(siteRows);
+    } catch (error) {
+      console.error("Failed to load locations", error);
+    } finally {
+      setLocationsLoading(false);
     }
   };
 
-  const saveOffices = (newOffices) => {
-    setOffices(newOffices);
-    if (typeof window !== "undefined") {
-      localStorage.setItem("suea-safety-offices-v1", JSON.stringify(newOffices));
-    }
-  };
+  useEffect(() => {
+    void refreshLocations();
+  }, []);
 
-  const saveSites = (newSites) => {
-    setSites(newSites);
-    if (typeof window !== "undefined") {
-      localStorage.setItem("suea-safety-sites-v1", JSON.stringify(newSites));
+  const persistLocation = async (item, method = "POST", id = null) => {
+    const locationType = selectedType === "office" ? "OFFICE" : selectedType === "site" ? "SITE" : "PLANT";
+    const code = selectedType === "office" ? item.officeCode : selectedType === "site" ? item.projectCode : item.plantCode;
+    const nameTh = selectedType === "office" ? item.officeName : selectedType === "site" ? item.projectName : item.plantName;
+    const lat = item.lat === null || item.lat === "" ? NaN : Number(item.lat);
+    const lng = item.lng === null || item.lng === "" ? NaN : Number(item.lng);
+    if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+      throw new Error("กรุณากรอก lat/lng เพื่อบันทึก Location ลงฐานข้อมูลจริง");
     }
+    const response = await fetch(id ? `/api/safety-effort/locations/${id}` : "/api/safety-effort/locations", {
+      method,
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        locationType,
+        code,
+        nameTh,
+        lat,
+        lng,
+        status: item.status || "ACTIVE",
+      }),
+    });
+    const payload = await response.json().catch(() => null);
+    if (!response.ok || !payload?.ok) throw new Error(payload?.error || "location_save_failed");
+    await refreshLocations();
   };
 
   const handleAddPlant = () => {
@@ -425,7 +419,7 @@ export default function SafetyAdminManageData() {
     }
   };
 
-  const submitAddPlant = () => {
+  const submitAddPlant = async () => {
     if (selectedType === "factory") {
       if (!plantForm.plantName || !plantForm.plantCode) {
         window.alert("กรุณากรอกข้อมูลรหัสและชื่อโรงงาน");
@@ -450,7 +444,12 @@ export default function SafetyAdminManageData() {
         approvedBy: plantForm.approvedBy || ""
       };
 
-      savePlants([newPlant, ...plants]);
+      try {
+        await persistLocation(newPlant, "POST");
+      } catch (error) {
+        window.alert(error?.message || "บันทึกข้อมูลโรงงานไม่สำเร็จ");
+        return;
+      }
     } else if (selectedType === "office") {
       if (!plantForm.officeName || !plantForm.officeCode) {
         window.alert("กรุณากรอกข้อมูลรหัสและชื่อสำนักงาน");
@@ -473,7 +472,12 @@ export default function SafetyAdminManageData() {
         lng: plantForm.lng ? parseFloat(plantForm.lng) : null
       };
 
-      saveOffices([newOffice, ...offices]);
+      try {
+        await persistLocation(newOffice, "POST");
+      } catch (error) {
+        window.alert(error?.message || "บันทึกข้อมูลสำนักงานไม่สำเร็จ");
+        return;
+      }
     } else if (selectedType === "site") {
       if (!plantForm.projectName || !plantForm.projectCode) {
         window.alert("กรุณากรอกข้อมูลรหัสและชื่อโครงการ");
@@ -492,91 +496,93 @@ export default function SafetyAdminManageData() {
         lng: plantForm.lng ? parseFloat(plantForm.lng) : null
       };
 
-      saveSites([newSite, ...sites]);
+      try {
+        await persistLocation(newSite, "POST");
+      } catch (error) {
+        window.alert(error?.message || "บันทึกข้อมูลไซต์งานไม่สำเร็จ");
+        return;
+      }
     }
     setAddingPlant(false);
   };
 
-  const submitEditPlant = () => {
+  const submitEditPlant = async () => {
     if (selectedType === "factory") {
       if (!plantForm.plantName || !plantForm.plantCode) {
         window.alert("กรุณากรอกข้อมูลรหัสและชื่อโรงงาน");
         return;
       }
-      const updated = plants.map(p => {
-        if (p.id === editingPlant.id) {
-          return {
-            ...p,
-            companyCode: plantForm.companyCode,
-            companyName: plantForm.companyName || "No name",
-            divisionCode: plantForm.divisionCode,
-            divisionName: plantForm.divisionName,
-            deptCode: plantForm.deptCode,
-            deptName: plantForm.deptName,
-            secCode: plantForm.secCode,
-            secName: plantForm.secName,
-            plantCode: plantForm.plantCode,
-            plantName: plantForm.plantName,
-            status: plantForm.status,
-            lat: plantForm.lat ? parseFloat(plantForm.lat) : null,
-            lng: plantForm.lng ? parseFloat(plantForm.lng) : null,
-            approvedBy: plantForm.approvedBy || ""
-          };
-        }
-        return p;
-      });
-
-      savePlants(updated);
+      const updated = {
+        ...editingPlant,
+        companyCode: plantForm.companyCode,
+        companyName: plantForm.companyName || "No name",
+        divisionCode: plantForm.divisionCode,
+        divisionName: plantForm.divisionName,
+        deptCode: plantForm.deptCode,
+        deptName: plantForm.deptName,
+        secCode: plantForm.secCode,
+        secName: plantForm.secName,
+        plantCode: plantForm.plantCode,
+        plantName: plantForm.plantName,
+        status: plantForm.status,
+        lat: plantForm.lat ? parseFloat(plantForm.lat) : null,
+        lng: plantForm.lng ? parseFloat(plantForm.lng) : null,
+        approvedBy: plantForm.approvedBy || ""
+      };
+      try {
+        await persistLocation(updated, "PATCH", editingPlant.id);
+      } catch (error) {
+        window.alert(error?.message || "แก้ไขข้อมูลโรงงานไม่สำเร็จ");
+        return;
+      }
     } else if (selectedType === "office") {
       if (!plantForm.officeName || !plantForm.officeCode) {
         window.alert("กรุณากรอกข้อมูลรหัสและชื่อสำนักงาน");
         return;
       }
-      const updated = offices.map(p => {
-        if (p.id === editingPlant.id) {
-          return {
-            ...p,
-            companyCode: plantForm.companyCode,
-            companyName: plantForm.companyName || "No name",
-            divisionCode: plantForm.divisionCode,
-            divisionName: plantForm.divisionName,
-            deptCode: plantForm.deptCode,
-            deptName: plantForm.deptName,
-            officeCode: plantForm.officeCode,
-            officeName: plantForm.officeName,
-            floor: plantForm.floor || "",
-            status: plantForm.status,
-            lat: plantForm.lat ? parseFloat(plantForm.lat) : null,
-            lng: plantForm.lng ? parseFloat(plantForm.lng) : null
-          };
-        }
-        return p;
-      });
-
-      saveOffices(updated);
+      const updated = {
+        ...editingPlant,
+        companyCode: plantForm.companyCode,
+        companyName: plantForm.companyName || "No name",
+        divisionCode: plantForm.divisionCode,
+        divisionName: plantForm.divisionName,
+        deptCode: plantForm.deptCode,
+        deptName: plantForm.deptName,
+        officeCode: plantForm.officeCode,
+        officeName: plantForm.officeName,
+        floor: plantForm.floor || "",
+        status: plantForm.status,
+        lat: plantForm.lat ? parseFloat(plantForm.lat) : null,
+        lng: plantForm.lng ? parseFloat(plantForm.lng) : null
+      };
+      try {
+        await persistLocation(updated, "PATCH", editingPlant.id);
+      } catch (error) {
+        window.alert(error?.message || "แก้ไขข้อมูลสำนักงานไม่สำเร็จ");
+        return;
+      }
     } else if (selectedType === "site") {
       if (!plantForm.projectName || !plantForm.projectCode) {
         window.alert("กรุณากรอกข้อมูลรหัสและชื่อโครงการ");
         return;
       }
-      const updated = sites.map(p => {
-        if (p.id === editingPlant.id) {
-          return {
-            ...p,
-            projectCode: plantForm.projectCode,
-            projectName: plantForm.projectName,
-            customer: plantForm.customer || "",
-            contractor: plantForm.contractor || "",
-            stage: plantForm.stage || "",
-            status: plantForm.status,
-            lat: plantForm.lat ? parseFloat(plantForm.lat) : null,
-            lng: plantForm.lng ? parseFloat(plantForm.lng) : null
-          };
-        }
-        return p;
-      });
-
-      saveSites(updated);
+      const updated = {
+        ...editingPlant,
+        projectCode: plantForm.projectCode,
+        projectName: plantForm.projectName,
+        customer: plantForm.customer || "",
+        contractor: plantForm.contractor || "",
+        stage: plantForm.stage || "",
+        status: plantForm.status,
+        lat: plantForm.lat ? parseFloat(plantForm.lat) : null,
+        lng: plantForm.lng ? parseFloat(plantForm.lng) : null
+      };
+      try {
+        await persistLocation(updated, "PATCH", editingPlant.id);
+      } catch (error) {
+        window.alert(error?.message || "แก้ไขข้อมูลไซต์งานไม่สำเร็จ");
+        return;
+      }
     }
     setEditingPlant(null);
   };
@@ -585,16 +591,18 @@ export default function SafetyAdminManageData() {
     setDeletePlantId(id);
   };
 
-  const confirmDeletePlant = () => {
-    if (selectedType === "factory") {
-      const next = plants.filter(p => p.id !== deletePlantId);
-      savePlants(next);
-    } else if (selectedType === "office") {
-      const next = offices.filter(p => p.id !== deletePlantId);
-      saveOffices(next);
-    } else if (selectedType === "site") {
-      const next = sites.filter(p => p.id !== deletePlantId);
-      saveSites(next);
+  const confirmDeletePlant = async () => {
+    try {
+      const response = await fetch(`/api/safety-effort/locations/${deletePlantId}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+      const payload = await response.json().catch(() => null);
+      if (!response.ok || !payload?.ok) throw new Error(payload?.error || "location_delete_failed");
+      await refreshLocations();
+    } catch (error) {
+      window.alert(error?.message || "ลบข้อมูลไม่สำเร็จ");
+      return;
     }
     setDeletePlantId(null);
   };
@@ -630,7 +638,9 @@ export default function SafetyAdminManageData() {
           };
         }).filter(p => p.plantName || p.plantCode);
 
-        savePlants([...imported, ...plants]);
+        for (const item of imported) {
+          await persistLocation(item, "POST");
+        }
         window.alert(`นำเข้าข้อมูลโรงงานสำเร็จจำนวน ${imported.length} รายการ`);
       } else if (selectedType === "office") {
         const imported = rows.map((row, index) => {
@@ -652,7 +662,9 @@ export default function SafetyAdminManageData() {
           };
         }).filter(p => p.officeName || p.officeCode);
 
-        saveOffices([...imported, ...offices]);
+        for (const item of imported) {
+          await persistLocation(item, "POST");
+        }
         window.alert(`นำเข้าข้อมูลสำนักงานสำเร็จจำนวน ${imported.length} รายการ`);
       } else if (selectedType === "site") {
         const imported = rows.map((row, index) => {
@@ -670,7 +682,9 @@ export default function SafetyAdminManageData() {
           };
         }).filter(p => p.projectName || p.projectCode);
 
-        saveSites([...imported, ...sites]);
+        for (const item of imported) {
+          await persistLocation(item, "POST");
+        }
         window.alert(`นำเข้าข้อมูลไซต์งานสำเร็จจำนวน ${imported.length} รายการ`);
       }
     } catch (error) {

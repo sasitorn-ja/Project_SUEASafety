@@ -1,6 +1,6 @@
 // @ts-nocheck
 import { useEffect, useState } from "react";
-import { useNavigate } from "@/lib/router-compat";
+import { useNavigate } from "@/lib/app-navigation";
 import { ArrowLeft, Eye, Trash2, Search, X, ClipboardList } from "lucide-react";
 import { Combobox } from "@/components/ui/combobox";
 
@@ -93,75 +93,56 @@ export default function SafetyAdminReportHistory() {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  // Load submissions on mount
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      const stored = localStorage.getItem("suea-safety-submissions-v1");
-      if (stored) {
-        try {
-          setSubmissions(JSON.parse(stored));
-        } catch {
-          setSubmissions([]);
-        }
-      } else {
-        const mockData = [
-          {
-            id: "sub-mock-1",
-            timestamp: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
-            activityId: "line-walk",
-            activityLabel: "Line Walk",
-            locType: "factory",
-            locationName: "โรงงานแก่งคอย",
-            locationTag: "FAC-KK-01",
-            date: new Date().toISOString().split("T")[0],
-            isSafetyContact: false,
-            answeredItems: [
-              { id: "mixer", title: "Mixer", status: "safe", note: "ระบบล็อคฝาใช้งานได้ดี", photos: [] },
-              { id: "skiphoist", title: "Skiphoist", status: "safe", note: "การ์ดกั้นมิดชิด", photos: [] },
-              { id: "sand-drag", title: "เครื่องลากหิน-ทราย", status: "unsafe_condition", note: "ป้ายเตือนระวังอันตรายหลุดลอก", photos: [] },
-              { id: "motor-pump", title: "MOTOR / ปั๊ม", status: "safe", note: "สายดินเชื่อมต่อเรียบร้อย", photos: [] }
-            ]
-          },
-          {
-            id: "sub-mock-2",
-            timestamp: new Date(Date.now() - 1000 * 60 * 180).toISOString(),
-            activityId: "safety-contact",
-            activityLabel: "Safety Contact",
-            locType: "office",
-            locationName: "สำนักงานใหญ่บางซื่อ",
-            locationTag: "OFF-BS-01",
-            date: new Date().toISOString().split("T")[0],
-            isSafetyContact: true,
-            safetyContactText: "พูดคุยรณรงค์กับแผนกจัดซื้อเรื่องการเดินขึ้นลงบันไดโดยระมัดระวังไม่ใช้โทรศัพท์มือถือและให้จับราวบันไดทุกครั้ง พนักงานเข้าใจและยินดีปฏิบัติตามแนวทางเพื่อความปลอดภัย"
-          },
-          {
-            id: "sub-mock-3",
-            timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(),
-            activityId: "line-walk",
-            activityLabel: "Line Walk",
-            locType: "site",
-            locationName: "Site พญาไท",
-            locationTag: "STE-PT-03",
-            date: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString().split("T")[0],
-            isSafetyContact: false,
-            answeredItems: [
-              { id: "site-readiness", title: "ความพร้อมของพื้นที่หน้างาน", status: "safe", note: "พื้นที่เรียบร้อยดี", photos: [] },
-              { id: "site-safety", title: "ความปลอดภัยในหน้างาน", status: "unsafe_action", note: "พบคนงานไม่สวมหมวกนิรภัย 1 คน ได้ตักเตือนให้สวมใส่ทันที", photos: [] }
-            ]
-          }
-        ];
-        localStorage.setItem("suea-safety-submissions-v1", JSON.stringify(mockData));
-        setSubmissions(mockData);
-      }
+  // Map a DB safety_activity row into the submission shape this screen renders.
+  const activityToSubmission = (row) => {
+    let meta = {};
+    try {
+      meta = row.notes ? JSON.parse(row.notes) : {};
+    } catch {
+      meta = {};
     }
+    const isSafetyContact = String(row.activity_type || "").toUpperCase() === "SAFETY_CONTACT";
+    return {
+      id: `act-${row.id}`,
+      timestamp: row.completed_at || row.started_at || row.created_at || new Date().toISOString(),
+      activityId: isSafetyContact ? "safety-contact" : "line-walk",
+      activityLabel: row.title || (isSafetyContact ? "Safety Contact" : "Line Walk"),
+      locType: meta.locType || "factory",
+      locationName: meta.locationName || "-",
+      locationTag: meta.locationTag || "-",
+      date: meta.date || String(row.completed_at || row.created_at || "").split("T")[0],
+      isSafetyContact,
+      safetyContactText: meta.safetyContactText || "",
+      answeredItems: Array.isArray(meta.answers) ? meta.answers : [],
+    };
+  };
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch("/api/safety-effort/submissions?pageSize=200", { credentials: "include", cache: "no-store" });
+        if (res.ok) {
+          const payload = await res.json().catch(() => null);
+          const items = payload?.data?.items;
+          if (Array.isArray(items) && !cancelled) setSubmissions(items);
+        }
+      } catch { if (!cancelled) setSubmissions([]); }
+    })();
+    return () => { cancelled = true; };
   }, []);
 
-  const handleDeleteSubmission = (id) => {
-    const next = submissions.filter(s => s.id !== id);
-    setSubmissions(next);
-    if (typeof window !== "undefined") {
-      localStorage.setItem("suea-safety-submissions-v1", JSON.stringify(next));
+  const handleDeleteSubmission = async (id) => {
+    const response = await fetch(`/api/safety-effort/submissions/${id}`, {
+      method: "DELETE",
+      credentials: "include",
+    });
+    const payload = await response.json().catch(() => null);
+    if (!response.ok || !payload?.ok || !payload.data?.deleted) {
+      window.alert("ลบรายงานไม่สำเร็จ");
+      return;
     }
+    setSubmissions((current) => current.filter((submission) => String(submission.id) !== String(id)));
   };
 
   const filtered = submissions.filter(item => {
@@ -310,10 +291,16 @@ export default function SafetyAdminReportHistory() {
             {submissions.length > 0 && (
               <button
                 type="button"
-                onClick={() => {
+                onClick={async () => {
                   if (window.confirm("คุณต้องการล้างประวัติการส่งรายงานทั้งหมดใช่หรือไม่?")) {
-                    setSubmissions([]);
-                    localStorage.setItem("suea-safety-submissions-v1", JSON.stringify([]));
+                    const results = await Promise.all(submissions.map((submission) =>
+                      fetch(`/api/safety-effort/submissions/${submission.id}`, {
+                        method: "DELETE",
+                        credentials: "include",
+                      })
+                    ));
+                    if (results.every((result) => result.ok)) setSubmissions([]);
+                    else window.alert("ล้างข้อมูลได้ไม่ครบ กรุณารีเฟรชและลองใหม่");
                   }
                 }}
                 style={{
