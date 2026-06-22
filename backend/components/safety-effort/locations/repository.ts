@@ -105,7 +105,7 @@ function mapLocation(row: LocationRow) {
     organizationName: row.organization_name,
     locationType: row.location_type,
     source: row.source,
-    readOnly: row.source === "RMR_SSO_PLANT",
+    readOnly: row.source.startsWith("RMR_SSO_") || row.source.startsWith("RMC_SSO_"),
     externalKey: row.external_key,
     code: row.code,
     nameTh: row.name_th,
@@ -185,6 +185,19 @@ export async function listSafetyEffortLocations(options: {
     params,
   );
 
+  return rows.map(mapLocation);
+}
+
+export async function listSafetyEffortLocationsBySourceKeys(source: string, externalKeys: string[]) {
+  if (!externalKeys.length) return [];
+  const rows = await queryRows<LocationRow>(
+    `
+      ${SELECT_LOCATIONS_SQL}
+      WHERE l.source = :source AND l.external_key IN (:externalKeys) AND l.deleted_at IS NULL
+      ORDER BY l.name_th
+    `,
+    { source, externalKeys },
+  );
   return rows.map(mapLocation);
 }
 
@@ -288,7 +301,7 @@ export async function createSafetyEffortLocation(input: SafetyEffortLocationInpu
 export async function updateSafetyEffortLocation(id: string, input: Partial<SafetyEffortLocationInput>) {
   const current = await getSafetyEffortLocation(id);
   if (!current) return null;
-  if (current.source === "RMR_SSO_PLANT") throw new Error("source_read_only");
+  if (current.source.startsWith("RMR_SSO_") || current.source.startsWith("RMC_SSO_")) throw new Error("source_read_only");
 
   const next = {
     locationType: input.locationType ?? current.locationType,

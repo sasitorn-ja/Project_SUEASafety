@@ -20,6 +20,7 @@ import {
   type SafetyEffortLocationType,
 } from "@backend/components/safety-effort/locations/repository";
 import { syncRmrPlants } from "@backend/components/safety-effort/locations/rmr-plant-sync";
+import { listRmcOffices, searchRmcSites } from "@backend/components/safety-effort/locations/rmc-location-search";
 import {
   createComment,
   createPost,
@@ -340,6 +341,20 @@ async function tryHandleConcreteRoute(
   const userId = session?.user?.id;
 
   try {
+    if (method === "GET" && path === "/api/locations/offices" && isRmrSsoDatabaseConfigured()) {
+      const locations = await listRmcOffices();
+      return jsonData({ items: locations, locations });
+    }
+    if (method === "GET" && path === "/api/locations/sites" && isRmrSsoDatabaseConfigured()) {
+      const search = query.get("search") || query.get("q") || "";
+      const locations = await searchRmcSites(search, Number(query.get("limit") || query.get("pageSize") || 30));
+      return jsonData({ items: locations, locations, minimumSearchLength: 3 });
+    }
+    if (method === "GET" && path === "/api/locations/search"
+      && normalizeLocationType(query.get("type")) === "SITE" && isRmrSsoDatabaseConfigured()) {
+      const locations = await searchRmcSites(query.get("q") || query.get("search") || "", Number(query.get("limit") || 30));
+      return jsonData({ items: locations, locations, minimumSearchLength: 3 });
+    }
     const typeFromPath = locationTypeForPath(path);
     if (method === "GET" && typeFromPath) {
       const locations = await listLocationsWithPlantBootstrap({

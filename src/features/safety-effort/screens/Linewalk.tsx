@@ -341,8 +341,7 @@ export default function Linewalk() {
   useEffect(() => {
     Promise.all([
       fetch("/api/locations/plants?pageSize=1000", { credentials: "include" }),
-      fetch("/api/locations/offices?pageSize=1000", { credentials: "include" }),
-      fetch("/api/locations/sites?pageSize=1000", { credentials: "include" }),
+      fetch("/api/locations/offices?pageSize=30", { credentials: "include" }),
       fetch("/api/organizations?pageSize=1000", { credentials: "include" }),
     ])
       .then(async responses => Promise.all(responses.map(async response => {
@@ -350,12 +349,12 @@ export default function Linewalk() {
         if (!response.ok || !payload?.ok) throw new Error(payload?.error || "locations_load_failed");
         return payload.data?.items || [];
       })))
-      .then(([plants, offices, sites, organizations]) => {
+      .then(([plants, offices, organizations]) => {
         const names = items => items.map(item => item.nameTh || item.name_th).filter(Boolean);
         setLocationOptions({
           factories: names(plants),
           offices: names(offices),
-          sites: names(sites),
+          sites: [],
         });
         const byType = type => organizations
           .filter(item => String(item.organization_type || item.organizationType || "").toUpperCase() === type)
@@ -374,6 +373,36 @@ export default function Linewalk() {
         setOrganizationOptions({ departments: [], companies: [], regions: [], divisions: [] });
       });
   }, []);
+
+  useEffect(() => {
+    if (locType !== "Site งาน" || siteName.trim().length < 3) {
+      setLocationOptions(current => ({ ...current, sites: [] }));
+      return;
+    }
+    const controller = new AbortController();
+    const timer = window.setTimeout(() => {
+      fetch(`/api/locations/sites?q=${encodeURIComponent(siteName.trim())}&limit=30`, {
+        credentials: "include",
+        signal: controller.signal,
+      })
+        .then(async response => {
+          const payload = await response.json().catch(() => null);
+          if (!response.ok || !payload?.ok) throw new Error(payload?.error || "sites_search_failed");
+          return payload.data?.items || [];
+        })
+        .then(items => setLocationOptions(current => ({
+          ...current,
+          sites: items.map(item => item.nameTh || item.name_th).filter(Boolean),
+        })))
+        .catch(error => {
+          if (error?.name !== "AbortError") console.error("Failed to search sites", error);
+        });
+    }, 400);
+    return () => {
+      window.clearTimeout(timer);
+      controller.abort();
+    };
+  }, [locType, siteName]);
 
   // ── Checklist ──
   const [checklist,     setChecklist]     = useState([]);
@@ -851,7 +880,7 @@ export default function Linewalk() {
                 <SearchInput label="สำนักงาน" value={office} onChange={setOffice} placeholder="เลือกสำนักงาน" options={locationOptions.offices} />
               )}
               {locType === "Site งาน" && (
-                <SearchInput label="Site งาน" value={siteName} onChange={setSiteName} placeholder="เลือก Site งาน" options={locationOptions.sites} />
+                <SearchInput label="Site งาน" value={siteName} onChange={setSiteName} placeholder="พิมพ์ชื่อหรือรหัส Site อย่างน้อย 3 ตัว" options={locationOptions.sites} />
               )}
               {!metaComplete && (
                 <p style={{ fontSize:12, color:T.foreground3, fontFamily:"'Prompt',sans-serif", fontStyle:"italic", margin:0 }}>

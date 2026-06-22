@@ -1488,6 +1488,38 @@ export default function Checkin() {
     };
   }, []);
 
+  useEffect(() => {
+    const keyword = searchQuery.trim();
+    if (keyword.length < 3 || !["ทั้งหมด", "all", "site"].includes(selectedType)) return;
+    const controller = new AbortController();
+    const timer = window.setTimeout(() => {
+      fetch(`/api/locations/search?type=SITE&q=${encodeURIComponent(keyword)}&limit=30`, {
+        credentials: "include",
+        signal: controller.signal,
+      })
+        .then(async response => {
+          const payload = await response.json().catch(() => null);
+          if (!response.ok || !payload?.ok) throw new Error(payload?.error || "sites_search_failed");
+          return payload.data?.items || [];
+        })
+        .then(items => {
+          const remoteSites = items.map(apiLocationToCheckinLocation);
+          setExtraLocs(current => {
+            const merged = new Map(current.map(item => [item.id, item]));
+            remoteSites.forEach(item => merged.set(item.id, item));
+            return Array.from(merged.values());
+          });
+        })
+        .catch(error => {
+          if (error?.name !== "AbortError") setApiError(error?.message || "ไม่สามารถค้นหา Site ได้");
+        });
+    }, 400);
+    return () => {
+      window.clearTimeout(timer);
+      controller.abort();
+    };
+  }, [searchQuery, selectedType]);
+
   const allLocations = extraLocs
     .map(l => ({
       ...l,
