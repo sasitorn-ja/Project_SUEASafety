@@ -1370,11 +1370,21 @@ async function handleCultureRewards(request: NextRequest, method: string, match:
   if (route.startsWith("/api/safety-culture/events")) {
     if (method === "GET" && route === "/api/safety-culture/events") {
       const status = request.nextUrl.searchParams.get("status");
-      return jsonData(await listRows("safety_culture_events", request, {
+      const options = {
         where: ["deleted_at IS NULL", ...(status ? ["status = :status"] : [])],
         params: status ? { status } : {},
-        orderBy: "COALESCE(event_start_at, created_at) DESC, id DESC",
-      }));
+      };
+      try {
+        return jsonData(await listRows("safety_culture_events", request, {
+          ...options,
+          orderBy: "COALESCE(event_start_at, created_at) DESC, id DESC",
+        }));
+      } catch {
+        return jsonData(await listRows("safety_culture_events", request, {
+          ...options,
+          orderBy: "id DESC",
+        }));
+      }
     }
     if (method === "POST" && route === "/api/safety-culture/events") return jsonData({ event: await createCultureEvent(input, userId) }, { status: 201 });
     if (method === "GET" && route === "/api/safety-culture/events/:id") return jsonData({ event: await getRow("safety_culture_events", match.params.id) });

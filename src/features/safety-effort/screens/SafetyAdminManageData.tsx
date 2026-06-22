@@ -1,8 +1,6 @@
 // @ts-nocheck
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "@/lib/app-navigation";
 import {
-  ArrowLeft,
   Search,
   X,
   Upload,
@@ -98,6 +96,12 @@ const selectStyle = {
   backgroundRepeat: "no-repeat",
   backgroundSize: "18px",
   paddingRight: "30px",
+};
+
+const comboboxSelectStyle = {
+  ...selectStyle,
+  backgroundImage: "none",
+  paddingRight: 12,
 };
 
 const buttonPrimaryStyle = {
@@ -213,7 +217,6 @@ async function fetchAdminLocations(type, selectedType) {
 }
 
 export default function SafetyAdminManageData() {
-  const navigate = useNavigate();
   const [width, setWidth] = useState(() => (typeof window !== "undefined" ? window.innerWidth : 1024));
 
   useEffect(() => {
@@ -709,6 +712,15 @@ export default function SafetyAdminManageData() {
     ];
   };
 
+  const updatePlantCodeField = (codeField, nameField, value) => {
+    const found = plants.find((plant) => plant[codeField] === value);
+    setPlantForm((prev) => ({
+      ...prev,
+      [codeField]: value,
+      [nameField]: found ? found[nameField] : (value === "" ? "[NULL]" : nameField === "companyName" ? "No name" : ""),
+    }));
+  };
+
   const filteredPlants = useMemo(() => {
     const term = plantSearchQuery.trim().toLowerCase();
     if (selectedType === "factory") {
@@ -810,25 +822,6 @@ export default function SafetyAdminManageData() {
           }}
         >
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-            <button
-              type="button"
-              onClick={() => navigate("/safety-admin")}
-              style={{
-                background: "transparent",
-                border: "none",
-                cursor: "pointer",
-                display: "grid",
-                placeItems: "center",
-                color: T.sub,
-                padding: 4,
-                borderRadius: "50%",
-                transition: "background 0.2s",
-              }}
-              onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(0,0,0,0.05)")}
-              onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
-            >
-              <ArrowLeft size={20} />
-            </button>
             <div>
               <h1 style={{ fontSize: 18, fontWeight: 900, color: T.ink, margin: 0 }}>จัดการข้อมูล (Manage Data)</h1>
               <p style={{ fontSize: 12.5, color: T.sub, margin: "2px 0 0" }}>
@@ -1408,61 +1401,48 @@ export default function SafetyAdminManageData() {
                     <span style={fieldLabelStyle}>
                       <Building size={14} style={{ display: "inline-block", verticalAlign: "middle", marginRight: 4, color: "#2563eb" }} /> Company
                     </span>
-                    <select
+                    <Combobox
                       value={plantForm.companyCode || ""}
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        const found = plants.find(p => p.companyCode === val);
-                        setPlantForm(prev => ({
-                          ...prev,
-                          companyCode: val,
-                          companyName: found ? found.companyName : (val === "" ? "[NULL]" : "No name")
-                        }));
-                      }}
-                      style={selectStyle}
-                    >
-                      {getUniqueOptions("companyCode").map(opt => (
-                        <option key={opt.value} value={opt.value}>{opt.label}</option>
-                      ))}
-                    </select>
+                      onValueChange={(value) => updatePlantCodeField("companyCode", "companyName", value)}
+                      options={getUniqueOptions("companyCode")}
+                      searchPlaceholder="ค้นหา Company..."
+                      emptyText="ไม่พบ Company"
+                      style={comboboxSelectStyle}
+                      contentClassName="z-[1100]"
+                    />
                   </label>
 
                   <label style={fieldStyle}>
                     <span style={fieldLabelStyle}>
                       <Users size={14} style={{ display: "inline-block", verticalAlign: "middle", marginRight: 4, color: "#10b981" }} /> Division
                     </span>
-                    <select
+                    <Combobox
                       value={plantForm.divisionCode || ""}
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        const found = plants.find(p => p.divisionCode === val);
-                        setPlantForm(prev => ({
-                          ...prev,
-                          divisionCode: val,
-                          divisionName: found ? found.divisionName : (val === "" ? "[NULL]" : "")
-                        }));
-                      }}
-                      style={selectStyle}
-                    >
-                      {getUniqueOptions("divisionCode").map(opt => (
-                        <option key={opt.value} value={opt.value}>{opt.label}</option>
-                      ))}
-                    </select>
+                      onValueChange={(value) => updatePlantCodeField("divisionCode", "divisionName", value)}
+                      options={getUniqueOptions("divisionCode")}
+                      searchPlaceholder="ค้นหา Division..."
+                      emptyText="ไม่พบ Division"
+                      style={comboboxSelectStyle}
+                      contentClassName="z-[1100]"
+                    />
                   </label>
 
                   <label style={fieldStyle}>
                     <span style={fieldLabelStyle}>
                       <Settings size={14} style={{ display: "inline-block", verticalAlign: "middle", marginRight: 4, color: "#6b7280" }} /> Status
                     </span>
-                    <select
+                    <Combobox
                       value={plantForm.status || ""}
-                      onChange={(e) => setPlantForm(prev => ({ ...prev, status: e.target.value }))}
-                      style={selectStyle}
-                    >
-                      <option value="CPAC">CPAC</option>
-                      <option value="ACTIVE">ACTIVE</option>
-                      <option value="INACTIVE">INACTIVE</option>
-                    </select>
+                      onValueChange={(value) => setPlantForm(prev => ({ ...prev, status: value }))}
+                      options={[
+                        { value: "CPAC", label: "CPAC" },
+                        { value: "ACTIVE", label: "ACTIVE" },
+                        { value: "INACTIVE", label: "INACTIVE" },
+                      ]}
+                      searchable={false}
+                      style={comboboxSelectStyle}
+                      contentClassName="z-[1100]"
+                    />
                   </label>
 
                   {/* Row 2: Department, Section, Approved By */}
@@ -1470,46 +1450,30 @@ export default function SafetyAdminManageData() {
                     <span style={fieldLabelStyle}>
                       <Layers size={14} style={{ display: "inline-block", verticalAlign: "middle", marginRight: 4, color: "#8b5cf6" }} /> Department
                     </span>
-                    <select
+                    <Combobox
                       value={plantForm.deptCode || ""}
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        const found = plants.find(p => p.deptCode === val);
-                        setPlantForm(prev => ({
-                          ...prev,
-                          deptCode: val,
-                          deptName: found ? found.deptName : (val === "" ? "[NULL]" : "")
-                        }));
-                      }}
-                      style={selectStyle}
-                    >
-                      {getUniqueOptions("deptCode").map(opt => (
-                        <option key={opt.value} value={opt.value}>{opt.label}</option>
-                      ))}
-                    </select>
+                      onValueChange={(value) => updatePlantCodeField("deptCode", "deptName", value)}
+                      options={getUniqueOptions("deptCode")}
+                      searchPlaceholder="ค้นหา Department..."
+                      emptyText="ไม่พบ Department"
+                      style={comboboxSelectStyle}
+                      contentClassName="z-[1100]"
+                    />
                   </label>
 
                   <label style={fieldStyle}>
                     <span style={fieldLabelStyle}>
                       <Layers size={14} style={{ display: "inline-block", verticalAlign: "middle", marginRight: 4, color: "#8b5cf6" }} /> Section
                     </span>
-                    <select
+                    <Combobox
                       value={plantForm.secCode || ""}
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        const found = plants.find(p => p.secCode === val);
-                        setPlantForm(prev => ({
-                          ...prev,
-                          secCode: val,
-                          secName: found ? found.secName : (val === "" ? "[NULL]" : "")
-                        }));
-                      }}
-                      style={selectStyle}
-                    >
-                      {getUniqueOptions("secCode").map(opt => (
-                        <option key={opt.value} value={opt.value}>{opt.label}</option>
-                      ))}
-                    </select>
+                      onValueChange={(value) => updatePlantCodeField("secCode", "secName", value)}
+                      options={getUniqueOptions("secCode")}
+                      searchPlaceholder="ค้นหา Section..."
+                      emptyText="ไม่พบ Section"
+                      style={comboboxSelectStyle}
+                      contentClassName="z-[1100]"
+                    />
                   </label>
 
                   <label style={fieldStyle}>

@@ -1,8 +1,6 @@
 // @ts-nocheck
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "@/lib/app-navigation";
 import {
-  ArrowLeft,
   Search,
   X,
   Download,
@@ -236,7 +234,6 @@ function createEditableReportDraft(item) {
 }
 
 export default function SafetyAdminExportReport() {
-  const navigate = useNavigate();
   const [width, setWidth] = useState(() => (typeof window !== "undefined" ? window.innerWidth : 1024));
   
   useEffect(() => {
@@ -467,25 +464,6 @@ export default function SafetyAdminExportReport() {
           }}
         >
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-            <button
-              type="button"
-              onClick={() => navigate("/safety-admin")}
-              style={{
-                background: "transparent",
-                border: "none",
-                cursor: "pointer",
-                display: "grid",
-                placeItems: "center",
-                color: T.sub,
-                padding: 4,
-                borderRadius: "50%",
-                transition: "background 0.2s",
-              }}
-              onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(0,0,0,0.05)")}
-              onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
-            >
-              <ArrowLeft size={20} />
-            </button>
             <div>
               <h1 style={{ fontSize: 18, fontWeight: 900, color: T.ink, margin: 0 }}>ส่งออกรายงาน (Export Report)</h1>
               <p style={{ fontSize: 12.5, color: T.sub, margin: "2px 0 0" }}>

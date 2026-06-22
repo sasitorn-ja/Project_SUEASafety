@@ -425,7 +425,7 @@ export async function deletePost(id: string, userId: string) {
     const [deleteResult] = await connection.execute<ResultSetHeader>(
       `
         UPDATE posts
-        SET deleted_at = UTC_TIMESTAMP(3), status = 'DELETED'
+        SET deleted_at = UTC_TIMESTAMP(3)
         WHERE id = :id AND author_id = :userId AND deleted_at IS NULL
       `,
       { id, userId },
