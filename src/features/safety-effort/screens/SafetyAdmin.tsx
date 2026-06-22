@@ -15,19 +15,20 @@ import { GripVertical, Eye, Trash2, Search, X, Check, Settings, ChevronDown, Che
 
 
 const T = {
-  page: "var(--background)",
-  panel: "var(--brand-soft)",
+  page: "linear-gradient(180deg, #edf5ff 0, var(--background) 280px, var(--background) 100%)",
+  panel: "#f4f8fc",
   card: "#ffffff",
   ink: "var(--c-1f1a17)",
   sub: "var(--c-6f665e)",
-  line: "rgba(31,26,23,0.10)",
-  lineStrong: "rgba(31,26,23,0.18)",
+  line: "rgba(11,78,162,0.12)",
+  lineStrong: "rgba(11,78,162,0.20)",
   accent: "var(--brand-accent-strong)",
   accentDeep: "var(--brand-text)",
-  accentSoft: "var(--brand-soft)",
-  danger: "#c73a21",
+  accentSoft: "#eaf4ff",
+  soft: "#eef6ff",
+  danger: "#e2553f",
   ok: "#1f7a55",
-  shadow: "0 20px 40px rgba(63, 37, 17, 0.08)",
+  shadow: "0 14px 32px rgba(6, 43, 99, 0.08)",
 };
 
 const fieldStyle = {
@@ -38,12 +39,12 @@ const fieldStyle = {
 const fieldLabelStyle = {
   fontSize: 12.5,
   fontWeight: 800,
-  color: T.sub,
+  color: "#5f7591",
 };
 
 const inputStyle = {
   width: "100%",
-  borderRadius: 14,
+  borderRadius: 12,
   border: `1px solid ${T.lineStrong}`,
   background: "#fff",
   color: T.ink,
@@ -118,9 +119,9 @@ const buttonGhostStyle = {
 
 const buttonDangerStyle = {
   height: 44,
-  borderRadius: 14,
-  border: "none",
-  background: "#fbe9e4",
+  borderRadius: 12,
+  border: "1px solid #f5c9c9",
+  background: "#ffe7e7",
   color: T.danger,
   padding: "0 16px",
   fontWeight: 800,
@@ -169,6 +170,10 @@ function moveItem(list, from, to) {
   const [item] = next.splice(from, 1);
   next.splice(to, 0, item);
   return next;
+}
+
+function isQuestionActive(question) {
+  return question?.active !== false;
 }
 
 
@@ -561,8 +566,8 @@ export default function SafetyAdmin() {
   return (
     <div
       style={{
-        height: isMobile ? "auto" : "100%",
-        background: `radial-gradient(circle at top right, rgba(var(--brand-accent-rgb),0.18), transparent 28%), ${T.page}`,
+        minHeight: isMobile ? "auto" : "calc(100dvh - var(--topbar-h) - 32px)",
+        background: T.page,
         color: T.ink,
         fontFamily: "'Prompt','Sarabun',sans-serif",
         display: "flex",
@@ -581,9 +586,9 @@ export default function SafetyAdmin() {
             gap: 12,
             background: "#fff",
             border: `1px solid ${T.line}`,
-            borderRadius: 20,
+            borderRadius: 18,
             padding: isMobile ? "12px 14px" : "12px 20px",
-            boxShadow: "0 4px 12px rgba(63, 37, 17, 0.04)",
+            boxShadow: "0 10px 28px rgba(6, 43, 99, 0.08)",
             flexShrink: 0,
           }}
         >
@@ -654,7 +659,7 @@ export default function SafetyAdmin() {
             gap: 12
           }}>
             {/* Toggle switch for Today vs Backdate */}
-            <div style={{ display: "flex", alignItems: "center", gap: 8, background: "#f5f3f0", padding: 4, borderRadius: 12, border: `1px solid ${T.line}` }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, background: T.soft, padding: 4, borderRadius: 12, border: `1px solid ${T.line}` }}>
               <button
                 type="button"
                 onClick={() => handleToggleMode("today")}
@@ -908,12 +913,12 @@ export default function SafetyAdmin() {
                   style={{
                     background: T.card,
                     border: `1px solid ${T.line}`,
-                    borderRadius: 24,
-                    padding: 16,
-                    boxShadow: T.shadow,
+                    borderRadius: 22,
+                    padding: isMobile ? 16 : 20,
+                    boxShadow: "0 16px 34px rgba(6, 43, 99, 0.10)",
                     display: "flex",
                     flexDirection: "column",
-                    gap: 12,
+                    gap: 16,
                     flexShrink: 0,
                   }}
                 >
@@ -924,7 +929,7 @@ export default function SafetyAdmin() {
                     justifyContent: "space-between",
                     gap: 12,
                     borderBottom: `1px solid ${T.line}`,
-                    paddingBottom: 10
+                    paddingBottom: 14
                   }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                       {isMobile && (
@@ -946,54 +951,86 @@ export default function SafetyAdmin() {
                         </button>
                       )}
                       <div>
-                        <span style={{ fontSize: 11, fontWeight: 800, color: T.accentDeep, textTransform: "uppercase" }}>Question Editor</span>
-                        <h2 style={{ fontSize: 18, fontWeight: 900, margin: 0, color: T.ink }}>{selectedQuestion.title}</h2>
+                        <span style={{ fontSize: 11, fontWeight: 900, color: "#236487", textTransform: "uppercase", letterSpacing: "0.04em" }}>Question Editor</span>
+                        <h2 style={{ fontSize: 20, fontWeight: 900, margin: "4px 0 0", color: T.ink, lineHeight: 1.1 }}>{selectedQuestion.title}</h2>
                       </div>
                     </div>
-                    <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap", justifyContent: isMobile ? "flex-start" : "flex-end" }}>
-                      <button type="button" onClick={() => setDeleteTargetId(selectedQuestion.id)} style={{ ...buttonDangerStyle, height: 30, borderRadius: 8, fontSize: 11.5, padding: "0 10px" }}>ลบข้อ</button>
+                    <div style={{ display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap", justifyContent: isMobile ? "flex-start" : "flex-end" }}>
+                      <button
+                        type="button"
+                        onClick={() => updateQuestion(selectedQuestion.id, (item) => ({ ...item, active: !isQuestionActive(item) }))}
+                        aria-pressed={isQuestionActive(selectedQuestion)}
+                        style={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: 8,
+                          border: "none",
+                          background: "transparent",
+                          color: "#24779d",
+                          fontFamily: "inherit",
+                          fontSize: 13,
+                          fontWeight: 900,
+                          cursor: "pointer",
+                          padding: 0,
+                        }}
+                      >
+                        <span>เปิดใช้งานคำถาม</span>
+                        <span
+                          style={{
+                            position: "relative",
+                            display: "inline-flex",
+                            width: 50,
+                            height: 26,
+                            borderRadius: 999,
+                            background: isQuestionActive(selectedQuestion) ? "linear-gradient(180deg,#27d7ff,#0b8fe6)" : "#d7e2ee",
+                            boxShadow: isQuestionActive(selectedQuestion) ? "0 5px 14px rgba(30,144,255,0.28)" : "inset 0 1px 3px rgba(0,0,0,0.08)",
+                            transition: "background 160ms ease",
+                          }}
+                        >
+                          <span
+                            style={{
+                              position: "absolute",
+                              top: 3,
+                              left: isQuestionActive(selectedQuestion) ? 27 : 3,
+                              width: 20,
+                              height: 20,
+                              borderRadius: "50%",
+                              background: "#fff",
+                              boxShadow: "0 2px 6px rgba(6,43,99,0.18)",
+                              transition: "left 160ms ease",
+                            }}
+                          />
+                        </span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setDeleteTargetId(selectedQuestion.id)}
+                        style={{ ...buttonDangerStyle, height: 38, borderRadius: 13, fontSize: 13, padding: "0 16px", display: "inline-flex", alignItems: "center", gap: 7 }}
+                      >
+                        <Trash2 size={15} />
+                        ลบข้อ
+                      </button>
                     </div>
                   </div>
 
-                  <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr auto", gap: 12, alignItems: "end" }}>
+                  <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 12, alignItems: "end" }}>
                     <label style={fieldStyle}>
-                      <span style={fieldLabelStyle}>Question Title</span>
+                      <span style={fieldLabelStyle}>หัวข้อ</span>
                       <input
                         value={selectedQuestion.title}
                         onChange={(event) => updateQuestion(selectedQuestion.id, (item) => ({ ...item, title: event.target.value }))}
-                        style={{ ...inputStyle, minHeight: 36, borderRadius: 8, fontSize: 13, padding: "0 10px" }}
+                        style={{ ...inputStyle, minHeight: 42, borderRadius: 12, fontSize: 14, padding: "0 12px", boxShadow: "inset 0 1px 2px rgba(6,43,99,0.04)" }}
                       />
                     </label>
 
                     <label style={fieldStyle}>
-                      <span style={fieldLabelStyle}>Guide Title</span>
+                      <span style={fieldLabelStyle}>รายละเอียด</span>
                       <input
                         value={selectedQuestion.guideTitle === false ? "" : selectedQuestion.guideTitle || ""}
                         onChange={(event) => updateQuestion(selectedQuestion.id, (item) => ({ ...item, guideTitle: event.target.value }))}
-                        style={{ ...inputStyle, minHeight: 36, borderRadius: 8, fontSize: 13, padding: "0 10px" }}
+                        style={{ ...inputStyle, minHeight: 42, borderRadius: 12, fontSize: 14, padding: "0 12px", boxShadow: "inset 0 1px 2px rgba(6,43,99,0.04)" }}
                         placeholder="เว้นว่างเพื่อสร้างอัตโนมัติ"
                       />
-                    </label>
-
-                    <label style={{ ...fieldStyle, justifyItems: "end" }}>
-                      <span style={fieldLabelStyle}>Show Guide Title</span>
-                      <button
-                        type="button"
-                        onClick={() => updateQuestion(selectedQuestion.id, (item) => ({ ...item, guideTitle: item.guideTitle === false ? "" : false }))}
-                        style={{
-                          ...buttonGhostStyle,
-                          height: 36,
-                          minWidth: 100,
-                          borderRadius: 8,
-                          fontSize: 12,
-                          background: selectedQuestion.guideTitle === false ? "var(--c-fff0ea)" : "#fff",
-                          borderColor: selectedQuestion.guideTitle === false ? "rgba(199,58,33,0.25)" : T.lineStrong,
-                          color: selectedQuestion.guideTitle === false ? T.danger : T.ink,
-                          padding: "0 12px",
-                        }}
-                      >
-                        {selectedQuestion.guideTitle === false ? "ซ่อนอยู่" : "เปิดอยู่"}
-                      </button>
                     </label>
                   </div>
 

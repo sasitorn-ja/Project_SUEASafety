@@ -138,6 +138,11 @@ body {
   background-color: var(--background);
 }
 
+html {
+  overflow-y: scroll;
+  scrollbar-gutter: stable;
+}
+
 body {
   min-height: 100dvh;
 }
@@ -228,7 +233,7 @@ body {
 
 .page-content {
   min-height: 100dvh;
-  background-color: var(--background);
+  background: linear-gradient(180deg, #edf5ff 0, var(--background) 280px, var(--background) 100%);
   padding-top: var(--mobile-topbar-h);
   padding-right: 0;
   padding-bottom: calc(var(--mobile-bottomnav-h) + env(safe-area-inset-bottom));
