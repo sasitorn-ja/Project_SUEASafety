@@ -9,12 +9,14 @@ import {
   Award,
   CalendarDays,
   Check,
+  CheckCircle2,
   ChevronRight,
   Flame,
   Gift,
   ShieldCheck,
   Target,
   Trophy,
+  XCircle,
   Zap,
 } from "lucide-react";
 import styles from "./safe-plus-dashboard.module.css";
@@ -140,6 +142,7 @@ export default function SafePlusDashboard() {
   const latestScore = dashboardData.latest
     ? `${dashboardData.latest.score}/${dashboardData.latest.total}`
     : "-";
+  const latestQuestions = dashboardData.latest?.questions ?? [];
 
   return (
     <div className={styles.dashboard}>
@@ -171,8 +174,10 @@ export default function SafePlusDashboard() {
 
         <div className={styles.rewardPanel}>
           <div><Award /><span>{rewardsCatalog.length > 0 ? `มี ${rewardsCatalog.length} รางวัลให้แลก` : "ยังไม่มีรางวัลในระบบ"}</span></div>
-          <Link href="/safety-culture/rewards"><Gift />แลกรางวัล</Link>
-          <Link href="/safety-culture/leaderboard" className={styles.outlineButton}><Trophy />ดูอันดับ</Link>
+          <div className={styles.rewardActions}>
+            <Link href="/safety-culture/rewards"><Gift />แลกรางวัล</Link>
+            <Link href="/safety-culture/leaderboard" className={styles.outlineButton}><Trophy />ดูอันดับ</Link>
+          </div>
         </div>
 
         <Image
@@ -233,8 +238,24 @@ export default function SafePlusDashboard() {
             <div className={styles.latestRow}>
               <strong>{dashboardData.latest ? `${formatThaiDate(dashboardData.latest.date)} · ${latestScore} คะแนน` : "ยังไม่มีประวัติการทำ"}</strong>
               <p>{dashboardData.latest ? `ทำ Safety Awareness ${dashboardData.latest.total} ข้อ เมื่อ ${formatThaiDate(dashboardData.latest.date)}` : "เมื่อทำ Safety Awareness แล้ว รายการล่าสุดจะแสดงที่นี่"}</p>
-              <ChevronRight />
             </div>
+            {dashboardData.latest && latestQuestions.length > 0 ? (
+              <div className={styles.latestQuestions}>
+                {latestQuestions.slice(0, 3).map((question) => (
+                  <div
+                    key={question.id}
+                    className={`${styles.latestQuestion} ${question.correct ? styles.latestQuestionCorrect : styles.latestQuestionWrong}`}
+                  >
+                    {question.correct ? <CheckCircle2 /> : <XCircle />}
+                    <span>
+                      <b>{question.category}</b> {question.text}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            ) : dashboardData.latest ? (
+              <div className={styles.latestFallback}>มีประวัติการทำแล้ว แต่ระบบเวอร์ชันเดิมยังไม่มีรายละเอียดคำถามของวันนั้น</div>
+            ) : null}
           </div>
         </section>
 

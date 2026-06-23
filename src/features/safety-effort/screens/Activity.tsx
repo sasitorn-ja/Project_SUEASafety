@@ -2,6 +2,8 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "@/lib/app-navigation";
 import { useAppTheme } from "@/providers/theme-provider";
+import SafetyEffortProgressStepper from "@/features/safety-effort/components/SafetyEffortProgressStepper";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 
 // ฤฤฤ Design tokens ฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤ
 const T = {
@@ -294,6 +296,7 @@ const STYLES = `
     align-items: center;
     gap: 12px;
     flex-shrink: 0;
+    margin-left: auto;
   }
   .ac-stepper-inner-box {
     display: flex;
@@ -668,17 +671,17 @@ const STYLES = `
   /* ฤฤ Custom activity modal ฤฤ */
   .ac-modal-overlay {
     position: fixed; inset: 0; z-index: 9999;
-    background: rgba(14,15,18,0.5); backdrop-filter: blur(6px);
+    background: rgba(20,13,7,0.55); backdrop-filter: blur(4px);
     display: flex; align-items: flex-end; justify-content: center;
   }
   .ac-modal {
     width: 100%; max-width: 530px;
-    background: var(--c-fbf9f4); border-radius: 24px 24px 0 0;
+    background: var(--brand-surface); border-radius: 24px 24px 0 0;
     padding: 24px 24px 38px;
     font-family: 'Sarabun', sans-serif;
     animation: ac-modal-in 0.35s cubic-bezier(0.16, 1, 0.3, 1);
-    border-top: 1px solid rgba(255,255,255,0.8);
-    box-shadow: 0 -15px 40px rgba(0, 0, 0, 0.15);
+    border-top: 1px solid var(--border);
+    box-shadow: 0 -15px 40px rgba(0, 0, 0, 0.18);
   }
   @keyframes ac-modal-in {
     from { transform: translateY(100%); opacity: 0; }
@@ -690,10 +693,10 @@ const STYLES = `
       align-items: center;
     }
     .ac-modal {
-      border-radius: 24px;
+      border-radius: 30px;
       animation: ac-modal-in-desktop 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
-      border: 1px solid rgba(255,255,255,0.8);
-      box-shadow: 0 20px 50px rgba(0,0,0,0.18);
+      border: 1px solid var(--border);
+      box-shadow: 0 28px 60px rgba(0,0,0,0.22);
     }
   }
   @keyframes ac-modal-in-desktop {
@@ -741,28 +744,28 @@ const STYLES = `
 
   /* ฤฤ Modal close ฤฤ */
   .ac-modal-close {
-    width: 32px; height: 32px; border-radius: 10px;
-    background: rgba(14,15,18,0.05); border: 1px solid transparent;
+    width: 40px; height: 40px; border-radius: 999px;
+    background: #fff; border: 1px solid var(--border);
     display: flex; align-items: center; justify-content: center;
     cursor: pointer; transition: all 0.2s; color: ${T.foreground3};
     flex-shrink: 0;
   }
-  .ac-modal-close:hover { background: rgba(14,15,18,0.1); transform: rotate(90deg); color: ${T.foreground}; }
+  .ac-modal-close:hover { background: var(--secondary); transform: rotate(90deg); color: ${T.foreground}; }
 
   /* ฤฤ Modal action buttons ฤฤ */
   .ac-modal-cancel {
     flex: 1; padding: 12px; border-radius: 14px;
-    border: 1px solid rgba(14,15,18,0.08); background: transparent;
-    color: ${T.foreground3}; font-size: 13.5px; font-weight: 700;
+    border: 1px solid var(--border); background: #fff;
+    color: ${T.primaryDark}; font-size: 13.5px; font-weight: 800;
     cursor: pointer; font-family: inherit; transition: background 0.15s;
   }
   .ac-modal-cancel:hover { background: var(--secondary); }
   .ac-modal-confirm {
     flex: 2; padding: 12px; border-radius: 14px;
-    border: none; background: ${T.navyDeep}; color: #fff;
+    border: none; background: linear-gradient(135deg, var(--brand-text) 0%, var(--c-1a1613) 100%); color: #fff;
     font-size: 13.5px; font-weight: 800;
     cursor: pointer; font-family: inherit;
-    box-shadow: 0 6px 20px rgba(15,23,42,0.22);
+    box-shadow: 0 10px 24px rgba(26,22,19,0.18);
     transition: opacity 0.15s, transform 0.15s;
   }
   .ac-modal-confirm:hover { opacity: 0.9; transform: translateY(-1px); }
@@ -803,7 +806,7 @@ const STYLES = `
     }
     .ac-hdr-right-stepper {
       display: flex;
-      justify-content: flex-end;
+      justify-content: space-between;
       width: 100%;
       margin-top: 4px;
       padding-top: 8px;
@@ -817,26 +820,6 @@ const STYLES = `
     }
   }
 `;
-
-// ฤฤฤ Step pips (horizontal stepper matching Checkin layout) ฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤ
-function StepPips({ current = 2, total = 4 }) {
-  return (
-    <div className="ci-stepper-container">
-      {Array.from({ length: total }, (_, i) => {
-        const n = i + 1;
-        const cls = n < current ? "done" : n === current ? "active" : "idle";
-        return (
-          <div key={n} className="ci-stepper-item-wrap">
-            {n > 1 && <div className={`ci-stepper-line ${n <= current ? "active" : "idle"}`} />}
-            <div className={`ci-stepper-node ${cls}`}>
-              {n < current ? <IcoCheck /> : <span>{n}</span>}
-            </div>
-          </div>
-        );
-      })}
-    </div>
-  );
-}
 
 // ฤฤฤ Activity card ฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤ
 function ActivityCard({ activity, isSelected, onClick }) {
@@ -881,8 +864,8 @@ function CustomModal({ onConfirm, onClose }) {
   }
 
   return (
-    <div className="ac-modal-overlay" onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
-      <div className="ac-modal">
+    <Dialog open onOpenChange={(open) => !open && onClose()}>
+      <DialogContent showCloseButton={false} className="ac-modal p-0">
         <div style={{ display: "flex", justifyContent: "center", marginBottom: 16 }}>
           <div style={{ width: 36, height: 4, borderRadius: 99, background: "rgba(14,15,18,0.15)" }} />
         </div>
@@ -936,8 +919,8 @@ function CustomModal({ onConfirm, onClose }) {
             ยืนยัน
           </button>
         </div>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -1051,17 +1034,7 @@ export default function Activity() {
 
         {/* Right cluster: Stepper node and actions */}
         <div className="ac-hdr-right-stepper">
-          <div className="ac-stepper-inner-box">
-            <span className="ac-stepper-title-lbl">
-              SAFETY EFFORT
-            </span>
-            <div className="ac-stepper-row-flex">
-              <StepPips current={1} total={4} />
-              <span className="ac-stepper-count-lbl">
-                1 / 4
-              </span>
-            </div>
-          </div>
+          <SafetyEffortProgressStepper current={1} total={4} compact />
 
           <img className="ac-hdr-mascot-compact mascot-motion mascot-motion-compact" src={mascot("cheer")} alt={theme === "wangjai" ? "น้องวางใจ Safety mascot" : "SUEA tiger mascot"} />
         </div>

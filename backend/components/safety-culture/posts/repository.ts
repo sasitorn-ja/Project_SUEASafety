@@ -159,10 +159,14 @@ async function resolvePostPoints(eventId?: string | number | null) {
   const end = metadata.endDate ? new Date(`${metadata.endDate}T23:59:59.999`).getTime() : event.event_end_at ? new Date(event.event_end_at).getTime() : NaN;
   if ((!Number.isNaN(start) && now < start) || (!Number.isNaN(end) && now > end)) throw new Error("event_not_live");
   const actions = Array.isArray(metadata.enabledActions) ? metadata.enabledActions.map(String) : [];
-  let amount = Math.max(0, Number(metadata.points) || 0);
+  const basePoints = Number(ruleRows[0]?.points || fallback);
+  let amount = basePoints;
   if (actions.includes("theme-post")) {
-    if (metadata.bonusMode === "multiplier") amount = Math.round(amount * Math.max(1, Number(metadata.multiplier) || 1));
-    else amount += Math.max(0, Number(metadata.fixedPoints) || 0);
+    const eventPoints = Math.max(0, Number(metadata.points) || 0);
+    const eventBonus = metadata.bonusMode === "multiplier"
+      ? Math.round(eventPoints * Math.max(1, Number(metadata.multiplier) || 1))
+      : eventPoints + Math.max(0, Number(metadata.fixedPoints) || 0);
+    amount = basePoints + eventBonus;
   }
   return { amount, pointRuleId: ruleRows[0]?.id || null };
 }

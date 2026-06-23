@@ -8,6 +8,7 @@ import {
   getChecklistForType,
 } from "@/features/safety-effort/config/checklists";
 import { uploadSafetyEffortMedia } from "@/features/safety-effort/lib/upload-media";
+import SafetyEffortProgressStepper from "@/features/safety-effort/components/SafetyEffortProgressStepper";
 
 // ─── Design tokens ─────────────────────────────────────────────────────────
 const T = {
@@ -88,33 +89,6 @@ const IcoArrow   = ({c="#fff"}) => <svg width={15} height={15} viewBox="0 0 24 2
 const IcoChevron = () => <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>;
 const IcoUpload  = () => <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>;
 const IcoX       = () => <svg width={12} height={12} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>;
-
-// ─── Step Pips ───────────────────────────────────────────────────────────────
-function StepPips({ current = 3, total = 4 }) {
-  return (
-    <div style={{ display:"flex", alignItems:"center", gap:6 }}>
-      {Array.from({ length: total }).map((_, i) => {
-        const step = i + 1;
-        const isDone = step < current, isActive = step === current;
-        return (
-          <div key={step} style={{ display:"flex", alignItems:"center" }}>
-            {i > 0 && <div style={{ width:12, height:2, background:(isDone||isActive)?"var(--brand-accent)":"rgba(255,255,255,0.15)", transition:"all 0.3s" }} />}
-            <div style={{
-              width:18, height:18, borderRadius:"50%", display:"flex", alignItems:"center", justifyContent:"center",
-              fontSize:"9.5px", fontWeight:900, fontFamily:"'Prompt',sans-serif", transition:"all 0.3s",
-              background:isDone?"#1f7a55":isActive?"var(--brand-accent)":"rgba(255,255,255,0.1)",
-              color:isDone?"#fff":isActive?"var(--c-1a1613)":"rgba(255,255,255,0.4)",
-              boxShadow:isActive?"0 0 0 3px rgba(var(--brand-accent-rgb),0.18)":"none",
-              border:(!isDone&&!isActive)?"1px solid rgba(255,255,255,0.08)":"none"
-            }}>
-              {isDone ? "✓" : step}
-            </div>
-          </div>
-        );
-      })}
-    </div>
-  );
-}
 
 // ─── Animated Reveal ─────────────────────────────────────────────────────────
 function FadeSlide({ show, children, delay = 0 }) {
@@ -676,15 +650,7 @@ export default function Linewalk() {
                 {/* Step pips — only meaningful in full Activity flow */}
                 {fromActivity && !isMobileQuestionScreen && (
                   <div style={{ display:"flex", alignItems:"center", gap:10, flexShrink:0 }}>
-                    <div style={{ textAlign:"right" }}>
-                      <span style={{ fontSize:9, color:"rgba(255,248,230,0.55)", fontWeight:800, fontFamily:"'Prompt',sans-serif", letterSpacing:"0.05em", display:"block" }}>SAFETY EFFORT</span>
-                      <div style={{ display:"flex", alignItems:"center", gap:6, justifyContent:"flex-end" }}>
-                        <StepPips current={isQuestionScreen ? 4 : 3} total={4} />
-                        <span style={{ fontSize:11, color:"var(--brand-accent)", fontWeight:900, fontFamily:"'Prompt',sans-serif" }}>
-                          {isQuestionScreen ? 4 : 3} / 4
-                        </span>
-                      </div>
-                    </div>
+                    <SafetyEffortProgressStepper current={isQuestionScreen ? 4 : 3} total={4} compact />
                   </div>
                 )}
               </div>
@@ -715,7 +681,7 @@ export default function Linewalk() {
                 action="linewalkClip"
                 size={isQuestionScreen ? "68px" : "88px"}
                 animation="float"
-                style={{ position: "absolute", right: fromActivity ? 118 : 20, bottom: isQuestionScreen ? -2 : 4, zIndex: 0 }}
+                style={{ position: "absolute", right: fromActivity ? (isMobileViewport ? 20 : 220) : 20, bottom: isQuestionScreen ? -2 : 4, zIndex: 0 }}
               />
             )}
             <div style={{ position:"absolute", left:0, right:0, bottom:0, height:5, background:"repeating-linear-gradient(135deg,var(--brand-accent) 0 10px,#0e0f12 10px 20px)" }} />
@@ -999,20 +965,21 @@ export default function Linewalk() {
               <div
                 className="no-scrollbar"
                 style={{
-                  display: isMobileQuestionScreen ? "grid" : "flex",
-                  gridTemplateColumns: isMobileQuestionScreen
-                    ? `repeat(${getOptimalColumns(totalItems)}, 36px)`
-                    : undefined,
-                  flexWrap: isMobileQuestionScreen ? undefined : "nowrap",
-                  gap: isMobileQuestionScreen ? "6px 12px" : 12,
-                  justifyContent: "center",
+                  display: "flex",
+                  flexWrap: "nowrap",
+                  gap: isMobileQuestionScreen ? 6 : 5,
+                  justifyContent: isMobileQuestionScreen ? "flex-start" : "center",
                   alignItems: "center",
                   flexShrink: 0,
-                  overflowX: "visible",
+                  overflowX: isMobileQuestionScreen ? "auto" : "visible",
                   width: "100%",
-                  maxWidth: isMobileQuestionScreen ? undefined : (isQuestionScreen ? 360 : undefined),
-                  margin: isMobileQuestionScreen ? "0 auto 8px" : (isQuestionScreen ? "0px auto 2px" : "2px 0 6px"),
-                  padding: isMobileQuestionScreen ? "10px 16px 12px" : (isQuestionScreen ? "4px 4px 6px" : "6px 4px 10px"),
+                  maxWidth: isMobileQuestionScreen ? undefined : (isQuestionScreen ? 460 : undefined),
+                  margin: isMobileQuestionScreen ? "0 auto 6px" : (isQuestionScreen ? "0px auto 0" : "2px 0 6px"),
+                  padding: isMobileQuestionScreen ? "8px 12px 10px" : (isQuestionScreen ? "6px 8px" : "6px 4px 10px"),
+                  borderRadius: isQuestionScreen ? 999 : undefined,
+                  border: isQuestionScreen ? "1px solid rgba(64,38,16,0.08)" : undefined,
+                  background: isQuestionScreen ? "rgba(255,255,255,0.64)" : undefined,
+                  boxShadow: isQuestionScreen ? "0 10px 24px rgba(64,38,16,0.06)" : undefined,
                   scrollbarWidth: "none",
                   msOverflowStyle: "none",
                 }}
@@ -1025,20 +992,20 @@ export default function Linewalk() {
 
                   let bg = "linear-gradient(180deg,#ffffff 0%, var(--brand-surface) 100%)";
                   let color = "var(--c-8d7a63)";
-                  let border = active ? "2.5px solid var(--c-8b5a14)" : "1px solid rgba(64,38,16,0.10)";
+                  let border = active ? "2px solid var(--brand-text)" : "1px solid rgba(64,38,16,0.10)";
 
                   if (status === "safe") {
                     bg = "#e6f7ed";
                     color = "#15803d";
-                    border = active ? "2.5px solid #15803d" : "1.5px solid #86efac";
+                    border = active ? "2px solid #15803d" : "1px solid #86efac";
                   } else if (status === "unsafe_condition") {
                     bg = "#fee2e2";
                     color = "#dc2626";
-                    border = active ? "2.5px solid #dc2626" : "1.5px solid #fca5a5";
+                    border = active ? "2px solid #dc2626" : "1px solid #fca5a5";
                   } else if (status === "unsafe_action") {
                     bg = "#fff7ed";
                     color = "#ea580c";
-                    border = active ? "2.5px solid #ea580c" : "1.5px solid #ffedd5";
+                    border = active ? "2px solid #ea580c" : "1px solid #ffedd5";
                   } else if (active) {
                     bg = "linear-gradient(180deg,var(--brand-accent) 0%, var(--brand-accent-strong) 100%)";
                     color = "var(--brand-text)";
@@ -1054,20 +1021,20 @@ export default function Linewalk() {
                       type="button"
                       onClick={() => setCurrentQuestionIndex(idx)}
                       style={{
-                        width: isMobileQuestionScreen ? 36 : (isQuestionScreen ? 34 : 40),
-                        height: isMobileQuestionScreen ? 36 : (isQuestionScreen ? 34 : 40),
-                        borderRadius: "50%",
+                        width: isMobileQuestionScreen ? 32 : (isQuestionScreen ? 30 : 40),
+                        height: isMobileQuestionScreen ? 32 : (isQuestionScreen ? 30 : 40),
+                        borderRadius: isQuestionScreen ? 12 : "50%",
                         border: border,
                         background: bg,
                         color: color,
                         fontFamily: "'Prompt',sans-serif",
                         fontWeight: 800,
-                        fontSize: isMobileQuestionScreen ? 12 : (isQuestionScreen ? 13 : 14),
+                        fontSize: isMobileQuestionScreen ? 11.5 : (isQuestionScreen ? 12 : 14),
                         cursor: "pointer",
                         flex: "0 0 auto",
                         boxShadow: active
-                          ? `0 0 0 3px ${shadowColor}, 0 8px 18px rgba(0,0,0,0.12)`
-                          : `0 2px 8px ${shadowColor}`,
+                          ? `0 0 0 2px ${shadowColor}, 0 6px 14px rgba(0,0,0,0.10)`
+                          : "none",
                       }}
                     >
                       {idx + 1}

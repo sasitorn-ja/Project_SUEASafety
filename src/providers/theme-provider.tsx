@@ -38,42 +38,6 @@ export type MascotAction =
   | "welcome"
   | "firstaid";
 
-const TIGER_MASCOTS: Record<MascotAction, string> = {
-  logo: "/images/mascots/suea-mascot-logo.png",
-  logoMobile: "/images/mascots/suea-mascot-logo.png",
-  logoApp: "/images/mascots/suea-mascot-logo.png",
-  big: "/images/mascots/suea-mascot-logo.png",
-  "thumbs-up": "/images/mascots/suea-thumbs-up.png",
-  createThumb: "/images/mascots/suea-thumbs-up.png",
-  salute: "/images/mascots/suea-mascot-logo.png",
-  saluteAlt: "/images/mascots/suea-mascot-logo.png",
-  radio: "/images/mascots/suea-mascot-logo.png",
-  stop: "/images/mascots/suea-shield.png",
-  danger: "/images/mascots/suea-shield.png",
-  shield: "/images/mascots/suea-shield.png",
-  clipboard: "/images/mascots/suea-mascot-logo.png",
-  clipboardPost: "/images/mascots/suea-mascot-logo.png",
-  clipboardHover: "/images/mascots/suea-mascot-logo.png",
-  linewalkClip: "/images/mascots/suea-mascot-logo.png",
-  flashlight: "/images/mascots/suea-shield.png",
-  announce: "/images/mascots/suea-mascot-logo.png",
-  announce2: "/images/mascots/suea-mascot-logo.png",
-  whistle: "/images/mascots/suea-mascot-logo.png",
-  running: "/images/mascots/suea-mascot-logo.png",
-  smile: "/images/mascots/suea-mascot-logo.png",
-  happy: "/images/mascots/suea-thumbs-up.png",
-  happyReward: "/images/mascots/suea-thumbs-up.png",
-  happyClaim: "/images/mascots/suea-thumbs-up.png",
-  gateHappy: "/images/mascots/suea-thumbs-up.png",
-  assessHappy: "/images/mascots/suea-thumbs-up.png",
-  idea: "/images/mascots/suea-mascot-logo.png",
-  idea2: "/images/mascots/suea-mascot-logo.png",
-  cheer: "/images/mascots/suea-thumbs-up.png",
-  cheer2: "/images/mascots/suea-thumbs-up.png",
-  welcome: "/images/mascots/suea-mascot-logo.png",
-  firstaid: "/images/mascots/suea-shield.png",
-};
-
 const WANGJAI_TRANSPARENT_BASE = "/images/mascots/wangjai";
 
 // น้องวางใจ (CPAC) set — every display spot uses a UNIQUE image (no duplicates).
@@ -125,11 +89,11 @@ type ThemeContextValue = {
 const ThemeContext = createContext<ThemeContextValue | null>(null);
 
 function getMascot(theme: AppTheme, action: MascotAction = "big") {
-  return (theme === "wangjai" ? WANGJAI_MASCOTS : TIGER_MASCOTS)[action];
+  return WANGJAI_MASCOTS[action];
 }
 
 function getThemedImage(theme: AppTheme, src: string) {
-  if (theme !== "wangjai" || !src.startsWith("/images/mascots/")) return src;
+  if (!src.startsWith("/images/mascots/")) return src;
   if (src.includes("reward") || src.includes("thumb")) return getMascot(theme, "happy");
   if (src.includes("ppe")) return getMascot(theme, "salute");
   if (src.includes("line-walk")) return getMascot(theme, "clipboard");
@@ -156,7 +120,7 @@ export function AppThemeProvider({ children }: { children: ReactNode }) {
   const value = useMemo<ThemeContextValue>(
     () => ({
       theme,
-      toggleTheme: () => setTheme((current) => (current === "tiger" ? "wangjai" : "tiger")),
+      toggleTheme: () => setTheme("wangjai"),
       mascot: (action = "big") => getMascot(theme, action),
       mascotForTheme: getMascot,
       themedImage: (src) => getThemedImage(theme, src),

@@ -9,7 +9,6 @@ import { toast } from "sonner";
 import { useAppActions, useAppState } from "@/providers/app-providers";
 import { SafetyCultureHero } from "@/components/safety-culture/safety-culture-hero";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { SAFETY_CULTURE_CATEGORIES } from "@/lib/safety-culture";
 import { getSafetyPoint } from "@/lib/point-rules";
@@ -102,13 +101,15 @@ export default function PostSocialPage() {
   const [isProcessingPhotos, setIsProcessingPhotos] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const selectedFeedEvent = availableFeedEvents.find((event) => event.id === selectedFeedEventId) ?? null;
+  const basePostPoints = getSafetyPoint("safetyPostApproved");
+  const selectedFeedEventBonusPoints = selectedFeedEvent?.enabledActions.includes("theme-post")
+    ? selectedFeedEvent.bonusMode === "multiplier"
+      ? Math.round(selectedFeedEvent.points * Math.max(1, selectedFeedEvent.multiplier))
+      : selectedFeedEvent.points + Math.max(0, selectedFeedEvent.fixedPoints)
+    : 0;
   const selectedFeedEventPoints = selectedFeedEvent
-    ? selectedFeedEvent.enabledActions.includes("theme-post")
-      ? selectedFeedEvent.bonusMode === "multiplier"
-        ? Math.round(selectedFeedEvent.points * Math.max(1, selectedFeedEvent.multiplier))
-        : selectedFeedEvent.points + Math.max(0, selectedFeedEvent.fixedPoints)
-      : selectedFeedEvent.points
-    : getSafetyPoint("safetyPostApproved");
+    ? basePostPoints + selectedFeedEventBonusPoints
+    : basePostPoints;
 
   const animStyle = (delay: number) => ({
     animationDelay: `${delay}s`,
@@ -212,7 +213,7 @@ export default function PostSocialPage() {
         imageData: null,
         likes: 0,
         comments: [],
-        points: getSafetyPoint("safetyPostApproved"),
+        points: basePostPoints,
         hasLiked: false,
         feedEventId: selectedFeedEvent?.id,
         feedEventTitle: selectedFeedEvent?.title,
@@ -236,10 +237,10 @@ export default function PostSocialPage() {
 
     toast.success("โพสต์สำเร็จ", {
       description: selectedFeedEvent
-        ? `โพสต์เข้ากิจกรรม ${selectedFeedEvent.title} แล้ว ฐาน ${getSafetyPoint("safetyPostApproved")} แต้ม และโบนัส ${nextBonusLabel}`
+        ? `โพสต์เข้ากิจกรรม ${selectedFeedEvent.title} แล้ว ได้ทั้งหมด +${selectedFeedEventPoints} แต้ม (ฐาน ${basePostPoints} + กิจกรรม ${selectedFeedEventBonusPoints})`
         : isEventLive
-          ? `แชร์เรื่องความปลอดภัยแล้ว ได้ฐาน +${getSafetyPoint("safetyPostApproved")} แต้ม และโบนัสอีเว้น ${nextBonusLabel}`
-          : `แชร์เรื่องความปลอดภัยแล้ว ได้รับ +${getSafetyPoint("safetyPostApproved")} แต้ม`,
+          ? `แชร์เรื่องความปลอดภัยแล้ว ได้ฐาน +${basePostPoints} แต้ม และโบนัสอีเว้น ${nextBonusLabel}`
+          : `แชร์เรื่องความปลอดภัยแล้ว ได้รับ +${basePostPoints} แต้ม`,
     });
 
     setTimeout(() => router.push("/safety-culture"), 800);
@@ -284,20 +285,17 @@ export default function PostSocialPage() {
               </>
             }
             description="เล่าเหตุการณ์ดี ๆ หรือจุดเสี่ยงให้เพื่อนร่วมทีมเห็นได้เร็วขึ้น"
-            mascotSrc="/images/mascots/suea-mascot.png"
-            mascotAlt="SUEA Mascot"
-            mascotAction="clipboardPost"
             variant="community"
             backgroundImage="/images/hero02.png"
-            backgroundOverlay="linear-gradient(90deg, rgba(2, 26, 66, .82) 0%, rgba(3, 33, 78, .5) 34%, rgba(3, 33, 78, .16) 56%, rgba(3, 33, 78, 0) 70%)"
+            backgroundOverlay="linear-gradient(90deg, rgba(2, 26, 66, .84) 0%, rgba(3, 33, 78, .60) 44%, rgba(3, 33, 78, .30) 100%)"
           />
         </div>
 
         <div
-          className="anim-fade mb-5 flex items-center gap-3 rounded-[16px] border-[1.5px] border-[var(--border)] bg-white p-4"
+          className="anim-fade mb-4 flex items-center gap-3 rounded-2xl border border-[#d9e5f3] bg-white/90 p-4 shadow-[0_10px_24px_rgba(23,59,107,0.06)]"
           style={animStyle(0.05)}
         >
-          <div className="flex h-11 w-11 items-center justify-center overflow-hidden rounded-full border-2 border-[var(--brand-accent)] bg-[var(--brand-soft)] text-lg font-extrabold text-[var(--brand-accent)]">
+          <div className="flex h-11 w-11 items-center justify-center overflow-hidden rounded-full bg-[var(--brand-soft)] text-lg font-extrabold text-[var(--brand-accent)] ring-2 ring-[rgba(var(--brand-accent-rgb),0.22)]">
             {getSessionProfileImage(sessionUser) ? (
               <Image src={getSessionProfileImage(sessionUser)} alt="" width={44} height={44} className="h-full w-full object-cover" />
             ) : (
@@ -318,7 +316,7 @@ export default function PostSocialPage() {
 
         {availableFeedEvents.length > 0 ? (
           <div
-            className="anim-fade mb-5 rounded-[22px] border-[1.5px] border-[var(--border)] bg-white p-4"
+            className="anim-fade mb-4 rounded-2xl border border-[#d9e5f3] bg-white/90 p-4 shadow-[0_10px_24px_rgba(23,59,107,0.06)]"
             style={animStyle(0.1)}
           >
             <div className="flex flex-col gap-3">
@@ -366,7 +364,8 @@ export default function PostSocialPage() {
               </div>
               {selectedFeedEvent ? (
                 <div className="rounded-[14px] border border-[var(--c-e4cdac)] bg-[#fff7e8] px-3 py-2 text-[12px] font-bold leading-relaxed text-[#6d5a46]">
-                  กิจกรรม {selectedFeedEvent.title} ให้ {selectedFeedEventPoints} แต้มเมื่อโพสต์สำเร็จ
+                  กิจกรรม {selectedFeedEvent.title} ได้ทั้งหมด {selectedFeedEventPoints} แต้มเมื่อโพสต์สำเร็จ
+                  <span className="ml-1 text-[#8E8A81]">(ฐาน {basePostPoints} + กิจกรรม {selectedFeedEventBonusPoints})</span>
                 </div>
               ) : null}
             </div>
@@ -374,7 +373,7 @@ export default function PostSocialPage() {
         ) : null}
 
         <div
-          className="anim-fade mb-5 flex min-h-[180px] flex-col gap-2.5 rounded-3xl border-2 border-[var(--brand-text)] bg-[var(--brand-surface)] p-4 md:p-4"
+          className="anim-fade mb-5 flex min-h-[180px] flex-col gap-2.5 rounded-[22px] border border-[#d9e5f3] bg-white p-4 shadow-[0_12px_28px_rgba(23,59,107,0.07)] md:p-4"
           style={animStyle(0.12)}
         >
           <div className="mb-1 flex items-center justify-between gap-2">
@@ -405,9 +404,9 @@ export default function PostSocialPage() {
                 key={category}
                 onClick={() => setActiveCategory(category)}
                 className={cn(
-                  "rounded-full border-[1.5px] px-4 py-2 text-[13px] font-bold outline-none transition-all",
+                  "rounded-full border px-4 py-2 text-[13px] font-bold outline-none transition-all",
                   activeCategory === category
-                    ? "border-[var(--brand-text)] bg-[var(--brand-text)] text-white shadow-[0_3px_8px_rgba(var(--brand-accent-rgb),0.15)]"
+                    ? "border-[var(--brand-text)] bg-[var(--brand-text)] text-white shadow-[0_3px_8px_rgba(23,59,107,0.16)]"
                     : "border-[var(--border)] bg-white text-[var(--brand-text)] hover:border-[var(--brand-accent)] hover:bg-[var(--brand-soft)]"
                 )}
               >
@@ -432,7 +431,7 @@ export default function PostSocialPage() {
             {photos.map((photo, idx) => (
               <div
                 key={idx}
-                className="relative aspect-square overflow-hidden rounded-2xl border-[1.5px] border-[var(--border)] bg-[var(--secondary)]"
+                className="relative aspect-square overflow-hidden rounded-2xl border border-[#d9e5f3] bg-[var(--secondary)]"
               >
                 <Image
                   src={photo.dataUrl}
@@ -457,7 +456,7 @@ export default function PostSocialPage() {
               <label
                 htmlFor={cameraInputId}
                 className={cn(
-                  "flex aspect-square flex-col items-center justify-center gap-1 rounded-2xl border-2 border-dashed border-[var(--border)] bg-white text-xs font-bold text-[var(--brand-text)] transition-colors",
+                  "flex aspect-square flex-col items-center justify-center gap-1 rounded-2xl border border-dashed border-[var(--border)] bg-white text-xs font-bold text-[var(--brand-text)] transition-colors",
                   isProcessingPhotos
                     ? "cursor-wait opacity-60"
                     : "cursor-pointer hover:border-[var(--brand-accent)] hover:bg-[var(--brand-hover-surface)]"
@@ -481,7 +480,7 @@ export default function PostSocialPage() {
               <label
                 htmlFor={uploadInputId}
                 className={cn(
-                  "flex aspect-square flex-col items-center justify-center gap-1 rounded-2xl border-2 border-dashed border-[var(--border)] bg-white text-xs font-bold text-[var(--brand-text)] transition-colors",
+                  "flex aspect-square flex-col items-center justify-center gap-1 rounded-2xl border border-dashed border-[var(--border)] bg-white text-xs font-bold text-[var(--brand-text)] transition-colors",
                   isProcessingPhotos
                     ? "cursor-wait opacity-60"
                     : "cursor-pointer hover:border-[var(--brand-accent)] hover:bg-[var(--brand-hover-surface)]"

@@ -2,7 +2,6 @@
 import { useEffect, useMemo, useState } from "react";
 import {
   Search,
-  X,
   Upload,
   Pencil,
   Trash2,
@@ -16,6 +15,14 @@ import {
 } from "lucide-react";
 import * as XLSX from "xlsx";
 import { Combobox } from "@/components/ui/combobox";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { SafetyCultureHero } from "@/components/safety-culture/safety-culture-hero";
 
 // This screen is wired to the real locations API. Fields that do not exist on
@@ -217,7 +224,12 @@ async function fetchAdminLocations(type, selectedType) {
   });
   const payload = await response.json().catch(() => null);
   if (!response.ok || !payload?.ok) throw new Error(payload?.error || "locations_fetch_failed");
-  return (payload.data?.items || []).map((location) => mapLocationToAdminRow(location, selectedType));
+  const items = Array.isArray(payload.data?.items)
+    ? payload.data.items
+    : Array.isArray(payload.data?.locations)
+      ? payload.data.locations
+      : [];
+  return items.map((location) => mapLocationToAdminRow(location, selectedType));
 }
 
 export default function SafetyAdminManageData() {
@@ -1296,69 +1308,51 @@ export default function SafetyAdminManageData() {
       </div>
 
       {/* Add / Edit Plant Modal */}
-      {(addingPlant || editingPlant) && (
-        <div
+      <Dialog
+        open={addingPlant || !!editingPlant}
+        onOpenChange={(open) => {
+          if (!open) {
+            setAddingPlant(false);
+            setEditingPlant(null);
+          }
+        }}
+      >
+        <DialogContent
+          className="gap-0 p-0"
           style={{
-            position: "fixed",
-            inset: 0,
-            background: "rgba(31, 26, 23, 0.42)",
-            display: "grid",
-            placeItems: "center",
-            padding: 20,
-            zIndex: 1000,
+            width: selectedType === "factory" ? "min(100%, 920px)" : "min(100%, 680px)",
+            maxWidth: "calc(100vw - 32px)",
+            maxHeight: "90vh",
           }}
         >
-          <div
-            style={{
-              width: selectedType === "factory" ? "min(100%, 920px)" : "min(100%, 680px)",
-              background: "var(--brand-surface)",
-              borderRadius: 24,
-              border: `1px solid ${T.line}`,
-              boxShadow: "0 24px 60px rgba(31,26,23,0.22)",
-              padding: 24,
-              display: "grid",
-              gap: 16,
-              maxHeight: "90vh",
-              overflowY: "auto"
-            }}
-          >
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: `1px solid ${T.line}`, paddingBottom: 12 }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                {selectedType === "factory" ? (
-                  <Building2 size={20} style={{ color: "#2563eb" }} />
-                ) : selectedType === "office" ? (
-                  <Building size={20} style={{ color: "#2563eb" }} />
-                ) : (
-                  <Layers size={20} style={{ color: "#2563eb" }} />
-                )}
-                <div style={{ fontSize: 18, fontWeight: 700, color: T.ink }}>
-                  {selectedType === "factory" 
+          <DialogHeader className="mx-0 mt-0 flex-row items-center justify-between">
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              {selectedType === "factory" ? (
+                <Building2 size={20} style={{ color: "var(--brand-text)" }} />
+              ) : selectedType === "office" ? (
+                <Building size={20} style={{ color: "var(--brand-text)" }} />
+              ) : (
+                <Layers size={20} style={{ color: "var(--brand-text)" }} />
+              )}
+              <div>
+                <DialogTitle style={{ fontSize: 18, color: T.ink }}>
+                  {selectedType === "factory"
                     ? (addingPlant ? "Add Plant Record" : "Edit Plant Record")
                     : selectedType === "office"
-                    ? (addingPlant ? "Add Office Record" : "Edit Office Record")
-                    : (addingPlant ? "Add Site Record" : "Edit Site Record")}
-                </div>
+                      ? (addingPlant ? "Add Office Record" : "Edit Office Record")
+                      : (addingPlant ? "Add Site Record" : "Edit Site Record")}
+                </DialogTitle>
+                <DialogDescription>แก้ไขข้อมูลสถานที่สำหรับ Check-in และ Safety Effort</DialogDescription>
               </div>
-              <button
-                type="button"
-                onClick={() => {
-                  setAddingPlant(false);
-                  setEditingPlant(null);
-                }}
-                style={{
-                  ...buttonGhostStyle,
-                  width: 32,
-                  height: 32,
-                  borderRadius: 999,
-                  padding: 0,
-                  display: "grid",
-                  placeItems: "center"
-                }}
-              >
-                <X size={16} />
-              </button>
             </div>
-
+          </DialogHeader>
+          <div style={{ padding: 24, overflowY: "auto" }}>
+          <div
+            style={{
+              display: "grid",
+              gap: 16,
+            }}
+          >
             {/* Form Fields */}
             <div style={{ display: "grid", gap: 14 }}>
               {selectedType === "factory" ? (
@@ -1366,7 +1360,7 @@ export default function SafetyAdminManageData() {
                   {/* Row 1: Company, Division, Status */}
                   <label style={fieldStyle}>
                     <span style={fieldLabelStyle}>
-                      <Building size={14} style={{ display: "inline-block", verticalAlign: "middle", marginRight: 4, color: "#2563eb" }} /> Company
+                      <Building size={14} style={{ display: "inline-block", verticalAlign: "middle", marginRight: 4, color: "var(--brand-text)" }} /> Company
                     </span>
                     <Combobox
                       value={plantForm.companyCode || ""}
@@ -1381,7 +1375,7 @@ export default function SafetyAdminManageData() {
 
                   <label style={fieldStyle}>
                     <span style={fieldLabelStyle}>
-                      <Users size={14} style={{ display: "inline-block", verticalAlign: "middle", marginRight: 4, color: "#10b981" }} /> Division
+                      <Users size={14} style={{ display: "inline-block", verticalAlign: "middle", marginRight: 4, color: "var(--brand-text)" }} /> Division
                     </span>
                     <Combobox
                       value={plantForm.divisionCode || ""}
@@ -1733,9 +1727,11 @@ export default function SafetyAdminManageData() {
                 </div>
               )}
             </div>
+          </div>
+          </div>
 
-            {/* Action buttons */}
-            <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, borderTop: `1px solid ${T.line}`, paddingTop: 14 }}>
+          <DialogFooter className="mx-0 mb-0">
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, width: "100%" }}>
               <button
                 type="button"
                 onClick={() => {
@@ -1765,7 +1761,7 @@ export default function SafetyAdminManageData() {
                 onClick={addingPlant ? submitAddPlant : submitEditPlant}
                 style={selectedType === "factory"
                   ? {
-                      background: "#2563eb",
+                      background: "var(--brand-text)",
                       border: "none",
                       color: "#ffffff",
                       height: 38,
@@ -1793,40 +1789,21 @@ export default function SafetyAdminManageData() {
                       : "บันทึกการแก้ไข")}
               </button>
             </div>
-          </div>
-        </div>
-      )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Delete Plant Confirmation Modal */}
-      {deletePlantId && (
-        <div
-          style={{
-            position: "fixed",
-            inset: 0,
-            background: "rgba(31, 26, 23, 0.42)",
-            display: "grid",
-            placeItems: "center",
-            padding: 20,
-            zIndex: 1000,
-          }}
-        >
-          <div
-            style={{
-              width: "min(100%, 420px)",
-              background: "var(--brand-surface)",
-              borderRadius: 24,
-              border: `1px solid ${T.line}`,
-              boxShadow: "0 24px 60px rgba(31,26,23,0.22)",
-              padding: 24,
-              display: "grid",
-              gap: 16,
-            }}
-          >
-            <div style={{ fontSize: 20, fontWeight: 950 }}>ยืนยันการลบสถานที่</div>
-            <div style={{ fontSize: 14, color: T.sub, lineHeight: 1.6 }}>
+      <Dialog open={!!deletePlantId} onOpenChange={(open) => !open && setDeletePlantId(null)}>
+        <DialogContent className="gap-0 p-0 sm:max-w-[420px]">
+          <DialogHeader className="mx-0 mt-0">
+            <DialogTitle style={{ fontSize: 20, fontWeight: 950 }}>ยืนยันการลบสถานที่</DialogTitle>
+            <DialogDescription style={{ fontSize: 14, color: T.sub, lineHeight: 1.6 }}>
               คุณแน่ใจว่าต้องการลบสถานที่นี้ใช่หรือไม่? รายการจะหายจากหน้า Check-in และไม่สามารถย้อนกลับได้
-            </div>
-            <div style={{ display: "flex", justifyContent: "flex-end", gap: 10 }}>
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="mx-0 mb-0">
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, width: "100%" }}>
               <button
                 type="button"
                 onClick={() => setDeletePlantId(null)}
@@ -1842,9 +1819,9 @@ export default function SafetyAdminManageData() {
                 ลบสถานที่
               </button>
             </div>
-          </div>
-        </div>
-      )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

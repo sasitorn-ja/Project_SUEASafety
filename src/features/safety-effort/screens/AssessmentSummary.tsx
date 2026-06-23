@@ -5,6 +5,7 @@ import TigerMascot from "@/components/TigerMascot";
 import { getChecklistForType } from "@/features/safety-effort/config/checklists";
 import { useAppActions } from "@/providers/app-providers";
 import { getSessionDisplayName, useSessionUser } from "@/lib/session-user";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 
 const T = {
   background: "var(--background)",
@@ -464,29 +465,12 @@ export default function AssessmentSummary() {
           </button>
         </div>
 
-        {showSuccessPopup && (
-          <div style={{
-            position: "fixed",
-            inset: 0,
-            zIndex: 9999,
-            background: "rgba(14,15,18,0.45)",
-            backdropFilter: "blur(8px)",
-            WebkitBackdropFilter: "blur(8px)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            padding: 16,
-            animation: "fadeIn 0.25s ease-out",
-          }}>
-            <div style={{
-              background: "#fff",
-              border: "1px solid rgba(82,52,24,0.08)",
-              borderRadius: 24,
-              boxShadow: "0 20px 48px rgba(34,25,11,0.2)",
-              width: "100%",
-              maxWidth: 380,
+        <Dialog open={showSuccessPopup}>
+          <DialogContent
+            showCloseButton={false}
+            className="z-[9999] w-full max-w-[380px] text-center"
+            style={{
               padding: "28px 24px",
-              textAlign: "center",
               display: "flex",
               flexDirection: "column",
               alignItems: "center",
@@ -548,9 +532,8 @@ export default function AssessmentSummary() {
               >
                 กลับหน้าหลัก
               </button>
-            </div>
-          </div>
-        )}
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );

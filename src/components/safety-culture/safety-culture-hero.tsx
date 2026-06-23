@@ -10,8 +10,8 @@ type SafetyCultureHeroProps = {
   eyebrow: string;
   title: ReactNode;
   description: string;
-  mascotSrc: string;
-  mascotAlt: string;
+  mascotSrc?: string;
+  mascotAlt?: string;
   mascotAction?: MascotAction;
   actions?: ReactNode;
   actionsLayout?: "stacked" | "side";
@@ -36,7 +36,10 @@ export function SafetyCultureHero({
   const hasActions = !!actions;
   const sideActions = hasActions && actionsLayout === "side";
   const { theme, mascot } = useAppTheme();
-  const themedMascotSrc = variant === "community"
+  const showMascot = Boolean(mascotSrc);
+  const themedMascotSrc = !mascotSrc
+    ? ""
+    : variant === "community"
     ? mascotSrc
     : theme === "wangjai"
       ? mascot(mascotAction)
@@ -84,7 +87,11 @@ export function SafetyCultureHero({
         className={cn(
           "safety-culture-hero-grid relative z-10 grid items-start gap-2 px-3.5 pt-[6px] pb-[22px] sm:px-4 md:px-6 md:pt-[10px] md:pb-[30px]",
           sideActions
-            ? "grid-cols-[minmax(0,1fr)_84px] md:grid-cols-[minmax(0,1fr)_132px_minmax(300px,410px)] md:items-center md:gap-5"
+            ? showMascot
+              ? "grid-cols-[minmax(0,1fr)_84px] md:grid-cols-[minmax(0,1fr)_132px_minmax(300px,410px)] md:items-center md:gap-5"
+              : "grid-cols-1 md:grid-cols-[minmax(0,1fr)_minmax(300px,410px)] md:items-center md:gap-5"
+            : !showMascot
+            ? "grid-cols-1"
             : hasActions
             ? "grid-cols-[1fr_96px] md:grid-cols-[1fr_150px]"
             : "grid-cols-[1fr_100px] md:grid-cols-[1fr_130px]"
@@ -115,34 +122,36 @@ export function SafetyCultureHero({
           {!sideActions ? actions : null}
         </div>
 
-        <div
-          className={cn(
-            "relative flex h-full min-h-[90px] items-end justify-end overflow-visible md:min-h-[110px]",
-            sideActions ? "min-h-[128px] justify-end md:min-h-[150px] md:justify-center" : ""
-          )}
-        >
+        {showMascot ? (
           <div
             className={cn(
-              "suea-hero-mascot safety-culture-hero-mascot absolute right-[-2px] bottom-[-2px] h-auto sm:right-[-6px] md:right-0",
-              sideActions && "safety-culture-hero-mascot-side",
-              sideActions
-                ? "w-[74px] sm:w-[86px] md:right-auto md:left-1/2 md:w-[138px] md:-translate-x-1/2 lg:w-[158px]"
-                : hasActions
-                ? "w-[82px] sm:w-[92px] md:w-[118px] lg:w-[132px]"
-                : "w-[92px] sm:w-[102px] md:w-[112px] lg:w-[118px]"
+              "relative flex h-full min-h-[90px] items-end justify-end overflow-visible md:min-h-[110px]",
+              sideActions ? "min-h-[128px] justify-end md:min-h-[150px] md:justify-center" : ""
             )}
-            data-mascot-action={mascotAction}
           >
-            <Image
-              src={themedMascotSrc}
-              alt={mascotAlt}
-              width={180}
-              height={180}
-              priority
-              className="safety-culture-hero-mascot-image h-auto w-full object-contain drop-shadow-[0_12px_14px_rgba(0,0,0,0.30)]"
-            />
+            <div
+              className={cn(
+                "suea-hero-mascot safety-culture-hero-mascot absolute right-[-2px] bottom-[-2px] h-auto sm:right-[-6px] md:right-0",
+                sideActions && "safety-culture-hero-mascot-side",
+                sideActions
+                  ? "w-[74px] sm:w-[86px] md:right-auto md:left-1/2 md:w-[138px] md:-translate-x-1/2 lg:w-[158px]"
+                  : hasActions
+                  ? "w-[82px] sm:w-[92px] md:w-[118px] lg:w-[132px]"
+                  : "w-[92px] sm:w-[102px] md:w-[112px] lg:w-[118px]"
+              )}
+              data-mascot-action={mascotAction}
+            >
+              <Image
+                src={themedMascotSrc}
+                alt={mascotAlt ?? ""}
+                width={180}
+                height={180}
+                priority
+                className="safety-culture-hero-mascot-image h-auto w-full object-contain drop-shadow-[0_12px_14px_rgba(0,0,0,0.30)]"
+              />
+            </div>
           </div>
-        </div>
+        ) : null}
 
         {sideActions ? <div className="hidden md:flex md:min-w-0 md:justify-end">{actions}</div> : null}
       </div>

@@ -14,6 +14,14 @@ import {
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import { useSessionUser, getSessionProfileImage, getSessionInitials } from "@/lib/session-user";
 import {
@@ -1259,18 +1267,14 @@ export default function Page() {
         </div>
       </div>
 
-      {expandedPhoto ? (
-        <div
-          className="fixed inset-0 z-[90] flex items-center justify-center bg-[rgba(20,13,7,0.88)] p-4 backdrop-blur-[4px]"
-          onClick={() => setExpandedPhoto(null)}
-          role="dialog"
-          aria-modal="true"
+      <Dialog open={!!expandedPhoto} onOpenChange={(open) => !open && setExpandedPhoto(null)}>
+        <DialogContent
+          showCloseButton={false}
           aria-label="ภาพเต็มของโพสต์"
+          className="z-[90] max-w-[calc(100vw-2rem)] border-0 bg-transparent p-0 shadow-none"
         >
-          <div
-            className="relative flex max-h-[92vh] w-fit max-w-[calc(100vw-2rem)] flex-col gap-3"
-            onClick={(event) => event.stopPropagation()}
-          >
+          {expandedPhoto ? (
+            <div className="relative flex max-h-[92vh] w-fit max-w-[calc(100vw-2rem)] flex-col gap-3">
             <div className="flex items-center justify-between gap-3 text-white">
               <div className="min-w-0">
                 <div className="truncate text-[15px] font-extrabold">{expandedPhoto.postAuthor}</div>
@@ -1315,22 +1319,19 @@ export default function Page() {
                 </button>
               ) : null}
             </div>
-          </div>
-        </div>
-      ) : null}
+            </div>
+          ) : null}
+        </DialogContent>
+      </Dialog>
 
-      {expandedPost ? (
-        <div
-          className="fixed inset-0 z-[91] flex items-center justify-center bg-[rgba(20,13,7,0.82)] p-4 animate-[fadeIn_0.2s_ease-out_both] md:p-6"
-          onClick={closeExpandedPost}
-          role="dialog"
-          aria-modal="true"
+      <Dialog open={!!expandedPost} onOpenChange={(open) => !open && closeExpandedPost()}>
+        <DialogContent
+          showCloseButton={false}
           aria-label="รายละเอียดโพสต์"
+          className="z-[91] max-h-[86vh] w-full max-w-[430px] gap-0 overflow-hidden rounded-[24px] border border-[var(--c-e4d3b3)] bg-[var(--c-fffdfa)] p-0 shadow-[0_24px_60px_rgba(0,0,0,0.28)] sm:max-w-[560px] md:max-h-[82vh] md:max-w-[620px] md:rounded-[24px]"
         >
-          <div
-            className="relative flex max-h-[86vh] w-full max-w-[430px] flex-col overflow-hidden rounded-[24px] border border-[var(--c-e4d3b3)] bg-[var(--c-fffdfa)] shadow-[0_24px_60px_rgba(0,0,0,0.28)] animate-[scaleUp_0.24s_cubic-bezier(0.175,0.885,0.32,1.12)_both] sm:max-w-[560px] md:max-h-[82vh] md:max-w-[620px] md:rounded-[24px]"
-            onClick={(event) => event.stopPropagation()}
-          >
+          {expandedPost ? (
+            <>
             <div className="flex items-start justify-between gap-3 border-b border-[var(--c-eee2cb)] px-4 py-3 md:gap-4 md:px-5 md:py-3.5">
               <div className="min-w-0">
                 <div className="flex items-center gap-2.5 md:gap-3">
@@ -1593,31 +1594,26 @@ export default function Page() {
                 </Button>
               </div>
             </div>
-          </div>
-        </div>
-      ) : null}
+            </>
+          ) : null}
+        </DialogContent>
+      </Dialog>
 
-      {likedByPostId != null ? (
-        <div
-          className="fixed inset-0 z-[110] flex items-center justify-center bg-[rgba(20,13,7,0.55)] p-4 animate-[fadeIn_0.2s_ease-out_both]"
-          onClick={() => setLikedByPostId(null)}
-          role="dialog"
-          aria-modal="true"
+      <Dialog open={likedByPostId != null} onOpenChange={(open) => !open && setLikedByPostId(null)}>
+        <DialogContent
+          showCloseButton={false}
           aria-label="ผู้ที่กดถูกใจ"
+          className="z-[110] w-full max-w-[380px] gap-0 overflow-hidden rounded-[22px] bg-white p-0 shadow-[0_20px_48px_rgba(34,25,11,0.2)]"
         >
-          <div
-            className="w-full max-w-[380px] overflow-hidden rounded-[22px] bg-white shadow-[0_20px_48px_rgba(34,25,11,0.2)]"
-            onClick={(event) => event.stopPropagation()}
-          >
-            <div className="flex items-center justify-between border-b border-[var(--c-eee2cb)] px-5 py-4">
+          <DialogHeader className="mx-0 mt-0 flex-row items-center justify-between border-b border-[var(--c-eee2cb)] bg-white px-5 py-4">
               <div>
-                <h3 className="text-[18px] font-black text-[var(--c-2f261d)]">ผู้ที่กดถูกใจ</h3>
-                <p className="text-[12px] font-bold text-[#5f7591]">ทั้งหมด {likedByPost?.likes ?? 0} คน</p>
+                <DialogTitle className="text-[18px] font-black text-[var(--c-2f261d)]">ผู้ที่กดถูกใจ</DialogTitle>
+                <DialogDescription className="text-[12px] font-bold text-[#5f7591]">ทั้งหมด {likedByPost?.likes ?? 0} คน</DialogDescription>
               </div>
               <button type="button" onClick={() => setLikedByPostId(null)} aria-label="ปิด" className="p-2 text-[#667085]">
                 <X className="h-5 w-5" />
               </button>
-            </div>
+          </DialogHeader>
             <div className="max-h-[55vh] overflow-y-auto p-3">
               {(likedByPost?.likedBy || []).length > 0 ? (
                 (likedByPost?.likedBy || []).map((person) => (
@@ -1630,24 +1626,19 @@ export default function Page() {
                 <div className="px-4 py-8 text-center text-[13px] font-bold text-[#5f7591]">ยังไม่มีผู้กดถูกใจโพสต์นี้</div>
               )}
             </div>
-          </div>
-        </div>
-      ) : null}
+        </DialogContent>
+      </Dialog>
 
-      {deletingPostId != null ? (
-        <div
-          className="fixed inset-0 z-[95] flex items-center justify-center bg-[rgba(20,13,7,0.55)] p-4 animate-[fadeIn_0.2s_ease-out_both]"
-          onClick={() => setDeletingPostId(null)}
-        >
-          <div
-            className="w-full max-w-[360px] rounded-[20px] bg-white p-6 shadow-[0_20px_48px_rgba(34,25,11,0.2)]"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <h3 className="text-[17px] font-black text-[#c73a21]">ยืนยันการลบโพส</h3>
-            <p className="mt-2 text-[14px] font-bold leading-relaxed text-[var(--c-33271a)]">
+      <Dialog open={deletingPostId != null} onOpenChange={(open) => !open && setDeletingPostId(null)}>
+        <DialogContent className="z-[95] w-full max-w-[360px] rounded-[20px] bg-white p-6 shadow-[0_20px_48px_rgba(34,25,11,0.2)]">
+          <DialogHeader className="mx-0 mt-0 border-0 bg-white p-0">
+            <DialogTitle className="text-[17px] font-black text-[#c73a21]">ยืนยันการลบโพส</DialogTitle>
+            <DialogDescription className="mt-2 text-[14px] font-bold leading-relaxed text-[var(--c-33271a)]">
               คุณแน่ใจหรือไม่ว่าต้องการลบโพสนี้? การลบจะไม่สามารถกู้คืนได้
-            </p>
-            <div className="mt-5 flex justify-end gap-2">
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="mx-0 mb-0 mt-5 border-0 bg-white p-0">
+            <div className="flex justify-end gap-2">
               <button
                 type="button"
                 onClick={() => setDeletingPostId(null)}
@@ -1663,22 +1654,18 @@ export default function Page() {
                 ยืนยันลบ
               </button>
             </div>
-          </div>
-        </div>
-      ) : null}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
-      {expandedActivity ? (
-        <div
-          className="fixed inset-0 z-[92] flex items-center justify-center bg-[rgba(20,13,7,0.82)] p-3 animate-[fadeIn_0.2s_ease-out_both] md:p-5"
-          onClick={closeExpandedActivity}
-          role="dialog"
-          aria-modal="true"
+      <Dialog open={!!expandedActivity} onOpenChange={(open) => !open && closeExpandedActivity()}>
+        <DialogContent
+          showCloseButton={false}
           aria-label="รายละเอียดกิจกรรม"
+          className="z-[92] max-h-[94vh] w-full max-w-[920px] gap-0 overflow-hidden rounded-[28px] border border-[var(--c-e4d3b3)] bg-[var(--c-fffdfa)] p-0 shadow-[0_24px_60px_rgba(0,0,0,0.28)]"
         >
-          <div
-            className="relative flex max-h-[94vh] w-full max-w-[920px] flex-col overflow-hidden rounded-[28px] border border-[var(--c-e4d3b3)] bg-[var(--c-fffdfa)] shadow-[0_24px_60px_rgba(0,0,0,0.28)] animate-[scaleUp_0.24s_cubic-bezier(0.175,0.885,0.32,1.12)_both]"
-            onClick={(event) => event.stopPropagation()}
-          >
+          {expandedActivity ? (
+            <>
             <div className="flex items-start justify-between gap-4 border-b border-[var(--c-eee2cb)] px-5 py-4 md:px-7 md:py-5">
               <div className="min-w-0">
                 <h3 className="text-[26px] font-black text-[var(--c-2f261d)]">{expandedActivity.title}</h3>
@@ -1736,9 +1723,10 @@ export default function Page() {
                 </div>
               </div>
             </div>
-          </div>
-        </div>
-      ) : null}
+            </>
+          ) : null}
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

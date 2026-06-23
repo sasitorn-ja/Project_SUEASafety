@@ -319,9 +319,6 @@ export default function AdminLeaderboardPage() {
             </>
           }
           description="จัดการหน่วยงานที่ใช้บน Leaderboard โดยอ้างอิงข้อมูลจริงในระบบ"
-          mascotSrc="/images/mascots/suea-mascot.png"
-          mascotAlt="SUEA Admin Mascot"
-          mascotAction="clipboard"
           variant="community"
           backgroundImage="/images/safety-culture-hero.png"
           backgroundOverlay="linear-gradient(90deg, rgba(2, 26, 66, .82) 0%, rgba(3, 33, 78, .5) 34%, rgba(3, 33, 78, .16) 56%, rgba(3, 33, 78, 0) 70%)"

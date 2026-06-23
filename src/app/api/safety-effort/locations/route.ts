@@ -17,9 +17,10 @@ export async function GET(request: NextRequest) {
   try {
     const type = normalizeLocationType(request.nextUrl.searchParams.get("type"));
     const search = request.nextUrl.searchParams.get("search");
+    const source = request.nextUrl.searchParams.get("source");
     const limit = Number(request.nextUrl.searchParams.get("limit") || 200);
-    const locations = await listSafetyEffortLocations({ type, search, limit });
-    return apiOk({ locations });
+    const locations = await listSafetyEffortLocations({ type, search, source, limit });
+    return apiOk({ items: locations, locations });
   } catch (error) {
     return apiError(error);
   }

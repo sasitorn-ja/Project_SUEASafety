@@ -198,7 +198,7 @@ export default function RewardsPage() {
             }
             description="คะแนน Safety ของคุณเปลี่ยนเป็นรางวัลสุดแสนพิเศษได้"
             mascotSrc={mascot("happy")}
-            mascotAlt="SUEA Mascot"
+            mascotAlt="น้องวางใจ Safety mascot"
             mascotAction="happy"
             variant="community"
             backgroundImage="/images/hero01.png"
@@ -329,13 +329,13 @@ export default function RewardsPage() {
       </div>
 
       <Dialog open={!!redeeming} onOpenChange={(open) => !open && setRedeeming(null)}>
-        <DialogContent className="rounded-[16px] border-[3px] border-[#1A1A1A] bg-[var(--brand-surface)] p-4 text-center sm:max-w-sm">
+        <DialogContent className="p-4 text-center sm:max-w-sm">
           <DialogHeader>
             <DialogTitle className="flex flex-col items-center gap-3 text-xl font-extrabold text-foreground">
               <div className="w-[120px] animate-[sueaMascotFloat_1.8s_ease-in-out_infinite_alternate]">
                 <Image
                   src={mascot("happyClaim")}
-                  alt="SUEA Mascot"
+                  alt="น้องวางใจ Safety mascot"
                   width={120}
                   height={120}
                   className="mascot-motion h-auto w-full"
@@ -370,7 +370,7 @@ export default function RewardsPage() {
       </Dialog>
 
       <Dialog open={!!result} onOpenChange={(open) => !open && setResult(null)}>
-        <DialogContent className="rounded-[16px] border-[3px] border-[#1A1A1A] bg-[var(--brand-surface)] p-4 text-center sm:max-w-sm">
+        <DialogContent className="p-4 text-center sm:max-w-sm">
           <DialogHeader>
             <DialogTitle className="flex flex-col items-center gap-3 text-xl font-extrabold text-foreground">
               <span className="text-[52px] leading-none">{result?.type === "success" ? "✓" : "!"}</span>

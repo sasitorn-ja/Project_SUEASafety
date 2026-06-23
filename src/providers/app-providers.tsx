@@ -550,6 +550,14 @@ function calculateFeedEventAwardedPoints(basePoints: number, action: SafetyCultu
     return basePoints;
   }
 
+  if (action === "theme-post") {
+    const eventPoints = Math.max(0, Number(event.points) || 0);
+    const eventBonus = event.bonusMode === "multiplier"
+      ? Math.round(eventPoints * Math.max(1, Number(event.multiplier) || 1))
+      : eventPoints + Math.max(0, Number(event.fixedPoints) || 0);
+    return basePoints + eventBonus;
+  }
+
   if (event.bonusMode === "multiplier") {
     return Math.max(basePoints, Math.round(basePoints * event.multiplier));
   }

@@ -5,7 +5,9 @@ import { MapContainer, TileLayer, Marker, Popup, useMap, useMapEvents } from "re
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { useAppTheme } from "@/providers/theme-provider";
+import SafetyEffortProgressStepper from "@/features/safety-effort/components/SafetyEffortProgressStepper";
 import { Combobox } from "@/components/ui/combobox";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 
 // ─── Fix default Leaflet icon paths ───────────────────────────────────────────
 delete L.Icon.Default.prototype._getIconUrl;
@@ -534,11 +536,8 @@ function AddModal({ onAdd, onClose, userPos }) {
   }
 
   return (
-    <div
-      className="ci-modal-overlay"
-      onClick={e => { if (e.target === e.currentTarget) onClose(); }}
-    >
-      <div className="ci-modal" style={{ maxHeight: "98vh", overflow: "hidden", display: "flex", flexDirection: "column", padding: "18px 20px 20px" }}>
+    <Dialog open onOpenChange={(open) => !open && onClose()}>
+      <DialogContent showCloseButton={false} className="ci-modal p-0" style={{ maxHeight: "98vh", overflow: "hidden", display: "flex", flexDirection: "column", padding: "18px 20px 20px" }}>
         <div style={{ display: "flex", justifyContent: "center", marginBottom: 10 }}>
           <div style={{ width: 36, height: 4, borderRadius: 99, background: "rgba(14,15,18,0.15)" }} />
         </div>
@@ -672,8 +671,8 @@ function AddModal({ onAdd, onClose, userPos }) {
             เพิ่มสถานที่
           </button>
         </div>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -1259,17 +1258,17 @@ const STYLES = `
 
   .ci-modal-overlay {
     position: fixed; inset: 0; z-index: 9999;
-    background: rgba(14,15,18,0.5); backdrop-filter: blur(6px);
+    background: rgba(20,13,7,0.55); backdrop-filter: blur(4px);
     display: flex; align-items: flex-end; justify-content: center;
   }
   .ci-modal {
     width: min(100%, 680px); max-width: 680px;
-    background: var(--c-fbf9f4); border-radius: 24px 24px 0 0;
+    background: var(--brand-surface); border-radius: 24px 24px 0 0;
     padding: 28px 28px 42px;
     font-family: 'Sarabun', sans-serif;
     animation: ci-modal-in 0.35s cubic-bezier(0.16, 1, 0.3, 1);
-    border-top: 1px solid rgba(255,255,255,0.8);
-    box-shadow: 0 -15px 40px rgba(0, 0, 0, 0.15);
+    border-top: 1px solid var(--border);
+    box-shadow: 0 -15px 40px rgba(0, 0, 0, 0.18);
   }
   @keyframes ci-modal-in {
     from { transform: translateY(100%); opacity: 0; }
@@ -1281,10 +1280,10 @@ const STYLES = `
       align-items: center;
     }
     .ci-modal {
-      border-radius: 24px;
+      border-radius: 30px;
       animation: ci-modal-in-desktop 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
-      border: 1px solid rgba(255,255,255,0.8);
-      box-shadow: 0 20px 50px rgba(0,0,0,0.18);
+      border: 1px solid var(--border);
+      box-shadow: 0 28px 60px rgba(0,0,0,0.22);
     }
   }
   @keyframes ci-modal-in-desktop {
@@ -1293,12 +1292,12 @@ const STYLES = `
   }
 
   .ci-modal-close {
-    width: 32px; height: 32px; border-radius: 10px;
-    background: rgba(14,15,18,0.05); border: 1px solid transparent;
+    width: 40px; height: 40px; border-radius: 999px;
+    background: #fff; border: 1px solid var(--border);
     display: flex; align-items: center; justify-content: center;
     cursor: pointer; transition: all 0.2s; color: ${T.foreground3};
   }
-  .ci-modal-close:hover { background: rgba(14,15,18,0.1); transform: rotate(90deg); color: ${T.foreground}; }
+  .ci-modal-close:hover { background: var(--secondary); transform: rotate(90deg); color: ${T.foreground}; }
 
   .ci-input {
     width: 100%; padding: 12px 14px;
@@ -1708,24 +1707,6 @@ export default function Checkin() {
       ? "/linewalk"
       : "/activity";
 
-  // ── Custom Stepper Progress Indicator (compact size)
-  const StepPips = ({ current = 2, total = 4 }) => (
-    <div className="ci-stepper-container">
-      {Array.from({ length: total }, (_, i) => {
-        const n = i + 1;
-        const cls = n < current ? "done" : n === current ? "active" : "idle";
-        return (
-          <div key={n} className="ci-stepper-item-wrap">
-            {n > 1 && <div className={`ci-stepper-line ${n <= current ? "active" : "idle"}`} />}
-            <div className={`ci-stepper-node ${cls}`}>
-              {n < current ? <IcoCheck /> : <span>{n}</span>}
-            </div>
-          </div>
-        );
-      })}
-    </div>
-  );
-
   // ── Compact Sub-header (User Feedback Optimization)
   const StepHeader = () => (
     <div className="ci-step-header-compact">
@@ -1756,17 +1737,7 @@ export default function Checkin() {
 
           <div className="ci-hdr-divider" />
 
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 3 }}>
-            <span style={{ fontSize: 9, color: "rgba(255,248,230,0.6)", fontWeight: 800, fontFamily: "'Prompt',sans-serif", letterSpacing: "0.05em" }}>
-              SAFETY EFFORT
-            </span>
-            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-              <StepPips current={2} />
-              <span style={{ fontSize: 11, color: "var(--brand-accent)", fontWeight: 900, fontFamily: "'Prompt',sans-serif" }}>
-                2 / 4
-              </span>
-            </div>
-          </div>
+          <SafetyEffortProgressStepper current={2} total={4} compact />
 
           <img className="ci-hdr-mascot-compact mascot-motion mascot-motion-compact" src={mascot("idea")} alt={theme === "wangjai" ? "น้องวางใจ Safety mascot" : "SUEA tiger mascot"} />
         </div>

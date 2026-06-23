@@ -2,7 +2,6 @@
 import { useEffect, useMemo, useState } from "react";
 import {
   Search,
-  X,
   Download,
   Upload,
   Pencil,
@@ -10,6 +9,14 @@ import {
 } from "lucide-react";
 import * as XLSX from "xlsx";
 import { Combobox } from "@/components/ui/combobox";
+import {
+  AppModalBody,
+  AppModalCloseButton,
+  AppModalFooter,
+  AppModalHeader,
+  AppModalPanel,
+} from "@/components/ui/app-modal";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { SafetyCultureHero } from "@/components/safety-culture/safety-culture-hero";
 
 const T = {
@@ -871,38 +878,11 @@ export default function SafetyAdminExportReport() {
       </div>
 
       {/* Editing Modal */}
-      {editingReport ? (
-        <div
-          style={{
-            position: "fixed",
-            inset: 0,
-            background: "rgba(31, 26, 23, 0.42)",
-            display: "grid",
-            placeItems: "center",
-            padding: 20,
-            zIndex: 1000,
-          }}
-        >
-          <div
-            style={{
-              width: "min(100%, 560px)",
-              background: "var(--brand-surface)",
-              borderRadius: 24,
-              border: `1px solid ${T.line}`,
-              boxShadow: "0 24px 60px rgba(31,26,23,0.22)",
-              padding: 24,
-              display: "grid",
-              gap: 16,
-            }}
-          >
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                gap: 12,
-              }}
-            >
+      <Dialog open={!!editingReport} onOpenChange={(open) => !open && setEditingReport(null)}>
+        <DialogContent showCloseButton={false} className="z-[1000] max-w-[560px] border-0 bg-transparent p-0 shadow-none sm:max-w-[560px]">
+          {editingReport ? (
+          <AppModalPanel className="max-w-[560px]">
+            <AppModalHeader>
               <div>
                 <div
                   style={{
@@ -918,121 +898,114 @@ export default function SafetyAdminExportReport() {
                   แก้ไขข้อมูลรายงานแบบประเมิน
                 </div>
               </div>
-              <button
-                type="button"
-                onClick={() => setEditingReport(null)}
-                style={{
-                  ...buttonGhostStyle,
-                  width: 34,
-                  height: 34,
-                  borderRadius: 999,
-                  padding: 0,
-                  display: "grid",
-                  placeItems: "center",
-                }}
-              >
-                <X size={16} />
-              </button>
-            </div>
+              <AppModalCloseButton onClick={() => setEditingReport(null)} />
+            </AppModalHeader>
 
-            <div
+            <AppModalBody
               style={{
                 display: "grid",
-                gridTemplateColumns: isMobile ? "1fr" : "repeat(2, minmax(0, 1fr))",
-                gap: 12,
+                gap: 16,
               }}
             >
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: isMobile ? "1fr" : "repeat(2, minmax(0, 1fr))",
+                  gap: 12,
+                }}
+              >
+                <label style={fieldStyle}>
+                  <span style={fieldLabelStyle}>Linewalk ID</span>
+                  <input
+                    value={editingReport.linewalkId}
+                    onChange={(event) =>
+                      setEditingReport((prev) => ({
+                        ...prev,
+                        linewalkId: event.target.value,
+                        pms: event.target.value,
+                      }))
+                    }
+                    style={{ ...inputStyle, minHeight: 42, borderRadius: 10, fontSize: 13 }}
+                  />
+                </label>
+                <label style={fieldStyle}>
+                  <span style={fieldLabelStyle}>Year</span>
+                  <input
+                    type="number"
+                    value={editingReport.year}
+                    onChange={(event) =>
+                      setEditingReport((prev) => ({ ...prev, year: event.target.value }))
+                    }
+                    style={{ ...inputStyle, minHeight: 42, borderRadius: 10, fontSize: 13 }}
+                  />
+                </label>
+                <label style={fieldStyle}>
+                  <span style={fieldLabelStyle}>เดือน</span>
+                  <Combobox
+                    value={editingReport.month}
+                    onValueChange={(v) => setEditingReport((prev) => ({ ...prev, month: v }))}
+                    aria-label="เดือน"
+                    searchPlaceholder="ค้นหาเดือน"
+                    style={{ width: "100%" }}
+                    options={REPORT_MONTH_OPTIONS.filter((month) => month.value !== "all").map(
+                      (month) => ({ value: month.value, label: month.label })
+                    )}
+                  />
+                </label>
+                <label style={fieldStyle}>
+                  <span style={fieldLabelStyle}>กิจกรรม</span>
+                  <Combobox
+                    value={editingReport.activityType}
+                    onValueChange={(v) =>
+                      setEditingReport((prev) => ({ ...prev, activityType: v }))
+                    }
+                    aria-label="กิจกรรม"
+                    searchPlaceholder="ค้นหากิจกรรม"
+                    style={{ width: "100%" }}
+                    options={REPORT_ACTIVITY_OPTIONS.filter(
+                      (activity) => activity.value !== "all"
+                    ).map((activity) => ({ value: activity.value, label: activity.label }))}
+                  />
+                </label>
+              </div>
+
               <label style={fieldStyle}>
-                <span style={fieldLabelStyle}>Linewalk ID</span>
+                <span style={fieldLabelStyle}>Full Name (ชื่อ - นามสกุล)</span>
                 <input
-                  value={editingReport.linewalkId}
+                  value={editingReport.fullName}
                   onChange={(event) =>
                     setEditingReport((prev) => ({
                       ...prev,
-                      linewalkId: event.target.value,
-                      pms: event.target.value,
+                      fullName: event.target.value,
+                      name: event.target.value,
                     }))
                   }
                   style={{ ...inputStyle, minHeight: 42, borderRadius: 10, fontSize: 13 }}
                 />
               </label>
+
               <label style={fieldStyle}>
-                <span style={fieldLabelStyle}>Year</span>
+                <span style={fieldLabelStyle}>E-mail</span>
                 <input
-                  type="number"
-                  value={editingReport.year}
+                  value={editingReport.email}
                   onChange={(event) =>
-                    setEditingReport((prev) => ({ ...prev, year: event.target.value }))
+                    setEditingReport((prev) => ({ ...prev, email: event.target.value }))
                   }
                   style={{ ...inputStyle, minHeight: 42, borderRadius: 10, fontSize: 13 }}
                 />
               </label>
-              <label style={fieldStyle}>
-                <span style={fieldLabelStyle}>เดือน</span>
-                <Combobox
-                  value={editingReport.month}
-                  onValueChange={(v) => setEditingReport((prev) => ({ ...prev, month: v }))}
-                  aria-label="เดือน"
-                  searchPlaceholder="ค้นหาเดือน"
-                  style={{ width: "100%" }}
-                  options={REPORT_MONTH_OPTIONS.filter((month) => month.value !== "all").map(
-                    (month) => ({ value: month.value, label: month.label })
-                  )}
-                />
-              </label>
-              <label style={fieldStyle}>
-                <span style={fieldLabelStyle}>กิจกรรม</span>
-                <Combobox
-                  value={editingReport.activityType}
-                  onValueChange={(v) =>
-                    setEditingReport((prev) => ({ ...prev, activityType: v }))
-                  }
-                  aria-label="กิจกรรม"
-                  searchPlaceholder="ค้นหากิจกรรม"
-                  style={{ width: "100%" }}
-                  options={REPORT_ACTIVITY_OPTIONS.filter(
-                    (activity) => activity.value !== "all"
-                  ).map((activity) => ({ value: activity.value, label: activity.label }))}
-                />
-              </label>
-            </div>
 
-            <label style={fieldStyle}>
-              <span style={fieldLabelStyle}>Full Name (ชื่อ - นามสกุล)</span>
-              <input
-                value={editingReport.fullName}
-                onChange={(event) =>
-                  setEditingReport((prev) => ({
-                    ...prev,
-                    fullName: event.target.value,
-                    name: event.target.value,
-                  }))
-                }
-                style={{ ...inputStyle, minHeight: 42, borderRadius: 10, fontSize: 13 }}
-              />
-            </label>
+              <div style={{ fontSize: 12.5, color: T.sub }}>
+                แหล่งข้อมูล:{" "}
+                {editingReport.source === "submission"
+                  ? "รายการที่บันทึกในระบบ"
+                  : editingReport.source === "upload"
+                  ? "ไฟล์ Excel ที่อัปโหลด"
+                  : "ข้อมูลภายนอก"}
+              </div>
+            </AppModalBody>
 
-            <label style={fieldStyle}>
-              <span style={fieldLabelStyle}>E-mail</span>
-              <input
-                value={editingReport.email}
-                onChange={(event) =>
-                  setEditingReport((prev) => ({ ...prev, email: event.target.value }))
-                }
-                style={{ ...inputStyle, minHeight: 42, borderRadius: 10, fontSize: 13 }}
-              />
-            </label>
-
-            <div style={{ fontSize: 12.5, color: T.sub }}>
-              แหล่งข้อมูล:{" "}
-              {editingReport.source === "submission"
-                ? "รายการที่บันทึกในระบบ"
-                : editingReport.source === "upload"
-                ? "ไฟล์ Excel ที่อัปโหลด"
-                : "ข้อมูลภายนอก"}
-            </div>
-
-            <div style={{ display: "flex", justifyContent: "flex-end", gap: 10 }}>
+            <AppModalFooter>
               <button
                 type="button"
                 onClick={() => setEditingReport(null)}
@@ -1054,10 +1027,11 @@ export default function SafetyAdminExportReport() {
               >
                 บันทึกการแก้ไข
               </button>
-            </div>
-          </div>
-        </div>
-      ) : null}
+            </AppModalFooter>
+          </AppModalPanel>
+          ) : null}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

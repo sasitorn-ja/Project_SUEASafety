@@ -6,6 +6,7 @@ import { Check, ShieldCheck, X } from "lucide-react";
 import { useAppActions, useAppState } from "@/providers/app-providers";
 import { useAppTheme } from "@/providers/theme-provider";
 import { pickRandom, type SafetyAwarenessQuestion } from "@/lib/safety-awareness";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 
 const QUESTIONS_PER_DAY = 3;
 
@@ -64,13 +65,12 @@ export function SafetyAwarenessGate() {
   };
 
   return (
-    <div
-      role="dialog"
-      aria-modal="true"
+    <Dialog open={open}>
+      <DialogContent
+      showCloseButton={false}
       aria-label="Safety Awareness"
-      className="fixed inset-0 z-[100000] flex items-start justify-center overflow-y-auto bg-[rgba(20,12,4,0.72)] px-3 py-6 font-sarabun backdrop-blur-[3px] md:items-center md:px-4"
+      className="z-[100000] max-h-[calc(100vh-3rem)] w-full max-w-[560px] overflow-hidden rounded-[22px] border-[2px] border-[var(--brand-accent)] bg-[var(--background)] p-0 font-sarabun shadow-[0_24px_60px_rgba(0,0,0,0.4)]"
     >
-      <div className="relative my-auto w-full max-w-[560px] overflow-hidden rounded-[22px] border-[2px] border-[var(--brand-accent)] bg-[var(--background)] shadow-[0_24px_60px_rgba(0,0,0,0.4)]">
         {/* Header */}
         <div className="relative overflow-hidden bg-[linear-gradient(135deg,var(--brand-hero-start)_0%,var(--brand-nav)_55%,var(--brand-hero-end)_100%)] px-5 pb-4 pt-4 text-white">
           <div className="absolute bottom-0 left-0 right-0 h-2 bg-[repeating-linear-gradient(-45deg,var(--brand-accent),var(--brand-accent)_10px,#1a1a1a_10px,#1a1a1a_20px)]" />
@@ -241,7 +241,7 @@ export function SafetyAwarenessGate() {
             </div>
           )}
         </div>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }

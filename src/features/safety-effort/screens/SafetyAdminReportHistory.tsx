@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { Eye, Trash2, Search, X, ClipboardList } from "lucide-react";
 import { Combobox } from "@/components/ui/combobox";
 import { SafetyCultureHero } from "@/components/safety-culture/safety-culture-hero";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 
 const T = {
   page: "var(--background)",
@@ -546,18 +547,9 @@ export default function SafetyAdminReportHistory() {
       </div>
 
       {/* Selected Submission Detail Modal */}
-      {selectedSub ? (
-        <div
-          style={{
-            position: "fixed",
-            inset: 0,
-            background: "rgba(31, 26, 23, 0.42)",
-            display: "grid",
-            placeItems: "center",
-            padding: 20,
-            zIndex: 1000,
-          }}
-        >
+      <Dialog open={!!selectedSub} onOpenChange={(open) => !open && setSelectedSub(null)}>
+        <DialogContent showCloseButton={false} className="z-[1000] border-0 bg-transparent p-0 shadow-none sm:max-w-[640px]">
+          {selectedSub ? (
           <div
             style={{
               width: "min(100%, 640px)",
@@ -680,8 +672,9 @@ export default function SafetyAdminReportHistory() {
               )}
             </div>
           </div>
-        </div>
-      ) : null}
+          ) : null}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

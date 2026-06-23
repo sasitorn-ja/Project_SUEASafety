@@ -68,9 +68,6 @@ export default function LeaderboardPage() {
               </>
             }
             description="Safety Caring ช่วยสรุปคะแนน Safety ให้เห็นภาพรวม ทั้งคะแนนทีมและอันดับในทีมของคุณ"
-            mascotSrc="/images/mascots/suea-mascot.png"
-            mascotAlt="SUEA Mascot"
-            mascotAction="salute"
             backgroundImage="/images/hero03.png"
             backgroundOverlay="linear-gradient(90deg, rgba(2, 26, 66, .82) 0%, rgba(3, 33, 78, .5) 38%, rgba(3, 33, 78, .2) 100%)"
             actionsLayout="side"

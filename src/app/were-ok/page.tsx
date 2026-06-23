@@ -392,16 +392,8 @@ export default function WereOkPage() {
         </div>
       </div>
 
-      {/* SOS Modal - Custom Overlay to match old exactly */}
-      {sosOpen && (
-        <div
-          className="fixed inset-0 bg-[rgba(18,18,20,0.6)] backdrop-blur-[8px] flex items-center justify-center z-[9999] animate-[fadeIn_0.2s_ease-out] p-4"
-          onClick={() => setSosOpen(false)}
-        >
-          <div
-            className="bg-[var(--brand-surface)] border-[3px] border-[#1A1A1A] rounded-[16px] p-4 md:p-4 w-full max-w-[480px] shadow-[0_16px_40px_rgba(0,0,0,0.22)] flex flex-col gap-3.5 animate-[scaleUp_0.3s_cubic-bezier(0.175,0.885,0.32,1.275)_both] max-h-[94vh] overflow-y-auto"
-            onClick={(e) => e.stopPropagation()}
-          >
+      <Dialog open={sosOpen} onOpenChange={setSosOpen}>
+        <DialogContent showCloseButton={false} className="z-[9999] flex max-h-[94vh] w-full max-w-[480px] flex-col gap-3.5 overflow-y-auto rounded-[16px] border-[3px] border-[#1A1A1A] bg-[var(--brand-surface)] p-4 shadow-[0_16px_40px_rgba(0,0,0,0.22)] md:p-4">
             <div className="text-[21px] font-extrabold text-[#D9383A] flex items-center justify-center gap-2.5 text-center">
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
@@ -483,9 +475,8 @@ export default function WereOkPage() {
                 ปิดหน้าต่างนี้ / ยกเลิก
               </button>
             </div>
-          </div>
-        </div>
-      )}
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

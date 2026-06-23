@@ -12,6 +12,7 @@ import {
 import { uploadSafetyEffortMedia } from "@/features/safety-effort/lib/upload-media";
 import { GripVertical, Eye, Trash2, Search, X, Check, Settings, ChevronDown, ChevronUp, Pencil, ClipboardList } from "lucide-react";
 import { SafetyCultureHero } from "@/components/safety-culture/safety-culture-hero";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 
 
 
@@ -1097,18 +1098,8 @@ export default function SafetyAdmin() {
         </div>
     </div>
 
-      {deleteTargetId ? (
-        <div
-          style={{
-            position: "fixed",
-            inset: 0,
-            background: "rgba(31, 26, 23, 0.42)",
-            display: "grid",
-            placeItems: "center",
-            padding: 20,
-            zIndex: 1000,
-          }}
-        >
+      <Dialog open={!!deleteTargetId} onOpenChange={(open) => !open && setDeleteTargetId(null)}>
+        <DialogContent showCloseButton={false} className="z-[1000] border-0 bg-transparent p-0 shadow-none sm:max-w-[460px]">
           <div
             style={{
               width: "min(100%, 460px)",
@@ -1130,21 +1121,20 @@ export default function SafetyAdmin() {
               <button type="button" onClick={handleDeleteConfirmed} style={buttonDangerStyle}>ลบข้อ</button>
             </div>
           </div>
-        </div>
-      ) : null}
+        </DialogContent>
+      </Dialog>
 
-      {showAddTypeModal && tempQuestion ? (
-        <div
-          style={{
-            position: "fixed",
-            inset: 0,
-            background: "rgba(31, 26, 23, 0.42)",
-            display: "grid",
-            placeItems: "center",
-            padding: 20,
-            zIndex: 1000,
-          }}
-        >
+      <Dialog
+        open={showAddTypeModal && !!tempQuestion}
+        onOpenChange={(open) => {
+          if (!open) {
+            setShowAddTypeModal(false);
+            setTempQuestion(null);
+          }
+        }}
+      >
+        <DialogContent showCloseButton={false} className="z-[1000] border-0 bg-transparent p-0 shadow-none sm:max-w-[820px]">
+          {tempQuestion ? (
           <div
             style={{
               width: "min(100%, 820px)",
@@ -1354,21 +1344,12 @@ export default function SafetyAdmin() {
               </button>
             </div>
           </div>
-        </div>
-      ) : null}
+          ) : null}
+        </DialogContent>
+      </Dialog>
 
-      {showBackdateLimitModal ? (
-        <div
-          style={{
-            position: "fixed",
-            inset: 0,
-            background: "rgba(31, 26, 23, 0.42)",
-            display: "grid",
-            placeItems: "center",
-            padding: 20,
-            zIndex: 1000,
-          }}
-        >
+      <Dialog open={showBackdateLimitModal} onOpenChange={(open) => !open && handleCancelBackdateModal()}>
+        <DialogContent showCloseButton={false} className="z-[1000] border-0 bg-transparent p-0 shadow-none sm:max-w-[460px]">
           <div
             style={{
               width: "min(100%, 460px)",
@@ -1557,8 +1538,8 @@ export default function SafetyAdmin() {
               </button>
             </div>
           </div>
-        </div>
-      ) : null}
+        </DialogContent>
+      </Dialog>
 
 
 
