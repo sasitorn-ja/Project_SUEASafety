@@ -141,10 +141,31 @@ body {
 html {
   overflow-y: scroll;
   scrollbar-gutter: stable;
+  background: var(--background);
 }
 
 body {
   min-height: 100dvh;
+  background: var(--background);
+  overscroll-behavior-y: none;
+}
+
+.app-shell-root,
+.app-shell-loading,
+.app-login-main {
+  min-height: 100vh;
+  min-height: 100dvh;
+  width: 100%;
+  background: var(--background);
+}
+
+.app-shell-root {
+  display: flex;
+  flex-direction: column;
+}
+
+.app-login-main {
+  overflow: hidden;
 }
 
 :root[data-theme="wangjai"] {
@@ -157,37 +178,37 @@ body {
   --card-foreground: #173b6b;
   --popover: #ffffff;
   --popover-foreground: #173b6b;
-  --primary: #0b4ea2;
+  --primary: #1763c0;
   --primary-foreground: #ffffff;
   --secondary: #eaf2fd;
-  --secondary-foreground: #0b4ea2;
+  --secondary-foreground: #1763c0;
   --muted: #eef4fb;
   --muted-foreground: #5f7591;
   --accent: #dcebff;
-  --accent-foreground: #0b4ea2;
+  --accent-foreground: #1763c0;
   --border: rgba(11, 78, 162, 0.14);
   --input: rgba(11, 78, 162, 0.16);
   --ring: #1e90ff;
   --success: #2dbe60;
   --destructive: #e2553f;
   --brand-gold: #1e90ff;
-  --brand-brown: #062b63;
+  --brand-brown: #0e3e7d;
   --chart-1: #27d7ff;
   --chart-2: #1e90ff;
   --sidebar: #ffffff;
   --sidebar-foreground: #173b6b;
-  --sidebar-primary: #0b4ea2;
+  --sidebar-primary: #1763c0;
   --sidebar-accent: #eaf2fd;
-  --sidebar-accent-foreground: #0b4ea2;
+  --sidebar-accent-foreground: #1763c0;
   --sidebar-border: rgba(11, 78, 162, 0.14);
   --sidebar-ring: #1e90ff;
-  --nav-brown: #062b63;
+  --nav-brown: #0e3e7d;
   --brand-accent: #1e90ff;
-  --brand-accent-strong: #0b4ea2;
+  --brand-accent-strong: #1763c0;
   --brand-accent-rgb: 30, 144, 255;
   --brand-accent-contrast: #ffffff;
-  --brand-nav: #062b63;
-  --brand-nav-rgb: 6, 43, 99;
+  --brand-nav: #0e3e7d;
+  --brand-nav-rgb: 14, 62, 125;
   --brand-nav-active: #1e90ff;
   --brand-soft: #dcebff;
   --brand-surface: #ffffff;
@@ -197,16 +218,16 @@ body {
   --brand-hover-surface: #dcebff;
   --brand-hero-copy: #dcebff;
   --brand-hero-label: #27d7ff;
-  --brand-hero-start: #062b63;
-  --brand-hero-end: #0b4ea2;
-  --brand-shadow: rgba(6, 43, 99, 0.20);
+  --brand-hero-start: #0e3e7d;
+  --brand-hero-end: #1763c0;
+  --brand-shadow: rgba(14, 62, 125, 0.16);
   --app-page-max: 1480px;
   --app-page-pad-x: clamp(12px, 2vw, 28px);
   --app-page-pad-y: clamp(10px, 1.6vw, 22px);
   --app-section-gap: 14px;
   --app-card-radius: 14px;
   --app-card-border: rgba(11, 78, 162, 0.14);
-  --app-card-shadow: 0 7px 22px rgba(6, 43, 99, 0.07);
+  --app-card-shadow: 0 7px 22px rgba(14, 62, 125, 0.06);
 }
 
 :root[data-theme="wangjai"] [style*="background-color:#F8E46A" i] {
@@ -232,6 +253,7 @@ body {
 }
 
 .page-content {
+  flex: 1 0 auto;
   min-height: 100dvh;
   background: linear-gradient(180deg, #edf5ff 0, var(--background) 280px, var(--background) 100%);
   padding-top: var(--mobile-topbar-h);
@@ -499,13 +521,13 @@ body {
 
 /* Safety Culture community hero */
 .safety-culture-community-hero {
-  min-height: 168px;
+  min-height: 158px;
   border-width: 1px !important;
   border-color: #278dff !important;
   border-radius: 20px !important;
   background:
-    linear-gradient(90deg, rgba(2, 26, 66, .96) 0%, rgba(4, 48, 104, .84) 54%, rgba(3, 30, 70, .68) 100%),
-    url("/images/dashboard/cpac-desktop-hero-bg.png") center 72% / cover no-repeat !important;
+    var(--sc-hero-overlay, linear-gradient(90deg, rgba(2, 26, 66, .96) 0%, rgba(4, 48, 104, .84) 54%, rgba(3, 30, 70, .68) 100%)),
+    var(--sc-hero-image, url("/images/dashboard/cpac-desktop-hero-bg.png")) center 72% / cover no-repeat !important;
   box-shadow: inset 0 0 28px rgba(20, 143, 255, .16), 0 12px 30px rgba(5, 43, 91, .18) !important;
 }
 
@@ -532,10 +554,18 @@ body {
 }
 
 .safety-culture-community-hero .safety-culture-hero-grid {
-  min-height: 168px;
-  grid-template-columns: minmax(0, 1fr) 200px !important;
+  min-height: 158px;
+  grid-template-columns: minmax(0, 1fr) 220px !important;
   align-items: center;
-  padding: 14px 30px 16px !important;
+  padding: 12px 30px 0 !important;
+}
+
+/* Mascot sits grounded at the bottom edge and fills the banner height
+   (full-body, not floating) — same idea as the Home hero mascot */
+.safety-culture-community-hero .safety-culture-hero-mascot-image {
+  max-height: 156px;
+  object-fit: contain;
+  object-position: bottom center;
 }
 
 .safety-culture-community-hero .safety-culture-hero-copy {
@@ -570,14 +600,15 @@ body {
 }
 
 .safety-culture-community-hero .safety-culture-hero-mascot {
-  right: 56px !important;
-  bottom: 6px !important;
-  width: 118px !important;
+  right: 40px !important;
+  bottom: 0 !important;
+  width: 150px !important;
   max-width: none;
-  /* Layered shadow for depth without overflowing the banner */
+  /* Softer, bluer shadow so the mascot blends on light/photo backgrounds
+     instead of looking like a cut-out with a dark halo */
   filter:
-    drop-shadow(0 2px 2px rgba(0, 12, 35, .32))
-    drop-shadow(0 12px 14px rgba(0, 12, 35, .34));
+    drop-shadow(0 2px 3px rgba(8, 40, 88, .16))
+    drop-shadow(0 8px 12px rgba(8, 40, 88, .14));
 }
 
 @media (max-width: 1099px) {

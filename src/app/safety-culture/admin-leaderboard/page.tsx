@@ -310,7 +310,7 @@ export default function AdminLeaderboardPage() {
 
   return (
     <>
-      <div className="mx-auto w-full max-w-[1320px] bg-[var(--background)] px-3.5 pt-2 pb-8 font-sarabun md:px-4">
+      <div className="mx-auto w-full max-w-[1480px] bg-[var(--background)] px-3.5 pt-2.5 pb-8 font-sarabun md:px-5">
         <SafetyCultureHero
           eyebrow="SAFETY CULTURE ADMIN"
           title={
@@ -318,10 +318,13 @@ export default function AdminLeaderboardPage() {
               จัดการ <span className="text-[var(--brand-accent)]">Leaderboard</span>
             </>
           }
-          description="จัดการหน่วยงานที่ใช้บน Leaderboard โดยอ้างอิงข้อมูลจริงจากระบบ และรีเฟรชกลับจากฐานข้อมูลหลังบันทึก"
+          description="จัดการหน่วยงานที่ใช้บน Leaderboard โดยอ้างอิงข้อมูลจริงในระบบ"
           mascotSrc="/images/mascots/suea-mascot.png"
           mascotAlt="SUEA Admin Mascot"
           mascotAction="clipboard"
+          variant="community"
+          backgroundImage="/images/safety-culture-hero.png"
+          backgroundOverlay="linear-gradient(90deg, rgba(2, 26, 66, .82) 0%, rgba(3, 33, 78, .5) 34%, rgba(3, 33, 78, .16) 56%, rgba(3, 33, 78, 0) 70%)"
         />
         <Card className="mt-4 rounded-[16px] border border-[var(--border)] bg-[var(--brand-soft)] p-3.5 shadow-[0_8px_18px_var(--brand-shadow)] md:p-4">
           <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">

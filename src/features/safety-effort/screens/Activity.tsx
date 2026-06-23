@@ -40,13 +40,13 @@ const BASE_ACTIVITIES = [
   {
     id: "line-walk",
     label: "Line Walk",
-    desc: "เดินตรวจสายการผลิต / หน่วยงาน",
+    desc: "ตรวจสอบความปลอดภัย",
     icon: IcoLineWalk,
   },
   {
     id: "safety-contact",
     label: "Safety Contact",
-    desc: "บันทึกการสื่อสารด้านความปลอดภัย",
+    desc: "รายงานความปลอดภัย",
     icon: IcoShield,
   },
 ];

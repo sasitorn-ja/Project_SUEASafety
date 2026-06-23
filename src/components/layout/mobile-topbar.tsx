@@ -242,26 +242,8 @@ export function MobileTopbar({ hidden = false }: { hidden?: boolean }) {
             {open ? <X className="h-[23px] w-[23px]" strokeWidth={2.45} /> : <Menu className="h-[23px] w-[23px]" strokeWidth={2.45} />}
           </button>
 
-          <NavTo href="/" onClick={closeDrawer} className="flex min-w-0 items-center gap-[9px]">
-            <div className="flex h-[42px] w-[42px] flex-shrink-0 items-center justify-center overflow-hidden">
-              <Image src={mascot("logoMobile")} alt="SUEA Safety Logo" width={42} height={42} className="h-full w-full object-contain" />
-            </div>
-            <div className="flex min-w-0 flex-col leading-[1.12]">
-              <span className="overflow-hidden text-ellipsis whitespace-nowrap text-[19px] font-extrabold tracking-normal text-white">
-                {isWangjai ? (
-                  <>
-                    <strong className="text-[var(--brand-accent)]">CPAC</strong> Safe +
-                  </>
-                ) : (
-                  <>
-                    <strong className="text-[var(--brand-accent)]">SUEA</strong> Safety
-                  </>
-                )}
-              </span>
-              <span className="overflow-hidden text-ellipsis whitespace-nowrap text-[10px] font-bold text-white/[0.58]">
-                {isWangjai ? "Creating Protection And Care" : "Safety User Environment Awareness"}
-              </span>
-            </div>
+          <NavTo href="/" onClick={closeDrawer} className="flex min-w-0 items-center">
+            <Image src="/images/LOGO1_trim.png" alt="Safety Caring" width={210} height={36} priority className="h-[30px] w-auto object-contain" />
           </NavTo>
         </div>
       </div>

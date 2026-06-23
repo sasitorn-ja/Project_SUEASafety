@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import * as XLSX from "xlsx";
 import { Combobox } from "@/components/ui/combobox";
+import { SafetyCultureHero } from "@/components/safety-culture/safety-culture-hero";
 
 const T = {
   page: "var(--background)",
@@ -447,30 +448,19 @@ export default function SafetyAdminExportReport() {
           minHeight: isMobile ? undefined : 0,
         }}
       >
-        {/* Header Bar */}
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "row",
-            alignItems: "center",
-            justifyContent: "space-between",
-            gap: 12,
-            background: "#fff",
-            border: `1px solid ${T.line}`,
-            borderRadius: 20,
-            padding: isMobile ? "12px 14px" : "12px 20px",
-            boxShadow: "0 4px 12px rgba(63, 37, 17, 0.04)",
-            flexShrink: 0,
-          }}
-        >
-          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-            <div>
-              <h1 style={{ fontSize: 18, fontWeight: 900, color: T.ink, margin: 0 }}>ส่งออกรายงาน (Export Report)</h1>
-              <p style={{ fontSize: 12.5, color: T.sub, margin: "2px 0 0" }}>
-                ดาวน์โหลด ค้นหา แก้ไข และนำเข้าไฟล์รายงานประเมินความปลอดภัย
-              </p>
-            </div>
-          </div>
+        {/* Hero */}
+        <div style={{ flexShrink: 0 }}>
+          <SafetyCultureHero
+            eyebrow="SAFETY EFFORT ADMIN"
+            title={<>ส่งออกรายงาน</>}
+            description="ดาวน์โหลด ค้นหา แก้ไข และนำเข้าไฟล์รายงานประเมินความปลอดภัย"
+            mascotSrc="/images/safety-effort-mascot.png"
+            mascotAlt="Safety mascot"
+            mascotAction="happy"
+            variant="community"
+            backgroundImage="/images/safety-effort-hero.png"
+            backgroundOverlay="linear-gradient(90deg, rgba(2, 26, 66, .82) 0%, rgba(3, 33, 78, .5) 34%, rgba(3, 33, 78, .16) 56%, rgba(3, 33, 78, 0) 70%)"
+          />
         </div>
 
         {/* Content Box */}

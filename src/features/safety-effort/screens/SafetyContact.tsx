@@ -74,7 +74,7 @@ export default function SafetyContact() {
   const activity = location.state?.activity ?? {
     id: "safety-contact",
     label: "Safety Contact",
-    desc: "บันทึกการสื่อสารด้านความปลอดภัย",
+    desc: "รายงานความปลอดภัย",
   };
   const fromActivity = location.state?.fromActivity ?? false;
 
@@ -196,10 +196,6 @@ export default function SafetyContact() {
                       </div>
                     </div>
                   )}
-                </div>
-
-                <div className="lw-progress-track" style={{ marginTop: 12 }}>
-                  <div className="lw-progress-fill" style={{ width: `${progressPct}%` }} />
                 </div>
               </div>
             </div>

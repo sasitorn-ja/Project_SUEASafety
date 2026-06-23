@@ -16,8 +16,8 @@ const sarabun = Sarabun({
 });
 
 export const metadata: Metadata = {
-  title: "CPAC Safety",
-  description: "CPAC Safety — Safety Effort & Safety Culture",
+  title: "Safety Caring",
+  description: "Safety Caring — Safety Effort & Safety Culture",
   icons: {
     icon: "/images/mascots/wangjai/41.png",
     shortcut: "/images/mascots/wangjai/41.png",

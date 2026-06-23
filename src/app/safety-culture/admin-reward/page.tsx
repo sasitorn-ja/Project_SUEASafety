@@ -406,7 +406,7 @@ function RewardPreviewPanel({
         ) : reward.isHot ? (
           <Image
             src={mascot("saluteAlt")}
-            alt="SUEA reward"
+            alt="Safety Caring reward"
             fill
             sizes="(max-width: 768px) 50vw, 220px"
             className="object-cover"
@@ -985,7 +985,7 @@ export default function AdminRewardPage() {
 
   return (
     <>
-      <div className="mx-auto w-full max-w-[1460px] bg-[var(--background)] px-3.5 pt-0 pb-8 font-sarabun md:px-4 lg:px-5">
+      <div className="mx-auto w-full max-w-[1480px] bg-[var(--background)] px-3.5 pt-2.5 pb-8 font-sarabun md:px-5">
         <SafetyCultureHero
           eyebrow="SAFETY CULTURE ADMIN"
           title={
@@ -997,6 +997,9 @@ export default function AdminRewardPage() {
           mascotSrc="/images/mascots/suea-mascot.png"
           mascotAlt="SUEA Admin Mascot"
           mascotAction="happyReward"
+          variant="community"
+          backgroundImage="/images/safety-culture-hero.png"
+          backgroundOverlay="linear-gradient(90deg, rgba(2, 26, 66, .82) 0%, rgba(3, 33, 78, .5) 34%, rgba(3, 33, 78, .16) 56%, rgba(3, 33, 78, 0) 70%)"
         />
 
         <div className="mt-4 flex flex-col gap-4">

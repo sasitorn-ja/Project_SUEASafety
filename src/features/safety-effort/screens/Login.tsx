@@ -93,18 +93,18 @@ export default function Login() {
           </div>
         </div>
 
-        <aside className="login-panel" aria-label="CPAC Safety+ Login">
+        <aside className="login-panel" aria-label="Safety Caring Login">
           <div className="login-card">
             <div className="card-shine" />
 
             <div className="brand-block">
               <img
                 className="brand-logo"
-                src="/images/login/brand/LOGO2.png"
-                alt="CPAC Safety+"
+                src="/images/LOGO2_trim.png"
+                alt="Safety Caring"
               />
 
-              <p>เข้าสู่ระบบเพื่อใช้งานบริการ CPAC Safety+ อย่างปลอดภัย</p>
+              <p>เข้าสู่ระบบเพื่อใช้งานบริการ Safety Caring อย่างปลอดภัย</p>
             </div>
 
             <div className="action-block">
@@ -149,6 +149,9 @@ export default function Login() {
       <style>{`
         .cpac-login-page {
           min-height: 100vh;
+          min-height: 100dvh;
+          height: 100vh;
+          height: 100dvh;
           width: 100%;
           position: relative;
           overflow: hidden;
@@ -229,6 +232,8 @@ export default function Login() {
           position: relative;
           z-index: 5;
           min-height: 100vh;
+          min-height: 100dvh;
+          height: 100%;
           width: min(100%, 1680px);
           margin: 0 auto;
           padding: clamp(28px, 5vw, 80px);
@@ -610,10 +615,13 @@ export default function Login() {
         @media (max-width: 1024px) {
           .cpac-login-page {
             overflow-y: auto;
+            height: auto;
           }
 
           .login-shell {
             min-height: 100vh;
+            min-height: 100dvh;
+            height: auto;
             grid-template-columns: 1fr;
             justify-items: center;
             align-content: center;

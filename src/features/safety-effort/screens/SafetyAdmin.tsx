@@ -11,6 +11,7 @@ import {
 } from "@/features/safety-effort/config/checklists";
 import { uploadSafetyEffortMedia } from "@/features/safety-effort/lib/upload-media";
 import { GripVertical, Eye, Trash2, Search, X, Check, Settings, ChevronDown, ChevronUp, Pencil, ClipboardList } from "lucide-react";
+import { SafetyCultureHero } from "@/components/safety-culture/safety-culture-hero";
 
 
 
@@ -509,6 +510,20 @@ export default function SafetyAdmin() {
       }}
     >
       <div style={{ flex: isMobile ? "none" : 1, display: "flex", flexDirection: "column", gap: isMobile ? 12 : 16, padding: isMobile ? "12px 14px" : "16px 20px", minHeight: isMobile ? undefined : 0 }}>
+        {/* Hero */}
+        <div style={{ flexShrink: 0 }}>
+          <SafetyCultureHero
+            eyebrow="SAFETY EFFORT ADMIN"
+            title={<>จัดการแบบประเมิน</>}
+            description="เพิ่ม แก้ไข และจัดเรียงข้อประเมินความปลอดภัยสำหรับ Linewalk และ Safety Contact"
+            mascotSrc="/images/safety-effort-mascot.png"
+            mascotAlt="Safety mascot"
+            mascotAction="happy"
+            variant="community"
+            backgroundImage="/images/safety-effort-hero.png"
+            backgroundOverlay="linear-gradient(90deg, rgba(2, 26, 66, .82) 0%, rgba(3, 33, 78, .5) 34%, rgba(3, 33, 78, .16) 56%, rgba(3, 33, 78, 0) 70%)"
+          />
+        </div>
         {/* Compact Header & Controls Bar */}
         <div
           style={{
@@ -1168,7 +1183,7 @@ export default function SafetyAdmin() {
                     color: tempQuestion.format === "original" ? T.accentDeep : T.ink,
                   }}
                 >
-                  <span style={{ fontSize: 18 }}>✔️</span>
+                  <ClipboardList size={18} strokeWidth={2.2} />
                   <span style={{ fontWeight: 800, fontSize: 13.5 }}>แบบตัวเลือก (เดิม)</span>
                 </button>
                 <button
@@ -1187,7 +1202,7 @@ export default function SafetyAdmin() {
                     color: tempQuestion.format === "text_box" ? T.accentDeep : T.ink,
                   }}
                 >
-                  <span style={{ fontSize: 18 }}>📝</span>
+                  <Pencil size={18} strokeWidth={2.2} />
                   <span style={{ fontWeight: 800, fontSize: 13.5 }}>แบบ Text Box</span>
                 </button>
               </div>
@@ -1199,7 +1214,7 @@ export default function SafetyAdmin() {
               {/* Left Column: Edit Fields */}
               <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
                 <label style={fieldStyle}>
-                  <span style={fieldLabelStyle}>Question Title (ชื่อข้อ)</span>
+                  <span style={fieldLabelStyle}>หัวข้อ</span>
                   <input
                     value={tempQuestion.title}
                     onChange={(e) => setTempQuestion(prev => ({ ...prev, title: e.target.value }))}
@@ -1208,7 +1223,7 @@ export default function SafetyAdmin() {
                 </label>
 
                 <label style={fieldStyle}>
-                  <span style={fieldLabelStyle}>Guide Title (คำอธิบายเพิ่มเติม)</span>
+                  <span style={fieldLabelStyle}>คำอธิบายเพิ่มเติม</span>
                   <input
                     value={tempQuestion.guideTitle === false ? "" : tempQuestion.guideTitle || ""}
                     onChange={(e) => setTempQuestion(prev => ({ ...prev, guideTitle: e.target.value }))}
@@ -1218,7 +1233,7 @@ export default function SafetyAdmin() {
                 </label>
 
                 <label style={fieldStyle}>
-                  <span style={fieldLabelStyle}>Guidelines (รายละเอียดแยกบรรทัด)</span>
+                  <span style={fieldLabelStyle}>รายละเอียด</span>
                   <textarea
                     value={tempQuestion.guidelines.join("\n")}
                     onChange={(e) => setTempQuestion(prev => ({ ...prev, guidelines: e.target.value.split("\n") }))}

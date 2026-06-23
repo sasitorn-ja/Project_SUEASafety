@@ -1955,7 +1955,7 @@ export default function DashboardSafetyEffort() {
       >
         <span>ข้อมูล ณ วันที่ 31 มีนาคม 2026</span>
         <span>•</span>
-        <span>แหล่งข้อมูล: CPAC Safety System</span>
+        <span>แหล่งข้อมูล: Safety Caring System</span>
       </div>
     </div>
   );

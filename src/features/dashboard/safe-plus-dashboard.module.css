@@ -21,8 +21,8 @@
   border: 1px solid rgba(108, 201, 255, .52);
   border-radius: 20px;
   background:
-    linear-gradient(90deg, rgba(0, 22, 55, .24), rgba(0, 27, 65, .05)),
-    url("/images/dashboard/cpac-desktop-hero-bg.png") center 76% / cover no-repeat;
+    linear-gradient(90deg, rgba(2, 24, 62, .82) 0%, rgba(2, 24, 62, .52) 30%, rgba(2, 24, 62, .14) 52%, rgba(2, 24, 62, 0) 66%),
+    url("/images/Home01.png") center 55% / cover no-repeat;
   box-shadow: inset 0 0 40px rgba(0, 146, 255, .15), 0 16px 36px rgba(0, 42, 91, .24);
 }
 
@@ -128,11 +128,11 @@
 .trendCard, .rewardPanel {
   z-index: 2;
   align-self: center;
-  height: calc(100% - 28px);
-  margin: 12px 7px;
-  padding: 10px 12px;
+  height: auto;
+  margin: 10px 7px;
+  padding: 9px 11px;
   border: 1px solid rgba(110, 190, 239, .34);
-  border-radius: 15px;
+  border-radius: 14px;
   background: rgba(2, 43, 91, .55);
   backdrop-filter: blur(8px);
 }
@@ -179,16 +179,17 @@
   display: flex;
   flex-direction: column;
   justify-content: center;
-  gap: 9px;
+  gap: 5px;
   margin-right: 0;
 }
 
 .rewardPanel > div {
   display: flex;
   align-items: center;
-  gap: 9px;
+  gap: 6px;
   color: rgba(255,255,255,.8);
   font-weight: 800;
+  font-size: 11px;
 }
 
 .rewardPanel > div svg { color: #59c4ff; }
@@ -196,12 +197,12 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
-  min-height: 41px;
+  gap: 7px;
+  min-height: 28px;
   border: 1px solid #40c7ff;
-  border-radius: 12px;
+  border-radius: 9px;
   color: white;
-  font-size: 13px;
+  font-size: 11px;
   font-weight: 900;
   background: linear-gradient(180deg, #119cff, #006bdf);
   box-shadow: 0 0 22px rgba(0, 166, 255, .34), inset 0 1px rgba(255,255,255,.35);
@@ -356,8 +357,8 @@
     border-left: 0;
     border-radius: 0;
     background:
-      linear-gradient(rgba(0, 25, 65, .06), rgba(0, 25, 65, .16)),
-      url("/images/dashboard/cpac-mobile-hero-bg.png") center 76% / cover no-repeat;
+      linear-gradient(180deg, rgba(2, 24, 62, .62) 0%, rgba(2, 24, 62, .4) 45%, rgba(2, 24, 62, .3) 100%),
+      url("/images/Home01.png") center 50% / cover no-repeat;
   }
   .scoreBlock { position: absolute; inset: 15px auto auto 8%; width: 38%; padding: 0; }
   .eyebrow { font-size: 13px; }

@@ -58,19 +58,21 @@ export default function LeaderboardPage() {
 
   return (
     <>
-      <div className="mx-auto w-full max-w-[1400px] bg-[var(--background)] px-3.5 pt-2 pb-8 font-sarabun md:px-4 xl:px-6">
+      <div className="mx-auto w-full max-w-[1480px] bg-[var(--background)] px-3.5 pt-2.5 pb-8 font-sarabun md:px-5">
         <div className="anim-fade" style={animStyle(0)}>
           <SafetyCultureHero
-            eyebrow="CPAC SAFETY SCOREBOARD"
+            eyebrow="SAFETY CARING SCOREBOARD"
             title={
               <>
                 ทีมไหน <span className="text-[var(--brand-accent)]">ปลอดภัยสุด</span>
               </>
             }
-            description="CPAC Safety ช่วยสรุปคะแนน Safety ให้เห็นภาพรวม ทั้งคะแนนทีมและอันดับในทีมของคุณ"
+            description="Safety Caring ช่วยสรุปคะแนน Safety ให้เห็นภาพรวม ทั้งคะแนนทีมและอันดับในทีมของคุณ"
             mascotSrc="/images/mascots/suea-mascot.png"
             mascotAlt="SUEA Mascot"
             mascotAction="salute"
+            backgroundImage="/images/hero03.png"
+            backgroundOverlay="linear-gradient(90deg, rgba(2, 26, 66, .82) 0%, rgba(3, 33, 78, .5) 38%, rgba(3, 33, 78, .2) 100%)"
             actionsLayout="side"
             actions={
               leadingTeam ? (
@@ -119,7 +121,7 @@ export default function LeaderboardPage() {
               {teamStandings.length === 0 ? (
                 <div className="rounded-[18px] border border-dashed border-[var(--border)] bg-[var(--brand-surface)] px-4 py-8 text-center">
                   <p className="text-[14px] font-black text-[var(--foreground)]">ยังไม่มีข้อมูลทีม</p>
-                  <p className="mt-1 text-[12px] font-bold text-[var(--brand-muted-text)]">เมื่อมีข้อมูลทีมใน DB ระบบจะแสดงอันดับที่นี่</p>
+                  <p className="mt-1 text-[12px] font-bold text-[var(--brand-muted-text)]">เมื่อมีข้อมูลทีม ระบบจะแสดงอันดับที่นี่</p>
                 </div>
               ) : teamStandings.map((team, idx) => (
                 <article
@@ -190,7 +192,7 @@ export default function LeaderboardPage() {
               {visibleTopScorers.length === 0 ? (
                 <div className="rounded-[18px] border border-dashed border-[var(--border)] bg-[var(--brand-surface)] px-4 py-8 text-center">
                   <p className="text-[14px] font-black text-[var(--foreground)]">ยังไม่มีอันดับในทีม</p>
-                  <p className="mt-1 text-[12px] font-bold text-[var(--brand-muted-text)]">ระบบจะแสดงอันดับเมื่อคุณมีทีมและมีสมาชิกทีมใน DB</p>
+                  <p className="mt-1 text-[12px] font-bold text-[var(--brand-muted-text)]">ระบบจะแสดงอันดับเมื่อคุณมีทีมและมีสมาชิก</p>
                 </div>
               ) : visibleTopScorers.map((user, index) => {
                 const rankStyle = TOP_RANK_STYLES[index] ?? {

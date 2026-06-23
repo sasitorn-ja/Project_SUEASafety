@@ -277,7 +277,7 @@ export default function PostSocialPage() {
 
         <div className="anim-fade mb-5" style={animStyle(0.03)}>
           <SafetyCultureHero
-            eyebrow="SUEA SAFETY POST"
+            eyebrow="SAFETY CARING POST"
             title={
               <>
                 แชร์เรื่อง <span className="text-[var(--brand-accent)]">ปลอดภัย</span>
@@ -287,6 +287,9 @@ export default function PostSocialPage() {
             mascotSrc="/images/mascots/suea-mascot.png"
             mascotAlt="SUEA Mascot"
             mascotAction="clipboardPost"
+            variant="community"
+            backgroundImage="/images/hero02.png"
+            backgroundOverlay="linear-gradient(90deg, rgba(2, 26, 66, .82) 0%, rgba(3, 33, 78, .5) 34%, rgba(3, 33, 78, .16) 56%, rgba(3, 33, 78, 0) 70%)"
           />
         </div>
 

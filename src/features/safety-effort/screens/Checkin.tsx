@@ -837,7 +837,6 @@ const STYLES = `
   }
   .ci-stepper-line.active {
     background: var(--brand-accent);
-    box-shadow: 0 0 6px var(--brand-accent);
   }
   .ci-stepper-node {
     width: 18px;
@@ -854,7 +853,7 @@ const STYLES = `
   .ci-stepper-node.active {
     background: var(--brand-accent);
     color: var(--c-1a1613);
-    box-shadow: 0 0 8px rgba(var(--brand-accent-rgb), 0.6);
+    box-shadow: 0 0 0 3px rgba(var(--brand-accent-rgb), 0.18);
   }
   .ci-stepper-node.done {
     background: #1f7a55;
@@ -1564,7 +1563,7 @@ export default function Checkin() {
       : "กำลังแสดง Site งานจาก rmc_sso.sites ตามคำค้นหา"
     : selectedTypeKey === "office"
       ? "สำนักงานดึงจาก rmc_sso.offices โดยตรง"
-      : "โรงงาน/สำนักงานโหลดจาก DB จริง ส่วน Site งานให้ค้นหาอย่างน้อย 3 ตัว";
+      : "โรงงาน/สำนักงานแสดงจากระบบ ส่วน Site งานให้ค้นหาอย่างน้อย 3 ตัว";
   const emptyLocationMessage = selectedTypeKey === "site" && searchKeyword.length < 3
     ? "พิมพ์ชื่อหรือรหัส Site อย่างน้อย 3 ตัว เพื่อดึงข้อมูลจาก rmc_sso.sites"
     : "ไม่พบสถานที่ที่ค้นหา";
@@ -1632,7 +1631,7 @@ export default function Checkin() {
       setSelected(saved);
       setShowModal(false);
     } catch (error) {
-      setApiError(error?.message || "ไม่สามารถบันทึกสถานที่ใหม่ลงฐานข้อมูลได้");
+      setApiError(error?.message || "ไม่สามารถบันทึกสถานที่ใหม่ได้");
     }
   }
 

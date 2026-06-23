@@ -43,7 +43,7 @@ const PPE_PROMPT = [
 
 function buildSystemPrompt(context: AssistantContext): string {
   const lines: string[] = [
-    "คุณคือ Safety+ ผู้ช่วยด้านความปลอดภัยในแอป SUEA Safety",
+    "คุณคือ Safety+ ผู้ช่วยด้านความปลอดภัยในแอป Safety Caring",
     "ตอบไทย กระชับ สุภาพ เน้นความปลอดภัยก่อนเสมอ",
     "ตอบเฉพาะเรื่อง Safety Awareness, KYT, Pre-Trip/Fit-to-Drive, Work Permit, PPE, อุบัติเหตุ/ความเสี่ยง/เหตุฉุกเฉิน, คะแนน/รางวัล/อันดับ Safety Culture",
     `ถ้าคำถามไม่เกี่ยวกับความปลอดภัยหรือแอปนี้ ให้ตอบเท่านี้: ${OUT_OF_SCOPE_REPLY}`,
@@ -255,7 +255,7 @@ export async function POST(request: NextRequest) {
         Authorization: `Bearer ${apiKey}`,
         "Content-Type": "application/json",
         "HTTP-Referer": process.env.APP_BASE_URL || "https://safety.cipcloud.net",
-        "X-Title": "SUEA Safety - Nong Wangjai",
+        "X-Title": "Safety Caring - Nong Wangjai",
       },
       body: JSON.stringify({
         model,

@@ -22,7 +22,7 @@ import {
   formatPostSubtext,
   formatThaiDateTime,
 } from "@/lib/safety-culture";
-import { CalendarDays, ChevronLeft, ChevronRight, Clock3, Heart, ImageIcon, Pencil, Sparkles, Trash2, Trophy, UsersRound, X } from "lucide-react";
+import { CalendarDays, ChevronLeft, ChevronRight, Clock3, ImageIcon, MessageCircle, ThumbsUp, Pencil, Sparkles, Trash2, Trophy, UsersRound, X } from "lucide-react";
 import { SafetyCultureHero } from "@/components/safety-culture/safety-culture-hero";
 import { SafetyCultureTabs } from "@/components/safety-culture/safety-culture-tabs";
 import { useAppTheme } from "@/providers/theme-provider";
@@ -53,7 +53,7 @@ function ProfileAvatar({
   return (
     <div
       className={cn(
-        "flex flex-shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-[#1A1A1A] bg-[var(--brand-accent)] font-black text-[#1A1A1A]",
+        "flex flex-shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-[#1A1A1A] bg-[var(--brand-accent)] font-black text-[#173b6b]",
         sizeClassName,
         textClassName,
       )}
@@ -98,7 +98,7 @@ function LeadingTeamCard({ className, style }: { className?: string; style?: CSS
             <>
               <span className="text-[10px] font-bold uppercase tracking-wider text-white/65">ลำดับทีม</span>
               <div className="mt-0.5 text-[17px] leading-none font-black tracking-tight text-white">ยังไม่มีข้อมูลทีม</div>
-              <span className="mt-1 block text-[11px] font-bold text-white/70">ระบบจะแสดงข้อมูลเมื่อ DB มีคะแนนทีมจริง</span>
+              <span className="mt-1 block text-[11px] font-bold text-white/70">ข้อมูลอันดับทีมจะแสดงที่นี่เมื่อมีคะแนน</span>
             </>
           )}
         </div>
@@ -126,7 +126,7 @@ function TeamStandingsCard({ className, style }: { className?: string; style?: C
         {teamStandings.length === 0 ? (
           <div className="rounded-[18px] border border-dashed border-[var(--border)] bg-[var(--brand-surface)] px-4 py-7 text-center">
             <p className="text-[13.5px] font-black text-[var(--foreground)]">ยังไม่มีข้อมูลทีม</p>
-            <p className="mt-1 text-[11.5px] font-bold text-[var(--brand-muted-text)]">รอข้อมูลจริงจาก DB</p>
+            <p className="mt-1 text-[11.5px] font-bold text-[var(--brand-muted-text)]">ยังไม่มีข้อมูลทีมในขณะนี้</p>
           </div>
         ) : teamStandings.map((team, idx) => (
           <article
@@ -201,7 +201,7 @@ function PersonalRankingsCard({ className, style }: { className?: string; style?
         {personalRankings.length === 0 ? (
           <div className="rounded-[18px] border border-dashed border-[var(--border)] bg-[var(--brand-surface)] px-4 py-7 text-center">
             <p className="text-[13.5px] font-black text-[var(--foreground)]">ยังไม่มีอันดับในทีม</p>
-            <p className="mt-1 text-[11.5px] font-bold text-[var(--brand-muted-text)]">รอข้อมูลคะแนนจริงจาก DB</p>
+            <p className="mt-1 text-[11.5px] font-bold text-[var(--brand-muted-text)]">ยังไม่มีคะแนนในขณะนี้</p>
           </div>
         ) : personalRankings.map((user) => (
           <article
@@ -249,8 +249,8 @@ function SUEATipCard({ className, style, tipText }: { className?: string; style?
     <Card className={cn("flex items-start gap-2.5 rounded-[16px] border-2 border-[var(--c-f5bb00)] bg-[var(--c-fff9e6)] p-3 font-sarabun", className)} style={style}>
       <span className="text-xl animate-[pulse_2s_infinite]">💡</span>
       <div className="flex flex-col gap-1">
-        <span className="text-[13.5px] font-[850] text-[#1A1A1A]">เคล็ดลับจาก CPAC Safe +</span>
-        <span className="text-[11.5px] font-bold leading-relaxed text-[#555149]">{tipText}</span>
+        <span className="text-[13.5px] font-[850] text-[#173b6b]">เคล็ดลับจาก Safety Caring</span>
+        <span className="text-[11.5px] font-bold leading-relaxed text-[#5f7591]">{tipText}</span>
       </div>
     </Card>
   );
@@ -689,15 +689,17 @@ export default function Page() {
   return (
     <>
       <div className={cn("mx-auto w-full max-w-[1480px] px-3.5 pt-2.5 pb-7 md:px-5 font-sarabun", styles.page)}>
-        <div className="anim-fade" style={animStyle(0)}>
+        <div className="mb-3 anim-fade" style={animStyle(0)}>
           <SafetyCultureHero
             eyebrow="SAFETY CULTURE COMMUNITY"
             title={<>Safety Culture</>}
             description="พื้นที่แชร์เรื่องความปลอดภัย และช่วยกันต่อยอดพฤติกรรมปลอดภัยในทุกวัน"
-            mascotSrc="/images/mascots/wangjai/scenes/safety-culture-mascot-new.png"
+            mascotSrc="/images/safety-culture-mascot.png"
             mascotAlt="น้องวางใจถือโทรโข่งและมือถือโซเชียล"
             mascotAction="announce"
             variant="community"
+            backgroundImage="/images/safety-culture-hero.png"
+            backgroundOverlay="linear-gradient(90deg, rgba(2, 26, 66, .82) 0%, rgba(3, 33, 78, .5) 34%, rgba(3, 33, 78, .16) 56%, rgba(3, 33, 78, 0) 70%)"
           />
         </div>
 
@@ -754,7 +756,7 @@ export default function Page() {
                         {activity.imageSrc ? (
                         <Image src={activity.imageSrc} alt={activity.title} fill sizes="(max-width: 1023px) 100vw, 33vw" className="object-cover" />
                         ) : (
-                          <div className="flex h-full items-center justify-center px-6 text-center text-[18px] font-black text-[#8E8A81]">
+                          <div className="flex h-full items-center justify-center px-6 text-center text-[18px] font-black text-[#5f7591]">
                             {activity.imageText}
                         </div>
                       )}
@@ -768,7 +770,7 @@ export default function Page() {
                       <p className="mt-1.5 line-clamp-2 text-[12px] font-bold leading-relaxed text-[#667085]">{getActivityCardCopy(activity)}</p>
 
                       <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-[12px] font-black">
-                        <span className="inline-flex items-center gap-1.5 text-[#7d776c]">
+                        <span className="inline-flex items-center gap-1.5 text-[#5f7591]">
                           <CalendarDays className="h-4 w-4" strokeWidth={2.1} />
                           {activity.dateLabel}
                         </span>
@@ -829,7 +831,7 @@ export default function Page() {
                         {activity.imageSrc ? (
                           <Image src={activity.imageSrc} alt={activity.title} fill sizes="(max-width: 1023px) 100vw, 33vw" className="object-cover" />
                         ) : (
-                          <div className="flex h-full items-center justify-center px-6 text-center text-[18px] font-black text-[#8E8A81]">
+                          <div className="flex h-full items-center justify-center px-6 text-center text-[18px] font-black text-[#5f7591]">
                             {activity.imageText}
                           </div>
                         )}
@@ -843,7 +845,7 @@ export default function Page() {
                         <p className="mt-2 line-clamp-2 text-[13.5px] font-bold leading-relaxed text-[#667085]">{getActivityCardCopy(activity)}</p>
 
                         <div className="mt-4 flex flex-wrap items-center justify-between gap-2 text-[12px] font-black">
-                          <span className="inline-flex items-center gap-1.5 text-[#7d776c]">
+                          <span className="inline-flex items-center gap-1.5 text-[#5f7591]">
                             <CalendarDays className="h-4 w-4" strokeWidth={2.1} />
                             {activity.dateLabel}
                           </span>
@@ -911,7 +913,7 @@ export default function Page() {
                   key={category}
                   onClick={() => setActiveCategory(category)}
                   className={cn(
-                    "flex-shrink-0 whitespace-nowrap rounded-full border-[1.5px] px-4 py-2 text-[14px] font-extrabold transition-all md:px-[18px] md:py-[10px] md:text-[15px]",
+                    "flex-shrink-0 whitespace-nowrap rounded-full border-[1.5px] px-4 py-2 text-[14px] font-extrabold transition-all outline-none focus:outline-none focus-visible:outline-none md:px-[18px] md:py-[10px] md:text-[15px]",
                     styles.categoryButton,
                     activeCategory === category
                       ? styles.categoryActive
@@ -942,9 +944,9 @@ export default function Page() {
                       <ProfileAvatar imageUrl={post.avatarImageUrl || (post.isYou ? getSessionProfileImage(sessionUser) : null)} text={post.avatarText} />
                       <div className="min-w-0 flex flex-col gap-0">
                         <div className="flex flex-wrap items-center gap-1">
-                          <span className="truncate text-[14.5px] font-extrabold text-[#1A1A1A]">{post.author}</span>
+                          <span className="truncate text-[14.5px] font-extrabold text-[#173b6b]">{post.author}</span>
                           {post.isYou && (
-                            <span className="ml-1 rounded-md bg-[var(--c-ddd9cd)] px-1.5 py-0.5 text-[9px] font-black tracking-wide text-[#555149]">
+                            <span className="ml-1 rounded-md bg-[var(--c-ddd9cd)] px-1.5 py-0.5 text-[9px] font-black tracking-wide text-[#5f7591]">
                               YOU
                             </span>
                           )}
@@ -1036,7 +1038,7 @@ export default function Page() {
                             </span>
                           </>
                         ) : (
-                          <div className="flex h-full flex-col items-center justify-center gap-2 text-[15px] font-black lowercase text-[#8E8A81]">
+                          <div className="flex h-full flex-col items-center justify-center gap-2 text-[15px] font-black lowercase text-[#5f7591]">
                             <ImageIcon className="h-8 w-8" />
                             <span>{post.imageText}</span>
                           </div>
@@ -1068,17 +1070,14 @@ export default function Page() {
                         variant="ghost"
                         size="sm"
                         onClick={() => toggleLike(post.id)}
-                        className={cn(
-                          "h-auto gap-1.5 rounded-lg px-0 py-0 text-[13.5px] font-black hover:bg-transparent active:translate-y-0!",
-                          post.hasLiked ? "text-[#D9383A]" : "text-[#7d776c] hover:text-foreground"
-                        )}
+                        className="h-auto gap-1.5 rounded-lg px-0 py-0 text-[13.5px] font-black text-[#65676b] hover:bg-transparent hover:text-[#65676b] active:translate-y-0!"
                       >
-                        <span className="inline-block w-[1.15em] text-center leading-none" style={{ color: post.hasLiked ? "#D9383A" : "#8E8A81" }}>❤</span>
+                        <ThumbsUp className={cn("h-[18px] w-[18px] text-[#65676b]", post.hasLiked && "fill-[#65676b]")} strokeWidth={2.2} />
                       </Button>
                       <button
                         type="button"
                         onClick={() => setLikedByPostId(post.id)}
-                        className="-ml-1.5 tabular-nums text-[13.5px] font-black text-[#555149] hover:underline"
+                        className="-ml-1.5 tabular-nums text-[13.5px] font-black text-[#5f7591] hover:underline"
                         aria-label={`ดูผู้กดถูกใจ ${post.likes} คน`}
                       >
                         {post.likes}
@@ -1087,10 +1086,10 @@ export default function Page() {
                         variant="ghost"
                         size="sm"
                         onClick={() => handleToggleComments(post)}
-                        className="h-auto gap-1.5 rounded-lg px-0 py-0 text-[13.5px] font-black text-[#7d776c] hover:bg-transparent hover:text-foreground"
+                        className="h-auto gap-1.5 rounded-lg px-0 py-0 text-[13.5px] font-black text-[#5f7591] hover:bg-transparent hover:text-foreground"
                       >
-                        <span style={{ color: "#8E8A81" }}>💬</span>
-                        <span style={{ color: "#555149" }}>{commentCount}</span>
+                        <MessageCircle className="h-[18px] w-[18px] text-[#5f7591]" strokeWidth={2.2} />
+                        <span style={{ color: "#5f7591" }}>{commentCount}</span>
                       </Button>
                     </div>
                     <span className="w-fit rounded-full bg-[#e9fff4] px-2 py-0.5 text-[12px] font-black tracking-normal text-[#3D9A6A]">
@@ -1103,7 +1102,7 @@ export default function Page() {
                       {postComments.length > 0 && (
                         <>
                           {postComments.length > visibleComments.length && (
-                            <div className="rounded-xl border-[1.5px] border-[var(--c-ddd9cd)] bg-[var(--c-faf8f2)] px-2.5 py-1.5 text-center text-[13.5px] font-[850] text-[#555149]">
+                            <div className="rounded-xl border-[1.5px] border-[var(--c-ddd9cd)] bg-[var(--c-faf8f2)] px-2.5 py-1.5 text-center text-[13.5px] font-[850] text-[#5f7591]">
                               แสดง 20 คอมเมนต์ล่าสุด จากทั้งหมด {postComments.length} คอมเมนต์
                             </div>
                           )}
@@ -1122,8 +1121,8 @@ export default function Page() {
                                     textClassName="text-[11px]"
                                   />
                                   <div className="flex min-w-0 flex-col items-start gap-1">
-                                    <div className="min-w-0 rounded-[12px] border-[1.5px] border-[var(--c-ddd9cd)] bg-[var(--c-faf8f2)] px-2 py-1 text-[13px] font-bold leading-relaxed text-[#33312C]">
-                                      <span className="mb-0.5 flex flex-wrap items-baseline gap-x-1.5 text-[11.5px] font-black text-[#1A1A1A]">
+                                    <div className="min-w-0 rounded-[12px] border-[1.5px] border-[var(--c-ddd9cd)] bg-[var(--c-faf8f2)] px-2 py-1 text-[13px] font-bold leading-relaxed text-[#173b6b]">
+                                      <span className="mb-0.5 flex flex-wrap items-baseline gap-x-1.5 text-[11.5px] font-black text-[#173b6b]">
                                         {comment.author}
                                         {formatThaiDateTime(comment.createdAt) && (
                                           <span className="text-[10.5px] font-bold text-[var(--c-9f988d)]">{formatThaiDateTime(comment.createdAt)}</span>
@@ -1142,7 +1141,7 @@ export default function Page() {
                                             autoFocus
                                           />
                                           <div className="flex gap-1.5">
-                                            <button type="button" onClick={cancelEditComment} className="text-[11px] font-black text-[#7d776c]">ยกเลิก</button>
+                                            <button type="button" onClick={cancelEditComment} className="text-[11px] font-black text-[#5f7591]">ยกเลิก</button>
                                             <button type="button" disabled={commentSaving || !commentEditDraft.trim()} onClick={() => void handleSaveComment()} className="text-[11px] font-black text-[#0b69c7] disabled:opacity-50">บันทึก</button>
                                           </div>
                                         </div>
@@ -1156,7 +1155,7 @@ export default function Page() {
                                           <button
                                             type="button"
                                             onClick={() => startEditComment(post.id, comment)}
-                                            className="px-1.5 py-[3px] text-[11.5px] font-[850] text-[#555149] hover:text-[#1A1A1A]"
+                                            className="px-1.5 py-[3px] text-[11.5px] font-[850] text-[#5f7591] hover:text-[#173b6b]"
                                           >
                                             แก้ไข
                                           </button>
@@ -1171,8 +1170,8 @@ export default function Page() {
                                       )}
                                       <button
                                         className={cn(
-                                          "inline-flex cursor-pointer items-center gap-1 rounded-full bg-transparent px-1.5 py-[3px] text-[11.5px] font-[850] leading-none text-[#555149] transition-all hover:bg-[var(--c-faf8f2)] hover:text-[#1A1A1A]",
-                                          selectedReaction && "bg-[var(--c-fff7d6)] text-[#1A1A1A] shadow-[inset_0_0_0_1.5px_var(--c-f5bb00)]"
+                                          "inline-flex cursor-pointer items-center gap-1 rounded-full bg-transparent px-1.5 py-[3px] text-[11.5px] font-[850] leading-none text-[#5f7591] transition-all hover:bg-[var(--c-faf8f2)] hover:text-[#173b6b]",
+                                          selectedReaction && "bg-[var(--c-fff7d6)] text-[#173b6b] shadow-[inset_0_0_0_1.5px_var(--c-f5bb00)]"
                                         )}
                                         onClick={() => setOpenCommentReactionPicker((prev) => (prev === pickerKey ? null : pickerKey))}
                                       >
@@ -1403,7 +1402,7 @@ export default function Page() {
                           ) : null}
                         </>
                       ) : (
-                        <div className="flex h-full flex-col items-center justify-center gap-2 text-[15px] font-black lowercase text-[#8E8A81]">
+                        <div className="flex h-full flex-col items-center justify-center gap-2 text-[15px] font-black lowercase text-[#5f7591]">
                           <ImageIcon className="h-8 w-8" />
                           <span>{expandedPost.imageText}</span>
                         </div>
@@ -1435,17 +1434,14 @@ export default function Page() {
                       variant="ghost"
                       size="sm"
                       onClick={() => toggleLike(expandedPost.id)}
-                      className={cn(
-                        "h-auto gap-1.5 rounded-lg px-0 py-0 text-[13.5px] font-black hover:bg-transparent active:translate-y-0!",
-                        expandedPost.hasLiked ? "text-[#D9383A]" : "text-[#7d776c] hover:text-foreground"
-                      )}
+                      className="h-auto gap-1.5 rounded-lg px-0 py-0 text-[13.5px] font-black text-[#65676b] hover:bg-transparent hover:text-[#65676b] active:translate-y-0!"
                     >
-                      <span className="inline-block w-[1.15em] text-center leading-none" style={{ color: expandedPost.hasLiked ? "#D9383A" : "#8E8A81" }}>❤</span>
+                      <ThumbsUp className={cn("h-[18px] w-[18px] text-[#65676b]", expandedPost.hasLiked && "fill-[#65676b]")} strokeWidth={2.2} />
                     </Button>
                     <button
                       type="button"
                       onClick={() => setLikedByPostId(expandedPost.id)}
-                      className="-ml-2 tabular-nums text-[13.5px] font-black text-[#555149] hover:underline"
+                      className="-ml-2 tabular-nums text-[13.5px] font-black text-[#5f7591] hover:underline"
                       aria-label={`ดูผู้กดถูกใจ ${expandedPost.likes} คน`}
                     >
                       {expandedPost.likes}
@@ -1454,10 +1450,10 @@ export default function Page() {
                       variant="ghost"
                       size="sm"
                       onClick={() => handleToggleComments(expandedPost)}
-                      className="h-auto gap-1.5 rounded-lg px-0 py-0 text-[13.5px] font-black text-[#7d776c] hover:bg-transparent hover:text-foreground"
+                      className="h-auto gap-1.5 rounded-lg px-0 py-0 text-[13.5px] font-black text-[#5f7591] hover:bg-transparent hover:text-foreground"
                     >
-                      <span style={{ color: "#8E8A81" }}>💬</span>
-                      <span style={{ color: "#555149" }}>{expandedPostCommentCount}</span>
+                      <MessageCircle className="h-[18px] w-[18px] text-[#5f7591]" strokeWidth={2.2} />
+                      <span style={{ color: "#5f7591" }}>{expandedPostCommentCount}</span>
                     </Button>
                   </div>
                 </div>
@@ -1480,8 +1476,8 @@ export default function Page() {
                                 textClassName="text-[11px]"
                               />
                               <div className="flex min-w-0 flex-col items-start gap-1">
-                                <div className="min-w-0 rounded-[12px] border-[1.5px] border-[var(--c-ddd9cd)] bg-[var(--c-faf8f2)] px-2.5 py-1.5 text-[13px] font-bold leading-relaxed text-[#33312C]">
-                                  <span className="mb-0.5 flex flex-wrap items-baseline gap-x-1.5 text-[11.5px] font-black text-[#1A1A1A]">
+                                <div className="min-w-0 rounded-[12px] border-[1.5px] border-[var(--c-ddd9cd)] bg-[var(--c-faf8f2)] px-2.5 py-1.5 text-[13px] font-bold leading-relaxed text-[#173b6b]">
+                                  <span className="mb-0.5 flex flex-wrap items-baseline gap-x-1.5 text-[11.5px] font-black text-[#173b6b]">
                                     {comment.author}
                                     {formatThaiDateTime(comment.createdAt) && (
                                       <span className="text-[10.5px] font-bold text-[var(--c-9f988d)]">{formatThaiDateTime(comment.createdAt)}</span>
@@ -1500,7 +1496,7 @@ export default function Page() {
                                         autoFocus
                                       />
                                       <div className="flex gap-1.5">
-                                        <button type="button" onClick={cancelEditComment} className="text-[11px] font-black text-[#7d776c]">ยกเลิก</button>
+                                        <button type="button" onClick={cancelEditComment} className="text-[11px] font-black text-[#5f7591]">ยกเลิก</button>
                                         <button type="button" disabled={commentSaving || !commentEditDraft.trim()} onClick={() => void handleSaveComment()} className="text-[11px] font-black text-[#0b69c7] disabled:opacity-50">บันทึก</button>
                                       </div>
                                     </div>
@@ -1514,7 +1510,7 @@ export default function Page() {
                                       <button
                                         type="button"
                                         onClick={() => startEditComment(expandedPost.id, comment)}
-                                        className="px-1.5 py-[3px] text-[11.5px] font-[850] text-[#555149] hover:text-[#1A1A1A]"
+                                        className="px-1.5 py-[3px] text-[11.5px] font-[850] text-[#5f7591] hover:text-[#173b6b]"
                                       >
                                         แก้ไข
                                       </button>
@@ -1529,8 +1525,8 @@ export default function Page() {
                                   )}
                                   <button
                                     className={cn(
-                                      "inline-flex cursor-pointer items-center gap-1 rounded-full bg-transparent px-1.5 py-[3px] text-[11.5px] font-[850] leading-none text-[#555149] transition-all hover:bg-[var(--c-faf8f2)] hover:text-[#1A1A1A]",
-                                      selectedReaction && "bg-[var(--c-fff7d6)] text-[#1A1A1A] shadow-[inset_0_0_0_1.5px_var(--c-f5bb00)]"
+                                      "inline-flex cursor-pointer items-center gap-1 rounded-full bg-transparent px-1.5 py-[3px] text-[11.5px] font-[850] leading-none text-[#5f7591] transition-all hover:bg-[var(--c-faf8f2)] hover:text-[#173b6b]",
+                                      selectedReaction && "bg-[var(--c-fff7d6)] text-[#173b6b] shadow-[inset_0_0_0_1.5px_var(--c-f5bb00)]"
                                     )}
                                     onClick={() => setOpenCommentReactionPicker((prev) => (prev === pickerKey ? null : pickerKey))}
                                   >
@@ -1616,7 +1612,7 @@ export default function Page() {
             <div className="flex items-center justify-between border-b border-[var(--c-eee2cb)] px-5 py-4">
               <div>
                 <h3 className="text-[18px] font-black text-[var(--c-2f261d)]">ผู้ที่กดถูกใจ</h3>
-                <p className="text-[12px] font-bold text-[#8E8A81]">ทั้งหมด {likedByPost?.likes ?? 0} คน</p>
+                <p className="text-[12px] font-bold text-[#5f7591]">ทั้งหมด {likedByPost?.likes ?? 0} คน</p>
               </div>
               <button type="button" onClick={() => setLikedByPostId(null)} aria-label="ปิด" className="p-2 text-[#667085]">
                 <X className="h-5 w-5" />
@@ -1631,7 +1627,7 @@ export default function Page() {
                   </div>
                 ))
               ) : (
-                <div className="px-4 py-8 text-center text-[13px] font-bold text-[#8E8A81]">ยังไม่มีผู้กดถูกใจโพสต์นี้</div>
+                <div className="px-4 py-8 text-center text-[13px] font-bold text-[#5f7591]">ยังไม่มีผู้กดถูกใจโพสต์นี้</div>
               )}
             </div>
           </div>
@@ -1691,7 +1687,7 @@ export default function Page() {
               <button
                 type="button"
                 onClick={closeExpandedActivity}
-                className="inline-flex h-10 w-10 flex-shrink-0 items-center justify-center bg-transparent text-[#667085] transition-colors hover:text-[#1A1A1A]"
+                className="inline-flex h-10 w-10 flex-shrink-0 items-center justify-center bg-transparent text-[#667085] transition-colors hover:text-[#173b6b]"
                 aria-label="ปิดรายละเอียดกิจกรรม"
               >
                 <X className="h-5 w-5" strokeWidth={2.3} />
@@ -1708,7 +1704,7 @@ export default function Page() {
                       className="block aspect-[4/3] max-h-[520px] min-h-[260px] w-full object-cover"
                     />
                   ) : (
-                    <div className="flex aspect-[4/3] min-h-[260px] items-center justify-center px-8 text-center text-[22px] font-black text-[#8E8A81]">
+                    <div className="flex aspect-[4/3] min-h-[260px] items-center justify-center px-8 text-center text-[22px] font-black text-[#5f7591]">
                       {expandedActivity.imageText}
                     </div>
                   )}

@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import * as XLSX from "xlsx";
 import { Combobox } from "@/components/ui/combobox";
+import { SafetyCultureHero } from "@/components/safety-culture/safety-culture-hero";
 
 // This screen is wired to the real locations API. Fields that do not exist on
 // `locations` yet (customer/contractor/stage/approvedBy) are UI-only until the
@@ -299,7 +300,7 @@ export default function SafetyAdminManageData() {
     const lat = item.lat === null || item.lat === "" ? NaN : Number(item.lat);
     const lng = item.lng === null || item.lng === "" ? NaN : Number(item.lng);
     if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
-      throw new Error("กรุณากรอก lat/lng เพื่อบันทึก Location ลงฐานข้อมูลจริง");
+      throw new Error("กรุณากรอกพิกัด (lat/lng) เพื่อบันทึกสถานที่");
     }
     const response = await fetch(id ? `/api/safety-effort/locations/${id}` : "/api/safety-effort/locations", {
       method,
@@ -808,30 +809,19 @@ export default function SafetyAdminManageData() {
           minHeight: isMobile ? undefined : 0,
         }}
       >
-        {/* Header Bar */}
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "row",
-            alignItems: "center",
-            justifyContent: "space-between",
-            gap: 12,
-            background: "#fff",
-            border: `1px solid ${T.line}`,
-            borderRadius: 20,
-            padding: isMobile ? "12px 14px" : "12px 20px",
-            boxShadow: "0 4px 12px rgba(63, 37, 17, 0.04)",
-            flexShrink: 0,
-          }}
-        >
-          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-            <div>
-              <h1 style={{ fontSize: 18, fontWeight: 900, color: T.ink, margin: 0 }}>แก้ไขสถานที่ที่ผู้ใช้เพิ่มเอง</h1>
-              <p style={{ fontSize: 12.5, color: T.sub, margin: "2px 0 0" }}>
-                แก้ไขหรือลบเฉพาะสถานที่ที่เพิ่มจากหน้า Check-in โดยไม่กระทบข้อมูลจากระบบ RMC
-              </p>
-            </div>
-          </div>
+        {/* Hero */}
+        <div style={{ flexShrink: 0 }}>
+          <SafetyCultureHero
+            eyebrow="SAFETY EFFORT ADMIN"
+            title={<>จัดการสถานที่</>}
+            description="แก้ไขหรือลบเฉพาะสถานที่ที่เพิ่มจากหน้า Check-in โดยไม่กระทบข้อมูลจากระบบ RMC"
+            mascotSrc="/images/safety-effort-mascot.png"
+            mascotAlt="Safety mascot"
+            mascotAction="happy"
+            variant="community"
+            backgroundImage="/images/safety-effort-hero.png"
+            backgroundOverlay="linear-gradient(90deg, rgba(2, 26, 66, .82) 0%, rgba(3, 33, 78, .5) 34%, rgba(3, 33, 78, .16) 56%, rgba(3, 33, 78, 0) 70%)"
+          />
         </div>
 
         {/* Content Box */}

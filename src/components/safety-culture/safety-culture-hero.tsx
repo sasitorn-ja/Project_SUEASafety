@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import type { MouseEvent, ReactNode } from "react";
+import type { CSSProperties, MouseEvent, ReactNode } from "react";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { type MascotAction, useAppTheme } from "@/providers/theme-provider";
@@ -16,6 +16,8 @@ type SafetyCultureHeroProps = {
   actions?: ReactNode;
   actionsLayout?: "stacked" | "side";
   variant?: "default" | "community";
+  backgroundImage?: string;
+  backgroundOverlay?: string;
 };
 
 export function SafetyCultureHero({
@@ -28,6 +30,8 @@ export function SafetyCultureHero({
   actions,
   actionsLayout = "stacked",
   variant = "default",
+  backgroundImage,
+  backgroundOverlay,
 }: SafetyCultureHeroProps) {
   const hasActions = !!actions;
   const sideActions = hasActions && actionsLayout === "side";
@@ -58,6 +62,19 @@ export function SafetyCultureHero({
       "relative overflow-hidden rounded-[18px] border-[2px] border-[var(--brand-accent)] bg-[linear-gradient(135deg,var(--brand-hero-start)_0%,var(--brand-nav)_50%,var(--brand-hero-end)_100%)] shadow-[0_12px_28px_var(--brand-shadow)] font-sarabun",
       variant === "community" && "safety-culture-community-hero"
     )}
+    style={(backgroundImage || backgroundOverlay)
+      ? ({
+          ...(backgroundImage ? { "--sc-hero-image": `url("${backgroundImage}")` } : {}),
+          ...(backgroundOverlay ? { "--sc-hero-overlay": backgroundOverlay } : {}),
+          // For the default (non-community) variant the CSS variables above are
+          // unused, so apply the photo background inline as well.
+          ...(backgroundImage && variant !== "community"
+            ? {
+                background: `${backgroundOverlay || "linear-gradient(90deg, rgba(2,26,66,.82) 0%, rgba(3,33,78,.5) 34%, rgba(3,33,78,.16) 56%, rgba(3,33,78,0) 70%)"}, url("${backgroundImage}") center / cover no-repeat`,
+              }
+            : {}),
+        } as CSSProperties)
+      : undefined}
     onMouseMove={handleMascotPointer}
     onMouseLeave={resetMascotPointer}>
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_84%_34%,rgba(var(--brand-accent-rgb),0.20),transparent_28%),linear-gradient(90deg,rgba(22,10,2,0.24),transparent_54%)]" />
@@ -65,7 +82,7 @@ export function SafetyCultureHero({
 
       <div
         className={cn(
-          "safety-culture-hero-grid relative z-10 grid items-start gap-2 px-3.5 pt-[4px] pb-[10px] sm:px-4 md:px-6 md:pt-[6px] md:pb-[14px]",
+          "safety-culture-hero-grid relative z-10 grid items-start gap-2 px-3.5 pt-[6px] pb-[22px] sm:px-4 md:px-6 md:pt-[10px] md:pb-[30px]",
           sideActions
             ? "grid-cols-[minmax(0,1fr)_84px] md:grid-cols-[minmax(0,1fr)_132px_minmax(300px,410px)] md:items-center md:gap-5"
             : hasActions

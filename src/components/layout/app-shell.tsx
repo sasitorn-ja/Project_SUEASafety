@@ -166,15 +166,15 @@ export function AppShell({ children }: { children: ReactNode }) {
   }, [pathname]);
 
   if (pathname === "/login") {
-    return <main className="min-h-screen w-full bg-background">{children}</main>;
+    return <main className="app-login-main">{children}</main>;
   }
 
   if (!loginChecked) {
-    return <div className="min-h-screen bg-background" />;
+    return <div className="app-shell-loading" />;
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="app-shell-root">
       {notification && (
         <div
           className="fixed top-5 left-1/2 z-[99999] flex w-[calc(100%-40px)] max-w-[480px] items-start gap-3"

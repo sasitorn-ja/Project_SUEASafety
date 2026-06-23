@@ -206,7 +206,7 @@ export function getDefaultMenu(): MenuNode[] {
           label: "จัดการผู้ใช้และสิทธิ์ Admin",
           href: "/safety-culture/admin-users",
           icon: "UserCog",
-          description: "จัดการผู้ใช้ Role และสิทธิ์ Admin จาก DB",
+          description: "จัดการผู้ใช้ Role และสิทธิ์ Admin",
         }),
       ],
     }),

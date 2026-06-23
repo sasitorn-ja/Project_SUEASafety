@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { useMemo, useState } from "react";
-import { ChevronLeft, ImageIcon } from "lucide-react";
+import { ChevronLeft, ImageIcon, MessageCircle, ThumbsUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
@@ -209,10 +209,10 @@ export function MobileNotificationPostView({
                 onClick={() => onToggleLike(post.id)}
                 className={cn(
                   "h-auto gap-1.5 rounded-lg px-0 py-0 text-[13.5px] font-black hover:bg-transparent",
-                  post.hasLiked ? "text-[#D9383A]" : isWangjai ? "text-[#54738f] hover:text-[#183b5e]" : "text-[#7d776c] hover:text-foreground"
+                  isWangjai ? "text-[#9fb6cc] hover:text-[#c7d8ea]" : "text-[#b8b2a7] hover:text-white"
                 )}
               >
-                <span style={{ color: post.hasLiked ? "#D9383A" : "#8E8A81" }}>❤</span>
+                <ThumbsUp className="h-[18px] w-[18px]" strokeWidth={2.2} style={{ color: isWangjai ? "#9fb6cc" : "#b8b2a7", fill: post.hasLiked ? (isWangjai ? "#9fb6cc" : "#b8b2a7") : "none" }} />
                 <span style={{ color: isWangjai ? "#3e5f7d" : "#555149" }}>{post.likes}</span>
               </Button>
               <Button
@@ -224,7 +224,7 @@ export function MobileNotificationPostView({
                   isWangjai ? "text-[#54738f] hover:text-[#183b5e]" : "text-[#7d776c] hover:text-foreground"
                 )}
               >
-                <span style={{ color: isWangjai ? "#69b7f2" : "#8E8A81" }}>💬</span>
+                <MessageCircle className="h-[18px] w-[18px]" strokeWidth={2.2} style={{ color: isWangjai ? "#69b7f2" : "#8E8A81" }} />
                 <span style={{ color: isWangjai ? "#3e5f7d" : "#555149" }}>{commentCount}</span>
               </Button>
             </div>

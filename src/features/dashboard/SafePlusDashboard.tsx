@@ -70,7 +70,13 @@ export default function SafePlusDashboard() {
     awarenessHolidays,
     awarenessRequiredToday,
     awarenessStartDate,
+    feedEvents,
+    rewardsCatalog,
   } = useAppState();
+  const activeEvents = useMemo(
+    () => feedEvents.filter((event) => event.published && event.status === "open"),
+    [feedEvents],
+  );
   const [pointTransactions, setPointTransactions] = useState<Array<{ amount: number; occurredAt: string }>>([]);
 
   useEffect(() => {
@@ -164,7 +170,7 @@ export default function SafePlusDashboard() {
         </div>
 
         <div className={styles.rewardPanel}>
-          <div><Award /><span>ยังไม่มีรางวัลในระบบ</span></div>
+          <div><Award /><span>{rewardsCatalog.length > 0 ? `มี ${rewardsCatalog.length} รางวัลให้แลก` : "ยังไม่มีรางวัลในระบบ"}</span></div>
           <Link href="/safety-culture/rewards"><Gift />แลกรางวัล</Link>
           <Link href="/safety-culture/leaderboard" className={styles.outlineButton}><Trophy />ดูอันดับ</Link>
         </div>
@@ -235,10 +241,23 @@ export default function SafePlusDashboard() {
         <aside className={styles.sideColumn}>
           <section className={styles.activityCard}>
             <header><div><Zap /><b>กิจกรรมที่กำลังจัด</b></div><Link href="/safety-culture">ดูทั้งหมด <ChevronRight /></Link></header>
-            <div className={styles.activityBanner}>
-              <div><strong>เร็วๆ นี้!</strong><span>มีกิจกรรมสนุกๆ รอคุณอยู่</span></div>
-              <Image src={ACTIVITY_MASCOT} alt="" width={1254} height={1254} />
-            </div>
+            {activeEvents.length > 0 ? (
+              <Link href="/safety-culture" className={styles.activityBanner}>
+                <div>
+                  <strong>{activeEvents[0].title}</strong>
+                  <span>
+                    {[activeEvents[0].dateLabel, activeEvents[0].points ? `+${activeEvents[0].points} คะแนน` : ""].filter(Boolean).join(" · ")}
+                    {activeEvents.length > 1 ? ` · และอีก ${activeEvents.length - 1} กิจกรรม` : ""}
+                  </span>
+                </div>
+                <Image src={ACTIVITY_MASCOT} alt="" width={1254} height={1254} />
+              </Link>
+            ) : (
+              <div className={styles.activityBanner}>
+                <div><strong>เร็วๆ นี้!</strong><span>มีกิจกรรมสนุกๆ รอคุณอยู่</span></div>
+                <Image src={ACTIVITY_MASCOT} alt="" width={1254} height={1254} />
+              </div>
+            )}
           </section>
         </aside>
       </div>

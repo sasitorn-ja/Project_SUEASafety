@@ -155,7 +155,7 @@ export default function AdminUsersPage() {
 
   const updateAdminRole = async (target: ApiUser, shouldBeAdmin: boolean) => {
     if (!safetyAdminRole) {
-      setError("ยังไม่มี role SAFETY_ADMIN ใน DB กรุณารัน migration seed role ก่อน");
+      setError("ยังไม่มีสิทธิ์ SAFETY_ADMIN ในระบบ กรุณาตั้งค่าสิทธิ์ก่อน");
       return;
     }
 
@@ -188,8 +188,14 @@ export default function AdminUsersPage() {
   const lastRow = Math.min(page * pageSize, total);
 
   return (
-    <div className="mx-auto w-full max-w-[1380px] px-3.5 pb-10 pt-4 font-sarabun sm:px-5 lg:px-8">
-      <section className="rounded-[20px] bg-[linear-gradient(135deg,var(--brand-hero-start),var(--brand-hero-end))] px-4 py-5 text-white shadow-[0_12px_28px_var(--brand-shadow)] md:px-7 md:py-7">
+    <div className="mx-auto w-full max-w-[1480px] bg-[var(--background)] px-3.5 pt-2.5 pb-8 font-sarabun md:px-5">
+      <section
+        className="relative overflow-hidden rounded-[20px] border border-[#278dff] px-4 py-5 text-white shadow-[0_12px_28px_var(--brand-shadow)] md:px-7 md:py-7"
+        style={{
+          background:
+            "linear-gradient(90deg, rgba(2, 26, 66, .9) 0%, rgba(3, 33, 78, .62) 50%, rgba(3, 33, 78, .42) 100%), url('/images/safety-culture-hero.png') center / cover no-repeat",
+        }}
+      >
         <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
           <div>
             <p className="flex items-center gap-2 text-[11px] font-extrabold uppercase tracking-[0.16em] text-[var(--brand-hero-label)]">
@@ -198,7 +204,7 @@ export default function AdminUsersPage() {
             </p>
             <h1 className="mt-2 text-[26px] font-black leading-tight md:text-[34px]">จัดการผู้ใช้และสิทธิ์ Admin</h1>
             <p className="mt-2 max-w-[720px] text-[13px] font-bold leading-relaxed text-white/75 md:text-[14px]">
-              แสดงข้อมูลจาก DB แบบแบ่งหน้า รองรับรายชื่อผู้ใช้จำนวนมากโดยไม่โหลดทั้งหมดพร้อมกัน
+              แสดงรายชื่อผู้ใช้แบบแบ่งหน้า รองรับผู้ใช้จำนวนมากโดยไม่โหลดทั้งหมดพร้อมกัน
             </p>
           </div>
           <div className="rounded-[14px] border border-white/16 bg-white/10 px-4 py-3">

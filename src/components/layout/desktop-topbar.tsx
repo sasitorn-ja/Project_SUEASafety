@@ -227,26 +227,8 @@ export function DesktopTopbar() {
       style={{ fontFamily: "var(--font-sans)", height: "var(--topbar-h)" }}
     >
       <div className="desktop-topbar-inner mx-auto flex h-full w-full max-w-[1540px] items-center justify-between gap-[22px] px-6 xl:px-12">
-        <NavTo href="/" className="desktop-brand flex min-w-[300px] items-center gap-3.5">
-          <div className="desktop-brand-logo flex h-[54px] w-[54px] flex-shrink-0 items-center justify-center overflow-hidden rounded-md">
-            <Image src={mascot("logo")} alt="SUEA Safety Logo" width={54} height={54} className="h-full w-full object-contain" />
-          </div>
-          <div className="desktop-brand-copy overflow-hidden">
-            <div className="desktop-brand-title whitespace-nowrap text-3xl font-extrabold leading-none tracking-normal text-white">
-              {isWangjai ? (
-                <>
-                  <span className="text-[var(--brand-accent)]">CPAC</span> Safe +
-                </>
-              ) : (
-                <>
-                  <span className="text-[var(--brand-accent)]">SUEA</span> Safety
-                </>
-              )}
-            </div>
-            <div className="desktop-brand-subtitle mt-1 whitespace-nowrap text-[11.5px] font-semibold text-white/[0.62]">
-              {isWangjai ? "Creating Protection And Care" : "Safety User Environment Awareness"}
-            </div>
-          </div>
+        <NavTo href="/" className="desktop-brand flex min-w-[200px] items-center gap-3.5">
+          <Image src="/images/LOGO1_trim.png" alt="Safety Caring" width={300} height={52} priority className="h-[40px] w-auto object-contain" />
         </NavTo>
 
         <Sheet open={open} onOpenChange={setOpen}>

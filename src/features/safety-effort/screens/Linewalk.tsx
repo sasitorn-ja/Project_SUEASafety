@@ -104,7 +104,7 @@ function StepPips({ current = 3, total = 4 }) {
               fontSize:"9.5px", fontWeight:900, fontFamily:"'Prompt',sans-serif", transition:"all 0.3s",
               background:isDone?"#1f7a55":isActive?"var(--brand-accent)":"rgba(255,255,255,0.1)",
               color:isDone?"#fff":isActive?"var(--c-1a1613)":"rgba(255,255,255,0.4)",
-              boxShadow:isActive?"0 0 8px rgba(var(--brand-accent-rgb),0.6)":"none",
+              boxShadow:isActive?"0 0 0 3px rgba(var(--brand-accent-rgb),0.18)":"none",
               border:(!isDone&&!isActive)?"1px solid rgba(255,255,255,0.08)":"none"
             }}>
               {isDone ? "✓" : step}
@@ -304,7 +304,7 @@ export default function Linewalk() {
   const activity     = location.state?.activity ?? {
     id: "line-walk",
     label: "Line Walk",
-    desc: "เดินตรวจสายการผลิต / หน่วยงาน",
+    desc: "ตรวจสอบความปลอดภัย",
   };
 
   // ── Step 1 fields ──
@@ -687,10 +687,6 @@ export default function Linewalk() {
                     </div>
                   </div>
                 )}
-              </div>
-
-              <div className="lw-progress-track" style={{ marginTop:isMobileQuestionScreen ? 8 : (isQuestionScreen ? 8 : 12) }}>
-                <div className="lw-progress-fill" style={{ width:`${progressPct}%` }} />
               </div>
 
               {false && !isMobileQuestionScreen && <div style={{ marginTop:8, display:"flex", gap:8, flexWrap:"wrap" }}>

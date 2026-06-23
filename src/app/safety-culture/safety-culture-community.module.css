@@ -54,7 +54,7 @@
   border-color: #168fff;
   color: white;
   background: linear-gradient(180deg, #188fff, #0663d2);
-  box-shadow: 0 5px 13px rgba(0, 108, 223, .25);
+  box-shadow: none;
 }
 
 .categoryIdle {

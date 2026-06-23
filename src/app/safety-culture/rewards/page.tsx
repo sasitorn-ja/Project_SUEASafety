@@ -169,7 +169,7 @@ export default function RewardsPage() {
             : redeemResult.reason === "not-started" || redeemResult.reason === "expired"
               ? getRewardScheduleText(redeeming)
               : redeemResult.reason === "api-error"
-                ? "ระบบไม่สามารถบันทึกการแลกรางวัลลงฐานข้อมูลได้ กรุณาลองใหม่"
+                ? "ระบบไม่สามารถบันทึกการแลกรางวัลได้ กรุณาลองใหม่"
                 : "คะแนนอาจถูกใช้ไปแล้ว กรุณาลองใหม่",
       });
       return;
@@ -187,10 +187,10 @@ export default function RewardsPage() {
 
   return (
     <>
-      <div className="mx-auto w-full max-w-[1180px] px-3.5 pt-2 pb-8 md:px-4">
+      <div className="mx-auto w-full max-w-[1480px] px-3.5 pt-2.5 pb-8 md:px-5">
         <div className="anim-fade" style={animStyle(0)}>
           <SafetyCultureHero
-            eyebrow="CPAC SAFETY REWARDS SHOP"
+            eyebrow="SAFETY CARING REWARDS SHOP"
             title={
               <>
                 ทำดี แลกของ <span className="text-[var(--brand-accent)]">ให้ทีมภูมิใจ</span>
@@ -200,6 +200,9 @@ export default function RewardsPage() {
             mascotSrc={mascot("happy")}
             mascotAlt="SUEA Mascot"
             mascotAction="happy"
+            variant="community"
+            backgroundImage="/images/hero01.png"
+            backgroundOverlay="linear-gradient(90deg, rgba(2, 26, 66, .82) 0%, rgba(3, 33, 78, .5) 34%, rgba(3, 33, 78, .16) 56%, rgba(3, 33, 78, 0) 70%)"
           />
         </div>
 
@@ -315,7 +318,7 @@ export default function RewardsPage() {
           <Card className="rounded-[18px] border border-dashed border-[var(--border)] bg-[var(--brand-surface)] px-5 py-10 text-center">
             <p className="text-[17px] font-black text-[var(--brand-text)]">ยังไม่มีของรางวัลในระบบ</p>
             <p className="mt-2 text-[13px] font-bold text-[var(--brand-muted-text)]">
-              เมื่อแอดมินเพิ่มรางวัลผ่าน API/หลังบ้าน รายการจะปรากฏที่หน้านี้
+              เมื่อมีรางวัลในระบบ รายการจะแสดงที่นี่
             </p>
           </Card>
         ) : filtered.length === 0 ? (

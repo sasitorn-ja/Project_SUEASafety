@@ -17,8 +17,9 @@ import {
   UsersRound,
 } from "lucide-react";
 import styles from "./safety-effort-category.module.css";
+import { SafetyCultureHero } from "@/components/safety-culture/safety-culture-hero";
 
-const HERO_MASCOT = "/images/mascots/wangjai/scenes/safety-effort-user-mascot.png";
+const HERO_MASCOT = "/images/safety-effort-mascot.png";
 
 type MonthlyStats = {
   count: number | null;
@@ -28,7 +29,7 @@ type MonthlyStats = {
 const steps = [
   {
     title: "เลือกหมวดกิจกรรม",
-    description: "เลือกประเภทสถานที่ เช่น โรงงาน, สำนักงาน หรือ Site งาน",
+    description: "เลือกกิจกรรม Linewalk หรือ Safety Contact",
     icon: FolderOpen,
   },
   {
@@ -87,24 +88,19 @@ export default function Category() {
   return (
     <div className={styles.page}>
       <div className={styles.shell}>
-        <section className={styles.hero} aria-labelledby="safety-effort-title">
-          <div className={styles.heroGrid} />
-          <div className={styles.heroContent}>
-            <div className={styles.heroCopy}>
-              <h1 id="safety-effort-title">
-                <ShieldCheck aria-hidden="true" />
-                <span>Safety <strong>Effort</strong></span>
-              </h1>
-              <p>
-                ปักหมุดเลือกพื้นที่และบันทึกรายงานความปลอดภัย Linewalk<br className={styles.desktopBreak} />
-                หรือบันทึกข้อมูล Safety Contact เพื่อสร้างสภาพแวดล้อม<br className={styles.desktopBreak} />
-                การทำงานร่วมกันที่ปลอดภัยยิ่งขึ้น
-              </p>
-            </div>
-            <img className={`${styles.heroMascot} mascot-motion mascot-motion-hero`} src={HERO_MASCOT} alt="น้องวางใจขยิบตาถือคลิปบอร์ด Safety First" />
-          </div>
-          <div className={styles.hazardStripe} />
-        </section>
+        <div className="mb-3">
+          <SafetyCultureHero
+            eyebrow="SAFETY EFFORT"
+            title={<>Safety Effort</>}
+            description="ตรวจ Linewalk และบันทึก Safety Contact เพื่อสร้างสภาพแวดล้อมการทำงานที่ปลอดภัยยิ่งขึ้น"
+            mascotSrc={HERO_MASCOT}
+            mascotAlt="น้องวางใจขยิบตาถือคลิปบอร์ด Safety First"
+            mascotAction="happy"
+            variant="community"
+            backgroundImage="/images/safety-effort-hero.png"
+            backgroundOverlay="linear-gradient(90deg, rgba(2, 26, 66, .82) 0%, rgba(3, 33, 78, .5) 34%, rgba(3, 33, 78, .16) 56%, rgba(3, 33, 78, 0) 70%)"
+          />
+        </div>
 
         <div className={styles.contentGrid}>
           <main className={styles.activityColumn}>
