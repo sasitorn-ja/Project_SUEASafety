@@ -348,16 +348,16 @@ export default function Login() {
 
         .login-card {
           width: min(100%, 560px);
-          min-height: 320px;
+          min-height: 380px;
           position: relative;
           overflow: hidden;
           box-sizing: border-box;
-          padding: clamp(12px, 1.4vw, 18px) clamp(34px, 3.5vw, 56px) clamp(20px, 2.4vw, 30px);
+          padding: clamp(20px, 2.5vw, 32px) clamp(34px, 3.5vw, 56px);
           border-radius: 42px;
           display: flex;
           flex-direction: column;
           align-items: center;
-          justify-content: flex-start;
+          justify-content: center;
           gap: clamp(14px, 1.8vw, 22px);
           background:
             linear-gradient(155deg,
@@ -416,7 +416,7 @@ export default function Login() {
           width: min(54%, 210px);
           height: auto;
           display: block;
-          margin: 0 auto 10px;
+          margin: 0 auto -4px;
           filter: drop-shadow(0 12px 24px rgba(0, 0, 0, 0.45));
         }
 
@@ -661,9 +661,9 @@ export default function Login() {
           }
 
           .brand-logo {
-            width: min(58%, 175px);
-            margin-top: 0;
-            margin-bottom: -2px;
+            width: min(68%, 245px);
+            margin-top: -10px;
+            margin-bottom: -12px;
           }
         }
 
