@@ -282,7 +282,7 @@ function CheckinMapView({ height = "100%", mapMounted, mapInstanceKey, mapCenter
             ))}
           <FlyTo target={safeSelected} />
           <Recenter position={safeUserPos} zoom={13} />
-          <FitAll points={fitPoints} />
+          {!safeUserPos ? <FitAll points={fitPoints} /> : null}
           <InvalidateMapSize trigger={windowWidth} />
         </MapContainer>
       ) : (
@@ -1465,15 +1465,23 @@ export default function Checkin() {
     let cancelled = false;
     setLoadingLocations(true);
     setApiError("");
-    fetch("/api/locations/map?limit=1000", { credentials: "include" })
-      .then(async response => {
-        const payload = await response.json().catch(() => null);
-        if (!response.ok || !payload?.ok) throw new Error(payload?.error || "locations_load_failed");
-        return payload.data?.items || payload.data?.locations || [];
-      })
-      .then(items => {
+    const loadLocations = async (url) => {
+      const response = await fetch(url, { credentials: "include" });
+      const payload = await response.json().catch(() => null);
+      if (!response.ok || !payload?.ok) throw new Error(payload?.error || "locations_load_failed");
+      return payload.data?.items || payload.data?.locations || [];
+    };
+    Promise.all([
+      loadLocations("/api/locations/map?limit=1000"),
+      loadLocations("/api/locations/offices?limit=30"),
+    ])
+      .then(([mapItems, officeItems]) => {
         if (cancelled) return;
-        setExtraLocs(items.map(apiLocationToCheckinLocation));
+        const merged = new Map();
+        [...mapItems, ...officeItems]
+          .map(apiLocationToCheckinLocation)
+          .forEach(item => merged.set(item.id, item));
+        setExtraLocs(Array.from(merged.values()));
       })
       .catch(error => {
         if (cancelled) return;
@@ -1529,24 +1537,6 @@ export default function Checkin() {
     }))
     .sort((a, b) => (a.dist ?? 9999) - (b.dist ?? 9999));
 
-  // Compute filtered locations instantly based on query and quick type filters
-  const filteredLocations = allLocations.filter(loc => {
-    // Type filter
-    if (selectedType !== "ทั้งหมด") {
-      if (selectedType === "สำนักงาน" && loc.type !== "สำนักงาน" && loc.type !== "บริษัท") return false;
-      if (selectedType !== "สำนักงาน" && loc.type !== selectedType) return false;
-    }
-    // Search query filter
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase().trim();
-      const nameMatch = loc.name.toLowerCase().includes(q);
-      const tagMatch = loc.tag.toLowerCase().includes(q);
-      const typeMatch = loc.type.toLowerCase().includes(q);
-      return nameMatch || tagMatch || typeMatch;
-    }
-    return true;
-  });
-
   const selectedTypeKey = LOCATION_FILTERS.some(filter => filter.key === selectedType) ? selectedType : "all";
   const visibleLocations = allLocations.filter(loc => {
     const typeKind = normalizeLocationType(loc.type, loc.id);
@@ -1567,6 +1557,17 @@ export default function Checkin() {
 
     return true;
   });
+  const searchKeyword = searchQuery.trim();
+  const locationDataHint = selectedTypeKey === "site"
+    ? searchKeyword.length < 3
+      ? "Site งานดึงจาก rmc_sso.sites แบบค้นหาเท่านั้น กรุณาพิมพ์ชื่อ/รหัสอย่างน้อย 3 ตัว"
+      : "กำลังแสดง Site งานจาก rmc_sso.sites ตามคำค้นหา"
+    : selectedTypeKey === "office"
+      ? "สำนักงานดึงจาก rmc_sso.offices โดยตรง"
+      : "โรงงาน/สำนักงานโหลดจาก DB จริง ส่วน Site งานให้ค้นหาอย่างน้อย 3 ตัว";
+  const emptyLocationMessage = selectedTypeKey === "site" && searchKeyword.length < 3
+    ? "พิมพ์ชื่อหรือรหัส Site อย่างน้อย 3 ตัว เพื่อดึงข้อมูลจาก rmc_sso.sites"
+    : "ไม่พบสถานที่ที่ค้นหา";
 
   // Only render the first `visibleCount` results; "show more" reveals the rest.
   const pagedLocations = visibleLocations.slice(0, visibleCount);
@@ -1856,9 +1857,9 @@ export default function Checkin() {
                   <span style={{ fontSize: 11, color: T.foreground3, fontFamily: "'Prompt',sans-serif", fontWeight: 700, background: "var(--secondary)", padding: "3px 8px", borderRadius: "6px" }}>
                     {visibleLocations.length} สถานที่
                   </span>
-                  <span style={{ display: "none" }}>
-                    {filteredLocations.length} สถานที่
-                  </span>
+                </div>
+                <div style={{ marginTop: 8, fontSize: 11.5, fontWeight: 700, color: T.foreground3, lineHeight: 1.45 }}>
+                  {locationDataHint}
                 </div>
                 {loadingLocations && (
                   <div style={{ marginTop: 10, fontSize: 12, fontWeight: 700, color: T.foreground3 }}>
@@ -1952,7 +1953,7 @@ export default function Checkin() {
                       <line x1="21" y1="21" x2="16.65" y2="16.65"/>
                       <line x1="8" y1="11" x2="14" y2="11"/>
                     </svg>
-                    <span>ไม่พบสถานที่ที่ค้นหา</span>
+                    <span>{emptyLocationMessage}</span>
                   </div>
                 )}
 
@@ -1989,9 +1990,9 @@ export default function Checkin() {
               <span style={{ fontSize: 11, color: T.foreground3, fontFamily: "'Prompt',sans-serif", fontWeight: 700, background: "var(--secondary)", padding: "3px 8px", borderRadius: "6px" }}>
                 {visibleLocations.length} สถานที่
               </span>
-              <span style={{ display: "none" }}>
-                {filteredLocations.length} สถานที่
-              </span>
+            </div>
+            <div style={{ marginTop: 8, fontSize: 11.5, fontWeight: 700, color: T.foreground3, lineHeight: 1.45 }}>
+              {locationDataHint}
             </div>
             {loadingLocations && (
               <div style={{ marginTop: 10, fontSize: 12, fontWeight: 700, color: T.foreground3 }}>
@@ -2076,7 +2077,7 @@ export default function Checkin() {
                   <line x1="21" y1="21" x2="16.65" y2="16.65"/>
                   <line x1="8" y1="11" x2="14" y2="11"/>
                 </svg>
-                <span>ไม่พบสถานที่ที่ค้นหา</span>
+                <span>{emptyLocationMessage}</span>
               </div>
             )}
 
