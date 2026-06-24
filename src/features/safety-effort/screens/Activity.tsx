@@ -49,7 +49,7 @@ const BASE_ACTIVITIES = [
     id: "safety-contact",
     label: "Safety Contact",
     desc: "รายงานความปลอดภัย",
-    icon: IcoShield,
+    icon: IcoSafetyContact,
   },
 ];
 
@@ -98,13 +98,19 @@ function IcoPin({ s = 14, c = "currentColor" }) {
 }
 function IcoLineWalk() {
   return (
-    <svg width={22} height={22} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.35} strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="13" cy="4.5" r="2.2"/>
-      <path d="M10.7 8.4 8.6 13.2l4.6 2.2 2.4 4.6"/>
-      <path d="M12.2 9.1 16 11.5l3.2-.8"/>
-      <path d="M8.7 13.3 5.2 20"/>
-      <path d="M3.8 21h3.4"/>
-      <path d="M14.9 21h4.1"/>
+    <svg width={22} height={22} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+      <path d="M4 16v-2.38C4 11.5 2.97 10.5 3 8c.03-2.72 1.49-6 4.5-6C9.37 2 10 3.8 10 5.5c0 3.11-2 5.66-2 8.68V16a2 2 0 1 1-4 0Z"/>
+      <path d="M20 20v-2.38c0-2.12 1.03-3.12 1-5.62-.03-2.72-1.49-6-4.5-6C14.63 6 14 7.8 14 9.5c0 3.11 2 5.66 2 8.68V20a2 2 0 1 0 4 0Z"/>
+      <path d="M16 17h4"/>
+      <path d="M4 13h4"/>
+    </svg>
+  );
+}
+function IcoSafetyContact() {
+  return (
+    <svg width={22} height={22} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+      <path d="m8.5 10 2.2 2.2L15 8"/>
     </svg>
   );
 }

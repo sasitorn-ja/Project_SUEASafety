@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { type CSSProperties, useEffect, useMemo, useState } from "react";
 import { useAppState } from "@/providers/app-providers";
 import { apiFetch } from "@/lib/api-client";
 import {
@@ -62,6 +62,13 @@ function StatTile({
       <span>{label}</span>
     </div>
   );
+}
+
+function activityBonusLabel(event: { points: number; bonusMode: string; multiplier: number; fixedPoints: number }) {
+  if (event.bonusMode === "multiplier") return `x${event.multiplier}`;
+  if (event.fixedPoints > 0) return `+${event.fixedPoints} คะแนน`;
+  if (event.points > 0) return `+${event.points} คะแนน`;
+  return "กำลังจัด";
 }
 
 export default function SafePlusDashboard() {
@@ -271,16 +278,37 @@ export default function SafePlusDashboard() {
           <section className={styles.activityCard}>
             <header><div><Zap /><b>กิจกรรมที่กำลังจัด</b></div><Link href="/safety-culture">ดูทั้งหมด <ChevronRight /></Link></header>
             {activeEvents.length > 0 ? (
-              <Link href="/safety-culture" className={styles.activityBanner}>
-                <div>
-                  <strong>{activeEvents[0].title}</strong>
-                  <span>
-                    {[activeEvents[0].dateLabel, activeEvents[0].points ? `+${activeEvents[0].points} คะแนน` : ""].filter(Boolean).join(" · ")}
-                    {activeEvents.length > 1 ? ` · และอีก ${activeEvents.length - 1} กิจกรรม` : ""}
-                  </span>
+              <div
+                className={styles.activityViewport}
+                style={{ "--activity-count": activeEvents.length } as CSSProperties}
+              >
+                <div className={`${styles.activityTrack} ${activeEvents.length > 1 ? styles.activityTrackAuto : ""}`}>
+                  {activeEvents.map((activity) => (
+                    <Link
+                      key={activity.id}
+                      href={`/safety-culture?activityId=${encodeURIComponent(activity.id)}`}
+                      className={styles.activitySlide}
+                    >
+                      {activity.imageSrc ? (
+                        <img src={activity.imageSrc} alt={activity.title} className={styles.activityImage} />
+                      ) : (
+                        <div className={styles.activityFallbackImage}>
+                          <Image src={ACTIVITY_MASCOT} alt="" width={1254} height={1254} />
+                        </div>
+                      )}
+                      <div className={styles.activityOverlay}>
+                        <strong>{activity.title}</strong>
+                        <span>{[activity.dateLabel, activityBonusLabel(activity)].filter(Boolean).join(" · ")}</span>
+                      </div>
+                    </Link>
+                  ))}
                 </div>
-                <Image src={ACTIVITY_MASCOT} alt="" width={1254} height={1254} />
-              </Link>
+                {activeEvents.length > 1 ? (
+                  <div className={styles.activityDots} aria-hidden="true">
+                    {activeEvents.map((activity) => <span key={activity.id} />)}
+                  </div>
+                ) : null}
+              </div>
             ) : (
               <div className={styles.activityBanner}>
                 <div><strong>เร็วๆ นี้!</strong><span>มีกิจกรรมสนุกๆ รอคุณอยู่</span></div>

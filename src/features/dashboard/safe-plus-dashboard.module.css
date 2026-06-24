@@ -436,6 +436,128 @@
 .activityBanner span { font-size: 10.5px; }
 .activityBanner img { position: absolute; right: 14px; bottom: -37px; width: 128px; height: 142px; object-fit: contain; }
 
+.activityViewport {
+  position: relative;
+  height: calc(100% - 28px);
+  min-height: 180px;
+  margin-top: 7px;
+  overflow: hidden;
+  border-radius: 12px;
+  background: #d7efff;
+  box-shadow: inset 0 0 0 1px rgba(7, 125, 255, .1);
+}
+
+.activityTrack {
+  display: flex;
+  height: 100%;
+  will-change: transform;
+}
+
+.activityTrackAuto {
+  animation: activitySlide calc(var(--activity-count) * 5s) ease-in-out infinite;
+}
+
+.activityViewport:hover .activityTrackAuto {
+  animation-play-state: paused;
+}
+
+.activitySlide {
+  position: relative;
+  display: block;
+  flex: 0 0 100%;
+  height: 100%;
+  min-height: 180px;
+  overflow: hidden;
+  color: white;
+}
+
+.activityImage {
+  display: block;
+  width: 100%;
+  height: 100%;
+  min-height: 180px;
+  object-fit: cover;
+  object-position: center;
+  transition: transform .35s ease;
+}
+
+.activitySlide:hover .activityImage {
+  transform: scale(1.03);
+}
+
+.activityFallbackImage {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  background: url("/images/dashboard/cpac-activity-banner-bg.png") center 72% / cover no-repeat;
+}
+
+.activityFallbackImage img {
+  position: absolute;
+  right: 12px;
+  bottom: -38px;
+  width: 142px;
+  height: 156px;
+  object-fit: contain;
+}
+
+.activityOverlay {
+  position: absolute;
+  inset: auto 0 0;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 46px 16px 15px;
+  background: linear-gradient(180deg, rgba(0, 28, 64, 0), rgba(0, 28, 64, .76) 44%, rgba(0, 18, 43, .92));
+  text-shadow: 0 2px 10px rgba(0, 0, 0, .42);
+}
+
+.activityOverlay strong {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  font-size: 16px;
+  font-weight: 900;
+  line-height: 1.15;
+}
+
+.activityOverlay span {
+  overflow: hidden;
+  color: rgba(255,255,255,.86);
+  font-size: 10.5px;
+  font-weight: 800;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.activityDots {
+  position: absolute;
+  right: 12px;
+  bottom: 10px;
+  z-index: 2;
+  display: flex;
+  gap: 5px;
+}
+
+.activityDots span {
+  width: 6px;
+  height: 6px;
+  border-radius: 99px;
+  background: rgba(255,255,255,.88);
+  box-shadow: 0 1px 5px rgba(0,0,0,.35);
+}
+
+@keyframes activitySlide {
+  0%, 14% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(calc((var(--activity-count) - 1) * -100%));
+  }
+}
+
 @media (max-width: 1199px) {
   .dashboard { padding-inline: 18px; }
   .hero { grid-template-columns: 27% 39% 19% 15%; }
