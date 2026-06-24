@@ -64,7 +64,7 @@ export default function TigerMascot({
       <img
         className={`mascot-motion ${className} ${animationClass}`.trim()}
         src={image}
-        alt={theme === "wangjai" ? "น้องวางใจ Safety mascot" : "SUEA tiger mascot"}
+        alt="น้องวางใจ Safety mascot"
         style={{
           width: size,
           height: "auto",

@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation } from "@/lib/app-navigation";
 import RestrictedDatePicker from "@/components/RestrictedDatePicker";
+import TigerMascot from "@/components/TigerMascot";
 import {
   createInitialItemStates,
   getChecklistForType,
@@ -675,6 +676,15 @@ export default function Linewalk() {
                 ))}
               </div>}
             </div>
+
+            {!isMobileViewport && (
+              <TigerMascot
+                action="linewalkClip"
+                size={isQuestionScreen ? "68px" : "88px"}
+                animation="float"
+                style={{ position: "absolute", right: fromActivity ? (isMobileViewport ? 20 : 220) : 20, bottom: isQuestionScreen ? -2 : 4, zIndex: 0 }}
+              />
+            )}
             <div style={{ position:"absolute", left:0, right:0, bottom:0, height:5, background:"repeating-linear-gradient(135deg,var(--brand-accent) 0 10px,#0e0f12 10px 20px)" }} />
           </div>}
 

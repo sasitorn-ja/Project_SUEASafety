@@ -1036,7 +1036,7 @@ export default function Activity() {
         <div className="ac-hdr-right-stepper">
           <SafetyEffortProgressStepper current={1} total={4} compact />
 
-          <img className="ac-hdr-mascot-compact mascot-motion mascot-motion-compact" src={mascot("cheer")} alt={theme === "wangjai" ? "น้องวางใจ Safety mascot" : "SUEA tiger mascot"} />
+          <img className="ac-hdr-mascot-compact mascot-motion mascot-motion-compact" src={mascot("idea")} alt="น้องวางใจ Safety mascot" />
         </div>
       </div>
       <div

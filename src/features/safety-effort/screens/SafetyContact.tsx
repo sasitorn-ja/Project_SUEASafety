@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "@/lib/app-navigation";
 import RestrictedDatePicker from "@/components/RestrictedDatePicker";
+import SafetyEffortProgressStepper from "@/features/safety-effort/components/SafetyEffortProgressStepper";
 
 const T = {
   background: "var(--background)",
@@ -185,15 +186,8 @@ export default function SafetyContact() {
                   
                   {fromActivity && !isMobileViewport && (
                     <div style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}>
-                      <div style={{ textAlign: "right" }}>
-                        <span style={{ fontSize: 9, color: "rgba(255,248,230,0.55)", fontWeight: 800, fontFamily: "'Prompt',sans-serif", letterSpacing: "0.05em", display: "block" }}>SAFETY EFFORT</span>
-                        <div style={{ display: "flex", alignItems: "center", gap: 6, justifyContent: "flex-end" }}>
-                          <StepPips current={started ? 4 : 3} total={4} />
-                          <span style={{ fontSize: 11, color: "var(--brand-accent)", fontWeight: 900, fontFamily: "'Prompt',sans-serif" }}>
-                            {started ? 4 : 3} / 4
-                          </span>
-                        </div>
-                      </div>
+                      <SafetyEffortProgressStepper current={started ? 4 : 3} total={4} compact />
+                      <img className="mascot-motion mascot-motion-compact" src="/images/mascots/wangjai/17.png" alt="น้องวางใจ Safety mascot" style={{ width: 46, height: 46, objectFit: "contain", flexShrink: 0, filter: "drop-shadow(0 6px 12px rgba(0,0,0,0.25))" }} />
                     </div>
                   )}
                 </div>

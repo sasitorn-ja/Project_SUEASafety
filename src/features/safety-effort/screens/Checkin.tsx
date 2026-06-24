@@ -1739,7 +1739,7 @@ export default function Checkin() {
 
           <SafetyEffortProgressStepper current={2} total={4} compact />
 
-          <img className="ci-hdr-mascot-compact mascot-motion mascot-motion-compact" src={mascot("idea")} alt={theme === "wangjai" ? "น้องวางใจ Safety mascot" : "SUEA tiger mascot"} />
+          <img className="ci-hdr-mascot-compact mascot-motion mascot-motion-compact" src={mascot("idea")} alt="น้องวางใจ Safety mascot" />
         </div>
       </div>
       <div

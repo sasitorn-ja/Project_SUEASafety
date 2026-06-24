@@ -27,13 +27,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
-  AppModalBody,
-  AppModalCloseButton,
-  AppModalFooter,
-  AppModalHeader,
-  AppModalPanel,
-} from "@/components/ui/app-modal";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import {
   getSafetyCultureEventPhase,
@@ -1799,20 +1799,17 @@ export default function AdminEventPage() {
       </div>
 
       <Dialog open={feedModalOpen && !!feedModalDraft} onOpenChange={(open) => !open && closeFeedEditorModal()}>
-        <DialogContent showCloseButton={false} aria-label={feedModalTitle} className="max-w-[980px] border-0 bg-transparent p-0 shadow-none sm:max-w-[980px]">
+        <DialogContent aria-label={feedModalTitle} className="max-h-[94vh] max-w-[980px] overflow-hidden p-0 sm:max-w-[980px]">
           {feedModalDraft ? (
-          <AppModalPanel
-            className="max-h-[94vh] max-w-[980px] animate-[scaleUp_0.22s_cubic-bezier(0.175,0.885,0.32,1.12)_both]"
-          >
-            <AppModalHeader>
+          <>
+            <DialogHeader>
               <div>
-                <div className="text-[28px] font-black text-[var(--c-2b2119)]">{feedModalTitle}</div>
-                <div className="text-[14px] font-bold text-[#8E8A81]">{feedModalDescription}</div>
+                <DialogTitle className="text-[28px]">{feedModalTitle}</DialogTitle>
+                <DialogDescription>{feedModalDescription}</DialogDescription>
               </div>
-              <AppModalCloseButton onClick={closeFeedEditorModal} />
-            </AppModalHeader>
+            </DialogHeader>
 
-            <AppModalBody className="overflow-y-auto">
+            <div className="overflow-y-auto px-5 py-5 md:px-6">
               <div className="rounded-[22px] border border-[var(--c-eadcc7)] bg-[var(--c-fffaf2)] p-4">
                 <div className="flex flex-col gap-3">
                   <div className="text-[15px] font-black text-[var(--c-2d241b)]">ข้อมูลหลักของกิจกรรม</div>
@@ -2049,9 +2046,9 @@ export default function AdminEventPage() {
                   </div>
                 </div>
               </div>
-            </AppModalBody>
+            </div>
 
-            <AppModalFooter className="bg-[var(--c-fffaf2)]">
+            <DialogFooter className="bg-[var(--c-fffaf2)]">
               <Button
                 type="button"
                 onClick={handleApplyFeedModal}
@@ -2060,30 +2057,26 @@ export default function AdminEventPage() {
               >
                 {isSavingFeedEvents ? "กำลังบันทึก..." : feedModalSubmitLabel}
               </Button>
-            </AppModalFooter>
-          </AppModalPanel>
+            </DialogFooter>
+          </>
           ) : null}
         </DialogContent>
       </Dialog>
 
       <Dialog open={!!pendingDeleteFeedEvent} onOpenChange={(open) => !open && closeDeleteFeedEventPrompt()}>
-        <DialogContent showCloseButton={false} aria-label="ยืนยันการลบกิจกรรม" className="z-[125] max-w-[440px] border-0 bg-transparent p-0 shadow-none sm:max-w-[440px]">
+        <DialogContent aria-label="ยืนยันการลบกิจกรรม" className="z-[125] max-w-[440px] overflow-hidden p-0 sm:max-w-[440px]">
           {pendingDeleteFeedEvent ? (
-          <AppModalPanel
-            tone="danger"
-            className="max-w-[440px] animate-[scaleUp_0.22s_cubic-bezier(0.175,0.885,0.32,1.12)_both]"
-          >
-            <AppModalHeader>
+          <>
+            <DialogHeader>
               <div>
-                <div className="text-[24px] font-black text-[#7d3434]">ยืนยันก่อนลบ</div>
-                <div className="mt-1 text-[13px] font-bold leading-relaxed text-[#8E8A81]">
+                <DialogTitle className="text-[24px] text-[#7d3434]">ยืนยันก่อนลบ</DialogTitle>
+                <DialogDescription className="mt-1">
                   กิจกรรมนี้จะถูกลบออกจากรายการบน Feed ทันทีเมื่อกดยืนยัน
-                </div>
+                </DialogDescription>
               </div>
-              <AppModalCloseButton onClick={closeDeleteFeedEventPrompt} />
-            </AppModalHeader>
+            </DialogHeader>
 
-            <AppModalBody>
+            <div className="px-5 py-5">
               <div className="rounded-[20px] border border-[#f0d8d8] bg-[#fff7f7] px-4 py-4">
                 <div className="text-[12px] font-black uppercase tracking-[0.12em] text-[#c05a5a]">Delete Activity</div>
                 <div className="mt-2 text-[18px] font-black text-[#2b2119]">{pendingDeleteFeedEvent.title}</div>
@@ -2091,9 +2084,9 @@ export default function AdminEventPage() {
                   หากลบแล้วจะต้องสร้างกิจกรรมใหม่หรือกู้คืนจากข้อมูลเดิมด้วยตนเอง
                 </div>
               </div>
-            </AppModalBody>
+            </div>
 
-            <AppModalFooter className="bg-[var(--c-fffaf2)]">
+            <DialogFooter className="bg-[var(--c-fffaf2)]">
               <Button
                 type="button"
                 variant="outline"
@@ -2110,8 +2103,8 @@ export default function AdminEventPage() {
               >
                 {isSavingFeedEvents ? "กำลังลบ..." : "ลบกิจกรรมนี้"}
               </Button>
-            </AppModalFooter>
-          </AppModalPanel>
+            </DialogFooter>
+          </>
           ) : null}
         </DialogContent>
       </Dialog>

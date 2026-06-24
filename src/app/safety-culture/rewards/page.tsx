@@ -272,7 +272,7 @@ export default function RewardsPage() {
                   {reward.imageSrc ? (
                     <Image src={themedImage(reward.imageSrc)} alt={reward.name} fill sizes="(max-width: 768px) 50vw, 220px" className="object-cover" />
                   ) : reward.isHot ? (
-                    <Image src={mascot("welcome")} alt="SUEA reward" fill sizes="(max-width: 768px) 50vw, 220px" className="object-cover" />
+                    <Image src={mascot("welcome")} alt="น้องวางใจ reward" fill sizes="(max-width: 768px) 50vw, 220px" className="object-cover" />
                   ) : (
                     <span className="text-[13px] font-extrabold lowercase text-[var(--brand-muted-text)]">{reward.imageText}</span>
                   )}

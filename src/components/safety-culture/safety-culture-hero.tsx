@@ -35,15 +35,15 @@ export function SafetyCultureHero({
 }: SafetyCultureHeroProps) {
   const hasActions = !!actions;
   const sideActions = hasActions && actionsLayout === "side";
-  const { theme, mascot } = useAppTheme();
+  const { theme, mascot, themedImage } = useAppTheme();
   const showMascot = Boolean(mascotSrc);
   const themedMascotSrc = !mascotSrc
     ? ""
     : variant === "community"
-    ? mascotSrc
+    ? themedImage(mascotSrc)
     : theme === "wangjai"
       ? mascot(mascotAction)
-      : mascotSrc;
+      : themedImage(mascotSrc);
   const handleMascotPointer = (event: MouseEvent<HTMLElement>) => {
     const rect = event.currentTarget.getBoundingClientRect();
     const x = ((event.clientX - rect.left) / rect.width - 0.5) * 2;

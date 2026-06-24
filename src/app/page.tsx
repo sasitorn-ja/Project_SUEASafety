@@ -449,18 +449,18 @@ function LegacyHomePage() {
                     {formatThaiDate(bangkokDate(new Date(latestAwareness.completedAt).getTime()), true)}
                     {latestAwareness.total > 0 && ` · ${latestAwareness.score}/${latestAwareness.total} คะแนน`}
                   </div>
-                  <div className="grid gap-1.5">
-                    {latestAwareness.questions.length > 0 ? latestAwareness.questions.map((question) => (
-                      <div key={question.id} className={`flex items-start gap-2 rounded-xl px-2.5 py-2 text-[10px] font-bold ${question.correct ? "bg-[#daf5e6] text-[#19734a]" : "bg-[#fdeee9] text-[#b3271a]"}`}>
-                        {question.correct ? <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 flex-shrink-0" strokeWidth={2.8} /> : <XCircle className="mt-0.5 h-3.5 w-3.5 flex-shrink-0" strokeWidth={2.8} />}
-                        <span>
-                          <strong className="font-black">{question.category}:</strong> {question.text}
-                        </span>
-                      </div>
-                    )) : (
-                      <span className="text-[10.5px] font-bold text-[var(--brand-muted-text)]">มีประวัติการทำแล้ว แต่ยังไม่มีรายละเอียดคำถามจากระบบเวอร์ชันเดิม</span>
-                    )}
-                  </div>
+                  {latestAwareness.questions.filter((question) => question.text?.trim()).length > 0 ? (
+                    <div className="grid gap-1.5">
+                      {latestAwareness.questions.filter((question) => question.text?.trim()).map((question) => (
+                        <div key={question.id} className={`flex items-start gap-2 rounded-xl px-2.5 py-2 text-[10px] font-bold ${question.correct ? "bg-[#daf5e6] text-[#19734a]" : "bg-[#fdeee9] text-[#b3271a]"}`}>
+                          {question.correct ? <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 flex-shrink-0" strokeWidth={2.8} /> : <XCircle className="mt-0.5 h-3.5 w-3.5 flex-shrink-0" strokeWidth={2.8} />}
+                          <span>
+                            <strong className="font-black">{question.category}:</strong> {question.text}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  ) : null}
                 </div>
               ) : (
                 <p className="mt-2 text-[11px] font-bold text-[var(--brand-muted-text)]">ยังไม่มีประวัติ Safety Awareness เริ่มทำวันนี้เพื่อสร้างข้อมูล KPI</p>

@@ -2,7 +2,7 @@
 
 import { createContext, type ReactNode, useContext, useEffect, useMemo, useState } from "react";
 
-export type AppTheme = "tiger" | "wangjai";
+export type AppTheme = "wangjai";
 export type MascotAction =
   | "logo"
   | "logoMobile"

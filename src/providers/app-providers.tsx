@@ -436,8 +436,10 @@ function normalizePosts(posts: Post[]) {
       ? post.photos
           .filter((photo) => photo?.dataUrl)
           .map((photo, photoIndex) => {
-            const normalizedPhotoUrl =
-              photo.dataUrl === "/images/mascots/gallery/live-1.png" ? "/images/mascots/gallery/line-walk-3.png" : photo.dataUrl;
+            const photoUrl = String(photo.dataUrl);
+            const normalizedPhotoUrl = photoUrl.startsWith("/images/mascots/") && !photoUrl.includes("/images/mascots/wangjai/")
+              ? "/images/mascots/wangjai/scenes/safety-culture-mascot-new.png"
+              : photo.dataUrl;
 
             return {
               ...photo,

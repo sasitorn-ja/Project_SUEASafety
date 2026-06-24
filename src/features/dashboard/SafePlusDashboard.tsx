@@ -6,7 +6,6 @@ import { useEffect, useMemo, useState } from "react";
 import { useAppState } from "@/providers/app-providers";
 import { apiFetch } from "@/lib/api-client";
 import {
-  Award,
   CalendarDays,
   Check,
   CheckCircle2,
@@ -142,7 +141,7 @@ export default function SafePlusDashboard() {
   const latestScore = dashboardData.latest
     ? `${dashboardData.latest.score}/${dashboardData.latest.total}`
     : "-";
-  const latestQuestions = dashboardData.latest?.questions ?? [];
+  const latestQuestions = (dashboardData.latest?.questions ?? []).filter((question) => question.text?.trim());
 
   return (
     <div className={styles.dashboard}>
@@ -173,7 +172,18 @@ export default function SafePlusDashboard() {
         </div>
 
         <div className={styles.rewardPanel}>
-          <div><Award /><span>{rewardsCatalog.length > 0 ? `มี ${rewardsCatalog.length} รางวัลให้แลก` : "ยังไม่มีรางวัลในระบบ"}</span></div>
+          <div className={styles.rewardTop}>
+            <div className={styles.rewardTrophy}><Trophy /></div>
+            <div className={styles.rewardInfo}>
+              <span className={styles.rewardBadge}>รางวัลพร้อมแลก</span>
+              <strong className={styles.rewardTitle}>
+                {rewardsCatalog.length > 0 ? `มี ${rewardsCatalog.length} รางวัลให้แลก` : "ยังไม่มีรางวัลในระบบ"}
+              </strong>
+              <span className={styles.rewardSub}>
+                {rewardsCatalog.length > 0 ? "ใช้คะแนน Safety เพื่อรับสิทธิ์แลกรางวัล" : "เมื่อมีรางวัลในระบบ รายการจะแสดงที่นี่"}
+              </span>
+            </div>
+          </div>
           <div className={styles.rewardActions}>
             <Link href="/safety-culture/rewards"><Gift />แลกรางวัล</Link>
             <Link href="/safety-culture/leaderboard" className={styles.outlineButton}><Trophy />ดูอันดับ</Link>
@@ -237,7 +247,7 @@ export default function SafePlusDashboard() {
             <div className={styles.latestTitle}><CalendarDays /><b>รายการล่าสุด</b></div>
             <div className={styles.latestRow}>
               <strong>{dashboardData.latest ? `${formatThaiDate(dashboardData.latest.date)} · ${latestScore} คะแนน` : "ยังไม่มีประวัติการทำ"}</strong>
-              <p>{dashboardData.latest ? `ทำ Safety Awareness ${dashboardData.latest.total} ข้อ เมื่อ ${formatThaiDate(dashboardData.latest.date)}` : "เมื่อทำ Safety Awareness แล้ว รายการล่าสุดจะแสดงที่นี่"}</p>
+              {!dashboardData.latest ? <p>เมื่อทำ Safety Awareness แล้ว รายการล่าสุดจะแสดงที่นี่</p> : null}
             </div>
             {dashboardData.latest && latestQuestions.length > 0 ? (
               <div className={styles.latestQuestions}>
@@ -253,8 +263,6 @@ export default function SafePlusDashboard() {
                   </div>
                 ))}
               </div>
-            ) : dashboardData.latest ? (
-              <div className={styles.latestFallback}>มีประวัติการทำแล้ว แต่ระบบเวอร์ชันเดิมยังไม่มีรายละเอียดคำถามของวันนั้น</div>
             ) : null}
           </div>
         </section>
