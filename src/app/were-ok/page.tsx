@@ -393,7 +393,7 @@ export default function WereOkPage() {
       </div>
 
       <Dialog open={sosOpen} onOpenChange={setSosOpen}>
-        <DialogContent showCloseButton={false} className="z-[9999] flex max-h-[94vh] w-full max-w-[480px] flex-col gap-3.5 overflow-y-auto rounded-[16px] border-[3px] border-[#1A1A1A] bg-[var(--brand-surface)] p-4 shadow-[0_16px_40px_rgba(0,0,0,0.22)] md:p-4">
+        <DialogContent showCloseButton={false} className="z-[9999] flex max-h-[94vh] w-full max-w-[480px] flex-col gap-3.5 overflow-y-auto rounded-[28px] border border-[#cfe0f2] bg-[linear-gradient(180deg,#ffffff,#f8fcff)] p-4 shadow-[0_28px_80px_rgba(6,43,99,0.28)] md:p-4">
             <div className="text-[21px] font-extrabold text-[#D9383A] flex items-center justify-center gap-2.5 text-center">
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
@@ -408,18 +408,18 @@ export default function WereOkPage() {
               <button
                 type="button"
                 onClick={() => setSosHours((h) => Math.max(1, h - 1))}
-                className="w-12 h-12 rounded-full bg-white border-2 border-[#1A1A1A] text-[#1A1A1A] text-[22px] font-extrabold flex items-center justify-center transition-all hover:bg-[var(--secondary)] active:scale-[0.92] outline-none"
+                className="w-12 h-12 rounded-full bg-white border border-[#cfe0f2] text-[#0e3e7d] text-[22px] font-extrabold flex items-center justify-center transition-all hover:bg-[#eaf4ff] active:scale-[0.92] outline-none shadow-[0_8px_20px_rgba(14,62,125,0.12)]"
               >
                 −
               </button>
               <div className="min-w-[120px] text-center flex items-baseline justify-center gap-1.5">
                 <span className="text-[38px] font-black text-[#D9383A]">{sosHours}</span>
-                <span className="text-base font-extrabold text-[#1A1A1A]">ชั่วโมง</span>
+                <span className="text-base font-extrabold text-[#173b6b]">ชั่วโมง</span>
               </div>
               <button
                 type="button"
                 onClick={() => setSosHours((h) => Math.min(48, h + 1))}
-                className="w-12 h-12 rounded-full bg-white border-2 border-[#1A1A1A] text-[#1A1A1A] text-[22px] font-extrabold flex items-center justify-center transition-all hover:bg-[var(--secondary)] active:scale-[0.92] outline-none"
+                className="w-12 h-12 rounded-full bg-white border border-[#cfe0f2] text-[#0e3e7d] text-[22px] font-extrabold flex items-center justify-center transition-all hover:bg-[#eaf4ff] active:scale-[0.92] outline-none shadow-[0_8px_20px_rgba(14,62,125,0.12)]"
               >
                 +
               </button>
@@ -427,7 +427,7 @@ export default function WereOkPage() {
 
             {/* Reasons */}
             <div className="flex flex-col gap-2 w-full">
-              <label className="text-[13.5px] font-extrabold text-[#8E8A81] text-left w-full pl-1 mb-0.5">
+              <label className="text-[13.5px] font-extrabold text-[#5f7591] text-left w-full pl-1 mb-0.5">
                 สาเหตุที่ขอพัก:
               </label>
               {[
@@ -442,18 +442,18 @@ export default function WereOkPage() {
                   className={cn(
                     "w-full flex items-center gap-2.5 px-3.5 py-3 rounded-2xl border-2 text-sm font-extrabold text-left transition-all whitespace-nowrap",
                     sosReason === reason.value
-                      ? "bg-[var(--brand-soft)] border-[var(--brand-accent)] shadow-[0_4px_12px_rgba(var(--brand-accent-rgb),0.15)]"
-                      : "bg-white border-[var(--border)] hover:border-[#1A1A1A] hover:bg-[var(--brand-hover-surface)]"
+                      ? "bg-[#eaf4ff] border-[#1763c0] text-[#0e3e7d] shadow-[0_4px_12px_rgba(14,62,125,0.15)]"
+                      : "bg-white border-[#d7e6f6] text-[#173b6b] hover:border-[#1763c0] hover:bg-[#eaf4ff]"
                   )}
                 >
                   <span
                     className={cn(
                       "w-[18px] h-[18px] rounded-full border-2 flex items-center justify-center flex-shrink-0",
-                      sosReason === reason.value ? "border-[var(--brand-accent)]" : "border-[#8E8A81]"
+                      sosReason === reason.value ? "border-[#1763c0]" : "border-[#9db2ca]"
                     )}
                   >
                     {sosReason === reason.value && (
-                      <span className="w-2.5 h-2.5 rounded-full bg-[var(--brand-accent)]" />
+                      <span className="w-2.5 h-2.5 rounded-full bg-[#1763c0]" />
                     )}
                   </span>
                   {reason.label}
@@ -470,7 +470,7 @@ export default function WereOkPage() {
               </button>
               <button
                 onClick={() => setSosOpen(false)}
-                className="w-full bg-[var(--secondary)] text-[#1A1A1A] border-none rounded-[16px] py-3.5 text-[15px] font-extrabold transition-all hover:bg-[var(--border)] active:scale-[0.98]"
+                className="w-full bg-[#eaf4ff] text-[#0e3e7d] border border-[#cfe0f2] rounded-[16px] py-3.5 text-[15px] font-extrabold transition-all hover:bg-[#dcebff] active:scale-[0.98]"
               >
                 ปิดหน้าต่างนี้ / ยกเลิก
               </button>

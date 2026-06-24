@@ -152,28 +152,28 @@ export function getDefaultMenu(): MenuNode[] {
           icon: "ShieldCheck",
           children: [
             n({
-              label: "Settings",
+              label: "แบบประเมิน",
               href: "/safety-admin",
               icon: "Settings2",
-              description: "จัดการแบบประเมินและรายการตรวจ Safety Effort",
+              description: "เพิ่ม แก้ไข และจัดลำดับหัวข้อ Linewalk / Safety Contact",
             }),
             n({
-              label: "ประวัติส่งรายงาน",
+              label: "ประวัติการส่ง",
               href: "/safety-admin/report-history",
               icon: "ClipboardCheck",
-              description: "ประวัติส่งรายงาน Linewalk / Safety Contact",
+              description: "ดูรายงานที่ผู้ใช้ส่งเข้าระบบ",
             }),
             n({
-              label: "ส่งออกรายงาน",
+              label: "ส่งออก Excel",
               href: "/safety-admin/export-report",
               icon: "Download",
-              description: "ส่งออกรายงานในรูปแบบ Excel",
+              description: "ดาวน์โหลดรายงานและแก้ไขข้อมูลก่อนส่งออก",
             }),
             n({
-              label: "จัดการข้อมูล",
+              label: "โรงงาน/สำนักงาน/ไซต์งาน",
               href: "/safety-admin/manage-data",
-              icon: "Settings2",
-              description: "จัดการข้อมูลโรงงาน สำนักงาน และไซต์งาน",
+              icon: "MapPin",
+              description: "จัดการ master data สถานที่สำหรับ Check-in",
             }),
           ],
         }),
@@ -183,19 +183,19 @@ export function getDefaultMenu(): MenuNode[] {
           icon: "Heart",
           children: [
             n({
-              label: "Edit Event",
+              label: "กิจกรรมบนฟีด",
               href: "/safety-culture/admin-event",
               icon: "Settings2",
               description: "จัดการกิจกรรมและช่วงเวลาพิเศษ",
             }),
             n({
-              label: "Edit Leaderboard",
+              label: "ทีมและอันดับ",
               href: "/safety-culture/admin-leaderboard",
               icon: "Trophy",
               description: "จัดการทีม คะแนน และอันดับ",
             }),
             n({
-              label: "Edit Reward",
+              label: "รางวัลและแต้มแลก",
               href: "/safety-culture/admin-reward",
               icon: "Gift",
               description: "จัดการรางวัลและคะแนนแลก",
@@ -235,6 +235,59 @@ export function normalizeMenu(raw: any): MenuNode[] | null {
   return raw.map(normalizeNode).filter(Boolean) as MenuNode[];
 }
 
+function isAdminNode(node: MenuNode) {
+  const label = node.label.trim().toLowerCase();
+  return node.href === "/safety-admin" || label === "admin" || label === "ผู้ดูแลระบบ";
+}
+
+function applyAdminMenuLabels(adminNode: MenuNode) {
+  let updated = false;
+  const rename = (href: string, label: string, description?: string, icon?: string) => {
+    const node = findNodeByHref(adminNode.children, href);
+    if (!node) return;
+    if (node.label !== label) {
+      node.label = label;
+      updated = true;
+    }
+    if (description !== undefined && node.description !== description) {
+      node.description = description;
+      updated = true;
+    }
+    if (icon !== undefined && node.icon !== icon) {
+      node.icon = icon;
+      updated = true;
+    }
+  };
+
+  if (adminNode.label !== "Admin") {
+    adminNode.label = "Admin";
+    updated = true;
+  }
+
+  rename("/safety-culture/admin-awareness", "Safety Awareness", "จัดการวัน KPI และคลังคำถาม Safety Awareness", "ShieldCheck");
+  rename("/category", "Safety Effort", undefined, "ShieldCheck");
+  rename("/safety-admin", "แบบประเมิน", "เพิ่ม แก้ไข และจัดลำดับหัวข้อ Linewalk / Safety Contact", "Settings2");
+  rename("/safety-admin/report-history", "ประวัติการส่ง", "ดูรายงานที่ผู้ใช้ส่งเข้าระบบ", "ClipboardCheck");
+  rename("/safety-admin/export-report", "ส่งออก Excel", "ดาวน์โหลดรายงานและแก้ไขข้อมูลก่อนส่งออก", "Download");
+  rename("/safety-admin/manage-data", "โรงงาน/สำนักงาน/ไซต์งาน", "จัดการ master data สถานที่สำหรับ Check-in", "MapPin");
+  rename("/safety-culture", "Safety Culture", undefined, "Heart");
+  rename("/safety-culture/admin-event", "กิจกรรมบนฟีด", "จัดการกิจกรรมและช่วงเวลาพิเศษ", "Settings2");
+  rename("/safety-culture/admin-leaderboard", "ทีมและอันดับ", "จัดการทีม คะแนน และอันดับ", "Trophy");
+  rename("/safety-culture/admin-reward", "รางวัลและแต้มแลก", "จัดการรางวัลและคะแนนแลก", "Gift");
+  rename("/safety-culture/admin-users", "จัดการผู้ใช้และสิทธิ์ Admin", "จัดการผู้ใช้ Role และสิทธิ์ Admin", "UserCog");
+
+  return updated;
+}
+
+function findNodeByHref(menu: MenuNode[], href: string): MenuNode | undefined {
+  for (const node of menu) {
+    if (node.href === href) return node;
+    const child = findNodeByHref(node.children, href);
+    if (child) return child;
+  }
+  return undefined;
+}
+
 export function loadMenu(): MenuNode[] {
   if (typeof window === "undefined") return getDefaultMenu();
   try {
@@ -243,12 +296,10 @@ export function loadMenu(): MenuNode[] {
       const parsed = normalizeMenu(JSON.parse(stored));
       if (parsed && parsed.length > 0) {
         // Migration: ensure "Role" node and "ประวัติส่งรายงาน" node exist under "Admin" section
-        const adminNode = parsed.find(
-          (node) => node.href === "/safety-admin" || node.label.trim().toLowerCase() === "admin"
-        );
+        const adminNode = parsed.find(isAdminNode);
         if (adminNode) {
           const n = (p: Partial<MenuNode>) => createMenuNode(p);
-          let updated = false;
+          let updated = applyAdminMenuLabels(adminNode);
 
           // Migration: remove the deprecated "Role" (User Role Management) node.
           // Replaced by DB-backed "จัดการผู้ใช้และสิทธิ์ Admin" (/safety-culture/admin-users).
@@ -265,45 +316,56 @@ export function loadMenu(): MenuNode[] {
           );
           if (safetyEffortNode) {
             const hasReportHistory = safetyEffortNode.children.some(
-              (child) => child.href === "/safety-admin/report-history" || child.label.includes("ประวัติส่งรายงาน")
+              (child) =>
+                child.href === "/safety-admin/report-history" ||
+                child.label.includes("ประวัติส่งรายงาน") ||
+                child.label.includes("ประวัติรายงาน") ||
+                child.label.includes("ประวัติการส่ง")
             );
             if (!hasReportHistory) {
               safetyEffortNode.children.push(
                 n({
-                  label: "ประวัติส่งรายงาน",
+                  label: "ประวัติการส่ง",
                   href: "/safety-admin/report-history",
                   icon: "ClipboardCheck",
-                  description: "ประวัติส่งรายงาน Linewalk / Safety Contact",
+                  description: "ดูรายงานที่ผู้ใช้ส่งเข้าระบบ",
                 })
               );
               updated = true;
             }
 
             const hasExportReport = safetyEffortNode.children.some(
-              (child) => child.href === "/safety-admin/export-report" || child.label.includes("ส่งออกรายงาน")
+              (child) =>
+                child.href === "/safety-admin/export-report" ||
+                child.label.includes("ส่งออกรายงาน") ||
+                child.label.includes("ส่งออก Excel")
             );
             if (!hasExportReport) {
               safetyEffortNode.children.push(
                 n({
-                  label: "ส่งออกรายงาน",
+                  label: "ส่งออก Excel",
                   href: "/safety-admin/export-report",
                   icon: "Download",
-                  description: "ส่งออกรายงานในรูปแบบ Excel",
+                  description: "ดาวน์โหลดรายงานและแก้ไขข้อมูลก่อนส่งออก",
                 })
               );
               updated = true;
             }
 
             const hasManageData = safetyEffortNode.children.some(
-              (child) => child.href === "/safety-admin/manage-data" || child.label.includes("จัดการข้อมูล")
+              (child) =>
+                child.href === "/safety-admin/manage-data" ||
+                child.label.includes("จัดการข้อมูล") ||
+                child.label.includes("ข้อมูลสถานที่") ||
+                child.label.includes("โรงงาน")
             );
             if (!hasManageData) {
               safetyEffortNode.children.push(
                 n({
-                  label: "จัดการข้อมูล",
+                  label: "โรงงาน/สำนักงาน/ไซต์งาน",
                   href: "/safety-admin/manage-data",
-                  icon: "Settings2",
-                  description: "จัดการข้อมูลโรงงาน สำนักงาน และไซต์งาน",
+                  icon: "MapPin",
+                  description: "จัดการ master data สถานที่สำหรับ Check-in",
                 })
               );
               updated = true;
@@ -338,7 +400,7 @@ export function saveMenu(menu: MenuNode[]): void {
 }
 
 export function findAdminMenu(menu: MenuNode[]): MenuNode | undefined {
-  return menu.find((node) => node.href === "/safety-admin" || node.label.trim().toLowerCase() === "admin");
+  return menu.find(isAdminNode);
 }
 
 export function deepCloneMenu(menu: MenuNode[]): MenuNode[] {

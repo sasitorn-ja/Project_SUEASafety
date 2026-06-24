@@ -438,6 +438,150 @@ body {
   background: #f8fbff;
 }
 
+/* Shared popup language: soft CPAC glass, blue controls, section cards. */
+[data-slot="dialog-content"],
+[data-slot="sheet-content"] {
+  --popup-border: #cfe0f2;
+  --popup-border-strong: #b9d3ed;
+  --popup-blue: #1763c0;
+  --popup-blue-strong: #075cc8;
+  --popup-blue-soft: #eaf4ff;
+  --popup-text: #173b6b;
+  --popup-muted: #5f7591;
+}
+
+[data-slot="dialog-content"] :where(input, textarea, select),
+[data-slot="sheet-content"] :where(input, textarea, select),
+.ac-modal :where(input, textarea, select),
+.ci-modal :where(input, textarea, select) {
+  border-color: var(--popup-border, #cfe0f2) !important;
+  border-radius: 14px !important;
+  background: rgba(255, 255, 255, 0.92) !important;
+  color: var(--popup-text, #173b6b) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .7);
+}
+
+[data-slot="dialog-content"] :where(input, textarea, select):focus,
+[data-slot="sheet-content"] :where(input, textarea, select):focus,
+.ac-modal :where(input, textarea, select):focus,
+.ci-modal :where(input, textarea, select):focus {
+  border-color: var(--popup-blue, #1763c0) !important;
+  outline: none !important;
+  box-shadow: 0 0 0 3px rgba(30, 144, 255, .14), inset 0 1px 0 rgba(255, 255, 255, .7) !important;
+}
+
+[data-slot="dialog-content"] :where(label),
+[data-slot="sheet-content"] :where(label),
+.ac-modal :where(label),
+.ci-modal :where(label) {
+  color: var(--popup-text, #173b6b) !important;
+  font-weight: 900 !important;
+}
+
+[data-slot="dialog-content"] :where(.rounded-\[20px\], .rounded-\[22px\], .rounded-2xl):where(.border),
+[data-slot="sheet-content"] :where(.rounded-\[20px\], .rounded-\[22px\], .rounded-2xl):where(.border) {
+  border-color: var(--popup-border, #cfe0f2) !important;
+  background: linear-gradient(180deg, rgba(255, 255, 255, .94), rgba(248, 252, 255, .86)) !important;
+  box-shadow: 0 10px 28px rgba(14, 62, 125, .07);
+}
+
+[data-slot="dialog-content"] :where(button:not([data-slot="dialog-close"])),
+[data-slot="sheet-content"] :where(button:not([data-slot="sheet-close"])) {
+  letter-spacing: 0;
+}
+
+[data-slot="dialog-footer"] :where(button),
+[data-slot="sheet-footer"] :where(button) {
+  border-radius: 14px !important;
+  font-weight: 900 !important;
+}
+
+[data-slot="dialog-footer"] :where(button:not([class*="outline"]):not([class*="ghost"])),
+[data-slot="sheet-footer"] :where(button:not([class*="outline"]):not([class*="ghost"])) {
+  background: linear-gradient(180deg, #158eff, #075cc8) !important;
+  color: #fff !important;
+  box-shadow: 0 12px 24px rgba(7, 92, 200, .22), inset 0 1px rgba(255,255,255,.32);
+}
+
+[data-slot="dialog-footer"] :where(button[class*="outline"]),
+[data-slot="sheet-footer"] :where(button[class*="outline"]) {
+  border-color: var(--popup-border, #cfe0f2) !important;
+  background: #fff !important;
+  color: var(--popup-text, #173b6b) !important;
+}
+
+.ac-modal,
+.ci-modal {
+  border: 1px solid #cfe0f2 !important;
+  border-radius: 28px !important;
+  background: linear-gradient(180deg, rgba(255,255,255,.98), rgba(248,252,255,.96)) !important;
+  color: #173b6b !important;
+  box-shadow: 0 28px 80px rgba(6,43,99,.28) !important;
+}
+
+.ac-modal-close,
+.ci-modal-close {
+  border: 1px solid #cfe0f2 !important;
+  background: rgba(255,255,255,.88) !important;
+  color: #0e3e7d !important;
+  box-shadow: 0 8px 20px rgba(14,62,125,.12);
+}
+
+.ac-modal-close:hover,
+.ci-modal-close:hover {
+  background: #eaf2fd !important;
+  color: #1763c0 !important;
+}
+
+.ac-modal-cancel,
+.ci-modal-cancel {
+  border: 1px solid #cfe0f2 !important;
+  background: #fff !important;
+  color: #173b6b !important;
+  border-radius: 14px !important;
+  font-weight: 900 !important;
+}
+
+.ac-modal-confirm,
+.ci-modal-confirm {
+  border-radius: 14px !important;
+  background: linear-gradient(180deg, #158eff, #075cc8) !important;
+  color: #fff !important;
+  font-weight: 900 !important;
+  box-shadow: 0 12px 24px rgba(7,92,200,.22), inset 0 1px rgba(255,255,255,.32) !important;
+}
+
+.event-editor-popup :where(.border) {
+  border-color: #d7e6f6 !important;
+}
+
+.event-editor-popup :where(.bg-white) {
+  background-color: rgba(255, 255, 255, .94) !important;
+}
+
+.event-editor-popup :where([class*="bg-[var(--c-fff"], [class*="bg-[var(--c-fffc"], [class*="bg-[var(--c-faf"]) {
+  background: linear-gradient(180deg, rgba(255,255,255,.94), rgba(248,252,255,.86)) !important;
+}
+
+.event-editor-popup :where([class*="text-[var(--c-5c3214)]"], [class*="text-[var(--c-2d241b)]"], [class*="text-[var(--c-7a6d5d)]"]) {
+  color: #173b6b !important;
+}
+
+.event-editor-popup :where([class*="hover:bg-[var(--c-fff"]) {
+  --tw-bg-opacity: 1;
+}
+
+.event-editor-popup :where(input, textarea) {
+  border-color: #cfe0f2 !important;
+  background: #fff !important;
+  color: #173b6b !important;
+}
+
+.event-editor-popup :where(input:focus, textarea:focus) {
+  border-color: #1763c0 !important;
+  box-shadow: 0 0 0 3px rgba(30,144,255,.14) !important;
+}
+
 @media (max-width: 620px) {
   .app-standard-page [data-slot="card"] {
     border-radius: 13px;

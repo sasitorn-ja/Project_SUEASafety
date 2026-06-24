@@ -813,10 +813,10 @@ export default function AdminEventPage() {
           eyebrow="SAFETY CULTURE ADMIN"
           title={
             <>
-              Admin Edit <span className="text-[var(--c-f5bb00)]">Event</span>
+              กิจกรรม <span className="text-[var(--c-f5bb00)]">บนฟีด</span>
             </>
           }
-          description="ตั้งค่าอีเว้น ดูตัวอย่างผลทันที และกด Publish ได้อย่างมั่นใจ"
+          description="สร้าง แก้ไข จัดลำดับ และตั้งค่าการแสดงผลกิจกรรมบนหน้า Feed"
           variant="community"
           backgroundImage="/images/safety-culture-hero.png"
           backgroundOverlay="linear-gradient(90deg, rgba(2, 26, 66, .82) 0%, rgba(3, 33, 78, .5) 34%, rgba(3, 33, 78, .16) 56%, rgba(3, 33, 78, 0) 70%)"
@@ -1799,17 +1799,22 @@ export default function AdminEventPage() {
       </div>
 
       <Dialog open={feedModalOpen && !!feedModalDraft} onOpenChange={(open) => !open && closeFeedEditorModal()}>
-        <DialogContent aria-label={feedModalTitle} className="max-h-[94vh] max-w-[980px] overflow-hidden p-0 sm:max-w-[980px]">
+        <DialogContent aria-label={feedModalTitle} className="event-editor-popup max-h-[94vh] max-w-[980px] overflow-hidden p-0 sm:max-w-[980px]">
           {feedModalDraft ? (
           <>
-            <DialogHeader>
-              <div>
+            <DialogHeader className="px-5 py-5 sm:px-6">
+              <div className="flex items-center gap-3 pr-12">
+                <span className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-[linear-gradient(180deg,#158eff,#075cc8)] text-white shadow-[0_12px_24px_rgba(7,92,200,0.24)]">
+                  <Plus className="h-7 w-7" strokeWidth={2.2} />
+                </span>
+                <div className="min-w-0">
                 <DialogTitle className="text-[28px]">{feedModalTitle}</DialogTitle>
                 <DialogDescription>{feedModalDescription}</DialogDescription>
+                </div>
               </div>
             </DialogHeader>
 
-            <div className="overflow-y-auto px-5 py-5 md:px-6">
+            <div className="overflow-y-auto bg-[linear-gradient(180deg,#ffffff,#f8fcff)] px-5 py-5 md:px-6">
               <div className="rounded-[22px] border border-[var(--c-eadcc7)] bg-[var(--c-fffaf2)] p-4">
                 <div className="flex flex-col gap-3">
                   <div className="text-[15px] font-black text-[var(--c-2d241b)]">ข้อมูลหลักของกิจกรรม</div>
@@ -2048,13 +2053,14 @@ export default function AdminEventPage() {
               </div>
             </div>
 
-            <DialogFooter className="bg-[var(--c-fffaf2)]">
+            <DialogFooter>
               <Button
                 type="button"
                 onClick={handleApplyFeedModal}
                 disabled={isSavingFeedEvents}
-                className="h-10 rounded-[14px] bg-[var(--brand-text)] px-4 text-[13px] font-black text-white shadow-[0_8px_18px_var(--brand-shadow)] hover:bg-[var(--brand-nav)]"
+                className="h-11 rounded-[14px] bg-[linear-gradient(180deg,#158eff,#075cc8)] px-5 text-[13px] font-black text-white shadow-[0_12px_24px_rgba(7,92,200,0.22)] hover:bg-[#075cc8]"
               >
+                <Plus className="mr-1 h-4 w-4" />
                 {isSavingFeedEvents ? "กำลังบันทึก..." : feedModalSubmitLabel}
               </Button>
             </DialogFooter>
@@ -2086,7 +2092,7 @@ export default function AdminEventPage() {
               </div>
             </div>
 
-            <DialogFooter className="bg-[var(--c-fffaf2)]">
+            <DialogFooter>
               <Button
                 type="button"
                 variant="outline"

@@ -141,8 +141,6 @@ export default function SafePlusDashboard() {
     return { days, done, missed, completionRate, latest, streak };
   }, [awarenessHistory, awarenessHolidays, awarenessStartDate]);
 
-  const pointsTarget = Math.max(100, Math.ceil(Math.max(currentUserPoints, 1) / 100) * 100);
-  const remainingPoints = Math.max(0, pointsTarget - currentUserPoints);
   const todayKey = bangkokDateKey(new Date());
   const doneToday = awarenessHistory.some((item) => item.date === todayKey);
   const latestScore = dashboardData.latest
@@ -163,14 +161,6 @@ export default function SafePlusDashboard() {
           <div className={styles.score}>
             <strong>{currentUserPoints.toLocaleString()}</strong>
             <span>แต้ม</span>
-          </div>
-          <p>สะสมอีก {remainingPoints.toLocaleString()} แต้ม เพื่อให้ครบเป้าหมาย {pointsTarget.toLocaleString()} แต้ม</p>
-          <div className={styles.scoreProgress}>
-            <span style={{ width: `${Math.max(0, Math.min(100, (currentUserPoints / pointsTarget) * 100))}%` }} />
-          </div>
-          <div className={styles.progressCaption}>
-            <span />
-            <b>{currentUserPoints.toLocaleString()} / {pointsTarget.toLocaleString()}</b>
           </div>
           <div className={styles.desktopStreak}>
             <Flame />

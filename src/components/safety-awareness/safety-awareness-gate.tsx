@@ -69,17 +69,16 @@ export function SafetyAwarenessGate() {
       <DialogContent
       showCloseButton={false}
       aria-label="Safety Awareness"
-      className="z-[100000] max-h-[calc(100vh-3rem)] w-full max-w-[560px] overflow-hidden rounded-[22px] border-[2px] border-[var(--brand-accent)] bg-[var(--background)] p-0 font-sarabun shadow-[0_24px_60px_rgba(0,0,0,0.4)]"
+      className="z-[100000] max-h-[calc(100vh-3rem)] w-full max-w-[560px] overflow-hidden rounded-[28px] border border-[#cfe0f2] bg-[linear-gradient(180deg,#ffffff,#f8fcff)] p-0 font-sarabun shadow-[0_28px_80px_rgba(6,43,99,0.28)]"
     >
         {/* Header */}
-        <div className="relative overflow-hidden bg-[linear-gradient(135deg,var(--brand-hero-start)_0%,var(--brand-nav)_55%,var(--brand-hero-end)_100%)] px-5 pb-4 pt-4 text-white">
-          <div className="absolute bottom-0 left-0 right-0 h-2 bg-[repeating-linear-gradient(-45deg,var(--brand-accent),var(--brand-accent)_10px,#1a1a1a_10px,#1a1a1a_20px)]" />
+        <div className="relative overflow-hidden border-b border-[#d7e6f6] bg-[linear-gradient(135deg,#ffffff_0%,#f4f9ff_56%,#eaf4ff_100%)] px-5 pb-4 pt-4 text-[#173b6b]">
           <div className="relative flex items-center gap-3">
-            <span className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-2xl bg-white/15 text-[var(--brand-accent)]">
+            <span className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-[linear-gradient(180deg,#158eff,#075cc8)] text-white shadow-[0_12px_24px_rgba(7,92,200,0.24)]">
               <ShieldCheck className="h-6 w-6" strokeWidth={2.3} />
             </span>
             <div className="min-w-0 flex-1">
-              <span className="text-[10px] font-extrabold uppercase tracking-[0.16em] text-[var(--brand-hero-label)]">
+              <span className="text-[10px] font-extrabold uppercase tracking-[0.16em] text-[#1763c0]">
                 แบบทดสอบประจำวัน
               </span>
               <h2 className="text-[20px] font-black leading-tight">Safety Awareness</h2>
@@ -92,17 +91,17 @@ export function SafetyAwarenessGate() {
               className="mascot-motion mascot-motion-compact pointer-events-none hidden h-[66px] w-[66px] -translate-y-2 self-start object-contain sm:block"
             />
           </div>
-          <p className="relative mt-2 text-[12.5px] font-bold leading-relaxed text-white/85">
+          <p className="relative mt-2 text-[12.5px] font-bold leading-relaxed text-[#5f7591]">
             ตอบคำถามความปลอดภัย {quiz.length} ข้อ ก่อนเริ่มใช้งานในแต่ละวัน — ตอบครบทุกข้อจึงจะเข้าใช้งานได้
           </p>
           <div className="relative mt-2.5 flex items-center gap-2">
-            <div className="h-2 flex-1 overflow-hidden rounded-full bg-white/20">
+            <div className="h-2 flex-1 overflow-hidden rounded-full bg-[#dbeafa]">
               <div
-                className="h-full rounded-full bg-[var(--brand-accent)] transition-[width] duration-300 ease-out"
+                className="h-full rounded-full bg-[linear-gradient(90deg,#27d7ff,#1763c0)] transition-[width] duration-300 ease-out"
                 style={{ width: `${(answeredCount / quiz.length) * 100}%` }}
               />
             </div>
-            <span className="text-[11px] font-black text-white/90">
+            <span className="text-[11px] font-black text-[#0e3e7d]">
               {answeredCount}/{quiz.length}
             </span>
           </div>
@@ -118,10 +117,10 @@ export function SafetyAwarenessGate() {
               return (
                 <div
                   key={question.id}
-                  className="rounded-2xl border-[1.5px] border-[var(--border)] bg-[var(--brand-surface)] p-3.5"
+                  className="rounded-2xl border-[1.5px] border-[#d7e6f6] bg-white p-3.5 shadow-[0_10px_28px_rgba(14,62,125,0.06)]"
                 >
                   <div className="flex items-start gap-2.5">
-                    <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-[var(--brand-nav)] text-[12px] font-black text-[var(--brand-accent)]">
+                    <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-[#1763c0] text-[12px] font-black text-white">
                       {index + 1}
                     </span>
                     <div className="min-w-0 flex-1">
@@ -145,10 +144,10 @@ export function SafetyAwarenessGate() {
                       if (!submitted) {
                         // Pre-check: just highlight the user's current pick (changeable).
                         if (selected) {
-                          cls += " border-[var(--brand-accent)] bg-[var(--brand-soft)] text-[var(--brand-text)]";
+                          cls += " border-[#1763c0] bg-[#eaf4ff] text-[#0e3e7d]";
                         } else {
                           cls +=
-                            " border-[var(--border)] bg-[var(--background)] text-[var(--brand-text)] hover:border-[var(--brand-accent)] hover:bg-[var(--brand-soft)]";
+                            " border-[#d7e6f6] bg-white text-[#173b6b] hover:border-[#1763c0] hover:bg-[#eaf4ff]";
                         }
                       } else if (isAnswerOption) {
                         // After checking, the correct answer is highlighted green.
@@ -157,7 +156,7 @@ export function SafetyAwarenessGate() {
                         // User picked this and it's wrong.
                         cls += " border-[#d5301a] bg-[#fbe3df] text-[#b3271a]";
                       } else {
-                        cls += " border-[var(--border)] bg-[var(--background)] text-[var(--brand-text)]/40";
+                        cls += " border-[#d7e6f6] bg-white text-[#173b6b]/40";
                       }
 
                       return (

@@ -157,7 +157,7 @@ function makeRewardDraft(rewards: RewardCatalogItem[]): RewardCatalogItem {
 
   return {
     id: nextId,
-    name: `Reward ${nextId}`,
+    name: `รางวัล ${nextId}`,
     category: "merch",
     description: "รายละเอียดรางวัลใหม่",
     imageText: "// merch",
@@ -353,12 +353,12 @@ function RewardPreviewPanelLegacy({
 
             <div className="min-w-0">
               <div className="line-clamp-2 text-[28px] font-black leading-[0.92] text-[#1A1A1A] [overflow-wrap:anywhere] sm:text-[34px]">
-              {reward.name || "Reward name"}
+              {reward.name || "ชื่อรางวัล"}
             </div>
               <div className="mt-3 rounded-[18px] border border-[var(--border)] bg-[var(--brand-surface)] px-4 py-3">
                 <p className="line-clamp-6 min-h-[8.1rem] text-[14px] font-bold leading-relaxed text-[var(--c-6f665b)] [overflow-wrap:anywhere] sm:text-[15px]">
 
-              {reward.description || "รายละเอียด reward จะแสดงตรงนี้บนหน้า Rewards"}
+              {reward.description || "รายละเอียดรางวัลจะแสดงตรงนี้บนหน้ารางวัล"}
 
                 </p>
               </div>
@@ -527,7 +527,7 @@ function CategorySummaryCard({
         <div className="rounded-full bg-[var(--brand-soft)] px-3 py-1 text-[12px] font-black text-[var(--brand-text)]">
           {item.count} items
         </div>
-        <div className="text-[11px] font-black uppercase tracking-[0.14em] text-[var(--brand-accent-strong)]">Category</div>
+        <div className="text-[11px] font-black uppercase tracking-[0.14em] text-[var(--brand-accent-strong)]">หมวดหมู่</div>
       </div>
     </div>
   );
@@ -990,10 +990,10 @@ export default function AdminRewardPage() {
           eyebrow="SAFETY CULTURE ADMIN"
           title={
             <>
-              จัดการ <span className="text-[var(--brand-accent)]">Rewards</span>
+              รางวัลและ <span className="text-[var(--brand-accent)]">แต้มแลก</span>
             </>
           }
-          description="ออกแบบ reward catalog, รูปภาพ, รายละเอียด และราคา ให้หน้า Rewards ใช้งานง่ายและดูดีขึ้นจากที่เดียว"
+          description="จัดการแคตตาล็อกรางวัล รูปภาพ รายละเอียด คะแนนแลก และสถานะเด่นจากที่เดียว"
           variant="community"
           backgroundImage="/images/safety-culture-hero.png"
           backgroundOverlay="linear-gradient(90deg, rgba(2, 26, 66, .82) 0%, rgba(3, 33, 78, .5) 34%, rgba(3, 33, 78, .16) 56%, rgba(3, 33, 78, 0) 70%)"
@@ -1030,12 +1030,12 @@ export default function AdminRewardPage() {
 
           {rewardSaveState === "saved" ? (
             <div className="flex items-center rounded-[16px] border border-[#bfd7c0] bg-[#f2fff2] px-3 py-2 text-[12px] font-black text-[#245336]">
-              บันทึก reward เรียบร้อยแล้ว หน้า Rewards หลักอัปเดตทันที
+              บันทึกรางวัลเรียบร้อยแล้ว หน้ารางวัลหลักอัปเดตทันที
             </div>
           ) : null}
 
           <SectionCard
-            title="Category Manager"
+            title="จัดการหมวดหมู่รางวัล"
             description="เพิ่มหมวดหมู่"
             icon={<Users className="h-5 w-5" strokeWidth={2.3} />}
             className="overflow-visible"
@@ -1198,8 +1198,8 @@ export default function AdminRewardPage() {
           </SectionCard>
 
           <SectionCard
-            title="Reward Catalog"
-            description="จัดการ rewards"
+            title="รายการรางวัล"
+            description="จัดการรางวัลทั้งหมด"
             icon={<Gift className="h-5 w-5" strokeWidth={2.3} />}
             actions={
               <div className="flex flex-wrap items-center gap-2">
@@ -1217,7 +1217,7 @@ export default function AdminRewardPage() {
                   className="h-11 rounded-xl bg-[var(--brand-accent-strong)] px-5 text-[13px] font-black text-white hover:bg-[var(--brand-accent)]"
                 >
                   <Plus className="mr-1.5 h-4 w-4" />
-                  New Reward
+                  สร้างรางวัล
                 </Button>
               </div>
             }
@@ -1546,7 +1546,7 @@ export default function AdminRewardPage() {
                 <div className="mt-4 rounded-[18px] border border-dashed border-[var(--border)] bg-white px-5 py-10 text-center">
                   <div className="text-[18px] font-black text-[#1A1A1A]">ยังไม่มีประวัติการแลกรางวัล</div>
                   <div className="mt-2 text-[13px] font-bold text-[#8E8A81]">
-                    เมื่อมีคนกดแลกรางวัลจากหน้า Rewards รายการจะมาแสดงที่นี่ทันที
+                    เมื่อมีคนกดแลกรางวัลจากหน้ารางวัล รายการจะมาแสดงที่นี่ทันที
                   </div>
                 </div>
               ) : filteredRewardRedemptions.length === 0 ? (
@@ -1605,8 +1605,8 @@ export default function AdminRewardPage() {
               </DialogTitle>
               <DialogDescription className="max-w-[840px] text-[13px] font-bold leading-relaxed text-[#8E8A81] sm:text-[14px]">
                 {editingReward?.mode === "create"
-                  ? "ใช้มุมมองนี้เพื่อสร้าง reward ให้ใกล้กับหน้า public มากขึ้น เห็นรูป ราคา รายละเอียด และสถานะเด่นได้ตั้งแต่ก่อนยืนยัน"
-                  : "ปรับรายละเอียด reward และเช็ก preview ไปพร้อมกัน เพื่อให้แก้ไขได้แม่นขึ้นทั้งบน desktop และ mobile"}
+                  ? "ใช้มุมมองนี้เพื่อสร้างรางวัลให้ใกล้กับหน้าผู้ใช้มากขึ้น เห็นรูป คะแนนแลก รายละเอียด และสถานะเด่นได้ตั้งแต่ก่อนยืนยัน"
+                  : "ปรับรายละเอียดรางวัลและเช็กตัวอย่างไปพร้อมกัน เพื่อให้แก้ไขได้แม่นขึ้นทั้งบนเดสก์ท็อปและมือถือ"}
               </DialogDescription>
             </DialogHeader>
 
@@ -1650,7 +1650,7 @@ export default function AdminRewardPage() {
                       <DetailCard title="ข้อมูลหลัก" subtitle="เริ่มจากชื่อ ราคา และคำอธิบาย">
                         <div className="space-y-4">
                           <div className="flex flex-col gap-2">
-                            <Label className="text-[12px] font-black text-[var(--brand-text)]">Reward Name</Label>
+                            <Label className="text-[12px] font-black text-[var(--brand-text)]">ชื่อรางวัล</Label>
                             <Input
                               value={editingReward.name}
                               onChange={(event) => updateEditingReward("name", event.target.value)}
@@ -1858,7 +1858,7 @@ export default function AdminRewardPage() {
                         ) : null}
                       </DetailCard>
 
-                      <DetailCard title="Display Settings" subtitle="กำหนดว่ารางวัลนี้จะเด่นบนหน้า public หรือไม่">
+                      <DetailCard title="การแสดงผล" subtitle="กำหนดว่ารางวัลนี้จะเด่นบนหน้าผู้ใช้หรือไม่">
                         <button
                           type="button"
                           onClick={() => updateEditingReward("isHot", !editingReward.isHot)}
@@ -1872,7 +1872,7 @@ export default function AdminRewardPage() {
                           <span>
                             <span className="block text-[14px] font-black">Featured / Hot reward</span>
                             <span className="block text-[12px] font-bold opacity-80">
-                              เปิดสถานะนี้เมื่ออยากให้รางวัลเด่นเป็นพิเศษในหน้า public
+                              เปิดสถานะนี้เมื่ออยากให้รางวัลเด่นเป็นพิเศษในหน้าผู้ใช้
                             </span>
                           </span>
                           <span className="rounded-full bg-white/80 px-3 py-1 text-[12px] font-black">
@@ -1912,7 +1912,7 @@ export default function AdminRewardPage() {
                       <DetailCard title="ข้อมูลหลัก" subtitle="แก้ชื่อ ราคา และคำอธิบายได้จากตรงนี้">
                         <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
                           <div className="flex flex-col gap-2 lg:col-span-2">
-                            <Label className="text-[12px] font-black text-[var(--brand-text)]">Reward Name</Label>
+                            <Label className="text-[12px] font-black text-[var(--brand-text)]">ชื่อรางวัล</Label>
                             <Input
                               value={editingReward.name}
                               onChange={(event) => updateEditingReward("name", event.target.value)}
@@ -2059,10 +2059,10 @@ export default function AdminRewardPage() {
                         </div>
                       </DetailCard>
 
-                      <DetailCard title="Display Settings" subtitle="หมวดหมู่ และสถานะเด่น">
+                      <DetailCard title="การแสดงผล" subtitle="หมวดหมู่ และสถานะเด่น">
                         <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
                           <div className="flex flex-col gap-2">
-                            <Label className="text-[12px] font-black text-[var(--brand-text)]">Category</Label>
+                            <Label className="text-[12px] font-black text-[var(--brand-text)]">หมวดหมู่</Label>
                             <Combobox
                               value={editingReward.category}
                               onValueChange={(value) =>
@@ -2099,7 +2099,7 @@ export default function AdminRewardPage() {
                           <span>
                             <span className="block text-[14px] font-black">Featured / Hot reward</span>
                             <span className="block text-[12px] font-bold opacity-80">
-                              เปิดสถานะนี้เมื่ออยากให้รางวัลเด่นบนหน้า Rewards
+                              เปิดสถานะนี้เมื่ออยากให้รางวัลเด่นบนหน้ารางวัล
                             </span>
                           </span>
                           <span className="rounded-full bg-white/80 px-3 py-1 text-[12px] font-black">
@@ -2138,7 +2138,7 @@ export default function AdminRewardPage() {
                 Confirm Delete
               </DialogTitle>
               <DialogDescription className="max-w-[420px] text-[12px] font-bold leading-relaxed text-[#8E8A81] sm:text-[14px]">
-                แน่ใจใช่ไหมว่าต้องการลบรางวัลนี้ หากยืนยัน รายการจะหายจากหน้า Admin และหน้า Rewards หลักทันที
+                แน่ใจใช่ไหมว่าต้องการลบรางวัลนี้ หากยืนยัน รายการจะหายจากหน้าแอดมินและหน้ารางวัลหลักทันที
               </DialogDescription>
             </DialogHeader>
 
@@ -2194,8 +2194,8 @@ export default function AdminRewardPage() {
               </DialogTitle>
               <DialogDescription className="max-w-[460px] text-[12px] font-bold leading-relaxed text-[#8E8A81] sm:text-[14px]">
                 {pendingCategoryDelete?.count
-                  ? "หากยืนยัน จะลบข้อมูล Reward ทั้งหมดในหมู่นี้"
-                  : "หากยืนยัน ระบบจะลบหมวดหมู่นี้ออกจากตัวเลือกของ Admin ทันที"}
+                  ? "หากยืนยัน จะลบข้อมูลรางวัลทั้งหมดในหมู่นี้"
+                  : "หากยืนยัน ระบบจะลบหมวดหมู่นี้ออกจากตัวเลือกของผู้ดูแลทันที"}
               </DialogDescription>
             </DialogHeader>
 
@@ -2214,7 +2214,7 @@ export default function AdminRewardPage() {
 
                   {pendingCategoryDelete.count > 0 ? (
                     <div className="mt-4 rounded-[14px] border border-[var(--border)] bg-[var(--brand-soft)] px-3 py-3">
-                      <div className="text-[12px] font-black text-[var(--brand-text)]">Reward ที่ยังอยู่ในหมวดนี้</div>
+                      <div className="text-[12px] font-black text-[var(--brand-text)]">รางวัลที่ยังอยู่ในหมวดนี้</div>
                       <div className="mt-2 flex flex-col gap-2">
                         {rewardsInPendingCategory.slice(0, 4).map((reward) => (
                           <div key={reward.id} className="flex items-center justify-between gap-3 rounded-[12px] bg-white px-3 py-2">

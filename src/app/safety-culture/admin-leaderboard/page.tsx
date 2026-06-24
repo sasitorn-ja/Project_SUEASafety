@@ -234,7 +234,7 @@ export default function AdminLeaderboardPage() {
     setDraftTeams(normalizedTeams);
     const saved = await updateTeamStandings(normalizedTeams);
     if (!saved) {
-      window.alert("บันทึกข้อมูล Leaderboard ไม่สำเร็จ กรุณาลองใหม่อีกครั้ง");
+      window.alert("บันทึกข้อมูลทีมและอันดับไม่สำเร็จ กรุณาลองใหม่อีกครั้ง");
       return false;
     }
     setSaveState("saved");
@@ -315,10 +315,10 @@ export default function AdminLeaderboardPage() {
           eyebrow="SAFETY CULTURE ADMIN"
           title={
             <>
-              จัดการ <span className="text-[var(--brand-accent)]">Leaderboard</span>
+              ทีมและ <span className="text-[var(--brand-accent)]">อันดับ</span>
             </>
           }
-          description="จัดการหน่วยงานที่ใช้บน Leaderboard โดยอ้างอิงข้อมูลจริงในระบบ"
+          description="จัดการหน่วยงาน คะแนน และอันดับ โดยอ้างอิงข้อมูลจริงในระบบ"
           variant="community"
           backgroundImage="/images/safety-culture-hero.png"
           backgroundOverlay="linear-gradient(90deg, rgba(2, 26, 66, .82) 0%, rgba(3, 33, 78, .5) 34%, rgba(3, 33, 78, .16) 56%, rgba(3, 33, 78, 0) 70%)"
@@ -347,8 +347,8 @@ export default function AdminLeaderboardPage() {
 
         <div className="mt-4 flex flex-col gap-4">
           <SectionCard
-            title="จัดการหน่วยงาน (Teams)"
-            description="จัดการหน่วยงานที่จะแสดงบน Leaderboard จากข้อมูลจริงในระบบ พร้อมแก้ไขหัวหน้าหน่วยงานได้จากหน้านี้"
+            title="จัดการหน่วยงาน"
+            description="จัดการหน่วยงานที่จะแสดงบนหน้าอันดับจากข้อมูลจริงในระบบ พร้อมแก้ไขหัวหน้าหน่วยงานได้จากหน้านี้"
             icon={<LayoutList className="h-5 w-5" strokeWidth={2.3} />}
             actions={
               <Button
@@ -536,7 +536,7 @@ export default function AdminLeaderboardPage() {
                 Confirm Delete
               </DialogTitle>
               <DialogDescription className="max-w-[420px] text-[12px] font-bold leading-relaxed text-[#8E8A81] sm:text-[14px]">
-                แน่ใจใช่ไหมว่าต้องการลบหน่วยงานนี้ออกจาก Leaderboard หากยืนยัน รายการจะหายจากหน้าแอดมินและหน้าหลักทันที
+                แน่ใจใช่ไหมว่าต้องการลบหน่วยงานนี้ออกจากหน้าอันดับ หากยืนยัน รายการจะหายจากหน้าแอดมินและหน้าหลักทันที
               </DialogDescription>
             </DialogHeader>
 

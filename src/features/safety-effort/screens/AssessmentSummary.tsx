@@ -468,7 +468,7 @@ export default function AssessmentSummary() {
         <Dialog open={showSuccessPopup}>
           <DialogContent
             showCloseButton={false}
-            className="z-[9999] w-full max-w-[380px] text-center"
+            className="z-[9999] w-full max-w-[380px] border border-[#cfe0f2] bg-[linear-gradient(180deg,#ffffff,#f8fcff)] text-center shadow-[0_28px_80px_rgba(6,43,99,0.28)]"
             style={{
               padding: "28px 24px",
               display: "flex",
@@ -487,10 +487,10 @@ export default function AssessmentSummary() {
               </div>
 
               <div>
-                <h3 style={{ margin: 0, fontFamily: "'Prompt',sans-serif", fontSize: 20, fontWeight: 900, color: "var(--brand-text)" }}>
+                <h3 style={{ margin: 0, fontFamily: "'Prompt',sans-serif", fontSize: 20, fontWeight: 900, color: "#0e3e7d" }}>
                   {linewalkData?.isSafetyContact ? "ส่งข้อมูลสำเร็จ" : "บันทึกเสร็จสิ้น"}
                 </h3>
-                <p style={{ margin: "6px 0 0", fontFamily: "'Prompt',sans-serif", fontSize: 13.5, fontWeight: 500, color: "var(--brand-text-soft)", lineHeight: 1.4 }}>
+                <p style={{ margin: "6px 0 0", fontFamily: "'Prompt',sans-serif", fontSize: 13.5, fontWeight: 700, color: "#5f7591", lineHeight: 1.4 }}>
                   {linewalkData?.isSafetyContact ? "ส่งข้อมูล Safety Contact เรียบร้อยแล้ว" : "ทำบันทึกเสร็จเรียบร้อยแล้ว"}
                 </p>
               </div>
@@ -499,16 +499,16 @@ export default function AssessmentSummary() {
                 display: "inline-flex",
                 alignItems: "center",
                 gap: 6,
-                background: "#fef8e6",
-                border: "1.5px solid var(--brand-accent)",
+                background: "#eaf4ff",
+                border: "1.5px solid #b9d3ed",
                 borderRadius: 99,
                 padding: "6px 16px",
                 fontSize: "14.5px",
                 fontWeight: 900,
-                color: "var(--brand-text)",
+                color: "#0e3e7d",
                 fontFamily: "'Prompt',sans-serif",
                 marginTop: -4,
-                boxShadow: "0 4px 12px rgba(var(--brand-accent-rgb),0.15)"
+                boxShadow: "0 4px 12px rgba(14,62,125,0.12)"
               }}>
                 <IcoTrophy size={16} color={T.goldDeep} /> +10 คะแนน
               </div>
@@ -521,13 +521,13 @@ export default function AssessmentSummary() {
                   height: 46,
                   border: "none",
                   borderRadius: 12,
-                  background: "linear-gradient(135deg,var(--brand-text) 0%,var(--c-1a1613) 100%)",
+                  background: "linear-gradient(180deg,#158eff,#075cc8)",
                   color: "#fff",
                   fontFamily: "'Prompt',sans-serif",
                   fontSize: 14.5,
                   fontWeight: 800,
                   cursor: "pointer",
-                  boxShadow: "0 8px 18px rgba(26,22,19,0.18)",
+                  boxShadow: "0 12px 24px rgba(7,92,200,0.22)",
                 }}
               >
                 กลับหน้าหลัก
