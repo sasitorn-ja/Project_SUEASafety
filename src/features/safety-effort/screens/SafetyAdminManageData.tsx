@@ -224,7 +224,7 @@ function mapLocationToAdminRow(location, selectedType) {
 }
 
 async function fetchAdminLocations(type, selectedType) {
-  const response = await fetch(`/api/safety-effort/locations?type=${type}&limit=1000`, {
+  const response = await fetch(`/api/safety-effort/locations?type=${type}&source=ADMIN&limit=1000`, {
     credentials: "include",
     cache: "no-store",
   });
@@ -235,7 +235,9 @@ async function fetchAdminLocations(type, selectedType) {
     : Array.isArray(payload.data?.locations)
       ? payload.data.locations
       : [];
-  return items.map((location) => mapLocationToAdminRow(location, selectedType));
+  return items
+    .filter((location) => String(location.source || "").toUpperCase() === "ADMIN")
+    .map((location) => mapLocationToAdminRow(location, selectedType));
 }
 
 function canManageLocation(item) {
@@ -919,7 +921,7 @@ export default function SafetyAdminManageData() {
           <SafetyCultureHero
             eyebrow="SAFETY EFFORT ADMIN"
             title={<>จัดการสถานที่</>}
-            description="แสดงสถานที่ทั้งหมดจากฐานข้อมูล และแก้ไขได้เฉพาะรายการที่เพิ่มเอง"
+            description="แสดงเฉพาะสถานที่ที่ผู้ใช้เพิ่มเองในระบบ ไม่รวมข้อมูลจาก RMC"
             mascotSrc="/images/safety-effort-mascot.png"
             mascotAlt="Safety mascot"
             mascotAction="happy"
@@ -1026,10 +1028,10 @@ export default function SafetyAdminManageData() {
             >
               <div style={{ display: "grid", gap: 4 }}>
                 <div style={{ fontSize: 16, fontWeight: 900, color: T.accentDeep }}>
-                  {selectedType === "factory" ? "โรงงานทั้งหมด" : selectedType === "office" ? "สำนักงานทั้งหมด" : "ไซต์งานทั้งหมด"}
+                  {selectedType === "factory" ? "โรงงานที่เพิ่มเอง" : selectedType === "office" ? "สำนักงานที่เพิ่มเอง" : "ไซต์งานที่เพิ่มเอง"}
                 </div>
                 <div style={{ fontSize: 12.5, color: T.sub }}>
-                  ดึงจาก API/DB ทุก source โดยแก้ไขและลบได้เฉพาะ source = ADMIN
+                  ดึงจาก DB เฉพาะ source = ADMIN เพื่อจัดการรายการที่สร้างในระบบนี้
                 </div>
               </div>
             </div>
@@ -1066,7 +1068,7 @@ export default function SafetyAdminManageData() {
             <div style={{ flex: 1, overflow: "auto", minHeight: 0 }}>
               {filteredPlants.length === 0 ? (
                 <div style={{ border: `1px dashed ${T.lineStrong}`, borderRadius: 18, padding: 32, textAlign: "center", color: T.sub, fontSize: 14 }}>
-                  {plantSearchQuery ? "ไม่พบสถานที่ที่ตรงกับคำค้น" : locationsLoading ? "กำลังโหลดข้อมูลสถานที่..." : "ยังไม่มีสถานที่ประเภทนี้ในฐานข้อมูล"}
+                  {plantSearchQuery ? "ไม่พบสถานที่ที่เพิ่มเองตรงกับคำค้น" : locationsLoading ? "กำลังโหลดข้อมูลสถานที่..." : "ยังไม่มีสถานที่ประเภทนี้ที่ผู้ใช้เพิ่มเองในระบบ"}
                 </div>
               ) : selectedType === "factory" ? (
                 /* Plants Table */
