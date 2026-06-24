@@ -98,19 +98,22 @@ function IcoPin({ s = 14, c = "currentColor" }) {
 }
 function IcoLineWalk() {
   return (
-    <svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-      <path d="M4 16v-2.38C4 11.5 2.97 10.5 3 8c.03-2.72 1.49-6 4.5-6C9.37 2 10 3.8 10 5.5c0 3.11-2 5.66-2 8.68V16a2 2 0 1 1-4 0Z"/>
-      <path d="M20 20v-2.38c0-2.12 1.03-3.12 1-5.62-.03-2.72-1.49-6-4.5-6C14.63 6 14 7.8 14 9.5c0 3.11 2 5.66 2 8.68V20a2 2 0 1 0 4 0Z"/>
-      <path d="M16 17h4"/>
-      <path d="M4 13h4"/>
+    <svg width={22} height={22} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.35} strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="13" cy="4.5" r="2.2"/>
+      <path d="M10.7 8.4 8.6 13.2l4.6 2.2 2.4 4.6"/>
+      <path d="M12.2 9.1 16 11.5l3.2-.8"/>
+      <path d="M8.7 13.3 5.2 20"/>
+      <path d="M3.8 21h3.4"/>
+      <path d="M14.9 21h4.1"/>
     </svg>
   );
 }
 function IcoShield() {
   return (
-    <svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-      <polyline points="9 12 11 14 15 10"/>
+    <svg width={22} height={22} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.25} strokeLinecap="round" strokeLinejoin="round">
+      <path d="M4.5 5.5h15a2 2 0 0 1 2 2v8.2a2 2 0 0 1-2 2H11l-4.4 3.1v-3.1H4.5a2 2 0 0 1-2-2V7.5a2 2 0 0 1 2-2Z"/>
+      <path d="M12 14.1s4.1-2.1 4.1-5.2V7.6L12 6.1 7.9 7.6v1.3c0 3.1 4.1 5.2 4.1 5.2Z"/>
+      <path d="m10.4 10.1 1.1 1.1 2.2-2.2"/>
     </svg>
   );
 }
@@ -538,10 +541,17 @@ const STYLES = `
     display: flex; align-items: center; justify-content: center;
     transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
     flex-shrink: 0;
-    background: var(--c-f7f6f2); color: #767269;
-    border: 1px solid rgba(0,0,0,0.02);
+    background: linear-gradient(135deg, rgba(var(--brand-accent-rgb),0.13), rgba(var(--brand-accent-rgb),0.05));
+    color: var(--brand-accent);
+    border: 1px solid rgba(var(--brand-accent-rgb),0.22);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.85);
   }
-  .ac-card:hover:not(.sel) .ac-icon-box { background: var(--secondary); color: #0e0f12; }
+  .ac-card:hover:not(.sel) .ac-icon-box {
+    background: linear-gradient(135deg, rgba(var(--brand-accent-rgb),0.2), rgba(var(--brand-accent-rgb),0.08));
+    color: var(--brand-text);
+    border-color: rgba(var(--brand-accent-rgb),0.36);
+    transform: translateY(-1px);
+  }
   .ac-card.sel .ac-icon-box {
     background: linear-gradient(135deg, ${yellow} 0%, var(--brand-accent-strong) 100%); color: ${T.primaryFg};
     box-shadow: 0 3px 10px rgba(var(--brand-accent-rgb),0.25);

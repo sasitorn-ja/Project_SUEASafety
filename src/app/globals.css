@@ -555,7 +555,7 @@ body {
 
 .safety-culture-community-hero .safety-culture-hero-grid {
   min-height: 158px;
-  grid-template-columns: minmax(0, 1fr) 220px !important;
+  grid-template-columns: minmax(0, 1fr) 330px !important;
   align-items: center;
   padding: 12px 30px 0 !important;
 }
@@ -563,7 +563,7 @@ body {
 /* Mascot sits grounded at the bottom edge and fills the banner height
    (full-body, not floating) — same idea as the Home hero mascot */
 .safety-culture-community-hero .safety-culture-hero-mascot-image {
-  max-height: 156px;
+  max-height: none;
   object-fit: contain;
   object-position: bottom center;
 }
@@ -600,9 +600,9 @@ body {
 }
 
 .safety-culture-community-hero .safety-culture-hero-mascot {
-  right: 40px !important;
-  bottom: 0 !important;
-  width: 150px !important;
+  right: clamp(18px, 3.2vw, 58px) !important;
+  bottom: -110px !important;
+  width: clamp(252px, 17vw, 318px) !important;
   max-width: none;
   /* Softer, bluer shadow so the mascot blends on light/photo backgrounds
      instead of looking like a cut-out with a dark halo */
@@ -618,7 +618,7 @@ body {
 
   .safety-culture-community-hero .safety-culture-hero-grid {
     min-height: 150px;
-    grid-template-columns: minmax(0, 1fr) 140px !important;
+    grid-template-columns: minmax(0, 1fr) 214px !important;
     padding: 11px 18px 13px !important;
   }
 
@@ -631,9 +631,13 @@ body {
   }
 
   .safety-culture-community-hero .safety-culture-hero-mascot {
-    right: 24px !important;
-    bottom: 6px !important;
-    width: 104px !important;
+    right: 8px !important;
+    bottom: -86px !important;
+    width: 206px !important;
+  }
+
+  .safety-culture-community-hero .safety-culture-hero-mascot-image {
+    max-height: none;
   }
 }
 
@@ -649,7 +653,7 @@ body {
 
   .safety-culture-community-hero .safety-culture-hero-grid {
     min-height: 124px;
-    grid-template-columns: minmax(0, 1fr) 88px !important;
+    grid-template-columns: minmax(0, 1fr) 118px !important;
     gap: 2px;
     padding: 10px 12px 11px !important;
   }
@@ -676,9 +680,13 @@ body {
   }
 
   .safety-culture-community-hero .safety-culture-hero-mascot {
-    right: 2px !important;
-    bottom: 5px !important;
-    width: 84px !important;
+    right: -10px !important;
+    bottom: -48px !important;
+    width: 126px !important;
+  }
+
+  .safety-culture-community-hero .safety-culture-hero-mascot-image {
+    max-height: none;
   }
 }
 

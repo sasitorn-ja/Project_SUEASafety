@@ -5,6 +5,7 @@ import RestrictedDatePicker from "@/components/RestrictedDatePicker";
 import {
   createInitialItemStates,
   getChecklistForType,
+  hydrateChecklistDraft,
 } from "@/features/safety-effort/config/checklists";
 import { uploadSafetyEffortMedia } from "@/features/safety-effort/lib/upload-media";
 import SafetyEffortProgressStepper from "@/features/safety-effort/components/SafetyEffortProgressStepper";
@@ -383,6 +384,7 @@ export default function Linewalk() {
   const [activeSection, setActiveSection] = useState(-1);
   const [linewalkStarted, setLinewalkStarted] = useState(false);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  const [checklistRevision, setChecklistRevision] = useState(0);
 
   // ── Progressive disclosure ──
   const isSafetyContactFlow = activity?.id === "safety-contact" || activeTab === "safety_contact";
@@ -416,12 +418,18 @@ export default function Linewalk() {
   }, [locType]);
 
   useEffect(() => {
-    if (!locType) return;
-    const cl = locType === "สำนักงาน" ? OFFICE_CHECKLIST : locType === "Site งาน" ? SITE_CHECKLIST : FACTORY_CHECKLIST;
-    setChecklist(cl);
-    setItemStates(location.state?.linewalkData?.itemStates ?? cl.reduce((acc, c) => { acc[c.id] = { status:null, note:"", photos:[] }; return acc; }, {}));
-    setActiveSection(-1);
-  }, [locType]);
+    let cancelled = false;
+    hydrateChecklistDraft()
+      .then(() => {
+        if (!cancelled) setChecklistRevision((value) => value + 1);
+      })
+      .catch((error) => {
+        console.error("Failed to load assessment checklist from DB", error);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     if (!locType) return;
@@ -429,7 +437,7 @@ export default function Linewalk() {
     setChecklist(cl);
     setItemStates(location.state?.linewalkData?.itemStates ?? createInitialItemStates(cl));
     setActiveSection(-1);
-  }, [locType]);
+  }, [locType, checklistRevision]);
 
   const totalItems      = checklist.length;
   const answeredCount   = Object.values(itemStates).filter(i => i.status !== null).length;
@@ -443,17 +451,6 @@ export default function Linewalk() {
 
   useEffect(() => {
     if (!step1Complete || isSafetyContactFlow || !locType) return;
-    const cl = locType === "สำนักงาน" ? OFFICE_CHECKLIST : locType === "Site งาน" ? SITE_CHECKLIST : FACTORY_CHECKLIST;
-    setChecklist(cl);
-    setItemStates((prev) => cl.reduce((acc, c) => {
-      acc[c.id] = prev[c.id] ?? { status: null, note: "", photos: [] };
-      return acc;
-    }, {}));
-    setActiveSection(-1);
-  }, [step1Complete, isSafetyContactFlow, locType]);
-
-  useEffect(() => {
-    if (!step1Complete || isSafetyContactFlow || !locType) return;
     const cl = getChecklistForType(locType);
     setChecklist(cl);
     setItemStates((prev) =>
@@ -463,7 +460,7 @@ export default function Linewalk() {
       }, {})
     );
     setActiveSection(-1);
-  }, [step1Complete, isSafetyContactFlow, locType]);
+  }, [step1Complete, isSafetyContactFlow, locType, checklistRevision]);
 
   useEffect(() => {
     if (!step1Complete || isSafetyContactFlow) {

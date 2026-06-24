@@ -97,36 +97,42 @@ function sanitizeChecklistCollection(raw: any): ChecklistCollection | null {
   return next;
 }
 
+function hasChecklistItems(checklists: ChecklistCollection | null) {
+  return Boolean(checklists && Object.values(checklists).some((items) => items.length > 0));
+}
+
 export function loadChecklistDraft(): ChecklistCollection | null {
   return activeChecklistDraft ? deepCloneChecklists(activeChecklistDraft) : null;
 }
 
-export function saveChecklistDraft(checklists: ChecklistCollection) {
+export async function saveChecklistDraft(checklists: ChecklistCollection) {
   activeChecklistDraft = sanitizeChecklistCollection(checklists) || deepCloneChecklists(DEFAULT_CHECKLISTS);
   if (typeof window !== "undefined") {
-    void fetch("/api/safety-settings", {
+    const response = await fetch("/api/safety-effort/checklists", {
       method: "PUT",
       credentials: "include",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ key: "safety_checklists", value: activeChecklistDraft }),
+      body: JSON.stringify({ checklists: activeChecklistDraft }),
     });
+    if (!response.ok) throw new Error("checklists_save_failed");
   }
+  return activeChecklistDraft;
 }
 
-export function restoreChecklistDefaults() {
+export async function restoreChecklistDefaults() {
   activeChecklistDraft = deepCloneChecklists(DEFAULT_CHECKLISTS);
-  saveChecklistDraft(activeChecklistDraft);
+  return saveChecklistDraft(activeChecklistDraft);
 }
 
 let activeChecklistDraft: ChecklistCollection | null = null;
 
 export async function hydrateChecklistDraft() {
   if (typeof window === "undefined") return getActiveChecklistCollection();
-  const response = await fetch("/api/safety-settings?key=safety_checklists", { credentials: "include" });
+  const response = await fetch("/api/safety-effort/checklists", { credentials: "include", cache: "no-store" });
   const payload = await response.json().catch(() => null);
   if (!response.ok || !payload?.ok) return getActiveChecklistCollection();
-  const stored = sanitizeChecklistCollection(payload.data?.setting?.setting_value);
-  if (stored) activeChecklistDraft = stored;
+  const stored = sanitizeChecklistCollection(payload.data?.checklists);
+  if (hasChecklistItems(stored)) activeChecklistDraft = stored;
   return getActiveChecklistCollection();
 }
 

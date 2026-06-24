@@ -89,7 +89,7 @@ export function SafetyAwarenessGate() {
               alt=""
               width={66}
               height={66}
-              className="mascot-motion mascot-motion-compact pointer-events-none hidden h-[66px] w-[66px] object-contain sm:block"
+              className="mascot-motion mascot-motion-compact pointer-events-none hidden h-[66px] w-[66px] -translate-y-2 self-start object-contain sm:block"
             />
           </div>
           <p className="relative mt-2 text-[12.5px] font-bold leading-relaxed text-white/85">

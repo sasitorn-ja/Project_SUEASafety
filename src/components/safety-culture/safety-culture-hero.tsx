@@ -94,7 +94,7 @@ export function SafetyCultureHero({
             ? "grid-cols-1"
             : hasActions
             ? "grid-cols-[1fr_96px] md:grid-cols-[1fr_150px]"
-            : "grid-cols-[1fr_100px] md:grid-cols-[1fr_130px]"
+            : "grid-cols-[1fr_118px] md:grid-cols-[1fr_152px]"
         )}
       >
         <div className="safety-culture-hero-copy flex min-w-0 flex-col items-start gap-1">
@@ -131,13 +131,13 @@ export function SafetyCultureHero({
           >
             <div
               className={cn(
-                "suea-hero-mascot safety-culture-hero-mascot absolute right-[-2px] bottom-[-2px] h-auto sm:right-[-6px] md:right-0",
+                "suea-hero-mascot safety-culture-hero-mascot absolute right-[-2px] bottom-[-10px] h-auto sm:right-[-6px] sm:bottom-[-12px] md:right-0 md:bottom-[-14px]",
                 sideActions && "safety-culture-hero-mascot-side",
                 sideActions
                   ? "w-[74px] sm:w-[86px] md:right-auto md:left-1/2 md:w-[138px] md:-translate-x-1/2 lg:w-[158px]"
                   : hasActions
                   ? "w-[82px] sm:w-[92px] md:w-[118px] lg:w-[132px]"
-                  : "w-[92px] sm:w-[102px] md:w-[112px] lg:w-[118px]"
+                  : "w-[112px] sm:w-[122px] md:w-[134px] lg:w-[146px]"
               )}
               data-mascot-action={mascotAction}
             >

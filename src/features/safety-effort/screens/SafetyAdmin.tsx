@@ -6,6 +6,7 @@ import {
   LOCATION_TYPE_OPTIONS,
   deepCloneChecklists,
   getActiveChecklistCollection,
+  hydrateChecklistDraft,
   restoreChecklistDefaults,
   saveChecklistDraft,
 } from "@/features/safety-effort/config/checklists";
@@ -302,6 +303,7 @@ export default function SafetyAdmin() {
   const [allowedDates, setAllowedDates] = useState([]);
   const [newAllowedDate, setNewAllowedDate] = useState("");
   const [lastSavedAt, setLastSavedAt] = useState("");
+  const [savingChecklists, setSavingChecklists] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
   const [draggedId, setDraggedId] = useState(null);
   const [dragOverId, setDragOverId] = useState(null);
@@ -335,6 +337,24 @@ export default function SafetyAdmin() {
     const handleResize = () => setWidth(window.innerWidth);
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    hydrateChecklistDraft()
+      .then((collection) => {
+        if (cancelled) return;
+        const hydrated = cloneDraft(collection);
+        setDraft(hydrated);
+        setSavedSnapshot(cloneDraft(hydrated));
+        setSelectedQuestionId(hydrated.factory[0]?.id || "");
+      })
+      .catch(() => {
+        if (!cancelled) window.alert("โหลดแบบประเมินจาก DB ไม่สำเร็จ ระบบจะแสดงค่าเริ่มต้นไว้ก่อน");
+      });
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   // DB is the source of truth for shared admin settings.
@@ -473,10 +493,18 @@ export default function SafetyAdmin() {
     updateCurrentList((list) => moveItem(list, currentIndex, currentIndex + direction));
   };
 
-  const handleSaveDraft = () => {
-    saveChecklistDraft(draft);
-    setSavedSnapshot(cloneDraft(draft));
-    setLastSavedAt(new Date().toLocaleString("th-TH"));
+  const handleSaveDraft = async () => {
+    setSavingChecklists(true);
+    try {
+      const saved = await saveChecklistDraft(draft);
+      setDraft(cloneDraft(saved));
+      setSavedSnapshot(cloneDraft(saved));
+      setLastSavedAt(new Date().toLocaleString("th-TH"));
+    } catch {
+      window.alert("บันทึกแบบประเมินลง DB ไม่สำเร็จ กรุณาลองใหม่อีกครั้ง");
+    } finally {
+      setSavingChecklists(false);
+    }
   };
 
   const handleReset = () => {
@@ -485,13 +513,19 @@ export default function SafetyAdmin() {
     setSelectedQuestionId(restored[selectedType][0]?.id || "");
   };
 
-  const handleRestoreDefault = () => {
-    restoreChecklistDefaults();
-    const restored = cloneDraft(DEFAULT_CHECKLISTS);
-    setDraft(restored);
-    setSavedSnapshot(cloneDraft(DEFAULT_CHECKLISTS));
-    setSelectedQuestionId(restored[selectedType][0]?.id || "");
-    setLastSavedAt("");
+  const handleRestoreDefault = async () => {
+    setSavingChecklists(true);
+    try {
+      const restored = cloneDraft(await restoreChecklistDefaults());
+      setDraft(restored);
+      setSavedSnapshot(cloneDraft(restored));
+      setSelectedQuestionId(restored[selectedType][0]?.id || "");
+      setLastSavedAt(new Date().toLocaleString("th-TH"));
+    } catch {
+      window.alert("Restore Default ลง DB ไม่สำเร็จ กรุณาลองใหม่อีกครั้ง");
+    } finally {
+      setSavingChecklists(false);
+    }
   };
 
 
@@ -669,8 +703,8 @@ export default function SafetyAdmin() {
 
             <div style={{ display: "flex", gap: 6, justifyContent: isMobile ? "space-between" : "flex-start" }}>
               <button type="button" onClick={handleReset} style={{ ...buttonGhostStyle, height: 32, borderRadius: 8, fontSize: isMobile ? 11.5 : 13, padding: isMobile ? "0 8px" : "0 12px" }}>Reset</button>
-              <button type="button" onClick={handleRestoreDefault} style={{ ...buttonDangerStyle, height: 32, borderRadius: 8, fontSize: isMobile ? 11.5 : 13, padding: isMobile ? "0 8px" : "0 12px" }}>Restore Default</button>
-              <button type="button" onClick={handleSaveDraft} style={{ ...buttonPrimaryStyle, height: 32, borderRadius: 8, fontSize: isMobile ? 11.5 : 13, padding: isMobile ? "0 10px" : "0 14px", boxShadow: "none" }}>Save Draft</button>
+              <button type="button" onClick={handleRestoreDefault} disabled={savingChecklists} style={{ ...buttonDangerStyle, height: 32, borderRadius: 8, fontSize: isMobile ? 11.5 : 13, padding: isMobile ? "0 8px" : "0 12px", opacity: savingChecklists ? 0.6 : 1 }}>Restore Default</button>
+              <button type="button" onClick={handleSaveDraft} disabled={savingChecklists} style={{ ...buttonPrimaryStyle, height: 32, borderRadius: 8, fontSize: isMobile ? 11.5 : 13, padding: isMobile ? "0 10px" : "0 14px", boxShadow: "none", opacity: savingChecklists ? 0.7 : 1 }}>{savingChecklists ? "Saving..." : "Save Draft"}</button>
             </div>
           </div>
         </div>
