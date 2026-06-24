@@ -238,8 +238,8 @@ export function DesktopTopbar() {
               "border border-white/[0.12] bg-white/[0.08] text-white",
               "cursor-pointer hover:bg-white/16 hover:text-white"
             )}
-            aria-label={open ? "à¸›à¸´à¸”à¹€à¸¡à¸™à¸¹" : "à¹€à¸›à¸´à¸”à¹€à¸¡à¸™à¸¹"}
-            title={open ? "à¸›à¸´à¸”à¹€à¸¡à¸™à¸¹" : "à¹€à¸›à¸´à¸”à¹€à¸¡à¸™à¸¹"}
+            aria-label={open ? "ปิดเมนู" : "เปิดเมนู"}
+            title={open ? "ปิดเมนู" : "เปิดเมนู"}
           >
             {open ? <X className="h-5 w-5" strokeWidth={2.35} /> : <Menu className="h-5 w-5" strokeWidth={2.35} />}
           </SheetTrigger>
@@ -345,7 +345,7 @@ export function DesktopTopbar() {
                         <AdminFlyoutSection key={section.id} section={section} pathname={pathname} />
                       ))}
                       {adminSections.length === 0 && (
-                        <div className="px-3 py-4 text-center text-xs font-bold text-white/60">à¸¢à¸±à¸‡à¹„à¸¡à¹ˆà¸¡à¸µà¹€à¸¡à¸™à¸¹à¸¢à¹ˆà¸­à¸¢ Admin</div>
+                        <div className="px-3 py-4 text-center text-xs font-bold text-white/60">ยังไม่มีเมนูย่อย Admin</div>
                       )}
                     </div>
                   </div>
@@ -480,7 +480,7 @@ export function DesktopTopbar() {
           >
             <NavTo
               href="/profile"
-              aria-label="à¹‚à¸›à¸£à¹„à¸Ÿà¸¥à¹Œà¸‚à¸­à¸‡à¸‰à¸±à¸™"
+              aria-label="โปรไฟล์ของฉัน"
               className={cn(
                 "login-btn-compact inline-flex h-11 w-11 cursor-pointer items-center justify-center overflow-hidden rounded-full bg-[var(--brand-accent)] p-0 text-white",
                 "shadow-[0_8px_18px_rgba(var(--brand-accent-rgb),0.22)] transition-colors hover:bg-[var(--brand-accent)]"

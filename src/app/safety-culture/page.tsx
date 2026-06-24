@@ -1328,11 +1328,11 @@ export default function Page() {
         <DialogContent
           showCloseButton={false}
           aria-label="รายละเอียดโพสต์"
-          className="z-[91] max-h-[86vh] w-full max-w-[430px] gap-0 overflow-hidden rounded-[24px] border border-[var(--c-e4d3b3)] bg-[var(--c-fffdfa)] p-0 shadow-[0_24px_60px_rgba(0,0,0,0.28)] sm:max-w-[560px] md:max-h-[82vh] md:max-w-[620px] md:rounded-[24px]"
+          className="z-[91] flex max-h-[86vh] w-full max-w-[430px] flex-col gap-0 overflow-hidden rounded-[24px] border border-[var(--c-e4d3b3)] bg-[var(--c-fffdfa)] p-0 shadow-[0_24px_60px_rgba(0,0,0,0.28)] sm:max-w-[560px] md:max-h-[82vh] md:max-w-[620px] md:rounded-[24px]"
         >
           {expandedPost ? (
             <>
-            <div className="flex items-start justify-between gap-3 border-b border-[var(--c-eee2cb)] px-4 py-3 md:gap-4 md:px-5 md:py-3.5">
+            <div className="flex flex-shrink-0 items-start justify-between gap-3 border-b border-[var(--c-eee2cb)] px-4 py-3 md:gap-4 md:px-5 md:py-3.5">
               <div className="min-w-0">
                 <div className="flex items-center gap-2.5 md:gap-3">
                   <ProfileAvatar
@@ -1358,7 +1358,7 @@ export default function Page() {
             </div>
 
             <div
-              className="overflow-y-auto px-4 py-3.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden md:px-5 md:py-4"
+              className="min-h-0 flex-1 overflow-y-auto px-4 py-3.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden md:px-5 md:py-4"
             >
               <div className="flex flex-col gap-3.5 font-sarabun md:gap-4">
                 <div className="flex flex-wrap items-center justify-between gap-2">

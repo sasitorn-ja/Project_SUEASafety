@@ -144,18 +144,12 @@ export default function Category() {
               <header>
                 <Trophy />
                 <h2>สถิติ Safety Effort ของคุณ</h2>
-                <ChevronRight />
               </header>
               <div className={styles.statusRows}>
                 <div>
                   <span className={styles.rowIcon}><ClipboardCheck /></span>
                   <strong>จำนวน Line Walk / Safety Contact เดือนนี้</strong>
                   <b>{monthlyStats.loading ? "..." : monthlyStats.count?.toLocaleString("th-TH") ?? "0"} ครั้ง</b>
-                </div>
-                <div>
-                  <span className={styles.rowIcon}><ShieldCheck /></span>
-                  <strong>ระดับความเสี่ยงภาพรวม:</strong>
-                  <b className={styles.lowRisk}>ต่ำมาก</b>
                 </div>
               </div>
             </section>
@@ -164,7 +158,6 @@ export default function Category() {
               <header>
                 <Bell />
                 <h2>ข้อเสนอแนะ &amp; แจ้งเตือนภัย</h2>
-                <ChevronRight />
               </header>
               <div className={styles.alertRows}>
                 <div>

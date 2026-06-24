@@ -214,7 +214,7 @@ export function MobileTopbar({ hidden = false }: { hidden?: boolean }) {
   };
 
   const closeDrawer = () => setOpen(false);
-  const menuLabel = open ? "à¸›à¸´à¸”à¹€à¸¡à¸™à¸¹" : "à¹€à¸›à¸´à¸”à¹€à¸¡à¸™à¸¹";
+  const menuLabel = open ? "ปิดเมนู" : "เปิดเมนู";
 
   return (
     <>
@@ -343,7 +343,7 @@ export function MobileTopbar({ hidden = false }: { hidden?: boolean }) {
                             />
                           ))}
                           {adminSections.length === 0 && (
-                            <div className="px-2.5 py-3 text-[11px] font-bold text-white/55">à¸¢à¸±à¸‡à¹„à¸¡à¹ˆà¸¡à¸µà¹€à¸¡à¸™à¸¹à¸¢à¹ˆà¸­à¸¢ Admin</div>
+                            <div className="px-2.5 py-3 text-[11px] font-bold text-white/55">ยังไม่มีเมนูย่อย Admin</div>
                           )}
                         </div>
                       )}
