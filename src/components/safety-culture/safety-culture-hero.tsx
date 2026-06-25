@@ -65,7 +65,7 @@ export function SafetyCultureHero({
 
   return (
     <Card className={cn(
-      "relative overflow-hidden font-sarabun",
+      "relative left-1/2 w-[calc(100vw-20px)] max-w-none -translate-x-1/2 overflow-hidden font-sarabun lg:w-[calc(100vw-48px)]",
       isCommunity
         ? "min-h-[100px] rounded-[16px] border border-[#D7EAFE] bg-[linear-gradient(135deg,#EAF6FF_0%,#F7FBFF_46%,#E1F1FF_100%)] shadow-[0_8px_22px_rgba(185,223,255,0.45),inset_0_1px_0_rgba(255,255,255,0.75)] sm:min-h-[116px] sm:rounded-[20px] xl:min-h-[148px]"
         : "rounded-[18px] border-[2px] border-[#0B82F0] bg-[linear-gradient(135deg,#35A8FF_0%,#0B82F0_50%,#006AD6_100%)] shadow-[0_12px_28px_rgba(185,223,255,0.45)]",

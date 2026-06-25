@@ -164,6 +164,14 @@ body {
   flex-direction: column;
 }
 
+.home-hero-mascot {
+  transition: z-index 0s linear;
+}
+
+.app-shell-root:has(header [aria-expanded="true"]) .home-hero-mascot {
+  z-index: 40;
+}
+
 .app-login-main {
   overflow: hidden;
 }

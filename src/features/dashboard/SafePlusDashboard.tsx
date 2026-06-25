@@ -112,6 +112,12 @@ function formatThaiDate(dateKey: string) {
   }).format(date);
 }
 
+function previousBangkokDateKey(dateKey: string) {
+  const date = new Date(`${dateKey}T12:00:00+07:00`);
+  date.setUTCDate(date.getUTCDate() - 1);
+  return bangkokDateKey(date);
+}
+
 function activityBonusLabel(event: { points: number; bonusMode: string; multiplier: number; fixedPoints: number }) {
   if (event.bonusMode === "multiplier") return `x${event.multiplier}`;
   if (event.fixedPoints > 0) return `+${event.fixedPoints} คะแนน`;
@@ -195,12 +201,18 @@ export default function SafePlusDashboard() {
     const completionRate = pastRequiredDays.length ? Math.round((pastDone / pastRequiredDays.length) * 100) : 0;
     const latest = [...awarenessHistory].sort((a, b) => b.date.localeCompare(a.date))[0] || null;
     let streak = 0;
-    for (let i = days.length - 1; i >= 0; i -= 1) {
-      const day = days[i];
-      if (!day.required) continue;
-      if (day.completion) { streak += 1; continue; }
-      if (day.dateKey === today) continue;
-      break;
+    let streakDate = today;
+    if (!historyByDate.has(today)) {
+      streakDate = previousBangkokDateKey(streakDate);
+    }
+    while (streakDate >= awarenessStartDate) {
+      const date = new Date(`${streakDate}T00:00:00+07:00`);
+      const required = ![0, 6].includes(date.getDay()) && !holidayDates.has(streakDate);
+      if (required) {
+        if (!historyByDate.has(streakDate)) break;
+        streak += 1;
+      }
+      streakDate = previousBangkokDateKey(streakDate);
     }
     return { days, done, missed, completionRate, latest, streak };
   }, [awarenessHistory, awarenessHolidays, awarenessStartDate]);
@@ -217,7 +229,7 @@ export default function SafePlusDashboard() {
         aria-label="คะแนน Safety ของฉัน"
         className="relative mx-2.5 mt-2 overflow-hidden rounded-[18px] border border-[rgba(215,234,254,.72)] text-[#0B2F6B] shadow-[0_10px_22px_rgba(185,223,255,.28)] lg:mx-6 lg:mt-3 lg:overflow-visible"
         style={{
-          background: `linear-gradient(rgba(226,241,255,.26),rgba(226,241,255,.26)), url("${HERO_BG}") center 55%/cover no-repeat`,
+          background: `linear-gradient(rgba(226,241,255,.26),rgba(226,241,255,.26)), url("${HERO_BG}") center 64%/cover no-repeat`,
           minHeight: 212,
         }}
       >
@@ -274,7 +286,7 @@ export default function SafePlusDashboard() {
           width={1122}
           height={1402}
           priority
-          className="mascot-motion mascot-motion-hero pointer-events-none absolute bottom-[-22px] right-[10.5%] z-[20] hidden w-[16.5%] max-w-[212px] object-contain object-bottom [filter:drop-shadow(0_18px_18px_rgba(4,37,86,.24))] lg:block"
+          className="home-hero-mascot mascot-motion mascot-motion-hero pointer-events-none absolute bottom-[-28px] right-[9.5%] z-[60] hidden w-[17%] max-w-[226px] object-contain object-bottom [filter:drop-shadow(0_18px_18px_rgba(4,37,86,.24))] lg:block"
         />
 
         {/* mobile layout */}
@@ -375,18 +387,13 @@ export default function SafePlusDashboard() {
           </div>
 
           <div className="mt-2.5 rounded-[16px] border border-[#dbe9fa] bg-[#f9fbff] p-2">
-            <div className="mb-2 flex items-center justify-between gap-2">
-              <p className="m-0 text-[9px] font-bold leading-snug text-[#5f7698] sm:text-[10.5px]">
-                แสดง 11 วันรอบวันนี้ เพื่อดูว่าวันไหนต้องเข้ามาทำ Safety Awareness
-              </p>
-            </div>
             <div className="grid grid-cols-3 gap-1.5 sm:grid-cols-4 sm:gap-2 xl:grid-cols-11">
             {dashboardData.days.map((day) => {
               const isToday = day.dateKey === todayKey;
               const dayStatus = day.completion
                 ? "ทำแล้ว"
                 : day.isFuture
-                ? day.required ? "ควรทำ" : "ไม่นับ"
+                ? day.required ? "นับ" : "ไม่นับ"
                 : day.required
                 ? "ไม่ได้ทำ"
                 : "ไม่นับ";
@@ -396,7 +403,7 @@ export default function SafePlusDashboard() {
                   className={cn(
                     "relative flex min-h-[72px] flex-col items-center justify-center rounded-[16px] border-[1.5px] px-1.5 py-1.5 text-center transition-colors sm:min-h-[82px] sm:rounded-[18px] sm:px-2 sm:py-2",
                     isToday
-                      ? "border-[#0b82f0] bg-[#eaf4ff] text-[#0b4d97] shadow-[0_10px_24px_rgba(11,130,240,.16)]"
+                      ? "border-[3px] border-[#087dff] bg-gradient-to-b from-[#d6ecff] to-[#b9dcff] text-[#073f87] shadow-[inset_0_1px_0_rgba(255,255,255,.7),0_0_0_3px_rgba(8,125,255,.14),0_12px_28px_rgba(8,125,255,.28)]"
                       : day.completion
                       ? "border-[#7fd7a4] bg-[#ebfbf1] text-[#13814a]"
                       : day.isFuture

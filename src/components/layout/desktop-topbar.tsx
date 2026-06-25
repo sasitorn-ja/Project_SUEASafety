@@ -229,7 +229,7 @@ export function DesktopTopbar() {
       )}
       style={{ fontFamily: "var(--font-sans)", height: "var(--topbar-h)" }}
     >
-      <div className="mx-auto flex h-full w-full max-w-[1500px] items-center justify-between gap-2 px-5">
+      <div className="flex h-full w-full items-center justify-between gap-2 px-6">
         <NavTo href="/" className="flex min-w-[234px] items-center gap-3.5">
           <Image src="/images/brand/LOGO1_trim.png" alt="Safety Caring" width={300} height={52} priority className="h-[40px] w-auto object-contain" />
         </NavTo>
