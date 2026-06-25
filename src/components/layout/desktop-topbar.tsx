@@ -86,20 +86,20 @@ function ConfiguredMenuLink({
   const content = (
     <>
       {Icon && (
-        <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full border border-white/10 bg-[rgba(var(--brand-accent-rgb),0.18)] text-[var(--brand-hero-label)]">
+        <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full border border-[#D7EAFE] bg-[#F5FAFF] text-[#0B82F0]">
           <Icon className="h-[17px] w-[17px]" strokeWidth={2.35} />
         </span>
       )}
       <span className="min-w-0">
-        <span className="block text-[12.5px] font-extrabold leading-[16px] text-white">{node.label}</span>
-        {node.description && <span className="mt-0.5 block text-[10.5px] font-semibold leading-[14px] text-white/[0.68]">{node.description}</span>}
+        <span className="block text-[12.5px] font-extrabold leading-[16px] text-[#0B2F6B]">{node.label}</span>
+        {node.description && <span className="mt-0.5 block text-[10.5px] font-semibold leading-[14px] text-[#55739B]">{node.description}</span>}
       </span>
     </>
   );
 
   // asLabel: หัวข้อหมวด (เช่น Safety Effort / Safety Culture) — แสดงเป็นชื่อหมวดเฉยๆ ไม่ลิงก์ไปหน้า
   if (asLabel || !node.href) {
-    return <div className="flex items-center gap-2.5 rounded-lg p-2 text-white">{content}</div>;
+    return <div className="flex items-center gap-2.5 rounded-lg p-2 text-[#0B2F6B]">{content}</div>;
   }
 
   return (
@@ -107,8 +107,8 @@ function ConfiguredMenuLink({
       href={node.href}
       onClick={onClick}
       className={cn(
-        "flex items-center gap-2.5 rounded-lg p-2 text-white transition-colors hover:bg-white/10",
-        isExactNavActive(pathname, node.href) && "bg-white/10"
+        "flex items-center gap-2.5 rounded-lg p-2 text-[#0B2F6B] transition-colors hover:bg-[#F5FAFF]",
+        isExactNavActive(pathname, node.href) && "bg-[#EEF7FF]"
       )}
     >
       {content}
@@ -125,15 +125,15 @@ function AdminFlyoutSection({ section, pathname }: { section: MenuNode; pathname
 
   return (
     <div className="group/admin-section relative">
-      <div className="flex cursor-default items-center rounded-lg hover:bg-white/10">
+      <div className="flex cursor-default items-center rounded-lg hover:bg-[#F5FAFF]">
         <div className="min-w-0 flex-1">
           <ConfiguredMenuLink node={section} pathname={pathname} compact asLabel />
         </div>
-        {children.length > 0 && <ChevronDown className="mr-1.5 h-3 w-3 -rotate-90 text-white/70" strokeWidth={2.5} />}
+        {children.length > 0 && <ChevronDown className="mr-1.5 h-3 w-3 -rotate-90 text-[#55739B]" strokeWidth={2.5} />}
       </div>
       {children.length > 0 && (
         <div className="invisible absolute left-full top-0 z-50 w-[min(300px,calc(100vw-32px))] -translate-x-1 pl-1.5 opacity-0 transition-all duration-150 group-hover/admin-section:visible group-hover/admin-section:translate-x-0 group-hover/admin-section:opacity-100">
-          <div className="max-h-[calc(100vh-var(--topbar-h)-24px)] overflow-y-auto rounded-xl border border-white/[0.14] bg-[rgba(var(--brand-nav-rgb),0.98)] p-1.5 shadow-[0_18px_44px_var(--brand-shadow)] backdrop-blur-xl">
+          <div className="max-h-[calc(100vh-var(--topbar-h)-24px)] overflow-y-auto rounded-xl border border-[#D7EAFE] bg-white p-1.5 shadow-[0_18px_44px_rgba(185,223,255,0.55)] backdrop-blur-xl">
             {children.map((child) => (
               <ConfiguredMenuLink key={child.id} node={child} pathname={pathname} />
             ))}
@@ -218,25 +218,23 @@ export function DesktopTopbar() {
     <header
       className={cn(
         "hidden min-[1100px]:flex fixed top-0 left-0 right-0 z-50 items-center",
-        "home-desktop-topbar",
-        "bg-[rgba(var(--brand-nav-rgb),0.92)] border-b border-white/10",
-        "shadow-[0_10px_30px_var(--brand-shadow)] backdrop-blur-[16px]",
+        "border-b border-[#D7EAFE] bg-white/95 shadow-[0_6px_20px_rgba(185,223,255,0.45)] backdrop-blur-xl",
         "[transition:margin-left_200ms_ease-out]",
         "ml-0"
       )}
       style={{ fontFamily: "var(--font-sans)", height: "var(--topbar-h)" }}
     >
-      <div className="desktop-topbar-inner mx-auto flex h-full w-full max-w-[1540px] items-center justify-between gap-[22px] px-6 xl:px-12">
-        <NavTo href="/" className="desktop-brand flex min-w-[200px] items-center gap-3.5">
-          <Image src="/images/LOGO1_trim.png" alt="Safety Caring" width={300} height={52} priority className="h-[40px] w-auto object-contain" />
+      <div className="mx-auto flex h-full w-full max-w-[1500px] items-center justify-between gap-2 px-5">
+        <NavTo href="/" className="flex min-w-[234px] items-center gap-3.5">
+          <Image src="/images/brand/LOGO1_trim.png" alt="Safety Caring" width={300} height={52} priority className="h-[40px] w-auto object-contain" />
         </NavTo>
 
         <Sheet open={open} onOpenChange={setOpen}>
           <SheetTrigger
             className={cn(
               "compact-toggle-visible hidden h-11 w-11 flex-shrink-0 items-center justify-center rounded-full",
-              "border border-white/[0.12] bg-white/[0.08] text-white",
-              "cursor-pointer hover:bg-white/16 hover:text-white"
+              "border border-[#D7EAFE] bg-white text-[#0B82F0]",
+              "cursor-pointer hover:bg-[#F5FAFF]"
             )}
             aria-label={open ? "ปิดเมนู" : "เปิดเมนู"}
             title={open ? "ปิดเมนู" : "เปิดเมนู"}
@@ -258,7 +256,7 @@ export function DesktopTopbar() {
                       onClick={() => enabled && setOpen(false)}
                       className={cn(
                         "flex min-h-11 items-center gap-2.5 rounded-lg px-3 text-sm font-bold transition-colors",
-                        active && enabled ? "bg-[var(--brand-accent)] text-[var(--brand-nav)]" : "bg-white/[0.08] text-white/[0.82] hover:bg-white/10",
+                        active && enabled ? "bg-[#0B82F0] text-white" : "bg-white text-[#0B2F6B] hover:bg-[#F5FAFF]",
                         !enabled && "cursor-not-allowed opacity-[0.58]"
                       )}
                     >
@@ -269,8 +267,8 @@ export function DesktopTopbar() {
                 })}
               </div>
 
-              <div className="rounded-2xl border border-white/10 bg-white/[0.06] p-2.5">
-                <div className="mb-2 flex items-center gap-2 px-1.5 text-[10px] font-extrabold uppercase tracking-[0.18em] text-[var(--brand-hero-label)]">
+              <div className="rounded-2xl border border-[#D7EAFE] bg-white p-2.5">
+                <div className="mb-2 flex items-center gap-2 px-1.5 text-[10px] font-extrabold uppercase tracking-[0.18em] text-[#0B82F0]">
                   <Heart className="h-3.5 w-3.5" strokeWidth={2.3} />
                   <span>Safety Culture</span>
                 </div>
@@ -283,11 +281,11 @@ export function DesktopTopbar() {
                         href={item.href}
                         onClick={() => setOpen(false)}
                         className={cn(
-                          "flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-bold transition-colors hover:bg-white/10",
-                          isExactNavActive(pathname, item.href) ? "bg-white/10 text-[var(--brand-accent)]" : "text-white/[0.86]"
+                          "flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-bold transition-colors hover:bg-[#F5FAFF]",
+                          isExactNavActive(pathname, item.href) ? "bg-[#EEF7FF] text-[#0B82F0]" : "text-[#0B2F6B]"
                         )}
                       >
-                        <Icon className="h-[17px] w-[17px] text-[var(--brand-accent)]" strokeWidth={2.3} />
+                        <Icon className="h-[17px] w-[17px] text-[#0B82F0]" strokeWidth={2.3} />
                         {item.label}
                       </NavTo>
                     );
@@ -295,14 +293,14 @@ export function DesktopTopbar() {
                 </div>
               </div>
 
-              <div className="rounded-2xl border border-white/10 bg-white/[0.06] p-2.5">
-                <div className="mb-2 flex items-center gap-2 px-1.5 text-[10px] font-extrabold uppercase tracking-[0.18em] text-[var(--brand-hero-label)]">
+              <div className="rounded-2xl border border-[#D7EAFE] bg-white p-2.5">
+                <div className="mb-2 flex items-center gap-2 px-1.5 text-[10px] font-extrabold uppercase tracking-[0.18em] text-[#0B82F0]">
                   <UserRound className="h-3.5 w-3.5" strokeWidth={2.3} />
                   <span>Admin</span>
                 </div>
                 <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
                   {adminSections.map((section) => (
-                    <div key={section.id} className="rounded-xl border border-white/10 bg-white/[0.04] p-1.5">
+                    <div key={section.id} className="rounded-xl border border-[#D7EAFE] bg-[#F5FAFF] p-1.5">
                       <ConfiguredMenuLink
                         node={section}
                         pathname={pathname}
@@ -311,7 +309,7 @@ export function DesktopTopbar() {
                         asLabel={section.children.filter((node) => node.enabled).length > 0}
                       />
                       {section.children.filter((node) => node.enabled).length > 0 && (
-                        <div className="ml-3 border-l border-white/15 pl-2">
+                          <div className="ml-3 border-l border-[#D7EAFE] pl-2">
                           {section.children.filter((node) => node.enabled).map((child) => (
                             <ConfiguredMenuLink key={child.id} node={child} pathname={pathname} onClick={() => setOpen(false)} compact />
                           ))}
@@ -325,7 +323,7 @@ export function DesktopTopbar() {
           </SheetContent>
         </Sheet>
 
-        <nav ref={desktopNavRef} className="desktop-nav-visible flex min-w-0 flex-1 items-center justify-center gap-2" aria-label="Main navigation">
+        <nav ref={desktopNavRef} className="flex min-w-0 flex-1 items-center justify-center gap-1" aria-label="Main navigation">
           {navItems.map((item) => {
             const Icon = item.icon;
             const active = isActive(item.href);
@@ -334,18 +332,18 @@ export function DesktopTopbar() {
             if (item.id === "admin") {
               return (
                 <div key={item.id} className="relative">
-                  <button type="button" onClick={() => setDesktopMenu((current) => current === "admin" ? null : "admin")} aria-expanded={desktopMenu === "admin"} aria-haspopup="menu" className={cn("desktop-nav-item home-desktop-nav-item inline-flex h-11 items-center justify-center gap-2 rounded-full px-4 text-[15px] font-bold whitespace-nowrap transition-all", active && "is-home-active", active ? "bg-[var(--brand-nav-active)] text-white" : "bg-transparent text-white/[0.82] hover:bg-white/10 hover:text-white")}>
+                  <button type="button" onClick={() => setDesktopMenu((current) => current === "admin" ? null : "admin")} aria-expanded={desktopMenu === "admin"} aria-haspopup="menu" className={cn("inline-flex h-11 min-w-[100px] items-center justify-center gap-2 rounded-[13px] border border-transparent px-[15px] text-[14.5px] font-bold whitespace-nowrap transition-all", active ? "bg-[linear-gradient(135deg,#35A8FF_0%,#0B82F0_55%,#006AD6_100%)] text-white shadow-[0_8px_20px_rgba(11,130,240,0.22)]" : "bg-transparent text-[#0B2F6B] hover:border-[#D7EAFE] hover:bg-[#F5FAFF] hover:text-[#0B82F0]")}>
                     <Icon className="h-[17px] w-[17px]" strokeWidth={2.35} />
                     <span className="desktop-nav-label">{item.label}</span>
                     <ChevronDown className={cn("h-3.5 w-3.5 transition-transform", desktopMenu === "admin" && "rotate-180")} />
                   </button>
                   <div className={cn("absolute right-0 top-full z-50 w-[320px] pt-2 transition-all duration-150", desktopMenu === "admin" ? "visible translate-y-0 opacity-100" : "invisible -translate-y-1 opacity-0")}>
-                    <div className="overflow-visible rounded-xl border border-white/[0.14] bg-[rgba(var(--brand-nav-rgb),0.96)] p-1.5 text-white shadow-[0_18px_44px_var(--brand-shadow)] backdrop-blur-xl">
+                    <div className="overflow-visible rounded-xl border border-[#D7EAFE] bg-white p-1.5 text-[#0B2F6B] shadow-[0_18px_44px_rgba(185,223,255,0.55)] backdrop-blur-xl">
                       {adminSections.map((section) => (
                         <AdminFlyoutSection key={section.id} section={section} pathname={pathname} />
                       ))}
                       {adminSections.length === 0 && (
-                        <div className="px-3 py-4 text-center text-xs font-bold text-white/60">ยังไม่มีเมนูย่อย Admin</div>
+                        <div className="px-3 py-4 text-center text-xs font-bold text-[#55739B]">ยังไม่มีเมนูย่อย Admin</div>
                       )}
                     </div>
                   </div>
@@ -367,10 +365,8 @@ export function DesktopTopbar() {
                     aria-expanded={desktopMenu === menuId}
                     aria-haspopup="menu"
                     className={cn(
-                      "desktop-nav-item inline-flex h-11 items-center justify-center gap-2 rounded-full px-4 text-[15px] font-bold whitespace-nowrap transition-all",
-                      "home-desktop-nav-item",
-                      active && "is-home-active",
-                      active ? "bg-[var(--brand-nav-active)] text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.18),0_8px_18px_rgba(0,0,0,0.18)]" : "bg-transparent text-white/[0.82] hover:bg-white/10 hover:text-white"
+                      "inline-flex h-11 min-w-[100px] items-center justify-center gap-2 rounded-[13px] border border-transparent px-[15px] text-[14.5px] font-bold whitespace-nowrap transition-all",
+                      active ? "bg-[linear-gradient(135deg,#35A8FF_0%,#0B82F0_55%,#006AD6_100%)] text-white shadow-[0_8px_20px_rgba(11,130,240,0.22)]" : "bg-transparent text-[#0B2F6B] hover:border-[#D7EAFE] hover:bg-[#F5FAFF] hover:text-[#0B82F0]"
                     )}
                   >
                     <Icon className="h-[17px] w-[17px]" strokeWidth={2.35} />
@@ -384,7 +380,7 @@ export function DesktopTopbar() {
                       desktopMenu === menuId ? "visible translate-y-0 opacity-100" : "invisible -translate-y-1 opacity-0"
                     )}
                   >
-                    <div className="max-h-[calc(100vh-var(--topbar-h)-24px)] overflow-y-auto rounded-xl border border-white/[0.14] bg-[rgba(var(--brand-nav-rgb),0.96)] p-1.5 text-white shadow-[0_18px_44px_var(--brand-shadow)] backdrop-blur-xl">
+                    <div className="max-h-[calc(100vh-var(--topbar-h)-24px)] overflow-y-auto rounded-xl border border-[#D7EAFE] bg-white p-1.5 text-[#0B2F6B] shadow-[0_18px_44px_rgba(185,223,255,0.55)] backdrop-blur-xl">
                       {submenuItems.map((subitem) => {
                         const SubIcon = subitem.icon;
 
@@ -394,16 +390,16 @@ export function DesktopTopbar() {
                             href={subitem.href}
                             onClick={() => setDesktopMenu(null)}
                             className={cn(
-                              "flex items-center gap-2.5 rounded-lg p-2 text-white transition-colors hover:bg-white/10 focus:bg-white/10 focus:outline-none",
-                              isExactNavActive(pathname, subitem.href) && "bg-white/10"
+                              "flex items-center gap-2.5 rounded-lg p-2 text-[#0B2F6B] transition-colors hover:bg-[#F5FAFF] focus:bg-[#F5FAFF] focus:outline-none",
+                              isExactNavActive(pathname, subitem.href) && "bg-[#EEF7FF]"
                             )}
                           >
-                            <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full border border-white/10 bg-[rgba(var(--brand-accent-rgb),0.18)] text-[var(--brand-hero-label)]">
+                            <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full border border-[#D7EAFE] bg-[#F5FAFF] text-[#0B82F0]">
                               <SubIcon className="h-[17px] w-[17px]" strokeWidth={2.35} />
                             </span>
                             <span className="min-w-0">
-                              <span className="block text-[12.5px] font-extrabold leading-[16px] text-white">{subitem.label}</span>
-                              <span className="mt-0.5 block text-[10.5px] font-semibold leading-[14px] text-white/[0.68]">{subitem.description}</span>
+                              <span className="block text-[12.5px] font-extrabold leading-[16px] text-[#0B2F6B]">{subitem.label}</span>
+                              <span className="mt-0.5 block text-[10.5px] font-semibold leading-[14px] text-[#55739B]">{subitem.description}</span>
                             </span>
                           </NavTo>
                         );
@@ -419,10 +415,8 @@ export function DesktopTopbar() {
                 key={item.id}
                 href={enabled ? item.href : "#"}
                 className={cn(
-                  "desktop-nav-item inline-flex h-11 items-center justify-center gap-2 rounded-full px-4 text-[15px] font-bold whitespace-nowrap transition-all",
-                  "home-desktop-nav-item",
-                  active && "is-home-active",
-                  active && enabled ? "bg-[var(--brand-nav-active)] text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.18),0_8px_18px_rgba(0,0,0,0.18)]" : "bg-transparent text-white/[0.82] hover:bg-white/10",
+                  "inline-flex h-11 min-w-[100px] items-center justify-center gap-2 rounded-[13px] border border-transparent px-[15px] text-[14.5px] font-bold whitespace-nowrap transition-all",
+                  active && enabled ? "bg-[linear-gradient(135deg,#35A8FF_0%,#0B82F0_55%,#006AD6_100%)] text-white shadow-[0_8px_20px_rgba(11,130,240,0.22)]" : "bg-transparent text-[#0B2F6B] hover:border-[#D7EAFE] hover:bg-[#F5FAFF] hover:text-[#0B82F0]",
                   !enabled && "cursor-not-allowed opacity-[0.62] hover:bg-transparent"
                 )}
                 style={{ transition: "background 0.18s ease, color 0.18s ease, transform 0.18s ease" }}
@@ -442,8 +436,8 @@ export function DesktopTopbar() {
               onClick={() => setNotificationOpen((current) => !current)}
               className={cn(
                 "relative flex h-11 w-11 flex-shrink-0 cursor-pointer items-center justify-center rounded-full",
-                "bg-transparent text-white transition-opacity hover:opacity-70",
-                notificationOpen && "bg-white/10"
+                "bg-transparent text-[#0B82F0] transition-opacity hover:opacity-70",
+                notificationOpen && "bg-[#F5FAFF]"
               )}
               aria-label="Notifications"
               title="Notifications"
@@ -452,8 +446,8 @@ export function DesktopTopbar() {
               <Bell className="h-5 w-5" strokeWidth={2.3} />
               {unreadNotificationCount > 0 ? (
                 <span
-                  className="absolute -top-[5px] -right-[5px] flex h-4 min-w-4 items-center justify-center rounded-full bg-[var(--brand-accent)] px-[3px] text-[10px] font-bold text-[var(--brand-accent-contrast)]"
-                  style={{ outline: "2px solid var(--nav-brown)" }}
+                  className="absolute -top-[5px] -right-[5px] flex h-4 min-w-4 items-center justify-center rounded-full bg-[#0B82F0] px-[3px] text-[10px] font-bold text-white"
+                  style={{ outline: "2px solid #FFFFFF" }}
                 >
                   {Math.min(unreadNotificationCount, 9)}
                 </span>
@@ -482,8 +476,8 @@ export function DesktopTopbar() {
               href="/profile"
               aria-label="โปรไฟล์ของฉัน"
               className={cn(
-                "login-btn-compact inline-flex h-11 w-11 cursor-pointer items-center justify-center overflow-hidden rounded-full bg-[var(--brand-accent)] p-0 text-white",
-                "shadow-[0_8px_18px_rgba(var(--brand-accent-rgb),0.22)] transition-colors hover:bg-[var(--brand-accent)]"
+                "inline-flex h-11 w-11 cursor-pointer items-center justify-center overflow-hidden rounded-full bg-white p-0 text-[#0B82F0]",
+                "shadow-[0_8px_18px_rgba(185,223,255,0.45)] transition-colors hover:bg-[#F5FAFF]"
               )}
             >
               {displayImage && !profileImageFailed ? (
@@ -504,7 +498,7 @@ export function DesktopTopbar() {
                 desktopMenu === "profile" ? "visible translate-y-0 opacity-100" : "invisible -translate-y-1 opacity-0"
               )}
             >
-              <div className="rounded-xl border border-white/[0.14] bg-[rgba(var(--brand-nav-rgb),0.96)] p-1.5 text-white shadow-[0_18px_44px_var(--brand-shadow)] backdrop-blur-xl">
+              <div className="rounded-xl border border-[#D7EAFE] bg-white p-1.5 text-[#0B2F6B] shadow-[0_18px_44px_rgba(185,223,255,0.55)] backdrop-blur-xl">
                 {PROFILE_ITEMS.map((item) => {
                   const Icon = item.icon;
 
@@ -513,15 +507,15 @@ export function DesktopTopbar() {
                       key={item.href}
                       href={item.href}
                       className={cn(
-                        "flex items-center gap-2 rounded-lg p-2 text-white transition-colors hover:bg-white/10 focus:bg-white/10 focus:outline-none",
-                        isExactNavActive(pathname, item.href) && "bg-white/10"
+                        "flex items-center gap-2 rounded-lg p-2 text-[#0B2F6B] transition-colors hover:bg-[#F5FAFF] focus:bg-[#F5FAFF] focus:outline-none",
+                        isExactNavActive(pathname, item.href) && "bg-[#EEF7FF]"
                       )}
                     >
-                      <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full border border-white/10 bg-[rgba(var(--brand-accent-rgb),0.18)] text-[var(--brand-hero-label)]">
+                      <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full border border-[#D7EAFE] bg-[#F5FAFF] text-[#0B82F0]">
                         <Icon className="h-[17px] w-[17px]" strokeWidth={2.35} />
                       </span>
                       <span className="min-w-0">
-                        <span className="block whitespace-nowrap text-[11.5px] font-extrabold leading-[15px] text-white">{item.label}</span>
+                        <span className="block whitespace-nowrap text-[11.5px] font-extrabold leading-[15px] text-[#0B2F6B]">{item.label}</span>
                       </span>
                     </NavTo>
                   );

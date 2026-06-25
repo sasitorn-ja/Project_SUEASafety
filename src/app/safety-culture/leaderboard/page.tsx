@@ -68,8 +68,9 @@ export default function LeaderboardPage() {
               </>
             }
             description="Safety Caring ช่วยสรุปคะแนน Safety ให้เห็นภาพรวม ทั้งคะแนนทีมและอันดับในทีมของคุณ"
-            backgroundImage="/images/hero03.png"
-            backgroundOverlay="linear-gradient(90deg, rgba(2, 26, 66, .82) 0%, rgba(3, 33, 78, .5) 38%, rgba(3, 33, 78, .2) 100%)"
+            variant="community"
+            backgroundImage="/images/heroes/safety-culture-leaderboard-hero.png"
+            backgroundOverlay="linear-gradient(90deg, rgba(210,235,255,.82) 0%, rgba(210,235,255,.56) 42%, rgba(210,235,255,0) 100%)"
             actionsLayout="side"
             actions={
               leadingTeam ? (

@@ -201,8 +201,8 @@ export default function RewardsPage() {
             mascotAlt="น้องวางใจ Safety mascot"
             mascotAction="happy"
             variant="community"
-            backgroundImage="/images/hero01.png"
-            backgroundOverlay="linear-gradient(90deg, rgba(2, 26, 66, .82) 0%, rgba(3, 33, 78, .5) 34%, rgba(3, 33, 78, .16) 56%, rgba(3, 33, 78, 0) 70%)"
+            backgroundImage="/images/heroes/safety-culture-rewards-hero.png"
+            backgroundOverlay="linear-gradient(90deg, rgba(210,235,255,.82) 0%, rgba(210,235,255,.60) 32%, rgba(210,235,255,.10) 56%, rgba(210,235,255,0) 74%)"
           />
         </div>
 

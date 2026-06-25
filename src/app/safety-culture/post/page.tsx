@@ -286,8 +286,8 @@ export default function PostSocialPage() {
             }
             description="เล่าเหตุการณ์ดี ๆ หรือจุดเสี่ยงให้เพื่อนร่วมทีมเห็นได้เร็วขึ้น"
             variant="community"
-            backgroundImage="/images/hero02.png"
-            backgroundOverlay="linear-gradient(90deg, rgba(2, 26, 66, .84) 0%, rgba(3, 33, 78, .60) 44%, rgba(3, 33, 78, .30) 100%)"
+            backgroundImage="/images/heroes/safety-culture-post-hero.png"
+            backgroundOverlay="linear-gradient(90deg, rgba(210,235,255,.82) 0%, rgba(210,235,255,.60) 36%, rgba(210,235,255,.10) 64%, rgba(210,235,255,0) 100%)"
           />
         </div>
 

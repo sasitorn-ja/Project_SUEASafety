@@ -61,7 +61,7 @@ export function StepHeader({
   category,
   title,
   onBack,
-  mascotSrc = "/images/safety-effort-mascot.png",
+  mascotSrc = "/images/icons/safety-effort-mascot.png",
   rightExtra,
 }: StepHeaderProps) {
   return (

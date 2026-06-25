@@ -32,9 +32,8 @@ export function MobileBottomNav({ hidden = false }: { hidden?: boolean }) {
     <nav
       className={cn(
         "min-[1100px]:hidden fixed bottom-0 left-0 right-0 z-50",
-        "home-mobile-bottom-nav",
-        "bg-[rgba(var(--brand-nav-rgb),0.96)] border-t border-white/[0.08]",
-        "shadow-[0_-10px_28px_var(--brand-shadow)] backdrop-blur-[16px]",
+        "border-t border-[#D7EAFE] bg-white/95",
+        "shadow-[0_-10px_28px_rgba(185,223,255,0.45)] backdrop-blur-[16px]",
         "mobile-bottom-nav",
         hidden && "pointer-events-none is-hidden"
       )}
@@ -58,10 +57,8 @@ export function MobileBottomNav({ hidden = false }: { hidden?: boolean }) {
               href={enabled ? item.href : "#"}
               className={cn(
                 "relative flex min-h-[54px] cursor-pointer select-none flex-col items-center gap-[2px] rounded-[10px] pt-1 pb-0 text-center",
-                "home-bottom-nav-item",
-                active && "is-home-active",
                 "[-webkit-tap-highlight-color:transparent]",
-                active && enabled ? "font-black text-[var(--brand-accent)]" : "font-bold text-white/[0.62]",
+                active && enabled ? "font-black text-[#0B82F0]" : "font-bold text-[#55739B]",
                 !enabled && "cursor-not-allowed opacity-[0.56]",
                 !enabled && "active:bg-transparent"
               )}
@@ -75,20 +72,20 @@ export function MobileBottomNav({ hidden = false }: { hidden?: boolean }) {
             >
               <span
                 className={cn(
-                  "absolute -top-[1px] left-1/2 h-[3px] w-6 -translate-x-1/2 rounded-full bg-[var(--brand-accent)] transition-opacity",
+                  "absolute -top-[1px] left-1/2 h-[3px] w-6 -translate-x-1/2 rounded-full bg-[#0B82F0] transition-opacity",
                   active ? "opacity-100" : "opacity-0"
                 )}
               />
               <span
                 className={cn(
                   "relative flex h-[26px] w-[26px] items-center justify-center rounded-full transition-all",
-                  active && enabled ? "bg-[var(--brand-accent)] text-[var(--brand-nav)] shadow-[0_8px_16px_var(--brand-shadow)]" : "bg-transparent"
+                  active && enabled ? "bg-[#0B82F0] text-white shadow-[0_8px_16px_rgba(11,130,240,0.22)]" : "bg-transparent"
                 )}
                 style={{ transition: "background 150ms" }}
               >
                 <Icon className="h-[18px] w-[18px] transition-all" strokeWidth={active && enabled ? 2.45 : 2.1} />
                 {showBadge ? (
-                  <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-[var(--brand-accent)] px-[3px] text-[9px] font-black text-[var(--brand-accent-contrast)] ring-[1.5px] ring-[var(--brand-nav)]">
+                  <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#0B82F0] px-[3px] text-[9px] font-black text-white ring-[1.5px] ring-white">
                     {Math.min(unreadNotificationCount, 9)}
                   </span>
                 ) : null}

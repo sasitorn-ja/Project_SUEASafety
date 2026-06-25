@@ -818,8 +818,8 @@ export default function AdminEventPage() {
           }
           description="สร้าง แก้ไข จัดลำดับ และตั้งค่าการแสดงผลกิจกรรมบนหน้า Feed"
           variant="community"
-          backgroundImage="/images/safety-culture-hero.png"
-          backgroundOverlay="linear-gradient(90deg, rgba(2, 26, 66, .82) 0%, rgba(3, 33, 78, .5) 34%, rgba(3, 33, 78, .16) 56%, rgba(3, 33, 78, 0) 70%)"
+          backgroundImage="/images/heroes/admin-event-hero.png"
+          backgroundOverlay="linear-gradient(90deg, rgba(210,235,255,.82) 0%, rgba(210,235,255,.60) 32%, rgba(210,235,255,.10) 56%, rgba(210,235,255,0) 74%)"
         />
 
         {editorMode === "bonus" ? (
@@ -1799,7 +1799,7 @@ export default function AdminEventPage() {
       </div>
 
       <Dialog open={feedModalOpen && !!feedModalDraft} onOpenChange={(open) => !open && closeFeedEditorModal()}>
-        <DialogContent aria-label={feedModalTitle} className="event-editor-popup max-h-[94vh] max-w-[980px] overflow-hidden p-0 sm:max-w-[980px]">
+        <DialogContent aria-label={feedModalTitle} className="event-editor-popup grid h-[min(94vh,900px)] max-w-[980px] grid-rows-[auto_minmax(0,1fr)_auto] gap-0 overflow-hidden p-0 sm:max-w-[980px]">
           {feedModalDraft ? (
           <>
             <DialogHeader className="px-5 py-5 sm:px-6">
@@ -1814,7 +1814,7 @@ export default function AdminEventPage() {
               </div>
             </DialogHeader>
 
-            <div className="overflow-y-auto bg-[linear-gradient(180deg,#ffffff,#f8fcff)] px-5 py-5 md:px-6">
+            <div className="min-h-0 overflow-y-auto overscroll-contain bg-[linear-gradient(180deg,#ffffff,#f8fcff)] px-5 py-5 md:px-6">
               <div className="rounded-[22px] border border-[var(--c-eadcc7)] bg-[var(--c-fffaf2)] p-4">
                 <div className="flex flex-col gap-3">
                   <div className="text-[15px] font-black text-[var(--c-2d241b)]">ข้อมูลหลักของกิจกรรม</div>

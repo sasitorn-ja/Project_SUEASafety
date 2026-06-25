@@ -172,62 +172,76 @@ body {
   /* ===== CPAC Safe+ palette =====
      Navy #062B63 · Deep Blue #0B4EA2 · Bright Blue #1E90FF · Cyan Glow #27D7FF
      Soft Sky #DCEBFF · Light Gray #F4F8FC · Success #2DBE60 · Soft Red #F8D7D7 · Text #173B6B */
-  --background: #f4f8fc;
-  --foreground: #173b6b;
+  --background: #eef7ff;
+  --foreground: #0b2f6b;
   --card: #ffffff;
-  --card-foreground: #173b6b;
+  --card-foreground: #0b2f6b;
   --popover: #ffffff;
-  --popover-foreground: #173b6b;
-  --primary: #1763c0;
+  --popover-foreground: #0b2f6b;
+  --primary: #0b82f0;
   --primary-foreground: #ffffff;
-  --secondary: #eaf2fd;
-  --secondary-foreground: #1763c0;
-  --muted: #eef4fb;
-  --muted-foreground: #5f7591;
-  --accent: #dcebff;
-  --accent-foreground: #1763c0;
-  --border: rgba(11, 78, 162, 0.14);
-  --input: rgba(11, 78, 162, 0.16);
-  --ring: #1e90ff;
-  --success: #2dbe60;
+  --secondary: #f5faff;
+  --secondary-foreground: #0b82f0;
+  --muted: #eef6ff;
+  --muted-foreground: #55739b;
+  --accent: #f5faff;
+  --accent-foreground: #0b82f0;
+  --border: #d7eafe;
+  --input: #d7eafe;
+  --ring: #0b82f0;
+  --success: #22c55e;
   --destructive: #e2553f;
-  --brand-gold: #1e90ff;
-  --brand-brown: #0e3e7d;
-  --chart-1: #27d7ff;
-  --chart-2: #1e90ff;
+  --brand-gold: #0b82f0;
+  --brand-brown: #0b2f6b;
+  --chart-1: #35a8ff;
+  --chart-2: #0b82f0;
   --sidebar: #ffffff;
-  --sidebar-foreground: #173b6b;
-  --sidebar-primary: #1763c0;
-  --sidebar-accent: #eaf2fd;
-  --sidebar-accent-foreground: #1763c0;
-  --sidebar-border: rgba(11, 78, 162, 0.14);
-  --sidebar-ring: #1e90ff;
-  --nav-brown: #0e3e7d;
-  --brand-accent: #1e90ff;
-  --brand-accent-strong: #1763c0;
-  --brand-accent-rgb: 30, 144, 255;
+  --sidebar-foreground: #0b2f6b;
+  --sidebar-primary: #0b82f0;
+  --sidebar-accent: #f5faff;
+  --sidebar-accent-foreground: #0b82f0;
+  --sidebar-border: #d7eafe;
+  --sidebar-ring: #0b82f0;
+  --nav-brown: #0b2f6b;
+  --brand-cyan: #35a8ff;
+  --brand-blue: #0b82f0;
+  --brand-blue-600: #006ad6;
+  --brand-blue-700: #0b2f6b;
+  --brand-accent: #0b82f0;
+  --brand-accent-strong: #006ad6;
+  --brand-accent-rgb: 11, 130, 240;
   --brand-accent-contrast: #ffffff;
-  --brand-nav: #0e3e7d;
-  --brand-nav-rgb: 14, 62, 125;
-  --brand-nav-active: #1e90ff;
-  --brand-soft: #dcebff;
+  --brand-nav: #0d3568;
+  --brand-nav-rgb: 13, 53, 104;
+  --brand-nav-active: #0b82f0;
+  --brand-soft: #f5faff;
   --brand-surface: #ffffff;
-  --brand-text: #173b6b;
-  --brand-muted-text: #5f7591;
-  --brand-image-placeholder: #e8f1fb;
-  --brand-hover-surface: #dcebff;
-  --brand-hero-copy: #dcebff;
-  --brand-hero-label: #27d7ff;
-  --brand-hero-start: #0e3e7d;
-  --brand-hero-end: #1763c0;
-  --brand-shadow: rgba(14, 62, 125, 0.16);
+  --brand-text: #0b2f6b;
+  --brand-muted-text: #55739b;
+  --brand-image-placeholder: #e8f4ff;
+  --brand-hover-surface: #e9f5ff;
+  --brand-hero-copy: #55739b;
+  --brand-hero-label: #0b82f0;
+  --brand-hero-start: #ffffff;
+  --brand-hero-end: #eef7ff;
+  --brand-shadow: rgba(185, 223, 255, 0.55);
+  --text-secondary: #55739b;
+  --page-bg: #eef7ff;
+  --card-bg: #ffffff;
+  --card-soft: #f5faff;
+  --border-soft: #d7eafe;
+  --shadow-blue: rgba(185, 223, 255, 0.65);
+  --success-bg: #eafbf1;
+  --warning-bg: #fff7e6;
+  --error-bg: #fff1f2;
+  --topbar-h: 66px;
   --app-page-max: 1480px;
   --app-page-pad-x: clamp(12px, 2vw, 28px);
   --app-page-pad-y: clamp(10px, 1.6vw, 22px);
   --app-section-gap: 14px;
   --app-card-radius: 14px;
-  --app-card-border: rgba(11, 78, 162, 0.14);
-  --app-card-shadow: 0 7px 22px rgba(14, 62, 125, 0.06);
+  --app-card-border: rgba(13, 80, 165, 0.18);
+  --app-card-shadow: 0 4px 18px rgba(11, 53, 110, 0.10), 0 1px 4px rgba(11, 53, 110, 0.06);
 }
 
 :root[data-theme="wangjai"] [style*="background-color:#F8E46A" i] {
@@ -255,7 +269,7 @@ body {
 .page-content {
   flex: 1 0 auto;
   min-height: 100dvh;
-  background: linear-gradient(180deg, #edf5ff 0, var(--background) 280px, var(--background) 100%);
+  background: linear-gradient(180deg, #ddeeff 0px, #eaf3fc 180px, #f0f6fd 100%);
   padding-top: var(--mobile-topbar-h);
   padding-right: 0;
   padding-bottom: calc(var(--mobile-bottomnav-h) + env(safe-area-inset-bottom));
@@ -303,34 +317,6 @@ body {
   transform: translateY(-100%);
 }
 
-.mobile-drawer-layer {
-  position: fixed;
-  inset-inline: 0;
-  top: var(--mobile-topbar-h);
-  z-index: 40;
-  height: calc(100vh - var(--mobile-topbar-h));
-}
-
-.mobile-drawer-overlay {
-  position: absolute;
-  inset: 0;
-  cursor: pointer;
-  background: rgba(0, 0, 0, 0.32);
-  backdrop-filter: blur(2px);
-}
-
-.mobile-drawer-aside {
-  position: relative;
-  height: 100%;
-  width: min(318px, 86vw);
-  overflow-y: auto;
-  border-right: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(var(--brand-nav-rgb), 0.96);
-  padding: 12px;
-  box-shadow: 18px 0 34px rgba(38, 18, 3, 0.34);
-  backdrop-filter: blur(16px);
-}
-
 .mobile-bottom-nav {
   transition: transform 200ms cubic-bezier(0.2, 0.8, 0.2, 1);
 }
@@ -350,7 +336,7 @@ body {
 /* Shared CPAC Safe+ page language. Dashboard intentionally owns its own scale. */
 .app-standard-page {
   color: var(--foreground);
-  background: linear-gradient(180deg, #edf5ff 0, var(--background) 280px, var(--background) 100%);
+  background: linear-gradient(180deg, #ddeeff 0px, #eaf3fc 180px, var(--background) 100%);
 }
 
 .app-standard-page [data-slot="card"] {
@@ -450,6 +436,11 @@ body {
   --popup-muted: #5f7591;
 }
 
+[data-slot="dialog-content"] {
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+}
+
 [data-slot="dialog-content"] :where(input, textarea, select),
 [data-slot="sheet-content"] :where(input, textarea, select),
 .ac-modal :where(input, textarea, select),
@@ -512,11 +503,14 @@ body {
 
 .ac-modal,
 .ci-modal {
+  max-height: min(92dvh, 820px) !important;
   border: 1px solid #cfe0f2 !important;
   border-radius: 28px !important;
   background: linear-gradient(180deg, rgba(255,255,255,.98), rgba(248,252,255,.96)) !important;
   color: #173b6b !important;
   box-shadow: 0 28px 80px rgba(6,43,99,.28) !important;
+  overflow-y: auto !important;
+  overscroll-behavior: contain;
 }
 
 .ac-modal-close,
@@ -582,6 +576,48 @@ body {
   box-shadow: 0 0 0 3px rgba(30,144,255,.14) !important;
 }
 
+.safety-admin-form-popup {
+  max-height: min(92dvh, 840px) !important;
+  overflow: hidden !important;
+  border: 1px solid #cfe0f2 !important;
+  border-radius: 28px !important;
+  background: linear-gradient(180deg, rgba(255,255,255,.98), rgba(248,252,255,.96)) !important;
+  box-shadow: 0 28px 80px rgba(6,43,99,.28) !important;
+}
+
+.safety-admin-form-popup > div {
+  width: 100% !important;
+  max-height: min(92dvh, 840px) !important;
+  overflow-y: auto !important;
+  overscroll-behavior: contain;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: linear-gradient(180deg, rgba(255,255,255,.98), rgba(248,252,255,.96)) !important;
+  box-shadow: none !important;
+}
+
+.safety-admin-form-popup > div > :first-child {
+  margin: -24px -24px 16px !important;
+  padding: 18px 24px 14px !important;
+  border-bottom: 1px solid #d7e6f6 !important;
+  background: linear-gradient(135deg,#ffffff 0%,#f4f9ff 56%,#eaf4ff 100%) !important;
+  color: #0e3e7d !important;
+}
+
+.safety-admin-form-popup :where([style*="box-shadow"]) {
+  box-shadow: 0 10px 28px rgba(14,62,125,.07) !important;
+}
+
+.safety-admin-form-popup :where(input, textarea, select) {
+  border-color: #cfe0f2 !important;
+  border-radius: 14px !important;
+  color: #173b6b !important;
+}
+
+.safety-admin-form-popup :where(button) {
+  border-radius: 14px !important;
+}
+
 @media (max-width: 620px) {
   .app-standard-page [data-slot="card"] {
     border-radius: 13px;
@@ -605,336 +641,85 @@ body {
   }
 }
 
-/* CPAC Safe+ Home navigation */
-.home-desktop-topbar {
-  height: 66px !important;
-  border-bottom-color: rgba(54, 191, 255, 0.22) !important;
-  background: linear-gradient(90deg, rgba(2, 25, 58, 0.98), rgba(3, 50, 99, 0.97), rgba(2, 25, 58, 0.98)) !important;
-  box-shadow: 0 10px 28px rgba(0, 34, 78, 0.32) !important;
+/* Bright Safety Caring language for all authenticated app pages. Login is outside app-shell-root. */
+.app-shell-root {
+  --sc-bright-gradient: linear-gradient(135deg, #35a8ff 0%, #0b82f0 55%, #006ad6 100%);
+  --sc-soft-panel: linear-gradient(180deg, rgba(255,255,255,.96), rgba(248,252,255,.92));
 }
 
-.home-desktop-topbar .desktop-topbar-inner {
-  max-width: 1500px;
-  gap: 8px;
-  padding-inline: 20px;
+.app-shell-root :where(.app-section, .app-empty-state) {
+  border-color: #d7eafe !important;
+  background: var(--sc-soft-panel) !important;
+  box-shadow: 0 8px 22px rgba(185, 223, 255, .45) !important;
 }
 
-.home-desktop-topbar .desktop-brand {
-  min-width: 234px;
-  gap: 9px;
+.app-shell-root :where(button:not([data-slot="dialog-close"]):not([data-slot="sheet-close"]), a) {
+  letter-spacing: 0;
 }
 
-.home-desktop-topbar .desktop-brand-logo {
-  width: 46px;
-  height: 46px;
+.app-shell-root :where(button:not([disabled])) {
+  transition: transform .16s ease, box-shadow .16s ease, background .16s ease, border-color .16s ease;
 }
 
-.home-desktop-topbar .desktop-nav-visible {
-  gap: 3px;
+.app-shell-root :where(input, textarea, select, [role="combobox"]) {
+  border-color: #cfe4fb !important;
+  background-color: rgba(255, 255, 255, .92) !important;
+  color: #0b2f6b !important;
 }
 
-.home-desktop-topbar .desktop-brand-title {
-  font-size: 24px;
+.app-shell-root :where(input, textarea, select, [role="combobox"]):focus {
+  border-color: #0b82f0 !important;
+  box-shadow: 0 0 0 3px rgba(11, 130, 240, .14) !important;
 }
 
-.home-desktop-topbar .desktop-brand-subtitle {
-  font-size: 10px;
-  color: rgba(255, 255, 255, 0.78);
+.app-shell-root :where(.text-white) {
+  text-shadow: none;
 }
 
-.home-desktop-nav-item {
-  height: 44px !important;
-  min-width: 100px;
-  border: 1px solid transparent;
-  border-radius: 13px !important;
-  padding-inline: 15px !important;
-  font-size: 14.5px !important;
-}
-
-.home-desktop-nav-item svg {
-  width: 16px !important;
-  height: 16px !important;
-}
-
-.home-desktop-nav-item.is-home-active {
-  border-color: #28c7ff !important;
-  color: #fff !important;
-  background: linear-gradient(180deg, #158eff, #0565d2) !important;
-  box-shadow: 0 0 18px rgba(26, 181, 255, 0.62), inset 0 1px 0 rgba(255, 255, 255, 0.35) !important;
-}
-
-/* Safety Culture community hero */
-.safety-culture-community-hero {
-  min-height: 158px;
-  border-width: 1px !important;
-  border-color: #278dff !important;
-  border-radius: 20px !important;
+.app-shell-root :where([style*="linear-gradient(105deg, var(--brand-hero-start)"]) {
+  border: 1px solid #d7eafe !important;
   background:
-    var(--sc-hero-overlay, linear-gradient(90deg, rgba(2, 26, 66, .96) 0%, rgba(4, 48, 104, .84) 54%, rgba(3, 30, 70, .68) 100%)),
-    var(--sc-hero-image, url("/images/dashboard/cpac-desktop-hero-bg.png")) center 72% / cover no-repeat !important;
-  box-shadow: inset 0 0 28px rgba(20, 143, 255, .16), 0 12px 30px rgba(5, 43, 91, .18) !important;
+    linear-gradient(90deg, rgba(255,255,255,.96) 0%, rgba(245,250,255,.88) 38%, rgba(220,239,255,.55) 100%) !important;
+  color: #0b2f6b !important;
+  box-shadow: 0 8px 22px rgba(185, 223, 255, .45) !important;
 }
 
-.safety-culture-community-hero::after {
-  content: "";
-  position: absolute;
-  right: 42%;
-  bottom: 15px;
-  width: 164px;
-  height: 164px;
-  opacity: .16;
-  border: 4px solid #4fb8ff;
-  border-radius: 36% 36% 48% 48%;
-  clip-path: polygon(50% 0, 92% 18%, 84% 76%, 50% 100%, 16% 76%, 8% 18%);
+.app-shell-root :where([style*="repeating-linear-gradient"][style*="#0e0f12"], [class*="repeating-linear-gradient"][class*="#121214"], [class*="repeating-linear-gradient"][class*="#1A1A1A"], [class*="repeating-linear-gradient"][class*="--c-15120e"]) {
+  background: linear-gradient(90deg, #35a8ff, #0b82f0, #006ad6) !important;
 }
 
-.safety-culture-community-hero > div:first-child {
-  background: radial-gradient(circle at 76% 30%, rgba(29, 177, 255, .23), transparent 26%) !important;
+.app-shell-root :where([class*="brand-hero-start"], [class*="var(--brand-nav)_50%"], [class*="var(--brand-hero-end)"]) {
+  border: 1px solid #d7eafe !important;
+  background:
+    linear-gradient(90deg, rgba(255,255,255,.96) 0%, rgba(245,250,255,.90) 46%, rgba(220,239,255,.62) 100%) !important;
+  color: #0b2f6b !important;
+  box-shadow: 0 8px 22px rgba(185, 223, 255, .45) !important;
 }
 
-.safety-culture-community-hero > div:nth-child(2) {
-  height: 11px !important;
-  background: repeating-linear-gradient(-45deg, #1d9dff, #1d9dff 14px, #031629 14px, #031629 28px) !important;
+.app-shell-root :where([class*="brand-hero-start"], [class*="var(--brand-nav)_50%"], [class*="var(--brand-hero-end)"]) :where(.text-white, h1, h2, h3, p, span, strong) {
+  color: inherit !important;
+  text-shadow: none !important;
 }
 
-.safety-culture-community-hero .safety-culture-hero-grid {
-  min-height: 158px;
-  grid-template-columns: minmax(0, 1fr) 330px !important;
-  align-items: center;
-  padding: 12px 30px 0 !important;
+.app-shell-root :where([class*="brand-hero-start"], [class*="var(--brand-nav)_50%"], [class*="var(--brand-hero-end)"]) :where(svg) {
+  color: #0b82f0 !important;
 }
 
-/* Mascot sits grounded at the bottom edge and fills the banner height
-   (full-body, not floating) — same idea as the Home hero mascot */
-.safety-culture-community-hero .safety-culture-hero-mascot-image {
-  max-height: none;
-  object-fit: contain;
-  object-position: bottom center;
+.app-shell-root :where(.bg-\[var\(--brand-nav\)\], .bg-\[var\(--brand-text\)\]) {
+  background: var(--sc-bright-gradient) !important;
+  color: #ffffff !important;
 }
 
-.safety-culture-community-hero .safety-culture-hero-copy {
-  z-index: 2;
-  gap: 6px;
+.app-shell-root :where(.text-\[var\(--brand-nav\)\], .text-\[var\(--brand-text\)\]) {
+  color: #0b2f6b !important;
 }
 
-.safety-culture-community-hero .safety-culture-hero-copy > span {
-  border-radius: 4px;
-  border-color: #22c7ff;
-  color: #31d6ff;
-  background: rgba(0, 83, 153, .36);
-  padding: 4px 10px;
-  font-size: 9px;
-  letter-spacing: .08em;
+.app-shell-root :where(.border-\[var\(--brand-nav\)\]) {
+  border-color: #d7eafe !important;
 }
 
-.safety-culture-community-hero .safety-culture-hero-title {
-  font-size: 31px !important;
-  line-height: 1.05;
-  background: linear-gradient(90deg, #fff 0 45%, #2ed7ff 62%, #6ae8ff 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-}
-
-.safety-culture-community-hero .safety-culture-hero-description {
-  max-width: 680px !important;
-  font-size: 14px !important;
-  line-height: 1.55;
-  color: rgba(255, 255, 255, .88);
-}
-
-.safety-culture-community-hero .safety-culture-hero-mascot {
-  right: clamp(18px, 3.2vw, 58px) !important;
-  bottom: -110px !important;
-  width: clamp(252px, 17vw, 318px) !important;
-  max-width: none;
-  /* Softer, bluer shadow so the mascot blends on light/photo backgrounds
-     instead of looking like a cut-out with a dark halo */
-  filter:
-    drop-shadow(0 2px 3px rgba(8, 40, 88, .16))
-    drop-shadow(0 8px 12px rgba(8, 40, 88, .14));
-}
-
-@media (max-width: 1099px) {
-  .safety-culture-community-hero {
-    min-height: 150px;
-  }
-
-  .safety-culture-community-hero .safety-culture-hero-grid {
-    min-height: 150px;
-    grid-template-columns: minmax(0, 1fr) 214px !important;
-    padding: 11px 18px 13px !important;
-  }
-
-  .safety-culture-community-hero .safety-culture-hero-title {
-    font-size: 27px !important;
-  }
-
-  .safety-culture-community-hero .safety-culture-hero-description {
-    font-size: 12px !important;
-  }
-
-  .safety-culture-community-hero .safety-culture-hero-mascot {
-    right: 8px !important;
-    bottom: -86px !important;
-    width: 206px !important;
-  }
-
-  .safety-culture-community-hero .safety-culture-hero-mascot-image {
-    max-height: none;
-  }
-}
-
-@media (max-width: 620px) {
-  .safety-culture-community-hero {
-    min-height: 124px;
-    border-radius: 16px !important;
-  }
-
-  .safety-culture-community-hero::after {
-    display: none;
-  }
-
-  .safety-culture-community-hero .safety-culture-hero-grid {
-    min-height: 124px;
-    grid-template-columns: minmax(0, 1fr) 118px !important;
-    gap: 2px;
-    padding: 10px 12px 11px !important;
-  }
-
-  .safety-culture-community-hero .safety-culture-hero-copy {
-    gap: 5px;
-  }
-
-  .safety-culture-community-hero .safety-culture-hero-copy > span {
-    padding: 4px 7px;
-    font-size: 7px;
-  }
-
-  .safety-culture-community-hero .safety-culture-hero-title {
-    max-width: none !important;
-    font-size: 23px !important;
-    white-space: nowrap !important;
-  }
-
-  .safety-culture-community-hero .safety-culture-hero-description {
-    max-width: 230px !important;
-    font-size: 9px !important;
-    line-height: 1.55;
-  }
-
-  .safety-culture-community-hero .safety-culture-hero-mascot {
-    right: -10px !important;
-    bottom: -48px !important;
-    width: 126px !important;
-  }
-
-  .safety-culture-community-hero .safety-culture-hero-mascot-image {
-    max-height: none;
-  }
-}
-
-@media (max-width: 1099px) {
-  .home-mobile-topbar {
-    height: 66px !important;
-    padding-inline: 10px !important;
-    border-bottom: 0 !important;
-    background: linear-gradient(180deg, #001833, #002857) !important;
-    box-shadow: none !important;
-  }
-
-  .home-mobile-topbar > div:first-child {
-    gap: 8px;
-  }
-
-  .home-mobile-topbar button {
-    width: 35px;
-    height: 35px;
-  }
-
-  .home-mobile-topbar button svg {
-    width: 22px;
-    height: 22px;
-  }
-
-  .home-mobile-topbar a[href="/"] > div:first-child {
-    width: 38px;
-    height: 38px;
-  }
-
-  .home-mobile-topbar a[href="/"] > div:last-child > span:first-child {
-    font-size: 20px;
-  }
-
-  .home-mobile-topbar a[href="/"] > div:last-child > span:last-child {
-    margin-top: 1px;
-    font-size: 9.5px;
-    color: rgba(255, 255, 255, 0.72);
-  }
-
-  .home-mobile-bottom-nav {
-    right: 0 !important;
-    bottom: 0;
-    left: 0 !important;
-    min-height: calc(var(--mobile-bottomnav-h) + env(safe-area-inset-bottom)) !important;
-    overflow: visible;
-    border: 1px solid rgba(42, 190, 255, 0.38) !important;
-    border-bottom: 0 !important;
-    border-radius: 0;
-    background: linear-gradient(120deg, rgba(2, 24, 56, 0.99), rgba(4, 54, 104, 0.99), rgba(2, 24, 56, 0.99)) !important;
-    box-shadow: 0 -10px 28px rgba(0, 51, 112, 0.28) !important;
-  }
-
-  .home-mobile-bottom-nav > div {
-    height: auto !important;
-    min-height: 60px !important;
-    padding: 4px 5px 2px !important;
-    gap: 2px;
-  }
-
-  .home-bottom-nav-item {
-    min-height: 55px !important;
-    gap: 2px !important;
-    border: 1px solid transparent;
-    border-radius: 8px !important;
-    padding-top: 3px !important;
-    font-size: 9.5px !important;
-    color: rgba(255, 255, 255, 0.68) !important;
-  }
-
-  .home-bottom-nav-item > span:first-child {
-    display: none;
-  }
-
-  .home-bottom-nav-item > span:nth-child(2) {
-    width: 25px !important;
-    height: 25px !important;
-    border-radius: 7px !important;
-    color: currentColor !important;
-    background: transparent !important;
-    box-shadow: none !important;
-  }
-
-  .home-bottom-nav-item > span:nth-child(2) svg {
-    width: 19px !important;
-    height: 19px !important;
-  }
-
-  .home-bottom-nav-item > span:last-child {
-    max-width: 74px !important;
-  }
-
-  .home-bottom-nav-item.is-home-active {
-    border-color: rgba(32, 184, 255, 0.36);
-    color: #27cfff !important;
-    background: linear-gradient(180deg, rgba(6, 93, 161, 0.52), rgba(4, 48, 98, 0.48)) !important;
-    box-shadow: inset 0 0 18px rgba(18, 155, 255, 0.2), 0 0 16px rgba(0, 152, 255, 0.16);
-  }
-
-  .home-bottom-nav-item.is-home-active > span:nth-child(2) {
-    color: #3ed8ff !important;
-    filter: drop-shadow(0 0 8px rgba(38, 205, 255, 0.78));
-  }
+.app-shell-root :where(.bg-\[var\(--brand-soft\)\]) {
+  background: #f5faff !important;
 }
 
 @keyframes safety-assistant-float {
@@ -1338,6 +1123,21 @@ body {
 
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
+}
+
+/* SafePlusDashboard activity carousel */
+@keyframes activitySlide {
+  0%, 14% { transform: translateX(0); }
+  100% { transform: translateX(calc((var(--activity-count) - 1) * -100%)); }
+}
+
+.activity-viewport:hover .activity-track-auto {
+  animation-play-state: paused;
+}
+
+.activity-track-auto {
+  animation: activitySlide calc(var(--activity-count) * 5s) ease-in-out infinite;
+  will-change: transform;
 }
 
 /* === auto color tokens (warm->blue theme) START === */

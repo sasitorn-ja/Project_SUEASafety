@@ -551,12 +551,9 @@ export default function SafetyAdmin() {
             eyebrow="SAFETY EFFORT ADMIN"
             title={<>จัดการแบบประเมิน</>}
             description="เพิ่ม แก้ไข และจัดเรียงข้อประเมินความปลอดภัยสำหรับ Linewalk และ Safety Contact"
-            mascotSrc="/images/safety-effort-mascot.png"
-            mascotAlt="Safety mascot"
-            mascotAction="happy"
             variant="community"
-            backgroundImage="/images/safety-effort-hero.png"
-            backgroundOverlay="linear-gradient(90deg, rgba(2, 26, 66, .82) 0%, rgba(3, 33, 78, .5) 34%, rgba(3, 33, 78, .16) 56%, rgba(3, 33, 78, 0) 70%)"
+            backgroundImage="/images/heroes/safety-assessment-admin-hero.png"
+            backgroundOverlay="linear-gradient(90deg, rgba(210,235,255,.82) 0%, rgba(210,235,255,.60) 32%, rgba(210,235,255,.10) 56%, rgba(210,235,255,0) 74%)"
           />
         </div>
         {/* Compact Header & Controls Bar */}
@@ -1133,7 +1130,7 @@ export default function SafetyAdmin() {
     </div>
 
       <Dialog open={!!deleteTargetId} onOpenChange={(open) => !open && setDeleteTargetId(null)}>
-        <DialogContent showCloseButton={false} className="z-[1000] border-0 bg-transparent p-0 shadow-none sm:max-w-[460px]">
+        <DialogContent showCloseButton={false} className="safety-admin-form-popup z-[1000] p-0 sm:max-w-[460px]">
           <div
             style={{
               width: "min(100%, 460px)",
@@ -1167,7 +1164,7 @@ export default function SafetyAdmin() {
           }
         }}
       >
-        <DialogContent showCloseButton={false} className="z-[1000] border-0 bg-transparent p-0 shadow-none sm:max-w-[820px]">
+        <DialogContent showCloseButton={false} className="safety-admin-form-popup z-[1000] p-0 sm:max-w-[820px]">
           {tempQuestion ? (
           <div
             style={{
@@ -1383,7 +1380,7 @@ export default function SafetyAdmin() {
       </Dialog>
 
       <Dialog open={showBackdateLimitModal} onOpenChange={(open) => !open && handleCancelBackdateModal()}>
-        <DialogContent showCloseButton={false} className="z-[1000] border-0 bg-transparent p-0 shadow-none sm:max-w-[460px]">
+        <DialogContent showCloseButton={false} className="safety-admin-form-popup z-[1000] p-0 sm:max-w-[460px]">
           <div
             style={{
               width: "min(100%, 460px)",

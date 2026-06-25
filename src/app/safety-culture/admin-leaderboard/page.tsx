@@ -320,8 +320,8 @@ export default function AdminLeaderboardPage() {
           }
           description="จัดการหน่วยงาน คะแนน และอันดับ โดยอ้างอิงข้อมูลจริงในระบบ"
           variant="community"
-          backgroundImage="/images/safety-culture-hero.png"
-          backgroundOverlay="linear-gradient(90deg, rgba(2, 26, 66, .82) 0%, rgba(3, 33, 78, .5) 34%, rgba(3, 33, 78, .16) 56%, rgba(3, 33, 78, 0) 70%)"
+          backgroundImage="/images/heroes/admin-leaderboard-hero.png"
+          backgroundOverlay="linear-gradient(90deg, rgba(210,235,255,.82) 0%, rgba(210,235,255,.60) 32%, rgba(210,235,255,.10) 56%, rgba(210,235,255,0) 74%)"
         />
         <Card className="mt-4 rounded-[16px] border border-[var(--border)] bg-[var(--brand-soft)] p-3.5 shadow-[0_8px_18px_var(--brand-shadow)] md:p-4">
           <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
@@ -425,7 +425,7 @@ export default function AdminLeaderboardPage() {
         </div>
 
         <Dialog open={!!editingTeam} onOpenChange={(open) => !open && setEditingTeam(null)}>
-          <DialogContent className="max-h-[88vh] max-w-[620px] overflow-hidden rounded-[18px] border border-[var(--border)] bg-[var(--brand-surface)] p-0 shadow-[0_24px_50px_rgba(62,36,13,0.18)] sm:rounded-[30px] sm:max-w-[680px]">
+          <DialogContent className="grid h-[min(88vh,720px)] max-w-[620px] grid-rows-[auto_minmax(0,1fr)_auto] gap-0 overflow-hidden rounded-[28px] border border-[#cfe0f2] bg-[linear-gradient(180deg,#ffffff,#f8fcff)] p-0 shadow-[0_28px_80px_rgba(6,43,99,0.24)] sm:max-w-[680px]">
             <DialogHeader className="border-b border-[var(--border)] bg-[linear-gradient(180deg,var(--brand-soft)_0%,var(--brand-soft)_100%)] px-4 pt-4 pb-3 sm:px-6 sm:pt-6 sm:pb-5">
               <DialogTitle className="text-[22px] font-black text-[var(--brand-text)] sm:text-[28px]">
                 {editingTeam?.mode === "create" ? "เพิ่มหน่วยงาน" : "แก้ไขหน่วยงาน"}
@@ -438,7 +438,7 @@ export default function AdminLeaderboardPage() {
             </DialogHeader>
 
             {editingTeam ? (
-              <div className="max-h-[calc(88vh-132px)] overflow-y-auto bg-[var(--brand-surface)] px-4 py-4 sm:max-h-[calc(88vh-150px)] sm:px-6 sm:py-6">
+              <div className="min-h-0 overflow-y-auto overscroll-contain bg-[var(--brand-surface)] px-4 py-4 sm:px-6 sm:py-6">
                 <div className="mb-4 rounded-[18px] border border-[var(--border)] bg-white px-4 py-3 shadow-[0_8px_18px_rgba(62,36,13,0.04)] sm:mb-5 sm:rounded-[16px] sm:px-5 sm:py-4">
                   <div className="flex items-center gap-3">
                     <span

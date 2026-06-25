@@ -922,12 +922,9 @@ export default function SafetyAdminManageData() {
             eyebrow="SAFETY EFFORT ADMIN"
             title={<>จัดการสถานที่</>}
             description="แสดงเฉพาะสถานที่ที่ผู้ใช้เพิ่มเองในระบบ ไม่รวมข้อมูลจาก RMC"
-            mascotSrc="/images/safety-effort-mascot.png"
-            mascotAlt="Safety mascot"
-            mascotAction="happy"
             variant="community"
-            backgroundImage="/images/safety-effort-hero.png"
-            backgroundOverlay="linear-gradient(90deg, rgba(2, 26, 66, .82) 0%, rgba(3, 33, 78, .5) 34%, rgba(3, 33, 78, .16) 56%, rgba(3, 33, 78, 0) 70%)"
+            backgroundImage="/images/heroes/safety-location-admin-hero.png"
+            backgroundOverlay="linear-gradient(90deg, rgba(210,235,255,.82) 0%, rgba(210,235,255,.60) 32%, rgba(210,235,255,.10) 56%, rgba(210,235,255,0) 74%)"
           />
         </div>
 

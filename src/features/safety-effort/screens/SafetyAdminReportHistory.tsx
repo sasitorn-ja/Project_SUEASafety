@@ -187,12 +187,9 @@ export default function SafetyAdminReportHistory() {
             eyebrow="SAFETY EFFORT ADMIN"
             title={<>ประวัติการส่งรายงาน</>}
             description="ตรวจสอบรายละเอียดการบันทึกรายงาน Linewalk / Safety Contact ค้นหา และลบข้อมูลการทำรายการในระบบ"
-            mascotSrc="/images/safety-effort-mascot.png"
-            mascotAlt="Safety mascot"
-            mascotAction="happy"
             variant="community"
-            backgroundImage="/images/safety-effort-hero.png"
-            backgroundOverlay="linear-gradient(90deg, rgba(2, 26, 66, .82) 0%, rgba(3, 33, 78, .5) 34%, rgba(3, 33, 78, .16) 56%, rgba(3, 33, 78, 0) 70%)"
+            backgroundImage="/images/heroes/safety-report-history-hero.png"
+            backgroundOverlay="linear-gradient(90deg, rgba(210,235,255,.82) 0%, rgba(210,235,255,.60) 32%, rgba(210,235,255,.10) 56%, rgba(210,235,255,0) 74%)"
           />
         </div>
 
@@ -548,7 +545,7 @@ export default function SafetyAdminReportHistory() {
 
       {/* Selected Submission Detail Modal */}
       <Dialog open={!!selectedSub} onOpenChange={(open) => !open && setSelectedSub(null)}>
-        <DialogContent showCloseButton={false} className="z-[1000] border-0 bg-transparent p-0 shadow-none sm:max-w-[640px]">
+        <DialogContent showCloseButton={false} className="safety-admin-form-popup z-[1000] p-0 sm:max-w-[640px]">
           {selectedSub ? (
           <div
             style={{

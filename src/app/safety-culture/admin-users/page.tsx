@@ -190,10 +190,9 @@ export default function AdminUsersPage() {
   return (
     <div className="mx-auto w-full max-w-[1480px] bg-[var(--background)] px-3.5 pt-2.5 pb-8 font-sarabun md:px-5">
       <section
-        className="relative overflow-hidden rounded-[20px] border border-[#278dff] px-4 py-5 text-white shadow-[0_12px_28px_var(--brand-shadow)] md:px-7 md:py-7"
+        className="relative overflow-hidden rounded-[20px] border border-[#D7EAFE] px-4 py-5 text-[#0B2F6B] shadow-[0_8px_22px_rgba(185,223,255,0.45)] md:px-7 md:py-7"
         style={{
-          background:
-            "linear-gradient(90deg, rgba(2, 26, 66, .9) 0%, rgba(3, 33, 78, .62) 50%, rgba(3, 33, 78, .42) 100%), url('/images/safety-culture-hero.png') center / cover no-repeat",
+          background: "url('/images/heroes/admin-users-hero.png') center / cover no-repeat",
         }}
       >
         <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
@@ -203,13 +202,13 @@ export default function AdminUsersPage() {
               Admin Access
             </p>
             <h1 className="mt-2 text-[26px] font-black leading-tight md:text-[34px]">จัดการผู้ใช้และสิทธิ์ Admin</h1>
-            <p className="mt-2 max-w-[720px] text-[13px] font-bold leading-relaxed text-white/75 md:text-[14px]">
+            <p className="mt-2 max-w-[720px] text-[13px] font-bold leading-relaxed text-[#55739B] md:text-[14px]">
               แสดงรายชื่อผู้ใช้แบบแบ่งหน้า รองรับผู้ใช้จำนวนมากโดยไม่โหลดทั้งหมดพร้อมกัน
             </p>
           </div>
-          <div className="rounded-[14px] border border-white/16 bg-white/10 px-4 py-3">
-            <p className="text-[11px] font-bold text-white/65">ผู้ใช้งานปัจจุบัน</p>
-            <p className="mt-1 text-[13px] font-black">{getSessionDisplayName(sessionUser)}</p>
+          <div className="rounded-[14px] border border-[#D7EAFE] bg-white/85 px-4 py-3 shadow-[0_8px_18px_rgba(185,223,255,0.35)]">
+            <p className="text-[11px] font-bold text-[#55739B]">ผู้ใช้งานปัจจุบัน</p>
+            <p className="mt-1 text-[13px] font-black text-[#0B82F0]">{getSessionDisplayName(sessionUser)}</p>
           </div>
         </div>
       </section>

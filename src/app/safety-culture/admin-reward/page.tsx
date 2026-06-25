@@ -995,8 +995,8 @@ export default function AdminRewardPage() {
           }
           description="จัดการแคตตาล็อกรางวัล รูปภาพ รายละเอียด คะแนนแลก และสถานะเด่นจากที่เดียว"
           variant="community"
-          backgroundImage="/images/safety-culture-hero.png"
-          backgroundOverlay="linear-gradient(90deg, rgba(2, 26, 66, .82) 0%, rgba(3, 33, 78, .5) 34%, rgba(3, 33, 78, .16) 56%, rgba(3, 33, 78, 0) 70%)"
+          backgroundImage="/images/heroes/admin-reward-hero.png"
+          backgroundOverlay="linear-gradient(90deg, rgba(210,235,255,.82) 0%, rgba(210,235,255,.60) 32%, rgba(210,235,255,.10) 56%, rgba(210,235,255,0) 74%)"
         />
 
         <div className="mt-4 flex flex-col gap-4">

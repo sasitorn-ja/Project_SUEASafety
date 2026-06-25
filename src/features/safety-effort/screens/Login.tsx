@@ -46,7 +46,7 @@ export default function Login() {
   return (
     <main className="cpac-login-page">
       <video className="bg-video" autoPlay loop muted playsInline>
-        <source src="/images/login/bg/login-bg2.mp4" type="video/mp4" />
+        <source src="/images/login/login-bg2.mp4" type="video/mp4" />
       </video>
 
       <div className="bg-image" />
@@ -87,7 +87,7 @@ export default function Login() {
             <div className="mascot-halo" />
             <img
               className="mascot-img mascot-motion mascot-motion-hero"
-              src="/images/login/Video/WangJaiLogin.gif"
+              src="/images/login/WangJaiLogin.gif"
               alt="WangJai Mascot"
             />
           </div>
@@ -100,7 +100,7 @@ export default function Login() {
             <div className="brand-block">
               <img
                 className="brand-logo"
-                src="/images/LOGO2_trim.png"
+                src="/images/brand/LOGO2_trim.png"
                 alt="Safety Caring"
               />
 
@@ -111,7 +111,7 @@ export default function Login() {
               <button type="button" onClick={handleLogin} className="scg-login-btn">
                 <span className="scg-logo-badge">
                   <img
-                    src="/images/login/brand/scg.logo.jpg"
+                    src="/images/brand/scg.logo.jpg"
                     alt="SCG"
                   />
                 </span>
@@ -171,7 +171,7 @@ export default function Login() {
         }
 
         .bg-image {
-          background-image: url('/images/login/bg/login-bg.png');
+          
           background-size: cover;
           background-position: center;
           background-repeat: no-repeat;

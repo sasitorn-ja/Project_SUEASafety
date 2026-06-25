@@ -702,12 +702,12 @@ export default function Page() {
             eyebrow="SAFETY CULTURE COMMUNITY"
             title={<>Safety Culture</>}
             description="พื้นที่แชร์เรื่องความปลอดภัย และช่วยกันต่อยอดพฤติกรรมปลอดภัยในทุกวัน"
-            mascotSrc="/images/safety-culture-mascot.png"
+            mascotSrc="/images/icons/safety-culture-mascot.png"
             mascotAlt="น้องวางใจถือโทรโข่งและมือถือโซเชียล"
             mascotAction="announce"
             variant="community"
-            backgroundImage="/images/safety-culture-hero.png"
-            backgroundOverlay="linear-gradient(90deg, rgba(2, 26, 66, .82) 0%, rgba(3, 33, 78, .5) 34%, rgba(3, 33, 78, .16) 56%, rgba(3, 33, 78, 0) 70%)"
+            backgroundImage="/images/heroes/safety-culture-feed-hero.png"
+            backgroundOverlay="linear-gradient(90deg, rgba(210,235,255,.82) 0%, rgba(210,235,255,.60) 32%, rgba(210,235,255,.10) 56%, rgba(210,235,255,0) 74%)"
           />
         </div>
 
@@ -1328,11 +1328,11 @@ export default function Page() {
         <DialogContent
           showCloseButton={false}
           aria-label="รายละเอียดโพสต์"
-          className="z-[91] flex max-h-[86vh] w-full max-w-[430px] flex-col gap-0 overflow-hidden rounded-[24px] border border-[var(--c-e4d3b3)] bg-[var(--c-fffdfa)] p-0 shadow-[0_24px_60px_rgba(0,0,0,0.28)] sm:max-w-[560px] md:max-h-[82vh] md:max-w-[620px] md:rounded-[24px]"
+          className="z-[91] flex max-h-[86vh] w-full max-w-[430px] flex-col gap-0 overflow-hidden rounded-[28px] border border-[#cfe0f2] bg-[linear-gradient(180deg,#ffffff,#f8fcff)] p-0 shadow-[0_28px_80px_rgba(6,43,99,0.28)] sm:max-w-[560px] md:max-h-[82vh] md:max-w-[620px]"
         >
           {expandedPost ? (
             <>
-            <div className="flex flex-shrink-0 items-start justify-between gap-3 border-b border-[var(--c-eee2cb)] px-4 py-3 md:gap-4 md:px-5 md:py-3.5">
+            <div className="flex flex-shrink-0 items-start justify-between gap-3 border-b border-[#d7e6f6] bg-[linear-gradient(135deg,#ffffff_0%,#f4f9ff_56%,#eaf4ff_100%)] px-4 py-3 md:gap-4 md:px-5 md:py-3.5">
               <div className="min-w-0">
                 <div className="flex items-center gap-2.5 md:gap-3">
                   <ProfileAvatar
@@ -1603,9 +1603,9 @@ export default function Page() {
         <DialogContent
           showCloseButton={false}
           aria-label="ผู้ที่กดถูกใจ"
-          className="z-[110] w-full max-w-[380px] gap-0 overflow-hidden rounded-[22px] bg-white p-0 shadow-[0_20px_48px_rgba(34,25,11,0.2)]"
+          className="z-[110] w-full max-w-[380px] gap-0 overflow-hidden rounded-[28px] border border-[#cfe0f2] bg-[linear-gradient(180deg,#ffffff,#f8fcff)] p-0 shadow-[0_28px_80px_rgba(6,43,99,0.24)]"
         >
-          <DialogHeader className="mx-0 mt-0 flex-row items-center justify-between border-b border-[var(--c-eee2cb)] bg-white px-5 py-4">
+          <DialogHeader className="mx-0 mt-0 flex-row items-center justify-between border-b border-[#d7e6f6] bg-[linear-gradient(135deg,#ffffff_0%,#f4f9ff_56%,#eaf4ff_100%)] px-5 py-4">
               <div>
                 <DialogTitle className="text-[18px] font-black text-[var(--c-2f261d)]">ผู้ที่กดถูกใจ</DialogTitle>
                 <DialogDescription className="text-[12px] font-bold text-[#5f7591]">ทั้งหมด {likedByPost?.likes ?? 0} คน</DialogDescription>
@@ -1630,14 +1630,14 @@ export default function Page() {
       </Dialog>
 
       <Dialog open={deletingPostId != null} onOpenChange={(open) => !open && setDeletingPostId(null)}>
-        <DialogContent className="z-[95] w-full max-w-[360px] rounded-[20px] bg-white p-6 shadow-[0_20px_48px_rgba(34,25,11,0.2)]">
-          <DialogHeader className="mx-0 mt-0 border-0 bg-white p-0">
+        <DialogContent className="z-[95] w-full max-w-[360px] rounded-[28px] border border-[#cfe0f2] bg-[linear-gradient(180deg,#ffffff,#f8fcff)] p-6 shadow-[0_28px_80px_rgba(6,43,99,0.24)]">
+          <DialogHeader className="mx-0 mt-0 border-0 bg-transparent p-0">
             <DialogTitle className="text-[17px] font-black text-[#c73a21]">ยืนยันการลบโพส</DialogTitle>
             <DialogDescription className="mt-2 text-[14px] font-bold leading-relaxed text-[var(--c-33271a)]">
               คุณแน่ใจหรือไม่ว่าต้องการลบโพสนี้? การลบจะไม่สามารถกู้คืนได้
             </DialogDescription>
           </DialogHeader>
-          <DialogFooter className="mx-0 mb-0 mt-5 border-0 bg-white p-0">
+          <DialogFooter className="mx-0 mb-0 mt-5 border-0 bg-transparent p-0">
             <div className="flex justify-end gap-2">
               <button
                 type="button"
@@ -1662,11 +1662,11 @@ export default function Page() {
         <DialogContent
           showCloseButton={false}
           aria-label="รายละเอียดกิจกรรม"
-          className="z-[92] max-h-[94vh] w-full max-w-[920px] gap-0 overflow-hidden rounded-[28px] border border-[var(--c-e4d3b3)] bg-[var(--c-fffdfa)] p-0 shadow-[0_24px_60px_rgba(0,0,0,0.28)]"
+          className="z-[92] grid h-[min(94vh,900px)] w-full max-w-[920px] grid-rows-[auto_minmax(0,1fr)] gap-0 overflow-hidden rounded-[28px] border border-[#cfe0f2] bg-[linear-gradient(180deg,#ffffff,#f8fcff)] p-0 shadow-[0_28px_80px_rgba(6,43,99,0.28)]"
         >
           {expandedActivity ? (
             <>
-            <div className="flex items-start justify-between gap-4 border-b border-[var(--c-eee2cb)] px-5 py-4 md:px-7 md:py-5">
+            <div className="flex items-start justify-between gap-4 border-b border-[#d7e6f6] bg-[linear-gradient(135deg,#ffffff_0%,#f4f9ff_56%,#eaf4ff_100%)] px-5 py-4 md:px-7 md:py-5">
               <div className="min-w-0">
                 <h3 className="text-[26px] font-black text-[var(--c-2f261d)]">{expandedActivity.title}</h3>
                 <p className="mt-1 text-[13px] font-bold text-[#667085]">{expandedActivity.subtitle}</p>
@@ -1681,7 +1681,7 @@ export default function Page() {
               </button>
             </div>
 
-            <div className="overflow-y-auto px-5 py-5 md:px-7 md:py-6">
+            <div className="min-h-0 overflow-y-auto overscroll-contain px-5 py-5 md:px-7 md:py-6">
               <div className="grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,1.05fr)_minmax(280px,0.95fr)]">
                 <div className="self-start overflow-hidden rounded-[24px] border border-[var(--c-eee2cb)] bg-[var(--c-faf8f2)]">
                   {expandedActivity.imageSrc ? (
