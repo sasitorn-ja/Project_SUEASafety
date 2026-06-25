@@ -10,7 +10,6 @@ import {
   MapPin,
   ShieldCheck,
   Trash2,
-  Upload,
   UserRound,
 } from "lucide-react";
 import { notifyProfileImageUpdated } from "@/lib/profile";
@@ -163,14 +162,6 @@ export default function ProfilePage() {
             </div>
 
             <div className="flex flex-wrap justify-center gap-2 md:max-w-[190px] md:justify-end">
-              <button
-                type="button"
-                onClick={() => inputRef.current?.click()}
-                className="inline-flex h-10 cursor-pointer items-center gap-2 rounded-xl bg-[var(--brand-accent)] px-4 text-[12px] font-black text-[var(--brand-accent-contrast)] shadow-lg transition-transform hover:scale-[1.02]"
-              >
-                <Upload className="h-4 w-4" strokeWidth={2.5} />
-                {displayImage ? "เปลี่ยนรูป" : "เพิ่มรูปโปรไฟล์"}
-              </button>
               {profileImage && (
                 <button
                   type="button"

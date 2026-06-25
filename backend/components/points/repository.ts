@@ -50,6 +50,10 @@ const RULE_SOURCE_TYPES: Record<SafetyPointAction, string> = {
   safetyEffortCompleted: "SAFETY_EFFORT",
 };
 
+export function getPointRuleSourceType(action: SafetyPointAction) {
+  return RULE_SOURCE_TYPES[action];
+}
+
 export function fallbackPointRules(): MappedPointRule[] {
   return Object.entries(SAFETY_POINT_RULES).map(([code, points]) => ({
     id: null,
@@ -109,6 +113,61 @@ export async function getPointRule(action: SafetyPointAction) {
 
   if (rows[0]) return mapRule(rows[0]);
   return fallbackPointRules().find((rule) => rule.code === action)!;
+}
+
+export async function savePointRule(input: {
+  id?: string | null;
+  code: SafetyPointAction;
+  points: number;
+  status?: string;
+}) {
+  const code = input.code;
+  const points = Math.max(0, Number(input.points) || 0);
+  const status = String(input.status || "ACTIVE").toUpperCase();
+  const sourceType = RULE_SOURCE_TYPES[code];
+
+  await withTransaction(async (connection) => {
+    let targetId = input.id ? String(input.id) : null;
+
+    if (!targetId) {
+      const [existingRows] = await connection.execute<PointRuleRow[]>(
+        `
+          SELECT id, code, source_type, points, status
+          FROM point_rules
+          WHERE code = :code
+          ORDER BY id DESC
+          LIMIT 1
+        `,
+        { code },
+      );
+      targetId = existingRows[0]?.id ? String(existingRows[0].id) : null;
+    }
+
+    if (targetId) {
+      await connection.execute<ResultSetHeader>(
+        `
+          UPDATE point_rules
+          SET source_type = :sourceType,
+              points = :points,
+              status = :status
+          WHERE id = :id
+          LIMIT 1
+        `,
+        { id: targetId, sourceType, points, status },
+      );
+      return;
+    }
+
+    await connection.execute<ResultSetHeader>(
+      `
+        INSERT INTO point_rules (code, source_type, points, status)
+        VALUES (:code, :sourceType, :points, :status)
+      `,
+      { code, sourceType, points, status },
+    );
+  });
+
+  return getPointRule(code);
 }
 
 export async function getPointBalance(userId: string) {

@@ -99,7 +99,7 @@ export function SafetyCultureHero({
       <div
         className={cn(
           "relative z-10 grid items-start gap-2 px-3.5 pt-[6px] pb-[22px] sm:px-4 md:px-6 md:pt-[10px] md:pb-[30px]",
-          isCommunity && "min-h-[100px] items-center px-3 py-2 sm:min-h-[116px] sm:grid-cols-[minmax(0,1fr)_160px] sm:px-[18px] sm:py-2.5 xl:min-h-[148px] xl:grid-cols-[minmax(0,1fr)_230px] xl:px-[28px] xl:pt-3 xl:pb-0",
+          isCommunity && "h-full min-h-[100px] items-center px-3 py-2 sm:min-h-[116px] sm:grid-cols-[minmax(0,1fr)_160px] sm:px-[18px] sm:py-2.5 xl:min-h-[148px] xl:grid-cols-[minmax(0,1fr)_230px] xl:px-[28px] xl:pt-3 xl:pb-0",
           sideActions
             ? showMascot
               ? "grid-cols-[minmax(0,1fr)_84px] md:grid-cols-[minmax(0,1fr)_132px_minmax(300px,410px)] md:items-center md:gap-5"

@@ -147,6 +147,12 @@ export function getDefaultMenu(): MenuNode[] {
           description: "จัดการวัน KPI และคลังคำถาม Safety Awareness",
         }),
         n({
+          label: "ตั้งค่าคะแนน",
+          href: "/safety-culture/admin-points",
+          icon: "Star",
+          description: "กำหนดคะแนนที่ใช้ในระบบ Safety Culture และ Safety Effort",
+        }),
+        n({
           label: "Safety Effort",
           href: "/category",
           icon: "ShieldCheck",
@@ -272,6 +278,7 @@ function applyAdminMenuLabels(adminNode: MenuNode) {
   rename("/safety-admin/manage-data", "โรงงาน/สำนักงาน/ไซต์งาน", "จัดการ master data สถานที่สำหรับ Check-in", "MapPin");
   rename("/safety-culture", "Safety Culture", undefined, "Heart");
   rename("/safety-culture/admin-event", "กิจกรรมบนฟีด", "จัดการกิจกรรมและช่วงเวลาพิเศษ", "Settings2");
+  rename("/safety-culture/admin-points", "ตั้งค่าคะแนน", "กำหนดคะแนนที่ใช้ในระบบ Safety Culture และ Safety Effort", "Star");
   rename("/safety-culture/admin-leaderboard", "ทีมและอันดับ", "จัดการทีม คะแนน และอันดับ", "Trophy");
   rename("/safety-culture/admin-reward", "รางวัลและแต้มแลก", "จัดการรางวัลและคะแนนแลก", "Gift");
   rename("/safety-culture/admin-users", "จัดการผู้ใช้และสิทธิ์ Admin", "จัดการผู้ใช้ Role และสิทธิ์ Admin", "UserCog");
@@ -368,6 +375,36 @@ export function loadMenu(): MenuNode[] {
                   description: "จัดการ master data สถานที่สำหรับ Check-in",
                 })
               );
+              updated = true;
+            }
+          }
+
+          const hasTopLevelPointSettings = adminNode.children.some(
+            (child) => child.href === "/safety-culture/admin-points" || child.label.includes("ตั้งค่าคะแนน")
+          );
+          if (!hasTopLevelPointSettings) {
+            adminNode.children.splice(
+              1,
+              0,
+              n({
+                label: "ตั้งค่าคะแนน",
+                href: "/safety-culture/admin-points",
+                icon: "Star",
+                description: "กำหนดคะแนนที่ใช้ในระบบ Safety Culture และ Safety Effort",
+              })
+            );
+            updated = true;
+          }
+
+          const safetyCultureNode = adminNode.children.find(
+            (child) => child.href === "/safety-culture" || child.label.trim().toLowerCase() === "safety culture"
+          );
+          if (safetyCultureNode) {
+            const beforePointRemoval = safetyCultureNode.children.length;
+            safetyCultureNode.children = safetyCultureNode.children.filter(
+              (child) => child.href !== "/safety-culture/admin-points" && !child.label.includes("ตั้งค่าคะแนน")
+            );
+            if (safetyCultureNode.children.length !== beforePointRemoval) {
               updated = true;
             }
           }

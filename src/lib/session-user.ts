@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { hasAdminAccess } from "@/lib/access-control";
 import { PROFILE_IMAGE_UPDATED_EVENT } from "@/lib/profile";
 
-const LOGIN_SESSION_KEY = "cpac-safety-login-session";
+export const DEMO_LOGIN_SESSION_KEY = "cpac-safety-login-session";
 
 export type SessionUser = {
   id?: string;
@@ -83,7 +83,7 @@ export function useSessionUser() {
       demoLoginAllowed =
         process.env.NODE_ENV !== "production" &&
         isLocalDemoLoginHost(window.location.hostname) &&
-        window.sessionStorage.getItem(LOGIN_SESSION_KEY) === "true";
+        window.sessionStorage.getItem(DEMO_LOGIN_SESSION_KEY) === "true";
     } catch {
       demoLoginAllowed = false;
     }

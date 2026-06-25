@@ -298,9 +298,6 @@ export default function AdminAwarenessPage() {
           </>
         }
         description="จัดการวันทำงานที่นับ KPI และคลังคำถาม Safety Awareness — เพิ่ม/แก้/ลบ เปิด-ปิด และนำเข้าจาก XLSX"
-        mascotSrc="/images/mascots/wangjai/7.png"
-        mascotAlt="น้องวางใจ Safety mascot"
-        mascotAction="flashlight"
         variant="community"
         backgroundImage="/images/heroes/admin-awareness-hero.png"
         backgroundOverlay="linear-gradient(90deg, rgba(210,235,255,.82) 0%, rgba(210,235,255,.60) 32%, rgba(210,235,255,.10) 56%, rgba(210,235,255,0) 74%)"

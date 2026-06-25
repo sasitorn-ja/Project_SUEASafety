@@ -336,7 +336,7 @@ body {
 /* Shared CPAC Safe+ page language. Dashboard intentionally owns its own scale. */
 .app-standard-page {
   color: var(--foreground);
-  background: linear-gradient(180deg, #ddeeff 0px, #eaf3fc 180px, var(--background) 100%);
+  background: var(--background);
 }
 
 .app-standard-page [data-slot="card"] {

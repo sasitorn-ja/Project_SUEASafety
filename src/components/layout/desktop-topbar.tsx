@@ -56,6 +56,11 @@ const SAFETY_CULTURE_ITEMS = [
 
 const PROFILE_ITEMS = [
   {
+    label: "ข้อมูลส่วนตัว",
+    href: "/profile",
+    icon: UserRound,
+  },
+  {
     label: "\u0e01\u0e34\u0e08\u0e01\u0e23\u0e23\u0e21\u0e02\u0e2d\u0e07\u0e1c\u0e39\u0e49\u0e43\u0e0a\u0e49\u0e07\u0e32\u0e19",
     href: "/profile/activity-history",
     icon: FileText,
@@ -472,9 +477,12 @@ export function DesktopTopbar() {
             onMouseLeave={() => setDesktopMenu((current) => (current === "profile" ? null : current))}
             onFocus={() => setDesktopMenu("profile")}
           >
-            <NavTo
-              href="/profile"
+            <button
+              type="button"
+              onClick={() => setDesktopMenu((current) => (current === "profile" ? null : "profile"))}
               aria-label="โปรไฟล์ของฉัน"
+              aria-haspopup="menu"
+              aria-expanded={desktopMenu === "profile"}
               className={cn(
                 "inline-flex h-11 w-11 cursor-pointer items-center justify-center overflow-hidden rounded-full bg-white p-0 text-[#0B82F0]",
                 "shadow-[0_8px_18px_rgba(185,223,255,0.45)] transition-colors hover:bg-[#F5FAFF]"
@@ -490,7 +498,7 @@ export function DesktopTopbar() {
               ) : (
                 <UserRound className="h-[18px] w-[18px]" strokeWidth={2.5} />
               )}
-            </NavTo>
+            </button>
 
             <div
               className={cn(

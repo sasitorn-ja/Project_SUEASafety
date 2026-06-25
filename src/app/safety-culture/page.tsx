@@ -702,9 +702,6 @@ export default function Page() {
             eyebrow="SAFETY CULTURE COMMUNITY"
             title={<>Safety Culture</>}
             description="พื้นที่แชร์เรื่องความปลอดภัย และช่วยกันต่อยอดพฤติกรรมปลอดภัยในทุกวัน"
-            mascotSrc="/images/icons/safety-culture-mascot.png"
-            mascotAlt="น้องวางใจถือโทรโข่งและมือถือโซเชียล"
-            mascotAction="announce"
             variant="community"
             backgroundImage="/images/heroes/safety-culture-feed-hero.png"
             backgroundOverlay="linear-gradient(90deg, rgba(210,235,255,.82) 0%, rgba(210,235,255,.60) 32%, rgba(210,235,255,.10) 56%, rgba(210,235,255,0) 74%)"

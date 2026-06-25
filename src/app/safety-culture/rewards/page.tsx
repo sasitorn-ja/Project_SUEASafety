@@ -187,7 +187,7 @@ export default function RewardsPage() {
 
   return (
     <>
-      <div className="mx-auto w-full max-w-[1480px] px-3.5 pt-2.5 pb-8 md:px-5">
+      <div className="mx-auto w-full max-w-[1480px] bg-[var(--background)] px-3.5 pt-2.5 pb-8 md:px-5">
         <div className="anim-fade" style={animStyle(0)}>
           <SafetyCultureHero
             eyebrow="SAFETY CARING REWARDS SHOP"
@@ -197,9 +197,6 @@ export default function RewardsPage() {
               </>
             }
             description="คะแนน Safety ของคุณเปลี่ยนเป็นรางวัลสุดแสนพิเศษได้"
-            mascotSrc={mascot("happy")}
-            mascotAlt="น้องวางใจ Safety mascot"
-            mascotAction="happy"
             variant="community"
             backgroundImage="/images/heroes/safety-culture-rewards-hero.png"
             backgroundOverlay="linear-gradient(90deg, rgba(210,235,255,.82) 0%, rgba(210,235,255,.60) 32%, rgba(210,235,255,.10) 56%, rgba(210,235,255,0) 74%)"

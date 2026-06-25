@@ -125,17 +125,32 @@ function MobileConfiguredNode({
     <div>
       <div className={cn("flex min-h-9 items-stretch rounded-lg", active && "bg-[#F5FAFF]")}>
         {node.href ? (
-          <NavTo href={node.href} onClick={closeDrawer} className="flex min-w-0 flex-1 items-center gap-2.5 rounded-lg px-2.5 text-[11.5px] font-extrabold text-[#0B82F0] hover:bg-[#F5FAFF]">
-            {Icon && <Icon className="h-[15px] w-[15px] flex-shrink-0" strokeWidth={2.35} />}
+          <NavTo
+            href={node.href}
+            onClick={closeDrawer}
+            className={cn(
+              "flex min-w-0 flex-1 items-center gap-2.5 rounded-lg px-2.5 text-[11.5px] font-extrabold hover:bg-[#F5FAFF]",
+              active ? "text-[#0B82F0]" : "text-[#55739B]"
+            )}
+          >
+            {Icon && <Icon className={cn("h-[15px] w-[15px] flex-shrink-0", active ? "text-[#0B82F0]" : "text-[#55739B]")} strokeWidth={2.35} />}
             <span className="truncate">{node.label}</span>
           </NavTo>
         ) : (
-          <div className="flex min-w-0 flex-1 items-center gap-2.5 rounded-lg px-2.5 text-[11.5px] font-extrabold text-[#0B82F0]">
-            {Icon && <Icon className="h-[15px] w-[15px] flex-shrink-0" strokeWidth={2.35} />}
+          <div className={cn("flex min-w-0 flex-1 items-center gap-2.5 rounded-lg px-2.5 text-[11.5px] font-extrabold", active ? "text-[#0B82F0]" : "text-[#55739B]")}>
+            {Icon && <Icon className={cn("h-[15px] w-[15px] flex-shrink-0", active ? "text-[#0B82F0]" : "text-[#55739B]")} strokeWidth={2.35} />}
             <span className="truncate">{node.label}</span>
           </div>
         )}
-        <button type="button" onClick={() => toggleSection(node.id)} aria-expanded={isOpen} className="flex w-10 items-center justify-center rounded-r-lg text-[#0B82F0] outline-none hover:bg-[#F5FAFF] focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#0B82F0]">
+        <button
+          type="button"
+          onClick={() => toggleSection(node.id)}
+          aria-expanded={isOpen}
+          className={cn(
+            "flex w-10 items-center justify-center rounded-r-lg outline-none hover:bg-[#F5FAFF] focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#0B82F0]",
+            active ? "text-[#0B82F0]" : "text-[#55739B]"
+          )}
+        >
           <ChevronDown className={cn("h-3.5 w-3.5 transition-transform duration-200", isOpen && "rotate-180")} strokeWidth={2.5} />
         </button>
       </div>
@@ -219,11 +234,12 @@ export function MobileTopbar({ hidden = false }: { hidden?: boolean }) {
     <>
       <div
         className={cn(
-          "fixed top-0 right-0 left-0 z-50 flex items-center justify-between gap-2 px-2.5 min-[1100px]:hidden",
+          "fixed top-0 right-0 left-0 flex items-center justify-between gap-2 px-2.5 min-[1100px]:hidden",
+          open ? "z-[80]" : "z-50",
           "border-b border-[#D7EAFE] bg-white/95 shadow-[0_6px_20px_rgba(185,223,255,0.45)] backdrop-blur-[14px]",
           "transition-transform duration-200",
           "[transition-timing-function:cubic-bezier(0.2,0.8,0.2,1)]",
-          hidden && "pointer-events-none -translate-y-full"
+          hidden && !open && "pointer-events-none -translate-y-full"
         )}
         style={{ fontFamily: "var(--font-sans)", height: "var(--mobile-topbar-h)" }}
         role="banner"
@@ -247,7 +263,7 @@ export function MobileTopbar({ hidden = false }: { hidden?: boolean }) {
       </div>
 
       {open && (
-        <div className="fixed inset-x-0 top-[var(--mobile-topbar-h)] z-40 h-[calc(100vh-var(--mobile-topbar-h))] min-[1100px]:hidden">
+        <div className="fixed inset-x-0 top-[var(--mobile-topbar-h)] z-[70] h-[calc(100vh-var(--mobile-topbar-h))] min-[1100px]:hidden">
           <button className="absolute inset-0 cursor-pointer bg-[#0B2F6B]/20 backdrop-blur-[2px]" aria-label="ปิดเมนู" onClick={closeDrawer} />
           <aside className="relative flex h-full w-[min(318px,86vw)] flex-col border-r border-[#D7EAFE] bg-white/98 shadow-[18px_0_34px_rgba(185,223,255,0.48)] backdrop-blur-[16px]" aria-label="เมนูหลัก">
 
@@ -409,18 +425,15 @@ export function MobileTopbar({ hidden = false }: { hidden?: boolean }) {
                     </NavTo>
                   );
                 })}
-              </div>
-            </div>
 
-            {/* Logout — sticky at bottom, always visible */}
-            <div className="flex-shrink-0 border-t border-[#D7EAFE] p-3">
-              <NavTo
-                href="/api/auth/logout"
-                className="flex min-h-11 w-full items-center gap-3 rounded-xl bg-[#FFF5F5] px-3 text-[13px] font-bold text-[#D92D20] transition-colors hover:bg-[#FFE8E8]"
-              >
-                <LogOut className="h-4 w-4 flex-shrink-0" strokeWidth={2.35} />
-                <span>ออกจากระบบ</span>
-              </NavTo>
+                <NavTo
+                  href="/api/auth/logout"
+                  className="mt-1 flex min-h-11 w-full items-center gap-3 rounded-xl bg-[#FFF5F5] px-3 text-[13px] font-bold text-[#D92D20] transition-colors hover:bg-[#FFE8E8]"
+                >
+                  <LogOut className="h-4 w-4 flex-shrink-0" strokeWidth={2.35} />
+                  <span>ออกจากระบบ</span>
+                </NavTo>
+              </div>
             </div>
 
           </aside>

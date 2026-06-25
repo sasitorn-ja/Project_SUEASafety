@@ -1,8 +1,7 @@
 .page {
   font-size: 11px;
   color: #112f59;
-  /* Match the shared app background language (same direction as Home) */
-  background: linear-gradient(180deg, #edf5ff 0, var(--background) 280px, var(--background) 100%);
+  background: var(--background);
 }
 
 .communityGrid {

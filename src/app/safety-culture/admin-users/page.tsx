@@ -190,12 +190,12 @@ export default function AdminUsersPage() {
   return (
     <div className="mx-auto w-full max-w-[1480px] bg-[var(--background)] px-3.5 pt-2.5 pb-8 font-sarabun md:px-5">
       <section
-        className="relative overflow-hidden rounded-[20px] border border-[#D7EAFE] px-4 py-5 text-[#0B2F6B] shadow-[0_8px_22px_rgba(185,223,255,0.45)] md:px-7 md:py-7"
+        className="relative min-h-[100px] overflow-hidden rounded-[20px] border border-[#D7EAFE] px-4 py-5 text-[#0B2F6B] shadow-[0_8px_22px_rgba(185,223,255,0.45)] sm:min-h-[116px] md:px-7 md:py-7 xl:min-h-[148px]"
         style={{
           background: "url('/images/heroes/admin-users-hero.png') center / cover no-repeat",
         }}
       >
-        <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+        <div className="flex h-full flex-col gap-4 md:flex-row md:items-end md:justify-between">
           <div>
             <p className="flex items-center gap-2 text-[11px] font-extrabold uppercase tracking-[0.16em] text-[var(--brand-hero-label)]">
               <UserCog className="h-4 w-4" strokeWidth={2.5} />
