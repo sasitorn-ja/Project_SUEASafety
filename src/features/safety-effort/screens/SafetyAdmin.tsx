@@ -903,6 +903,8 @@ export default function SafetyAdmin() {
                   height: isMobile ? "auto" : "100%",
                   minHeight: isMobile ? undefined : 0,
                   gap: 16,
+                  overflowY: isMobile ? "visible" : "auto",
+                  paddingRight: isMobile ? 0 : 4,
                 }}
               >
                 {selectedQuestion ? (
@@ -976,7 +978,7 @@ export default function SafetyAdmin() {
                       </div>
                     </div>
 
-                    {/* Guidelines Editor & Live Preview Card */}
+                    {/* Guidelines Editor Card */}
                     <div
                       style={{
                         background: T.card,
@@ -987,52 +989,13 @@ export default function SafetyAdmin() {
                         display: "flex",
                         flexDirection: "column",
                         gap: 12,
-                        flex: isMobile ? "none" : 1,
-                        minHeight: isMobile ? undefined : 0,
+                        flexShrink: 0,
                       }}
                     >
                       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, flexShrink: 0 }}>
                         <div>
-                          <div style={{ fontSize: 13, fontWeight: 800, color: T.accentDeep }}>รายละเอียด & Preview</div>
+                          <div style={{ fontSize: 13, fontWeight: 800, color: T.accentDeep }}>รายละเอียดข้อประเมิน</div>
                           <div style={{ fontSize: 12, color: T.sub }}>ใส่รายละเอียดที่ต้องประเมินแยกกันทีละบรรทัด (กด Enter เพื่อขึ้นบรรทัดใหม่)</div>
-                        </div>
-                        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                          <button
-                            type="button"
-                            onClick={() => setShowPreview(false)}
-                            style={{
-                              height: 32,
-                              padding: "0 14px",
-                              borderRadius: 8,
-                              border: !showPreview ? "1px solid #3b82f6" : "1px solid transparent",
-                              background: !showPreview ? "#fff" : "#f1f5f9",
-                              color: !showPreview ? "#3b82f6" : "#64748b",
-                              fontWeight: 800,
-                              fontSize: 12.5,
-                              cursor: "pointer",
-                              transition: "all 0.15s ease",
-                            }}
-                          >
-                            แก้ไข
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setShowPreview(true)}
-                            style={{
-                              height: 32,
-                              padding: "0 14px",
-                              borderRadius: 8,
-                              border: showPreview ? "1px solid #3b82f6" : "1px solid transparent",
-                              background: showPreview ? "#fff" : "#eff6ff",
-                              color: showPreview ? "#3b82f6" : "#1e40af",
-                              fontWeight: 800,
-                              fontSize: 12.5,
-                              cursor: "pointer",
-                              transition: "all 0.15s ease",
-                            }}
-                          >
-                            Preview จริง
-                          </button>
                         </div>
                       </div>
 
@@ -1042,42 +1005,60 @@ export default function SafetyAdmin() {
                           borderRadius: 16,
                           padding: "16px 20px",
                           background: "#fff",
-                          flex: isMobile ? "none" : 1,
                           display: "flex",
                           flexDirection: "column",
-                          minHeight: 200,
+                          minHeight: 140,
                           overflow: "hidden",
                         }}
                       >
-                        {showPreview ? (
-                          <div style={{ overflowY: isMobile ? "visible" : "auto", flex: 1, paddingRight: 4 }}>
-                            <PreviewCard question={selectedQuestion} />
-                          </div>
-                        ) : (
-                          <textarea
-                            value={selectedQuestion.guidelines.join("\n")}
-                            onChange={(event) =>
-                              updateQuestion(selectedQuestion.id, (item) => ({
-                                ...item,
-                                guidelines: event.target.value.split("\n"),
-                              }))
-                            }
-                            placeholder="ใส่รายละเอียดการตรวจแต่ละข้อแยกตามบรรทัด"
-                            style={{
-                              border: "none",
-                              outline: "none",
-                              width: "100%",
-                              flex: 1,
-                              resize: "none",
-                              fontSize: 14,
-                              lineHeight: 1.8,
-                              color: T.ink,
-                              fontFamily: "inherit",
-                              background: "transparent",
-                              minHeight: 180,
-                            }}
-                          />
-                        )}
+                        <textarea
+                          value={selectedQuestion.guidelines.join("\n")}
+                          onChange={(event) =>
+                            updateQuestion(selectedQuestion.id, (item) => ({
+                              ...item,
+                              guidelines: event.target.value.split("\n"),
+                            }))
+                          }
+                          placeholder="ใส่รายละเอียดการตรวจแต่ละข้อแยกตามบรรทัด"
+                          style={{
+                            border: "none",
+                            outline: "none",
+                            width: "100%",
+                            flex: 1,
+                            resize: "none",
+                            fontSize: 14,
+                            lineHeight: 1.8,
+                            color: T.ink,
+                            fontFamily: "inherit",
+                            background: "transparent",
+                            minHeight: 120,
+                          }}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Live Preview Card */}
+                    <div
+                      style={{
+                        background: T.card,
+                        border: `1px solid ${T.line}`,
+                        borderRadius: 24,
+                        padding: 16,
+                        boxShadow: T.shadow,
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: 12,
+                        flexShrink: 0,
+                      }}
+                    >
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, flexShrink: 0 }}>
+                        <div>
+                          <div style={{ fontSize: 13, fontWeight: 800, color: T.accentDeep }}>Preview (แสดงผลจริงในหน้าประเมิน)</div>
+                          <div style={{ fontSize: 12, color: T.sub }}>การแสดงผลจำลองตามประเภทคำตอบที่ตั้งค่าไว้</div>
+                        </div>
+                      </div>
+                      <div style={{ padding: 2 }}>
+                        <PreviewCard question={selectedQuestion} />
                       </div>
                     </div>
                   </>
