@@ -195,9 +195,6 @@ function PreviewCard({ question, isEditable, onGuidelinesChange }) {
       }}
     >
       <div style={{ display: "grid", gap: 8 }}>
-        <div style={{ fontSize: 12, fontWeight: 800, color: T.accentDeep, letterSpacing: "0.08em", textTransform: "uppercase" }}>
-          Preview
-        </div>
         <div style={{ fontSize: 20, fontWeight: 800, lineHeight: 1.3 }}>{question.title || "หัวข้อคำถาม"}</div>
         {guideTitle ? (
           <div style={{ fontSize: 12.5, fontWeight: 700, color: T.sub }}>{guideTitle}</div>
