@@ -988,6 +988,7 @@ function awarenessCompletionFromApi(item: ApiAwarenessAttempt): AwarenessComplet
         correct: Boolean(answer.correct),
       }))
     : [];
+  if (questions.length === 0) return null;
   return {
     date,
     completedAt: String(completedAt),

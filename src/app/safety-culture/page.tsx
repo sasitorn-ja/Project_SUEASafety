@@ -689,7 +689,7 @@ export default function Page() {
             title={<>Safety Culture</>}
             description="พื้นที่แชร์เรื่องความปลอดภัย และช่วยกันต่อยอดพฤติกรรมปลอดภัยในทุกวัน"
             variant="community"
-            backgroundImage="/images/heroes/Home01.png"
+            backgroundImage="/images/heroes/safety-culture-hero-custom.png"
             backgroundOverlay="linear-gradient(90deg, rgba(210,235,255,.82) 0%, rgba(210,235,255,.60) 32%, rgba(210,235,255,.10) 56%, rgba(210,235,255,0) 74%)"
             mascotSrc="/images/mascots/wangjai/5.png"
             mascotAction="announce"
