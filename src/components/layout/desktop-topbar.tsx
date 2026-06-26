@@ -336,8 +336,13 @@ export function DesktopTopbar() {
 
             if (item.id === "admin") {
               return (
-                <div key={item.id} className="relative">
-                  <button type="button" onClick={() => setDesktopMenu((current) => current === "admin" ? null : "admin")} aria-expanded={desktopMenu === "admin"} aria-haspopup="menu" className={cn("inline-flex h-11 min-w-[100px] items-center justify-center gap-2 rounded-[13px] border border-transparent px-[15px] text-[14.5px] font-bold whitespace-nowrap transition-all", active ? "bg-[linear-gradient(135deg,#35A8FF_0%,#0B82F0_55%,#006AD6_100%)] text-white shadow-[0_8px_20px_rgba(11,130,240,0.22)]" : "bg-transparent text-[#0B2F6B] hover:border-[#D7EAFE] hover:bg-[#F5FAFF] hover:text-[#0B82F0]")}>
+                <div
+                  key={item.id}
+                  className="relative"
+                  onMouseEnter={() => setDesktopMenu("admin")}
+                  onMouseLeave={() => setDesktopMenu((current) => (current === "admin" ? null : current))}
+                >
+                  <button type="button" onFocus={() => setDesktopMenu("admin")} onClick={() => setDesktopMenu((current) => current === "admin" ? null : "admin")} aria-expanded={desktopMenu === "admin"} aria-haspopup="menu" className={cn("inline-flex h-11 min-w-[100px] items-center justify-center gap-2 rounded-[13px] border border-transparent px-[15px] text-[14.5px] font-bold whitespace-nowrap transition-all", active ? "bg-[linear-gradient(135deg,#35A8FF_0%,#0B82F0_55%,#006AD6_100%)] text-white shadow-[0_8px_20px_rgba(11,130,240,0.22)]" : "bg-transparent text-[#0B2F6B] hover:border-[#D7EAFE] hover:bg-[#F5FAFF] hover:text-[#0B82F0]")}>
                     <Icon className="h-[17px] w-[17px]" strokeWidth={2.35} />
                     <span className="desktop-nav-label">{item.label}</span>
                     <ChevronDown className={cn("h-3.5 w-3.5 transition-transform", desktopMenu === "admin" && "rotate-180")} />
@@ -363,9 +368,12 @@ export function DesktopTopbar() {
                 <div
                   key={item.id}
                   className="relative"
+                  onMouseEnter={() => setDesktopMenu(menuId)}
+                  onMouseLeave={() => setDesktopMenu((current) => (current === menuId ? null : current))}
                 >
                   <button
                     type="button"
+                    onFocus={() => setDesktopMenu(menuId)}
                     onClick={() => setDesktopMenu((current) => current === menuId ? null : menuId)}
                     aria-expanded={desktopMenu === menuId}
                     aria-haspopup="menu"

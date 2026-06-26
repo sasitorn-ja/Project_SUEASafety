@@ -1,9 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { ChevronDown, ChevronRight, Trophy } from "lucide-react";
+import { ChevronDown, ChevronRight } from "lucide-react";
 import { SafetyCultureHero } from "@/components/safety-culture/safety-culture-hero";
-import { SafetyCultureTabs } from "@/components/safety-culture/safety-culture-tabs";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { useAppState } from "@/providers/app-providers";
@@ -46,9 +45,6 @@ export default function LeaderboardPage() {
   const [showAllTopScorers, setShowAllTopScorers] = useState(false);
   const { teamStandings, personalRankings } = useAppState();
   const { themedColor } = useAppTheme();
-  const leadingTeam = teamStandings[0];
-  const runnerUpTeam = teamStandings[1];
-  const leadPoints = leadingTeam && runnerUpTeam ? leadingTeam.points - runnerUpTeam.points : 0;
   const topScorers = [...personalRankings];
   const visibleTopScorers = showAllTopScorers ? topScorers.slice(0, 10) : topScorers.slice(0, 5);
 
@@ -73,55 +69,7 @@ export default function LeaderboardPage() {
             backgroundOverlay="linear-gradient(90deg, rgba(210,235,255,.82) 0%, rgba(210,235,255,.56) 42%, rgba(210,235,255,0) 100%)"
             mascotSrc="/images/mascots/wangjai/1.png"
             mascotAction="cheer"
-            actionsLayout="side"
-            actions={
-              leadingTeam ? (
-                <div className="mt-2 w-full max-w-85 overflow-hidden rounded-[20px] border border-white/30 bg-white/96 shadow-[0_16px_36px_rgba(0,0,0,0.18)] backdrop-blur-sm md:mt-0">
-                  {/* header: trophy + ชื่อทีม + นำหน้า */}
-                  <div className="px-4 pt-3.5 pb-3" style={{ background: `linear-gradient(135deg, color-mix(in srgb,${themedColor(leadingTeam.color)} 12%,transparent), color-mix(in srgb,${themedColor(leadingTeam.color)} 4%,transparent))` }}>
-                    <div className="flex items-start gap-3">
-                      <div
-                        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[14px] shadow-[0_6px_16px_rgba(0,0,0,0.15)]"
-                        style={{ background: `linear-gradient(135deg, ${themedColor(leadingTeam.color)}, color-mix(in srgb,${themedColor(leadingTeam.color)} 72%,#000))` }}
-                      >
-                        <Trophy className="h-5 w-5 text-white" strokeWidth={2.5} />
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <p className="text-[10px] font-extrabold uppercase tracking-widest" style={{ color: themedColor(leadingTeam.color) }}>ทีมนำอันดับ 1</p>
-                        <h2 className="mt-0.5 text-[17px] font-black leading-tight text-foreground">{leadingTeam.name}</h2>
-                        <p className="mt-1 text-[11px] font-bold text-(--brand-muted-text)">
-                          นำหน้า{" "}
-                          <span className="font-black" style={{ color: themedColor(leadingTeam.color) }}>+{leadPoints.toLocaleString()} คะแนน</span>
-                          {runnerUpTeam ? <> · {runnerUpTeam.name}</> : null}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* footer: หัวหน้าทีม */}
-                  <div className="flex items-center gap-2.5 border-t border-[var(--border)] px-4 py-2.5">
-                    <div
-                      className="flex h-7 w-7 shrink-0 items-center justify-center overflow-hidden rounded-full text-[11px] font-black text-white shadow-sm"
-                      style={{ background: `linear-gradient(135deg, ${themedColor(leadingTeam.color)}, color-mix(in srgb,${themedColor(leadingTeam.color)} 75%,#000))` }}
-                    >
-                      {leadingTeam.leaderProfileImageUrl
-                        ? <img src={leadingTeam.leaderProfileImageUrl} alt={leadingTeam.leader} className="h-full w-full object-cover" />
-                        : leadingTeam.leader.charAt(0).toUpperCase()
-                      }
-                    </div>
-                    <div className="min-w-0">
-                      <p className="text-[9.5px] font-extrabold text-(--brand-muted-text)">หัวหน้าทีม</p>
-                      <p className="truncate text-[12px] font-black leading-tight text-foreground">{leadingTeam.leader}</p>
-                    </div>
-                  </div>
-                </div>
-              ) : null
-            }
           />
-        </div>
-
-        <div className="mt-[13px] mb-[20px] anim-fade" style={animStyle(0.02)}>
-          <SafetyCultureTabs />
         </div>
 
         <div className="grid grid-cols-1 items-start gap-4 xl:grid-cols-[minmax(0,1.45fr)_minmax(300px,1fr)]">

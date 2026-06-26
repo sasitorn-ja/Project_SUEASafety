@@ -167,12 +167,14 @@ export default function ProfilePage() {
             </div>
 
             {/* name info */}
-            <div className="min-w-0 text-center sm:text-left">
+            <div className="min-w-0 text-center sm:text-left md:pr-[150px] xl:pr-[178px]">
               <div className="mb-2 inline-flex items-center gap-1.5 rounded-[7px] border border-[#0B82F0] bg-white/85 px-2.5 py-[3px] text-[10px] font-extrabold uppercase tracking-[0.12em] text-[#0B82F0]">
                 <ShieldCheck className="h-3.5 w-3.5" strokeWidth={2.5} />
                 SSO Profile Preview
               </div>
-              <h1 className="text-[22px] font-black leading-tight text-[#0B2F6B] sm:text-[26px] md:text-[32px]">{displayName}</h1>
+              <h1 className="mx-auto line-clamp-2 max-w-[min(100%,760px)] break-words text-[22px] font-black leading-[1.08] text-[#0B2F6B] sm:mx-0 sm:text-[26px] md:text-[30px] xl:text-[34px]">
+                {displayName}
+              </h1>
               <p className="mt-1 text-[12px] font-bold text-[#55739B] md:text-[13.5px]">
                 {displayPosition} · {displayDivision}
               </p>

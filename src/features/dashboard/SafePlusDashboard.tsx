@@ -224,6 +224,7 @@ export default function SafePlusDashboard() {
   }, []);
 
   const latestQuestions = (dashboardData.latest?.questions ?? []).filter((q) => q.text?.trim());
+  const latestHasWrongAnswer = latestQuestions.some((q) => !q.correct);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-white via-[#f3f9ff] to-[#f0f7ff] pb-24 font-sarabun sm:pb-8 lg:pb-5">
@@ -386,12 +387,12 @@ export default function SafePlusDashboard() {
       <div className="mx-2.5 mt-2 grid gap-2 lg:mx-6 lg:mt-2.5 lg:grid-cols-[minmax(0,2.2fr)_minmax(300px,0.92fr)]">
 
         {/* ── Safety Awareness card ── */}
-        <Card className="gap-2 rounded-[18px] border border-[rgba(13,80,165,0.18)] bg-white p-2.5 shadow-[0_4px_18px_rgba(11,53,110,0.10),0_1px_4px_rgba(11,53,110,0.06)] sm:p-2.5 lg:p-2.5">
+        <Card className="self-start gap-1.5 rounded-[18px] border border-[rgba(13,80,165,0.18)] bg-white p-2.5 shadow-[0_4px_18px_rgba(11,53,110,0.10),0_1px_4px_rgba(11,53,110,0.06)] sm:p-2 lg:p-2">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex flex-wrap items-center gap-2">
               <ShieldCheck className="h-4 w-4 text-[#087dff]" strokeWidth={2.4} />
               <h2 className="app-card-title m-0 text-[#0b3572]">Safety Awareness</h2>
-              <span className="inline-flex h-8 w-[132px] shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-full border border-[#e1edf8] bg-white text-[11px] font-black text-[#ff642e] shadow-[0_3px_12px_rgba(145,174,205,0.16)] sm:h-9 sm:w-[150px] sm:text-[12px]">
+              <span className="inline-flex h-8 w-[132px] shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-full border border-[#e1edf8] bg-white text-[11px] font-black text-[#ff642e] shadow-[0_3px_12px_rgba(145,174,205,0.16)] sm:h-8 sm:w-[144px] sm:text-[11px]">
                 <svg
                   className="safety-streak-flame h-5 w-5"
                   viewBox="0 0 64 64"
@@ -435,10 +436,10 @@ export default function SafePlusDashboard() {
           </div>
 
           {/* completion row */}
-          <div className="grid gap-2 rounded-[16px] border-[1.5px] border-[#b9d8fb] bg-gradient-to-br from-[#f8fbff] via-[#eef6ff] to-[#f5fbff] p-2.5 shadow-[inset_0_1px_0_rgba(255,255,255,.78)] sm:gap-2 sm:p-2 lg:grid-cols-[minmax(0,1.3fr)_auto] lg:items-center lg:p-2.5">
-            <div className="grid grid-cols-[50px_minmax(0,1fr)] items-center gap-2 sm:grid-cols-[54px_minmax(0,1fr)] sm:gap-2">
+          <div className="grid gap-1.5 rounded-[16px] border-[1.5px] border-[#b9d8fb] bg-gradient-to-br from-[#f8fbff] via-[#eef6ff] to-[#f5fbff] p-2 shadow-[inset_0_1px_0_rgba(255,255,255,.78)] sm:gap-1.5 sm:p-2 lg:grid-cols-[minmax(0,1.3fr)_auto] lg:items-center">
+            <div className="grid grid-cols-[46px_minmax(0,1fr)] items-center gap-2 sm:grid-cols-[48px_minmax(0,1fr)] sm:gap-2">
               <div
-                className="grid h-[50px] w-[50px] place-items-center overflow-hidden rounded-[15px] border border-[#d4e6fb] bg-white shadow-[0_8px_14px_rgba(0,71,140,.16)] sm:h-[50px] sm:w-[50px]"
+                className="grid h-[46px] w-[46px] place-items-center overflow-hidden rounded-[14px] border border-[#d4e6fb] bg-white shadow-[0_8px_14px_rgba(0,71,140,.16)] sm:h-[46px] sm:w-[46px]"
               >
                 <Image
                   src={SAFETY_AWARENESS_ICON}
@@ -451,16 +452,16 @@ export default function SafePlusDashboard() {
               </div>
               <div className="min-w-0">
                 <div className="flex flex-col items-start gap-1 sm:flex-row sm:flex-wrap sm:items-center sm:gap-2">
-                  <span className="block text-[10px] font-black leading-tight text-[#536e94] sm:text-[10.5px]">เปอร์เซ็นต์การเข้าร่วม Safety Awareness</span>
-                  <span className="rounded-full bg-[#dff8e9] px-2.5 py-1 text-[9px] font-black leading-none text-[#118646] sm:px-3 sm:text-[9.5px]">
+                  <span className="block text-[9.5px] font-black leading-tight text-[#536e94] sm:text-[10px]">เปอร์เซ็นต์การเข้าร่วม Safety Awareness</span>
+                  <span className="rounded-full bg-[#dff8e9] px-2.5 py-0.5 text-[9px] font-black leading-none text-[#118646] sm:px-2.5 sm:text-[9px]">
                     วันนี้: {!awarenessRequiredToday ? "ไม่นับ" : doneToday ? "ทำแล้ว" : "ยังไม่ได้ทำ"}
                   </span>
                 </div>
-                <div className="mt-1 flex items-end gap-2">
-                  <strong className="text-[28px] font-black leading-none text-[#0b3572] sm:text-[24px]">{dashboardData.completionRate}%</strong>
+                <div className="mt-0.5 flex items-end gap-2">
+                  <strong className="text-[25px] font-black leading-none text-[#0b3572] sm:text-[22px]">{dashboardData.completionRate}%</strong>
                   <span className="pb-0.5 text-[9px] font-bold leading-tight text-[#5d7599] sm:text-[9.5px]">จากวันที่ต้องทำ</span>
                 </div>
-                <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-[#d8eafc]">
+                <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-[#d8eafc]">
                   <span
                     className="block h-full rounded-full bg-gradient-to-r from-[#0b6fe8] to-[#30b8ff] shadow-[0_0_8px_rgba(11,111,232,.4)]"
                     style={{ width: `${dashboardData.completionRate}%` }}
@@ -476,14 +477,14 @@ export default function SafePlusDashboard() {
                 <div
                   key={label}
                   className={cn(
-                    "flex min-h-[52px] flex-col items-center justify-center rounded-[15px] border px-2.5 text-center shadow-[inset_0_1px_0_rgba(255,255,255,.65)] sm:min-h-[56px] sm:rounded-[16px] sm:px-3",
+                    "flex min-h-[48px] flex-col items-center justify-center rounded-[14px] border px-2.5 text-center shadow-[inset_0_1px_0_rgba(255,255,255,.65)] sm:min-h-[50px] sm:rounded-[15px] sm:px-3",
                     danger
                       ? "border-[#ffc7c2] bg-[#fff3f1] text-[#da3127]"
                       : "border-[#c5dcf8] bg-[#f3f8ff] text-[#0b3572]",
                   )}
                 >
-                  <strong className="text-[18px] font-black leading-none sm:text-[20px]">{value}</strong>
-                  <span className={cn("mt-1 text-[8.5px] font-extrabold sm:text-[9.5px]", danger ? "text-[#da3127]/85" : "text-[#4a6fa5]")}>{label}</span>
+                  <strong className="text-[17px] font-black leading-none sm:text-[18px]">{value}</strong>
+                  <span className={cn("mt-0.5 text-[8.5px] font-extrabold sm:text-[9px]", danger ? "text-[#da3127]/85" : "text-[#4a6fa5]")}>{label}</span>
                 </div>
               ))}
             </div>
@@ -507,7 +508,7 @@ export default function SafePlusDashboard() {
                       key={day.dateKey}
                       ref={isToday ? todayCalendarRef : undefined}
                       className={cn(
-                        "relative flex w-[50px] flex-shrink-0 flex-col items-center justify-center rounded-[14px] border-[1.5px] py-1.5 text-center transition-colors xl:w-auto xl:min-h-[68px] xl:rounded-[16px] xl:px-2 xl:py-1.5",
+                        "relative flex w-[48px] flex-shrink-0 flex-col items-center justify-center rounded-[13px] border-[1.5px] py-1.5 text-center transition-colors xl:w-auto xl:min-h-[58px] xl:rounded-[15px] xl:px-2 xl:py-1",
                         isToday
                           ? "border-[3px] border-[#087dff] bg-gradient-to-b from-[#d6ecff] to-[#b9dcff] text-[#073f87] shadow-[inset_0_1px_0_rgba(255,255,255,.7),0_0_0_3px_rgba(8,125,255,.14),0_12px_28px_rgba(8,125,255,.28)]"
                           : day.completion
@@ -521,12 +522,12 @@ export default function SafePlusDashboard() {
                           : "border-[#d6e4f5] bg-[#f7fbff] text-[#6c7f99]",
                       )}
                     >
-                      <span className="text-[9px] font-extrabold opacity-70">{day.weekday}</span>
-                      <strong className="mt-0.5 text-[15px] font-black leading-none xl:mt-0.5 xl:text-[17px]">{day.day}</strong>
+                      <span className="text-[8.5px] font-extrabold opacity-70">{day.weekday}</span>
+                      <strong className="mt-0.5 text-[14px] font-black leading-none xl:mt-0 xl:text-[16px]">{day.day}</strong>
                       {day.completion ? (
-                        <Check className="mt-1 h-3 w-3 rounded-full border-2 border-current p-[2px] xl:mt-1 xl:h-3.5 xl:w-3.5" />
+                        <Check className="mt-1 h-3 w-3 rounded-full border-2 border-current p-[2px] xl:mt-0.5 xl:h-3.5 xl:w-3.5" />
                       ) : (
-                        <span className="mt-1 text-[7.5px] font-black leading-none xl:mt-1 xl:text-[9px]">{dayStatus}</span>
+                        <span className="mt-1 text-[7.5px] font-black leading-none xl:mt-0.5 xl:text-[8.5px]">{dayStatus}</span>
                       )}
                     </div>
                   );
@@ -536,40 +537,52 @@ export default function SafePlusDashboard() {
           </div>
 
           {/* latest record */}
-          <div className="rounded-[12px] border-[1.5px] border-[#c5d9f5] bg-[#f7fbff] p-2">
+          <div
+            className={cn(
+              "rounded-[12px] border-[1.5px] p-1.5",
+              latestHasWrongAnswer ? "border-[#ffc8c2] bg-[#fff3f1]" : "border-[#c5d9f5] bg-[#f7fbff]",
+            )}
+          >
             <div className="flex items-center gap-2">
-              <CalendarDays className="h-4 w-4 text-[#087dff]" strokeWidth={2.4} />
-              <b className="app-card-title text-[#0b3572]">รายการล่าสุด</b>
+              <CalendarDays className={cn("h-3.5 w-3.5", latestHasWrongAnswer ? "text-[#c9352b]" : "text-[#087dff]")} strokeWidth={2.4} />
+              <b className={cn("app-card-title", latestHasWrongAnswer ? "text-[#b3271a]" : "text-[#0b3572]")}>รายการล่าสุด</b>
             </div>
-            <div className="mt-1.5 grid gap-2 sm:grid-cols-[auto_1fr] sm:items-center sm:gap-3">
-              <strong className="rounded-xl bg-[#eef5ff] px-3 py-1.5 text-[10.5px] font-black text-[#0b3572]">
+            <div className="mt-1 grid gap-1.5 sm:grid-cols-[auto_1fr] sm:items-center sm:gap-2">
+              <strong
+                className={cn(
+                  "rounded-xl px-2.5 py-1 text-[10px] font-black",
+                  latestHasWrongAnswer ? "bg-[#fde1dc] text-[#b3271a]" : "bg-[#eef5ff] text-[#0b3572]",
+                )}
+              >
                 {dashboardData.latest
                   ? `${formatThaiDate(dashboardData.latest.date)}`
                   : "ยังไม่มีประวัติการทำ"}
               </strong>
               {!dashboardData.latest && (
-                <p className="m-0 text-[9.5px] font-bold leading-snug text-[#687b96] sm:text-[10.5px]">เมื่อทำ Safety Awareness แล้ว รายการล่าสุดจะแสดงที่นี่</p>
+                <p className="m-0 text-[9.5px] font-bold leading-snug text-[#687b96] sm:text-[10px]">เมื่อทำ Safety Awareness แล้ว รายการล่าสุดจะแสดงที่นี่</p>
               )}
               {dashboardData.latest && (
-                <p className="m-0 text-[9.5px] font-bold leading-snug text-[#687b96] sm:text-[10.5px]">คำถามที่ทำในวันล่าสุดจะแสดงด้านล่าง</p>
+                <p className={cn("m-0 text-[9.5px] font-bold leading-snug sm:text-[10px]", latestHasWrongAnswer ? "text-[#b3271a]" : "text-[#687b96]")}>
+                  {latestHasWrongAnswer ? "รายการล่าสุดมีคำตอบผิด แสดงด้วยสีแดงด้านล่าง" : "คำถามที่ทำในวันล่าสุดจะแสดงด้านล่าง"}
+                </p>
               )}
             </div>
             {dashboardData.latest && latestQuestions.length > 0 && (
-              <div className="mt-1.5 grid max-h-[88px] gap-1.5 overflow-y-auto pr-1">
+              <div className="mt-1 grid max-h-[56px] gap-1 overflow-y-auto pr-1">
                 {latestQuestions.map((q) => (
                   <div
                     key={q.id}
                     className={cn(
-                      "flex items-start gap-2 rounded-[10px] px-2 py-1.5 text-[9px] font-bold sm:px-2.5 sm:text-[9.5px]",
+                      "flex items-start gap-1.5 rounded-[9px] px-2 py-1 text-[9px] font-bold sm:px-2 sm:text-[9px]",
                       q.correct ? "bg-[#daf5e6] text-[#19734a]" : "bg-[#fdeee9] text-[#b3271a]",
                     )}
                   >
                     {q.correct ? (
-                      <CheckCircle2 className="mt-0.5 h-[14px] w-[14px] flex-shrink-0" strokeWidth={2.6} />
+                      <CheckCircle2 className="mt-0.5 h-[13px] w-[13px] flex-shrink-0" strokeWidth={2.6} />
                     ) : (
-                      <XCircle className="mt-0.5 h-[14px] w-[14px] flex-shrink-0" strokeWidth={2.6} />
+                      <XCircle className="mt-0.5 h-[13px] w-[13px] flex-shrink-0" strokeWidth={2.6} />
                     )}
-                    <span className="leading-[1.4]"><b className="mr-1 font-black">{q.category}</b>{q.text}</span>
+                    <span className="line-clamp-1 leading-[1.35]"><b className="mr-1 font-black">{q.category}</b>{q.text}</span>
                   </div>
                 ))}
               </div>

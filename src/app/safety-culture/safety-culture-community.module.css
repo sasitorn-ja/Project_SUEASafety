@@ -8,10 +8,6 @@
   align-items: start;
 }
 
-.topTabs {
-  display: none;
-}
-
 .composer,
 .postCard,
 .rankingCard {
@@ -70,17 +66,6 @@
 .postCard:hover {
   border-color: #80bff2 !important;
   box-shadow: 0 10px 24px rgba(23, 73, 131, .11);
-}
-
-.leadingCard {
-  border: 1px solid #25bfff !important;
-  color: white;
-  background: linear-gradient(135deg, #052551, #074d92) !important;
-  box-shadow: 0 10px 24px rgba(0, 57, 119, .2) !important;
-}
-
-.leadingCard > div:first-child {
-  display: none;
 }
 
 .rankingCard {

@@ -27,6 +27,8 @@ export function SafetyAwarenessGate() {
   // Answers stay editable until the user presses "ตรวจคำตอบ"; only then is the
   // เฉลย (answer key) revealed — so changing a pick beforehand can't be used to copy it.
   const [submitted, setSubmitted] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState("");
 
   useEffect(() => setMounted(true), []);
 
@@ -63,6 +65,25 @@ export function SafetyAwarenessGate() {
     // Freely selectable / changeable until the answers are checked.
     if (submitted) return;
     setAnswers((prev) => ({ ...prev, [question.id]: value }));
+  };
+
+  const finishAwareness = async () => {
+    setSaving(true);
+    setSaveError("");
+    const ok = await markAwarenessDone({
+      score: correctCount,
+      total: quiz.length,
+      questions: quiz.map((question) => ({
+        id: question.id,
+        category: question.category,
+        text: question.text,
+        correct: answers[question.id] === question.answer,
+      })),
+    });
+    if (!ok) {
+      setSaveError("บันทึกไม่สำเร็จ กรุณาลองอีกครั้ง");
+      setSaving(false);
+    }
   };
 
   return (
@@ -222,22 +243,17 @@ export function SafetyAwarenessGate() {
               </p>
               <button
                 type="button"
-                onClick={() =>
-                  markAwarenessDone({
-                    score: correctCount,
-                    total: quiz.length,
-                    questions: quiz.map((question) => ({
-                      id: question.id,
-                      category: question.category,
-                      text: question.text,
-                      correct: answers[question.id] === question.answer,
-                    })),
-                  })
-                }
-                className="flex h-11 items-center justify-center gap-2 rounded-xl bg-[var(--brand-nav)] px-5 text-[14px] font-black text-[var(--brand-accent)] transition-transform hover:scale-[1.02]"
+                disabled={saving}
+                onClick={finishAwareness}
+                className="flex h-11 items-center justify-center gap-2 rounded-xl bg-[var(--brand-nav)] px-5 text-[14px] font-black text-[var(--brand-accent)] transition-transform enabled:hover:scale-[1.02] disabled:cursor-not-allowed disabled:opacity-60"
               >
-                เข้าสู่เว็บไซต์
+                {saving ? "กำลังบันทึก..." : "เข้าสู่เว็บไซต์"}
               </button>
+              {saveError && (
+                <p className="text-[12px] font-bold text-[#b3271a] sm:basis-full sm:text-right">
+                  {saveError}
+                </p>
+              )}
             </div>
           )}
         </div>

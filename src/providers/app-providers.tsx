@@ -300,7 +300,7 @@ type AppActions = {
   updateAwarenessQuestions: (questions: SafetyAwarenessQuestion[]) => void;
   updateAwarenessHolidays: (holidays: AwarenessHoliday[]) => void;
   /** Mark today's Safety Awareness popup as completed. */
-  markAwarenessDone: (completion: Omit<AwarenessCompletion, "date" | "completedAt">) => void;
+  markAwarenessDone: (completion: Omit<AwarenessCompletion, "date" | "completedAt">) => Promise<boolean>;
   awardSafetyEffortCompletion: (sourceId: string, label?: string) => void;
   redeemPoints: (
     rewardId: number,
@@ -2723,12 +2723,25 @@ export function AppProviders({ children }: { children: ReactNode }) {
     }
   }, [awarenessHolidays, refreshAwarenessAttempts, refreshPointBalance]);
 
-  const markAwarenessDone = useCallback((completion: Omit<AwarenessCompletion, "date" | "completedAt">) => {
+  const markAwarenessDone = useCallback(async (completion: Omit<AwarenessCompletion, "date" | "completedAt">) => {
     const date = todayKey();
     const occurredAt = Date.now();
     const points = getSafetyPoint("safetyAwarenessCompleted");
     const actorName = userDisplayName(currentUserRef.current);
     const alreadyCompletedToday = awarenessDoneDate === date || awarenessHistory.some((item) => item.date === date);
+
+    if (isAuthenticatedRef.current) {
+      const saved = await apiFetch<{ attempt: { attemptDate?: string; score?: number; total?: number } }>("/api/safety-awareness/attempts", apiJson("POST", {
+        score: completion.score,
+        total: completion.total,
+        questions: completion.questions,
+      }));
+      if (!saved.ok) {
+        setNotification({ type: "info", message: "บันทึก Safety Awareness ไม่สำเร็จ กรุณารีเฟรชแล้วลองอีกครั้ง" });
+        return false;
+      }
+    }
+
     setAwarenessDoneDate(date);
     setAwarenessHistory((current) => [
       ...current.filter((item) => item.date !== date),
@@ -2753,19 +2766,9 @@ export function AppProviders({ children }: { children: ReactNode }) {
       );
     }
     if (isAuthenticatedRef.current) {
-      void (async () => {
-        const saved = await apiFetch<{ attempt: { attemptDate?: string; score?: number; total?: number } }>("/api/safety-awareness/attempts", apiJson("POST", {
-          score: completion.score,
-          total: completion.total,
-          questions: completion.questions,
-        }));
-        if (!saved.ok) {
-          setNotification({ type: "info", message: "บันทึก Safety Awareness ไม่สำเร็จ กรุณารีเฟรชแล้วลองอีกครั้ง" });
-          return;
-        }
-        await Promise.all([refreshPointBalance(), refreshAwarenessAttempts()]);
-      })();
+      await Promise.all([refreshPointBalance(), refreshAwarenessAttempts()]);
     }
+    return true;
   }, [awarenessDoneDate, awarenessHistory, refreshAwarenessAttempts, refreshPointBalance]);
 
   const awardSafetyEffortCompletion = useCallback((sourceId: string, label = "Safety Effort สำเร็จ") => {

@@ -33,7 +33,6 @@ import {
 } from "@/lib/safety-culture";
 import { CalendarDays, ChevronLeft, ChevronRight, ClipboardList, Clock3, ImageIcon, MessageCircle, ThumbsUp, Pencil, Sparkles, Trash2, Trophy, UsersRound, X } from "lucide-react";
 import { SafetyCultureHero } from "@/components/safety-culture/safety-culture-hero";
-import { SafetyCultureTabs } from "@/components/safety-culture/safety-culture-tabs";
 import { useAppTheme } from "@/providers/theme-provider";
 import styles from "./safety-culture-community.module.css";
 
@@ -75,50 +74,6 @@ function ProfileAvatar({
         text
       )}
     </div>
-  );
-}
-
-function LeadingTeamCard({ className, style }: { className?: string; style?: CSSProperties }) {
-  const { teamStandings } = useAppState();
-  const { themedColor } = useAppTheme();
-  const leadingTeam = teamStandings[0];
-  const runnerUpTeam = teamStandings[1];
-  const leadPoints = leadingTeam && runnerUpTeam ? leadingTeam.points - runnerUpTeam.points : 0;
-  const teamColor = leadingTeam ? themedColor(leadingTeam.color) : "var(--brand-accent)";
-  return (
-    <Card
-      className={cn(
-        "overflow-hidden rounded-[16px] border border-[var(--border)] bg-[linear-gradient(135deg,rgba(255,255,255,0.95),rgba(255,255,255,0.80))] p-3 shadow-[0_8px_20px_var(--brand-shadow)] backdrop-blur-sm md:p-3.5 font-sarabun",
-        className
-      )}
-      style={style}
-    >
-      <div className="flex items-center gap-3">
-        <div
-          className="flex h-[40px] w-[40px] flex-shrink-0 items-center justify-center rounded-full border-2 border-white text-[20px] shadow-[0_4px_12px_rgba(0,0,0,0.12)]"
-          style={{ background: `linear-gradient(180deg, ${teamColor}, color-mix(in srgb, ${teamColor} 80%, white))` }}
-        >
-          🏆
-        </div>
-        <div className="min-w-0 flex-1">
-          {leadingTeam ? (
-            <>
-              <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--brand-muted-text)]">ทีมนำอยู่ตอนนี้</span>
-              <div className="mt-0.5 text-[16px] leading-none font-black tracking-tight text-[var(--foreground)]">{leadingTeam.name}</div>
-              <span className="mt-1 block text-[11px] font-black" style={{ color: teamColor }}>
-                +{leadPoints.toLocaleString()} คะแนน เหนือกว่า {runnerUpTeam?.name ?? "-"}
-              </span>
-            </>
-          ) : (
-            <>
-              <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--brand-muted-text)]">อันดับทีม</span>
-              <div className="mt-0.5 text-[16px] leading-none font-black tracking-tight text-[var(--foreground)]">ยังไม่มีข้อมูลทีม</div>
-              <span className="mt-1 block text-[11px] font-bold text-[var(--brand-muted-text)]">ข้อมูลอันดับทีมจะแสดงที่นี่เมื่อมีคะแนน</span>
-            </>
-          )}
-        </div>
-      </div>
-    </Card>
   );
 }
 
@@ -741,10 +696,6 @@ export default function Page() {
           />
         </div>
 
-        <div className={cn("mt-[13px] mb-[20px] anim-fade", styles.topTabs)} style={animStyle(0.02)}>
-          <SafetyCultureTabs />
-        </div>
-
         {visibleFeedEvents.length > 0 ? (
           <Card className="mb-3 overflow-hidden rounded-[18px] border border-[var(--c-e4d3b3)] bg-[var(--c-fffdfa)] p-3 shadow-[0_8px_18px_rgba(62,36,13,0.04)] anim-fade md:p-3.5" style={animStyle(0.03)}>
             <div className="mb-1 flex items-start gap-2.5 text-[var(--c-5c3214)]">
@@ -937,7 +888,6 @@ export default function Page() {
             </Card>
 
             <div className="hidden flex-col gap-3 md:flex xl:hidden">
-              <LeadingTeamCard className="anim-fade" style={animStyle(0.045)} />
               <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
                 <TeamStandingsCard className="anim-fade" style={animStyle(0.05)} />
                 <PersonalRankingsCard className="anim-fade" style={animStyle(0.055)} />
@@ -1296,7 +1246,6 @@ export default function Page() {
           </div>
 
           <div className={cn("hidden flex-col gap-3 xl:flex", styles.sidebar)}>
-            <LeadingTeamCard className={cn("anim-fade", styles.leadingCard)} style={animStyle(0.1)} />
             <TeamStandingsCard className={cn("anim-fade", styles.rankingCard)} style={animStyle(0.15)} />
             <PersonalRankingsCard className={cn("anim-fade", styles.rankingCard)} style={animStyle(0.2)} />
             <SUEATipCard className={cn("anim-fade", styles.tipCard)} style={animStyle(0.25)} tipText={tipText} />

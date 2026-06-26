@@ -4,7 +4,6 @@ import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
 import { Gift } from "lucide-react";
 import { SafetyCultureHero } from "@/components/safety-culture/safety-culture-hero";
-import { SafetyCultureTabs } from "@/components/safety-culture/safety-culture-tabs";
 import { SafetyCulturePageHeader } from "@/components/safety-culture/safety-culture-page-header";
 import { Card } from "@/components/ui/card";
 import { Dialog } from "@/components/ui/dialog";
@@ -211,10 +210,6 @@ export default function RewardsPage() {
             mascotSrc="/images/mascots/wangjai/39.png"
             mascotAction="happyReward"
           />
-        </div>
-
-        <div className="mt-4 mb-6 anim-fade" style={animStyle(0.02)}>
-          <SafetyCultureTabs />
         </div>
 
         <div className="mt-2 mb-4 anim-fade" style={animStyle(0.05)}>
