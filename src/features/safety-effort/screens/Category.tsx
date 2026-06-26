@@ -8,6 +8,7 @@ import {
   CalendarDays,
   ChevronRight,
   ClipboardCheck,
+  Coins,
   FolderOpen,
   HardHat,
   MapPin,
@@ -133,7 +134,10 @@ export default function Category() {
                 <div>
                   <div className="flex flex-wrap items-center gap-2">
                     <h3 className="text-[16px] font-extrabold leading-tight sm:text-[18px]">ตรวจ Linewalk / Safety Contact</h3>
-                    <span className="rounded-full bg-[#0B82F0] px-2 py-0.5 text-[10px] font-black text-white shadow-[0_6px_14px_rgba(11,130,240,0.20)]">+10 pts</span>
+                    <span className="inline-flex items-center gap-1 rounded-full bg-[#0B82F0] px-2 py-0.5 text-[10px] font-black text-white shadow-[0_6px_14px_rgba(11,130,240,0.20)]">
+                      <Coins className="h-3 w-3" strokeWidth={2.5} />
+                      +10 Coin
+                    </span>
                   </div>
                   <p className="text-[12px] font-bold leading-relaxed text-[#55739B]">ความปลอดภัยเริ่มต้นที่นี่</p>
                 </div>
