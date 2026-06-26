@@ -386,8 +386,8 @@ export default function SafePlusDashboard() {
       <div className="mx-2.5 mt-2 grid gap-2 lg:mx-6 lg:mt-2.5 lg:grid-cols-[minmax(0,2.2fr)_minmax(300px,0.92fr)]">
 
         {/* ── Safety Awareness card ── */}
-        <Card className="rounded-[18px] border border-[rgba(13,80,165,0.18)] bg-white p-2.5 shadow-[0_4px_18px_rgba(11,53,110,0.10),0_1px_4px_rgba(11,53,110,0.06)] sm:p-3 lg:p-3">
-          <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <Card className="gap-2 rounded-[18px] border border-[rgba(13,80,165,0.18)] bg-white p-2.5 shadow-[0_4px_18px_rgba(11,53,110,0.10),0_1px_4px_rgba(11,53,110,0.06)] sm:p-2.5 lg:p-2.5">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex flex-wrap items-center gap-2">
               <ShieldCheck className="h-4 w-4 text-[#087dff]" strokeWidth={2.4} />
               <h2 className="app-card-title m-0 text-[#0b3572]">Safety Awareness</h2>
@@ -435,10 +435,10 @@ export default function SafePlusDashboard() {
           </div>
 
           {/* completion row */}
-          <div className="grid gap-2.5 rounded-[16px] border-[1.5px] border-[#b9d8fb] bg-gradient-to-br from-[#f8fbff] via-[#eef6ff] to-[#f5fbff] p-3 shadow-[inset_0_1px_0_rgba(255,255,255,.78)] sm:gap-2.5 sm:p-2.5 lg:grid-cols-[minmax(0,1.3fr)_auto] lg:items-center lg:p-3">
-            <div className="grid grid-cols-[54px_minmax(0,1fr)] items-center gap-2.5 sm:grid-cols-[60px_minmax(0,1fr)] sm:gap-2.5">
+          <div className="grid gap-2 rounded-[16px] border-[1.5px] border-[#b9d8fb] bg-gradient-to-br from-[#f8fbff] via-[#eef6ff] to-[#f5fbff] p-2.5 shadow-[inset_0_1px_0_rgba(255,255,255,.78)] sm:gap-2 sm:p-2 lg:grid-cols-[minmax(0,1.3fr)_auto] lg:items-center lg:p-2.5">
+            <div className="grid grid-cols-[50px_minmax(0,1fr)] items-center gap-2 sm:grid-cols-[54px_minmax(0,1fr)] sm:gap-2">
               <div
-                className="grid h-[54px] w-[54px] place-items-center overflow-hidden rounded-[16px] border border-[#d4e6fb] bg-white shadow-[0_8px_14px_rgba(0,71,140,.16)] sm:h-[52px] sm:w-[52px]"
+                className="grid h-[50px] w-[50px] place-items-center overflow-hidden rounded-[15px] border border-[#d4e6fb] bg-white shadow-[0_8px_14px_rgba(0,71,140,.16)] sm:h-[50px] sm:w-[50px]"
               >
                 <Image
                   src={SAFETY_AWARENESS_ICON}
@@ -460,7 +460,7 @@ export default function SafePlusDashboard() {
                   <strong className="text-[28px] font-black leading-none text-[#0b3572] sm:text-[24px]">{dashboardData.completionRate}%</strong>
                   <span className="pb-0.5 text-[9px] font-bold leading-tight text-[#5d7599] sm:text-[9.5px]">จากวันที่ต้องทำ</span>
                 </div>
-                <div className="mt-2 h-2 overflow-hidden rounded-full bg-[#d8eafc]">
+                <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-[#d8eafc]">
                   <span
                     className="block h-full rounded-full bg-gradient-to-r from-[#0b6fe8] to-[#30b8ff] shadow-[0_0_8px_rgba(11,111,232,.4)]"
                     style={{ width: `${dashboardData.completionRate}%` }}
@@ -476,7 +476,7 @@ export default function SafePlusDashboard() {
                 <div
                   key={label}
                   className={cn(
-                    "flex min-h-[58px] flex-col items-center justify-center rounded-[15px] border px-2.5 text-center shadow-[inset_0_1px_0_rgba(255,255,255,.65)] sm:min-h-[64px] sm:rounded-[18px] sm:px-3",
+                    "flex min-h-[52px] flex-col items-center justify-center rounded-[15px] border px-2.5 text-center shadow-[inset_0_1px_0_rgba(255,255,255,.65)] sm:min-h-[56px] sm:rounded-[16px] sm:px-3",
                     danger
                       ? "border-[#ffc7c2] bg-[#fff3f1] text-[#da3127]"
                       : "border-[#c5dcf8] bg-[#f3f8ff] text-[#0b3572]",
@@ -489,7 +489,7 @@ export default function SafePlusDashboard() {
             </div>
           </div>
 
-          <div className="mt-2.5 rounded-[16px] border border-[#dbe9fa] bg-[#f9fbff] p-2">
+          <div className="rounded-[16px] border border-[#dbe9fa] bg-[#f9fbff] p-1.5">
             {/* mobile: horizontal scroll — xl: full 11-column grid */}
             <div className="scrollbar-hide overflow-x-auto xl:overflow-visible">
               <div className="flex gap-1.5 xl:grid xl:grid-cols-11 xl:gap-2">
@@ -507,7 +507,7 @@ export default function SafePlusDashboard() {
                       key={day.dateKey}
                       ref={isToday ? todayCalendarRef : undefined}
                       className={cn(
-                        "relative flex w-[52px] flex-shrink-0 flex-col items-center justify-center rounded-[14px] border-[1.5px] py-2 text-center transition-colors xl:w-auto xl:min-h-[82px] xl:rounded-[18px] xl:px-2 xl:py-2",
+                        "relative flex w-[50px] flex-shrink-0 flex-col items-center justify-center rounded-[14px] border-[1.5px] py-1.5 text-center transition-colors xl:w-auto xl:min-h-[68px] xl:rounded-[16px] xl:px-2 xl:py-1.5",
                         isToday
                           ? "border-[3px] border-[#087dff] bg-gradient-to-b from-[#d6ecff] to-[#b9dcff] text-[#073f87] shadow-[inset_0_1px_0_rgba(255,255,255,.7),0_0_0_3px_rgba(8,125,255,.14),0_12px_28px_rgba(8,125,255,.28)]"
                           : day.completion
@@ -522,11 +522,11 @@ export default function SafePlusDashboard() {
                       )}
                     >
                       <span className="text-[9px] font-extrabold opacity-70">{day.weekday}</span>
-                      <strong className="mt-0.5 text-[15px] font-black leading-none xl:mt-1 xl:text-[18px]">{day.day}</strong>
+                      <strong className="mt-0.5 text-[15px] font-black leading-none xl:mt-0.5 xl:text-[17px]">{day.day}</strong>
                       {day.completion ? (
-                        <Check className="mt-1 h-3 w-3 rounded-full border-2 border-current p-[2px] xl:mt-1.5 xl:h-4 xl:w-4" />
+                        <Check className="mt-1 h-3 w-3 rounded-full border-2 border-current p-[2px] xl:mt-1 xl:h-3.5 xl:w-3.5" />
                       ) : (
-                        <span className="mt-1 text-[7.5px] font-black leading-none xl:mt-1.5 xl:text-[10px]">{dayStatus}</span>
+                        <span className="mt-1 text-[7.5px] font-black leading-none xl:mt-1 xl:text-[9px]">{dayStatus}</span>
                       )}
                     </div>
                   );
@@ -536,7 +536,7 @@ export default function SafePlusDashboard() {
           </div>
 
           {/* latest record */}
-          <div className="mt-2 rounded-[12px] border-[1.5px] border-[#c5d9f5] bg-[#f7fbff] p-2 sm:p-2.5">
+          <div className="rounded-[12px] border-[1.5px] border-[#c5d9f5] bg-[#f7fbff] p-2">
             <div className="flex items-center gap-2">
               <CalendarDays className="h-4 w-4 text-[#087dff]" strokeWidth={2.4} />
               <b className="app-card-title text-[#0b3572]">รายการล่าสุด</b>
@@ -555,19 +555,19 @@ export default function SafePlusDashboard() {
               )}
             </div>
             {dashboardData.latest && latestQuestions.length > 0 && (
-              <div className="mt-2 grid gap-1.5">
+              <div className="mt-1.5 grid max-h-[88px] gap-1.5 overflow-y-auto pr-1">
                 {latestQuestions.map((q) => (
                   <div
                     key={q.id}
                     className={cn(
-                      "flex items-start gap-2 rounded-[10px] px-2 py-2 text-[9px] font-bold sm:px-2.5 sm:text-[10px]",
+                      "flex items-start gap-2 rounded-[10px] px-2 py-1.5 text-[9px] font-bold sm:px-2.5 sm:text-[9.5px]",
                       q.correct ? "bg-[#daf5e6] text-[#19734a]" : "bg-[#fdeee9] text-[#b3271a]",
                     )}
                   >
                     {q.correct ? (
-                      <CheckCircle2 className="mt-0.5 h-[15px] w-[15px] flex-shrink-0" strokeWidth={2.6} />
+                      <CheckCircle2 className="mt-0.5 h-[14px] w-[14px] flex-shrink-0" strokeWidth={2.6} />
                     ) : (
-                      <XCircle className="mt-0.5 h-[15px] w-[15px] flex-shrink-0" strokeWidth={2.6} />
+                      <XCircle className="mt-0.5 h-[14px] w-[14px] flex-shrink-0" strokeWidth={2.6} />
                     )}
                     <span className="leading-[1.4]"><b className="mr-1 font-black">{q.category}</b>{q.text}</span>
                   </div>
@@ -578,8 +578,8 @@ export default function SafePlusDashboard() {
         </Card>
 
         {/* ── Activity card ── */}
-        <div className="hidden flex-col md:flex">
-          <Card className="flex flex-1 flex-col rounded-[18px] border border-[rgba(13,80,165,0.18)] bg-white p-2.5 shadow-[0_4px_18px_rgba(11,53,110,0.10),0_1px_4px_rgba(11,53,110,0.06)] lg:p-3">
+        <div className="hidden flex-col self-start md:flex">
+          <Card className="flex flex-col rounded-[18px] border border-[rgba(13,80,165,0.18)] bg-white p-2.5 shadow-[0_4px_18px_rgba(11,53,110,0.10),0_1px_4px_rgba(11,53,110,0.06)] lg:p-3">
             <div className="mb-2 flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Zap className="h-[15px] w-[15px] text-[#087bff]" strokeWidth={2.4} />
@@ -592,21 +592,21 @@ export default function SafePlusDashboard() {
 
             {displayedEvents.length > 0 ? (
               <div
-                className="activity-viewport relative flex-1 overflow-hidden rounded-xl bg-[#d7efff] shadow-[inset_0_0_0_1px_rgba(7,125,255,.1)]"
-                style={{ minHeight: 156, "--activity-count": displayedEvents.length } as CSSProperties}
+                className="activity-viewport relative overflow-hidden rounded-xl bg-[#d7efff] shadow-[inset_0_0_0_1px_rgba(7,125,255,.1)]"
+                style={{ height: 300, "--activity-count": displayedEvents.length } as CSSProperties}
               >
                 <div className={cn("activity-track flex h-full", displayedEvents.length > 1 && "activity-track-auto")}>
                   {displayedEvents.map((activity) => (
                     <Link
                       key={activity.id}
                       href={`/safety-culture?activityId=${encodeURIComponent(activity.id)}`}
-                      className="relative block h-full min-h-[156px] flex-[0_0_100%] overflow-hidden text-white"
+                      className="relative block h-full flex-[0_0_100%] overflow-hidden text-white"
                     >
                       {activity.imageSrc ? (
                         <img
                           src={activity.imageSrc}
                           alt={activity.title}
-                          className="block h-full min-h-[156px] w-full object-cover object-center transition-transform duration-300 hover:scale-[1.03]"
+                          className="block h-full w-full object-cover object-center transition-transform duration-300 hover:scale-[1.03]"
                         />
                       ) : (
                         <div
