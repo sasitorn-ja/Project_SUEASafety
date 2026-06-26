@@ -13,7 +13,6 @@ import {
   Check,
   CheckCircle2,
   ChevronRight,
-  Flame,
   Gift,
   ShieldCheck,
   Trophy,
@@ -392,8 +391,43 @@ export default function SafePlusDashboard() {
             <div className="flex flex-wrap items-center gap-2">
               <ShieldCheck className="h-4 w-4 text-[#087dff]" strokeWidth={2.4} />
               <h2 className="app-card-title m-0 text-[#0b3572]">Safety Awareness</h2>
-              <span className="inline-flex items-center gap-1.5 rounded-full border border-[#d7eafe] bg-[#f3f9ff] px-2 py-1 text-[9px] font-black text-[#0b82f0] sm:px-2.5 sm:py-[5px] sm:text-[9.5px]">
-                <Flame className="h-3.5 w-3.5" strokeWidth={2.4} />
+              <span className="inline-flex h-8 w-[132px] shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-full border border-[#e1edf8] bg-white text-[11px] font-black text-[#ff642e] shadow-[0_3px_12px_rgba(145,174,205,0.16)] sm:h-9 sm:w-[150px] sm:text-[12px]">
+                <svg
+                  className="safety-streak-flame h-5 w-5"
+                  viewBox="0 0 64 64"
+                  aria-hidden="true"
+                >
+                  <defs>
+                    <linearGradient id="streak-flame-outer" x1="17" x2="49" y1="58" y2="7" gradientUnits="userSpaceOnUse">
+                      <stop stopColor="#d51f45" />
+                      <stop offset="0.52" stopColor="#ff5b22" />
+                      <stop offset="1" stopColor="#ff2f1c" />
+                    </linearGradient>
+                    <linearGradient id="streak-flame-inner" x1="28" x2="46" y1="50" y2="18" gradientUnits="userSpaceOnUse">
+                      <stop stopColor="#ff9d18" />
+                      <stop offset="1" stopColor="#ffe45d" />
+                    </linearGradient>
+                  </defs>
+                  <path fill="#bd184b" d="M20.6 53.7c-3.7.1-7.3-1.8-9.2-5.1 3 .1 5.8-1 7.7-3.4 1.5-1.9 1.9-4.4 1.5-6.8 3.9 2.7 5.9 7.8 4.4 12.1-.8 2.1-2.1 3.1-4.4 3.2Z" />
+                  <path
+                    fill="url(#streak-flame-outer)"
+                    d="M34.6 61.6c-13.9 0-24.8-8.7-24.8-22.3 0-5.8 2.5-10.5 6-14.8-.2 5.2 2.6 9.8 7 10.5 5.9.9 10-4.9 9.6-10.5-.5-7.3 2.5-15 11.1-21.6-.4 8 4.8 11.3 10 17.7 5.2 6.5 7.6 14.7 5.3 23.4 2-1.1 3.8-2.9 5.2-5.5 1.5 12.8-8.3 23.1-29.4 23.1Z"
+                  />
+                  <path
+                    fill="url(#streak-flame-inner)"
+                    d="M36.4 54.5c-7.7 0-13.5-5.4-13.5-12.8 0-8.4 7.1-14.5 12.8-20 1.4 7 8.8 10.7 9.6 20 .6 7.4-2.9 12.8-8.9 12.8Z"
+                  />
+                  <path fill="#ef2830" d="M51.7 49.6c2.4-2.8 5.3-3.8 7.6-2.3 2.1 1.5 1.8 5.6-1.1 8.7-2.6 2.8-6.5 3.8-8.5 2.1-1.9-1.6-.6-5.5 2-8.5Z" />
+                  <path fill="#ef2830" d="M16.1 43.2c-3.1-.5-5.2-2.7-5-5.4.2-2.3 2.3-5.7 5.3-8.9-.5 4 1.2 7 4.2 8.9 2.3 1.5-.1 6.2-4.5 5.4Z" />
+                  <ellipse cx="30.3" cy="40.3" fill="#251f48" rx="3.7" ry="5" transform="rotate(-8 30.3 40.3)" />
+                  <ellipse cx="45.1" cy="39.6" fill="#251f48" rx="3.6" ry="4.8" transform="rotate(-22 45.1 39.6)" />
+                  <circle cx="29" cy="38.4" r="1.2" fill="#fff" />
+                  <circle cx="43.7" cy="37.7" r="1.1" fill="#fff" />
+                  <path fill="#251f48" d="M36.2 47.2c2.9 2.2 6.8 1.3 8.4-1.8.5-.9 2-.2 1.7.8-1.1 4.1-6.4 6.2-10.8 2.7-.9-.7-.2-2.4.7-1.7Z" />
+                  <circle cx="25.6" cy="46.2" r="1.7" fill="#ff7350" opacity=".78" />
+                  <circle cx="48.6" cy="45.7" r="1.5" fill="#ff7350" opacity=".78" />
+                  <path fill="#fff7b0" d="M49.2 27.8c1.3 1.9 2.4 4.2 3 6.5.2.7-.7 1.1-1 .4-1-2-2.2-3.9-3.8-5.4-.5-.5 1.4-2 1.8-1.5Z" opacity=".8" />
+                </svg>
                 ทำต่อเนื่อง {dashboardData.streak} วัน
               </span>
             </div>
