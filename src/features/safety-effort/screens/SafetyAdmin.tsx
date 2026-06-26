@@ -937,52 +937,6 @@ export default function SafetyAdmin() {
                     <div style={{ display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap", justifyContent: isMobile ? "flex-start" : "flex-end" }}>
                       <button
                         type="button"
-                        onClick={() => updateQuestion(selectedQuestion.id, (item) => ({ ...item, format: item.format === "text_box" ? "original" : "text_box" }))}
-                        aria-pressed={selectedQuestion.format === "text_box"}
-                        style={{
-                          display: "inline-flex",
-                          alignItems: "center",
-                          gap: 8,
-                          border: "none",
-                          background: "transparent",
-                          color: "#24779d",
-                          fontFamily: "inherit",
-                          fontSize: 13,
-                          fontWeight: 900,
-                          cursor: "pointer",
-                          padding: 0,
-                        }}
-                      >
-                        <span>ตอบแบบ Text box</span>
-                        <span
-                          style={{
-                            position: "relative",
-                            display: "inline-flex",
-                            width: 50,
-                            height: 26,
-                            borderRadius: 999,
-                            background: selectedQuestion.format === "text_box" ? "linear-gradient(180deg,#27d7ff,#0b8fe6)" : "#d7e2ee",
-                            boxShadow: selectedQuestion.format === "text_box" ? "0 5px 14px rgba(30,144,255,0.28)" : "inset 0 1px 3px rgba(0,0,0,0.08)",
-                            transition: "background 160ms ease",
-                          }}
-                        >
-                          <span
-                            style={{
-                              position: "absolute",
-                              top: 3,
-                              left: selectedQuestion.format === "text_box" ? 27 : 3,
-                              width: 20,
-                              height: 20,
-                              borderRadius: "50%",
-                              background: "#fff",
-                              boxShadow: "0 2px 6px rgba(6,43,99,0.18)",
-                              transition: "left 160ms ease",
-                            }}
-                          />
-                        </span>
-                      </button>
-                      <button
-                        type="button"
                         onClick={() => updateQuestion(selectedQuestion.id, (item) => ({ ...item, active: !isQuestionActive(item) }))}
                         aria-pressed={isQuestionActive(selectedQuestion)}
                         style={{
@@ -1038,7 +992,54 @@ export default function SafetyAdmin() {
                     </div>
                   </div>
 
-                  <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 12, alignItems: "end" }}>
+            {/* Format Selector */}
+            <div style={{ display: "grid", gap: 6, marginBottom: 14 }}>
+              <span style={fieldLabelStyle}>เลือกรูปแบบข้อคำถามที่ต้องการเปลี่ยน</span>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+                <button
+                  type="button"
+                  onClick={() => updateQuestion(selectedQuestion.id, (item) => ({ ...item, format: "original" }))}
+                  style={{
+                    ...buttonGhostStyle,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    height: 44,
+                    borderRadius: 12,
+                    gap: 8,
+                    border: `2px solid ${selectedQuestion.format !== "text_box" ? T.accent : T.lineStrong}`,
+                    background: selectedQuestion.format !== "text_box" ? "var(--brand-soft)" : "#fff",
+                    color: selectedQuestion.format !== "text_box" ? T.accentDeep : T.ink,
+                    cursor: "pointer",
+                  }}
+                >
+                  <ClipboardList size={18} strokeWidth={2.2} />
+                  <span style={{ fontWeight: 800, fontSize: 13.5 }}>แบบตัวเลือก (เดิม)</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => updateQuestion(selectedQuestion.id, (item) => ({ ...item, format: "text_box" }))}
+                  style={{
+                    ...buttonGhostStyle,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    height: 44,
+                    borderRadius: 12,
+                    gap: 8,
+                    border: `2px solid ${selectedQuestion.format === "text_box" ? T.accent : T.lineStrong}`,
+                    background: selectedQuestion.format === "text_box" ? "var(--brand-soft)" : "#fff",
+                    color: selectedQuestion.format === "text_box" ? T.accentDeep : T.ink,
+                    cursor: "pointer",
+                  }}
+                >
+                  <Pencil size={18} strokeWidth={2.2} />
+                  <span style={{ fontWeight: 800, fontSize: 13.5 }}>แบบ Text Box</span>
+                </button>
+              </div>
+            </div>
+
+            <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 12, alignItems: "end" }}>
                     <label style={fieldStyle}>
                       <span style={fieldLabelStyle}>หัวข้อ</span>
                       <input
