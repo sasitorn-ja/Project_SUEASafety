@@ -37,17 +37,17 @@ export default function SafetyEffortProgressStepper({
                   <div
                     className="se-stepper-line"
                     style={{
-                      background: lineActive ? "var(--brand-accent)" : "rgba(255,255,255,0.15)",
+                      background: lineActive ? "var(--brand-accent)" : "rgba(11, 130, 240, 0.2)",
                     }}
                   />
                 )}
                 <div
                   className="se-stepper-node"
                   style={{
-                    background: isDone ? "#1f7a55" : isActive ? "var(--brand-accent)" : "rgba(255,255,255,0.1)",
-                    color: isDone ? "#fff" : isActive ? "var(--c-1a1613)" : "rgba(255,255,255,0.4)",
+                    background: isDone ? "#1f7a55" : isActive ? "var(--brand-accent)" : "rgba(11, 130, 240, 0.08)",
+                    color: isDone ? "#fff" : isActive ? "var(--c-1a1613)" : "#55739B",
                     boxShadow: isActive ? "0 0 8px rgba(var(--brand-accent-rgb), 0.6)" : "none",
-                    border: !isDone && !isActive ? "1px solid rgba(255,255,255,0.08)" : "none",
+                    border: !isDone && !isActive ? "1px solid rgba(11, 130, 240, 0.22)" : "none",
                   }}
                 >
                   {isDone ? <CheckIcon /> : <span>{step}</span>}
@@ -56,9 +56,6 @@ export default function SafetyEffortProgressStepper({
             );
           })}
         </div>
-        <span className="se-stepper-count">
-          {current} / {total}
-        </span>
       </div>
       <style jsx>{`
         .se-stepper {

@@ -3,8 +3,7 @@ import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "@/lib/app-navigation";
 import { useAppTheme } from "@/providers/theme-provider";
 import SafetyEffortProgressStepper from "@/features/safety-effort/components/SafetyEffortProgressStepper";
-import { Dialog } from "@/components/ui/dialog";
-import { AppDialogContent } from "@/components/ui/app-dialog";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 
 // ฤฤฤ Design tokens ฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤ
 const T = {
@@ -648,7 +647,7 @@ const STYLES = `
         box-shadow: 0 8px 24px rgba(34,25,11,0.04);
         border: 1px solid rgba(14,15,18,0.08);
         border-radius: 16px;
-        margin-top: 16px;
+        margin-top: 10px;
       }
     }
 
@@ -663,7 +662,7 @@ const STYLES = `
   .ac-cta.ready {
     background: linear-gradient(135deg, var(--brand-text) 0%, var(--c-1a1613) 100%); color: #fff;
     box-shadow: 0 10px 25px rgba(26, 22, 19, 0.25);
-    padding: 14px;
+    padding: 10px;
   }
   .ac-cta.ready::after {
     content: '';
@@ -682,7 +681,7 @@ const STYLES = `
   .ac-cta.disabled {
     background: var(--c-e8e5dc); color: #9c988f;
     cursor: not-allowed; box-shadow: none;
-    padding: 14px;
+    padding: 10px;
     border: 1px solid rgba(0,0,0,0.03);
   }
 
@@ -795,7 +794,7 @@ const STYLES = `
 
   .ac-section-heading {
     flex-shrink: 0;
-    padding: 0px 20px 8px;
+    padding: 0px 20px 4px;
     display: flex;
     align-items: flex-end;
     justify-content: space-between;
@@ -803,7 +802,7 @@ const STYLES = `
   }
 
   @media (max-width: 767px) {
-    .ac-section-heading { padding: 0px 16px 8px; }
+    .ac-section-heading { padding: 0px 4px 4px; }
     .ac-hdr-flex {
       flex-direction: column;
       align-items: stretch;
@@ -841,30 +840,47 @@ const STYLES = `
 
 // ฤฤฤ Activity card ฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤ
 function ActivityCard({ activity, isSelected, onClick }) {
-  const Icon = activity.icon;
+  const cardImage = activity.id === "line-walk"
+    ? "/images/heroes/Contact.png"
+    : activity.id === "safety-contact"
+    ? "/images/heroes/Linewalk.png"
+    : "/images/heroes/safety-location-admin-hero.png";
+
   return (
     <div
-      className={`ac-card${isSelected ? " sel" : ""}${activity.dashed ? " dashed" : ""}`}
+      className={`relative flex flex-col overflow-hidden rounded-[16px] border bg-white shadow-[0_4px_16px_rgba(0,0,0,0.02)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_12px_24px_rgba(11,130,240,0.06)] cursor-pointer group ${
+        isSelected 
+          ? "border-[#0B82F0] ring-2 ring-[#0B82F0]/20" 
+          : "border-[#EAF0FF]"
+      }`}
       onClick={onClick}
     >
-      {/* Top row: icon-box + hot/check */}
-      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 12 }}>
-        <div className="ac-icon-box">
-          <Icon />
-        </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 5, paddingTop: 2 }}>
-          <div className="ac-check-wrapper">
-            {isSelected ? (
-              <div className="ac-check-ring"><IcoCheck /></div>
-            ) : (
-              !activity.dashed && <div className="ci-check-circle-placeholder" />
-            )}
-          </div>
+      {/* Top Banner Image */}
+      <div className="relative h-[130px] sm:h-[150px] md:h-[160px] w-full overflow-hidden bg-[#F0F7FF]">
+        <img 
+          src={cardImage} 
+          alt={activity.label} 
+          className="h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+        />
+        {/* Selection indicator badge on the top right */}
+        <div className="absolute right-3 top-3 z-10">
+          {isSelected ? (
+            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#0B82F0] text-white shadow-[0_3px_8px_rgba(11,130,240,0.3)]">
+              <svg width={10} height={10} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={3.8} strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="20 6 9 17 4 12"/>
+              </svg>
+            </span>
+          ) : (
+            <span className="flex h-5 w-5 items-center justify-center rounded-full border border-white/60 bg-white/40 backdrop-blur-sm transition-all duration-300 group-hover:bg-white" />
+          )}
         </div>
       </div>
-      {/* Text */}
-      <p className="ac-card-label">{activity.label}</p>
-      <p className="ac-card-desc">{activity.desc}</p>
+
+      {/* Card Content */}
+      <div className="flex flex-1 flex-col p-3 font-sarabun">
+        <h3 className="text-[15px] font-black text-[#0B2F6B] tracking-tight">{activity.label}</h3>
+        <p className="mt-1 text-[11.5px] font-semibold text-[#55739B] flex-1 leading-relaxed">{activity.desc}</p>
+      </div>
     </div>
   );
 }
@@ -883,7 +899,7 @@ function CustomModal({ onConfirm, onClose }) {
 
   return (
     <Dialog open onOpenChange={(open) => !open && onClose()}>
-      <AppDialogContent showCloseButton={false} className="ac-modal">
+      <DialogContent showCloseButton={false} className="ac-modal p-0">
         <div style={{ display: "flex", justifyContent: "center", marginBottom: 16 }}>
           <div style={{ width: 36, height: 4, borderRadius: 99, background: "rgba(14,15,18,0.15)" }} />
         </div>
@@ -937,7 +953,7 @@ function CustomModal({ onConfirm, onClose }) {
             ยืนยัน
           </button>
         </div>
-      </AppDialogContent>
+      </DialogContent>
     </Dialog>
   );
 }
@@ -1030,44 +1046,45 @@ export default function Activity() {
   const displayedActivities = [...customActivities, ...BASE_ACTIVITIES];
 
   // ฤฤ Step header (compact dashboard style matching Checkin) ฤฤ
+  // ฤฤ Step header (compact dashboard style matching Category) ฤฤ
   const StepHeader = () => (
-    <div className="ac-step-header-compact">
-      <div className="ac-hdr-flex">
-        {/* Left cluster: Back and Titles */}
-        <div style={{ display: "flex", alignItems: "center", gap: 12, minWidth: 0 }}>
-          <button className="ac-back-btn" onClick={handleBack} aria-label="ย้อนกลับ">
-            <IcoBack />
-          </button>
-
-          <div style={{ width: 1, height: 22, background: "rgba(255,255,255,0.15)" }} />
-
-          <div style={{ minWidth: 0 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
-              <span className="ac-hero-badge-compact">Step 1</span>
-              <span className="ac-hero-badge-compact" style={{ background: "rgba(var(--brand-accent-rgb), 0.16)", color: "var(--brand-accent)" }}>Activity</span>
-            </div>
-            <h1 className="ac-hdr-title">เลือกหมวดกิจกรรม</h1>
-          </div>
-        </div>
-
-        {/* Right cluster: Stepper node and actions */}
-        <div className="ac-hdr-right-stepper">
-          <SafetyEffortProgressStepper current={1} total={4} compact />
-
-          <img className="ac-hdr-mascot-compact mascot-motion mascot-motion-compact" src={mascot("idea")} alt="น้องวางใจ Safety mascot" />
-        </div>
-      </div>
-      <div
+    <div className="relative overflow-hidden rounded-[20px] border border-[#B9DDFF]/60 bg-[#EEF7FF] p-3.5 sm:p-5 lg:p-6 min-h-[120px] sm:min-h-[145px] xl:min-h-[160px] flex items-center shadow-[0_12px_30px_rgba(185,223,255,0.4)]">
+      {/* Background image container */}
+      <div 
+        className="absolute inset-0 bg-[url('/images/heroes/safety-effort-category-hero.png')] bg-no-repeat"
         style={{
-          position: "absolute",
-          left: 0,
-          right: 0,
-          bottom: 0,
-          height: 6,
-          background:
-            "repeating-linear-gradient(135deg, var(--brand-accent) 0 10px, #0e0f12 10px 20px)",
+          backgroundSize: 'auto 108%',
+          backgroundPosition: 'right -20px bottom -5px',
         }}
       />
+      {/* Gradient overlay to blend the image and ensure readability */}
+      <div className="absolute inset-0 bg-gradient-to-r from-[#EEF7FF] via-[#EEF7FF]/90 sm:via-[#EEF7FF]/40 to-transparent pointer-events-none" />
+
+      {/* Main content container directly on the background (no glassmorphic inner container) */}
+      <div className="relative z-10 w-full flex items-center justify-between font-sarabun">
+        {/* Left column: Back button, Title, and Stepper info */}
+        <div className="flex flex-col items-start gap-2">
+          <div className="flex items-center gap-3">
+            <button 
+              className="flex h-8 w-8 items-center justify-center rounded-[8px] bg-white border border-[#D7EAFE] text-[#0B82F0] shadow-[0_2px_8px_rgba(11,130,240,0.06)] hover:bg-[#0B82F0] hover:text-white transition-all duration-300 active:scale-95"
+              onClick={handleBack} 
+              aria-label="ย้อนกลับ"
+            >
+              <IcoBack />
+            </button>
+            <h1 className="text-[20px] sm:text-[24px] xl:text-[26px] font-black leading-tight tracking-tight text-[#0B2F6B]">
+              เลือกหมวดกิจกรรม
+            </h1>
+          </div>
+          
+          <div className="flex flex-col items-start gap-1 mt-1 sm:mt-1.5">
+            <span className="text-[10px] sm:text-[11px] font-extrabold tracking-wider text-[#55739B] uppercase">
+              ความคืบหน้า
+            </span>
+            <SafetyEffortProgressStepper current={1} total={4} compact />
+          </div>
+        </div>
+      </div>
     </div>
   );
 
@@ -1123,25 +1140,25 @@ export default function Activity() {
       <div className="ac">
         <div style={{
           width: "100%",
-          maxWidth: 1180,
+          maxWidth: 1500,
           margin: "0 auto",
           display: "flex",
           flexDirection: "column",
-          gap: isMobile ? 12 : 16,
-          padding: isMobile ? "0px 0 calc(102px + env(safe-area-inset-bottom))" : "8px 20px 40px",
+          gap: isMobile ? 8 : 10,
+          padding: isMobile ? "10px 12px calc(90px + env(safe-area-inset-bottom))" : "4px 20px 16px",
           minHeight: "100%",
         }}>
           <StepHeader />
 
           {/* Section label */}
-          <div className="ac-section-heading">
+          <div className="ac-section-heading" style={{ padding: isMobile ? "0 4px" : undefined }}>
             <div>
               <span className="ac-panel-label">เลือก 1 กิจกรรม</span>
-              <div style={{ marginTop: 2, fontSize: 15, fontWeight: 800, color: T.foreground, fontFamily: "'Prompt',sans-serif" }}>
+              <div style={{ marginTop: 1, fontSize: 13.5, fontWeight: 800, color: T.foreground, fontFamily: "'Prompt',sans-serif" }}>
                 รายการกิจกรรม
               </div>
             </div>
-            <span style={{ fontSize: 11, color: T.foreground3, fontFamily: "'Prompt',sans-serif", fontWeight: 700, background: "var(--secondary)", padding: "3px 8px", borderRadius: "6px" }}>
+            <span style={{ fontSize: 10, color: T.foreground3, fontFamily: "'Prompt',sans-serif", fontWeight: 700, background: "var(--secondary)", padding: "2px 6px", borderRadius: "6px" }}>
               {displayedActivities.length} รายการ
             </span>
           </div>
@@ -1149,13 +1166,13 @@ export default function Activity() {
           {/* Activity grid — natural height scrolling */}
           <div
             style={{
-              padding: isMobile ? "0 16px 8px" : "0 20px 8px",
+              padding: isMobile ? "0 4px 4px" : "0 20px 4px",
             }}
           >
             <div style={{
               display: "grid",
-              gridTemplateColumns: isMobile ? "1fr 1fr" : "repeat(auto-fill, minmax(260px, 1fr))",
-              gap: 10,
+              gridTemplateColumns: isMobile ? "1fr" : "repeat(auto-fill, minmax(300px, 1fr))",
+              gap: 12,
             }}>
               {displayedActivities.map(act => (
                 <ActivityCard

@@ -13,8 +13,7 @@ import {
 import { uploadSafetyEffortMedia } from "@/features/safety-effort/lib/upload-media";
 import { GripVertical, Eye, Trash2, Search, X, Check, Settings, ChevronDown, ChevronUp, Pencil, ClipboardList } from "lucide-react";
 import { SafetyCultureHero } from "@/components/safety-culture/safety-culture-hero";
-import { Dialog } from "@/components/ui/dialog";
-import { AppDialogBody, AppDialogContent } from "@/components/ui/app-dialog";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 
 
 
@@ -134,9 +133,9 @@ const buttonDangerStyle = {
 };
 
 function statusMeta(status) {
-  if (status === "safe") return { label: "ปลอดภัย", color: "#1f7a55", bg: "#f0fdf4", border: "#bbf7d0" };
-  if (status === "unsafe_condition") return { label: "สภาพไม่ปลอดภัย", color: "#c73a21", bg: "#fef2f2", border: "#fecaca" };
-  if (status === "unsafe_action") return { label: "พฤติกรรมไม่ปลอดภัย", color: "#e67e22", bg: "#fff7ed", border: "#ffedd5" };
+  if (status === "safe") return { label: "ปลอดภัย (Safe)", color: "#1f7a55", bg: "#f0fdf4", border: "#bbf7d0" };
+  if (status === "unsafe_condition") return { label: "สภาพไม่ปลอดภัย (Unsafe Condition)", color: "#c73a21", bg: "#fef2f2", border: "#fecaca" };
+  if (status === "unsafe_action") return { label: "พฤติกรรมไม่ปลอดภัย (Unsafe Act)", color: "#e67e22", bg: "#fff7ed", border: "#ffedd5" };
   return { label: "N/A", color: "var(--c-6f665e)", bg: "#fbfbfa", border: "rgba(31,26,23,0.10)" };
 }
 
@@ -257,7 +256,7 @@ function PreviewCard({ question }) {
         <div style={{ borderTop: `1px solid ${T.line}`, paddingTop: 12, marginTop: 8, display: "grid", gap: 8 }}>
           <div style={{ fontSize: 11, fontWeight: 800, color: T.sub }}>จำลองรูปแบบการตอบ: แบบเดิม (มีตัวเลือก)</div>
           <div style={{ display: "grid", gap: 6 }}>
-            {["ปลอดภัย", "สภาพไม่ปลอดภัย", "พฤติกรรมไม่ปลอดภัย"].map((lbl, idx) => (
+             {["ปลอดภัย (Safe)", "สภาพไม่ปลอดภัย (Unsafe Condition)", "พฤติกรรมไม่ปลอดภัย (Unsafe Act)"].map((lbl, idx) => (
               <div
                 key={idx}
                 style={{
@@ -1131,8 +1130,19 @@ export default function SafetyAdmin() {
     </div>
 
       <Dialog open={!!deleteTargetId} onOpenChange={(open) => !open && setDeleteTargetId(null)}>
-        <AppDialogContent showCloseButton={false} className="safety-admin-form-popup z-1000 max-w-115">
-          <AppDialogBody style={{ display: "grid", gap: 16 }}>
+        <DialogContent showCloseButton={false} className="safety-admin-form-popup z-[1000] p-0 sm:max-w-[460px]">
+          <div
+            style={{
+              width: "min(100%, 460px)",
+              background: "var(--brand-surface)",
+              borderRadius: 24,
+              border: `1px solid ${T.line}`,
+              boxShadow: "0 24px 60px rgba(31,26,23,0.22)",
+              padding: 24,
+              display: "grid",
+              gap: 16,
+            }}
+          >
             <div style={{ fontSize: 22, fontWeight: 900 }}>ยืนยันการลบข้อประเมิน</div>
             <div style={{ fontSize: 14.5, color: T.sub, lineHeight: 1.7 }}>
               ข้อนี้จะถูกลบออกจากหมวด {LOCATION_TYPE_LABELS[selectedType]} ใน draft ปัจจุบัน หากยังไม่ได้กด Save Draft สามารถกด Reset เพื่อย้อนกลับได้
@@ -1141,8 +1151,8 @@ export default function SafetyAdmin() {
               <button type="button" onClick={() => setDeleteTargetId(null)} style={buttonGhostStyle}>ยกเลิก</button>
               <button type="button" onClick={handleDeleteConfirmed} style={buttonDangerStyle}>ลบข้อ</button>
             </div>
-          </AppDialogBody>
-        </AppDialogContent>
+          </div>
+        </DialogContent>
       </Dialog>
 
       <Dialog
@@ -1154,9 +1164,22 @@ export default function SafetyAdmin() {
           }
         }}
       >
-        <AppDialogContent showCloseButton={false} className="safety-admin-form-popup z-1000 max-w-205">
+        <DialogContent showCloseButton={false} className="safety-admin-form-popup z-[1000] p-0 sm:max-w-[820px]">
           {tempQuestion ? (
-          <AppDialogBody className="max-h-[90vh] overflow-y-auto" style={{ display: "grid", gap: 16 }}>
+          <div
+            style={{
+              width: "min(100%, 820px)",
+              background: "var(--brand-surface)",
+              borderRadius: 24,
+              border: `1px solid ${T.line}`,
+              boxShadow: "0 24px 60px rgba(31,26,23,0.22)",
+              padding: 24,
+              display: "grid",
+              gap: 16,
+              maxHeight: "90vh",
+              overflowY: "auto",
+            }}
+          >
             <div style={{ fontSize: 20, fontWeight: 900, textAlign: "center", borderBottom: `1px solid ${T.line}`, paddingBottom: 10 }}>
               เพิ่มข้อประเมินใหม่
             </div>
@@ -1351,14 +1374,27 @@ export default function SafetyAdmin() {
                 เพิ่มข้อประเมิน
               </button>
             </div>
-          </AppDialogBody>
+          </div>
           ) : null}
-        </AppDialogContent>
+        </DialogContent>
       </Dialog>
 
       <Dialog open={showBackdateLimitModal} onOpenChange={(open) => !open && handleCancelBackdateModal()}>
-        <AppDialogContent showCloseButton={false} className="safety-admin-form-popup z-1000 max-w-115">
-          <AppDialogBody className="max-h-[90vh] overflow-y-auto" style={{ display: "grid", gap: 16 }}>
+        <DialogContent showCloseButton={false} className="safety-admin-form-popup z-[1000] p-0 sm:max-w-[460px]">
+          <div
+            style={{
+              width: "min(100%, 460px)",
+              background: "var(--brand-surface)",
+              borderRadius: 24,
+              border: `1px solid ${T.line}`,
+              boxShadow: "0 24px 60px rgba(31,26,23,0.22)",
+              padding: 24,
+              display: "grid",
+              gap: 16,
+              maxHeight: "90vh",
+              overflowY: "auto",
+            }}
+          >
             <div style={{ fontSize: 20, fontWeight: 900, textAlign: "center" }}>ตั้งค่าระบบทำย้อนหลัง</div>
             <div style={{ fontSize: 13, color: T.sub, lineHeight: 1.5, textAlign: "center" }}>
               กำหนดจำนวนวันที่อนุญาตให้ทำรายการย้อนหลังได้ และเลือกตั้งค่าเปิดระบบเฉพาะบางวันได้
@@ -1532,8 +1568,8 @@ export default function SafetyAdmin() {
                 บันทึก
               </button>
             </div>
-          </AppDialogBody>
-        </AppDialogContent>
+          </div>
+        </DialogContent>
       </Dialog>
 
 

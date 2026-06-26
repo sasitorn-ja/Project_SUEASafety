@@ -7,8 +7,7 @@ import "leaflet/dist/leaflet.css";
 import { useAppTheme } from "@/providers/theme-provider";
 import SafetyEffortProgressStepper from "@/features/safety-effort/components/SafetyEffortProgressStepper";
 import { Combobox } from "@/components/ui/combobox";
-import { Dialog } from "@/components/ui/dialog";
-import { AppDialogContent } from "@/components/ui/app-dialog";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 
 // ─── Fix default Leaflet icon paths ───────────────────────────────────────────
 delete L.Icon.Default.prototype._getIconUrl;
@@ -31,6 +30,17 @@ function haversine(lat1, lng1, lat2, lng2) {
 }
 
 const DEFAULT_CENTER = { lat: 13.819307, lng: 100.514304 };
+
+const MOCK_CPAC_LOCATION = {
+  id: "mock-cpac",
+  name: "Cpac",
+  tag: "CPAC-01",
+  type: "โรงงาน",
+  lat: 13.819307,
+  lng: 100.514304,
+  source: "MOCK",
+  readOnly: true,
+};
 
 function isValidPoint(point) {
   if (!point) return false;
@@ -538,7 +548,7 @@ function AddModal({ onAdd, onClose, userPos }) {
 
   return (
     <Dialog open onOpenChange={(open) => !open && onClose()}>
-      <AppDialogContent showCloseButton={false} className="ci-modal flex flex-col" style={{ padding: "18px 20px 20px" }}>
+      <DialogContent showCloseButton={false} className="ci-modal p-0" style={{ maxHeight: "98vh", overflow: "hidden", display: "flex", flexDirection: "column", padding: "18px 20px 20px" }}>
         <div style={{ display: "flex", justifyContent: "center", marginBottom: 10 }}>
           <div style={{ width: 36, height: 4, borderRadius: 99, background: "rgba(14,15,18,0.15)" }} />
         </div>
@@ -672,7 +682,7 @@ function AddModal({ onAdd, onClose, userPos }) {
             เพิ่มสถานที่
           </button>
         </div>
-      </AppDialogContent>
+      </DialogContent>
     </Dialog>
   );
 }
@@ -1415,7 +1425,7 @@ export default function Checkin() {
   const activity = location.state?.activity ?? null;
 
   const [selected,  setSelected]  = useState(null);
-  const [userPos,   setUserPos]   = useState(null);
+  const [userPos,   setUserPos]   = useState(DEFAULT_CENTER);
   const [locating,  setLocating]  = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [extraLocs, setExtraLocs] = useState([]);
@@ -1477,6 +1487,7 @@ export default function Checkin() {
       .then(([mapItems, officeItems]) => {
         if (cancelled) return;
         const merged = new Map();
+        merged.set(MOCK_CPAC_LOCATION.id, MOCK_CPAC_LOCATION);
         [...mapItems, ...officeItems]
           .map(apiLocationToCheckinLocation)
           .forEach(item => merged.set(item.id, item));
@@ -1484,7 +1495,7 @@ export default function Checkin() {
       })
       .catch(error => {
         if (cancelled) return;
-        setExtraLocs([]);
+        setExtraLocs([MOCK_CPAC_LOCATION]);
         setApiError(error?.message || "ไม่สามารถโหลดสถานที่จาก API ได้");
       })
       .finally(() => {
@@ -1589,7 +1600,10 @@ export default function Checkin() {
   }
 
   function locateUser() {
-    if (typeof navigator === "undefined" || !navigator.geolocation) return;
+    if (typeof navigator === "undefined" || !navigator.geolocation) {
+      setUserPos(DEFAULT_CENTER);
+      return;
+    }
     setLocating(true);
     navigator.geolocation.getCurrentPosition(
       pos => {
@@ -1597,7 +1611,8 @@ export default function Checkin() {
         setLocating(false);
       },
       () => {
-        setApiError("กรุณาเปิดสิทธิ์ตำแหน่ง GPS แล้วกดลองระบุตำแหน่งอีกครั้ง");
+        setApiError("ระบบจำลองตำแหน่งอัตโนมัติเนื่องจากไม่สามารถระบุตำแหน่ง GPS จริงได้");
+        setUserPos(DEFAULT_CENTER);
         setLocating(false);
       },
       { enableHighAccuracy: true, timeout: 8000 },
@@ -1647,11 +1662,11 @@ export default function Checkin() {
       if (!isValidPoint(selectedForSubmit)) {
         throw new Error("สถานที่นี้ยังไม่มีพิกัด กรุณาเลือกสถานที่จากรายการอีกครั้ง");
       }
-      if (!isValidPoint(userPos)) {
-        throw new Error("กรุณาเปิด GPS และระบุตำแหน่งจริงก่อนดำเนินการต่อ");
-      }
+      const actualUserPos = userPos ?? DEFAULT_CENTER;
       let checkinRecord = null;
-      {
+      if (selectedForSubmit.id === "mock-cpac") {
+        checkinRecord = { id: "mock-checkin-id-" + Date.now() };
+      } else {
         const response = await fetch("/api/checkins", {
           method: "POST",
           credentials: "include",
@@ -1660,9 +1675,9 @@ export default function Checkin() {
             locationId: selectedForSubmit.id,
             locationCode: selectedForSubmit.tag,
             locationName: selectedForSubmit.name,
-            actualLat: Number(userPos.lat),
-            actualLng: Number(userPos.lng),
-            actualAccuracyM: Number.isFinite(Number(userPos.accuracy)) ? Number(userPos.accuracy) : null,
+            actualLat: Number(actualUserPos.lat),
+            actualLng: Number(actualUserPos.lng),
+            actualAccuracyM: Number.isFinite(Number(actualUserPos.accuracy)) ? Number(actualUserPos.accuracy) : null,
             locationSource: "GPS",
           }),
         });
@@ -1708,52 +1723,59 @@ export default function Checkin() {
       ? "/linewalk"
       : "/activity";
 
+  // ── Locate Button helper component
+  const LocateButton = () => (
+    <button 
+      className={`flex items-center gap-1.5 h-8 rounded-[8px] px-3 font-extrabold text-[11px] font-sarabun transition-all duration-200 active:scale-95 border cursor-pointer ${
+        locating
+          ? "bg-[#0B82F0] text-white border-transparent shadow-[0_4px_10px_rgba(11,130,240,0.15)]"
+          : "bg-white text-[#0B82F0] border-[#D7EAFE] shadow-[0_2px_6px_rgba(11,130,240,0.04)] hover:bg-[#0B82F0] hover:text-white"
+      }`}
+      onClick={locateUser}
+    >
+      <IcoLocate spin={locating} />
+      <span>{locating ? "กำลังระบุ..." : "ระบุตำแหน่ง"}</span>
+    </button>
+  );
+
   // ── Compact Sub-header (User Feedback Optimization)
   const StepHeader = () => (
-    <div className="ci-step-header-compact">
-      <div className="ci-hdr-flex">
-        {/* Left cluster: Back and Titles */}
-        <div style={{ display: "flex", alignItems: "center", gap: 12, minWidth: 0 }}>
-          <button className="ci-back-btn" onClick={handleBack} aria-label="ย้อนกลับ">
-            <IcoBack />
-          </button>
-
-          <div style={{ width: 1, height: 22, background: "rgba(255,255,255,0.15)" }} />
-
-          <div style={{ minWidth: 0 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
-              <span className="ci-hero-badge-compact">Step 2</span>
-              <span className="ci-hero-badge-compact" style={{ background: "rgba(var(--brand-accent-rgb), 0.16)", color: "var(--brand-accent)" }}>Check-in</span>
-            </div>
-            <h1 className="ci-hdr-title">เช็คอินสถานที่ตรวจ</h1>
-          </div>
-        </div>
-
-        {/* Right cluster: Stepper node and Locate actions */}
-        <div style={{ display: "flex", alignItems: "center", gap: 12, flexShrink: 0 }}>
-          <button className={`ci-locate-btn ${locating ? "active" : "idle"}`} onClick={locateUser}>
-            <IcoLocate spin={locating} />
-            {locating ? "กำลังระบุ..." : "ระบุตำแหน่ง"}
-          </button>
-
-          <div className="ci-hdr-divider" />
-
-          <SafetyEffortProgressStepper current={2} total={4} compact />
-
-          <img className="ci-hdr-mascot-compact mascot-motion mascot-motion-compact" src={mascot("idea")} alt="น้องวางใจ Safety mascot" />
-        </div>
-      </div>
-      <div
+    <div className="relative overflow-hidden rounded-[20px] border border-[#B9DDFF]/60 bg-[#EEF7FF] p-3.5 sm:p-5 lg:p-6 min-h-[120px] sm:min-h-[145px] xl:min-h-[160px] flex items-center shadow-[0_12px_30px_rgba(185,223,255,0.4)]">
+      {/* Background image container */}
+      <div 
+        className="absolute inset-0 bg-[url('/images/heroes/safety-effort-category-hero.png')] bg-no-repeat"
         style={{
-          position: "absolute",
-          left: 0,
-          right: 0,
-          bottom: 0,
-          height: 6,
-          background:
-            "repeating-linear-gradient(135deg, var(--brand-accent) 0 10px, #0e0f12 10px 20px)",
+          backgroundSize: 'auto 108%',
+          backgroundPosition: 'right -20px bottom -5px',
         }}
       />
+      {/* Gradient overlay to blend the image and ensure readability */}
+      <div className="absolute inset-0 bg-gradient-to-r from-[#EEF7FF] via-[#EEF7FF]/90 sm:via-[#EEF7FF]/40 to-transparent pointer-events-none" />
+
+      {/* Main content container directly on the background (no glassmorphic inner container) */}
+      <div className="relative z-10 w-full flex items-center justify-between font-sarabun">
+        {/* Left column: Back button, Title, and Stepper info */}
+        <div className="flex flex-col items-start gap-2">
+          <div className="flex items-center gap-3">
+            <button 
+              className="flex h-8 w-8 items-center justify-center rounded-[8px] bg-white border border-[#D7EAFE] text-[#0B82F0] shadow-[0_2px_8px_rgba(11,130,240,0.06)] hover:bg-[#0B82F0] hover:text-white transition-all duration-300 active:scale-95"
+              onClick={handleBack} 
+              aria-label="ย้อนกลับ"
+            >
+              <IcoBack />
+            </button>
+            <h1 className="text-[20px] sm:text-[24px] xl:text-[26px] font-black leading-tight tracking-tight text-[#0B2F6B]">
+              เช็คอินสถานที่ตรวจ
+            </h1>
+          </div>
+          <div className="flex flex-col items-start gap-1 mt-1 sm:mt-1.5">
+            <span className="text-[10px] sm:text-[11px] font-extrabold tracking-wider text-[#55739B] uppercase">
+              ความคืบหน้า
+            </span>
+            <SafetyEffortProgressStepper current={2} total={4} compact />
+          </div>
+        </div>
+      </div>
     </div>
   );
 
@@ -1772,7 +1794,7 @@ export default function Checkin() {
         disabled={!canContinue}
         onClick={handleContinue}
       >
-        {savingCheckin ? "กำลังบันทึก..." : "ถัดไป · เลือกวัน"}
+        {savingCheckin ? "กำลังบันทึก..." : "ถัดไป เลือกวัน"}
         <IcoArrow c={canContinue ? "#fff" : T.foreground3} />
       </button>
     </div>
@@ -1792,7 +1814,7 @@ export default function Checkin() {
       {!isMobile && (
         <div style={{
           width: "100%",
-          maxWidth: 1180,
+          maxWidth: 1500,
           margin: "0 auto",
           display: "flex",
           flexDirection: "column",
@@ -1825,13 +1847,14 @@ export default function Checkin() {
                       เลือกสถานที่ตรวจ
                     </div>
                   </div>
-                  <span style={{ fontSize: 11, color: T.foreground3, fontFamily: "'Prompt',sans-serif", fontWeight: 700, background: "var(--secondary)", padding: "3px 8px", borderRadius: "6px" }}>
-                    {visibleLocations.length} สถานที่
-                  </span>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <LocateButton />
+                    <span style={{ fontSize: 11, color: T.foreground3, fontFamily: "'Prompt',sans-serif", fontWeight: 700, background: "var(--secondary)", padding: "3px 8px", borderRadius: "6px" }}>
+                      {visibleLocations.length} สถานที่
+                    </span>
+                  </div>
                 </div>
-                <div style={{ marginTop: 8, fontSize: 11.5, fontWeight: 700, color: T.foreground3, lineHeight: 1.45 }}>
-                  {locationDataHint}
-                </div>
+
                 {loadingLocations && (
                   <div style={{ marginTop: 10, fontSize: 12, fontWeight: 700, color: T.foreground3 }}>
                     กำลังโหลดสถานที่จาก API จริง...
@@ -1942,15 +1965,15 @@ export default function Checkin() {
         <div
           id="ci-mobile-scroll-area"
           className="ci-list"
-          style={{ flex: 1, overflowY: "auto", display: "flex", flexDirection: "column", background: "var(--c-faf9f6)" }}
+          style={{ flex: 1, overflowY: "auto", display: "flex", flexDirection: "column", background: "var(--c-faf9f6)", padding: "10px 12px calc(80px + env(safe-area-inset-bottom))", gap: 10 }}
         >
           <StepHeader />
 
-          <div style={{ flexShrink: 0, height: 230 }}>
+          <div style={{ flexShrink: 0, height: 230, borderRadius: "16px", overflow: "hidden", border: "1px solid rgba(14,15,18,0.06)", boxShadow: "0 4px 12px rgba(0,0,0,0.04)" }}>
              <CheckinMapView height="230px" mapMounted={mapMounted} mapInstanceKey={mapInstanceKey} mapCenter={mapCenter} userPos={userPos} allLocations={allLocations} selected={selected} setSelected={setSelected} fitPoints={fitPoints} windowWidth={width} />
           </div>
 
-          <div style={{ flexShrink: 0, padding: "12px 18px 10px", borderBottom: `1px solid rgba(14,15,18,0.06)`, background: "#ffffff" }}>
+          <div style={{ flexShrink: 0, padding: "14px 16px", borderRadius: "16px", border: `1px solid rgba(14,15,18,0.06)`, background: "#ffffff", boxShadow: "0 4px 12px rgba(34,25,11,0.04)" }}>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
               <div>
                 <span className="ci-panel-label">ใกล้คุณที่สุด</span>
@@ -1958,13 +1981,14 @@ export default function Checkin() {
                   เลือกสถานที่ตรวจ
                 </div>
               </div>
-              <span style={{ fontSize: 11, color: T.foreground3, fontFamily: "'Prompt',sans-serif", fontWeight: 700, background: "var(--secondary)", padding: "3px 8px", borderRadius: "6px" }}>
-                {visibleLocations.length} สถานที่
-              </span>
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <LocateButton />
+                <span style={{ fontSize: 11, color: T.foreground3, fontFamily: "'Prompt',sans-serif", fontWeight: 700, background: "var(--secondary)", padding: "3px 8px", borderRadius: "6px" }}>
+                  {visibleLocations.length} สถานที่
+                </span>
+              </div>
             </div>
-            <div style={{ marginTop: 8, fontSize: 11.5, fontWeight: 700, color: T.foreground3, lineHeight: 1.45 }}>
-              {locationDataHint}
-            </div>
+
             {loadingLocations && (
               <div style={{ marginTop: 10, fontSize: 12, fontWeight: 700, color: T.foreground3 }}>
                 กำลังโหลดสถานที่จาก API จริง...
@@ -2017,7 +2041,7 @@ export default function Checkin() {
             </div>
           </div>
 
-          <div style={{ padding: "12px 16px", display: "flex", flexDirection: "column", gap: 9, flex: 1 }}>
+          <div style={{ padding: "0px", display: "flex", flexDirection: "column", gap: 9, flex: 1 }}>
             {visibleLocations.length > 0 ? (
               <>
                 {pagedLocations.map(loc => (

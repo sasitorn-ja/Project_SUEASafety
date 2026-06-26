@@ -3,8 +3,7 @@ import { useEffect, useState } from "react";
 import { Eye, Trash2, Search, X, ClipboardList } from "lucide-react";
 import { Combobox } from "@/components/ui/combobox";
 import { SafetyCultureHero } from "@/components/safety-culture/safety-culture-hero";
-import { Dialog } from "@/components/ui/dialog";
-import { AppDialogBody, AppDialogContent } from "@/components/ui/app-dialog";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 
 const T = {
   page: "var(--background)",
@@ -72,9 +71,9 @@ const LOCATION_TYPE_LABELS = {
 };
 
 function statusMeta(status) {
-  if (status === "safe") return { label: "ปลอดภัย", color: "#1f7a55", bg: "#f0fdf4", border: "#bbf7d0" };
-  if (status === "unsafe_condition") return { label: "สภาพไม่ปลอดภัย", color: "#c73a21", bg: "#fef2f2", border: "#fecaca" };
-  if (status === "unsafe_action") return { label: "พฤติกรรมไม่ปลอดภัย", color: "#e67e22", bg: "#fff7ed", border: "#ffedd5" };
+  if (status === "safe") return { label: "ปลอดภัย (Safe)", color: "#1f7a55", bg: "#f0fdf4", border: "#bbf7d0" };
+  if (status === "unsafe_condition") return { label: "สภาพไม่ปลอดภัย (Unsafe Condition)", color: "#c73a21", bg: "#fef2f2", border: "#fecaca" };
+  if (status === "unsafe_action") return { label: "พฤติกรรมไม่ปลอดภัย (Unsafe Act)", color: "#e67e22", bg: "#fff7ed", border: "#ffedd5" };
   return { label: "N/A", color: "var(--c-6f665e)", bg: "#fbfbfa", border: "rgba(31,26,23,0.10)" };
 }
 
@@ -546,9 +545,22 @@ export default function SafetyAdminReportHistory() {
 
       {/* Selected Submission Detail Modal */}
       <Dialog open={!!selectedSub} onOpenChange={(open) => !open && setSelectedSub(null)}>
-        <AppDialogContent showCloseButton={false} className="safety-admin-form-popup z-1000 max-w-160">
+        <DialogContent showCloseButton={false} className="safety-admin-form-popup z-[1000] p-0 sm:max-w-[640px]">
           {selectedSub ? (
-          <AppDialogBody className="grid max-h-[90vh] gap-4 overflow-y-auto p-6">
+          <div
+            style={{
+              width: "min(100%, 640px)",
+              background: "var(--brand-surface)",
+              borderRadius: 24,
+              border: `1px solid ${T.line}`,
+              boxShadow: "0 24px 60px rgba(31,26,23,0.22)",
+              padding: 24,
+              display: "grid",
+              gap: 16,
+              maxHeight: "90vh",
+              overflowY: "auto"
+            }}
+          >
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: `1px solid ${T.line}`, paddingBottom: 10 }}>
               <div>
                 <div style={{ fontSize: 11, fontWeight: 800, color: T.accentDeep, textTransform: "uppercase" }}>SUBMISSION DETAIL</div>
@@ -617,6 +629,36 @@ export default function SafetyAdminReportHistory() {
                   >
                     {selectedSub.safetyContactText || "ไม่มีการบันทึกข้อความ"}
                   </div>
+
+                  {selectedSub.metadata?.photos && selectedSub.metadata.photos.length > 0 && (
+                    <div style={{ display: "flex", flexDirection: "column", gap: 6, marginTop: 8 }}>
+                      <span style={fieldLabelStyle}>รูปภาพแนบ ({selectedSub.metadata.photos.length})</span>
+                      <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                        {selectedSub.metadata.photos.map((photoUrl, pIdx) => (
+                          <a
+                            key={pIdx}
+                            href={photoUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            style={{
+                              width: 64,
+                              height: 64,
+                              borderRadius: 8,
+                              overflow: "hidden",
+                              border: "1px solid rgba(0,0,0,0.08)",
+                              display: "inline-block",
+                            }}
+                          >
+                            <img
+                              src={photoUrl}
+                              alt={`Evidence ${pIdx + 1}`}
+                              style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                            />
+                          </a>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               ) : (
                 <div style={{ display: "grid", gap: 8 }}>
@@ -656,9 +698,9 @@ export default function SafetyAdminReportHistory() {
                 </div>
               )}
             </div>
-          </AppDialogBody>
+          </div>
           ) : null}
-        </AppDialogContent>
+        </DialogContent>
       </Dialog>
     </div>
   );

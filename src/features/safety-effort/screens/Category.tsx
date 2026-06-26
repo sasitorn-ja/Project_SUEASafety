@@ -85,50 +85,74 @@ export default function Category() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-[#EEF7FF] px-3 py-4 text-[#0B2F6B] sm:px-4 lg:px-6">
-      <div className="mx-auto flex w-full max-w-[1500px] flex-col gap-3">
-        <div className="mb-3">
-          <SafetyCultureHero
-            eyebrow="SAFETY EFFORT"
-            title={<>Safety <span>Effort</span></>}
-            description="ตรวจ Linewalk และบันทึก Safety Contact เพื่อสร้างสภาพแวดล้อมการทำงานที่ปลอดภัยยิ่งขึ้น"
-            variant="community"
-            backgroundImage="/images/heroes/safety-effort-category-hero.png"
-            backgroundOverlay="linear-gradient(90deg, rgba(210,235,255,.82) 0%, rgba(210,235,255,.60) 32%, rgba(210,235,255,.10) 56%, rgba(210,235,255,0) 74%)"
-          />
+    <div className="min-h-screen bg-[#EEF7FF] px-3 py-2.5 text-[#0B2F6B] sm:px-4 lg:px-6">
+      <div className="mx-auto flex w-full max-w-[1500px] flex-col gap-2.5">
+        <div className="mb-2">
+          <div className="relative overflow-hidden rounded-[20px] border border-[#B9DDFF]/60 bg-[#EEF7FF] p-3.5 sm:p-5 lg:p-6 min-h-[120px] sm:min-h-[145px] xl:min-h-[160px] flex items-center shadow-[0_12px_30px_rgba(185,223,255,0.4)]">
+            {/* Background image container */}
+            <div 
+              className="absolute inset-0 bg-[url('/images/heroes/safety-effort-category-hero.png')] bg-no-repeat"
+              style={{
+                backgroundSize: 'auto 108%',
+                backgroundPosition: 'right -20px bottom -5px',
+              }}
+            />
+            {/* Gradient overlay to blend the image and ensure readability */}
+            <div className="absolute inset-0 bg-gradient-to-r from-[#EEF7FF] via-[#EEF7FF]/90 sm:via-[#EEF7FF]/40 to-transparent pointer-events-none" />
+            
+            {/* Text content directly on the banner background */}
+            <div className="relative z-10 flex flex-col items-start max-w-[580px] font-sarabun">
+              <span className="inline-flex items-center gap-1.5 rounded-[8px] bg-gradient-to-r from-[#0B82F0] to-[#35A8FF] px-2 py-0.5 text-[9px] font-extrabold tracking-wider text-white shadow-[0_4px_12px_rgba(11,130,240,0.2)]">
+                <span className="relative flex h-1.5 w-1.5">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-white"></span>
+                </span>
+                SAFETY EFFORT
+              </span>
+              
+              <h1 className="mt-2 text-[20px] sm:text-[24px] xl:text-[28px] font-black leading-tight tracking-tight text-[#0B2F6B]">
+                Safety <span className="bg-gradient-to-r from-[#0B82F0] to-[#005DCC] bg-clip-text text-transparent">Effort</span>
+              </h1>
+              
+              <p className="mt-1 text-[11.5px] sm:text-[12.5px] xl:text-[13px] font-bold leading-relaxed text-[#55739B]">
+                ตรวจ Linewalk และบันทึก Safety Contact เพื่อสร้างสภาพแวดล้อมการทำงานที่ปลอดภัยยิ่งขึ้น
+              </p>
+            </div>
+          </div>
         </div>
 
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1.08fr)_minmax(360px,0.92fr)]">
-          <main className="min-w-0">
+        <div className="grid grid-cols-1 gap-3 lg:grid-cols-[minmax(0,1.08fr)_minmax(360px,0.92fr)]">
+          {/* Main Card */}
+          <main className="min-w-0 order-1 lg:col-start-1 lg:row-start-1 lg:row-span-2">
             <Card className="h-full rounded-[14px]">
-              <CardContent className="p-4 sm:p-5">
-              <div className="mb-5 flex items-start gap-4">
-                <span className="flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-[14px] bg-[#EEF7FF] text-[#0B82F0]">
-                  <ShieldCheck className="h-9 w-9" strokeWidth={2.3} />
+              <CardContent className="p-3 sm:p-4">
+              <div className="mb-3.5 flex items-center gap-3">
+                <span className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-[10px] bg-[#EEF7FF] text-[#0B82F0]">
+                  <ShieldCheck className="h-6 w-6" strokeWidth={2.2} />
                 </span>
                 <div>
-                  <div className="mb-1 flex flex-wrap items-center gap-2">
-                    <h3 className="text-[18px] font-extrabold leading-tight sm:text-[20px]">ตรวจ Linewalk / Safety Contact</h3>
-                    <span className="rounded-full bg-[#0B82F0] px-3 py-1 text-[12px] font-black text-white shadow-[0_6px_14px_rgba(11,130,240,0.20)]">+10 pts</span>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <h3 className="text-[16px] font-extrabold leading-tight sm:text-[18px]">ตรวจ Linewalk / Safety Contact</h3>
+                    <span className="rounded-full bg-[#0B82F0] px-2 py-0.5 text-[10px] font-black text-white shadow-[0_6px_14px_rgba(11,130,240,0.20)]">+10 pts</span>
                   </div>
-                  <p className="text-[12.5px] font-bold leading-relaxed text-[#55739B]">เลือกหมวดกิจกรรม &gt; Check-in สถานที่ &gt; เลือกวัน &gt; Linewalk หรือ Safety Contact</p>
+                  <p className="text-[12px] font-bold leading-relaxed text-[#55739B]">ความปลอดภัยเริ่มต้นที่นี่</p>
                 </div>
               </div>
 
-              <ol className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+              <ol className="grid grid-cols-1 gap-1.5 sm:grid-cols-2 sm:gap-2 2xl:grid-cols-4">
                 {steps.map((step, index) => {
                   const Icon = step.icon;
                   return (
-                    <li key={step.title} className="relative min-h-[174px] rounded-[10px] border border-[#D7EAFE] bg-white p-4 shadow-[0_6px_18px_rgba(185,223,255,0.26)]">
-                      <span className="absolute left-4 top-4 flex h-7 w-7 items-center justify-center rounded-full bg-[#0B82F0] text-[12px] font-black text-white shadow-[0_6px_14px_rgba(11,130,240,0.20)]">{index + 1}</span>
-                      <span className="mx-auto mb-5 mt-3 flex h-12 w-12 items-center justify-center rounded-[12px] bg-[#EEF7FF] text-[#0B82F0]">
-                        <Icon className="h-7 w-7" strokeWidth={2.3} />
+                    <li key={step.title} className="relative flex items-center gap-2.5 rounded-[10px] border border-[#D7EAFE] bg-white p-2.5 shadow-[0_4px_12px_rgba(185,223,255,0.15)] sm:min-h-[130px] sm:flex-col sm:justify-center sm:p-3 sm:text-center">
+                      <span className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-[#0B82F0] text-[9.5px] font-black text-white shadow-[0_3px_8px_rgba(11,130,240,0.15)] sm:absolute sm:left-3 sm:top-3 sm:h-5.5 sm:w-5.5 sm:text-[10px]">{index + 1}</span>
+                      <span className="flex h-7.5 w-7.5 flex-shrink-0 items-center justify-center rounded-[8px] bg-[#EEF7FF] text-[#0B82F0] sm:mx-auto sm:mb-2.5 sm:mt-1 sm:h-9 sm:w-9">
+                        <Icon className="h-4.5 w-4.5 sm:h-5 sm:w-5" strokeWidth={2.2} />
                       </span>
-                      <div className="text-center">
-                        <h4 className="text-[14px] font-extrabold leading-snug">{step.title}</h4>
-                        <p className="mt-2 text-[12px] font-bold leading-relaxed text-[#55739B]">{step.description}</p>
+                      <div className="min-w-0 flex-1 sm:w-full">
+                        <h4 className="text-[12.5px] font-extrabold leading-tight text-[#0B2F6B] sm:text-[12.5px] sm:leading-snug">{step.title}</h4>
+                        <p className="mt-0.5 text-[10px] font-bold leading-tight text-[#55739B] sm:mt-1 sm:text-[11px] sm:leading-relaxed">{step.description}</p>
                       </div>
-                      {index < steps.length - 1 && <ChevronRight className="absolute -right-[18px] top-1/2 hidden h-6 w-6 -translate-y-1/2 text-[#55739B]/50 xl:block" aria-hidden="true" />}
+                      {index < steps.length - 1 && <ChevronRight className="absolute -right-[14px] top-1/2 hidden h-5 w-5 -translate-y-1/2 text-[#55739B]/50 2xl:block" aria-hidden="true" />}
                     </li>
                   );
                 })}
@@ -136,62 +160,79 @@ export default function Category() {
 
               <Button
                 variant="brand"
-                className="mt-5 h-12 w-full rounded-[9px] text-[18px] font-extrabold"
+                className="mt-2.5 h-10 w-full rounded-[8px] text-[16px] font-extrabold"
                 type="button"
                 onClick={() => navigate("/activity")}
               >
-                เริ่มกิจกรรม <ArrowRight className="h-6 w-6" />
+                เริ่มกิจกรรม <ArrowRight className="h-5 w-5" />
               </Button>
               </CardContent>
             </Card>
           </main>
 
-          <aside className="grid min-w-0 grid-cols-1 gap-3">
+          {/* Stats Card */}
+          <div className="order-2 lg:col-start-2 lg:row-start-1">
             <Card className="rounded-[14px]">
-              <CardHeader className="flex-row items-center justify-between gap-3 px-5 py-4">
+              <CardHeader className="flex-row items-center justify-between gap-3 px-4 py-2.5">
                 <div className="flex items-center gap-3">
-                  <span className="flex h-11 w-11 items-center justify-center rounded-[12px] bg-[#EEF7FF] text-[#0B82F0]">
-                    <Trophy className="h-6 w-6" strokeWidth={2.3} />
+                  <span className="flex h-9 w-9 items-center justify-center rounded-[10px] bg-[#EEF7FF] text-[#0B82F0]">
+                    <Trophy className="h-5 w-5" strokeWidth={2.2} />
                   </span>
-                  <CardTitle className="text-[17px]">สถิติ Safety Effort ของคุณ</CardTitle>
+                  <CardTitle className="text-[15px]">สถิติ Safety Effort ของคุณ</CardTitle>
                 </div>
               </CardHeader>
-              <CardContent className="px-5 pb-5 pt-0">
-                <div className="flex min-h-[70px] items-center gap-4 rounded-[12px] border border-[#D7EAFE] bg-[#F5FAFF] px-4">
-                  <span className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-[12px] bg-[#EEF7FF] text-[#0B82F0]">
-                    <ClipboardCheck className="h-7 w-7" strokeWidth={2.3} />
+              <CardContent className="px-4 pb-3.5 pt-0">
+                <div className="group relative flex items-center gap-4 overflow-hidden rounded-[12px] border border-[#E1F0FF] bg-gradient-to-r from-white via-[#F5FAFF] to-white p-2.5 shadow-[0_6px_20px_rgba(11,130,240,0.03)] transition-all duration-300 hover:border-[#BCE0FF] hover:shadow-[0_10px_25px_rgba(11,130,240,0.08)]">
+                  {/* Subtle inner decorative glow */}
+                  <div className="absolute right-0 top-0 -mr-6 -mt-6 h-16 w-16 rounded-full bg-[#0B82F0]/5 blur-2xl transition-all duration-500 group-hover:bg-[#0B82F0]/10 group-hover:scale-150" />
+                  
+                  <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-[10px] bg-gradient-to-br from-[#EEF7FF] to-[#DCEFFF] text-[#0B82F0] shadow-[0_4px_12px_rgba(11,130,240,0.1)] transition-all duration-300 group-hover:scale-105 group-hover:from-[#0B82F0] group-hover:to-[#35A8FF] group-hover:text-white">
+                    <ClipboardCheck className="h-5 w-5" strokeWidth={2.2} />
                   </span>
-                  <strong className="min-w-0 flex-1 text-[13px] font-extrabold">จำนวน Line Walk / Safety Contact เดือนนี้</strong>
-                  <b className="whitespace-nowrap text-[22px] font-black text-[#0B82F0]">{monthlyStats.loading ? "..." : monthlyStats.count?.toLocaleString("th-TH") ?? "0"} ครั้ง</b>
+                  
+                  <div className="min-w-0 flex-1">
+                    <span className="block text-[9px] font-extrabold uppercase tracking-wider text-[#0B82F0]/80">สถิติเดือนนี้</span>
+                    <h4 className="mt-0.5 text-[12px] font-black leading-tight text-[#0B2F6B] tracking-tight">Line Walk / Safety Contact</h4>
+                  </div>
+                  
+                  <div className="text-right">
+                    <span className="block text-[22px] font-black leading-none bg-gradient-to-r from-[#0B82F0] to-[#005DCC] bg-clip-text text-transparent">
+                      {monthlyStats.loading ? "..." : monthlyStats.count?.toLocaleString("th-TH") ?? "0"}
+                    </span>
+                    <span className="mt-1 block text-[9px] font-extrabold text-[#55739B]">ครั้ง</span>
+                  </div>
                 </div>
               </CardContent>
             </Card>
+          </div>
 
+          {/* Suggestions Card */}
+          <div className="order-3 lg:order-3 lg:col-start-2 lg:row-start-2">
             <Card className="rounded-[14px]">
-              <CardHeader className="flex-row items-center justify-between gap-3 px-5 py-4">
+              <CardHeader className="flex-row items-center justify-between gap-3 px-4 py-2.5">
                 <div className="flex items-center gap-3">
-                  <span className="flex h-11 w-11 items-center justify-center rounded-[12px] bg-[#EEF7FF] text-[#0B82F0]">
-                    <Bell className="h-6 w-6" strokeWidth={2.3} />
+                  <span className="flex h-9 w-9 items-center justify-center rounded-[10px] bg-[#EEF7FF] text-[#0B82F0]">
+                    <Bell className="h-5 w-5" strokeWidth={2.2} />
                   </span>
-                  <CardTitle className="text-[17px]">ข้อเสนอแนะ &amp; แจ้งเตือนภัย</CardTitle>
+                  <CardTitle className="text-[15px]">ข้อเสนอแนะ &amp; แจ้งเตือนภัย</CardTitle>
                 </div>
               </CardHeader>
-              <CardContent className="grid gap-3 px-5 pb-5 pt-0">
-                <div className="flex items-start gap-3 rounded-[12px] border border-[#D7EAFE] bg-[#F5FAFF] p-3">
-                  <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-[#0B82F0] text-white shadow-[0_8px_16px_rgba(11,130,240,0.18)]">
-                    <TriangleAlert className="h-5 w-5" strokeWidth={2.35} />
+              <CardContent className="grid gap-2 px-4 pb-3.5 pt-0">
+                <div className="flex items-start gap-3 rounded-[12px] border border-[#D7EAFE] bg-[#F5FAFF] p-2.5">
+                  <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-[#0B82F0] text-white shadow-[0_8px_16px_rgba(11,130,240,0.18)]">
+                    <TriangleAlert className="h-4 w-4" strokeWidth={2.2} />
                   </span>
-                  <p className="text-[12.5px] font-bold leading-relaxed text-[#55739B]"><strong className="text-[#0B82F0]">ระวังลมกระโชกแรง:</strong> พยากรณ์อากาศแจ้งเตือนลมพัดแรงเป็นระยะ ขอให้จัดเก็บอุปกรณ์ภายนอกอาคารให้มิดชิด</p>
+                  <p className="text-[11.5px] font-bold leading-relaxed text-[#55739B]"><strong className="text-[#0B82F0]">ระวังลมกระโชกแรง:</strong> พยากรณ์อากาศแจ้งเตือนลมพัดแรงเป็นระยะ ขอให้จัดเก็บอุปกรณ์ภายนอกอาคารให้มิดชิด</p>
                 </div>
-                <div className="flex items-start gap-3 rounded-[12px] border border-[#D7EAFE] bg-[#F5FAFF] p-3">
-                  <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-[#0B82F0] text-white shadow-[0_8px_16px_rgba(11,130,240,0.18)]">
-                    <HardHat className="h-5 w-5" strokeWidth={2.35} />
+                <div className="flex items-start gap-3 rounded-[12px] border border-[#D7EAFE] bg-[#F5FAFF] p-2.5">
+                  <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-[#0B82F0] text-white shadow-[0_8px_16px_rgba(11,130,240,0.18)]">
+                    <HardHat className="h-4 w-4" strokeWidth={2.2} />
                   </span>
-                  <p className="text-[12.5px] font-bold leading-relaxed text-[#55739B]"><strong className="text-[#0B82F0]">การดูแล PPE:</strong> หมวกนิรภัยที่ชำรุดหรือร้าวควรส่งเคลมทันทีเพื่อความปลอดภัยเต็มประสิทธิภาพ</p>
+                  <p className="text-[11.5px] font-bold leading-relaxed text-[#55739B]"><strong className="text-[#0B82F0]">การดูแล PPE:</strong> หมวกนิรภัยที่ชำรุดหรือร้าวควรส่งเคลมทันทีเพื่อความปลอดภัยเต็มประสิทธิภาพ</p>
                 </div>
               </CardContent>
             </Card>
-          </aside>
+          </div>
         </div>
       </div>
     </div>
