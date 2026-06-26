@@ -767,6 +767,7 @@ export default function SafetyAdmin() {
                 const active = item.id === selectedQuestionId;
                 const isDragging = draggedId === item.id;
                 const isOver = dragOverId === item.id;
+                const isEnabled = isQuestionActive(item);
 
                 return (
                   <div
@@ -835,7 +836,7 @@ export default function SafetyAdmin() {
                       gap: 4,
                       cursor: isDragging ? "grabbing" : "grab",
                       fontFamily: "inherit",
-                      opacity: isDragging ? 0.4 : 1,
+                      opacity: isDragging ? 0.4 : isEnabled ? 1 : 0.55,
                       transition: "all 0.15s ease",
                       transform: isOver ? "scale(0.98)" : "none",
                       outline: "none",
