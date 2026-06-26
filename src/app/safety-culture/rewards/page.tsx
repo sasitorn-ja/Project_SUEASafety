@@ -7,7 +7,15 @@ import { SafetyCultureHero } from "@/components/safety-culture/safety-culture-he
 import { SafetyCultureTabs } from "@/components/safety-culture/safety-culture-tabs";
 import { SafetyCulturePageHeader } from "@/components/safety-culture/safety-culture-page-header";
 import { Card } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog } from "@/components/ui/dialog";
+import {
+  AppDialogBody,
+  AppDialogContent,
+  AppDialogDescription,
+  AppDialogSectionFooter,
+  AppDialogSectionHeader,
+  AppDialogTitle,
+} from "@/components/ui/app-dialog";
 import { useAppActions, useAppState } from "@/providers/app-providers";
 import { cn } from "@/lib/utils";
 import { useAppTheme } from "@/providers/theme-provider";
@@ -187,7 +195,7 @@ export default function RewardsPage() {
 
   return (
     <>
-      <div className="mx-auto w-full max-w-[1480px] bg-[var(--background)] px-3.5 pt-2.5 pb-8 md:px-5">
+      <div className="page-shell-wide bg-[var(--background)] pt-2.5 pb-8">
         <div className="anim-fade" style={animStyle(0)}>
           <SafetyCultureHero
             eyebrow="SAFETY CARING REWARDS SHOP"
@@ -198,8 +206,10 @@ export default function RewardsPage() {
             }
             description="คะแนน Safety ของคุณเปลี่ยนเป็นรางวัลสุดแสนพิเศษได้"
             variant="community"
-            backgroundImage="/images/heroes/safety-culture-rewards-hero.png"
+            backgroundImage="/images/heroes/Home01.png"
             backgroundOverlay="linear-gradient(90deg, rgba(210,235,255,.82) 0%, rgba(210,235,255,.60) 32%, rgba(210,235,255,.10) 56%, rgba(210,235,255,0) 74%)"
+            mascotSrc="/images/mascots/wangjai/39.png"
+            mascotAction="happyReward"
           />
         </div>
 
@@ -239,7 +249,7 @@ export default function RewardsPage() {
           </div>
         ) : null}
 
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
           {filtered.map((reward, idx) => {
             const availability = getRewardAvailability(reward);
             const locked = currentUserPoints < reward.points;
@@ -301,7 +311,7 @@ export default function RewardsPage() {
                 ) : (
                   <button
                     onClick={() => handleRedeem(reward)}
-                    className="w-full rounded-xl bg-[#1A1A1A] py-2.5 text-center text-[13px] font-[850] text-white outline-none transition-all hover:bg-[var(--brand-accent)] hover:text-[#1A1A1A]"
+                    className="w-full rounded-xl bg-brand-accent py-2.5 text-center text-[13px] font-[850] text-white outline-none transition-all hover:bg-(--brand-nav-active)"
                   >
                     แลกรางวัล
                   </button>
@@ -326,59 +336,60 @@ export default function RewardsPage() {
       </div>
 
       <Dialog open={!!redeeming} onOpenChange={(open) => !open && setRedeeming(null)}>
-        <DialogContent className="p-4 text-center sm:max-w-sm">
-          <DialogHeader>
-            <DialogTitle className="flex flex-col items-center gap-3 text-xl font-extrabold text-foreground">
-              <div className="w-[120px] animate-[sueaMascotFloat_1.8s_ease-in-out_infinite_alternate]">
-                <Image
-                  src={mascot("happyClaim")}
-                  alt="น้องวางใจ Safety mascot"
-                  width={120}
-                  height={120}
-                  className="mascot-motion h-auto w-full"
-                />
-              </div>
-              ยืนยันการแลกรางวัล
-            </DialogTitle>
-          </DialogHeader>
-          <p className="text-sm font-semibold leading-relaxed text-[#555149]">
-            คุณต้องการใช้คะแนนจำนวน <strong className="text-[var(--brand-accent-strong)]">{redeeming?.points} แต้ม</strong> เพื่อแลก
-            <br />
-            <strong>&quot;{redeeming?.name}&quot;</strong> ใช่หรือไม่?
-          </p>
-          {redeeming ? (
-            <div className="rounded-[14px] border border-[var(--border)] bg-white/80 px-3 py-2 text-left text-[12px] font-bold text-[#6f665b]">
-              <div>{redeeming.stockMode === "limited" ? `คงเหลือ ${Math.max(0, Number(redeeming.stockRemaining) || 0)} ชิ้น` : "ไม่จำกัดจำนวน"}</div>
-              <div className="mt-1">{getRewardScheduleText(redeeming)}</div>
+        <AppDialogContent size="sm">
+          <AppDialogSectionHeader className="border-[#d7e6f6] bg-[linear-gradient(135deg,#ffffff_0%,#f4f9ff_56%,#eaf4ff_100%)] text-center">
+            <AppDialogTitle className="text-center text-[17px] sm:text-[19px]">ยืนยันการแลกรางวัล</AppDialogTitle>
+            <AppDialogDescription className="text-center">ตรวจสอบข้อมูลก่อนใช้คะแนนแลกรางวัล</AppDialogDescription>
+          </AppDialogSectionHeader>
+
+          <AppDialogBody className="flex flex-col items-center gap-4 text-center">
+            <div className="w-27.5 animate-[sueaMascotFloat_1.8s_ease-in-out_infinite_alternate]">
+              <Image
+                src={mascot("happyClaim")}
+                alt="น้องวางใจ Safety mascot"
+                width={120}
+                height={120}
+                className="mascot-motion h-auto w-full"
+              />
             </div>
-          ) : null}
-          <div className="flex flex-col gap-2.5">
-            <button onClick={confirmRedeem} className="w-full rounded-xl bg-[#1A1A1A] py-3 text-center text-[13px] font-[850] text-white transition-all hover:bg-[var(--brand-accent)] hover:text-[#1A1A1A]">
+            <p className="text-sm font-semibold leading-relaxed text-[#555149]">
+              คุณต้องการใช้คะแนนจำนวน <strong className="text-(--brand-accent-strong)">{redeeming?.points} แต้ม</strong> เพื่อแลก
+              <br />
+              <strong>&quot;{redeeming?.name}&quot;</strong> ใช่หรือไม่?
+            </p>
+            {redeeming ? (
+              <div className="w-full rounded-[14px] border border-border bg-white/80 px-3 py-2 text-left text-[12px] font-bold text-[#6f665b]">
+                <div>{redeeming.stockMode === "limited" ? `คงเหลือ ${Math.max(0, Number(redeeming.stockRemaining) || 0)} ชิ้น` : "ไม่จำกัดจำนวน"}</div>
+                <div className="mt-1">{getRewardScheduleText(redeeming)}</div>
+              </div>
+            ) : null}
+          </AppDialogBody>
+
+          <AppDialogSectionFooter className="flex-col gap-2.5 bg-transparent sm:flex-col">
+            <button onClick={confirmRedeem} className="w-full rounded-xl bg-brand-accent py-3 text-center text-[13px] font-[850] text-white transition-all hover:bg-(--brand-nav-active)">
               ยืนยันการแลก
             </button>
             <button
               onClick={() => setRedeeming(null)}
-              className="w-full rounded-xl bg-[var(--secondary)] py-2.5 text-center text-[13px] font-[850] text-foreground transition-colors hover:bg-[var(--border)]"
+              className="w-full rounded-xl bg-secondary py-2.5 text-center text-[13px] font-[850] text-foreground transition-colors hover:bg-border"
             >
               ยกเลิก
             </button>
-          </div>
-        </DialogContent>
+          </AppDialogSectionFooter>
+        </AppDialogContent>
       </Dialog>
 
       <Dialog open={!!result} onOpenChange={(open) => !open && setResult(null)}>
-        <DialogContent className="p-4 text-center sm:max-w-sm">
-          <DialogHeader>
-            <DialogTitle className="flex flex-col items-center gap-3 text-xl font-extrabold text-foreground">
-              <span className="text-[52px] leading-none">{result?.type === "success" ? "✓" : "!"}</span>
-              {result?.title}
-            </DialogTitle>
-          </DialogHeader>
-          <p className="text-sm font-semibold leading-relaxed text-[#555149]">{result?.desc}</p>
-          <button onClick={() => setResult(null)} className="w-full rounded-xl bg-[#1A1A1A] py-3 text-center text-[13px] font-[850] text-white transition-all hover:bg-[var(--brand-accent)] hover:text-[#1A1A1A]">
-            ตกลง
-          </button>
-        </DialogContent>
+        <AppDialogContent size="sm">
+          <AppDialogBody className="flex flex-col items-center gap-4 text-center">
+            <span className="text-[52px] leading-none">{result?.type === "success" ? "✓" : "!"}</span>
+            <AppDialogTitle>{result?.title}</AppDialogTitle>
+            <p className="text-sm font-semibold leading-relaxed text-[#555149]">{result?.desc}</p>
+            <button onClick={() => setResult(null)} className="w-full rounded-xl bg-brand-accent py-3 text-center text-[13px] font-[850] text-white transition-all hover:bg-(--brand-nav-active)">
+              ตกลง
+            </button>
+          </AppDialogBody>
+        </AppDialogContent>
       </Dialog>
     </>
   );

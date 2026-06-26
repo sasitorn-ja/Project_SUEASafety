@@ -6,12 +6,8 @@ import { useAppState, useAppActions } from "@/providers/app-providers";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog } from "@/components/ui/dialog";
+import { AppDialogBody, AppDialogContent } from "@/components/ui/app-dialog";
 import { cn } from "@/lib/utils";
 import { getSafetyPoint } from "@/lib/point-rules";
 import { Check, X, ChevronRight, AlertTriangle, Minus, Plus } from "lucide-react";
@@ -393,7 +389,8 @@ export default function WereOkPage() {
       </div>
 
       <Dialog open={sosOpen} onOpenChange={setSosOpen}>
-        <DialogContent showCloseButton={false} className="z-[9999] flex max-h-[94vh] w-full max-w-[480px] flex-col gap-3.5 overflow-y-auto rounded-[28px] border border-[#cfe0f2] bg-[linear-gradient(180deg,#ffffff,#f8fcff)] p-4 shadow-[0_28px_80px_rgba(6,43,99,0.28)] md:p-4">
+        <AppDialogContent showCloseButton={false} className="z-9999 max-h-[94vh] max-w-120 overflow-y-auto">
+          <AppDialogBody className="flex flex-col gap-3.5">
             <div className="text-[21px] font-extrabold text-[#D9383A] flex items-center justify-center gap-2.5 text-center">
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
@@ -475,7 +472,8 @@ export default function WereOkPage() {
                 ปิดหน้าต่างนี้ / ยกเลิก
               </button>
             </div>
-        </DialogContent>
+          </AppDialogBody>
+        </AppDialogContent>
       </Dialog>
     </>
   );

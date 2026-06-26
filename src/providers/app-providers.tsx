@@ -194,6 +194,7 @@ export type LeaderboardTeam = {
   name: string;
   leaderUserId?: string;
   leaderEmail?: string;
+  leaderProfileImageUrl?: string | null;
   leader: string;
   members: number;
   color: string;
@@ -1762,6 +1763,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
         name: String(item.name || item.team_name || item.teamName || ""),
         leaderUserId: String(item.leader_user_id || item.leaderUserId || ""),
         leaderEmail: String(item.leader_email || item.leaderEmail || ""),
+        leaderProfileImageUrl: (item.leader_profile_image_url || item.leaderProfileImageUrl || null) as string | null,
         leader: String(item.leader_name_th || item.leaderNameTh || item.leader_name_en || item.leaderNameEn || item.leader_email || item.leaderEmail || ""),
         members: Number(item.members || item.member_count || item.memberCount || 0),
         color: String(item.color || "var(--brand-accent)"),
@@ -1791,6 +1793,16 @@ export function AppProviders({ children }: { children: ReactNode }) {
     let cancelled = false;
 
     async function loadBackendState() {
+      let demoLoginAllowed = false;
+      try {
+        demoLoginAllowed =
+          process.env.NODE_ENV !== "production"
+          && isLocalDemoLoginHost(window.location.hostname)
+          && window.sessionStorage.getItem(DEMO_LOGIN_SESSION_KEY) === "true";
+      } catch {
+        demoLoginAllowed = false;
+      }
+
       // ตรวจ session ก่อน ถ้ายังไม่ล็อกอินก็ไม่ต้องเรียก API ที่ต้องยืนยันตัวตน
       let authed = false;
       let sessionUser: SessionUser | null = null;
@@ -1807,7 +1819,32 @@ export function AppProviders({ children }: { children: ReactNode }) {
       if (cancelled) return;
       isAuthenticatedRef.current = authed;
       currentUserRef.current = sessionUser;
-      if (!authed) return;
+      demoModeRef.current = false;
+
+      if (!authed) {
+        if (demoLoginAllowed) {
+          const demoUser = createDemoSessionUser();
+          const demoSnapshot = createDemoSafetyCultureSnapshot(demoUser);
+          currentUserRef.current = demoUser;
+          demoModeRef.current = true;
+          setCurrentUserPoints(demoSnapshot.currentUserPoints);
+          setPosts(demoSnapshot.posts);
+          setFeedEvents(demoSnapshot.feedEvents);
+          setTeamStandings(demoSnapshot.teamStandings);
+          setPersonalRankings(demoSnapshot.personalRankings);
+          setRewardsCatalog(demoSnapshot.rewardsCatalog);
+          setRewardCategories(demoSnapshot.rewardCategories);
+          setRewardRedemptions(demoSnapshot.rewardRedemptions);
+          setInboxNotifications(demoSnapshot.inboxNotifications);
+          setUserActivityHistory(demoSnapshot.userActivityHistory);
+          setAwarenessQuestions(demoSnapshot.awarenessQuestions);
+          setAwarenessHistory(demoSnapshot.awarenessHistory);
+          setAwarenessDoneDate(demoSnapshot.awarenessDoneDate);
+          setAwarenessHolidays(demoSnapshot.awarenessHolidays);
+          setSafetyCultureEvent(demoSnapshot.safetyCultureEvent);
+        }
+        return;
+      }
 
       const [postsResult, balanceResult, notificationsResult, rewardsResult, rewardCategoriesResult, leaderboardResult, teamsResult, awarenessResult, attemptsResult, holidaysResult, eventsResult, wereOkResult, transactionsResult] = await Promise.all([
         apiFetch<{ items: ApiPost[] }>("/api/safety-culture/posts?limit=50"),
@@ -1908,6 +1945,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
           name: String(item.name || item.team_name || item.teamName || ""),
           leaderUserId: String(item.leader_user_id || item.leaderUserId || ""),
           leaderEmail: String(item.leader_email || item.leaderEmail || ""),
+          leaderProfileImageUrl: (item.leader_profile_image_url || item.leaderProfileImageUrl || null) as string | null,
           leader: String(item.leader_name_th || item.leaderNameTh || item.leader_name_en || item.leaderNameEn || item.leader_email || item.leaderEmail || ""),
           members: Number(item.members || item.member_count || item.memberCount || 0),
           color: String(item.color || "var(--brand-accent)"),

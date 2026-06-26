@@ -3,7 +3,8 @@ import { useEffect, useState } from "react";
 import { Eye, Trash2, Search, X, ClipboardList } from "lucide-react";
 import { Combobox } from "@/components/ui/combobox";
 import { SafetyCultureHero } from "@/components/safety-culture/safety-culture-hero";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog } from "@/components/ui/dialog";
+import { AppDialogBody, AppDialogContent } from "@/components/ui/app-dialog";
 
 const T = {
   page: "var(--background)",
@@ -545,22 +546,9 @@ export default function SafetyAdminReportHistory() {
 
       {/* Selected Submission Detail Modal */}
       <Dialog open={!!selectedSub} onOpenChange={(open) => !open && setSelectedSub(null)}>
-        <DialogContent showCloseButton={false} className="safety-admin-form-popup z-[1000] p-0 sm:max-w-[640px]">
+        <AppDialogContent showCloseButton={false} className="safety-admin-form-popup z-1000 max-w-160">
           {selectedSub ? (
-          <div
-            style={{
-              width: "min(100%, 640px)",
-              background: "var(--brand-surface)",
-              borderRadius: 24,
-              border: `1px solid ${T.line}`,
-              boxShadow: "0 24px 60px rgba(31,26,23,0.22)",
-              padding: 24,
-              display: "grid",
-              gap: 16,
-              maxHeight: "90vh",
-              overflowY: "auto"
-            }}
-          >
+          <AppDialogBody className="grid max-h-[90vh] gap-4 overflow-y-auto p-6">
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: `1px solid ${T.line}`, paddingBottom: 10 }}>
               <div>
                 <div style={{ fontSize: 11, fontWeight: 800, color: T.accentDeep, textTransform: "uppercase" }}>SUBMISSION DETAIL</div>
@@ -668,9 +656,9 @@ export default function SafetyAdminReportHistory() {
                 </div>
               )}
             </div>
-          </div>
+          </AppDialogBody>
           ) : null}
-        </DialogContent>
+        </AppDialogContent>
       </Dialog>
     </div>
   );

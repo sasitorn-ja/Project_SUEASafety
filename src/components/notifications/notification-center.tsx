@@ -186,6 +186,16 @@ export function NotificationCenter({ compact = false, onItemClick, onNotificatio
                   : "bg-[linear-gradient(135deg,#51301a_0%,#70411d_48%,#9f641f_100%)]"
               )
         )}
+        style={
+          compact
+            ? undefined
+            : {
+                backgroundImage:
+                  "linear-gradient(90deg, rgba(2,26,66,.82) 0%, rgba(3,33,78,.54) 46%, rgba(3,33,78,.2) 100%), url('/images/heroes/Home01.png')",
+                backgroundPosition: "center",
+                backgroundSize: "cover",
+              }
+        }
       >
         {mobileMode ? (
           <div className="relative">
@@ -348,4 +358,3 @@ export function NotificationCenter({ compact = false, onItemClick, onNotificatio
     </div>
   );
 }
-

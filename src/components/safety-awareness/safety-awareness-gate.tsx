@@ -6,7 +6,8 @@ import { Check, ShieldCheck, X } from "lucide-react";
 import { useAppActions, useAppState } from "@/providers/app-providers";
 import { useAppTheme } from "@/providers/theme-provider";
 import { pickRandom, type SafetyAwarenessQuestion } from "@/lib/safety-awareness";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog } from "@/components/ui/dialog";
+import { AppDialogContent } from "@/components/ui/app-dialog";
 
 const QUESTIONS_PER_DAY = 3;
 
@@ -66,11 +67,11 @@ export function SafetyAwarenessGate() {
 
   return (
     <Dialog open={open}>
-      <DialogContent
-      showCloseButton={false}
-      aria-label="Safety Awareness"
-      className="z-[100000] max-h-[calc(100vh-3rem)] w-full max-w-[560px] overflow-hidden rounded-[28px] border border-[#cfe0f2] bg-[linear-gradient(180deg,#ffffff,#f8fcff)] p-0 font-sarabun shadow-[0_28px_80px_rgba(6,43,99,0.28)]"
-    >
+      <AppDialogContent
+        showCloseButton={false}
+        aria-label="Safety Awareness"
+        className="z-100000 max-h-[calc(100vh-3rem)] max-w-140 overflow-y-auto"
+      >
         {/* Header */}
         <div className="relative overflow-hidden border-b border-[#d7e6f6] bg-[linear-gradient(135deg,#ffffff_0%,#f4f9ff_56%,#eaf4ff_100%)] px-5 pb-4 pt-4 text-[#173b6b]">
           <div className="relative flex items-center gap-3">
@@ -240,7 +241,7 @@ export function SafetyAwarenessGate() {
             </div>
           )}
         </div>
-      </DialogContent>
+      </AppDialogContent>
     </Dialog>
   );
 }

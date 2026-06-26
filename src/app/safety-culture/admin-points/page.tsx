@@ -6,8 +6,8 @@ import { RefreshCcw, Save, Star, Trophy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { SafetyCultureHero } from "@/components/safety-culture/safety-culture-hero";
 import { apiFetch, apiJson } from "@/lib/api-client";
-import { getSessionDisplayName, useSessionUser } from "@/lib/session-user";
 
 type PointRule = {
   id: string | null;
@@ -36,7 +36,6 @@ const RULE_HINTS: Record<string, string> = {
 };
 
 export default function AdminPointsPage() {
-  const { user: sessionUser } = useSessionUser();
   const [rules, setRules] = useState<PointRule[]>([]);
   const [draft, setDraft] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
@@ -122,32 +121,19 @@ export default function AdminPointsPage() {
   };
 
   return (
-    <div className="mx-auto w-full max-w-[1320px] bg-[var(--background)] px-3.5 pt-2.5 pb-8 font-sarabun md:px-5">
-      <section
-        className="relative min-h-[110px] overflow-hidden rounded-[20px] border border-[#D7EAFE] px-4 py-5 text-[#0B2F6B] shadow-[0_8px_22px_rgba(185,223,255,0.45)] sm:min-h-[120px] md:px-7 md:py-7 xl:min-h-[150px]"
-        style={{
-          background: "url('/images/heroes/admin-event-hero.png') center / cover no-repeat",
-        }}
-      >
-        <div className="flex h-full flex-col gap-4 md:flex-row md:items-end md:justify-between">
-          <div>
-            <p className="flex items-center gap-2 text-[11px] font-extrabold uppercase tracking-[0.16em] text-[var(--brand-hero-label)]">
-              <Star className="h-4 w-4" strokeWidth={2.5} />
-              Point Settings
-            </p>
-            <h1 className="mt-2 text-[26px] font-black leading-tight md:text-[34px]">ตั้งค่าคะแนนในระบบ</h1>
-            <p className="mt-2 max-w-[760px] text-[13px] font-bold leading-relaxed text-[#55739B] md:text-[14px]">
-              กำหนดคะแนนของกิจกรรมหลักใน Safety Awareness, Safety Culture และ Safety Effort ได้จากหน้าเดียว
-            </p>
-          </div>
-          <div className="rounded-[14px] border border-[#D7EAFE] bg-white/85 px-4 py-3 shadow-[0_8px_18px_rgba(185,223,255,0.35)]">
-            <p className="text-[11px] font-bold text-[#55739B]">ผู้ใช้งานปัจจุบัน</p>
-            <p className="mt-1 text-[13px] font-black text-[#0B82F0]">{getSessionDisplayName(sessionUser)}</p>
-          </div>
-        </div>
-      </section>
+    <div className="page-shell-wide bg-background pt-2.5 pb-8 font-sarabun">
+      <SafetyCultureHero
+        eyebrow="POINT SETTINGS"
+        title={<>ตั้งค่าคะแนนในระบบ</>}
+        description="กำหนดคะแนนของกิจกรรมหลักใน Safety Awareness, Safety Culture และ Safety Effort ได้จากหน้าเดียว"
+        variant="community"
+        backgroundImage="/images/heroes/Home01.png"
+        backgroundOverlay="linear-gradient(90deg, rgba(210,235,255,.82) 0%, rgba(210,235,255,.60) 32%, rgba(210,235,255,.10) 56%, rgba(210,235,255,0) 74%)"
+        mascotSrc="/images/mascots/wangjai/17.png"
+        mascotAction="idea"
+      />
 
-      <Card className="mt-4 rounded-[18px] border border-[var(--border)] bg-[var(--brand-surface)] p-4 shadow-[0_10px_26px_var(--brand-shadow)]">
+      <Card className="mt-4 rounded-[18px] border border-border bg-(--brand-surface) p-4 shadow-[0_10px_26px_var(--brand-shadow)]">
         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <div>
             <h2 className="text-[18px] font-black text-[#0B2F6B]">คะแนนกิจกรรมหลัก</h2>
@@ -180,7 +166,7 @@ export default function AdminPointsPage() {
                   <h3 className="text-[16px] font-black leading-tight text-[#0B2F6B]">{rule.label}</h3>
                   <p className="mt-1 text-[11px] font-bold leading-relaxed text-[#55739B]">{RULE_HINTS[rule.code] || rule.sourceType}</p>
                 </div>
-                <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-2xl bg-[#F5FAFF] text-[#0B82F0]">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-[#F5FAFF] text-[#0B82F0]">
                   <Trophy className="h-5 w-5" strokeWidth={2.3} />
                 </div>
               </div>

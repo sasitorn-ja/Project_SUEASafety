@@ -35,22 +35,22 @@ const NAV_ITEMS = [
 
 const SAFETY_CULTURE_ITEMS = [
   {
-    label: "Feed",
+    label: "ฟีด",
     href: "/safety-culture",
     icon: Heart,
-    description: "Share safe behaviors and team stories in the feed",
+    description: "แชร์พฤติกรรมความปลอดภัยและเรื่องราวของทีมในฟีด",
   },
   {
     label: "Leaderboard",
     href: "/safety-culture/leaderboard",
     icon: Trophy,
-    description: "Track team and personal ranking progress",
+    description: "ติดตามอันดับทีมและคะแนนส่วนตัว",
   },
   {
-    label: "Rewards",
+    label: "ของรางวัล",
     href: "/safety-culture/rewards",
     icon: Gift,
-    description: "Review points and available redemption rewards",
+    description: "ดูคะแนนและของรางวัลที่สามารถแลกได้",
   },
 ] as const;
 

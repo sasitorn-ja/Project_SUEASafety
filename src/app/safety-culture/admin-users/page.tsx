@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { RefreshCcw, Search, ShieldCheck, ShieldMinus, UserCog, UsersRound } from "lucide-react";
+import { SafetyCultureHero } from "@/components/safety-culture/safety-culture-hero";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -18,7 +19,7 @@ import {
 } from "@/components/ui/pagination";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
-import { getSessionDisplayName, useSessionUser } from "@/lib/session-user";
+import { useSessionUser } from "@/lib/session-user";
 
 type ApiRole = {
   id: string | number;
@@ -188,30 +189,17 @@ export default function AdminUsersPage() {
   const lastRow = Math.min(page * pageSize, total);
 
   return (
-    <div className="mx-auto w-full max-w-[1480px] bg-[var(--background)] px-3.5 pt-2.5 pb-8 font-sarabun md:px-5">
-      <section
-        className="relative left-1/2 min-h-[100px] w-[calc(100vw-20px)] max-w-none -translate-x-1/2 overflow-hidden rounded-[20px] border border-[#D7EAFE] px-4 py-5 text-[#0B2F6B] shadow-[0_8px_22px_rgba(185,223,255,0.45)] sm:min-h-[116px] md:px-7 md:py-7 lg:w-[calc(100vw-48px)] xl:min-h-[148px]"
-        style={{
-          background: "url('/images/heroes/admin-users-hero.png') center / cover no-repeat",
-        }}
-      >
-        <div className="flex h-full flex-col gap-4 md:flex-row md:items-end md:justify-between">
-          <div>
-            <p className="flex items-center gap-2 text-[11px] font-extrabold uppercase tracking-[0.16em] text-[var(--brand-hero-label)]">
-              <UserCog className="h-4 w-4" strokeWidth={2.5} />
-              Admin Access
-            </p>
-            <h1 className="mt-2 text-[26px] font-black leading-tight md:text-[34px]">จัดการผู้ใช้และสิทธิ์ Admin</h1>
-            <p className="mt-2 max-w-[720px] text-[13px] font-bold leading-relaxed text-[#55739B] md:text-[14px]">
-              แสดงรายชื่อผู้ใช้แบบแบ่งหน้า รองรับผู้ใช้จำนวนมากโดยไม่โหลดทั้งหมดพร้อมกัน
-            </p>
-          </div>
-          <div className="rounded-[14px] border border-[#D7EAFE] bg-white/85 px-4 py-3 shadow-[0_8px_18px_rgba(185,223,255,0.35)]">
-            <p className="text-[11px] font-bold text-[#55739B]">ผู้ใช้งานปัจจุบัน</p>
-            <p className="mt-1 text-[13px] font-black text-[#0B82F0]">{getSessionDisplayName(sessionUser)}</p>
-          </div>
-        </div>
-      </section>
+    <div className="page-shell-wide bg-[var(--background)] pt-2.5 pb-8 font-sarabun">
+      <SafetyCultureHero
+        eyebrow="ADMIN ACCESS"
+        title={<>จัดการผู้ใช้และสิทธิ์ Admin</>}
+        description="แสดงรายชื่อผู้ใช้แบบแบ่งหน้า รองรับผู้ใช้จำนวนมากโดยไม่โหลดทั้งหมดพร้อมกัน"
+        variant="community"
+        backgroundImage="/images/heroes/Home01.png"
+        backgroundOverlay="linear-gradient(90deg, rgba(210,235,255,.82) 0%, rgba(210,235,255,.60) 32%, rgba(210,235,255,.10) 56%, rgba(210,235,255,0) 74%)"
+        mascotSrc="/images/mascots/wangjai/31.png"
+        mascotAction="shield"
+      />
 
       <Card className="mt-4 rounded-[18px] border border-[var(--border)] bg-[var(--brand-surface)] p-4 shadow-[0_10px_26px_var(--brand-shadow)]">
         <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_auto_auto_auto] md:items-center">

@@ -369,6 +369,12 @@ body {
   padding: var(--app-page-pad-y) var(--app-page-pad-x) 30px;
 }
 
+.page-shell-wide {
+  width: calc(100vw - 20px);
+  max-width: none;
+  margin-inline: auto;
+}
+
 .app-page-header {
   display: flex;
   min-height: 56px;
@@ -418,6 +424,19 @@ body {
   box-shadow: var(--app-card-shadow);
 }
 
+.app-card-title {
+  font-size: 14px;
+  line-height: 1.2;
+  font-weight: 900;
+  letter-spacing: 0.01em;
+}
+
+@media (min-width: 640px) {
+  .app-card-title {
+    font-size: 15px;
+  }
+}
+
 .app-empty-state {
   display: flex;
   min-height: 190px;
@@ -446,7 +465,6 @@ body {
 
 [data-slot="dialog-content"] {
   overscroll-behavior: contain;
-  scrollbar-gutter: stable;
 }
 
 [data-slot="dialog-content"] :where(input, textarea, select),
@@ -636,6 +654,10 @@ body {
     padding: 10px 10px 22px;
   }
 
+  .page-shell-wide {
+    width: calc(100vw - 20px);
+  }
+
   .app-page-header {
     min-height: 48px;
   }
@@ -646,6 +668,12 @@ body {
 
   .app-page-header-actions {
     width: 100%;
+  }
+}
+
+@media (min-width: 1024px) {
+  .page-shell-wide {
+    width: calc(100vw - 48px);
   }
 }
 

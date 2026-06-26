@@ -42,8 +42,6 @@ export function SafetyCultureHero({
   const isCommunity = variant === "community";
   const themedMascotSrc = !mascotSrc
     ? ""
-    : isCommunity
-    ? themedImage(mascotSrc)
     : theme === "wangjai"
       ? mascot(mascotAction)
       : themedImage(mascotSrc);

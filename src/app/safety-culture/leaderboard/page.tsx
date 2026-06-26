@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ChevronDown, ChevronRight, Trophy, UsersRound } from "lucide-react";
+import { ChevronDown, ChevronRight, Trophy } from "lucide-react";
 import { SafetyCultureHero } from "@/components/safety-culture/safety-culture-hero";
 import { SafetyCultureTabs } from "@/components/safety-culture/safety-culture-tabs";
 import { Card } from "@/components/ui/card";
@@ -50,7 +50,7 @@ export default function LeaderboardPage() {
   const runnerUpTeam = teamStandings[1];
   const leadPoints = leadingTeam && runnerUpTeam ? leadingTeam.points - runnerUpTeam.points : 0;
   const topScorers = [...personalRankings];
-  const visibleTopScorers = showAllTopScorers ? topScorers.slice(0, 10) : topScorers.slice(0, 4);
+  const visibleTopScorers = showAllTopScorers ? topScorers.slice(0, 10) : topScorers.slice(0, 5);
 
   const animStyle = (delay: number) => ({
     animationDelay: `${delay}s`,
@@ -58,7 +58,7 @@ export default function LeaderboardPage() {
 
   return (
     <>
-      <div className="mx-auto w-full max-w-[1480px] bg-[var(--background)] px-3.5 pt-2.5 pb-8 font-sarabun md:px-5">
+      <div className="page-shell-wide bg-[var(--background)] pt-2.5 pb-8 font-sarabun">
         <div className="anim-fade" style={animStyle(0)}>
           <SafetyCultureHero
             eyebrow="SAFETY CARING SCOREBOARD"
@@ -67,33 +67,51 @@ export default function LeaderboardPage() {
                 ทีมไหน <span className="text-[var(--brand-accent)]">ปลอดภัยสุด</span>
               </>
             }
-            description="Safety Caring ช่วยสรุปคะแนน Safety ให้เห็นภาพรวม ทั้งคะแนนทีมและอันดับในทีมของคุณ"
+            description="สรุปคะแนน Safety ให้เห็นภาพรวม ทั้งอันดับทีมและอันดับสมาชิกในทีมของคุณ"
             variant="community"
-            backgroundImage="/images/heroes/safety-culture-leaderboard-hero.png"
+            backgroundImage="/images/heroes/Home01.png"
             backgroundOverlay="linear-gradient(90deg, rgba(210,235,255,.82) 0%, rgba(210,235,255,.56) 42%, rgba(210,235,255,0) 100%)"
+            mascotSrc="/images/mascots/wangjai/1.png"
+            mascotAction="cheer"
             actionsLayout="side"
             actions={
               leadingTeam ? (
-                <div className="mt-2 w-full max-w-[410px] rounded-[22px] border border-white/16 bg-[linear-gradient(135deg,rgba(255,255,255,0.98),rgba(255,255,255,0.92))] px-3 py-2.5 text-[var(--foreground)] shadow-[0_12px_24px_rgba(0,0,0,0.16)] backdrop-blur-sm sm:px-3.5 md:mt-0">
-                  <div className="flex items-center gap-2.5">
-                    <div
-                      className="flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-full border-[3px] border-white shadow-[0_8px_18px_rgba(0,0,0,0.10)] sm:h-15 sm:w-15"
-                      style={{ background: `linear-gradient(180deg, ${themedColor(leadingTeam.color)}, color-mix(in srgb, ${themedColor(leadingTeam.color)} 84%, white))` }}
-                    >
-                      <Trophy className="h-7 w-7 text-white" strokeWidth={2.4} />
-                    </div>
-
-                    <div className="min-w-0">
-                      <p className="text-[12px] font-extrabold tracking-[0.01em] text-[var(--brand-muted-text)]">ทีมนำตอนนี้</p>
-                      <h2 className="truncate text-[26px] leading-none font-black tracking-tight text-[var(--foreground)] sm:text-[30px]">
-                        {leadingTeam.name}
-                      </h2>
-                      <p className="mt-1 text-[13.5px] font-black sm:text-[15px]" style={{ color: themedColor(leadingTeam.color) }}>
-                        +{leadPoints.toLocaleString()} คะแนน เหนือกว่า {runnerUpTeam?.name ?? "-"}
-                      </p>
-                      <div className="mt-2 inline-flex items-center rounded-full border border-[var(--border)] bg-[var(--brand-soft)] px-2.5 py-1 text-[11px] font-black text-[var(--brand-text)] shadow-[inset_0_1px_0_rgba(255,255,255,0.55)]">
-                        Leader {leadingTeam.leader}
+                <div className="mt-2 w-full max-w-85 overflow-hidden rounded-[20px] border border-white/30 bg-white/96 shadow-[0_16px_36px_rgba(0,0,0,0.18)] backdrop-blur-sm md:mt-0">
+                  {/* header: trophy + ชื่อทีม + นำหน้า */}
+                  <div className="px-4 pt-3.5 pb-3" style={{ background: `linear-gradient(135deg, color-mix(in srgb,${themedColor(leadingTeam.color)} 12%,transparent), color-mix(in srgb,${themedColor(leadingTeam.color)} 4%,transparent))` }}>
+                    <div className="flex items-start gap-3">
+                      <div
+                        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[14px] shadow-[0_6px_16px_rgba(0,0,0,0.15)]"
+                        style={{ background: `linear-gradient(135deg, ${themedColor(leadingTeam.color)}, color-mix(in srgb,${themedColor(leadingTeam.color)} 72%,#000))` }}
+                      >
+                        <Trophy className="h-5 w-5 text-white" strokeWidth={2.5} />
                       </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-[10px] font-extrabold uppercase tracking-widest" style={{ color: themedColor(leadingTeam.color) }}>ทีมนำอันดับ 1</p>
+                        <h2 className="mt-0.5 text-[17px] font-black leading-tight text-foreground">{leadingTeam.name}</h2>
+                        <p className="mt-1 text-[11px] font-bold text-(--brand-muted-text)">
+                          นำหน้า{" "}
+                          <span className="font-black" style={{ color: themedColor(leadingTeam.color) }}>+{leadPoints.toLocaleString()} คะแนน</span>
+                          {runnerUpTeam ? <> · {runnerUpTeam.name}</> : null}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* footer: หัวหน้าทีม */}
+                  <div className="flex items-center gap-2.5 border-t border-[var(--border)] px-4 py-2.5">
+                    <div
+                      className="flex h-7 w-7 shrink-0 items-center justify-center overflow-hidden rounded-full text-[11px] font-black text-white shadow-sm"
+                      style={{ background: `linear-gradient(135deg, ${themedColor(leadingTeam.color)}, color-mix(in srgb,${themedColor(leadingTeam.color)} 75%,#000))` }}
+                    >
+                      {leadingTeam.leaderProfileImageUrl
+                        ? <img src={leadingTeam.leaderProfileImageUrl} alt={leadingTeam.leader} className="h-full w-full object-cover" />
+                        : leadingTeam.leader.charAt(0).toUpperCase()
+                      }
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-[9.5px] font-extrabold text-(--brand-muted-text)">หัวหน้าทีม</p>
+                      <p className="truncate text-[12px] font-black leading-tight text-foreground">{leadingTeam.leader}</p>
                     </div>
                   </div>
                 </div>
@@ -106,91 +124,97 @@ export default function LeaderboardPage() {
           <SafetyCultureTabs />
         </div>
 
-        <div className="grid grid-cols-1 items-start gap-5 xl:grid-cols-[minmax(0,1.65fr)_minmax(360px,0.95fr)] 2xl:grid-cols-[minmax(0,1.78fr)_minmax(380px,0.92fr)]">
+        <div className="grid grid-cols-1 items-start gap-4 xl:grid-cols-[minmax(0,1.45fr)_minmax(300px,1fr)]">
+          {/* ── อันดับทีม ── */}
           <Card
-            className="overflow-hidden rounded-[24px] border-[1.5px] border-[var(--border)] bg-[linear-gradient(180deg,rgba(255,255,255,0.82),rgba(255,255,255,0.62))] shadow-[0_16px_36px_var(--brand-shadow)] backdrop-blur-sm anim-fade"
+            className="overflow-hidden rounded-[20px] border-[1.5px] border-[var(--border)] bg-[linear-gradient(180deg,rgba(255,255,255,0.82),rgba(255,255,255,0.62))] shadow-[0_16px_36px_var(--brand-shadow)] backdrop-blur-sm anim-fade"
             style={animStyle(0.15)}
           >
-            <div className="border-b border-[var(--border)] px-3.5 py-3.5 md:px-5 md:py-4">
-              <p className="text-[13px] font-black tracking-[0.01em] text-[var(--foreground)] md:text-[14px]">ลำดับทีม · YTD</p>
+            <div className="border-b border-[var(--border)] px-4 py-3 md:px-5">
+              <p className="app-card-title text-[var(--foreground)]">อันดับทีม · เดือนนี้</p>
             </div>
 
-            <div className="space-y-2.5 p-2.5 md:space-y-3 md:p-4">
+            <div className="space-y-1.5 p-3 md:space-y-2 md:p-4">
               {teamStandings.length === 0 ? (
-                <div className="rounded-[18px] border border-dashed border-[var(--border)] bg-[var(--brand-surface)] px-4 py-8 text-center">
+                <div className="rounded-[16px] border border-dashed border-[var(--border)] bg-[var(--brand-surface)] px-4 py-8 text-center">
                   <p className="text-[14px] font-black text-[var(--foreground)]">ยังไม่มีข้อมูลทีม</p>
                   <p className="mt-1 text-[12px] font-bold text-[var(--brand-muted-text)]">เมื่อมีข้อมูลทีม ระบบจะแสดงอันดับที่นี่</p>
                 </div>
               ) : teamStandings.map((team, idx) => (
                 <article
                   key={team.id}
-                  className="rounded-[18px] border border-[var(--border)] bg-[var(--brand-surface)] px-2.5 py-2.5 shadow-[0_8px_22px_var(--brand-shadow)] transition-all duration-200 hover:-translate-y-[1px] hover:border-[rgba(var(--brand-accent-rgb),0.45)] md:rounded-[20px] md:px-4 md:py-3"
-                  style={animStyle(0.18 + idx * 0.04)}
+                  className="flex items-center gap-3 rounded-[14px] border border-[var(--border)] bg-[var(--brand-surface)] px-3 py-2.5 transition-all duration-150 hover:-translate-y-px hover:border-[rgba(var(--brand-accent-rgb),0.4)] md:gap-3.5 md:px-4 md:py-3"
+                  style={animStyle(0.18 + idx * 0.03)}
                 >
-                  <div className="flex items-center gap-2.5 md:gap-3">
-                    <div className="flex min-w-0 flex-1 items-center gap-2.5 md:gap-3.5">
-                      <div className="flex w-6 flex-shrink-0 items-center justify-center text-[18px] font-black text-[var(--foreground)] md:w-8 md:text-[22px]">
-                        {team.rank}
-                      </div>
-                      <div
-                        className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-[12px] border border-white/70 shadow-[inset_0_1px_0_rgba(255,255,255,0.4)] md:h-12 md:w-12 md:rounded-[14px]"
-                        style={{ background: `linear-gradient(180deg, ${themedColor(team.color)}, color-mix(in srgb, ${themedColor(team.color)} 76%, white))` }}
-                      >
-                        <UsersRound className="h-5 w-5 text-white md:h-6 md:w-6" strokeWidth={2.2} />
-                      </div>
+                  {/* rank badge */}
+                  <div
+                    className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-[10px] text-[13px] font-black text-white shadow-[0_2px_6px_rgba(0,0,0,0.18)]"
+                    style={{ background: `linear-gradient(180deg, ${themedColor(team.color)}, color-mix(in srgb, ${themedColor(team.color)} 78%, #000))` }}
+                  >
+                    {team.rank}
+                  </div>
 
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-1.5 md:gap-2">
-                          <h4 className="truncate text-[15px] font-black text-[var(--foreground)] md:text-[18px]">{team.name}</h4>
-                          {idx === 0 ? (
-                            <span className="rounded-full bg-[var(--brand-soft)] px-1.5 py-0.5 text-[8.5px] font-extrabold uppercase tracking-[0.12em] text-[var(--brand-text)] md:px-2 md:text-[10px]">
-                              Leader
-                            </span>
-                          ) : null}
-                        </div>
-                        <p className="mt-0.5 truncate text-[11px] font-bold text-[var(--brand-muted-text)] md:text-[12.5px]">
-                          {team.leader} · {team.members} สมาชิก
-                        </p>
-                      </div>
+                  {/* leader avatar */}
+                  <div
+                    className="relative flex h-10 w-10 flex-shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-white/80 text-[13px] font-black text-white shadow-[0_2px_8px_rgba(0,0,0,0.12)] md:h-11 md:w-11"
+                    style={{ background: `linear-gradient(180deg, ${themedColor(team.color)}, color-mix(in srgb, ${themedColor(team.color)} 74%, white))` }}
+                  >
+                    {team.leaderProfileImageUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={team.leaderProfileImageUrl} alt={team.leader} className="h-full w-full object-cover" />
+                    ) : (
+                      <span className="md:text-[14px]">{team.leader.charAt(0).toUpperCase()}</span>
+                    )}
+                  </div>
+
+                  {/* info */}
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-1.5">
+                      <h4 className="truncate text-[14px] font-black text-[var(--foreground)] md:text-[16px]">{team.name}</h4>
+                      {idx === 0 ? (
+                        <span className="flex-shrink-0 rounded-full bg-[var(--brand-soft)] px-1.5 py-0.5 text-[8px] font-extrabold uppercase tracking-[0.1em] text-[var(--brand-text)] md:text-[9px]">
+                          อันดับ 1
+                        </span>
+                      ) : null}
                     </div>
-
-                    <div className="flex-shrink-0 text-right">
-                      <p className="text-[17px] leading-none font-black text-[var(--foreground)] md:text-[22px]">{team.points.toLocaleString()}</p>
-                      <p className="mt-1 text-[8.5px] font-bold uppercase tracking-[0.1em] text-[var(--brand-muted-text)] md:text-[10px] md:tracking-[0.12em]">คะแนน</p>
+                    <p className="mt-0.5 truncate text-[11px] font-bold text-[var(--brand-muted-text)] md:text-[12px]">
+                      {team.leader} · {team.members} สมาชิก
+                    </p>
+                    <div className="mt-1.5 flex items-center gap-1.5">
+                      <div className="h-[5px] min-w-0 flex-1 overflow-hidden rounded-full bg-[var(--secondary)]">
+                        <div
+                          className="h-full rounded-full transition-[width] duration-1000 ease-out"
+                          style={{ width: mounted ? `${team.percent}%` : "0%", backgroundColor: themedColor(team.color) }}
+                        />
+                      </div>
+                      <span className="flex-shrink-0 text-[10px] font-black" style={{ color: themedColor(team.color) }}>{Math.round(team.percent)}%</span>
                     </div>
                   </div>
 
-                  <div className="mt-2.5 md:mt-3">
-                    <div className="mb-1 flex items-center justify-between text-[10px] font-bold text-[var(--brand-muted-text)] md:mb-1.5 md:text-[11px]">
-                      <span>ภาพรวมทีม</span>
-                      <span>{team.percent}%</span>
-                    </div>
-                    <div className="h-[6px] w-full overflow-hidden rounded-full bg-[var(--secondary)] md:h-[7px]">
-                      <div
-                        className="h-full rounded-full transition-[width] duration-1000 ease-out"
-                        style={{ width: mounted ? `${team.percent}%` : "0%", backgroundColor: themedColor(team.color) }}
-                      />
-                    </div>
+                  {/* points */}
+                  <div className="flex-shrink-0 text-right">
+                    <p className="text-[16px] leading-none font-black text-[var(--foreground)] md:text-[20px]">{team.points.toLocaleString()}</p>
+                    <p className="mt-0.5 text-[9px] font-bold uppercase tracking-[0.1em] text-[var(--brand-muted-text)]">คะแนน</p>
                   </div>
                 </article>
               ))}
             </div>
-
           </Card>
 
+          {/* ── อันดับสมาชิก ── */}
           <Card
-            className="overflow-hidden rounded-[24px] border-[1.5px] border-[var(--border)] bg-[linear-gradient(180deg,rgba(255,255,255,0.92),rgba(255,255,255,0.70))] shadow-[0_16px_36px_var(--brand-shadow)] backdrop-blur-sm anim-fade"
+            className="overflow-hidden rounded-[20px] border-[1.5px] border-[var(--border)] bg-[linear-gradient(180deg,rgba(255,255,255,0.92),rgba(255,255,255,0.70))] shadow-[0_16px_36px_var(--brand-shadow)] backdrop-blur-sm anim-fade"
             style={animStyle(0.24)}
           >
-            <div className="border-b border-[var(--border)] px-3.5 py-3.5 md:px-5 md:py-4">
-              <p className="text-[13px] font-black tracking-[0.01em] text-[var(--foreground)] md:text-[14px]">อันดับในทีมของฉัน · เดือนนี้</p>
+            <div className="border-b border-[var(--border)] px-4 py-3 md:px-5">
+              <p className="app-card-title text-[var(--foreground)]">อันดับสมาชิกในทีม · เดือนนี้</p>
             </div>
 
-            <div className="space-y-2.5 p-2.5 md:p-4">
+            <div className="space-y-1.5 p-3 md:space-y-2 md:p-4">
               {visibleTopScorers.length === 0 ? (
-                <div className="rounded-[18px] border border-dashed border-[var(--border)] bg-[var(--brand-surface)] px-4 py-8 text-center">
-                  <p className="text-[14px] font-black text-[var(--foreground)]">ยังไม่มีอันดับในทีม</p>
-                  <p className="mt-1 text-[12px] font-bold text-[var(--brand-muted-text)]">ระบบจะแสดงอันดับเมื่อคุณมีทีมและมีสมาชิก</p>
+                <div className="rounded-[16px] border border-dashed border-[var(--border)] bg-[var(--brand-surface)] px-4 py-8 text-center">
+                  <p className="text-[14px] font-black text-[var(--foreground)]">ยังไม่มีอันดับสมาชิก</p>
+                  <p className="mt-1 text-[12px] font-bold text-[var(--brand-muted-text)]">ระบบจะแสดงอันดับเมื่อมีสมาชิกและคะแนน</p>
                 </div>
               ) : visibleTopScorers.map((user, index) => {
                 const rankStyle = TOP_RANK_STYLES[index] ?? {
@@ -202,58 +226,56 @@ export default function LeaderboardPage() {
                   <article
                     key={user.id}
                     className={cn(
-                      "flex items-center justify-between gap-2.5 rounded-[18px] border px-2.5 py-2.5 shadow-[0_8px_22px_var(--brand-shadow)] transition-all duration-200 md:gap-3 md:px-4 md:py-3",
+                      "flex items-center gap-2.5 rounded-[14px] border px-3 py-2.5 transition-all duration-150",
                       user.active
                         ? "border-[rgba(var(--brand-accent-rgb),0.55)] bg-[linear-gradient(180deg,rgba(var(--brand-accent-rgb),0.10),rgba(var(--brand-accent-rgb),0.03))]"
                         : "border-[var(--border)] bg-[var(--brand-surface)] hover:border-[rgba(var(--brand-accent-rgb),0.4)]"
                     )}
                   >
-                    <div className="flex min-w-0 items-center gap-2.5 md:gap-3">
-                      <div
-                        className={cn(
-                          "flex h-8 min-w-8 items-center justify-center rounded-full border text-[11px] font-black shadow-[inset_0_1px_0_rgba(255,255,255,0.45)] md:h-9 md:min-w-9 md:text-[13px]",
-                          rankStyle.badgeClassName
-                        )}
-                      >
-                        {formatRankLabel(user.rank)}
-                      </div>
+                    <div
+                      className={cn(
+                        "flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full border text-[11px] font-black shadow-[inset_0_1px_0_rgba(255,255,255,0.45)]",
+                        rankStyle.badgeClassName
+                      )}
+                    >
+                      {formatRankLabel(user.rank)}
+                    </div>
 
-                      <div
-                        className={cn(
-                          "relative flex h-10 w-10 flex-shrink-0 items-center justify-center overflow-hidden rounded-full bg-[linear-gradient(180deg,var(--brand-accent),var(--brand-nav-active))] text-[13px] font-black text-white ring-2 ring-offset-2 ring-offset-[var(--brand-surface)] md:h-12 md:w-12 md:text-[15px]",
-                          rankStyle.avatarRingClassName
-                        )}
-                      >
-                        <span>{getInitials(user.name)}</span>
-                        <div className="absolute inset-x-0 bottom-0 h-1/2 bg-[linear-gradient(180deg,transparent,rgba(0,0,0,0.18))]" />
-                      </div>
+                    <div
+                      className={cn(
+                        "relative flex h-10 w-10 flex-shrink-0 items-center justify-center overflow-hidden rounded-full bg-[linear-gradient(180deg,var(--brand-accent),var(--brand-nav-active))] text-[13px] font-black text-white ring-2 ring-offset-1 ring-offset-[var(--brand-surface)]",
+                        rankStyle.avatarRingClassName
+                      )}
+                    >
+                      <span>{getInitials(user.name)}</span>
+                      <div className="absolute inset-x-0 bottom-0 h-1/2 bg-[linear-gradient(180deg,transparent,rgba(0,0,0,0.18))]" />
+                    </div>
 
-                      <div className="min-w-0">
-                        <p className="truncate text-[15px] leading-tight font-black text-[var(--foreground)] md:text-[18px]">{user.name}</p>
-                        <p className="mt-0.5 truncate text-[11px] font-bold text-[var(--brand-muted-text)] md:text-[12.5px]">{user.team}</p>
-                      </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-[14px] leading-tight font-black text-[var(--foreground)]">{user.name}</p>
+                      <p className="mt-0.5 truncate text-[11px] font-bold text-[var(--brand-muted-text)]">{user.team}</p>
                     </div>
 
                     <div className="flex-shrink-0 text-right">
-                      <p className="text-[17px] leading-none font-black text-[var(--foreground)] md:text-[24px]">{user.points}</p>
-                      <p className="mt-1 text-[8.5px] font-bold uppercase tracking-[0.1em] text-[var(--brand-muted-text)] md:text-[10px] md:tracking-[0.12em]">คะแนน</p>
+                      <p className="text-[16px] leading-none font-black text-[var(--foreground)] md:text-[20px]">{user.points}</p>
+                      <p className="mt-0.5 text-[9px] font-bold uppercase tracking-[0.1em] text-[var(--brand-muted-text)]">คะแนน</p>
                     </div>
                   </article>
                 );
               })}
             </div>
 
-            {topScorers.length > 4 ? (
-            <div className="flex justify-end px-4 pb-4 md:px-5">
-              <button
-                type="button"
-                onClick={() => setShowAllTopScorers((current) => !current)}
-                className="inline-flex items-center gap-1 rounded-full border border-[var(--border)] bg-[var(--brand-surface)] px-4 py-2 text-[13px] font-black text-[var(--brand-accent)] shadow-[0_6px_16px_var(--brand-shadow)] transition-colors hover:bg-[var(--brand-soft)]"
-              >
-                {showAllTopScorers ? "ซ่อนบางส่วน" : "ดูทั้งหมด"}
-                {showAllTopScorers ? <ChevronDown className="h-4 w-4" strokeWidth={2.4} /> : <ChevronRight className="h-4 w-4" strokeWidth={2.4} />}
-              </button>
-            </div>
+            {topScorers.length > 5 ? (
+              <div className="border-t border-[var(--border)] px-4 py-2.5">
+                <button
+                  type="button"
+                  onClick={() => setShowAllTopScorers((current) => !current)}
+                  className="flex w-full items-center justify-center gap-1.5 py-1 text-[12px] font-black text-[var(--brand-accent)] outline-none transition-colors hover:text-[var(--brand-nav-active)]"
+                >
+                  {showAllTopScorers ? "ซ่อนบางส่วน" : "ดูอันดับทั้งหมด"}
+                  {showAllTopScorers ? <ChevronDown className="h-3.5 w-3.5" strokeWidth={2.5} /> : <ChevronRight className="h-3.5 w-3.5" strokeWidth={2.5} />}
+                </button>
+              </div>
             ) : null}
           </Card>
         </div>

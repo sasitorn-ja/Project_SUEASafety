@@ -147,12 +147,6 @@ export function getDefaultMenu(): MenuNode[] {
           description: "จัดการวัน KPI และคลังคำถาม Safety Awareness",
         }),
         n({
-          label: "ตั้งค่าคะแนน",
-          href: "/safety-culture/admin-points",
-          icon: "Star",
-          description: "กำหนดคะแนนที่ใช้ในระบบ Safety Culture และ Safety Effort",
-        }),
-        n({
           label: "Safety Effort",
           href: "/category",
           icon: "ShieldCheck",
@@ -207,6 +201,12 @@ export function getDefaultMenu(): MenuNode[] {
               description: "จัดการรางวัลและคะแนนแลก",
             }),
           ],
+        }),
+        n({
+          label: "ตั้งค่าคะแนน",
+          href: "/safety-culture/admin-points",
+          icon: "Star",
+          description: "กำหนดคะแนนที่ใช้ในระบบ Safety Culture และ Safety Effort",
         }),
         n({
           label: "จัดการผู้ใช้และสิทธิ์ Admin",
@@ -407,6 +407,30 @@ export function loadMenu(): MenuNode[] {
             if (safetyCultureNode.children.length !== beforePointRemoval) {
               updated = true;
             }
+          }
+
+          // Migration: enforce canonical admin-children order:
+          // Safety Awareness → Safety Effort → Safety Culture → ตั้งค่าคะแนน → จัดการผู้ใช้ฯ
+          const DESIRED_ADMIN_ORDER = [
+            "/safety-culture/admin-awareness",
+            "/category",
+            "/safety-culture",
+            "/safety-culture/admin-points",
+            "/safety-culture/admin-users",
+          ];
+          const currentOrder = adminNode.children.map((c) => c.href);
+          const isOrdered = DESIRED_ADMIN_ORDER.every((href, i) => {
+            const pos = currentOrder.indexOf(href);
+            if (pos === -1) return true;
+            const prevHref = DESIRED_ADMIN_ORDER.slice(0, i).find((h) => currentOrder.includes(h));
+            return prevHref === undefined || currentOrder.indexOf(prevHref) < pos;
+          });
+          if (!isOrdered) {
+            const byHref = new Map(adminNode.children.map((c) => [c.href, c]));
+            const ordered = DESIRED_ADMIN_ORDER.flatMap((href) => (byHref.has(href) ? [byHref.get(href)!] : []));
+            const rest = adminNode.children.filter((c) => !DESIRED_ADMIN_ORDER.includes(c.href));
+            adminNode.children = [...ordered, ...rest];
+            updated = true;
           }
 
           if (updated) {

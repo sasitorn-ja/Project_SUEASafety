@@ -7,14 +7,15 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Combobox, type ComboboxOption } from "@/components/ui/combobox";
+import { Dialog } from "@/components/ui/dialog";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+  AppDialogBody,
+  AppDialogContent,
+  AppDialogDescription,
+  AppDialogSectionFooter,
+  AppDialogSectionHeader,
+  AppDialogTitle,
+} from "@/components/ui/app-dialog";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import {
@@ -310,7 +311,7 @@ export default function AdminLeaderboardPage() {
 
   return (
     <>
-      <div className="mx-auto w-full max-w-[1480px] bg-[var(--background)] px-3.5 pt-2.5 pb-8 font-sarabun md:px-5">
+      <div className="page-shell-wide bg-[var(--background)] pt-2.5 pb-8 font-sarabun">
         <SafetyCultureHero
           eyebrow="SAFETY CULTURE ADMIN"
           title={
@@ -320,8 +321,10 @@ export default function AdminLeaderboardPage() {
           }
           description="จัดการหน่วยงาน คะแนน และอันดับ โดยอ้างอิงข้อมูลจริงในระบบ"
           variant="community"
-          backgroundImage="/images/heroes/admin-leaderboard-hero.png"
+          backgroundImage="/images/heroes/Home01.png"
           backgroundOverlay="linear-gradient(90deg, rgba(210,235,255,.82) 0%, rgba(210,235,255,.60) 32%, rgba(210,235,255,.10) 56%, rgba(210,235,255,0) 74%)"
+          mascotSrc="/images/mascots/wangjai/44.png"
+          mascotAction="cheer2"
         />
         <Card className="mt-4 rounded-[16px] border border-[var(--border)] bg-[var(--brand-soft)] p-3.5 shadow-[0_8px_18px_var(--brand-shadow)] md:p-4">
           <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
@@ -425,20 +428,20 @@ export default function AdminLeaderboardPage() {
         </div>
 
         <Dialog open={!!editingTeam} onOpenChange={(open) => !open && setEditingTeam(null)}>
-          <DialogContent className="grid h-[min(88vh,720px)] max-w-[620px] grid-rows-[auto_minmax(0,1fr)_auto] gap-0 overflow-hidden rounded-[28px] border border-[#cfe0f2] bg-[linear-gradient(180deg,#ffffff,#f8fcff)] p-0 shadow-[0_28px_80px_rgba(6,43,99,0.24)] sm:max-w-[680px]">
-            <DialogHeader className="border-b border-[var(--border)] bg-[linear-gradient(180deg,var(--brand-soft)_0%,var(--brand-soft)_100%)] px-4 pt-4 pb-3 sm:px-6 sm:pt-6 sm:pb-5">
-              <DialogTitle className="text-[22px] font-black text-[var(--brand-text)] sm:text-[28px]">
+          <AppDialogContent className="grid h-[min(88vh,720px)] max-w-155 grid-rows-[auto_minmax(0,1fr)_auto] sm:max-w-170">
+            <AppDialogSectionHeader className="px-4 pt-4 pb-3 sm:px-6 sm:pt-6 sm:pb-5">
+              <AppDialogTitle className="sm:text-[28px]">
                 {editingTeam?.mode === "create" ? "เพิ่มหน่วยงาน" : "แก้ไขหน่วยงาน"}
-              </DialogTitle>
-              <DialogDescription className="max-w-[460px] text-[12px] font-bold leading-relaxed text-[#8E8A81] sm:text-[14px]">
+              </AppDialogTitle>
+              <AppDialogDescription className="max-w-115 sm:text-[14px]">
                 {editingTeam?.mode === "create"
                   ? "กรอกข้อมูลหน่วยงานใหม่ แล้วกดยืนยันเพื่อบันทึกลงระบบ"
                   : "ปรับข้อมูลหน่วยงาน แล้วกดยืนยันเพื่ออัปเดตกลับไปยังระบบ"}
-              </DialogDescription>
-            </DialogHeader>
+              </AppDialogDescription>
+            </AppDialogSectionHeader>
 
             {editingTeam ? (
-              <div className="min-h-0 overflow-y-auto overscroll-contain bg-[var(--brand-surface)] px-4 py-4 sm:px-6 sm:py-6">
+              <AppDialogBody className="min-h-0 overflow-y-auto overscroll-contain bg-(--brand-surface) px-4 py-4 sm:px-6 sm:py-6">
                 <div className="mb-4 rounded-[18px] border border-[var(--border)] bg-white px-4 py-3 shadow-[0_8px_18px_rgba(62,36,13,0.04)] sm:mb-5 sm:rounded-[16px] sm:px-5 sm:py-4">
                   <div className="flex items-center gap-3">
                     <span
@@ -513,39 +516,39 @@ export default function AdminLeaderboardPage() {
                     </div>
                   </div>
                 </div>
-              </div>
+              </AppDialogBody>
             ) : null}
 
-            <DialogFooter className="rounded-b-[26px] border-t border-[var(--border)] bg-[var(--brand-soft)] px-5 py-4 sm:rounded-b-[30px] sm:px-6 sm:py-5">
+            <AppDialogSectionFooter className="px-5 py-4 sm:px-6 sm:py-5">
               <div className="flex w-full justify-end pr-1 pb-1 sm:pr-0 sm:pb-0">
                 <Button
                   onClick={confirmTeamEdit}
-                  className="h-10 rounded-full bg-[var(--brand-text)] px-4 text-[13px] text-white hover:bg-[var(--c-4a280f)] sm:h-11 sm:px-5 sm:text-[14px]"
+                  className="h-10 rounded-full bg-(--brand-text) px-4 text-[13px] text-white hover:bg-(--c-4a280f) sm:h-11 sm:px-5 sm:text-[14px]"
                 >
                   {editingTeam?.mode === "create" ? "Confirm Create" : "Confirm Update"}
                 </Button>
               </div>
-            </DialogFooter>
-          </DialogContent>
+            </AppDialogSectionFooter>
+          </AppDialogContent>
         </Dialog>
 
         <Dialog open={!!deletingTeam} onOpenChange={(open) => !open && setDeletingTeam(null)}>
-          <DialogContent className="max-w-[520px] overflow-hidden rounded-[18px] border border-[var(--border)] bg-[var(--brand-surface)] p-0 shadow-[0_24px_50px_rgba(62,36,13,0.18)] sm:rounded-[30px]">
-            <DialogHeader className="border-b border-[var(--border)] bg-[linear-gradient(180deg,var(--brand-soft)_0%,var(--brand-soft)_100%)] px-4 pt-4 pb-3 sm:px-6 sm:pt-6 sm:pb-5">
-              <DialogTitle className="text-[22px] font-black text-[#8a2f2b] sm:text-[26px]">
+          <AppDialogContent className="max-w-130">
+            <AppDialogSectionHeader className="px-4 pt-4 pb-3 sm:px-6 sm:pt-6 sm:pb-5">
+              <AppDialogTitle className="text-[#8a2f2b] sm:text-[26px]">
                 Confirm Delete
-              </DialogTitle>
-              <DialogDescription className="max-w-[420px] text-[12px] font-bold leading-relaxed text-[#8E8A81] sm:text-[14px]">
+              </AppDialogTitle>
+              <AppDialogDescription className="max-w-105 sm:text-[14px]">
                 แน่ใจใช่ไหมว่าต้องการลบหน่วยงานนี้ออกจากหน้าอันดับ หากยืนยัน รายการจะหายจากหน้าแอดมินและหน้าหลักทันที
-              </DialogDescription>
-            </DialogHeader>
+              </AppDialogDescription>
+            </AppDialogSectionHeader>
 
             {deletingTeam ? (
-              <div className="bg-[var(--brand-surface)] px-4 py-4 sm:px-6 sm:py-6">
+              <AppDialogBody className="bg-(--brand-surface) px-4 py-4 sm:px-6 sm:py-6">
                 <div className="rounded-[16px] border border-[#f1d1cf] bg-white px-4 py-4 shadow-[0_8px_18px_rgba(62,36,13,0.04)]">
                   <div className="flex items-center gap-3">
                     <span
-                      className="h-5 w-5 flex-shrink-0 rounded-full ring-4 ring-[var(--brand-soft)]"
+                      className="h-5 w-5 shrink-0 rounded-full ring-4 ring-brand-soft"
                       style={{ backgroundColor: deletingTeam.color }}
                     />
                     <div className="min-w-0">
@@ -558,10 +561,10 @@ export default function AdminLeaderboardPage() {
                     </div>
                   </div>
                 </div>
-              </div>
+              </AppDialogBody>
             ) : null}
 
-            <DialogFooter className="rounded-b-[26px] border-t border-[var(--border)] bg-[var(--brand-soft)] px-5 py-4 sm:rounded-b-[30px] sm:px-6 sm:py-5">
+            <AppDialogSectionFooter className="px-5 py-4 sm:px-6 sm:py-5">
               <div className="flex w-full justify-end">
                 <Button
                   onClick={confirmDeleteTeam}
@@ -570,8 +573,8 @@ export default function AdminLeaderboardPage() {
                   Confirm Delete
                 </Button>
               </div>
-            </DialogFooter>
-          </DialogContent>
+            </AppDialogSectionFooter>
+          </AppDialogContent>
         </Dialog>
       </div>
     </>
