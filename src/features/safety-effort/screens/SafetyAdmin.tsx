@@ -994,48 +994,68 @@ export default function SafetyAdmin() {
                   </div>
 
             {/* Format Selector */}
-            <div style={{ display: "grid", gap: 6, marginBottom: 14 }}>
-              <span style={fieldLabelStyle}>เลือกรูปแบบข้อคำถามที่ต้องการเปลี่ยน</span>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 14, flexWrap: "wrap" }}>
+              <span style={{ ...fieldLabelStyle, margin: 0, whiteSpace: "nowrap" }}>รูปแบบข้อคำถาม:</span>
+              <div
+                style={{
+                  display: "inline-flex",
+                  background: "#eef2f6",
+                  borderRadius: 10,
+                  padding: 3,
+                  border: "1px solid rgba(14,15,18,0.05)",
+                  width: "100%",
+                  maxWidth: 260,
+                }}
+              >
                 <button
                   type="button"
                   onClick={() => updateQuestion(selectedQuestion.id, (item) => ({ ...item, format: "original" }))}
                   style={{
-                    ...buttonGhostStyle,
+                    flex: 1,
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
-                    height: 44,
-                    borderRadius: 12,
-                    gap: 8,
-                    border: `2px solid ${selectedQuestion.format !== "text_box" ? T.accent : T.lineStrong}`,
-                    background: selectedQuestion.format !== "text_box" ? "var(--brand-soft)" : "#fff",
-                    color: selectedQuestion.format !== "text_box" ? T.accentDeep : T.ink,
+                    height: 28,
+                    borderRadius: 8,
+                    gap: 6,
+                    border: "none",
+                    background: selectedQuestion.format !== "text_box" ? "#fff" : "transparent",
+                    color: selectedQuestion.format !== "text_box" ? T.accentDeep : T.sub,
+                    boxShadow: selectedQuestion.format !== "text_box" ? "0 2px 6px rgba(0,0,0,0.08)" : "none",
                     cursor: "pointer",
+                    fontSize: 12,
+                    fontWeight: 800,
+                    fontFamily: "inherit",
+                    transition: "all 0.2s ease",
                   }}
                 >
-                  <ClipboardList size={18} strokeWidth={2.2} />
-                  <span style={{ fontWeight: 800, fontSize: 13.5 }}>แบบตัวเลือก (เดิม)</span>
+                  <ClipboardList size={14} strokeWidth={2.2} />
+                  <span>ตัวเลือก (เดิม)</span>
                 </button>
                 <button
                   type="button"
                   onClick={() => updateQuestion(selectedQuestion.id, (item) => ({ ...item, format: "text_box" }))}
                   style={{
-                    ...buttonGhostStyle,
+                    flex: 1,
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
-                    height: 44,
-                    borderRadius: 12,
-                    gap: 8,
-                    border: `2px solid ${selectedQuestion.format === "text_box" ? T.accent : T.lineStrong}`,
-                    background: selectedQuestion.format === "text_box" ? "var(--brand-soft)" : "#fff",
-                    color: selectedQuestion.format === "text_box" ? T.accentDeep : T.ink,
+                    height: 28,
+                    borderRadius: 8,
+                    gap: 6,
+                    border: "none",
+                    background: selectedQuestion.format === "text_box" ? "#fff" : "transparent",
+                    color: selectedQuestion.format === "text_box" ? T.accentDeep : T.sub,
+                    boxShadow: selectedQuestion.format === "text_box" ? "0 2px 6px rgba(0,0,0,0.08)" : "none",
                     cursor: "pointer",
+                    fontSize: 12,
+                    fontWeight: 800,
+                    fontFamily: "inherit",
+                    transition: "all 0.2s ease",
                   }}
                 >
-                  <Pencil size={18} strokeWidth={2.2} />
-                  <span style={{ fontWeight: 800, fontSize: 13.5 }}>แบบ Text Box</span>
+                  <Pencil size={14} strokeWidth={2.2} />
+                  <span>Text Box</span>
                 </button>
               </div>
             </div>
