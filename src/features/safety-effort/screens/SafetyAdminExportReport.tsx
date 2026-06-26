@@ -9,15 +9,14 @@ import {
 } from "lucide-react";
 import * as XLSX from "xlsx";
 import { Combobox } from "@/components/ui/combobox";
-import { Dialog } from "@/components/ui/dialog";
 import {
-  AppDialogBody,
-  AppDialogContent,
-  AppDialogDescription,
-  AppDialogSectionFooter,
-  AppDialogSectionHeader,
-  AppDialogTitle,
-} from "@/components/ui/app-dialog";
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { SafetyCultureHero } from "@/components/safety-culture/safety-culture-hero";
 
 const T = {
@@ -877,22 +876,35 @@ export default function SafetyAdminExportReport() {
 
       {/* Editing Modal */}
       <Dialog open={!!editingReport} onOpenChange={(open) => !open && setEditingReport(null)}>
-        <AppDialogContent className="z-1000 max-w-140">
+        <DialogContent className="z-[1000] max-w-[560px] overflow-hidden p-0 sm:max-w-[560px]">
           {editingReport ? (
           <>
-            <AppDialogSectionHeader>
+            <DialogHeader>
               <div>
-                <div style={{ fontSize: 11, fontWeight: 800, color: T.accentDeep, textTransform: "uppercase" }}>
+                <div
+                  style={{
+                    fontSize: 11,
+                    fontWeight: 800,
+                    color: T.accentDeep,
+                    textTransform: "uppercase",
+                  }}
+                >
                   REPORT EDITOR
                 </div>
-                <AppDialogTitle style={{ fontSize: 20 }}>
+                <DialogTitle style={{ fontSize: 20, fontWeight: 950, color: T.ink }}>
                   แก้ไขข้อมูลรายงานแบบประเมิน
-                </AppDialogTitle>
-                <AppDialogDescription>ปรับข้อมูลรายงาน แล้วบันทึกกลับเข้า dashboard</AppDialogDescription>
+                </DialogTitle>
+                <DialogDescription>ปรับข้อมูลรายงาน แล้วบันทึกกลับเข้า dashboard</DialogDescription>
               </div>
-            </AppDialogSectionHeader>
+            </DialogHeader>
 
-            <AppDialogBody style={{ display: "grid", gap: 16 }}>
+            <div
+              className="px-5 py-5 md:px-6"
+              style={{
+                display: "grid",
+                gap: 16,
+              }}
+            >
               <div
                 style={{
                   display: "grid",
@@ -989,9 +1001,9 @@ export default function SafetyAdminExportReport() {
                   ? "ไฟล์ Excel ที่อัปโหลด"
                   : "ข้อมูลภายนอก"}
               </div>
-            </AppDialogBody>
+            </div>
 
-            <AppDialogSectionFooter>
+            <DialogFooter>
               <button
                 type="button"
                 onClick={() => setEditingReport(null)}
@@ -1013,10 +1025,10 @@ export default function SafetyAdminExportReport() {
               >
                 บันทึกการแก้ไข
               </button>
-            </AppDialogSectionFooter>
+            </DialogFooter>
           </>
           ) : null}
-        </AppDialogContent>
+        </DialogContent>
       </Dialog>
     </div>
   );

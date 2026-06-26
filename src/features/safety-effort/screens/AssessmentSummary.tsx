@@ -5,8 +5,7 @@ import TigerMascot from "@/components/TigerMascot";
 import { getChecklistForType } from "@/features/safety-effort/config/checklists";
 import { useAppActions } from "@/providers/app-providers";
 import { getSessionDisplayName, useSessionUser } from "@/lib/session-user";
-import { Dialog } from "@/components/ui/dialog";
-import { AppDialogBody, AppDialogContent } from "@/components/ui/app-dialog";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 
 const T = {
   background: "var(--background)",
@@ -673,12 +672,17 @@ export default function AssessmentSummary() {
         </div>
 
         <Dialog open={showSuccessPopup}>
-          <AppDialogContent
+          <DialogContent
             showCloseButton={false}
-            className="z-9999 max-w-95 text-center"
-            style={{ animation: "scaleUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)" }}
-          >
-            <AppDialogBody className="flex flex-col items-center gap-4 py-7">
+            className="z-[9999] w-full max-w-[380px] border border-[#cfe0f2] bg-[linear-gradient(180deg,#ffffff,#f8fcff)] text-center shadow-[0_28px_80px_rgba(6,43,99,0.28)]"
+            style={{
+              padding: "28px 24px",
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: 16,
+              animation: "scaleUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)",
+            }}>
               <style>{`
                 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
                 @keyframes scaleUp { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
@@ -734,8 +738,7 @@ export default function AssessmentSummary() {
               >
                 กลับหน้าหลัก
               </button>
-            </AppDialogBody>
-          </AppDialogContent>
+          </DialogContent>
         </Dialog>
       </div>
 

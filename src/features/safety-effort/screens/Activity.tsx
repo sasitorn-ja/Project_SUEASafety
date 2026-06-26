@@ -3,8 +3,7 @@ import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "@/lib/app-navigation";
 import { useAppTheme } from "@/providers/theme-provider";
 import SafetyEffortProgressStepper from "@/features/safety-effort/components/SafetyEffortProgressStepper";
-import { Dialog } from "@/components/ui/dialog";
-import { AppDialogContent } from "@/components/ui/app-dialog";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 
 // ฤฤฤ Design tokens ฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤ
 const T = {
@@ -900,7 +899,7 @@ function CustomModal({ onConfirm, onClose }) {
 
   return (
     <Dialog open onOpenChange={(open) => !open && onClose()}>
-      <AppDialogContent showCloseButton={false} className="ac-modal">
+      <DialogContent showCloseButton={false} className="ac-modal p-0">
         <div style={{ display: "flex", justifyContent: "center", marginBottom: 16 }}>
           <div style={{ width: 36, height: 4, borderRadius: 99, background: "rgba(14,15,18,0.15)" }} />
         </div>
@@ -954,7 +953,7 @@ function CustomModal({ onConfirm, onClose }) {
             ยืนยัน
           </button>
         </div>
-      </AppDialogContent>
+      </DialogContent>
     </Dialog>
   );
 }
