@@ -180,7 +180,7 @@ function isQuestionActive(question) {
 }
 
 
-function PreviewCard({ question }) {
+function PreviewCard({ question, isEditable, onGuidelinesChange }) {
   const guideTitle = getGuideTitle(question);
 
   return (
@@ -212,8 +212,37 @@ function PreviewCard({ question }) {
         </div>
       )}
 
-      <div style={{ display: "grid", gap: 4 }}>
-        {question.guidelines.length && (question.guidelines.length > 1 || question.guidelines[0] !== "") ? (
+      <div
+        style={{
+          border: isEditable ? "1px solid rgba(11,78,162,0.12)" : "none",
+          borderRadius: isEditable ? 12 : 0,
+          padding: isEditable ? "12px 14px" : 0,
+          background: isEditable ? "#fff" : "transparent",
+          display: "grid",
+          gap: 4,
+        }}
+      >
+        {isEditable ? (
+          <textarea
+            value={question.guidelines.join("\n")}
+            onChange={(event) => onGuidelinesChange(event.target.value.split("\n"))}
+            placeholder="ใส่รายละเอียดการตรวจแต่ละข้อแยกตามบรรทัด"
+            style={{
+              border: "none",
+              outline: "none",
+              width: "100%",
+              background: "transparent",
+              resize: "none",
+              fontSize: 14,
+              lineHeight: 1.8,
+              color: T.ink,
+              fontFamily: "inherit",
+              minHeight: 140,
+              padding: 0,
+              margin: 0,
+            }}
+          />
+        ) : question.guidelines.length && (question.guidelines.length > 1 || question.guidelines[0] !== "") ? (
           question.guidelines.map((line, index) => (
             <div
               key={`${question.id}-preview-${index}`}
@@ -978,7 +1007,7 @@ export default function SafetyAdmin() {
                       </div>
                     </div>
 
-                    {/* Guidelines Editor Card */}
+                    {/* Guidelines Editor & Live Preview Card */}
                     <div
                       style={{
                         background: T.card,
@@ -998,67 +1027,17 @@ export default function SafetyAdmin() {
                           <div style={{ fontSize: 12, color: T.sub }}>ใส่รายละเอียดที่ต้องประเมินแยกกันทีละบรรทัด (กด Enter เพื่อขึ้นบรรทัดใหม่)</div>
                         </div>
                       </div>
-
-                      <div
-                        style={{
-                          border: "1px solid rgba(11,78,162,0.12)",
-                          borderRadius: 16,
-                          padding: "16px 20px",
-                          background: "#fff",
-                          display: "flex",
-                          flexDirection: "column",
-                          minHeight: 140,
-                          overflow: "hidden",
-                        }}
-                      >
-                        <textarea
-                          value={selectedQuestion.guidelines.join("\n")}
-                          onChange={(event) =>
+                      <div style={{ padding: 2 }}>
+                        <PreviewCard
+                          question={selectedQuestion}
+                          isEditable={true}
+                          onGuidelinesChange={(newLines) =>
                             updateQuestion(selectedQuestion.id, (item) => ({
                               ...item,
-                              guidelines: event.target.value.split("\n"),
+                              guidelines: newLines,
                             }))
                           }
-                          placeholder="ใส่รายละเอียดการตรวจแต่ละข้อแยกตามบรรทัด"
-                          style={{
-                            border: "none",
-                            outline: "none",
-                            width: "100%",
-                            flex: 1,
-                            resize: "none",
-                            fontSize: 14,
-                            lineHeight: 1.8,
-                            color: T.ink,
-                            fontFamily: "inherit",
-                            background: "transparent",
-                            minHeight: 120,
-                          }}
                         />
-                      </div>
-                    </div>
-
-                    {/* Live Preview Card */}
-                    <div
-                      style={{
-                        background: T.card,
-                        border: `1px solid ${T.line}`,
-                        borderRadius: 24,
-                        padding: 16,
-                        boxShadow: T.shadow,
-                        display: "flex",
-                        flexDirection: "column",
-                        gap: 12,
-                        flexShrink: 0,
-                      }}
-                    >
-                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, flexShrink: 0 }}>
-                        <div>
-                          <div style={{ fontSize: 13, fontWeight: 800, color: T.accentDeep }}>Preview (แสดงผลจริงในหน้าประเมิน)</div>
-                          <div style={{ fontSize: 12, color: T.sub }}>การแสดงผลจำลองตามประเภทคำตอบที่ตั้งค่าไว้</div>
-                        </div>
-                      </div>
-                      <div style={{ padding: 2 }}>
-                        <PreviewCard question={selectedQuestion} />
                       </div>
                     </div>
                   </>
