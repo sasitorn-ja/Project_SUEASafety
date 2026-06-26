@@ -133,9 +133,9 @@ const buttonDangerStyle = {
 };
 
 function statusMeta(status) {
-  if (status === "safe") return { label: "ปลอดภัย", color: "#1f7a55", bg: "#f0fdf4", border: "#bbf7d0" };
-  if (status === "unsafe_condition") return { label: "สภาพไม่ปลอดภัย", color: "#c73a21", bg: "#fef2f2", border: "#fecaca" };
-  if (status === "unsafe_action") return { label: "พฤติกรรมไม่ปลอดภัย", color: "#e67e22", bg: "#fff7ed", border: "#ffedd5" };
+  if (status === "safe") return { label: "ปลอดภัย (Safe)", color: "#1f7a55", bg: "#f0fdf4", border: "#bbf7d0" };
+  if (status === "unsafe_condition") return { label: "สภาพไม่ปลอดภัย (Unsafe Condition)", color: "#c73a21", bg: "#fef2f2", border: "#fecaca" };
+  if (status === "unsafe_action") return { label: "พฤติกรรมไม่ปลอดภัย (Unsafe Act)", color: "#e67e22", bg: "#fff7ed", border: "#ffedd5" };
   return { label: "N/A", color: "var(--c-6f665e)", bg: "#fbfbfa", border: "rgba(31,26,23,0.10)" };
 }
 
@@ -256,7 +256,7 @@ function PreviewCard({ question }) {
         <div style={{ borderTop: `1px solid ${T.line}`, paddingTop: 12, marginTop: 8, display: "grid", gap: 8 }}>
           <div style={{ fontSize: 11, fontWeight: 800, color: T.sub }}>จำลองรูปแบบการตอบ: แบบเดิม (มีตัวเลือก)</div>
           <div style={{ display: "grid", gap: 6 }}>
-            {["ปลอดภัย", "สภาพไม่ปลอดภัย", "พฤติกรรมไม่ปลอดภัย"].map((lbl, idx) => (
+             {["ปลอดภัย (Safe)", "สภาพไม่ปลอดภัย (Unsafe Condition)", "พฤติกรรมไม่ปลอดภัย (Unsafe Act)"].map((lbl, idx) => (
               <div
                 key={idx}
                 style={{

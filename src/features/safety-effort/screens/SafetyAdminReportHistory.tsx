@@ -71,9 +71,9 @@ const LOCATION_TYPE_LABELS = {
 };
 
 function statusMeta(status) {
-  if (status === "safe") return { label: "ปลอดภัย", color: "#1f7a55", bg: "#f0fdf4", border: "#bbf7d0" };
-  if (status === "unsafe_condition") return { label: "สภาพไม่ปลอดภัย", color: "#c73a21", bg: "#fef2f2", border: "#fecaca" };
-  if (status === "unsafe_action") return { label: "พฤติกรรมไม่ปลอดภัย", color: "#e67e22", bg: "#fff7ed", border: "#ffedd5" };
+  if (status === "safe") return { label: "ปลอดภัย (Safe)", color: "#1f7a55", bg: "#f0fdf4", border: "#bbf7d0" };
+  if (status === "unsafe_condition") return { label: "สภาพไม่ปลอดภัย (Unsafe Condition)", color: "#c73a21", bg: "#fef2f2", border: "#fecaca" };
+  if (status === "unsafe_action") return { label: "พฤติกรรมไม่ปลอดภัย (Unsafe Act)", color: "#e67e22", bg: "#fff7ed", border: "#ffedd5" };
   return { label: "N/A", color: "var(--c-6f665e)", bg: "#fbfbfa", border: "rgba(31,26,23,0.10)" };
 }
 
@@ -629,6 +629,36 @@ export default function SafetyAdminReportHistory() {
                   >
                     {selectedSub.safetyContactText || "ไม่มีการบันทึกข้อความ"}
                   </div>
+
+                  {selectedSub.metadata?.photos && selectedSub.metadata.photos.length > 0 && (
+                    <div style={{ display: "flex", flexDirection: "column", gap: 6, marginTop: 8 }}>
+                      <span style={fieldLabelStyle}>รูปภาพแนบ ({selectedSub.metadata.photos.length})</span>
+                      <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                        {selectedSub.metadata.photos.map((photoUrl, pIdx) => (
+                          <a
+                            key={pIdx}
+                            href={photoUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            style={{
+                              width: 64,
+                              height: 64,
+                              borderRadius: 8,
+                              overflow: "hidden",
+                              border: "1px solid rgba(0,0,0,0.08)",
+                              display: "inline-block",
+                            }}
+                          >
+                            <img
+                              src={photoUrl}
+                              alt={`Evidence ${pIdx + 1}`}
+                              style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                            />
+                          </a>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               ) : (
                 <div style={{ display: "grid", gap: 8 }}>

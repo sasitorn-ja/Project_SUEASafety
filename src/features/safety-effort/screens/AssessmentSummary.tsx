@@ -29,6 +29,25 @@ const IcoBack = () => (
   </svg>
 );
 
+const IcoChevronDown = ({ rotate = false }) => (
+  <svg 
+    width={16} 
+    height={16} 
+    viewBox="0 0 24 24" 
+    fill="none" 
+    stroke="currentColor" 
+    strokeWidth={2.5} 
+    strokeLinecap="round" 
+    strokeLinejoin="round"
+    style={{
+      transform: rotate ? "rotate(180deg)" : "rotate(0deg)",
+      transition: "transform 0.2s ease",
+    }}
+  >
+    <polyline points="6 9 12 15 18 9" />
+  </svg>
+);
+
 const IcoTrophy = ({ size = 16, color = "currentColor" }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round">
     <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6" />
@@ -40,9 +59,9 @@ const IcoTrophy = ({ size = 16, color = "currentColor" }) => (
 );
 
 function statusMeta(status) {
-  if (status === "safe") return { label: "ปลอดภัย", color: T.safe, bg: "#f0fdf4", border: "#bbf7d0" };
-  if (status === "unsafe_condition") return { label: "สภาพไม่ปลอดภัย", color: T.issue, bg: "#fef2f2", border: "#fecaca" };
-  if (status === "unsafe_action") return { label: "พฤติกรรมไม่ปลอดภัย", color: T.action, bg: "#fff7ed", border: "#ffedd5" };
+  if (status === "safe") return { label: "ปลอดภัย (Safe)", color: T.safe, bg: "#f0fdf4", border: "#bbf7d0" };
+  if (status === "unsafe_condition") return { label: "สภาพไม่ปลอดภัย (Unsafe Condition)", color: T.issue, bg: "#fef2f2", border: "#fecaca" };
+  if (status === "unsafe_action") return { label: "พฤติกรรมไม่ปลอดภัย (Unsafe Act)", color: T.action, bg: "#fff7ed", border: "#ffedd5" };
   return { label: "N/A", color: T.foreground3, bg: "var(--c-f8f6f1)", border: "rgba(14,15,18,0.08)" };
 }
 
@@ -52,16 +71,52 @@ export default function AssessmentSummary() {
   const actions = useAppActions();
   const { user: sessionUser } = useSessionUser();
   const [showSuccessPopup, setShowSuccessPopup] = useState(false);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [hasInitializedExpanded, setHasInitializedExpanded] = useState(false);
+  const [previewImages, setPreviewImages] = useState<string[] | null>(null);
+  const [previewIndex, setPreviewIndex] = useState<number>(0);
   const checkin = location.state?.checkin ?? null;
   const activity = location.state?.activity ?? null;
   const linewalkData = location.state?.linewalkData ?? null;
   const [width, setWidth] = useState(() => typeof window !== "undefined" ? window.innerWidth : 1200);
+
+  const answeredItems = useMemo(() => {
+    if (!linewalkData?.itemStates) return [];
+    const cl = linewalkData.locType ? getChecklistForType(linewalkData.locType) : [];
+    return Object.entries(linewalkData.itemStates).map(([key, value]) => {
+      const question = cl.find(q => q.id === key);
+      return {
+        id: key,
+        title: question ? question.title : "",
+        format: question?.format ?? "original",
+        status: value?.status ?? null,
+        note: value?.note ?? "",
+        photos: value?.photos ?? [],
+      };
+    });
+  }, [linewalkData]);
 
   useEffect(() => {
     const handleResize = () => setWidth(window.innerWidth);
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
+
+  useEffect(() => {
+    if (!previewImages || previewImages.length === 0) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "ArrowRight" || e.key === "Right") {
+        setPreviewIndex((prev) => (prev + 1) % previewImages.length);
+      } else if (e.key === "ArrowLeft" || e.key === "Left") {
+        setPreviewIndex((prev) => (prev - 1 + previewImages.length) % previewImages.length);
+      } else if (e.key === "Escape" || e.key === "Esc") {
+        setPreviewImages(null);
+        setPreviewIndex(0);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [previewImages]);
 
   const isMobile = width < 768;
 
@@ -70,6 +125,13 @@ export default function AssessmentSummary() {
       navigate("/category", { replace: true });
     }
   }, [linewalkData, navigate]);
+
+  useEffect(() => {
+    if (answeredItems.length > 0 && !hasInitializedExpanded) {
+      setExpandedId(answeredItems[0].id);
+      setHasInitializedExpanded(true);
+    }
+  }, [answeredItems, hasInitializedExpanded]);
 
   const handleBack = () => {
     if (linewalkData?.isSafetyContact) {
@@ -114,6 +176,7 @@ export default function AssessmentSummary() {
             locationTag: submission.locationTag,
             date: submission.date,
             safetyContactText: submission.safetyContactText,
+            photos: submission.metadata?.photos || [],
             answers: submission.answeredItems,
             // report fields (used by Export Report) — not first-class activity columns
             pms: submission.pms,
@@ -151,6 +214,9 @@ export default function AssessmentSummary() {
       email: sessionUser?.email || "",
       activityType: linewalkData?.isSafetyContact ? "SAFETY_CONTACT" : "LINE_WALK",
       checkinId: checkin?.checkinId || null,
+      metadata: {
+        photos: linewalkData?.photos || [],
+      },
     };
     try {
       const response = await fetch("/api/safety-effort/submissions", {
@@ -166,28 +232,20 @@ export default function AssessmentSummary() {
       const savedId = String(payload.data.submission.id);
       actions.awardSafetyEffortCompletion(savedId, `${newSubmission.activityLabel} สำเร็จ`);
       void persistActivityToDb(newSubmission);
-      setShowSuccessPopup(true);
+      
+      if (newSubmission.isSafetyContact) {
+        navigate("/category", { replace: true });
+      } else {
+        setShowSuccessPopup(true);
+      }
     } catch (error) {
       console.error("Error saving submission", error);
       window.alert("บันทึกข้อมูลไม่สำเร็จ กรุณาตรวจสอบการเชื่อมต่อแล้วลองใหม่");
+      if (newSubmission.isSafetyContact) {
+        navigate("/category", { replace: true });
+      }
     }
   };
-
-  const answeredItems = useMemo(() => {
-    if (!linewalkData?.itemStates) return [];
-    const cl = linewalkData.locType ? getChecklistForType(linewalkData.locType) : [];
-    return Object.entries(linewalkData.itemStates).map(([key, value]) => {
-      const question = cl.find(q => q.id === key);
-      return {
-        id: key,
-        title: question ? question.title : "",
-        format: question?.format ?? "original",
-        status: value?.status ?? null,
-        note: value?.note ?? "",
-        photos: value?.photos ?? [],
-      };
-    });
-  }, [linewalkData]);
 
   const counts = useMemo(() => {
     return answeredItems.reduce(
@@ -241,37 +299,61 @@ export default function AssessmentSummary() {
           transform: scale(0.98);
         }
       `}</style>
-      <div style={{ maxWidth: 860, margin: "0 auto", display: "grid", gap: 16 }}>
+      <div style={{ width: "100%", maxWidth: isMobile ? "100%" : 1500, margin: "0 auto", display: "grid", gap: 16 }}>
         <section
+          className="relative overflow-hidden border border-[#B9DDFF]/60 bg-[#EEF7FF] shadow-[0_12px_30px_rgba(185,223,255,0.4)]"
           style={{
             borderRadius: isMobile ? 14 : 18,
-            overflow: "hidden",
-            background: "linear-gradient(105deg, var(--brand-hero-start) 0%, var(--brand-hero-end) 48%, var(--brand-nav) 100%)",
-            color: "var(--brand-soft)",
-            boxShadow: isMobile ? "0 8px 16px rgba(42,26,9,0.1)" : "0 16px 32px rgba(42,26,9,0.14)",
           }}
         >
-          <div style={{ padding: isMobile ? "14px 14px 16px" : "22px 20px 26px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: isMobile ? 10 : 16 }}>
+          {/* Background image container */}
+          <div
+            className="absolute inset-0 bg-[url('/images/heroes/safety-effort-category-hero.png')] bg-no-repeat"
+            style={{
+              backgroundSize: "auto 108%",
+              backgroundPosition: "right -20px bottom -5px",
+            }}
+          />
+          {/* Gradient overlay to blend the image and ensure readability */}
+          <div className="absolute inset-0 bg-gradient-to-r from-[#EEF7FF] via-[#EEF7FF]/90 sm:via-[#EEF7FF]/40 to-transparent pointer-events-none" />
+
+          <div style={{ position: "relative", zIndex: 1, padding: isMobile ? "14px 14px 16px" : "22px 20px 26px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: isMobile ? 10 : 16, fontFamily: "'Sarabun', sans-serif" }}>
             <div style={{ display: "flex", alignItems: "center", gap: isMobile ? 10 : 16, minWidth: 0, flex: 1 }}>
-              <button type="button" className="as-back-btn" onClick={handleBack} aria-label="ย้อนกลับ">
+              <button 
+                type="button" 
+                className="flex h-8 w-8 items-center justify-center rounded-[8px] bg-white border border-[#D7EAFE] text-[#0B82F0] shadow-[0_2px_8px_rgba(11,130,240,0.06)] hover:bg-[#0B82F0] hover:text-white transition-all duration-300 active:scale-95" 
+                onClick={handleBack} 
+                aria-label="ย้อนกลับ"
+              >
                 <IcoBack />
               </button>
-              <div style={{ width: 1, height: isMobile ? 32 : 52, background: "rgba(255,255,255,0.15)", flexShrink: 0 }} />
+              <div style={{ width: 1, height: isMobile ? 32 : 52, background: "#D7EAFE", flexShrink: 0 }} />
               <div style={{ minWidth: 0 }}>
-                <div style={{ display: "inline-flex", alignItems: "center", padding: isMobile ? "2px 8px" : "4px 10px", borderRadius: 999, background: "color-mix(in srgb, var(--brand-accent) 18%, transparent)", color: "var(--brand-accent)", fontSize: isMobile ? 9 : 11, fontWeight: 800, textTransform: "uppercase" }}>
+                <div 
+                  style={{ 
+                    display: "inline-flex", 
+                    alignItems: "center", 
+                    padding: isMobile ? "2px 8px" : "4px 10px", 
+                    borderRadius: 999, 
+                    background: "#E6F2FF", 
+                    border: "1px solid #B9DDFF", 
+                    color: "#0B82F0", 
+                    fontSize: isMobile ? 9 : 11, 
+                    fontWeight: 800, 
+                    textTransform: "uppercase" 
+                  }}
+                >
                   {linewalkData?.isSafetyContact ? "Safety Contact Complete" : "Assessment Complete"}
                 </div>
-                <h1 style={{ margin: isMobile ? "6px 0 4px" : "12px 0 6px", fontSize: isMobile ? 18 : 28, lineHeight: 1.2, fontWeight: 900, fontFamily: "'Prompt', sans-serif" }}>
+                <h1 style={{ margin: isMobile ? "6px 0 4px" : "12px 0 6px", fontSize: isMobile ? 18 : 28, lineHeight: 1.2, fontWeight: 900, fontFamily: "'Prompt', sans-serif", color: "#0B2F6B" }}>
                   {linewalkData?.isSafetyContact ? "สรุปผลการทำ Safety Contact" : "สรุปผลการทำแบบประเมิน"}
                 </h1>
-                <p style={{ margin: 0, color: "rgba(255,255,255,0.76)", fontSize: isMobile ? 11.5 : 14, fontWeight: 600 }}>
+                <p style={{ margin: 0, color: "#55739B", fontSize: isMobile ? 11.5 : 14, fontWeight: 600 }}>
                   {linewalkData?.isSafetyContact ? "ตรวจสอบข้อมูลที่บันทึกไว้ก่อนทำการส่งข้อมูล" : "ตรวจสอบข้อมูลที่ทำไว้ก่อนทำการบันทึกข้อมูล"}
                 </p>
               </div>
             </div>
-            <TigerMascot action="happy" size={isMobile ? "56px" : "104px"} animation="float" />
           </div>
-          <div style={{ height: isMobile ? 6 : 10, background: isMobile ? "repeating-linear-gradient(135deg,var(--brand-accent) 0 10px,#0e0f12 10px 20px)" : "repeating-linear-gradient(135deg,var(--brand-accent) 0 18px,#0e0f12 18px 36px)" }} />
         </section>
 
         <section
@@ -318,9 +400,9 @@ export default function AssessmentSummary() {
               {/* Row 2: Breakdown */}
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(120px,1fr))", gap: 10 }}>
                 {[
-                  { label: "ปลอดภัย", value: counts.safe, color: T.safe, bg: "#f0fdf4" },
-                  { label: "สภาพไม่ปลอดภัย", value: counts.condition, color: T.issue, bg: "#fef2f2" },
-                  { label: "พฤติกรรมไม่ปลอดภัย", value: counts.action, color: T.action, bg: "#fff7ed" },
+                  { label: "ปลอดภัย (Safe)", value: counts.safe, color: T.safe, bg: "#f0fdf4" },
+                  { label: "สภาพไม่ปลอดภัย (Unsafe Condition)", value: counts.condition, color: T.issue, bg: "#fef2f2" },
+                  { label: "พฤติกรรมไม่ปลอดภัย (Unsafe Act)", value: counts.action, color: T.action, bg: "#fff7ed" },
                 ].map((item) => (
                   <div key={item.label} style={{ background: item.bg, borderRadius: 14, padding: "12px 12px 10px" }}>
                     <div style={{ fontSize: 11, fontWeight: 800, color: item.color }}>{item.label}</div>
@@ -362,6 +444,39 @@ export default function AssessmentSummary() {
             >
               {linewalkData?.safetyContactText || "-"}
             </div>
+
+            {linewalkData?.photos && linewalkData.photos.length > 0 && (
+              <div style={{ display: "flex", flexDirection: "column", gap: 6, marginTop: 12 }}>
+                <span style={{ fontSize: 11.5, fontWeight: 800, color: "#64748B", textTransform: "uppercase", letterSpacing: "0.02em", fontFamily: "'Prompt',sans-serif" }}>
+                  รูปภาพแนบ ({linewalkData.photos.length})
+                </span>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                  {linewalkData.photos.map((photoUrl, pIdx) => (
+                    <div
+                      key={pIdx}
+                      onClick={() => {
+                        setPreviewImages(linewalkData.photos);
+                        setPreviewIndex(pIdx);
+                      }}
+                      style={{
+                        width: 64,
+                        height: 64,
+                        borderRadius: 8,
+                        overflow: "hidden",
+                        border: "1px solid rgba(0,0,0,0.08)",
+                        cursor: "zoom-in",
+                      }}
+                    >
+                      <img
+                        src={photoUrl}
+                        alt={`Safety Contact Evidence ${pIdx + 1}`}
+                        style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </section>
         ) : (
           <section
@@ -382,6 +497,8 @@ export default function AssessmentSummary() {
                 const meta = (isTextBox && item.status === "text")
                   ? { label: "ตอบแล้ว", color: T.brown, bg: T.brownSoft, border: T.gold }
                   : statusMeta(item.status);
+                const isExpanded = expandedId === item.id;
+
                 return (
                   <div
                     key={item.id}
@@ -389,30 +506,119 @@ export default function AssessmentSummary() {
                       borderRadius: 14,
                       border: `1px solid ${meta.border}`,
                       background: meta.bg,
-                      padding: "12px 12px 10px",
-                      display: "grid",
-                      gap: 4,
+                      overflow: "hidden",
+                      transition: "all 0.2s ease",
+                      boxShadow: isExpanded ? "0 4px 12px rgba(0,0,0,0.05)" : "none",
                     }}
                   >
-                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
-                      <div style={{ fontSize: 14, fontWeight: 800, color: T.foreground, display: "flex", flexWrap: "wrap", alignItems: "center", gap: 8, minWidth: 0 }}>
-                        <span style={{ flexShrink: 0 }}>ข้อ {index + 1}</span>
-                        <span style={{ fontSize: 13, fontWeight: 700, color: T.foreground2 }}>
+                    {/* Header: Clickable Toggle */}
+                    <button
+                      type="button"
+                      onClick={() => setExpandedId(isExpanded ? null : item.id)}
+                      style={{
+                        width: "100%",
+                        border: "none",
+                        background: "transparent",
+                        textAlign: "left",
+                        padding: "14px 16px",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        gap: 12,
+                        cursor: "pointer",
+                        fontFamily: "inherit",
+                      }}
+                    >
+                      <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0, flex: 1 }}>
+                        <span style={{ fontSize: 13, fontWeight: 800, color: "#64748B", flexShrink: 0 }}>
+                          ข้อ {index + 1}
+                        </span>
+                        <span style={{ fontSize: 14, fontWeight: 700, color: T.foreground, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                           {item.title}
                         </span>
                       </div>
-                      <div style={{ fontSize: 12, fontWeight: 800, color: meta.color, flexShrink: 0 }}>
-                        {meta.label}
+                      
+                      <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
+                        <span style={{ fontSize: 12, fontWeight: 800, color: meta.color }}>
+                          {meta.label}
+                        </span>
+                        <div style={{ color: "#94A3B8" }}>
+                          <IcoChevronDown rotate={isExpanded} />
+                        </div>
                       </div>
-                    </div>
-                    {item.note && (
-                      <div style={{ fontSize: 12.5, fontWeight: 600, color: T.foreground2 }}>
-                        {isTextBox ? "คำตอบ: " : "หมายเหตุ: "}{item.note}
-                      </div>
-                    )}
-                    {!!item.photos.length && (
-                      <div style={{ fontSize: 12.5, fontWeight: 600, color: T.foreground2 }}>
-                        แนบรูป: {item.photos.length} รูป
+                    </button>
+
+                    {/* Content Section: Expanded Panel */}
+                    {isExpanded && (
+                      <div 
+                        style={{
+                          borderTop: `1px solid ${meta.border}`,
+                          padding: "14px 16px 16px",
+                          background: "rgba(255, 255, 255, 0.4)",
+                          display: "flex",
+                          flexDirection: "column",
+                          gap: 12,
+                        }}
+                      >
+                        {/* Note area */}
+                        <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                          <span style={{ fontSize: 11, fontWeight: 800, color: "#64748B", textTransform: "uppercase", letterSpacing: "0.02em" }}>
+                            {isTextBox ? "คำตอบ / หมายเหตุ" : (item.status === "safe" ? "หมายเหตุ / ข้อเสนอแนะ / ชื่นชม" : "หมายเหตุ / ข้อเสนอแนะ")}
+                          </span>
+                          {item.note ? (
+                            <p style={{ margin: 0, fontSize: 13.5, fontWeight: 600, color: T.foreground2, whiteSpace: "pre-wrap" }}>
+                              {item.note}
+                            </p>
+                          ) : (
+                            <span style={{ fontSize: 13, color: "#94A3B8", fontStyle: "italic" }}>
+                              ไม่มีหมายเหตุเพิ่มเติม
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Photos area */}
+                        {!isTextBox && (
+                          <div style={{ display: "flex", flexDirection: "column", gap: 6, marginTop: 4 }}>
+                            <span style={{ fontSize: 11, fontWeight: 800, color: "#64748B", textTransform: "uppercase", letterSpacing: "0.02em" }}>
+                              รูปภาพแนบ ({item.photos.length})
+                            </span>
+                            {item.photos.length > 0 ? (
+                              <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                                {item.photos.map((photoUrl, pIdx) => (
+                                  <button
+                                    key={pIdx}
+                                    type="button"
+                                    onClick={() => {
+                                      setPreviewImages(item.photos);
+                                      setPreviewIndex(pIdx);
+                                    }}
+                                    style={{ display: "block", background: "none", border: "none", padding: 0, margin: 0, cursor: "zoom-in" }}
+                                  >
+                                    <img 
+                                      src={photoUrl} 
+                                      alt={`Evidence ${pIdx + 1}`} 
+                                      style={{
+                                        width: 80,
+                                        height: 80,
+                                        borderRadius: 8,
+                                        objectFit: "cover",
+                                        border: "1px solid rgba(0,0,0,0.06)",
+                                        boxShadow: "0 2px 6px rgba(0,0,0,0.04)",
+                                        transition: "transform 0.15s ease",
+                                      }}
+                                      onMouseEnter={(e) => e.currentTarget.style.transform = "scale(1.05)"}
+                                      onMouseLeave={(e) => e.currentTarget.style.transform = "scale(1)"}
+                                    />
+                                  </button>
+                                ))}
+                              </div>
+                            ) : (
+                              <span style={{ fontSize: 13, color: "#94A3B8", fontStyle: "italic" }}>
+                                ไม่มีรูปภาพแนบ
+                              </span>
+                            )}
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>
@@ -535,6 +741,191 @@ export default function AssessmentSummary() {
           </DialogContent>
         </Dialog>
       </div>
+
+      {/* Photo Preview Modal Overlay */}
+      {previewImages && previewImages.length > 0 && (
+        <div
+          onClick={() => {
+            setPreviewImages(null);
+            setPreviewIndex(0);
+          }}
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            width: "100vw",
+            height: "100vh",
+            backgroundColor: "rgba(0, 0, 0, 0.93)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 9999,
+            cursor: "zoom-out",
+            animation: "as-fade-in 0.22s ease-out",
+          }}
+        >
+          <style>{`
+            @keyframes as-fade-in {
+              from { opacity: 0; }
+              to { opacity: 1; }
+            }
+            @keyframes as-zoom-in {
+              from { transform: scale(0.94); opacity: 0; }
+              to { transform: scale(1); opacity: 1; }
+            }
+            .as-thumb-tray::-webkit-scrollbar {
+              display: none;
+            }
+            .as-thumb-tray {
+              -ms-overflow-style: none;
+              scrollbar-width: none;
+            }
+          `}</style>
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              position: "relative",
+              maxWidth: "92vw",
+              maxHeight: "92vh",
+              display: "inline-block",
+              animation: "as-zoom-in 0.22s cubic-bezier(0.34, 1.56, 0.64, 1)",
+            }}
+          >
+            {/* Image Index Indicator (e.g. 1/5) */}
+            <div
+              style={{
+                position: "absolute",
+                top: 16,
+                left: "50%",
+                transform: "translateX(-50%)",
+                background: "rgba(0, 0, 0, 0.55)",
+                color: "#fff",
+                padding: "5px 14px",
+                borderRadius: 99,
+                fontSize: 13.5,
+                fontWeight: 800,
+                fontFamily: "'Prompt', sans-serif",
+                backdropFilter: "blur(8px)",
+                WebkitBackdropFilter: "blur(8px)",
+                boxShadow: "0 4px 12px rgba(0,0,0,0.25)",
+                zIndex: 10,
+                pointerEvents: "none",
+                letterSpacing: "0.05em",
+              }}
+            >
+              {previewIndex + 1} / {previewImages.length}
+            </div>
+
+            <img
+              src={previewImages[previewIndex]}
+              alt="Preview"
+              style={{
+                maxWidth: "100%",
+                maxHeight: "82vh",
+                borderRadius: 24,
+                boxShadow: "0 24px 60px rgba(0,0,0,0.8)",
+                objectFit: "contain",
+                cursor: "default",
+                display: "block",
+              }}
+            />
+
+            {/* Thumbnails list overlapping the preview at the bottom */}
+            {previewImages.length > 1 && (
+              <div 
+                className="as-thumb-tray"
+                style={{ 
+                  position: "absolute",
+                  bottom: 16,
+                  left: "50%",
+                  transform: "translateX(-50%)",
+                  display: "flex", 
+                  gap: 6, 
+                  justifyContent: "center", 
+                  alignItems: "center",
+                  background: "rgba(0, 0, 0, 0.45)",
+                  padding: "6px 8px",
+                  borderRadius: 14,
+                  backdropFilter: "blur(12px)",
+                  WebkitBackdropFilter: "blur(12px)",
+                  boxShadow: "0 8px 32px rgba(0,0,0,0.3)",
+                  maxWidth: "90%",
+                  overflowX: "auto",
+                  zIndex: 10,
+                }}
+              >
+                {previewImages.map((photoUrl, idx) => {
+                  const isActive = idx === previewIndex;
+                  return (
+                    <button
+                      key={idx}
+                      type="button"
+                      onClick={() => setPreviewIndex(idx)}
+                      style={{
+                        width: 44,
+                        height: 44,
+                        borderRadius: 8,
+                        overflow: "hidden",
+                        border: isActive ? "2.5px solid #ffffff" : "2.5px solid transparent",
+                        opacity: isActive ? 1 : 0.5,
+                        cursor: "pointer",
+                        padding: 0,
+                        margin: 0,
+                        background: "none",
+                        transition: "all 0.18s ease-in-out",
+                      }}
+                    >
+                      <img
+                        src={photoUrl}
+                        alt={`Thumbnail ${idx + 1}`}
+                        style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                      />
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          {/* Elegant Close Button at top-right of screen overlay */}
+          <button
+            type="button"
+            onClick={() => {
+              setPreviewImages(null);
+              setPreviewIndex(0);
+            }}
+            style={{
+              position: "fixed",
+              top: 20,
+              right: 20,
+              width: 42,
+              height: 42,
+              borderRadius: "50%",
+              background: "rgba(0, 0, 0, 0.5)",
+              color: "#fff",
+              border: "none",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontSize: 26,
+              cursor: "pointer",
+              boxShadow: "0 4px 12px rgba(0,0,0,0.3)",
+              transition: "background 0.2s, transform 0.15s ease",
+              zIndex: 10000,
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = "scale(1.08)";
+              e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.15)";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = "scale(1)";
+              e.currentTarget.style.backgroundColor = "rgba(0, 0, 0, 0.5)";
+            }}
+          >
+            ×
+          </button>
+        </div>
+      )}
     </div>
   );
 }
