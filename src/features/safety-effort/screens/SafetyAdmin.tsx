@@ -604,6 +604,46 @@ export default function SafetyAdmin() {
             <div style={{ fontSize: 18, fontWeight: 900, color: T.ink, lineHeight: 1.1 }}>Safety Admin</div>
             {lastSavedAt && <div style={{ fontSize: 10, color: T.sub, marginTop: 2 }}>เซฟล่าสุด: {lastSavedAt}</div>}
           </div>
+
+          {/* Toggle switch for Today vs Backdate */}
+          <div style={{ display: "flex", alignItems: "center", gap: 8, background: T.soft, padding: 4, borderRadius: 12, border: `1px solid ${T.line}` }}>
+            <button
+              type="button"
+              onClick={() => handleToggleMode("today")}
+              style={{
+                height: 28,
+                padding: "0 12px",
+                borderRadius: 8,
+                border: "none",
+                background: backdateMode === "today" ? T.accent : "transparent",
+                color: backdateMode === "today" ? "#fff" : T.sub,
+                fontWeight: 800,
+                fontSize: 12,
+                cursor: "pointer",
+                transition: "all 0.2s",
+              }}
+            >
+              ทำวันนี้
+            </button>
+            <button
+              type="button"
+              onClick={() => handleToggleMode("backdate")}
+              style={{
+                height: 28,
+                padding: "0 12px",
+                borderRadius: 8,
+                border: "none",
+                background: backdateMode === "backdate" ? T.accent : "transparent",
+                color: backdateMode === "backdate" ? "#fff" : T.sub,
+                fontWeight: 800,
+                fontSize: 12,
+                cursor: "pointer",
+                transition: "all 0.2s",
+              }}
+            >
+              ทำย้อนหลัง
+            </button>
+          </div>
         </div>
 
           <div
@@ -1094,49 +1134,6 @@ export default function SafetyAdmin() {
                   </div>
                 </div>
 
-                {/* ระบบทำรายการ (Today/Backdate Toggle) */}
-                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                  <label style={{ fontSize: 13, fontWeight: 900, color: T.ink }}>ระบบทำรายการ</label>
-                  <div style={{ display: "flex", alignItems: "center", gap: 4, background: T.soft, padding: 4, borderRadius: 12, border: `1px solid ${T.line}`, width: "100%" }}>
-                    <button
-                      type="button"
-                      onClick={() => handleToggleMode("today")}
-                      style={{
-                        flex: 1,
-                        height: 32,
-                        borderRadius: 8,
-                        border: "none",
-                        background: backdateMode === "today" ? T.accent : "transparent",
-                        color: backdateMode === "today" ? "#fff" : T.sub,
-                        fontWeight: 800,
-                        fontSize: 12.5,
-                        cursor: "pointer",
-                        transition: "all 0.2s",
-                      }}
-                    >
-                      ทำวันนี้
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleToggleMode("backdate")}
-                      style={{
-                        flex: 1,
-                        height: 32,
-                        borderRadius: 8,
-                        border: "none",
-                        background: backdateMode === "backdate" ? T.accent : "transparent",
-                        color: backdateMode === "backdate" ? "#fff" : T.sub,
-                        fontWeight: 800,
-                        fontSize: 12.5,
-                        cursor: "pointer",
-                        transition: "all 0.2s",
-                      }}
-                    >
-                      ทำย้อนหลัง
-                    </button>
-                  </div>
-                </div>
-
                 {/* สถานะการบันทึก และ ปุ่มควบคุมหลัก */}
                 <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                   <div
@@ -1417,6 +1414,7 @@ export default function SafetyAdmin() {
                   </>
                 )}
               </aside>
+
 
 
             </>
