@@ -1794,6 +1794,7 @@ export default function Checkin() {
         disabled={!canContinue}
         onClick={handleContinue}
       >
+        <IcoPin s={18} c={canContinue ? "#fff" : T.foreground3} />
         {savingCheckin ? "กำลังบันทึก..." : "ถัดไป เลือกวัน"}
         <IcoArrow c={canContinue ? "#fff" : T.foreground3} />
       </button>
