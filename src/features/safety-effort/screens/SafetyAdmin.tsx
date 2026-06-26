@@ -305,6 +305,7 @@ export default function SafetyAdmin() {
   const [lastSavedAt, setLastSavedAt] = useState("");
   const [savingChecklists, setSavingChecklists] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
+  const [formatDropdownOpen, setFormatDropdownOpen] = useState(false);
   const [draggedId, setDraggedId] = useState(null);
   const [dragOverId, setDragOverId] = useState(null);
   const [backdateMode, setBackdateMode] = useState("today");
@@ -709,7 +710,11 @@ export default function SafetyAdmin() {
             style={{
               flex: isMobile ? "none" : 1,
               display: isMobile ? "flex" : "grid",
-              gridTemplateColumns: isMobile ? undefined : "minmax(300px, 360px) minmax(0, 1fr)",
+              gridTemplateColumns: isMobile
+                ? undefined
+                : selectedQuestion
+                  ? "minmax(300px, 360px) minmax(0, 1fr) 300px"
+                  : "minmax(300px, 360px) minmax(0, 1fr)",
               flexDirection: isMobile ? "column" : undefined,
               gap: 16,
               minHeight: isMobile ? undefined : 0,
@@ -828,15 +833,17 @@ export default function SafetyAdmin() {
                         ? `2px dashed ${T.accent}`
                         : active
                           ? `1px solid ${T.accent}`
-                          : `1px solid ${T.line}`,
-                      background: active ? "var(--c-fff5de)" : "#fff",
+                          : `1px solid ${isEnabled ? T.line : "rgba(11,78,162,0.06)"}`,
+                      background: active
+                        ? (isEnabled ? "var(--c-fff5de)" : "rgba(255, 245, 222, 0.65)")
+                        : (isEnabled ? "#fff" : "#f8fafc"),
                       borderRadius: 14,
                       padding: 10,
                       display: "grid",
                       gap: 4,
                       cursor: isDragging ? "grabbing" : "grab",
                       fontFamily: "inherit",
-                      opacity: isDragging ? 0.4 : isEnabled ? 1 : 0.55,
+                      opacity: isDragging ? 0.4 : isEnabled ? 1 : 0.65,
                       transition: "all 0.15s ease",
                       transform: isOver ? "scale(0.98)" : "none",
                       outline: "none",
@@ -850,8 +857,10 @@ export default function SafetyAdmin() {
                           borderRadius: 999,
                           display: "grid",
                           placeItems: "center",
-                          background: active ? T.accent : T.accentSoft,
-                          color: active ? "#fff" : T.accentDeep,
+                          background: active
+                            ? (isEnabled ? T.accent : "#94a3b8")
+                            : (isEnabled ? T.accentSoft : "#f1f5f9"),
+                          color: active ? "#fff" : (isEnabled ? T.accentDeep : "#64748b"),
                           fontSize: 11,
                           fontWeight: 800,
                           flexShrink: 0,
@@ -859,9 +868,18 @@ export default function SafetyAdmin() {
                       >
                         {index + 1}
                       </span>
-                      <GripVertical size={14} style={{ color: T.sub, opacity: 0.6, cursor: "grab" }} />
+                      <GripVertical size={14} style={{ color: isEnabled ? T.sub : "#94a3b8", opacity: 0.6, cursor: "grab" }} />
                     </div>
-                    <div style={{ fontSize: 13, fontWeight: 800, lineHeight: 1.4, color: T.ink }}>{item.title}</div>
+                    <div
+                      style={{
+                        fontSize: 13,
+                        fontWeight: 800,
+                        lineHeight: 1.4,
+                        color: isEnabled ? T.ink : "#94a3b8",
+                      }}
+                    >
+                      {item.title}
+                    </div>
                   </div>
                 );
               })}
@@ -877,321 +895,440 @@ export default function SafetyAdmin() {
 
           {/* Right Column: Question & Guidelines Editor */}
           {(!isMobile || mobileActiveView === "editor") && (
-            <section
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              height: isMobile ? "auto" : "100%",
-              minHeight: isMobile ? undefined : 0,
-              gap: 16,
-            }}
-          >
-            {selectedQuestion ? (
-              <>
-                {/* Question Details Editor Card */}
-                <div
-                  style={{
-                    background: T.card,
-                    border: `1px solid ${T.line}`,
-                    borderRadius: 22,
-                    padding: isMobile ? 16 : 20,
-                    boxShadow: "0 16px 34px rgba(6, 43, 99, 0.10)",
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: 16,
-                    flexShrink: 0,
-                  }}
-                >
-                  <div style={{
-                    display: "flex",
-                    flexDirection: isMobile ? "column" : "row",
-                    alignItems: isMobile ? "flex-start" : "center",
-                    justifyContent: "space-between",
-                    gap: 12,
-                    borderBottom: `1px solid ${T.line}`,
-                    paddingBottom: 14
-                  }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                      {isMobile && (
-                        <button
-                          type="button"
-                          onClick={() => setMobileActiveView("list")}
-                          style={{
-                            ...buttonGhostStyle,
-                            height: 32,
-                            borderRadius: 8,
-                            fontSize: 12,
-                            padding: "0 10px",
-                            borderColor: T.accentDeep,
-                            color: T.accentDeep,
-                            marginRight: 6,
-                          }}
-                        >
-                          ← กลับรายการ
-                        </button>
-                      )}
-                      <div>
-                        <span style={{ fontSize: 11, fontWeight: 900, color: "#236487", textTransform: "uppercase", letterSpacing: "0.04em" }}>Question Editor</span>
-                        <h2 style={{ fontSize: 20, fontWeight: 900, margin: "4px 0 0", color: T.ink, lineHeight: 1.1 }}>{selectedQuestion.title}</h2>
-                      </div>
-                    </div>
-                    <div style={{ display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap", justifyContent: isMobile ? "flex-start" : "flex-end" }}>
-                      <button
-                        type="button"
-                        onClick={() => updateQuestion(selectedQuestion.id, (item) => ({ ...item, active: !isQuestionActive(item) }))}
-                        aria-pressed={isQuestionActive(selectedQuestion)}
-                        style={{
-                          display: "inline-flex",
-                          alignItems: "center",
-                          gap: 8,
-                          border: "none",
-                          background: "transparent",
-                          color: "#24779d",
-                          fontFamily: "inherit",
-                          fontSize: 13,
-                          fontWeight: 900,
-                          cursor: "pointer",
-                          padding: 0,
-                        }}
-                      >
-                        <span>เปิดใช้งานคำถาม</span>
-                        <span
-                          style={{
-                            position: "relative",
-                            display: "inline-flex",
-                            width: 50,
-                            height: 26,
-                            borderRadius: 999,
-                            background: isQuestionActive(selectedQuestion) ? "linear-gradient(180deg,#27d7ff,#0b8fe6)" : "#d7e2ee",
-                            boxShadow: isQuestionActive(selectedQuestion) ? "0 5px 14px rgba(30,144,255,0.28)" : "inset 0 1px 3px rgba(0,0,0,0.08)",
-                            transition: "background 160ms ease",
-                          }}
-                        >
-                          <span
-                            style={{
-                              position: "absolute",
-                              top: 3,
-                              left: isQuestionActive(selectedQuestion) ? 27 : 3,
-                              width: 20,
-                              height: 20,
-                              borderRadius: "50%",
-                              background: "#fff",
-                              boxShadow: "0 2px 6px rgba(6,43,99,0.18)",
-                              transition: "left 160ms ease",
-                            }}
-                          />
-                        </span>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setDeleteTargetId(selectedQuestion.id)}
-                        style={{ ...buttonDangerStyle, height: 38, borderRadius: 13, fontSize: 13, padding: "0 16px", display: "inline-flex", alignItems: "center", gap: 7 }}
-                      >
-                        <Trash2 size={15} />
-                        ลบข้อ
-                      </button>
-                    </div>
-                  </div>
-
-            {/* Format Selector */}
-            <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 14, flexWrap: "wrap" }}>
-              <span style={{ ...fieldLabelStyle, margin: 0, whiteSpace: "nowrap" }}>รูปแบบข้อคำถาม:</span>
-              <div
+            <>
+              <section
                 style={{
-                  display: "inline-flex",
-                  background: "#eef2f6",
-                  borderRadius: 10,
-                  padding: 3,
-                  border: "1px solid rgba(14,15,18,0.05)",
-                  width: "100%",
-                  maxWidth: 260,
+                  display: "flex",
+                  flexDirection: "column",
+                  height: isMobile ? "auto" : "100%",
+                  minHeight: isMobile ? undefined : 0,
+                  gap: 16,
                 }}
               >
-                <button
-                  type="button"
-                  onClick={() => updateQuestion(selectedQuestion.id, (item) => ({ ...item, format: "original" }))}
-                  style={{
-                    flex: 1,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    height: 28,
-                    borderRadius: 8,
-                    gap: 6,
-                    border: "none",
-                    background: selectedQuestion.format !== "text_box" ? "#fff" : "transparent",
-                    color: selectedQuestion.format !== "text_box" ? T.accentDeep : T.sub,
-                    boxShadow: selectedQuestion.format !== "text_box" ? "0 2px 6px rgba(0,0,0,0.08)" : "none",
-                    cursor: "pointer",
-                    fontSize: 12,
-                    fontWeight: 800,
-                    fontFamily: "inherit",
-                    transition: "all 0.2s ease",
-                  }}
-                >
-                  <ClipboardList size={14} strokeWidth={2.2} />
-                  <span>ตัวเลือก (เดิม)</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => updateQuestion(selectedQuestion.id, (item) => ({ ...item, format: "text_box" }))}
-                  style={{
-                    flex: 1,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    height: 28,
-                    borderRadius: 8,
-                    gap: 6,
-                    border: "none",
-                    background: selectedQuestion.format === "text_box" ? "#fff" : "transparent",
-                    color: selectedQuestion.format === "text_box" ? T.accentDeep : T.sub,
-                    boxShadow: selectedQuestion.format === "text_box" ? "0 2px 6px rgba(0,0,0,0.08)" : "none",
-                    cursor: "pointer",
-                    fontSize: 12,
-                    fontWeight: 800,
-                    fontFamily: "inherit",
-                    transition: "all 0.2s ease",
-                  }}
-                >
-                  <Pencil size={14} strokeWidth={2.2} />
-                  <span>Text Box</span>
-                </button>
-              </div>
-            </div>
+                {selectedQuestion ? (
+                  <>
+                    {/* Question Details Editor Card */}
+                    <div
+                      style={{
+                        background: T.card,
+                        border: `1px solid ${T.line}`,
+                        borderRadius: 22,
+                        padding: isMobile ? 16 : 20,
+                        boxShadow: "0 16px 34px rgba(6, 43, 99, 0.10)",
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: 16,
+                        flexShrink: 0,
+                      }}
+                    >
+                      <div style={{
+                        display: "flex",
+                        flexDirection: isMobile ? "column" : "row",
+                        alignItems: isMobile ? "flex-start" : "center",
+                        justifyContent: "space-between",
+                        gap: 12
+                      }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                          {isMobile && (
+                            <button
+                              type="button"
+                              onClick={() => setMobileActiveView("list")}
+                              style={{
+                                ...buttonGhostStyle,
+                                height: 32,
+                                borderRadius: 8,
+                                fontSize: 12,
+                                padding: "0 10px",
+                                borderColor: T.accentDeep,
+                                color: T.accentDeep,
+                                marginRight: 6,
+                              }}
+                            >
+                              ← กลับรายการ
+                            </button>
+                          )}
+                          <div>
+                            <span style={{ fontSize: 11, fontWeight: 900, color: "#5f7591", textTransform: "uppercase", letterSpacing: "0.04em" }}>QUESTION EDITOR</span>
+                            <h2 style={{ fontSize: 24, fontWeight: 900, margin: "4px 0 0", color: T.ink, lineHeight: 1.1 }}>{selectedQuestion.title}</h2>
+                          </div>
+                        </div>
+                      </div>
 
-            <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 12, alignItems: "end" }}>
-                    <label style={fieldStyle}>
-                      <span style={fieldLabelStyle}>หัวข้อ</span>
-                      <input
-                        value={selectedQuestion.title}
-                        onChange={(event) => updateQuestion(selectedQuestion.id, (item) => ({ ...item, title: event.target.value }))}
-                        style={{ ...inputStyle, minHeight: 42, borderRadius: 12, fontSize: 14, padding: "0 12px", boxShadow: "inset 0 1px 2px rgba(6,43,99,0.04)" }}
-                      />
-                    </label>
+                      <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 12, alignItems: "end" }}>
+                        <label style={fieldStyle}>
+                          <span style={fieldLabelStyle}>หัวข้อ</span>
+                          <input
+                            value={selectedQuestion.title}
+                            onChange={(event) => updateQuestion(selectedQuestion.id, (item) => ({ ...item, title: event.target.value }))}
+                            style={{ ...inputStyle, minHeight: 42, borderRadius: 12, fontSize: 14, padding: "0 12px", boxShadow: "inset 0 1px 2px rgba(6,43,99,0.04)" }}
+                          />
+                        </label>
 
-                    <label style={fieldStyle}>
-                      <span style={fieldLabelStyle}>รายละเอียด</span>
-                      <input
-                        value={selectedQuestion.guideTitle === false ? "" : selectedQuestion.guideTitle || ""}
-                        onChange={(event) => updateQuestion(selectedQuestion.id, (item) => ({ ...item, guideTitle: event.target.value }))}
-                        style={{ ...inputStyle, minHeight: 42, borderRadius: 12, fontSize: 14, padding: "0 12px", boxShadow: "inset 0 1px 2px rgba(6,43,99,0.04)" }}
-                        placeholder="เว้นว่างเพื่อสร้างอัตโนมัติ"
-                      />
-                    </label>
+                        <label style={fieldStyle}>
+                          <span style={fieldLabelStyle}>รายละเอียด</span>
+                          <input
+                            value={selectedQuestion.guideTitle === false ? "" : selectedQuestion.guideTitle || ""}
+                            onChange={(event) => updateQuestion(selectedQuestion.id, (item) => ({ ...item, guideTitle: event.target.value }))}
+                            style={{ ...inputStyle, minHeight: 42, borderRadius: 12, fontSize: 14, padding: "0 12px", boxShadow: "inset 0 1px 2px rgba(6,43,99,0.04)" }}
+                            placeholder="เว้นว่างเพื่อสร้างอัตโนมัติ"
+                          />
+                        </label>
+                      </div>
+                    </div>
+
+                    {/* Guidelines Editor & Live Preview Card */}
+                    <div
+                      style={{
+                        background: T.card,
+                        border: `1px solid ${T.line}`,
+                        borderRadius: 24,
+                        padding: 16,
+                        boxShadow: T.shadow,
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: 12,
+                        flex: isMobile ? "none" : 1,
+                        minHeight: isMobile ? undefined : 0,
+                      }}
+                    >
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, flexShrink: 0 }}>
+                        <div>
+                          <div style={{ fontSize: 13, fontWeight: 800, color: T.accentDeep }}>รายละเอียด & Preview</div>
+                          <div style={{ fontSize: 12, color: T.sub }}>ใส่รายละเอียดที่ต้องประเมินแยกกันทีละบรรทัด (กด Enter เพื่อขึ้นบรรทัดใหม่)</div>
+                        </div>
+                        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                          <button
+                            type="button"
+                            onClick={() => setShowPreview(false)}
+                            style={{
+                              height: 32,
+                              padding: "0 14px",
+                              borderRadius: 8,
+                              border: !showPreview ? "1px solid #3b82f6" : "1px solid transparent",
+                              background: !showPreview ? "#fff" : "#f1f5f9",
+                              color: !showPreview ? "#3b82f6" : "#64748b",
+                              fontWeight: 800,
+                              fontSize: 12.5,
+                              cursor: "pointer",
+                              transition: "all 0.15s ease",
+                            }}
+                          >
+                            แก้ไข
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setShowPreview(true)}
+                            style={{
+                              height: 32,
+                              padding: "0 14px",
+                              borderRadius: 8,
+                              border: showPreview ? "1px solid #3b82f6" : "1px solid transparent",
+                              background: showPreview ? "#fff" : "#eff6ff",
+                              color: showPreview ? "#3b82f6" : "#1e40af",
+                              fontWeight: 800,
+                              fontSize: 12.5,
+                              cursor: "pointer",
+                              transition: "all 0.15s ease",
+                            }}
+                          >
+                            Preview จริง
+                          </button>
+                        </div>
+                      </div>
+
+                      <div
+                        style={{
+                          border: "1px solid rgba(11,78,162,0.12)",
+                          borderRadius: 16,
+                          padding: "16px 20px",
+                          background: "#fff",
+                          flex: isMobile ? "none" : 1,
+                          display: "flex",
+                          flexDirection: "column",
+                          minHeight: 200,
+                          overflow: "hidden",
+                        }}
+                      >
+                        {showPreview ? (
+                          <div style={{ overflowY: isMobile ? "visible" : "auto", flex: 1, paddingRight: 4 }}>
+                            <PreviewCard question={selectedQuestion} />
+                          </div>
+                        ) : (
+                          <textarea
+                            value={selectedQuestion.guidelines.join("\n")}
+                            onChange={(event) =>
+                              updateQuestion(selectedQuestion.id, (item) => ({
+                                ...item,
+                                guidelines: event.target.value.split("\n"),
+                              }))
+                            }
+                            placeholder="ใส่รายละเอียดการตรวจแต่ละข้อแยกตามบรรทัด"
+                            style={{
+                              border: "none",
+                              outline: "none",
+                              width: "100%",
+                              flex: 1,
+                              resize: "none",
+                              fontSize: 14,
+                              lineHeight: 1.8,
+                              color: T.ink,
+                              fontFamily: "inherit",
+                              background: "transparent",
+                              minHeight: 180,
+                            }}
+                          />
+                        )}
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <div
+                    style={{
+                      border: `1px dashed ${T.lineStrong}`,
+                      borderRadius: 24,
+                      padding: 28,
+                      background: "var(--brand-surface)",
+                      color: T.sub,
+                    }}
+                  >
+                    ยังไม่มีข้อประเมินในหมวดนี้
                   </div>
+                )}
+              </section>
 
-
-                </div>
-
-                {/* Guidelines Editor & Live Preview Card */}
-                <div
+              {/* Right Column: Settings Panel */}
+              {selectedQuestion && (
+                <aside
                   style={{
                     background: T.card,
                     border: `1px solid ${T.line}`,
                     borderRadius: 24,
-                    padding: 16,
+                    padding: 20,
                     boxShadow: T.shadow,
                     display: "flex",
                     flexDirection: "column",
-                    gap: 12,
-                    flex: isMobile ? "none" : 1,
+                    gap: 20,
+                    height: isMobile ? "auto" : "100%",
                     minHeight: isMobile ? undefined : 0,
                   }}
                 >
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, flexShrink: 0 }}>
-                    <div>
-                      <div style={{ fontSize: 13, fontWeight: 800, color: T.accentDeep }}>รายละเอียด & Preview</div>
-                      <div style={{ fontSize: 12, color: T.sub }}>ใส่รายละเอียดข้อประเมินแยกกันทีละบรรทัด (กด Enter เพื่อขึ้นบรรทัดใหม่)</div>
-                    </div>
-                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                      <div style={{ display: "flex", background: T.soft, borderRadius: 8, padding: 3, border: `1px solid ${T.line}` }}>
-                        <button
-                          type="button"
-                          onClick={() => setShowPreview(false)}
+                  {/* Header */}
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, paddingBottom: 12, borderBottom: `1px solid ${T.line}` }}>
+                    <Settings size={18} style={{ color: "#5f7591" }} />
+                    <span style={{ fontSize: 15, fontWeight: 900, color: T.ink }}>การตั้งค่า</span>
+                  </div>
+
+                  {/* รูปแบบคำตอบ */}
+                  <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                    <label style={{ fontSize: 13, fontWeight: 900, color: T.ink }}>รูปแบบคำตอบ</label>
+                    <div style={{ position: "relative" }}>
+                      <button
+                        type="button"
+                        onClick={() => setFormatDropdownOpen(!formatDropdownOpen)}
+                        style={{
+                          width: "100%",
+                          height: 44,
+                          borderRadius: 12,
+                          border: `1px solid ${T.lineStrong}`,
+                          background: "#fff",
+                          color: T.ink,
+                          padding: "0 14px",
+                          fontSize: 13.5,
+                          fontWeight: 800,
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "space-between",
+                          cursor: "pointer",
+                          outline: "none",
+                        }}
+                      >
+                        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                          {selectedQuestion.format === "text_box" ? (
+                            <>
+                              <div style={{ width: 24, height: 24, borderRadius: 6, background: "#eff6ff", display: "grid", placeItems: "center" }}>
+                                <Pencil size={14} style={{ color: "#3b82f6" }} />
+                              </div>
+                              <span>Text Box</span>
+                            </>
+                          ) : (
+                            <>
+                              <div style={{ width: 24, height: 24, borderRadius: 6, background: "#eff6ff", display: "grid", placeItems: "center" }}>
+                                <ClipboardList size={14} style={{ color: "#3b82f6" }} />
+                              </div>
+                              <span>แบบตัวเลือก (เดิม)</span>
+                            </>
+                          )}
+                        </div>
+                        <ChevronDown size={16} style={{ color: T.sub, transform: formatDropdownOpen ? "rotate(180deg)" : "none", transition: "transform 0.15s ease" }} />
+                      </button>
+
+                      {/* Backdrop overlay to close dropdown */}
+                      {formatDropdownOpen && (
+                        <div
+                          onClick={() => setFormatDropdownOpen(false)}
+                          style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, zIndex: 999 }}
+                        />
+                      )}
+
+                      {/* Dropdown Menu */}
+                      {formatDropdownOpen && (
+                        <div
                           style={{
-                            height: 26,
-                            padding: "0 12px",
-                            borderRadius: 6,
-                            border: "none",
-                            background: !showPreview ? "#fff" : "transparent",
-                            color: !showPreview ? T.accentDeep : T.sub,
-                            fontWeight: 800,
-                            fontSize: 12,
-                            cursor: "pointer",
-                            boxShadow: !showPreview ? "0 2px 4px rgba(0,0,0,0.05)" : "none",
+                            position: "absolute",
+                            top: "calc(100% + 6px)",
+                            left: 0,
+                            width: "100%",
+                            background: "#fff",
+                            border: `1px solid ${T.lineStrong}`,
+                            borderRadius: 12,
+                            boxShadow: "0 10px 25px rgba(0,0,0,0.1)",
+                            zIndex: 1000,
+                            padding: 4,
+                            display: "grid",
+                            gap: 2,
                           }}
                         >
-                          แก้ไข
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setShowPreview(true)}
-                          style={{
-                            height: 26,
-                            padding: "0 12px",
-                            borderRadius: 6,
-                            border: "none",
-                            background: showPreview ? "#fff" : "transparent",
-                            color: showPreview ? T.accentDeep : T.sub,
-                            fontWeight: 800,
-                            fontSize: 12,
-                            cursor: "pointer",
-                            boxShadow: showPreview ? "0 2px 4px rgba(0,0,0,0.05)" : "none",
-                          }}
-                        >
-                          Preview จริง
-                        </button>
-                      </div>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              updateQuestion(selectedQuestion.id, (item) => ({ ...item, format: "original" }));
+                              setFormatDropdownOpen(false);
+                            }}
+                            style={{
+                              width: "100%",
+                              padding: "10px 12px",
+                              borderRadius: 8,
+                              border: "none",
+                              background: selectedQuestion.format !== "text_box" ? "#f1f5f9" : "transparent",
+                              color: T.ink,
+                              fontSize: 13,
+                              fontWeight: 800,
+                              textAlign: "left",
+                              cursor: "pointer",
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 8,
+                            }}
+                          >
+                            <ClipboardList size={14} style={{ color: "#3b82f6" }} />
+                            <span>แบบตัวเลือก (เดิม)</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              updateQuestion(selectedQuestion.id, (item) => ({ ...item, format: "text_box" }));
+                              setFormatDropdownOpen(false);
+                            }}
+                            style={{
+                              width: "100%",
+                              padding: "10px 12px",
+                              borderRadius: 8,
+                              border: "none",
+                              background: selectedQuestion.format === "text_box" ? "#f1f5f9" : "transparent",
+                              color: T.ink,
+                              fontSize: 13,
+                              fontWeight: 800,
+                              textAlign: "left",
+                              cursor: "pointer",
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 8,
+                            }}
+                          >
+                            <Pencil size={14} style={{ color: "#3b82f6" }} />
+                            <span>Text Box</span>
+                          </button>
+                        </div>
+                      )}
                     </div>
                   </div>
 
-                  {showPreview ? (
-                    <div style={{ overflowY: isMobile ? "visible" : "auto", flex: isMobile ? "none" : 1, paddingRight: 4 }}>
-                      <PreviewCard question={selectedQuestion} />
-                    </div>
-                  ) : (
-                    <textarea
-                      value={selectedQuestion.guidelines.join("\n")}
-                      onChange={(event) =>
-                        updateQuestion(selectedQuestion.id, (item) => ({
-                          ...item,
-                          guidelines: event.target.value.split("\n"),
-                        }))
-                      }
-                      placeholder="ใส่รายละเอียดการตรวจแต่ละข้อแยกตามบรรทัด"
+                  {/* สถานะคำถาม */}
+                  <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                    <label style={{ fontSize: 13, fontWeight: 900, color: T.ink }}>สถานะคำถาม</label>
+                    <div
                       style={{
-                        ...inputStyle,
-                        flex: 1,
-                        minHeight: 180,
-                        resize: "vertical",
-                        padding: "12px 14px",
-                        fontSize: 13,
-                        lineHeight: 1.6,
-                        borderRadius: 14,
-                        border: `1px solid ${T.lineStrong}`,
-                        fontFamily: "inherit",
-                        outline: "none",
-                        boxSizing: "border-box",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        padding: "8px 0",
                       }}
-                    />
-                  )}
-                </div>
-              </>
-            ) : (
-              <div
-                style={{
-                  border: `1px dashed ${T.lineStrong}`,
-                  borderRadius: 24,
-                  padding: 28,
-                  background: "var(--brand-surface)",
-                  color: T.sub,
-                }}
-              >
-                ยังไม่มีข้อประเมินในหมวดนี้
-              </div>
-            )}
-          </section>
+                    >
+                      <span
+                        style={{
+                          fontSize: 14,
+                          fontWeight: 800,
+                          color: isQuestionActive(selectedQuestion) ? "#22c55e" : T.sub,
+                          transition: "color 0.15s ease",
+                        }}
+                      >
+                        {isQuestionActive(selectedQuestion) ? "เปิดใช้งาน" : "ปิดใช้งาน"}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => updateQuestion(selectedQuestion.id, (item) => ({ ...item, active: !isQuestionActive(item) }))}
+                        style={{
+                          position: "relative",
+                          display: "inline-flex",
+                          width: 46,
+                          height: 24,
+                          borderRadius: 999,
+                          background: isQuestionActive(selectedQuestion) ? "#22c55e" : "#cbd5e1",
+                          border: "none",
+                          cursor: "pointer",
+                          transition: "background-color 0.2s ease",
+                          padding: 0,
+                          outline: "none",
+                        }}
+                      >
+                        <span
+                          style={{
+                            position: "absolute",
+                            top: 3,
+                            left: isQuestionActive(selectedQuestion) ? 25 : 3,
+                            width: 18,
+                            height: 18,
+                            borderRadius: "50%",
+                            background: "#fff",
+                            boxShadow: "0 2px 4px rgba(0,0,0,0.15)",
+                            transition: "left 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
+                          }}
+                        />
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Spacer */}
+                  <div style={{ flex: 1 }} />
+
+                  {/* ปุ่ม ลบข้อ */}
+                  <button
+                    type="button"
+                    onClick={() => setDeleteTargetId(selectedQuestion.id)}
+                    style={{
+                      width: "100%",
+                      height: 44,
+                      borderRadius: 12,
+                      border: "1px solid #fecaca",
+                      background: "#fef2f2",
+                      color: "#dc2626",
+                      fontWeight: 800,
+                      fontSize: 13.5,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: 8,
+                      cursor: "pointer",
+                      transition: "all 0.15s ease",
+                      outline: "none",
+                    }}
+                  >
+                    <Trash2 size={16} />
+                    <span>ลบข้อ</span>
+                  </button>
+                </aside>
+              )}
+            </>
           )}
         </div>
     </div>
