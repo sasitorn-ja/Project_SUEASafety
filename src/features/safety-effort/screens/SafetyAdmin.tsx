@@ -699,9 +699,8 @@ export default function SafetyAdmin() {
             </div>
 
             <div style={{ display: "flex", gap: 6, justifyContent: isMobile ? "space-between" : "flex-start" }}>
-              <button type="button" onClick={handleReset} style={{ ...buttonGhostStyle, height: 32, borderRadius: 8, fontSize: isMobile ? 11.5 : 13, padding: isMobile ? "0 8px" : "0 12px" }}>Reset</button>
               <button type="button" onClick={handleRestoreDefault} disabled={savingChecklists} style={{ ...buttonDangerStyle, height: 32, borderRadius: 8, fontSize: isMobile ? 11.5 : 13, padding: isMobile ? "0 8px" : "0 12px", opacity: savingChecklists ? 0.6 : 1 }}>Restore Default</button>
-              <button type="button" onClick={handleSaveDraft} disabled={savingChecklists} style={{ ...buttonPrimaryStyle, height: 32, borderRadius: 8, fontSize: isMobile ? 11.5 : 13, padding: isMobile ? "0 10px" : "0 14px", boxShadow: "none", opacity: savingChecklists ? 0.7 : 1 }}>{savingChecklists ? "Saving..." : "Save Draft"}</button>
+              <button type="button" onClick={handleSaveDraft} disabled={savingChecklists} style={{ ...buttonPrimaryStyle, height: 32, borderRadius: 8, fontSize: isMobile ? 11.5 : 13, padding: isMobile ? "0 10px" : "0 14px", boxShadow: "none", opacity: savingChecklists ? 0.7 : 1 }}>{savingChecklists ? "Saving..." : "Save"}</button>
             </div>
           </div>
         </div>
@@ -1145,7 +1144,7 @@ export default function SafetyAdmin() {
           >
             <div style={{ fontSize: 22, fontWeight: 900 }}>ยืนยันการลบข้อประเมิน</div>
             <div style={{ fontSize: 14.5, color: T.sub, lineHeight: 1.7 }}>
-              ข้อนี้จะถูกลบออกจากหมวด {LOCATION_TYPE_LABELS[selectedType]} ใน draft ปัจจุบัน หากยังไม่ได้กด Save Draft สามารถกด Reset เพื่อย้อนกลับได้
+              ข้อนี้จะถูกลบออกจากหมวด {LOCATION_TYPE_LABELS[selectedType]} ใน draft ปัจจุบัน หากยังไม่ได้กด Save จะยังไม่บันทึกลงฐานข้อมูลถาวร
             </div>
             <div style={{ display: "flex", justifyContent: "flex-end", gap: 10 }}>
               <button type="button" onClick={() => setDeleteTargetId(null)} style={buttonGhostStyle}>ยกเลิก</button>
