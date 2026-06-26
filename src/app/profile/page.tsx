@@ -1,4 +1,5 @@
 "use client";
+import Image from "next/image";
 import { ChangeEvent, useEffect, useRef, useState } from "react";
 import {
   BadgeCheck,
@@ -10,10 +11,10 @@ import {
   MapPin,
   ShieldCheck,
   Trash2,
-  Upload,
   UserRound,
 } from "lucide-react";
 import { notifyProfileImageUpdated } from "@/lib/profile";
+import { useAppTheme } from "@/providers/theme-provider";
 import { getSessionDisplayName, getSessionEnglishName, getSessionProfileImage, useSessionUser } from "@/lib/session-user";
 
 const MAX_IMAGE_SIZE = 3 * 1024 * 1024;
@@ -32,6 +33,7 @@ export default function ProfilePage() {
   const [profileImage, setProfileImage] = useState("");
   const [imageError, setImageError] = useState("");
   const { user: sessionUser } = useSessionUser();
+  const { mascot } = useAppTheme();
   const displayName = sessionUser ? getSessionDisplayName(sessionUser) : "-";
   const displayNameEn = getSessionEnglishName(sessionUser) || "-";
   const displayPosition = sessionUser?.positionTh || sessionUser?.positionEn || "-";
@@ -120,71 +122,83 @@ export default function ProfilePage() {
   };
 
   return (
-    <div className="min-h-[calc(100vh-var(--topbar-h))] bg-[linear-gradient(180deg,var(--secondary)_0%,var(--background)_360px)] px-3.5 pb-10 pt-2 font-sans md:px-7 md:pt-4">
-      <div className="mx-auto grid w-full max-w-[1180px] gap-4 md:gap-5">
-        <section className="relative overflow-hidden rounded-[24px] bg-[linear-gradient(135deg,var(--brand-hero-start),var(--brand-hero-end))] p-5 text-white shadow-[0_18px_44px_var(--brand-shadow)] md:p-8">
-          <div className="pointer-events-none absolute -right-16 -top-24 h-72 w-72 rounded-full bg-[var(--brand-accent)] opacity-15 blur-3xl" />
-          <div className="relative grid gap-6 md:grid-cols-[auto_minmax(0,1fr)_auto] md:items-center">
-            <div className="relative mx-auto md:mx-0">
-              <button
-                type="button"
-                onClick={() => inputRef.current?.click()}
-                className="group relative flex h-32 w-32 cursor-pointer items-center justify-center overflow-hidden rounded-full border-[5px] border-white/80 bg-white/12 shadow-[0_16px_34px_rgba(0,0,0,0.24)] md:h-40 md:w-40"
-                aria-label="เลือกรูปโปรไฟล์"
-              >
+    <div className="min-h-[calc(100vh-var(--topbar-h))] bg-[linear-gradient(180deg,var(--secondary)_0%,var(--background)_360px)] pb-10 pt-2 font-sans md:pt-4">
+      <div className="page-shell-wide grid gap-4 md:gap-5">
+        <section
+          className="relative left-1/2 w-[calc(100vw-20px)] max-w-none -translate-x-1/2 overflow-hidden rounded-[16px] border border-[#D7EAFE] bg-[linear-gradient(135deg,#EAF6FF_0%,#F7FBFF_46%,#E1F1FF_100%)] p-4 shadow-[0_8px_22px_rgba(185,223,255,0.45),inset_0_1px_0_rgba(255,255,255,0.75)] sm:rounded-[20px] sm:p-5 lg:w-[calc(100vw-48px)] md:p-6"
+          style={{ backgroundImage: "url('/images/heroes/Home01.png')", backgroundSize: "cover", backgroundPosition: "center" }}
+        >
+          <div className="relative grid gap-5 sm:grid-cols-[auto_minmax(0,1fr)] md:grid-cols-[auto_minmax(0,1fr)_auto] md:items-center">
+            {/* profile photo */}
+            <div className="relative mx-auto sm:mx-0">
+              <div className="group relative h-28 w-28 overflow-hidden rounded-full border-[4px] border-white shadow-[0_12px_28px_rgba(11,130,240,0.18)] sm:h-32 sm:w-32 md:h-36 md:w-36">
                 {displayImage ? (
                   <img src={displayImage} alt="รูปโปรไฟล์" className="h-full w-full object-cover" />
                 ) : (
-                  <UserRound className="h-16 w-16 text-white/75 md:h-20 md:w-20" strokeWidth={1.7} />
+                  <div className="grid h-full w-full place-items-center bg-[#EEF7FF]">
+                    <UserRound className="h-14 w-14 text-[#0B82F0]/60 md:h-16 md:w-16" strokeWidth={1.7} />
+                  </div>
                 )}
-                <span className="absolute inset-x-0 bottom-0 flex h-10 items-center justify-center gap-1.5 bg-black/55 text-[11px] font-extrabold opacity-100 backdrop-blur-sm md:opacity-0 md:transition-opacity md:group-hover:opacity-100">
-                  <Camera className="h-4 w-4" />
-                  เปลี่ยนรูป
-                </span>
-              </button>
-              <span className="absolute bottom-2 right-1 flex h-7 w-7 items-center justify-center rounded-full border-[3px] border-[var(--brand-nav)] bg-emerald-500">
-                <CheckCircle2 className="h-4 w-4 text-white" strokeWidth={3} />
+                <div className="absolute inset-x-0 bottom-0 flex items-center justify-between gap-1.5 border-t border-white/20 bg-gradient-to-t from-[rgba(7,22,40,.80)] via-[rgba(7,22,40,.60)] to-transparent px-2 pb-2 pt-5 text-[11px] font-extrabold text-white opacity-100 backdrop-blur-[2px] transition-opacity md:opacity-0 md:group-hover:opacity-100">
+                  <button
+                    type="button"
+                    onClick={() => inputRef.current?.click()}
+                    className="inline-flex min-w-0 flex-1 items-center gap-1.5 rounded-full bg-white/20 px-2 py-1.5 text-left text-[11px] font-extrabold text-white shadow-[inset_0_0_0_1px_rgba(255,255,255,.15)] hover:bg-white/30"
+                    aria-label="เลือกรูปโปรไฟล์"
+                  >
+                    <Camera className="h-3.5 w-3.5 shrink-0" />
+                    <span className="truncate [text-shadow:0_1px_2px_rgba(0,0,0,.4)]">เปลี่ยนรูป</span>
+                  </button>
+                  {profileImage && (
+                    <button
+                      type="button"
+                      onClick={removeImage}
+                      className="inline-flex h-7 items-center gap-1 rounded-full bg-[rgba(215,46,46,.88)] px-2 text-[10px] font-black text-white hover:bg-[rgba(229,61,61,.96)]"
+                    >
+                      <Trash2 className="h-3 w-3" strokeWidth={2.5} />
+                      ลบรูป
+                    </button>
+                  )}
+                </div>
+              </div>
+              <span className="absolute bottom-1.5 right-0.5 flex h-6 w-6 items-center justify-center rounded-full border-[2.5px] border-white bg-emerald-500">
+                <CheckCircle2 className="h-3.5 w-3.5 text-white" strokeWidth={3} />
               </span>
             </div>
 
-            <div className="min-w-0 text-center md:text-left">
-              <div className="mb-2 inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-white/10 px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-[0.14em] text-[var(--brand-hero-label)]">
+            {/* name info */}
+            <div className="min-w-0 text-center sm:text-left md:pr-[150px] xl:pr-[178px]">
+              <div className="mb-2 inline-flex items-center gap-1.5 rounded-[7px] border border-[#0B82F0] bg-white/85 px-2.5 py-[3px] text-[10px] font-extrabold uppercase tracking-[0.12em] text-[#0B82F0]">
                 <ShieldCheck className="h-3.5 w-3.5" strokeWidth={2.5} />
                 SSO Profile Preview
               </div>
-              <h1 className="text-[25px] font-black leading-tight md:text-[36px]">{displayName}</h1>
-              <p className="mt-1.5 text-[13px] font-bold text-white/72 md:text-[15px]">
+              <h1 className="mx-auto line-clamp-2 max-w-[min(100%,760px)] break-words text-[22px] font-black leading-[1.08] text-[#0B2F6B] sm:mx-0 sm:text-[26px] md:text-[30px] xl:text-[34px]">
+                {displayName}
+              </h1>
+              <p className="mt-1 text-[12px] font-bold text-[#55739B] md:text-[13.5px]">
                 {displayPosition} · {displayDivision}
               </p>
-              <div className="mt-3 flex flex-wrap justify-center gap-2 md:justify-start">
-                <span className="rounded-full bg-white/10 px-3 py-1 text-[11px] font-extrabold text-white/85">{displayEmail}</span>
-                <span className="rounded-full bg-white/10 px-3 py-1 text-[11px] font-extrabold text-white/85">@{displayUsername}</span>
+              <div className="mt-2.5 flex flex-wrap justify-center gap-1.5 sm:justify-start">
+                <span className="rounded-full bg-[#E8F2FF] px-2.5 py-1 text-[11px] font-extrabold text-[#0B2F6B]">{displayEmail}</span>
+                <span className="rounded-full bg-[#E8F2FF] px-2.5 py-1 text-[11px] font-extrabold text-[#0B2F6B]">@{displayUsername}</span>
               </div>
             </div>
 
-            <div className="flex flex-wrap justify-center gap-2 md:max-w-[190px] md:justify-end">
-              <button
-                type="button"
-                onClick={() => inputRef.current?.click()}
-                className="inline-flex h-10 cursor-pointer items-center gap-2 rounded-xl bg-[var(--brand-accent)] px-4 text-[12px] font-black text-[var(--brand-accent-contrast)] shadow-lg transition-transform hover:scale-[1.02]"
-              >
-                <Upload className="h-4 w-4" strokeWidth={2.5} />
-                {displayImage ? "เปลี่ยนรูป" : "เพิ่มรูปโปรไฟล์"}
-              </button>
-              {profileImage && (
-                <button
-                  type="button"
-                  onClick={removeImage}
-                  className="inline-flex h-10 cursor-pointer items-center gap-2 rounded-xl border border-white/20 bg-white/10 px-4 text-[12px] font-black text-white hover:bg-white/15"
-                >
-                  <Trash2 className="h-4 w-4" strokeWidth={2.4} />
-                  ลบรูป
-                </button>
-              )}
-              <input ref={inputRef} type="file" accept="image/*" onChange={handleImageChange} className="hidden" />
+            {/* mascot */}
+            <div className="pointer-events-none absolute right-0 bottom-0 hidden md:block">
+              <Image
+                src={mascot("smile")}
+                alt=""
+                width={180}
+                height={180}
+                priority
+                className="h-[130px] w-auto object-contain drop-shadow-[0_8px_12px_rgba(11,130,240,0.18)] [animation:sueaMascotFloat_1.8s_ease-in-out_infinite_alternate] xl:h-[152px]"
+              />
             </div>
+
+            <input ref={inputRef} type="file" accept="image/*" onChange={handleImageChange} className="hidden" />
           </div>
-          {imageError && <p className="relative mt-4 rounded-xl bg-red-500/20 px-3 py-2 text-center text-[11px] font-extrabold text-red-50 md:text-left">{imageError}</p>}
+          {imageError && <p className="relative mt-4 rounded-xl border border-[#f2c6bd] bg-[#fff5f2] px-3 py-2 text-center text-[11px] font-extrabold text-[#b3271a] sm:text-left">{imageError}</p>}
         </section>
 
         <section className="grid gap-3 sm:grid-cols-3">

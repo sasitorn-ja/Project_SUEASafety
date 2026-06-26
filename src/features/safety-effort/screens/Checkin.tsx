@@ -7,7 +7,8 @@ import "leaflet/dist/leaflet.css";
 import { useAppTheme } from "@/providers/theme-provider";
 import SafetyEffortProgressStepper from "@/features/safety-effort/components/SafetyEffortProgressStepper";
 import { Combobox } from "@/components/ui/combobox";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog } from "@/components/ui/dialog";
+import { AppDialogContent } from "@/components/ui/app-dialog";
 
 // ─── Fix default Leaflet icon paths ───────────────────────────────────────────
 delete L.Icon.Default.prototype._getIconUrl;
@@ -548,7 +549,7 @@ function AddModal({ onAdd, onClose, userPos }) {
 
   return (
     <Dialog open onOpenChange={(open) => !open && onClose()}>
-      <DialogContent showCloseButton={false} className="ci-modal p-0" style={{ maxHeight: "98vh", overflow: "hidden", display: "flex", flexDirection: "column", padding: "18px 20px 20px" }}>
+      <AppDialogContent showCloseButton={false} className="ci-modal flex flex-col" style={{ padding: "18px 20px 20px" }}>
         <div style={{ display: "flex", justifyContent: "center", marginBottom: 10 }}>
           <div style={{ width: 36, height: 4, borderRadius: 99, background: "rgba(14,15,18,0.15)" }} />
         </div>
@@ -682,7 +683,7 @@ function AddModal({ onAdd, onClose, userPos }) {
             เพิ่มสถานที่
           </button>
         </div>
-      </DialogContent>
+      </AppDialogContent>
     </Dialog>
   );
 }

@@ -6,7 +6,8 @@ import { Check, ShieldCheck, X } from "lucide-react";
 import { useAppActions, useAppState } from "@/providers/app-providers";
 import { useAppTheme } from "@/providers/theme-provider";
 import { pickRandom, type SafetyAwarenessQuestion } from "@/lib/safety-awareness";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog } from "@/components/ui/dialog";
+import { AppDialogContent } from "@/components/ui/app-dialog";
 
 const QUESTIONS_PER_DAY = 3;
 
@@ -26,6 +27,8 @@ export function SafetyAwarenessGate() {
   // Answers stay editable until the user presses "ตรวจคำตอบ"; only then is the
   // เฉลย (answer key) revealed — so changing a pick beforehand can't be used to copy it.
   const [submitted, setSubmitted] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState("");
 
   useEffect(() => setMounted(true), []);
 
@@ -64,13 +67,32 @@ export function SafetyAwarenessGate() {
     setAnswers((prev) => ({ ...prev, [question.id]: value }));
   };
 
+  const finishAwareness = async () => {
+    setSaving(true);
+    setSaveError("");
+    const ok = await markAwarenessDone({
+      score: correctCount,
+      total: quiz.length,
+      questions: quiz.map((question) => ({
+        id: question.id,
+        category: question.category,
+        text: question.text,
+        correct: answers[question.id] === question.answer,
+      })),
+    });
+    if (!ok) {
+      setSaveError("บันทึกไม่สำเร็จ กรุณาลองอีกครั้ง");
+      setSaving(false);
+    }
+  };
+
   return (
     <Dialog open={open}>
-      <DialogContent
-      showCloseButton={false}
-      aria-label="Safety Awareness"
-      className="z-[100000] max-h-[calc(100vh-3rem)] w-full max-w-[560px] overflow-hidden rounded-[28px] border border-[#cfe0f2] bg-[linear-gradient(180deg,#ffffff,#f8fcff)] p-0 font-sarabun shadow-[0_28px_80px_rgba(6,43,99,0.28)]"
-    >
+      <AppDialogContent
+        showCloseButton={false}
+        aria-label="Safety Awareness"
+        className="z-100000 max-h-[calc(100vh-3rem)] max-w-140 overflow-y-auto"
+      >
         {/* Header */}
         <div className="relative overflow-hidden border-b border-[#d7e6f6] bg-[linear-gradient(135deg,#ffffff_0%,#f4f9ff_56%,#eaf4ff_100%)] px-5 pb-4 pt-4 text-[#173b6b]">
           <div className="relative flex items-center gap-3">
@@ -221,26 +243,21 @@ export function SafetyAwarenessGate() {
               </p>
               <button
                 type="button"
-                onClick={() =>
-                  markAwarenessDone({
-                    score: correctCount,
-                    total: quiz.length,
-                    questions: quiz.map((question) => ({
-                      id: question.id,
-                      category: question.category,
-                      text: question.text,
-                      correct: answers[question.id] === question.answer,
-                    })),
-                  })
-                }
-                className="flex h-11 items-center justify-center gap-2 rounded-xl bg-[var(--brand-nav)] px-5 text-[14px] font-black text-[var(--brand-accent)] transition-transform hover:scale-[1.02]"
+                disabled={saving}
+                onClick={finishAwareness}
+                className="flex h-11 items-center justify-center gap-2 rounded-xl bg-[var(--brand-nav)] px-5 text-[14px] font-black text-[var(--brand-accent)] transition-transform enabled:hover:scale-[1.02] disabled:cursor-not-allowed disabled:opacity-60"
               >
-                เข้าสู่เว็บไซต์
+                {saving ? "กำลังบันทึก..." : "เข้าสู่เว็บไซต์"}
               </button>
+              {saveError && (
+                <p className="text-[12px] font-bold text-[#b3271a] sm:basis-full sm:text-right">
+                  {saveError}
+                </p>
+              )}
             </div>
           )}
         </div>
-      </DialogContent>
+      </AppDialogContent>
     </Dialog>
   );
 }

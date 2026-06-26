@@ -15,13 +15,14 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+  AppDialogBody,
+  AppDialogContent,
+  AppDialogDescription,
+  AppDialogSectionFooter,
+  AppDialogSectionHeader,
+  AppDialogTitle,
+} from "@/components/ui/app-dialog";
+import { Dialog } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import { useSessionUser, getSessionProfileImage, getSessionInitials } from "@/lib/session-user";
 import {
@@ -30,9 +31,8 @@ import {
   formatPostSubtext,
   formatThaiDateTime,
 } from "@/lib/safety-culture";
-import { CalendarDays, ChevronLeft, ChevronRight, Clock3, ImageIcon, MessageCircle, ThumbsUp, Pencil, Sparkles, Trash2, Trophy, UsersRound, X } from "lucide-react";
+import { CalendarDays, ChevronLeft, ChevronRight, ClipboardList, Clock3, ImageIcon, MessageCircle, ThumbsUp, Pencil, Sparkles, Trash2, Trophy, UsersRound, X } from "lucide-react";
 import { SafetyCultureHero } from "@/components/safety-culture/safety-culture-hero";
-import { SafetyCultureTabs } from "@/components/safety-culture/safety-culture-tabs";
 import { useAppTheme } from "@/providers/theme-provider";
 import styles from "./safety-culture-community.module.css";
 
@@ -77,44 +77,6 @@ function ProfileAvatar({
   );
 }
 
-function LeadingTeamCard({ className, style }: { className?: string; style?: CSSProperties }) {
-  const { teamStandings } = useAppState();
-  const leadingTeam = teamStandings[0];
-  const runnerUpTeam = teamStandings[1];
-  const leadPoints = leadingTeam && runnerUpTeam ? leadingTeam.points - runnerUpTeam.points : 0;
-  return (
-    <Card
-      className={cn(
-        "relative overflow-hidden rounded-[16px] p-3 text-white shadow-[0_8px_20px_rgba(0,0,0,0.12)] md:p-3.5 font-sarabun",
-        className
-      )}
-      style={{ background: "linear-gradient(135deg, var(--c-3b210b), var(--c-5c3214))", ...style }}
-    >
-      <div className="absolute top-0 left-0 right-0 h-2 bg-[repeating-linear-gradient(-45deg,var(--c-f5bb00),var(--c-f5bb00)_10px,#1A1A1A_10px,#1A1A1A_20px)]" />
-      <div className="relative flex items-center gap-3">
-        <div className="flex h-[42px] w-[42px] flex-shrink-0 items-center justify-center rounded-full border-2 border-white text-xl shadow-[0_0_14px_rgba(45,174,255,0.3)]" style={{ backgroundColor: leadingTeam?.color ?? "var(--c-f5bb00)" }}>
-          🏆
-        </div>
-        <div className="min-w-0 flex-1">
-          {leadingTeam ? (
-            <>
-              <span className="text-[10px] font-bold uppercase tracking-wider text-white/65">นำอยู่ตอนนี้</span>
-              <div className="mt-0.5 text-[17px] leading-none font-black tracking-tight text-white">{leadingTeam.name}</div>
-              <span className="mt-1 block text-[11px] font-black" style={{ color: leadingTeam.color ?? "var(--c-f5bb00)" }}>+ {leadPoints.toLocaleString()} คะแนน เหนือกว่า {runnerUpTeam?.name ?? "-"}</span>
-            </>
-          ) : (
-            <>
-              <span className="text-[10px] font-bold uppercase tracking-wider text-white/65">ลำดับทีม</span>
-              <div className="mt-0.5 text-[17px] leading-none font-black tracking-tight text-white">ยังไม่มีข้อมูลทีม</div>
-              <span className="mt-1 block text-[11px] font-bold text-white/70">ข้อมูลอันดับทีมจะแสดงที่นี่เมื่อมีคะแนน</span>
-            </>
-          )}
-        </div>
-      </div>
-    </Card>
-  );
-}
-
 function TeamStandingsCard({ className, style }: { className?: string; style?: CSSProperties }) {
   const { teamStandings } = useAppState();
   const { themedColor } = useAppTheme();
@@ -126,67 +88,79 @@ function TeamStandingsCard({ className, style }: { className?: string; style?: C
       )}
       style={style}
     >
-      <div className="border-b border-[var(--border)] px-3 py-3">
-        <p className="text-[11px] font-black tracking-[0.01em] text-[var(--foreground)]">ลำดับทีม · YTD</p>
+      <div className="border-b border-[var(--border)] px-3 py-2.5">
+        <p className="app-card-title text-[var(--foreground)]">ลำดับทีมที่ติดอันดับ · เดือนนี้</p>
       </div>
 
-      <div className="space-y-2 p-2.5 xl:space-y-2.5 xl:p-3">
+      <div className="p-2 xl:p-2.5">
         {teamStandings.length === 0 ? (
-          <div className="rounded-[18px] border border-dashed border-[var(--border)] bg-[var(--brand-surface)] px-4 py-7 text-center">
-            <p className="text-[13.5px] font-black text-[var(--foreground)]">ยังไม่มีข้อมูลทีม</p>
-            <p className="mt-1 text-[11.5px] font-bold text-[var(--brand-muted-text)]">ยังไม่มีข้อมูลทีมในขณะนี้</p>
+          <div className="rounded-[14px] border border-dashed border-[var(--border)] bg-[var(--brand-surface)] px-4 py-6 text-center">
+            <p className="text-[13px] font-black text-[var(--foreground)]">ยังไม่มีข้อมูลทีม</p>
+            <p className="mt-1 text-[11px] font-bold text-[var(--brand-muted-text)]">ยังไม่มีข้อมูลทีมในขณะนี้</p>
           </div>
-        ) : teamStandings.map((team, idx) => (
+        ) : teamStandings.slice(0, 4).map((team, idx) => (
           <article
             key={team.id}
-            className="rounded-[14px] border border-[var(--border)] bg-[var(--brand-surface)] px-2.5 py-2 shadow-[0_8px_22px_var(--brand-shadow)] transition-all duration-200 hover:-translate-y-[1px] hover:border-[rgba(var(--brand-accent-rgb),0.45)] xl:px-3 xl:py-2.5"
+            className="group flex items-center gap-2.5 rounded-[12px] border border-transparent px-2 py-2 transition-all duration-150 hover:border-[rgba(var(--brand-accent-rgb),0.3)] hover:bg-[var(--brand-surface)]"
           >
-            <div className="flex items-center gap-2.5 xl:gap-3">
-              <div className="flex min-w-0 flex-1 items-center gap-2.5 xl:gap-3.5">
-                <div className="flex w-6 flex-shrink-0 items-center justify-center text-[17px] font-black text-[var(--foreground)] xl:w-7 xl:text-[20px]">
-                  {team.rank}
-                </div>
-                <div
-                  className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-[12px] border border-white/70 shadow-[inset_0_1px_0_rgba(255,255,255,0.4)] xl:h-12 xl:w-12 xl:rounded-[14px]"
-                  style={{ background: `linear-gradient(180deg, ${themedColor(team.color)}, color-mix(in srgb, ${themedColor(team.color)} 76%, white))` }}
-                >
-                  <UsersRound className="h-5 w-5 text-white xl:h-6 xl:w-6" strokeWidth={2.2} />
-                </div>
+            <div
+              className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-[8px] text-[12px] font-black text-white shadow-[0_2px_6px_rgba(0,0,0,0.15)]"
+              style={{ background: `linear-gradient(180deg, ${themedColor(team.color)}, color-mix(in srgb, ${themedColor(team.color)} 80%, #000))` }}
+            >
+              {team.rank}
+            </div>
 
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-1.5 xl:gap-2">
-                    <h4 className="truncate text-[14px] font-black text-[var(--foreground)] xl:text-[16.5px]">{team.name}</h4>
-                    {idx === 0 ? (
-                      <span className="rounded-full bg-[var(--brand-soft)] px-1.5 py-0.5 text-[8px] font-extrabold uppercase tracking-[0.12em] text-[var(--brand-text)] xl:px-2 xl:text-[9px]">
-                        Leader
-                      </span>
-                    ) : null}
-                  </div>
-                  <p className="mt-0.5 truncate text-[10px] font-bold text-[var(--brand-muted-text)] xl:text-[11.5px]">{team.members} สมาชิก</p>
-                </div>
+            <div
+              className="relative flex h-8 w-8 flex-shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-white/80 shadow-[0_2px_8px_rgba(0,0,0,0.10)] text-[11px] font-black text-white"
+              style={{ background: `linear-gradient(180deg, ${themedColor(team.color)}, color-mix(in srgb, ${themedColor(team.color)} 76%, white))` }}
+            >
+              {team.leaderProfileImageUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={team.leaderProfileImageUrl} alt={team.leader} className="h-full w-full object-cover" />
+              ) : (
+                <span>{team.leader.charAt(0).toUpperCase()}</span>
+              )}
+            </div>
+
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-1.5">
+                <h4 className="truncate text-[13px] font-black leading-tight text-[var(--foreground)]">{team.name}</h4>
+                {idx === 0 ? (
+                  <span className="flex-shrink-0 rounded-full bg-[var(--brand-soft)] px-1.5 py-0.5 text-[8px] font-extrabold uppercase tracking-[0.08em] text-[var(--brand-text)]">
+                    LEADER
+                  </span>
+                ) : null}
               </div>
-
-              <div className="flex-shrink-0 text-right">
-                <p className="text-[15px] leading-none font-black text-[var(--foreground)] xl:text-[17px]">{team.points.toLocaleString()}</p>
-                <p className="mt-1 text-[8px] font-bold uppercase tracking-[0.1em] text-[var(--brand-muted-text)] xl:text-[9px] xl:tracking-[0.12em]">คะแนน</p>
+              <div className="mt-1 flex items-center gap-1.5">
+                <div className="h-[4px] min-w-0 flex-1 overflow-hidden rounded-full bg-[var(--secondary)]">
+                  <div
+                    className="h-full rounded-full transition-[width] duration-1000 ease-out"
+                    style={{ width: `${team.percent}%`, backgroundColor: themedColor(team.color) }}
+                  />
+                </div>
+                <span className="flex-shrink-0 text-[10px] font-black" style={{ color: themedColor(team.color) }}>{team.percent}%</span>
               </div>
             </div>
 
-            <div className="mt-2.5 xl:mt-3">
-              <div className="mb-1 flex items-center justify-between text-[9px] font-bold text-[var(--brand-muted-text)] xl:mb-1.5 xl:text-[10px]">
-                <span>ภาพรวมทีม</span>
-                <span>{team.percent}%</span>
-              </div>
-              <div className="h-[6px] w-full overflow-hidden rounded-full bg-[var(--secondary)] xl:h-[7px]">
-                <div
-                  className="h-full rounded-full transition-[width] duration-1000 ease-out"
-                  style={{ width: `${team.percent}%`, backgroundColor: themedColor(team.color) }}
-                />
-              </div>
+            <div className="flex-shrink-0 text-right">
+              <p className="text-[14px] leading-none font-black text-[var(--foreground)]">{team.points.toLocaleString()}</p>
+              <p className="mt-0.5 text-[9px] font-bold text-[var(--brand-muted-text)]">คะแนน</p>
             </div>
           </article>
         ))}
       </div>
+
+      {teamStandings.length > 4 ? (
+        <div className="border-t border-[var(--border)] px-2 py-2 xl:px-2.5">
+          <Link
+            href="/safety-culture/leaderboard"
+            className="flex w-full items-center justify-center gap-1.5 py-1.5 text-[12px] font-black text-[var(--brand-accent)] transition-colors hover:text-[var(--brand-nav-active)] outline-none"
+          >
+            ดูทั้งหมด {teamStandings.length} ทีม
+            <ChevronRight className="h-3.5 w-3.5" strokeWidth={2.5} />
+          </Link>
+        </div>
+      ) : null}
     </Card>
   );
 }
@@ -202,7 +176,7 @@ function PersonalRankingsCard({ className, style }: { className?: string; style?
       style={style}
     >
       <div className="border-b border-[var(--border)] px-3 py-3">
-        <p className="text-[11px] font-black tracking-[0.01em] text-[var(--foreground)]">อันดับในทีมของฉัน · เดือนนี้</p>
+        <p className="app-card-title text-[var(--foreground)]">อันดับในทีมของฉัน · เดือนนี้</p>
       </div>
 
       <div className="space-y-2 p-3">
@@ -211,7 +185,7 @@ function PersonalRankingsCard({ className, style }: { className?: string; style?
             <p className="text-[13.5px] font-black text-[var(--foreground)]">ยังไม่มีอันดับในทีม</p>
             <p className="mt-1 text-[11.5px] font-bold text-[var(--brand-muted-text)]">ยังไม่มีคะแนนในขณะนี้</p>
           </div>
-        ) : personalRankings.map((user) => (
+        ) : personalRankings.slice(0, 4).map((user) => (
           <article
             key={user.id}
             className={cn(
@@ -248,6 +222,18 @@ function PersonalRankingsCard({ className, style }: { className?: string; style?
           </article>
         ))}
       </div>
+
+      {personalRankings.length > 4 ? (
+        <div className="border-t border-[var(--border)] px-3 py-2">
+          <Link
+            href="/safety-culture/leaderboard"
+            className="flex w-full items-center justify-center gap-1.5 py-1.5 text-[12px] font-black text-[var(--brand-accent)] transition-colors hover:text-[var(--brand-nav-active)] outline-none"
+          >
+            ดูอันดับทั้งหมด
+            <ChevronRight className="h-3.5 w-3.5" strokeWidth={2.5} />
+          </Link>
+        </div>
+      ) : null}
     </Card>
   );
 }
@@ -696,33 +682,28 @@ export default function Page() {
 
   return (
     <>
-      <div className={cn("mx-auto w-full max-w-[1480px] px-3.5 pt-2.5 pb-7 md:px-5 font-sarabun", styles.page)}>
+      <div className={cn("page-shell-wide pt-2.5 pb-7 font-sarabun", styles.page)}>
         <div className="mb-3 anim-fade" style={animStyle(0)}>
           <SafetyCultureHero
             eyebrow="SAFETY CULTURE COMMUNITY"
             title={<>Safety Culture</>}
             description="พื้นที่แชร์เรื่องความปลอดภัย และช่วยกันต่อยอดพฤติกรรมปลอดภัยในทุกวัน"
-            mascotSrc="/images/icons/safety-culture-mascot.png"
-            mascotAlt="น้องวางใจถือโทรโข่งและมือถือโซเชียล"
-            mascotAction="announce"
             variant="community"
-            backgroundImage="/images/heroes/safety-culture-feed-hero.png"
+            backgroundImage="/images/heroes/Home01.png"
             backgroundOverlay="linear-gradient(90deg, rgba(210,235,255,.82) 0%, rgba(210,235,255,.60) 32%, rgba(210,235,255,.10) 56%, rgba(210,235,255,0) 74%)"
+            mascotSrc="/images/mascots/wangjai/5.png"
+            mascotAction="announce"
           />
         </div>
 
-        <div className={cn("mt-[13px] mb-[20px] anim-fade", styles.topTabs)} style={animStyle(0.02)}>
-          <SafetyCultureTabs />
-        </div>
-
         {visibleFeedEvents.length > 0 ? (
-          <Card className="mb-3 overflow-hidden rounded-[18px] border border-[var(--c-e4d3b3)] bg-[var(--c-fffdfa)] p-3 shadow-[0_8px_18px_rgba(62,36,13,0.04)] anim-fade md:p-4" style={animStyle(0.03)}>
-            <div className="mb-1 flex items-start gap-3 text-[var(--c-5c3214)]">
-              <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[var(--c-fff1c9)] text-[var(--c-f0a400)] shadow-[0_6px_14px_rgba(240,164,0,0.15)]">
-                <Sparkles className="h-5 w-5" strokeWidth={2.2} />
+          <Card className="mb-3 overflow-hidden rounded-[18px] border border-[var(--c-e4d3b3)] bg-[var(--c-fffdfa)] p-3 shadow-[0_8px_18px_rgba(62,36,13,0.04)] anim-fade md:p-3.5" style={animStyle(0.03)}>
+            <div className="mb-1 flex items-start gap-2.5 text-[var(--c-5c3214)]">
+              <div className="flex h-9 w-9 items-center justify-center rounded-[18px] bg-[var(--c-fff1c9)] text-[var(--c-f0a400)] shadow-[0_6px_14px_rgba(240,164,0,0.15)]">
+                <Sparkles className="h-4.5 w-4.5" strokeWidth={2.2} />
               </div>
               <div className="flex-1 pt-0.5">
-                <h2 className="text-[17px] font-black">กิจกรรมปัจจุบัน</h2>
+                <h2 className="app-card-title">กิจกรรมปัจจุบัน</h2>
               </div>
             </div>
 
@@ -731,20 +712,20 @@ export default function Page() {
                 type="button"
                 onClick={() => setMobileActivityStartIndex((current) => Math.max(0, current - 1))}
                 disabled={mobileActivityStartIndex === 0}
-                className="absolute top-1/2 left-[-14px] z-10 inline-flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-[var(--c-d7c5a7)] bg-white text-[var(--c-5c3214)] shadow-[0_8px_18px_rgba(62,36,13,0.08)] transition-all duration-200 hover:-translate-x-0.5 hover:bg-[var(--c-fff4df)] disabled:cursor-not-allowed disabled:opacity-45 disabled:hover:translate-x-0"
+                className="absolute top-1/2 left-[-10px] z-10 inline-flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-[var(--c-d7c5a7)] bg-white text-[var(--c-5c3214)] shadow-[0_8px_18px_rgba(62,36,13,0.08)] transition-all duration-200 hover:-translate-x-0.5 hover:bg-[var(--c-fff4df)] disabled:cursor-not-allowed disabled:opacity-45 disabled:hover:translate-x-0"
                 aria-label="เลื่อนดูกิจกรรมก่อนหน้า"
               >
-                <ChevronLeft className="h-5 w-5" strokeWidth={2.5} />
+                <ChevronLeft className="h-4.5 w-4.5" strokeWidth={2.5} />
               </button>
 
               <button
                 type="button"
                 onClick={() => setMobileActivityStartIndex((current) => Math.min(maxMobileActivityStartIndex, current + 1))}
                 disabled={mobileActivityStartIndex >= maxMobileActivityStartIndex}
-                className="absolute top-1/2 right-[-14px] z-10 inline-flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-[var(--c-d7c5a7)] bg-white text-[var(--c-5c3214)] shadow-[0_8px_18px_rgba(62,36,13,0.08)] transition-all duration-200 hover:translate-x-0.5 hover:bg-[var(--c-fff4df)] disabled:cursor-not-allowed disabled:opacity-45 disabled:hover:translate-x-0"
+                className="absolute top-1/2 right-[-10px] z-10 inline-flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-[var(--c-d7c5a7)] bg-white text-[var(--c-5c3214)] shadow-[0_8px_18px_rgba(62,36,13,0.08)] transition-all duration-200 hover:translate-x-0.5 hover:bg-[var(--c-fff4df)] disabled:cursor-not-allowed disabled:opacity-45 disabled:hover:translate-x-0"
                 aria-label="เลื่อนดูกิจกรรมถัดไป"
               >
-                <ChevronRight className="h-5 w-5" strokeWidth={2.5} />
+                <ChevronRight className="h-4.5 w-4.5" strokeWidth={2.5} />
               </button>
 
               <div className="overflow-hidden rounded-[24px]">
@@ -758,28 +739,28 @@ export default function Page() {
                 return (
                   <article
                     key={activity.id}
-                    className="flex min-w-full flex-[0_0_100%] flex-col rounded-[16px] border border-[var(--c-e4d3b3)] bg-white shadow-[0_10px_20px_rgba(62,36,13,0.05)]"
+                    className="flex min-w-full flex-[0_0_100%] flex-col rounded-[14px] border border-[var(--c-e4d3b3)] bg-white shadow-[0_8px_18px_rgba(62,36,13,0.05)]"
                   >
-                      <div className="relative aspect-[1.42/1] overflow-hidden rounded-t-[22px] bg-[var(--c-f7e7cf)] sm:aspect-[1.3/1]">
+                      <div className="relative aspect-[1.62/1] overflow-hidden rounded-t-[18px] bg-[var(--c-f7e7cf)] sm:aspect-[1.48/1]">
                         {activity.imageSrc ? (
                         <Image src={activity.imageSrc} alt={activity.title} fill sizes="(max-width: 1023px) 100vw, 33vw" className="object-cover" />
                         ) : (
-                          <div className="flex h-full items-center justify-center px-6 text-center text-[18px] font-black text-[#5f7591]">
+                          <div className="flex h-full items-center justify-center px-5 text-center text-[16px] font-black text-[#5f7591]">
                             {activity.imageText}
                         </div>
                       )}
-                      <span className={cn("absolute top-3 right-3 rounded-full border px-3 py-1 text-[11px] font-black backdrop-blur-[2px]", statusMeta.badgeClass)}>
+                      <span className={cn("absolute top-2.5 right-2.5 rounded-full border px-2.5 py-1 text-[10px] font-black backdrop-blur-[2px]", statusMeta.badgeClass)}>
                         {statusMeta.label}
                       </span>
                     </div>
 
-                    <div className="flex flex-1 flex-col px-4 pt-4 pb-3">
-                      <h3 className="text-[15.5px] font-black text-[var(--c-2f261d)]">{activity.title}</h3>
-                      <p className="mt-1.5 line-clamp-2 text-[12px] font-bold leading-relaxed text-[#667085]">{getActivityCardCopy(activity)}</p>
+                    <div className="flex flex-1 flex-col px-3.5 pt-3.5 pb-3">
+                      <h3 className="text-[14px] font-black text-[var(--c-2f261d)]">{activity.title}</h3>
+                      <p className="mt-1 line-clamp-2 text-[11px] font-bold leading-relaxed text-[#667085]">{getActivityCardCopy(activity)}</p>
 
-                      <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-[12px] font-black">
+                      <div className="mt-2.5 flex flex-wrap items-center justify-between gap-2 text-[11px] font-black">
                         <span className="inline-flex items-center gap-1.5 text-[#5f7591]">
-                          <CalendarDays className="h-4 w-4" strokeWidth={2.1} />
+                          <CalendarDays className="h-[14px] w-[14px]" strokeWidth={2.1} />
                           {activity.dateLabel}
                         </span>
                         <span className="text-[#18b989]">+{activity.points} คะแนน</span>
@@ -789,7 +770,7 @@ export default function Page() {
                         type="button"
                         variant="outline"
                         onClick={() => setExpandedActivity(activity)}
-                        className="mt-3 h-10 rounded-[14px] border-[var(--c-d7c5a7)] bg-[var(--c-faf8f2)] text-[13px] font-black text-[var(--c-5c3214)] hover:bg-[var(--c-fff2d8)]"
+                        className="mt-2.5 h-9 rounded-[12px] border-[var(--c-d7c5a7)] bg-[var(--c-faf8f2)] text-[12px] font-black text-[var(--c-5c3214)] hover:bg-[var(--c-fff2d8)]"
                       >
                         ดูรายละเอียด
                       </Button>
@@ -806,20 +787,20 @@ export default function Page() {
                 type="button"
                 onClick={() => setDesktopActivityStartIndex((current) => Math.max(0, current - 1))}
                 disabled={desktopActivityStartIndex === 0}
-                className="absolute top-1/2 left-[-22px] z-10 inline-flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-[var(--c-d7c5a7)] bg-white text-[var(--c-5c3214)] shadow-[0_8px_20px_rgba(62,36,13,0.08)] transition-all duration-200 hover:-translate-x-0.5 hover:bg-[var(--c-fff4df)] disabled:cursor-not-allowed disabled:opacity-45 disabled:hover:translate-x-0"
+                className="absolute top-1/2 left-[-18px] z-10 inline-flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-[var(--c-d7c5a7)] bg-white text-[var(--c-5c3214)] shadow-[0_8px_20px_rgba(62,36,13,0.08)] transition-all duration-200 hover:-translate-x-0.5 hover:bg-[var(--c-fff4df)] disabled:cursor-not-allowed disabled:opacity-45 disabled:hover:translate-x-0"
                 aria-label="เลื่อนดูกิจกรรมก่อนหน้า"
               >
-                <ChevronLeft className="h-5 w-5" strokeWidth={2.5} />
+                <ChevronLeft className="h-4.5 w-4.5" strokeWidth={2.5} />
               </button>
 
               <button
                 type="button"
                 onClick={() => setDesktopActivityStartIndex((current) => Math.min(maxDesktopActivityStartIndex, current + 1))}
                 disabled={desktopActivityStartIndex >= maxDesktopActivityStartIndex}
-                className="absolute top-1/2 right-[-22px] z-10 inline-flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-[var(--c-d7c5a7)] bg-white text-[var(--c-5c3214)] shadow-[0_8px_20px_rgba(62,36,13,0.08)] transition-all duration-200 hover:translate-x-0.5 hover:bg-[var(--c-fff4df)] disabled:cursor-not-allowed disabled:opacity-45 disabled:hover:translate-x-0"
+                className="absolute top-1/2 right-[-18px] z-10 inline-flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-[var(--c-d7c5a7)] bg-white text-[var(--c-5c3214)] shadow-[0_8px_20px_rgba(62,36,13,0.08)] transition-all duration-200 hover:translate-x-0.5 hover:bg-[var(--c-fff4df)] disabled:cursor-not-allowed disabled:opacity-45 disabled:hover:translate-x-0"
                 aria-label="เลื่อนดูกิจกรรมถัดไป"
               >
-                <ChevronRight className="h-5 w-5" strokeWidth={2.5} />
+                <ChevronRight className="h-4.5 w-4.5" strokeWidth={2.5} />
               </button>
 
               <div className="overflow-hidden rounded-[24px]">
@@ -833,41 +814,41 @@ export default function Page() {
                   return (
                     <article
                       key={activity.id}
-                      className="flex min-w-[calc((100%-1.5rem)/3)] flex-[0_0_calc((100%-1.5rem)/3)] flex-col rounded-[16px] border border-[var(--c-e4d3b3)] bg-white shadow-[0_10px_20px_rgba(62,36,13,0.05)] transition-transform duration-300 hover:-translate-y-1"
+                      className="flex min-w-[calc((100%-1.5rem)/3)] flex-[0_0_calc((100%-1.5rem)/3)] flex-col rounded-[14px] border border-[var(--c-e4d3b3)] bg-white shadow-[0_8px_18px_rgba(62,36,13,0.05)] transition-transform duration-300 hover:-translate-y-0.5"
                     >
-                      <div className="relative aspect-[1.2/1] overflow-hidden rounded-t-[22px] bg-[var(--c-f7e7cf)]">
+                      <div className="relative aspect-[1.42/1] overflow-hidden rounded-t-[18px] bg-[var(--c-f7e7cf)]">
                         {activity.imageSrc ? (
                           <Image src={activity.imageSrc} alt={activity.title} fill sizes="(max-width: 1023px) 100vw, 33vw" className="object-cover" />
                         ) : (
-                          <div className="flex h-full items-center justify-center px-6 text-center text-[18px] font-black text-[#5f7591]">
+                          <div className="flex h-full items-center justify-center px-5 text-center text-[16px] font-black text-[#5f7591]">
                             {activity.imageText}
                           </div>
                         )}
-                        <span className={cn("absolute top-3 right-3 rounded-full border px-3 py-1 text-[11px] font-black backdrop-blur-[2px]", statusMeta.badgeClass)}>
+                        <span className={cn("absolute top-2.5 right-2.5 rounded-full border px-2.5 py-1 text-[10px] font-black backdrop-blur-[2px]", statusMeta.badgeClass)}>
                           {statusMeta.label}
                         </span>
                       </div>
 
-                      <div className="flex flex-1 flex-col p-3">
-                        <h3 className="text-[15.5px] font-black text-[var(--c-2f261d)]">{activity.title}</h3>
-                        <p className="mt-2 line-clamp-2 text-[13.5px] font-bold leading-relaxed text-[#667085]">{getActivityCardCopy(activity)}</p>
+                      <div className="flex flex-1 flex-col p-2.5">
+                        <h3 className="text-[14px] font-black text-[var(--c-2f261d)]">{activity.title}</h3>
+                        <p className="mt-1.5 line-clamp-2 text-[12px] font-bold leading-relaxed text-[#667085]">{getActivityCardCopy(activity)}</p>
 
-                        <div className="mt-4 flex flex-wrap items-center justify-between gap-2 text-[12px] font-black">
+                        <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-[11px] font-black">
                           <span className="inline-flex items-center gap-1.5 text-[#5f7591]">
-                            <CalendarDays className="h-4 w-4" strokeWidth={2.1} />
+                            <CalendarDays className="h-[14px] w-[14px]" strokeWidth={2.1} />
                             {activity.dateLabel}
                           </span>
                           <span className="text-[#18b989]">+{activity.points} คะแนน</span>
                         </div>
 
                         <Button
-                          type="button"
-                          variant="outline"
-                          onClick={() => setExpandedActivity(activity)}
-                          className="mt-4 h-10 rounded-[14px] border-[var(--c-d7c5a7)] bg-[var(--c-faf8f2)] text-[13px] font-black text-[var(--c-5c3214)] hover:bg-[var(--c-fff2d8)]"
-                        >
-                          ดูรายละเอียด
-                        </Button>
+                        type="button"
+                        variant="outline"
+                        onClick={() => setExpandedActivity(activity)}
+                        className="mt-3 h-9 rounded-[12px] border-[var(--c-d7c5a7)] bg-[var(--c-faf8f2)] text-[12px] font-black text-[var(--c-5c3214)] hover:bg-[var(--c-fff2d8)]"
+                      >
+                        ดูรายละเอียด
+                      </Button>
                       </div>
                     </article>
                   );
@@ -879,7 +860,7 @@ export default function Page() {
         ) : null}
 
 <div className={cn("grid grid-cols-1 gap-3 md:gap-4 xl:grid-cols-[minmax(0,1.82fr)_minmax(310px,0.88fr)]", styles.communityGrid)}>
-          <div className="flex flex-col gap-3">
+          <div className="mx-auto flex w-full max-w-[900px] flex-col gap-3 xl:max-w-[860px] 2xl:max-w-[900px]">
             <Card className={cn("rounded-[16px] px-3 py-2 anim-fade md:rounded-[18px] md:px-3.5 md:py-2.5", styles.composer)} style={animStyle(0.04)}>
               <div className="flex items-center gap-2 sm:gap-2.5">
                 <div className="flex min-w-0 flex-1 items-center gap-[8px]">
@@ -907,7 +888,6 @@ export default function Page() {
             </Card>
 
             <div className="hidden flex-col gap-3 md:flex xl:hidden">
-              <LeadingTeamCard className="anim-fade" style={animStyle(0.045)} />
               <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
                 <TeamStandingsCard className="anim-fade" style={animStyle(0.05)} />
                 <PersonalRankingsCard className="anim-fade" style={animStyle(0.055)} />
@@ -1025,16 +1005,23 @@ export default function Page() {
 
                   {(postPhotos.length > 0 || post.imageText) && (
                     <div className="flex flex-col gap-2 font-sarabun">
-                      <div className="relative aspect-[1.34/1] w-full overflow-hidden rounded-[16px] border-[1.5px] border-[var(--c-e5cfad)] bg-[var(--c-f7e7cf)]">
+                      <div className="relative w-full overflow-hidden rounded-[16px] border-[1.5px] border-[var(--c-e5cfad)] bg-[#f3f6fa] md:mx-auto md:max-w-[680px]">
                         {activePhoto ? (
                           <>
                             <button
                               type="button"
                               onClick={() => showExpandedPhotoAt(post, activePhotoIndex)}
-                              className="absolute inset-0 z-0 cursor-zoom-in"
+                              className="relative z-0 flex min-h-[220px] max-h-[480px] w-full cursor-zoom-in items-center justify-center bg-[#eef3f8] sm:min-h-[260px] md:min-h-[300px] md:max-h-[520px]"
                               aria-label="ดูรูปภาพเต็ม"
                             >
-                              <Image src={activePhoto.dataUrl} alt={`Attached post scene by ${post.author}`} fill sizes="(max-width: 1023px) 100vw, 640px" className="object-cover" />
+                              <Image
+                                src={activePhoto.dataUrl}
+                                alt={`Attached post scene by ${post.author}`}
+                                width={1200}
+                                height={900}
+                                sizes="(max-width: 1023px) 100vw, 680px"
+                                className="h-auto max-h-[480px] w-full object-contain md:max-h-[520px]"
+                              />
                             </button>
                             {postPhotos.length > 1 && (
                               <span className="absolute right-3 bottom-3 z-10 rounded-full bg-[rgba(53,50,48,0.86)] px-2.5 py-1 text-[13px] font-black text-white">
@@ -1259,7 +1246,6 @@ export default function Page() {
           </div>
 
           <div className={cn("hidden flex-col gap-3 xl:flex", styles.sidebar)}>
-            <LeadingTeamCard className={cn("anim-fade", styles.leadingCard)} style={animStyle(0.1)} />
             <TeamStandingsCard className={cn("anim-fade", styles.rankingCard)} style={animStyle(0.15)} />
             <PersonalRankingsCard className={cn("anim-fade", styles.rankingCard)} style={animStyle(0.2)} />
             <SUEATipCard className={cn("anim-fade", styles.tipCard)} style={animStyle(0.25)} tipText={tipText} />
@@ -1268,67 +1254,74 @@ export default function Page() {
       </div>
 
       <Dialog open={!!expandedPhoto} onOpenChange={(open) => !open && setExpandedPhoto(null)}>
-        <DialogContent
+        <AppDialogContent
+          size="xl"
           showCloseButton={false}
           aria-label="ภาพเต็มของโพสต์"
-          className="z-[90] max-w-[calc(100vw-2rem)] border-0 bg-transparent p-0 shadow-none"
+          className="z-[90] max-h-[min(88vh,760px)] w-[calc(100vw-20px)] overflow-hidden border-[#d7e6f6] bg-[linear-gradient(180deg,#ffffff,#f8fcff)] p-0 shadow-[0_28px_80px_rgba(6,43,99,0.28)] sm:w-[calc(100vw-32px)] sm:!max-w-[860px]"
         >
           {expandedPhoto ? (
-            <div className="relative flex max-h-[92vh] w-fit max-w-[calc(100vw-2rem)] flex-col gap-3">
-            <div className="flex items-center justify-between gap-3 text-white">
-              <div className="min-w-0">
-                <div className="truncate text-[15px] font-extrabold">{expandedPhoto.postAuthor}</div>
-                <div className="text-[12px] font-bold text-white/70">
-                  {expandedPhoto.photos.length > 1 ? `รูปที่ ${expandedPhoto.index + 1} จาก ${expandedPhoto.photos.length}` : "ภาพเต็ม"}
+            <>
+              <AppDialogSectionHeader className="flex-row items-start justify-between gap-3 border-[#d7e6f6] bg-[linear-gradient(135deg,#ffffff_0%,#f4f9ff_56%,#eaf4ff_100%)] px-4 py-3 sm:px-5 sm:py-3.5">
+                <div className="min-w-0">
+                  <AppDialogTitle className="truncate text-[15px] text-[var(--c-2f261d)] sm:text-[17px]">
+                    {expandedPhoto.postAuthor}
+                  </AppDialogTitle>
+                  <AppDialogDescription className="mt-0.5 text-[10px] text-[#667085] sm:text-[11px]">
+                    {expandedPhoto.photos.length > 1 ? `รูปที่ ${expandedPhoto.index + 1} จาก ${expandedPhoto.photos.length}` : "ภาพเต็ม"}
+                  </AppDialogDescription>
                 </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => setExpandedPhoto(null)}
-                className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/18 bg-white/10 text-white transition-colors hover:bg-white/16"
-                aria-label="ปิดภาพเต็ม"
-              >
-                <X className="h-5 w-5" strokeWidth={2.4} />
-              </button>
-            </div>
+                <button
+                  type="button"
+                  onClick={() => setExpandedPhoto(null)}
+                  className="inline-flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-[12px] border border-[#cfe0f2] bg-[linear-gradient(180deg,#f7fbff,#edf5ff)] text-[#6c7f99] shadow-[0_8px_20px_rgba(185,223,255,.2)] transition-colors hover:text-[#173b6b] sm:h-10 sm:w-10"
+                  aria-label="ปิดภาพเต็ม"
+                >
+                  <X className="h-4 w-4 sm:h-4.5 sm:w-4.5" strokeWidth={2.2} />
+                </button>
+              </AppDialogSectionHeader>
 
-            <div className="relative flex max-h-[calc(92vh-56px)] max-w-full items-center justify-center overflow-hidden rounded-[24px] border border-white/10 bg-[rgba(255,255,255,0.04)] shadow-[0_20px_50px_rgba(0,0,0,0.35)]">
-              {expandedPhoto.photos.length > 1 ? (
-                <button
-                  type="button"
-                  onClick={() => goToExpandedPhoto(-1)}
-                  className="absolute top-1/2 left-3 z-10 inline-flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-white/18 bg-white/10 text-white transition-all duration-200 hover:-translate-x-0.5 hover:bg-white/16"
-                  aria-label="ดูรูปก่อนหน้า"
-                >
-                  <ChevronLeft className="h-5 w-5" strokeWidth={2.4} />
-                </button>
-              ) : null}
-              <img
-                src={expandedPhoto.photos[expandedPhoto.index]?.dataUrl}
-                alt={expandedPhoto.alt}
-                className="block max-h-[78vh] max-w-full object-contain"
-              />
-              {expandedPhoto.photos.length > 1 ? (
-                <button
-                  type="button"
-                  onClick={() => goToExpandedPhoto(1)}
-                  className="absolute top-1/2 right-3 z-10 inline-flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-white/18 bg-white/10 text-white transition-all duration-200 hover:translate-x-0.5 hover:bg-white/16"
-                  aria-label="ดูรูปถัดไป"
-                >
-                  <ChevronRight className="h-5 w-5" strokeWidth={2.4} />
-                </button>
-              ) : null}
-            </div>
-            </div>
+              <AppDialogBody className="relative min-h-0 overflow-y-auto px-3 py-3 sm:px-4 sm:py-4">
+                <div className="relative flex min-h-[220px] items-center justify-center overflow-hidden rounded-[22px] border border-[#cfe0f2] bg-[linear-gradient(180deg,#f7fbff,#edf5ff)] px-10 py-4 shadow-[0_14px_32px_rgba(185,223,255,.18)] sm:min-h-[280px] sm:px-12 md:min-h-[360px]">
+                  {expandedPhoto.photos.length > 1 ? (
+                    <button
+                      type="button"
+                      onClick={() => goToExpandedPhoto(-1)}
+                      className="absolute top-1/2 left-3 z-10 inline-flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-[#cfe0f2] bg-white/92 text-[#173b6b] shadow-[0_8px_18px_rgba(185,223,255,.24)] transition-all duration-200 hover:-translate-x-0.5 hover:bg-white sm:h-10 sm:w-10"
+                      aria-label="ดูรูปก่อนหน้า"
+                    >
+                      <ChevronLeft className="h-4.5 w-4.5" strokeWidth={2.4} />
+                    </button>
+                  ) : null}
+
+                  <img
+                    src={expandedPhoto.photos[expandedPhoto.index]?.dataUrl}
+                    alt={expandedPhoto.alt}
+                    className="block max-h-[65vh] max-w-full rounded-[18px] object-contain sm:max-h-[68vh]"
+                  />
+
+                  {expandedPhoto.photos.length > 1 ? (
+                    <button
+                      type="button"
+                      onClick={() => goToExpandedPhoto(1)}
+                      className="absolute top-1/2 right-3 z-10 inline-flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-[#cfe0f2] bg-white/92 text-[#173b6b] shadow-[0_8px_18px_rgba(185,223,255,.24)] transition-all duration-200 hover:translate-x-0.5 hover:bg-white sm:h-10 sm:w-10"
+                      aria-label="ดูรูปถัดไป"
+                    >
+                      <ChevronRight className="h-4.5 w-4.5" strokeWidth={2.4} />
+                    </button>
+                  ) : null}
+                </div>
+              </AppDialogBody>
+            </>
           ) : null}
-        </DialogContent>
+        </AppDialogContent>
       </Dialog>
 
       <Dialog open={!!expandedPost} onOpenChange={(open) => !open && closeExpandedPost()}>
-        <DialogContent
+        <AppDialogContent
           showCloseButton={false}
           aria-label="รายละเอียดโพสต์"
-          className="z-[91] flex max-h-[86vh] w-full max-w-[430px] flex-col gap-0 overflow-hidden rounded-[28px] border border-[#cfe0f2] bg-[linear-gradient(180deg,#ffffff,#f8fcff)] p-0 shadow-[0_28px_80px_rgba(6,43,99,0.28)] sm:max-w-[560px] md:max-h-[82vh] md:max-w-[620px]"
+          className="z-[91] flex max-h-[86vh] w-full max-w-[430px] flex-col sm:max-w-[560px] md:max-h-[82vh] md:max-w-[620px]"
         >
           {expandedPost ? (
             <>
@@ -1374,21 +1367,35 @@ export default function Page() {
 
                 {(expandedPostPhotos.length > 0 || expandedPost.imageText) && (
                   <div className="flex flex-col gap-2">
-                    <div className="relative aspect-[1.18/1] w-full overflow-hidden rounded-[16px] border-[1.5px] border-[var(--c-e5cfad)] bg-[var(--c-f7e7cf)] md:aspect-[1.52/1]">
+                    <div className="relative w-full overflow-hidden rounded-[16px] border-[1.5px] border-[var(--c-e5cfad)] bg-[#f3f6fa] md:mx-auto md:max-w-[680px]">
                       {expandedPostActivePhoto ? (
                         <>
                           {isNotificationPostPopup ? (
-                            <div className="absolute inset-0 z-0">
-                              <Image src={expandedPostActivePhoto.dataUrl} alt={`Attached post scene by ${expandedPost.author}`} fill sizes="(max-width: 1023px) 100vw, 640px" className="object-cover" />
+                            <div className="relative z-0 flex min-h-[220px] max-h-[500px] w-full items-center justify-center bg-[#eef3f8] sm:min-h-[260px] md:min-h-[300px] md:max-h-[540px]">
+                              <Image
+                                src={expandedPostActivePhoto.dataUrl}
+                                alt={`Attached post scene by ${expandedPost.author}`}
+                                width={1200}
+                                height={900}
+                                sizes="(max-width: 1023px) 100vw, 680px"
+                                className="h-auto max-h-[500px] w-full object-contain md:max-h-[540px]"
+                              />
                             </div>
                           ) : (
                             <button
                               type="button"
                               onClick={() => showExpandedPhotoAt(expandedPost, expandedPostActivePhotoIndex)}
-                              className="absolute inset-0 z-0 cursor-zoom-in"
+                              className="relative z-0 flex min-h-[220px] max-h-[500px] w-full cursor-zoom-in items-center justify-center bg-[#eef3f8] sm:min-h-[260px] md:min-h-[300px] md:max-h-[540px]"
                               aria-label="ดูรูปภาพเต็ม"
                             >
-                              <Image src={expandedPostActivePhoto.dataUrl} alt={`Attached post scene by ${expandedPost.author}`} fill sizes="(max-width: 1023px) 100vw, 640px" className="object-cover" />
+                              <Image
+                                src={expandedPostActivePhoto.dataUrl}
+                                alt={`Attached post scene by ${expandedPost.author}`}
+                                width={1200}
+                                height={900}
+                                sizes="(max-width: 1023px) 100vw, 680px"
+                                className="h-auto max-h-[500px] w-full object-contain md:max-h-[540px]"
+                              />
                             </button>
                           )}
                           {expandedPostPhotos.length > 1 && (
@@ -1596,136 +1603,151 @@ export default function Page() {
             </div>
             </>
           ) : null}
-        </DialogContent>
+        </AppDialogContent>
       </Dialog>
 
       <Dialog open={likedByPostId != null} onOpenChange={(open) => !open && setLikedByPostId(null)}>
-        <DialogContent
+        <AppDialogContent
           showCloseButton={false}
           aria-label="ผู้ที่กดถูกใจ"
-          className="z-[110] w-full max-w-[380px] gap-0 overflow-hidden rounded-[28px] border border-[#cfe0f2] bg-[linear-gradient(180deg,#ffffff,#f8fcff)] p-0 shadow-[0_28px_80px_rgba(6,43,99,0.24)]"
+          className="z-[110] max-w-[380px]"
         >
-          <DialogHeader className="mx-0 mt-0 flex-row items-center justify-between border-b border-[#d7e6f6] bg-[linear-gradient(135deg,#ffffff_0%,#f4f9ff_56%,#eaf4ff_100%)] px-5 py-4">
-              <div>
-                <DialogTitle className="text-[18px] font-black text-[var(--c-2f261d)]">ผู้ที่กดถูกใจ</DialogTitle>
-                <DialogDescription className="text-[12px] font-bold text-[#5f7591]">ทั้งหมด {likedByPost?.likes ?? 0} คน</DialogDescription>
-              </div>
-              <button type="button" onClick={() => setLikedByPostId(null)} aria-label="ปิด" className="p-2 text-[#667085]">
-                <X className="h-5 w-5" />
-              </button>
-          </DialogHeader>
-            <div className="max-h-[55vh] overflow-y-auto p-3">
-              {(likedByPost?.likedBy || []).length > 0 ? (
-                (likedByPost?.likedBy || []).map((person) => (
-                  <div key={person.userId} className="flex items-center gap-3 rounded-[14px] px-2 py-2.5">
-                    <ProfileAvatar imageUrl={person.profileImageUrl} text={person.name.charAt(0)} sizeClassName="h-10 w-10" textClassName="text-[14px]" />
-                    <span className="min-w-0 truncate text-[14px] font-black text-[var(--c-33271a)]">{person.name}</span>
-                  </div>
-                ))
-              ) : (
-                <div className="px-4 py-8 text-center text-[13px] font-bold text-[#5f7591]">ยังไม่มีผู้กดถูกใจโพสต์นี้</div>
-              )}
+          <AppDialogSectionHeader className="flex-row items-center justify-between py-4">
+            <div>
+              <AppDialogTitle>ผู้ที่กดถูกใจ</AppDialogTitle>
+              <AppDialogDescription>ทั้งหมด {likedByPost?.likes ?? 0} คน</AppDialogDescription>
             </div>
-        </DialogContent>
+            <button type="button" onClick={() => setLikedByPostId(null)} aria-label="ปิด" className="p-2 text-[#667085]">
+              <X className="h-5 w-5" />
+            </button>
+          </AppDialogSectionHeader>
+          <AppDialogBody className="max-h-[55vh] overflow-y-auto p-3">
+            {(likedByPost?.likedBy || []).length > 0 ? (
+              (likedByPost?.likedBy || []).map((person) => (
+                <div key={person.userId} className="flex items-center gap-3 rounded-[14px] px-2 py-2.5">
+                  <ProfileAvatar imageUrl={person.profileImageUrl} text={person.name.charAt(0)} sizeClassName="h-10 w-10" textClassName="text-[14px]" />
+                  <span className="min-w-0 truncate text-[14px] font-black text-[var(--c-33271a)]">{person.name}</span>
+                </div>
+              ))
+            ) : (
+              <div className="px-4 py-8 text-center text-[13px] font-bold text-[#5f7591]">ยังไม่มีผู้กดถูกใจโพสต์นี้</div>
+            )}
+          </AppDialogBody>
+        </AppDialogContent>
       </Dialog>
 
       <Dialog open={deletingPostId != null} onOpenChange={(open) => !open && setDeletingPostId(null)}>
-        <DialogContent className="z-[95] w-full max-w-[360px] rounded-[28px] border border-[#cfe0f2] bg-[linear-gradient(180deg,#ffffff,#f8fcff)] p-6 shadow-[0_28px_80px_rgba(6,43,99,0.24)]">
-          <DialogHeader className="mx-0 mt-0 border-0 bg-transparent p-0">
-            <DialogTitle className="text-[17px] font-black text-[#c73a21]">ยืนยันการลบโพส</DialogTitle>
-            <DialogDescription className="mt-2 text-[14px] font-bold leading-relaxed text-[var(--c-33271a)]">
+        <AppDialogContent className="z-[95] max-w-[360px]">
+          <AppDialogSectionHeader>
+            <AppDialogTitle className="text-[#c73a21]">ยืนยันการลบโพส</AppDialogTitle>
+            <AppDialogDescription className="mt-2 text-[14px] leading-relaxed text-[var(--c-33271a)]">
               คุณแน่ใจหรือไม่ว่าต้องการลบโพสนี้? การลบจะไม่สามารถกู้คืนได้
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter className="mx-0 mb-0 mt-5 border-0 bg-transparent p-0">
-            <div className="flex justify-end gap-2">
-              <button
-                type="button"
-                onClick={() => setDeletingPostId(null)}
-                className="rounded-full border border-[var(--c-e3d0ae)] bg-white px-4 py-2 text-[13px] font-extrabold text-[var(--c-706557)] hover:bg-[var(--c-fff7e8)]"
-              >
-                ยกเลิก
-              </button>
-              <button
-                type="button"
-                onClick={handleConfirmDeletePost}
-                className="rounded-full bg-[#c73a21] px-4 py-2 text-[13px] font-extrabold text-white hover:bg-[#a82e19]"
-              >
-                ยืนยันลบ
-              </button>
-            </div>
-          </DialogFooter>
-        </DialogContent>
+            </AppDialogDescription>
+          </AppDialogSectionHeader>
+          <AppDialogSectionFooter className="flex justify-end gap-2">
+            <button
+              type="button"
+              onClick={() => setDeletingPostId(null)}
+              className="rounded-full border border-[var(--c-e3d0ae)] bg-white px-4 py-2 text-[13px] font-extrabold text-[var(--c-706557)] hover:bg-[var(--c-fff7e8)]"
+            >
+              ยกเลิก
+            </button>
+            <button
+              type="button"
+              onClick={handleConfirmDeletePost}
+              className="rounded-full bg-[#c73a21] px-4 py-2 text-[13px] font-extrabold text-white hover:bg-[#a82e19]"
+            >
+              ยืนยันลบ
+            </button>
+          </AppDialogSectionFooter>
+        </AppDialogContent>
       </Dialog>
 
       <Dialog open={!!expandedActivity} onOpenChange={(open) => !open && closeExpandedActivity()}>
-        <DialogContent
+        <AppDialogContent
+          size="xl"
           showCloseButton={false}
           aria-label="รายละเอียดกิจกรรม"
-          className="z-[92] grid h-[min(94vh,900px)] w-full max-w-[920px] grid-rows-[auto_minmax(0,1fr)] gap-0 overflow-hidden rounded-[28px] border border-[#cfe0f2] bg-[linear-gradient(180deg,#ffffff,#f8fcff)] p-0 shadow-[0_28px_80px_rgba(6,43,99,0.28)]"
+          className="z-[92] grid max-h-[min(82vh,640px)] w-[calc(100vw-20px)] grid-rows-[auto_minmax(0,1fr)] sm:w-[calc(100vw-32px)] sm:!max-w-[760px] md:!max-w-[780px]"
         >
           {expandedActivity ? (
             <>
-            <div className="flex items-start justify-between gap-4 border-b border-[#d7e6f6] bg-[linear-gradient(135deg,#ffffff_0%,#f4f9ff_56%,#eaf4ff_100%)] px-5 py-4 md:px-7 md:py-5">
-              <div className="min-w-0">
-                <h3 className="text-[26px] font-black text-[var(--c-2f261d)]">{expandedActivity.title}</h3>
-                <p className="mt-1 text-[13px] font-bold text-[#667085]">{expandedActivity.subtitle}</p>
-              </div>
-              <button
-                type="button"
-                onClick={closeExpandedActivity}
-                className="inline-flex h-10 w-10 flex-shrink-0 items-center justify-center bg-transparent text-[#667085] transition-colors hover:text-[#173b6b]"
-                aria-label="ปิดรายละเอียดกิจกรรม"
-              >
-                <X className="h-5 w-5" strokeWidth={2.3} />
-              </button>
-            </div>
-
-            <div className="min-h-0 overflow-y-auto overscroll-contain px-5 py-5 md:px-7 md:py-6">
-              <div className="grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,1.05fr)_minmax(280px,0.95fr)]">
-                <div className="self-start overflow-hidden rounded-[24px] border border-[var(--c-eee2cb)] bg-[var(--c-faf8f2)]">
-                  {expandedActivity.imageSrc ? (
-                    <img
-                      src={expandedActivity.imageSrc}
-                      alt={expandedActivity.title}
-                      className="block aspect-[4/3] max-h-[520px] min-h-[260px] w-full object-cover"
-                    />
-                  ) : (
-                    <div className="flex aspect-[4/3] min-h-[260px] items-center justify-center px-8 text-center text-[22px] font-black text-[#5f7591]">
-                      {expandedActivity.imageText}
-                    </div>
-                  )}
+              <AppDialogSectionHeader className="flex-row items-start justify-between gap-3 border-[#d7e6f6] bg-[linear-gradient(135deg,#ffffff_0%,#f4f9ff_56%,#eaf4ff_100%)] px-4 py-3 sm:px-4.5 sm:py-3.5 md:px-5 md:py-3.5">
+                <div className="min-w-0">
+                  <AppDialogTitle className="text-[15px] text-[var(--c-2f261d)] sm:text-[17px] md:text-[19px]">
+                    {expandedActivity.title}
+                  </AppDialogTitle>
+                  <AppDialogDescription className="mt-0.5 text-[9.5px] text-[#667085] sm:text-[10.5px] md:text-[11.5px]">
+                    {expandedActivity.subtitle}
+                  </AppDialogDescription>
                 </div>
+                <button
+                  type="button"
+                  onClick={closeExpandedActivity}
+                  className="inline-flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-[12px] border border-[#cfe0f2] bg-[linear-gradient(180deg,#f7fbff,#edf5ff)] text-[#6c7f99] shadow-[0_8px_20px_rgba(185,223,255,.2)] transition-colors hover:text-[#173b6b] sm:h-10 sm:w-10 md:h-11 md:w-11"
+                  aria-label="ปิดรายละเอียดกิจกรรม"
+                >
+                  <X className="h-4 w-4 sm:h-4.5 sm:w-4.5 md:h-5 md:w-5" strokeWidth={2.2} />
+                </button>
+              </AppDialogSectionHeader>
 
-                <div className="grid grid-cols-1 gap-4">
-                  <Card className="rounded-[22px] border-[var(--c-e4d3b3)] bg-white p-5 shadow-none">
-                    <div className="mb-3 text-[18px] font-black text-[var(--c-2f261d)]">รายละเอียดของกิจกรรมนี้:</div>
-                    <p className="text-[15px] font-bold leading-relaxed text-[#667085]">{expandedActivity.details}</p>
-                    <div className="mt-4 inline-flex items-center gap-2 rounded-full bg-[#effff6] px-3 py-1.5 text-[13px] font-black text-[#18b989]">
-                      <Trophy className="h-4 w-4" strokeWidth={2.2} />
-                      Points: {expandedActivity.points}
-                    </div>
-                  </Card>
+              <AppDialogBody className="min-h-0 overflow-y-auto overscroll-contain px-3.5 py-3.5 sm:px-4 sm:py-4 md:px-5 md:py-5">
+                <div className="grid grid-cols-1 gap-3.5 md:gap-4">
+                  <div className="self-start overflow-hidden rounded-[20px] border border-[#cfe0f2] bg-[linear-gradient(180deg,#ffffff,#f8fbff)] p-1.5 shadow-[0_10px_24px_rgba(185,223,255,.18)] sm:rounded-[22px]">
+                    {expandedActivity.imageSrc ? (
+                      <div className="flex aspect-[2.15/1] max-h-[240px] min-h-[150px] w-full items-center justify-center rounded-[16px] bg-[linear-gradient(180deg,#edf6ff,#e6f2ff)] px-2 py-2 sm:max-h-[260px] sm:min-h-[180px] sm:rounded-[18px] md:max-h-[280px] md:min-h-[200px] md:rounded-[20px]">
+                        <img
+                          src={expandedActivity.imageSrc}
+                          alt={expandedActivity.title}
+                          className="block h-full max-h-full w-full rounded-[14px] object-contain sm:rounded-[16px] md:rounded-[18px]"
+                        />
+                      </div>
+                    ) : (
+                      <div className="flex aspect-[2.15/1] min-h-[150px] items-center justify-center rounded-[16px] bg-[linear-gradient(180deg,#edf6ff,#e6f2ff)] px-6 text-center text-[16px] font-black text-[#5f7591] sm:min-h-[180px] sm:rounded-[18px] sm:text-[18px] md:min-h-[200px] md:rounded-[20px] md:text-[20px]">
+                        {expandedActivity.imageText}
+                      </div>
+                    )}
+                  </div>
 
-                  <Card className="rounded-[22px] border-[var(--c-e4d3b3)] bg-white p-5 shadow-none">
-                    <div className="mb-3 text-[18px] font-black text-[var(--c-2f261d)]">สถานะกิจกรรม:</div>
-                    <div className="flex flex-col items-center justify-center gap-3 rounded-[18px] border border-[var(--c-eee2cb)] bg-[var(--c-faf8f2)] px-4 py-5 text-center">
-                      <Clock3 className={cn("h-14 w-14", getActivityStatusMeta(expandedActivity.status).iconClass)} strokeWidth={1.8} />
-                      <div className="text-[20px] font-black text-[var(--c-5c3214)]">{getActivityStatusMeta(expandedActivity.status).label}</div>
-                      <p className="max-w-[260px] text-[14px] font-bold leading-relaxed text-[#667085]">
-                        {getActivityStatusMeta(expandedActivity.status).note}
-                      </p>
-                      <span className="rounded-full border border-[var(--c-ddd9cd)] bg-white px-3 py-1 text-[12px] font-black text-[var(--c-5c3214)]">
-                        {expandedActivity.dateLabel}
-                      </span>
-                    </div>
-                  </Card>
+                  <div className="grid grid-cols-1 gap-3.5 md:grid-cols-2 md:items-start md:gap-4">
+                    <Card className="rounded-[18px] border border-[#cfe0f2] bg-[linear-gradient(180deg,#ffffff,#f8fbff)] p-3.5 shadow-[0_10px_24px_rgba(185,223,255,.14)] sm:rounded-[20px] sm:p-4 md:h-full">
+                      <div className="mb-3 flex items-center gap-2.5 sm:mb-3.5">
+                        <span className="flex h-10 w-10 items-center justify-center rounded-full border border-[#cfe0f2] bg-[linear-gradient(180deg,#f4f9ff,#e8f2ff)] text-[#2f86f6] shadow-[inset_0_1px_0_rgba(255,255,255,.85)] sm:h-11 sm:w-11">
+                          <ClipboardList className="h-5 w-5 sm:h-5.5 sm:w-5.5" strokeWidth={2.1} />
+                        </span>
+                        <div className="text-[14px] font-black text-[var(--c-2f261d)] sm:text-[15px]">รายละเอียดของกิจกรรมนี้:</div>
+                      </div>
+                      <p className="text-[12px] font-bold leading-relaxed text-[#667085] sm:text-[13px]">{expandedActivity.details}</p>
+                      <div className="mt-4 inline-flex w-full items-center gap-2 rounded-full bg-[linear-gradient(90deg,#ecfff5,#eefdf3)] px-3 py-2 text-[12px] font-black text-[#18b989] sm:px-3.5 sm:text-[13px]">
+                        <Trophy className="h-4 w-4" strokeWidth={2.2} />
+                        Points: {expandedActivity.points}
+                      </div>
+                    </Card>
+
+                    <Card className="rounded-[18px] border border-[#cfe0f2] bg-[linear-gradient(180deg,#ffffff,#f8fbff)] p-3.5 shadow-[0_10px_24px_rgba(185,223,255,.14)] sm:rounded-[20px] sm:p-4 md:h-full">
+                      <div className="mb-3 flex items-center gap-2.5 sm:mb-3.5">
+                        <span className="flex h-10 w-10 items-center justify-center rounded-full border border-[#cfe0f2] bg-[linear-gradient(180deg,#f4f9ff,#e8f2ff)] text-[#2f86f6] shadow-[inset_0_1px_0_rgba(255,255,255,.85)] sm:h-11 sm:w-11">
+                          <CalendarDays className="h-5 w-5 sm:h-5.5 sm:w-5.5" strokeWidth={2.1} />
+                        </span>
+                        <div className="text-[14px] font-black text-[var(--c-2f261d)] sm:text-[15px]">สถานะกิจกรรม:</div>
+                      </div>
+                      <div className="flex h-full min-h-[190px] flex-col items-center justify-center gap-2.5 rounded-[18px] border border-[#cfe0f2] bg-[linear-gradient(180deg,#f7fbff,#edf5ff)] px-4 py-4 text-center shadow-[inset_0_1px_0_rgba(255,255,255,.7)] sm:rounded-[20px] sm:px-4.5 sm:py-5">
+                        <Clock3 className={cn("h-10 w-10 sm:h-11 sm:w-11", getActivityStatusMeta(expandedActivity.status).iconClass)} strokeWidth={1.8} />
+                        <div className="text-[16px] font-black text-[var(--c-5c3214)] sm:text-[18px]">{getActivityStatusMeta(expandedActivity.status).label}</div>
+                        <p className="max-w-[250px] text-[11.5px] font-bold leading-relaxed text-[#667085] sm:text-[12.5px]">
+                          {getActivityStatusMeta(expandedActivity.status).note}
+                        </p>
+                        <span className="rounded-full border border-[#cfe0f2] bg-white px-4 py-1.5 text-[11px] font-black text-[#1867da] shadow-[0_6px_12px_rgba(185,223,255,.24)] sm:px-4.5 sm:text-[12px]">
+                          {expandedActivity.dateLabel}
+                        </span>
+                      </div>
+                    </Card>
+                  </div>
                 </div>
-              </div>
-            </div>
+              </AppDialogBody>
             </>
           ) : null}
-        </DialogContent>
+        </AppDialogContent>
       </Dialog>
     </>
   );

@@ -26,14 +26,15 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Dialog } from "@/components/ui/dialog";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+  AppDialogBody,
+  AppDialogContent,
+  AppDialogDescription,
+  AppDialogSectionFooter,
+  AppDialogSectionHeader,
+  AppDialogTitle,
+} from "@/components/ui/app-dialog";
 import { cn } from "@/lib/utils";
 import {
   getSafetyCultureEventPhase,
@@ -808,7 +809,7 @@ export default function AdminEventPage() {
 
   return (
     <>
-      <div className="mx-auto w-full max-w-[1480px] bg-[var(--background)] px-3.5 pt-2.5 pb-8 font-sarabun md:px-5">
+      <div className="page-shell-wide bg-[var(--background)] pt-2.5 pb-8 font-sarabun">
         <SafetyCultureHero
           eyebrow="SAFETY CULTURE ADMIN"
           title={
@@ -818,8 +819,10 @@ export default function AdminEventPage() {
           }
           description="สร้าง แก้ไข จัดลำดับ และตั้งค่าการแสดงผลกิจกรรมบนหน้า Feed"
           variant="community"
-          backgroundImage="/images/heroes/admin-event-hero.png"
+          backgroundImage="/images/heroes/Home01.png"
           backgroundOverlay="linear-gradient(90deg, rgba(210,235,255,.82) 0%, rgba(210,235,255,.60) 32%, rgba(210,235,255,.10) 56%, rgba(210,235,255,0) 74%)"
+          mascotSrc="/images/mascots/wangjai/24.png"
+          mascotAction="announce2"
         />
 
         {editorMode === "bonus" ? (
@@ -1799,22 +1802,22 @@ export default function AdminEventPage() {
       </div>
 
       <Dialog open={feedModalOpen && !!feedModalDraft} onOpenChange={(open) => !open && closeFeedEditorModal()}>
-        <DialogContent aria-label={feedModalTitle} className="event-editor-popup grid h-[min(94vh,900px)] max-w-[980px] grid-rows-[auto_minmax(0,1fr)_auto] gap-0 overflow-hidden p-0 sm:max-w-[980px]">
+        <AppDialogContent aria-label={feedModalTitle} className="event-editor-popup grid h-[min(94vh,900px)] max-w-[980px] grid-rows-[auto_minmax(0,1fr)_auto] sm:max-w-[980px]">
           {feedModalDraft ? (
           <>
-            <DialogHeader className="px-5 py-5 sm:px-6">
+            <AppDialogSectionHeader className="px-5 py-5 sm:px-6">
               <div className="flex items-center gap-3 pr-12">
-                <span className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-[linear-gradient(180deg,#158eff,#075cc8)] text-white shadow-[0_12px_24px_rgba(7,92,200,0.24)]">
+                <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-linear-to-b from-[#158eff] to-[#075cc8] text-white shadow-[0_12px_24px_rgba(7,92,200,0.24)]">
                   <Plus className="h-7 w-7" strokeWidth={2.2} />
                 </span>
                 <div className="min-w-0">
-                <DialogTitle className="text-[28px]">{feedModalTitle}</DialogTitle>
-                <DialogDescription>{feedModalDescription}</DialogDescription>
+                  <AppDialogTitle className="text-[28px]">{feedModalTitle}</AppDialogTitle>
+                  <AppDialogDescription>{feedModalDescription}</AppDialogDescription>
                 </div>
               </div>
-            </DialogHeader>
+            </AppDialogSectionHeader>
 
-            <div className="min-h-0 overflow-y-auto overscroll-contain bg-[linear-gradient(180deg,#ffffff,#f8fcff)] px-5 py-5 md:px-6">
+            <AppDialogBody className="min-h-0 overflow-y-auto overscroll-contain px-5 py-5 md:px-6">
               <div className="rounded-[22px] border border-[var(--c-eadcc7)] bg-[var(--c-fffaf2)] p-4">
                 <div className="flex flex-col gap-3">
                   <div className="text-[15px] font-black text-[var(--c-2d241b)]">ข้อมูลหลักของกิจกรรม</div>
@@ -2051,38 +2054,36 @@ export default function AdminEventPage() {
                   </div>
                 </div>
               </div>
-            </div>
+            </AppDialogBody>
 
-            <DialogFooter>
+            <AppDialogSectionFooter>
               <Button
                 type="button"
                 onClick={handleApplyFeedModal}
                 disabled={isSavingFeedEvents}
-                className="h-11 rounded-[14px] bg-[linear-gradient(180deg,#158eff,#075cc8)] px-5 text-[13px] font-black text-white shadow-[0_12px_24px_rgba(7,92,200,0.22)] hover:bg-[#075cc8]"
+                className="h-11 rounded-[14px] bg-linear-to-b from-[#158eff] to-[#075cc8] px-5 text-[13px] font-black text-white shadow-[0_12px_24px_rgba(7,92,200,0.22)] hover:bg-[#075cc8]"
               >
                 <Plus className="mr-1 h-4 w-4" />
                 {isSavingFeedEvents ? "กำลังบันทึก..." : feedModalSubmitLabel}
               </Button>
-            </DialogFooter>
+            </AppDialogSectionFooter>
           </>
           ) : null}
-        </DialogContent>
+        </AppDialogContent>
       </Dialog>
 
       <Dialog open={!!pendingDeleteFeedEvent} onOpenChange={(open) => !open && closeDeleteFeedEventPrompt()}>
-        <DialogContent aria-label="ยืนยันการลบกิจกรรม" className="z-[125] max-w-[440px] overflow-hidden p-0 sm:max-w-[440px]">
+        <AppDialogContent aria-label="ยืนยันการลบกิจกรรม" className="z-[125] max-w-110">
           {pendingDeleteFeedEvent ? (
           <>
-            <DialogHeader>
-              <div>
-                <DialogTitle className="text-[24px] text-[#7d3434]">ยืนยันก่อนลบ</DialogTitle>
-                <DialogDescription className="mt-1">
-                  กิจกรรมนี้จะถูกลบออกจากรายการบน Feed ทันทีเมื่อกดยืนยัน
-                </DialogDescription>
-              </div>
-            </DialogHeader>
+            <AppDialogSectionHeader>
+              <AppDialogTitle className="text-[#7d3434]">ยืนยันก่อนลบ</AppDialogTitle>
+              <AppDialogDescription className="mt-1">
+                กิจกรรมนี้จะถูกลบออกจากรายการบน Feed ทันทีเมื่อกดยืนยัน
+              </AppDialogDescription>
+            </AppDialogSectionHeader>
 
-            <div className="px-5 py-5">
+            <AppDialogBody>
               <div className="rounded-[20px] border border-[#f0d8d8] bg-[#fff7f7] px-4 py-4">
                 <div className="text-[12px] font-black uppercase tracking-[0.12em] text-[#c05a5a]">Delete Activity</div>
                 <div className="mt-2 text-[18px] font-black text-[#2b2119]">{pendingDeleteFeedEvent.title}</div>
@@ -2090,14 +2091,14 @@ export default function AdminEventPage() {
                   หากลบแล้วจะต้องสร้างกิจกรรมใหม่หรือกู้คืนจากข้อมูลเดิมด้วยตนเอง
                 </div>
               </div>
-            </div>
+            </AppDialogBody>
 
-            <DialogFooter>
+            <AppDialogSectionFooter>
               <Button
                 type="button"
                 variant="outline"
                 onClick={closeDeleteFeedEventPrompt}
-                className="h-10 rounded-[14px] border-[var(--c-d7c5a7)] bg-white px-4 text-[13px] font-black text-[var(--c-5c3214)] hover:bg-[var(--c-fff4df)]"
+                className="h-10 rounded-[14px] border-(--c-d7c5a7) bg-white px-4 text-[13px] font-black text-(--c-5c3214) hover:bg-(--c-fff4df)"
               >
                 ยกเลิก
               </Button>
@@ -2109,10 +2110,10 @@ export default function AdminEventPage() {
               >
                 {isSavingFeedEvents ? "กำลังลบ..." : "ลบกิจกรรมนี้"}
               </Button>
-            </DialogFooter>
+            </AppDialogSectionFooter>
           </>
           ) : null}
-        </DialogContent>
+        </AppDialogContent>
       </Dialog>
     </>
   );

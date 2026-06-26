@@ -27,6 +27,47 @@ async function isExcludedAwarenessDate(dateKey: string) {
   return rows.length > 0;
 }
 
+async function resolveAwarenessQuestionId(
+  connection: Parameters<Parameters<typeof withTransaction>[0]>[0],
+  question: { id: string; correct: boolean; category?: string; text?: string },
+) {
+  const numericQuestionId = Number(question.id);
+  if (Number.isFinite(numericQuestionId) && numericQuestionId > 0) return numericQuestionId;
+
+  const questionText = String(question.text || "").trim();
+  if (!questionText) return null;
+
+  const [existingRows] = await connection.execute<Array<RowDataPacket & { id: number | string }>>(
+    `
+      SELECT id
+      FROM awareness_questions
+      WHERE question_text = :questionText
+      ORDER BY FIELD(status, 'ACTIVE', 'SNAPSHOT', 'INACTIVE'), id
+      LIMIT 1
+    `,
+    { questionText },
+  );
+  const existingId = existingRows[0]?.id;
+  if (existingId) return Number(existingId);
+
+  const [inserted] = await connection.execute<ResultSetHeader>(
+    `
+      INSERT INTO awareness_questions (question_text, options_json, correct_answer_json, status)
+      VALUES (:questionText, :optionsJson, :correctAnswerJson, 'SNAPSHOT')
+    `,
+    {
+      questionText,
+      optionsJson: JSON.stringify({
+        category: question.category || "ทั่วไป",
+        sourceQuestionId: question.id,
+        snapshot: true,
+      }),
+      correctAnswerJson: JSON.stringify({ unknown: true }),
+    },
+  );
+  return Number(inserted.insertId);
+}
+
 export async function createAwarenessAttempt(input: {
   userId: string;
   score: number;
@@ -89,8 +130,8 @@ export async function createAwarenessAttempt(input: {
       attemptId = String(result.insertId);
     }
     for (const question of input.questions || []) {
-      const questionId = Number(question.id);
-      if (!Number.isFinite(questionId)) continue;
+      const questionId = await resolveAwarenessQuestionId(connection, question);
+      if (!questionId) continue;
 
       await connection.execute<ResultSetHeader>(
         `

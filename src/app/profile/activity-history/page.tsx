@@ -128,9 +128,17 @@ export default function ProfileActivityHistoryPage() {
   };
 
   return (
-    <div className={cn("min-h-[calc(100vh-var(--topbar-h))] px-3 pb-10 pt-2 font-sans md:px-6 md:pt-4", pageBackgroundClass)}>
-      <div className="mx-auto grid w-full max-w-[1080px] gap-3 md:gap-4">
-        <section className="relative overflow-hidden rounded-[24px] bg-[linear-gradient(135deg,var(--brand-hero-start),var(--brand-hero-end))] p-4 text-white shadow-[0_18px_44px_var(--brand-shadow)] md:p-7">
+    <div className={cn("min-h-[calc(100vh-var(--topbar-h))] pb-10 pt-2 font-sans md:pt-4", pageBackgroundClass)}>
+      <div className="page-shell-wide grid gap-3 md:gap-4">
+        <section
+          className="relative overflow-hidden rounded-[24px] bg-[linear-gradient(135deg,var(--brand-hero-start),var(--brand-hero-end))] p-4 text-white shadow-[0_18px_44px_var(--brand-shadow)] md:p-7"
+          style={{
+            backgroundImage:
+              "linear-gradient(90deg, rgba(2,26,66,.82) 0%, rgba(3,33,78,.54) 42%, rgba(3,33,78,.18) 72%), url('/images/heroes/Home01.png')",
+            backgroundPosition: "center",
+            backgroundSize: "cover",
+          }}
+        >
           <div className="pointer-events-none absolute -right-16 -top-24 h-72 w-72 rounded-full bg-[var(--brand-accent)] opacity-15 blur-3xl" />
           <div className="relative flex flex-col gap-3">
             <div className="flex items-start justify-between gap-3">

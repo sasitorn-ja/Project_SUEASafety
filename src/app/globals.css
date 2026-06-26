@@ -164,6 +164,14 @@ body {
   flex-direction: column;
 }
 
+.home-hero-mascot {
+  transition: z-index 0s linear;
+}
+
+.app-shell-root:has(header [aria-expanded="true"]) .home-hero-mascot {
+  z-index: 40;
+}
+
 .app-login-main {
   overflow: hidden;
 }
@@ -336,7 +344,7 @@ body {
 /* Shared CPAC Safe+ page language. Dashboard intentionally owns its own scale. */
 .app-standard-page {
   color: var(--foreground);
-  background: linear-gradient(180deg, #ddeeff 0px, #eaf3fc 180px, var(--background) 100%);
+  background: var(--background);
 }
 
 .app-standard-page [data-slot="card"] {
@@ -359,6 +367,12 @@ body {
   margin-inline: auto;
   gap: var(--app-section-gap);
   padding: var(--app-page-pad-y) var(--app-page-pad-x) 30px;
+}
+
+.page-shell-wide {
+  width: calc(100vw - 20px);
+  max-width: none;
+  margin-inline: auto;
 }
 
 .app-page-header {
@@ -410,6 +424,19 @@ body {
   box-shadow: var(--app-card-shadow);
 }
 
+.app-card-title {
+  font-size: 14px;
+  line-height: 1.2;
+  font-weight: 900;
+  letter-spacing: 0.01em;
+}
+
+@media (min-width: 640px) {
+  .app-card-title {
+    font-size: 15px;
+  }
+}
+
 .app-empty-state {
   display: flex;
   min-height: 190px;
@@ -438,7 +465,6 @@ body {
 
 [data-slot="dialog-content"] {
   overscroll-behavior: contain;
-  scrollbar-gutter: stable;
 }
 
 [data-slot="dialog-content"] :where(input, textarea, select),
@@ -628,6 +654,10 @@ body {
     padding: 10px 10px 22px;
   }
 
+  .page-shell-wide {
+    width: calc(100vw - 20px);
+  }
+
   .app-page-header {
     min-height: 48px;
   }
@@ -638,6 +668,12 @@ body {
 
   .app-page-header-actions {
     width: 100%;
+  }
+}
+
+@media (min-width: 1024px) {
+  .page-shell-wide {
+    width: calc(100vw - 48px);
   }
 }
 
@@ -774,6 +810,31 @@ body {
   rotate: 1.5deg;
 }
 
+@keyframes safetyStreakFlame {
+  0%,
+  100% {
+    filter: drop-shadow(0 0 0 rgba(255, 100, 46, 0));
+    transform: translateY(0) scale(1) rotate(-2deg);
+  }
+
+  35% {
+    filter: drop-shadow(0 3px 8px rgba(255, 100, 46, 0.34));
+    transform: translateY(-1px) scale(1.08) rotate(3deg);
+  }
+
+  70% {
+    filter: drop-shadow(0 1px 5px rgba(255, 100, 46, 0.22));
+    transform: translateY(0) scale(0.96) rotate(-1deg);
+  }
+}
+
+.safety-streak-flame {
+  animation: safetyStreakFlame 1.65s ease-in-out infinite;
+  transform-box: fill-box;
+  transform-origin: 50% 78%;
+  will-change: transform, filter;
+}
+
 @starting-style {
   .mascot-motion {
     opacity: 0;
@@ -784,7 +845,8 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .floating-safety-assistant-image,
   .mascot-motion,
-  .mascot-motion:hover {
+  .mascot-motion:hover,
+  .safety-streak-flame {
     animation: none;
     transition: none;
   }

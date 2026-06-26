@@ -15,14 +15,15 @@ import {
 } from "lucide-react";
 import * as XLSX from "xlsx";
 import { Combobox } from "@/components/ui/combobox";
+import { Dialog } from "@/components/ui/dialog";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+  AppDialogBody,
+  AppDialogContent,
+  AppDialogDescription,
+  AppDialogSectionFooter,
+  AppDialogSectionHeader,
+  AppDialogTitle,
+} from "@/components/ui/app-dialog";
 import { SafetyCultureHero } from "@/components/safety-culture/safety-culture-hero";
 
 // This screen is wired to the real locations API. Fields that do not exist on
@@ -1406,15 +1407,14 @@ export default function SafetyAdminManageData() {
           }
         }}
       >
-        <DialogContent
-          className="gap-0 p-0"
+        <AppDialogContent
           style={{
             width: selectedType === "factory" ? "min(100%, 920px)" : "min(100%, 680px)",
             maxWidth: "calc(100vw - 32px)",
             maxHeight: "90vh",
           }}
         >
-          <DialogHeader className="mx-0 mt-0 flex-row items-center justify-between">
+          <AppDialogSectionHeader className="flex-row items-center justify-between">
             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
               {selectedType === "factory" ? (
                 <Building2 size={20} style={{ color: "var(--brand-text)" }} />
@@ -1424,18 +1424,18 @@ export default function SafetyAdminManageData() {
                 <Layers size={20} style={{ color: "var(--brand-text)" }} />
               )}
               <div>
-                <DialogTitle style={{ fontSize: 18, color: T.ink }}>
+                <AppDialogTitle style={{ fontSize: 18 }}>
                   {selectedType === "factory"
                     ? (addingPlant ? "Add Plant Record" : "Edit Plant Record")
                     : selectedType === "office"
                       ? (addingPlant ? "Add Office Record" : "Edit Office Record")
                       : (addingPlant ? "Add Site Record" : "Edit Site Record")}
-                </DialogTitle>
-                <DialogDescription>แก้ไขข้อมูลสถานที่สำหรับ Check-in และ Safety Effort</DialogDescription>
+                </AppDialogTitle>
+                <AppDialogDescription>แก้ไขข้อมูลสถานที่สำหรับ Check-in และ Safety Effort</AppDialogDescription>
               </div>
             </div>
-          </DialogHeader>
-          <div style={{ padding: 24, overflowY: "auto" }}>
+          </AppDialogSectionHeader>
+          <AppDialogBody style={{ overflowY: "auto" }}>
           <div
             style={{
               display: "grid",
@@ -1817,9 +1817,9 @@ export default function SafetyAdminManageData() {
               )}
             </div>
           </div>
-          </div>
+          </AppDialogBody>
 
-          <DialogFooter className="mx-0 mb-0">
+          <AppDialogSectionFooter>
             <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, width: "100%" }}>
               <button
                 type="button"
@@ -1878,20 +1878,20 @@ export default function SafetyAdminManageData() {
                       : "บันทึกการแก้ไข")}
               </button>
             </div>
-          </DialogFooter>
-        </DialogContent>
+          </AppDialogSectionFooter>
+        </AppDialogContent>
       </Dialog>
 
       {/* Delete Plant Confirmation Modal */}
       <Dialog open={!!deletePlantId} onOpenChange={(open) => !open && setDeletePlantId(null)}>
-        <DialogContent className="gap-0 p-0 sm:max-w-[420px]">
-          <DialogHeader className="mx-0 mt-0">
-            <DialogTitle style={{ fontSize: 20, fontWeight: 950 }}>ยืนยันการลบสถานที่</DialogTitle>
-            <DialogDescription style={{ fontSize: 14, color: T.sub, lineHeight: 1.6 }}>
+        <AppDialogContent className="max-w-105">
+          <AppDialogSectionHeader>
+            <AppDialogTitle>ยืนยันการลบสถานที่</AppDialogTitle>
+            <AppDialogDescription>
               คุณแน่ใจว่าต้องการลบสถานที่นี้ใช่หรือไม่? รายการจะหายจากหน้า Check-in และไม่สามารถย้อนกลับได้
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter className="mx-0 mb-0">
+            </AppDialogDescription>
+          </AppDialogSectionHeader>
+          <AppDialogSectionFooter>
             <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, width: "100%" }}>
               <button
                 type="button"
@@ -1908,8 +1908,8 @@ export default function SafetyAdminManageData() {
                 ลบสถานที่
               </button>
             </div>
-          </DialogFooter>
-        </DialogContent>
+          </AppDialogSectionFooter>
+        </AppDialogContent>
       </Dialog>
     </div>
   );

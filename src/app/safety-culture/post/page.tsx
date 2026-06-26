@@ -276,7 +276,7 @@ export default function PostSocialPage() {
           </Button>
         </header>
 
-        <div className="anim-fade mb-5" style={animStyle(0.03)}>
+        <div className="anim-fade mb-5 lg:hidden" style={animStyle(0.03)}>
           <SafetyCultureHero
             eyebrow="SAFETY CARING POST"
             title={
@@ -286,8 +286,10 @@ export default function PostSocialPage() {
             }
             description="เล่าเหตุการณ์ดี ๆ หรือจุดเสี่ยงให้เพื่อนร่วมทีมเห็นได้เร็วขึ้น"
             variant="community"
-            backgroundImage="/images/heroes/safety-culture-post-hero.png"
+            backgroundImage="/images/heroes/Home01.png"
             backgroundOverlay="linear-gradient(90deg, rgba(210,235,255,.82) 0%, rgba(210,235,255,.60) 36%, rgba(210,235,255,.10) 64%, rgba(210,235,255,0) 100%)"
+            mascotSrc="/images/mascots/wangjai/34.png"
+            mascotAction="clipboardPost"
           />
         </div>
 

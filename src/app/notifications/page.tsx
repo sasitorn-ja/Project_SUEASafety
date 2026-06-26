@@ -76,7 +76,7 @@ export default function NotificationsPage() {
   );
 
   return (
-    <div className="mx-auto w-full max-w-3xl px-0 md:px-4">
+    <div className="page-shell-wide">
       <section className="hidden min-h-[calc(100vh-var(--mobile-topbar-h)-var(--mobile-bottomnav-h))] overflow-hidden rounded-none bg-transparent md:block md:min-h-0 md:rounded-[28px] md:border md:border-[var(--border)] md:bg-[var(--brand-surface)] md:px-2 md:py-2">
         <NotificationCenter />
       </section>

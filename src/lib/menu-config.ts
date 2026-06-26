@@ -203,6 +203,12 @@ export function getDefaultMenu(): MenuNode[] {
           ],
         }),
         n({
+          label: "ตั้งค่าคะแนน",
+          href: "/safety-culture/admin-points",
+          icon: "Star",
+          description: "กำหนดคะแนนที่ใช้ในระบบ Safety Culture และ Safety Effort",
+        }),
+        n({
           label: "จัดการผู้ใช้และสิทธิ์ Admin",
           href: "/safety-culture/admin-users",
           icon: "UserCog",
@@ -272,6 +278,7 @@ function applyAdminMenuLabels(adminNode: MenuNode) {
   rename("/safety-admin/manage-data", "โรงงาน/สำนักงาน/ไซต์งาน", "จัดการ master data สถานที่สำหรับ Check-in", "MapPin");
   rename("/safety-culture", "Safety Culture", undefined, "Heart");
   rename("/safety-culture/admin-event", "กิจกรรมบนฟีด", "จัดการกิจกรรมและช่วงเวลาพิเศษ", "Settings2");
+  rename("/safety-culture/admin-points", "ตั้งค่าคะแนน", "กำหนดคะแนนที่ใช้ในระบบ Safety Culture และ Safety Effort", "Star");
   rename("/safety-culture/admin-leaderboard", "ทีมและอันดับ", "จัดการทีม คะแนน และอันดับ", "Trophy");
   rename("/safety-culture/admin-reward", "รางวัลและแต้มแลก", "จัดการรางวัลและคะแนนแลก", "Gift");
   rename("/safety-culture/admin-users", "จัดการผู้ใช้และสิทธิ์ Admin", "จัดการผู้ใช้ Role และสิทธิ์ Admin", "UserCog");
@@ -370,6 +377,60 @@ export function loadMenu(): MenuNode[] {
               );
               updated = true;
             }
+          }
+
+          const hasTopLevelPointSettings = adminNode.children.some(
+            (child) => child.href === "/safety-culture/admin-points" || child.label.includes("ตั้งค่าคะแนน")
+          );
+          if (!hasTopLevelPointSettings) {
+            adminNode.children.splice(
+              1,
+              0,
+              n({
+                label: "ตั้งค่าคะแนน",
+                href: "/safety-culture/admin-points",
+                icon: "Star",
+                description: "กำหนดคะแนนที่ใช้ในระบบ Safety Culture และ Safety Effort",
+              })
+            );
+            updated = true;
+          }
+
+          const safetyCultureNode = adminNode.children.find(
+            (child) => child.href === "/safety-culture" || child.label.trim().toLowerCase() === "safety culture"
+          );
+          if (safetyCultureNode) {
+            const beforePointRemoval = safetyCultureNode.children.length;
+            safetyCultureNode.children = safetyCultureNode.children.filter(
+              (child) => child.href !== "/safety-culture/admin-points" && !child.label.includes("ตั้งค่าคะแนน")
+            );
+            if (safetyCultureNode.children.length !== beforePointRemoval) {
+              updated = true;
+            }
+          }
+
+          // Migration: enforce canonical admin-children order:
+          // Safety Awareness → Safety Effort → Safety Culture → ตั้งค่าคะแนน → จัดการผู้ใช้ฯ
+          const DESIRED_ADMIN_ORDER = [
+            "/safety-culture/admin-awareness",
+            "/category",
+            "/safety-culture",
+            "/safety-culture/admin-points",
+            "/safety-culture/admin-users",
+          ];
+          const currentOrder = adminNode.children.map((c) => c.href);
+          const isOrdered = DESIRED_ADMIN_ORDER.every((href, i) => {
+            const pos = currentOrder.indexOf(href);
+            if (pos === -1) return true;
+            const prevHref = DESIRED_ADMIN_ORDER.slice(0, i).find((h) => currentOrder.includes(h));
+            return prevHref === undefined || currentOrder.indexOf(prevHref) < pos;
+          });
+          if (!isOrdered) {
+            const byHref = new Map(adminNode.children.map((c) => [c.href, c]));
+            const ordered = DESIRED_ADMIN_ORDER.flatMap((href) => (byHref.has(href) ? [byHref.get(href)!] : []));
+            const rest = adminNode.children.filter((c) => !DESIRED_ADMIN_ORDER.includes(c.href));
+            adminNode.children = [...ordered, ...rest];
+            updated = true;
           }
 
           if (updated) {

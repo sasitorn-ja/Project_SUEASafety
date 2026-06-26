@@ -35,26 +35,31 @@ const NAV_ITEMS = [
 
 const SAFETY_CULTURE_ITEMS = [
   {
-    label: "Feed",
+    label: "ฟีด",
     href: "/safety-culture",
     icon: Heart,
-    description: "Share safe behaviors and team stories in the feed",
+    description: "แชร์พฤติกรรมความปลอดภัยและเรื่องราวของทีมในฟีด",
   },
   {
     label: "Leaderboard",
     href: "/safety-culture/leaderboard",
     icon: Trophy,
-    description: "Track team and personal ranking progress",
+    description: "ติดตามอันดับทีมและคะแนนส่วนตัว",
   },
   {
-    label: "Rewards",
+    label: "ของรางวัล",
     href: "/safety-culture/rewards",
     icon: Gift,
-    description: "Review points and available redemption rewards",
+    description: "ดูคะแนนและของรางวัลที่สามารถแลกได้",
   },
 ] as const;
 
 const PROFILE_ITEMS = [
+  {
+    label: "ข้อมูลส่วนตัว",
+    href: "/profile",
+    icon: UserRound,
+  },
   {
     label: "\u0e01\u0e34\u0e08\u0e01\u0e23\u0e23\u0e21\u0e02\u0e2d\u0e07\u0e1c\u0e39\u0e49\u0e43\u0e0a\u0e49\u0e07\u0e32\u0e19",
     href: "/profile/activity-history",
@@ -224,7 +229,7 @@ export function DesktopTopbar() {
       )}
       style={{ fontFamily: "var(--font-sans)", height: "var(--topbar-h)" }}
     >
-      <div className="mx-auto flex h-full w-full max-w-[1500px] items-center justify-between gap-2 px-5">
+      <div className="flex h-full w-full items-center justify-between gap-2 px-6">
         <NavTo href="/" className="flex min-w-[234px] items-center gap-3.5">
           <Image src="/images/brand/LOGO1_trim.png" alt="Safety Caring" width={300} height={52} priority className="h-[40px] w-auto object-contain" />
         </NavTo>
@@ -331,8 +336,13 @@ export function DesktopTopbar() {
 
             if (item.id === "admin") {
               return (
-                <div key={item.id} className="relative">
-                  <button type="button" onClick={() => setDesktopMenu((current) => current === "admin" ? null : "admin")} aria-expanded={desktopMenu === "admin"} aria-haspopup="menu" className={cn("inline-flex h-11 min-w-[100px] items-center justify-center gap-2 rounded-[13px] border border-transparent px-[15px] text-[14.5px] font-bold whitespace-nowrap transition-all", active ? "bg-[linear-gradient(135deg,#35A8FF_0%,#0B82F0_55%,#006AD6_100%)] text-white shadow-[0_8px_20px_rgba(11,130,240,0.22)]" : "bg-transparent text-[#0B2F6B] hover:border-[#D7EAFE] hover:bg-[#F5FAFF] hover:text-[#0B82F0]")}>
+                <div
+                  key={item.id}
+                  className="relative"
+                  onMouseEnter={() => setDesktopMenu("admin")}
+                  onMouseLeave={() => setDesktopMenu((current) => (current === "admin" ? null : current))}
+                >
+                  <button type="button" onFocus={() => setDesktopMenu("admin")} onClick={() => setDesktopMenu((current) => current === "admin" ? null : "admin")} aria-expanded={desktopMenu === "admin"} aria-haspopup="menu" className={cn("inline-flex h-11 min-w-[100px] items-center justify-center gap-2 rounded-[13px] border border-transparent px-[15px] text-[14.5px] font-bold whitespace-nowrap transition-all", active ? "bg-[linear-gradient(135deg,#35A8FF_0%,#0B82F0_55%,#006AD6_100%)] text-white shadow-[0_8px_20px_rgba(11,130,240,0.22)]" : "bg-transparent text-[#0B2F6B] hover:border-[#D7EAFE] hover:bg-[#F5FAFF] hover:text-[#0B82F0]")}>
                     <Icon className="h-[17px] w-[17px]" strokeWidth={2.35} />
                     <span className="desktop-nav-label">{item.label}</span>
                     <ChevronDown className={cn("h-3.5 w-3.5 transition-transform", desktopMenu === "admin" && "rotate-180")} />
@@ -358,9 +368,12 @@ export function DesktopTopbar() {
                 <div
                   key={item.id}
                   className="relative"
+                  onMouseEnter={() => setDesktopMenu(menuId)}
+                  onMouseLeave={() => setDesktopMenu((current) => (current === menuId ? null : current))}
                 >
                   <button
                     type="button"
+                    onFocus={() => setDesktopMenu(menuId)}
                     onClick={() => setDesktopMenu((current) => current === menuId ? null : menuId)}
                     aria-expanded={desktopMenu === menuId}
                     aria-haspopup="menu"
@@ -472,9 +485,12 @@ export function DesktopTopbar() {
             onMouseLeave={() => setDesktopMenu((current) => (current === "profile" ? null : current))}
             onFocus={() => setDesktopMenu("profile")}
           >
-            <NavTo
-              href="/profile"
+            <button
+              type="button"
+              onClick={() => setDesktopMenu((current) => (current === "profile" ? null : "profile"))}
               aria-label="โปรไฟล์ของฉัน"
+              aria-haspopup="menu"
+              aria-expanded={desktopMenu === "profile"}
               className={cn(
                 "inline-flex h-11 w-11 cursor-pointer items-center justify-center overflow-hidden rounded-full bg-white p-0 text-[#0B82F0]",
                 "shadow-[0_8px_18px_rgba(185,223,255,0.45)] transition-colors hover:bg-[#F5FAFF]"
@@ -490,7 +506,7 @@ export function DesktopTopbar() {
               ) : (
                 <UserRound className="h-[18px] w-[18px]" strokeWidth={2.5} />
               )}
-            </NavTo>
+            </button>
 
             <div
               className={cn(

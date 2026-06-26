@@ -26,12 +26,15 @@ import { Button } from "@/components/ui/button";
 import { Combobox } from "@/components/ui/combobox";
 import { Card } from "@/components/ui/card";
 import {
+  AppDialogBody,
+  AppDialogContent,
+  AppDialogDescription,
+  AppDialogSectionFooter,
+  AppDialogSectionHeader,
+  AppDialogTitle,
+} from "@/components/ui/app-dialog";
+import {
   Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -289,7 +292,7 @@ export default function AdminAwarenessPage() {
   };
 
   return (
-    <div className="mx-auto w-full max-w-[1480px] bg-[var(--background)] px-3.5 pt-2.5 pb-8 font-sarabun md:px-5">
+    <div className="page-shell-wide bg-[var(--background)] pt-2.5 pb-8 font-sarabun">
       <SafetyCultureHero
         eyebrow="SAFETY CULTURE ADMIN"
         title={
@@ -298,12 +301,11 @@ export default function AdminAwarenessPage() {
           </>
         }
         description="จัดการวันทำงานที่นับ KPI และคลังคำถาม Safety Awareness — เพิ่ม/แก้/ลบ เปิด-ปิด และนำเข้าจาก XLSX"
-        mascotSrc="/images/mascots/wangjai/7.png"
-        mascotAlt="น้องวางใจ Safety mascot"
-        mascotAction="flashlight"
         variant="community"
-        backgroundImage="/images/heroes/admin-awareness-hero.png"
+        backgroundImage="/images/heroes/Home01.png"
         backgroundOverlay="linear-gradient(90deg, rgba(210,235,255,.82) 0%, rgba(210,235,255,.60) 32%, rgba(210,235,255,.10) 56%, rgba(210,235,255,0) 74%)"
+        mascotSrc="/images/mascots/wangjai/7.png"
+        mascotAction="flashlight"
       />
 
       {/* Stat strip */}
@@ -559,16 +561,16 @@ export default function AdminAwarenessPage() {
 
       {/* Add / Edit dialog */}
       <Dialog open={!!editor} onOpenChange={(open) => !open && setEditor(null)}>
-        <DialogContent className="font-sarabun sm:max-w-[520px]">
-          <DialogHeader>
-            <DialogTitle className="text-[var(--c-3b1d07)]">
+        <AppDialogContent size="md">
+          <AppDialogSectionHeader>
+            <AppDialogTitle className="text-[var(--c-3b1d07)]">
               {editor?.mode === "edit" ? "แก้ไขคำถาม" : "เพิ่มคำถามใหม่"}
-            </DialogTitle>
-            <DialogDescription>กรอกข้อความคำถาม กำหนดเฉลย (ถูก/ผิด) และคำอธิบายเพิ่มเติม</DialogDescription>
-          </DialogHeader>
+            </AppDialogTitle>
+            <AppDialogDescription>กรอกข้อความคำถาม กำหนดเฉลย (ถูก/ผิด) และคำอธิบายเพิ่มเติม</AppDialogDescription>
+          </AppDialogSectionHeader>
 
           {editor && (
-            <div className="flex flex-col gap-3">
+            <AppDialogBody className="flex flex-col gap-3">
               <div>
                 <Label className="text-[12.5px] font-black text-[var(--c-5c3214)]">หมวดหมู่</Label>
                 <Combobox
@@ -651,10 +653,10 @@ export default function AdminAwarenessPage() {
                   เปิดใช้งาน (ให้สุ่มในป็อปอัพ)
                 </span>
               </button>
-            </div>
+            </AppDialogBody>
           )}
 
-          <DialogFooter>
+          <AppDialogSectionFooter>
             <Button
               onClick={saveEditor}
               disabled={!editor?.text.trim()}
@@ -662,37 +664,39 @@ export default function AdminAwarenessPage() {
             >
               บันทึก
             </Button>
-          </DialogFooter>
-        </DialogContent>
+          </AppDialogSectionFooter>
+        </AppDialogContent>
       </Dialog>
 
       <Dialog open={!!pendingDeleteQuestion} onOpenChange={(open) => !open && setPendingDeleteQuestion(null)}>
-        <DialogContent className="font-sarabun sm:max-w-[460px]">
-          <DialogHeader>
-            <DialogTitle className="text-[var(--c-3b1d07)]">ยืนยันการลบคำถาม</DialogTitle>
-            <DialogDescription>
+        <AppDialogContent size="sm">
+          <AppDialogSectionHeader>
+            <AppDialogTitle className="text-[var(--c-3b1d07)]">ยืนยันการลบคำถาม</AppDialogTitle>
+            <AppDialogDescription>
               หากยืนยัน คำถามข้อนี้จะถูกลบออกจากคลังคำถามทันที
-            </DialogDescription>
-          </DialogHeader>
+            </AppDialogDescription>
+          </AppDialogSectionHeader>
 
           {pendingDeleteQuestion ? (
-            <div className="rounded-xl border border-[#eccdc6] bg-[#fff8f6] px-4 py-3">
+            <AppDialogBody>
+              <div className="rounded-xl border border-[#eccdc6] bg-[#fff8f6] px-4 py-3">
               <div className="text-[12px] font-black text-[#b3271a]">{pendingDeleteQuestion.category}</div>
               <div className="mt-1 text-[13px] font-bold leading-relaxed text-[var(--c-3b1d07)]">
                 {pendingDeleteQuestion.text}
               </div>
-            </div>
+              </div>
+            </AppDialogBody>
           ) : null}
 
-          <DialogFooter>
+          <AppDialogSectionFooter>
             <Button
               onClick={confirmDeleteQuestion}
               className="h-9 rounded-xl bg-[#b3271a] px-4 text-[12.5px] font-black text-white hover:bg-[#962113]"
             >
               ลบคำถาม
             </Button>
-          </DialogFooter>
-        </DialogContent>
+          </AppDialogSectionFooter>
+        </AppDialogContent>
       </Dialog>
 
       {/* XLSX import dialog */}
@@ -706,16 +710,17 @@ export default function AdminAwarenessPage() {
           }
         }}
       >
-        <DialogContent className="max-h-[90vh] overflow-y-auto font-sarabun sm:max-w-[640px]">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-[var(--c-3b1d07)]">
+        <AppDialogContent size="lg" className="max-h-[90vh] overflow-y-auto">
+          <AppDialogSectionHeader>
+            <AppDialogTitle className="flex items-center gap-2 text-[var(--c-3b1d07)]">
               <FileSpreadsheet className="h-5 w-5" /> นำเข้าคำถามจาก XLSX
-            </DialogTitle>
-            <DialogDescription>
+            </AppDialogTitle>
+            <AppDialogDescription>
               ดาวน์โหลดแบบฟอร์ม กรอกคำถามในชีต Questions แล้วนำไฟล์กลับเข้าระบบ
-            </DialogDescription>
-          </DialogHeader>
+            </AppDialogDescription>
+          </AppDialogSectionHeader>
 
+          <AppDialogBody>
           <div className="rounded-xl border border-[#cfe3f4] bg-[#f1f8fe] p-3.5 text-[12px] font-bold text-[#24567f]">
             <p className="flex items-center gap-2 text-[12.5px] font-black">
               <Info className="h-4 w-4" /> แนวทางการกรอกที่ถูกต้อง
@@ -772,8 +777,9 @@ export default function AdminAwarenessPage() {
               แทนที่คลังคำถามทั้งหมด (ถ้าไม่ติ๊ก = เพิ่มต่อท้าย)
             </span>
           </label>
+          </AppDialogBody>
 
-          <DialogFooter>
+          <AppDialogSectionFooter>
             <Button
               onClick={() => setImportOpen(false)}
               className="h-9 rounded-xl border border-[var(--c-d7c5a7)] bg-white px-4 text-[12.5px] font-black text-[var(--c-5c3214)] hover:bg-[var(--c-fff2d8)]"
@@ -787,8 +793,8 @@ export default function AdminAwarenessPage() {
             >
               นำเข้า {importQuestions.length > 0 ? `(${importQuestions.length} ข้อ)` : ""}
             </Button>
-          </DialogFooter>
-        </DialogContent>
+          </AppDialogSectionFooter>
+        </AppDialogContent>
       </Dialog>
     </div>
   );

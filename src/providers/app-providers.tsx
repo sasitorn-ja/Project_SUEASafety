@@ -14,7 +14,14 @@ import {
 } from "@/lib/safety-awareness";
 import { getSafetyPoint } from "@/lib/point-rules";
 import { apiFetch, apiJson } from "@/lib/api-client";
-import { getSessionDisplayName, getSessionInitials, type SessionUser } from "@/lib/session-user";
+import {
+  DEMO_ADMIN_USER,
+  DEMO_LOGIN_SESSION_KEY,
+  getSessionDisplayName,
+  getSessionInitials,
+  isLocalDemoLoginHost,
+  type SessionUser,
+} from "@/lib/session-user";
 
 export type HealthData = {
   systolic?: number;
@@ -187,6 +194,7 @@ export type LeaderboardTeam = {
   name: string;
   leaderUserId?: string;
   leaderEmail?: string;
+  leaderProfileImageUrl?: string | null;
   leader: string;
   members: number;
   color: string;
@@ -292,7 +300,7 @@ type AppActions = {
   updateAwarenessQuestions: (questions: SafetyAwarenessQuestion[]) => void;
   updateAwarenessHolidays: (holidays: AwarenessHoliday[]) => void;
   /** Mark today's Safety Awareness popup as completed. */
-  markAwarenessDone: (completion: Omit<AwarenessCompletion, "date" | "completedAt">) => void;
+  markAwarenessDone: (completion: Omit<AwarenessCompletion, "date" | "completedAt">) => Promise<boolean>;
   awardSafetyEffortCompletion: (sourceId: string, label?: string) => void;
   redeemPoints: (
     rewardId: number,
@@ -1071,6 +1079,552 @@ function parseTimestamp(value?: string | number | null) {
   return Number.isFinite(time) ? time : null;
 }
 
+const DEMO_SAFETY_CULTURE_TEAM_ID = "team-demo-safety";
+const DEMO_SAFETY_CULTURE_ORG = "ศูนย์ Safety Excellence";
+
+function createDemoSessionUser(): SessionUser {
+  return {
+    ...DEMO_ADMIN_USER,
+    id: DEMO_ADMIN_USER.id || DEMO_ADMIN_USER.sub,
+    name: "อนันต์ ใจดี (Demo)",
+    firstNameTh: "อนันต์",
+    lastNameTh: "ใจดี",
+    division: "Safety Excellence",
+  };
+}
+
+function filterDemoPosts(
+  posts: Post[],
+  currentUserId: string,
+  options: { scope?: "all" | "my-team" | "mine"; category?: string | null; limit?: number } = {},
+) {
+  const scope = options.scope || "all";
+  const category = options.category?.trim();
+  let filtered = posts;
+
+  if (scope === "mine") {
+    filtered = filtered.filter((post) => String(post.authorId || "") === currentUserId);
+  } else if (scope === "my-team") {
+    filtered = filtered.filter((post) => String(post.teamId || "") === DEMO_SAFETY_CULTURE_TEAM_ID);
+  }
+
+  if (category && category !== "ทั้งหมด" && category !== "ทีมของฉัน") {
+    filtered = filtered.filter((post) => post.category === category);
+  }
+
+  return filtered.slice(0, options.limit || 50);
+}
+
+function createDemoSafetyCultureSnapshot(demoUser: SessionUser, now = Date.now()) {
+  const currentUserId = String(demoUser.id || demoUser.sub || "demo-admin");
+  const currentUserName = getSessionDisplayName(demoUser);
+  const currentUserInitials = getSessionInitials(demoUser);
+  const makePhoto = (id: string, dataUrl: string): PostPhoto => ({ id, dataUrl, type: "demo" });
+  const makeComment = (
+    id: string,
+    author: string,
+    text: string,
+    createdAtOffsetHours: number,
+    options: Partial<Comment> = {},
+  ): Comment => ({
+    id,
+    author,
+    authorId: options.authorId,
+    avatarText: options.avatarText || author.slice(0, 1),
+    avatarImageUrl: options.avatarImageUrl || null,
+    text,
+    isYou: Boolean(options.isYou),
+    createdAt: now - createdAtOffsetHours * 60 * 60 * 1000,
+    reactions: options.reactions || {},
+    viewerReaction: options.viewerReaction || null,
+  });
+
+  const feedEvents = normalizeFeedEvents([
+    {
+      id: "demo-event-kyt-week",
+      title: "KYT Mission Week",
+      subtitle: "ชวนทีมแชร์ภาพการชี้จุดเสี่ยงก่อนเริ่มงาน",
+      summary: "โพสต์ภาพหรือแนวคิด KYT พร้อมแนบสิ่งที่ทีมตัดสินใจป้องกันความเสี่ยง",
+      details: "ผู้เข้าร่วมที่โพสต์พร้อมภาพประกอบจะได้รับแต้มพิเศษ และโพสต์เด่นจะถูกปักหมุดบนฟีด Safety Culture",
+      imageSrc: "/images/dashboard/cpac-activity-banner-bg.png",
+      imageText: "KYT Mission",
+      startDate: formatLocalDate(addDays(new Date(now), -2)),
+      endDate: formatLocalDate(addDays(new Date(now), 5)),
+      dateLabel: "",
+      points: 25,
+      status: "open",
+      published: true,
+      bonusMode: "fixed",
+      multiplier: 1,
+      fixedPoints: 10,
+      enabledActions: ["theme-post", "comment", "reaction"],
+    },
+    {
+      id: "demo-event-ppe-focus",
+      title: "PPE Focus แชร์การใช้งานที่ถูกต้อง",
+      subtitle: "ก่อนเริ่มงานวันนี้ ทีมคุณเช็ก PPE กันหรือยัง",
+      summary: "แบ่งปันเคล็ดลับ PPE ที่ทำให้ทีมทำงานปลอดภัยขึ้นจริง",
+      details: "โพสต์ที่มีรูป before/after หรือ checklist PPE จะช่วยให้ทีมอื่นเอาไปใช้ต่อได้ง่าย",
+      imageSrc: "/images/heroes/admin-awareness-hero.png",
+      imageText: "PPE Focus",
+      startDate: formatLocalDate(addDays(new Date(now), -1)),
+      endDate: formatLocalDate(addDays(new Date(now), 7)),
+      dateLabel: "",
+      points: 20,
+      status: "open",
+      published: true,
+      bonusMode: "multiplier",
+      multiplier: 2,
+      fixedPoints: 0,
+      enabledActions: ["theme-post", "reaction"],
+    },
+    {
+      id: "demo-event-linewalk",
+      title: "Line Walk แชร์จุดปรับปรุงหน้างาน",
+      subtitle: "บอกสิ่งที่เห็นและแนวทางแก้ให้ทีมอื่นต่อยอดได้",
+      summary: "โพสต์จุดเสี่ยงหรือไอเดียปรับปรุงที่พบจากการทำ Line Walk",
+      details: "เหมาะกับหัวข้อหน้างานจริง เช่น ทางเดิน วัสดุ กั้นพื้นที่ หรือการติดป้ายเตือน",
+      imageSrc: "/images/heroes/safety-report-history-hero.png",
+      imageText: "Line Walk",
+      startDate: formatLocalDate(addDays(new Date(now), -3)),
+      endDate: formatLocalDate(addDays(new Date(now), 3)),
+      dateLabel: "",
+      points: 15,
+      status: "open",
+      published: true,
+      bonusMode: "fixed",
+      multiplier: 1,
+      fixedPoints: 5,
+      enabledActions: ["theme-post", "comment"],
+    },
+  ]);
+
+  const posts = normalizePosts([
+    {
+      id: 9001,
+      author: currentUserName,
+      authorId: currentUserId,
+      authorEmail: demoUser.email || "demo.admin@localhost",
+      avatarBg: "var(--brand-accent)",
+      avatarColor: "#173b6b",
+      avatarText: currentUserInitials,
+      avatarImageUrl: null,
+      subtext: `${DEMO_SAFETY_CULTURE_ORG} · Safety Culture Champions`,
+      category: "KYT",
+      body: "เช้านี้ทีมลองทำ KYT หน้าเครื่องผสมก่อนเริ่มเดินเครื่อง พบว่าจุดเสี่ยงหลักคือสายไฟชาร์จวิทยุที่พาดข้ามทางเดิน เลยย้ายตำแหน่งและติด cable cover ทันที",
+      photos: [makePhoto("demo-post-1-photo-1", "/images/heroes/safety-culture-post-hero.png")],
+      likes: 18,
+      comments: [
+        makeComment("demo-comment-1", "พงศธร ทีมผลิต", "ชอบวิธีสรุปสั้น ๆ แบบนี้มาก เอาไปใช้กับกะบ่ายได้เลย", 1.8, {
+          authorId: "user-prod-1",
+          avatarText: "พ",
+          reactions: { useful: 2, like: 1 },
+        }),
+        makeComment("demo-comment-2", "อรทัย EHS", "ดีเลยค่ะ ถ้ามีรูป after เพิ่มอีกมุมจะช่วยให้ทีมอื่นทำตามง่ายขึ้น", 1.3, {
+          authorId: "user-ehs-1",
+          avatarText: "อ",
+          reactions: { like: 3 },
+        }),
+      ],
+      points: 35,
+      hasLiked: true,
+      likedBy: [
+        { userId: "user-ehs-1", name: "อรทัย EHS" },
+        { userId: "user-prod-1", name: "พงศธร ทีมผลิต" },
+        { userId: currentUserId, name: currentUserName },
+      ],
+      isYou: true,
+      createdAt: now - 2 * 60 * 60 * 1000,
+      feedEventId: "demo-event-kyt-week",
+      feedEventTitle: "KYT Mission Week",
+      organizationId: "org-demo",
+      organizationName: DEMO_SAFETY_CULTURE_ORG,
+      teamId: DEMO_SAFETY_CULTURE_TEAM_ID,
+      teamName: "Safety Culture Champions",
+      location: DEMO_SAFETY_CULTURE_ORG,
+      team: "Safety Culture Champions",
+    },
+    {
+      id: 9002,
+      author: "สุชาดา หน่วยงานผลิต",
+      authorId: "user-prod-2",
+      avatarBg: "#DFF1FF",
+      avatarColor: "#173b6b",
+      avatarText: "ส",
+      avatarImageUrl: null,
+      subtext: "โรงงานสระบุรี · Green Kiln Team",
+      category: "PPE",
+      body: "แชร์วิธีจัดมุมตรวจ PPE ก่อนเข้าพื้นที่งานร้อน ทีมตั้ง check point หน้าโซนพร้อมตัวอย่างอุปกรณ์ที่ใส่ถูกต้อง ทำให้คนหน้างานหยิบใส่ครบมากขึ้น",
+      photos: [makePhoto("demo-post-2-photo-1", "/images/heroes/safety-culture-rewards-hero.png")],
+      likes: 26,
+      comments: [
+        makeComment("demo-comment-3", "วิชัย Maintenance", "ชอบที่มีตัวอย่าง PPE จริงให้ดู เทียบก่อนเข้าพื้นที่ได้เลย", 3.4, {
+          authorId: "user-mtn-1",
+          avatarText: "ว",
+          reactions: { like: 2, wow: 1 },
+        }),
+      ],
+      points: 28,
+      hasLiked: false,
+      likedBy: [
+        { userId: "user-mtn-1", name: "วิชัย Maintenance" },
+        { userId: "user-qc-1", name: "ชลธิชา QC" },
+      ],
+      createdAt: now - 5 * 60 * 60 * 1000,
+      feedEventId: "demo-event-ppe-focus",
+      organizationId: "org-saraburi",
+      organizationName: "โรงงานสระบุรี",
+      teamId: "team-green-kiln",
+      teamName: "Green Kiln Team",
+      location: "โรงงานสระบุรี",
+      team: "Green Kiln Team",
+    },
+    {
+      id: 9003,
+      author: "ธีรภัทร วิศวกรรม",
+      authorId: "user-eng-1",
+      avatarBg: "#EAF6FF",
+      avatarColor: "#173b6b",
+      avatarText: "ธ",
+      avatarImageUrl: null,
+      subtext: `${DEMO_SAFETY_CULTURE_ORG} · Safety Culture Champions`,
+      category: "Line Walk",
+      body: "จากการ Line Walk รอบบ่าย เจอจุดวางวัสดุชิดทางหนีไฟเกินระยะที่กำหนด เลยทำ floor marking ใหม่และติดป้ายเตือนระยะ clear zone ให้ชัดขึ้น",
+      photos: [makePhoto("demo-post-3-photo-1", "/images/heroes/safety-report-history-hero.png")],
+      likes: 14,
+      comments: [
+        makeComment("demo-comment-4", currentUserName, "ดีมากครับ แบบนี้ทีมอื่นเห็นแล้วเอาไปเทียบพื้นที่ตัวเองได้เลย", 6.5, {
+          authorId: currentUserId,
+          avatarText: currentUserInitials,
+          isYou: true,
+          reactions: { useful: 1 },
+        }),
+      ],
+      points: 22,
+      hasLiked: true,
+      likedBy: [
+        { userId: currentUserId, name: currentUserName },
+        { userId: "user-ehs-1", name: "อรทัย EHS" },
+      ],
+      createdAt: now - 8 * 60 * 60 * 1000,
+      feedEventId: "demo-event-linewalk",
+      organizationId: "org-demo",
+      organizationName: DEMO_SAFETY_CULTURE_ORG,
+      teamId: DEMO_SAFETY_CULTURE_TEAM_ID,
+      teamName: "Safety Culture Champions",
+      location: DEMO_SAFETY_CULTURE_ORG,
+      team: "Safety Culture Champions",
+    },
+    {
+      id: 9004,
+      author: "วรางคณา Office Support",
+      authorId: "user-office-1",
+      avatarBg: "#EFF7FF",
+      avatarColor: "#173b6b",
+      avatarText: "ว",
+      avatarImageUrl: null,
+      subtext: "สำนักงานใหญ่ · Office Safety Squad",
+      category: "5S",
+      body: "ทีมลองปรับมุมเก็บเอกสารและสายชาร์จใต้โต๊ะประชุมใหม่ตาม 5S ทำให้พื้นที่โล่งขึ้นมาก เวลาเดินตรวจหรือประชุมด่วนไม่สะดุดสายอีกแล้ว",
+      photos: [makePhoto("demo-post-4-photo-1", "/images/heroes/admin-users-hero.png")],
+      likes: 9,
+      comments: [],
+      points: 16,
+      hasLiked: false,
+      likedBy: [],
+      createdAt: now - 26 * 60 * 60 * 1000,
+      organizationId: "org-hq",
+      organizationName: "สำนักงานใหญ่",
+      teamId: "team-office-safety",
+      teamName: "Office Safety Squad",
+      location: "สำนักงานใหญ่",
+      team: "Office Safety Squad",
+    },
+    {
+      id: 9005,
+      author: "อรทัย EHS",
+      authorId: "user-ehs-1",
+      avatarBg: "#DFF1FF",
+      avatarColor: "#173b6b",
+      avatarText: "อ",
+      avatarImageUrl: null,
+      subtext: "ศูนย์ฝึกอบรม · Safety Coach",
+      category: "เคล็ดลับ",
+      body: "เคล็ดลับสั้น ๆ สำหรับโพสต์ Safety Culture ให้คนอยากอ่านต่อ: 1) เริ่มจากสิ่งที่พบจริง 2) บอกว่าทำอะไรแก้ 3) ปิดท้ายด้วยสิ่งที่ทีมอื่นเอาไปใช้ต่อได้",
+      photos: [],
+      imageText: "Safety Tips",
+      likes: 31,
+      comments: [
+        makeComment("demo-comment-5", "สุชาดา หน่วยงานผลิต", "ข้อ 3 สำคัญมากค่ะ ถ้าเอาไปใช้ต่อไม่ได้คนจะอ่านจบยาก", 20, {
+          authorId: "user-prod-2",
+          avatarText: "ส",
+          reactions: { like: 4, useful: 2 },
+        }),
+      ],
+      points: 18,
+      hasLiked: false,
+      likedBy: [
+        { userId: "user-prod-2", name: "สุชาดา หน่วยงานผลิต" },
+        { userId: "user-mtn-1", name: "วิชัย Maintenance" },
+      ],
+      createdAt: now - 32 * 60 * 60 * 1000,
+      organizationId: "org-training",
+      organizationName: "ศูนย์ฝึกอบรม",
+      teamId: "team-safety-coach",
+      teamName: "Safety Coach",
+      location: "ศูนย์ฝึกอบรม",
+      team: "Safety Coach",
+    },
+  ]);
+
+  const teamStandings = normalizeTeamStandings([
+    {
+      id: DEMO_SAFETY_CULTURE_TEAM_ID,
+      rank: 1,
+      name: "Safety Culture Champions",
+      leader: "อนันต์ ใจดี",
+      leaderUserId: currentUserId,
+      leaderEmail: demoUser.email || "demo.admin@localhost",
+      members: 12,
+      color: "#0B82F0",
+      points: 420,
+      percent: 100,
+      streak: 9,
+      awards: 5,
+    },
+    {
+      id: "team-green-kiln",
+      rank: 2,
+      name: "Green Kiln Team",
+      leader: "สุชาดา หน่วยงานผลิต",
+      leaderUserId: "user-prod-2",
+      leaderEmail: "suchada@example.com",
+      members: 15,
+      color: "#18B989",
+      points: 385,
+      percent: 92,
+      streak: 7,
+      awards: 4,
+    },
+    {
+      id: "team-office-safety",
+      rank: 3,
+      name: "Office Safety Squad",
+      leader: "วรางคณา Office Support",
+      leaderUserId: "user-office-1",
+      leaderEmail: "office@example.com",
+      members: 9,
+      color: "#F59E0B",
+      points: 344,
+      percent: 82,
+      streak: 4,
+      awards: 3,
+    },
+    {
+      id: "team-safety-coach",
+      rank: 4,
+      name: "Safety Coach",
+      leader: "อรทัย EHS",
+      leaderUserId: "user-ehs-1",
+      leaderEmail: "orathai@example.com",
+      members: 8,
+      color: "#8B5CF6",
+      points: 298,
+      percent: 71,
+      streak: 5,
+      awards: 2,
+    },
+  ]);
+
+  const personalRankings = normalizePersonalRankings([
+    { id: currentUserId, rank: "#1", name: currentUserName, points: 185, team: "Safety Culture Champions", active: true },
+    { id: "user-ehs-1", rank: "#2", name: "อรทัย EHS", points: 176, team: "Safety Coach" },
+    { id: "user-prod-2", rank: "#3", name: "สุชาดา หน่วยงานผลิต", points: 168, team: "Green Kiln Team" },
+    { id: "user-eng-1", rank: "#4", name: "ธีรภัทร วิศวกรรม", points: 154, team: "Safety Culture Champions" },
+    { id: "user-office-1", rank: "#5", name: "วรางคณา Office Support", points: 149, team: "Office Safety Squad" },
+    { id: "user-mtn-1", rank: "#6", name: "วิชัย Maintenance", points: 132, team: "Green Kiln Team" },
+  ]);
+
+  const rewardsCatalog = normalizeRewardsCatalog([
+    {
+      id: 701,
+      name: "แก้วน้ำ Safety Caring",
+      category: "merch",
+      description: "แก้วเก็บอุณหภูมิพร้อมลาย Safety Caring รุ่น Demo",
+      imageText: "Safety Mug",
+      imageSrc: "/images/heroes/safety-culture-rewards-hero.png",
+      points: 120,
+      isHot: true,
+      stockMode: "limited",
+      stockTotal: 50,
+      stockRemaining: 18,
+    },
+    {
+      id: 702,
+      name: "Voucher Coffee Shop",
+      category: "voucher",
+      description: "คูปองเครื่องดื่มสำหรับผู้ทำกิจกรรมต่อเนื่อง",
+      imageText: "Coffee Voucher",
+      imageSrc: "/images/heroes/admin-reward-hero.png",
+      points: 150,
+      stockMode: "limited",
+      stockTotal: 100,
+      stockRemaining: 42,
+    },
+    {
+      id: 703,
+      name: "ชุด PPE Premium",
+      category: "ppe",
+      description: "เซ็ตหมวกนิรภัยและถุงมือสำหรับใช้งานหน้างาน",
+      imageText: "PPE Set",
+      imageSrc: "/images/heroes/admin-awareness-hero.png",
+      points: 220,
+      stockMode: "limited",
+      stockTotal: 20,
+      stockRemaining: 6,
+    },
+    {
+      id: 704,
+      name: "Team Lunch Reward",
+      category: "team",
+      description: "สิทธิ์เลี้ยงอาหารกลางวันทีมสำหรับทีมที่ทำคะแนนสูง",
+      imageText: "Team Lunch",
+      imageSrc: "/images/heroes/safety-culture-leaderboard-hero.png",
+      points: 300,
+      stockMode: "unlimited",
+      stockTotal: null,
+      stockRemaining: null,
+    },
+  ]);
+
+  const rewardRedemptions = normalizeRewardRedemptions([
+    {
+      id: "demo-redemption-1",
+      rewardId: 701,
+      rewardName: "แก้วน้ำ Safety Caring",
+      rewardCategory: "merch",
+      pointsSpent: 120,
+      redeemedAt: new Date(now - 4 * 24 * 60 * 60 * 1000).toISOString(),
+      redeemedBy: currentUserName,
+    },
+  ]);
+
+  const inboxNotifications = normalizeInboxNotifications([
+    {
+      id: "demo-noti-1",
+      kind: "like",
+      title: "อรทัย EHS กดถูกใจโพสต์ของคุณ",
+      body: "โพสต์ KYT หน้าเครื่องผสมได้รับความสนใจจากทีม EHS",
+      actorName: "อรทัย EHS",
+      createdAt: now - 35 * 60 * 1000,
+      read: false,
+      postId: 9001,
+    },
+    {
+      id: "demo-noti-2",
+      kind: "comment",
+      title: "มีคอมเมนต์ใหม่บนโพสต์ของคุณ",
+      body: "สุชาดา หน่วยงานผลิต ฝากความคิดเห็นเกี่ยวกับแนวทาง PPE ที่คุณแชร์",
+      actorName: "สุชาดา หน่วยงานผลิต",
+      createdAt: now - 75 * 60 * 1000,
+      read: false,
+      postId: 9001,
+    },
+    {
+      id: "demo-noti-3",
+      kind: "activity",
+      title: "กิจกรรมใหม่ KYT Mission Week เริ่มแล้ว",
+      body: "แชร์ตัวอย่าง KYT หรือภาพจุดเสี่ยงเพื่อรับแต้มเพิ่ม",
+      createdAt: now - 3 * 60 * 60 * 1000,
+      read: true,
+      feedEventId: "demo-event-kyt-week",
+    },
+    {
+      id: "demo-noti-4",
+      kind: "reward",
+      title: "แต้มของคุณพร้อมแลกรางวัลแล้ว",
+      body: "ตอนนี้คุณมี 185 แต้ม ลองแวะดู reward catalog ได้เลย",
+      createdAt: now - 5 * 60 * 60 * 1000,
+      read: true,
+      href: "/safety-culture/rewards",
+    },
+  ]);
+
+  const userActivityHistory = normalizeUserActivityHistory([
+    {
+      id: "demo-activity-1",
+      type: "post",
+      occurredAt: now - 2 * 60 * 60 * 1000,
+      postId: 9001,
+      postAuthor: currentUserName,
+      postCategory: "KYT",
+      postPreview: "เช้านี้ทีมลองทำ KYT หน้าเครื่องผสมก่อนเริ่มเดินเครื่อง...",
+      pointsDelta: 35,
+    },
+    {
+      id: "demo-activity-2",
+      type: "reaction",
+      occurredAt: now - 90 * 60 * 1000,
+      postId: 9003,
+      postAuthor: "ธีรภัทร วิศวกรรม",
+      postCategory: "Line Walk",
+      postPreview: "จากการ Line Walk รอบบ่าย เจอจุดวางวัสดุชิดทางหนีไฟ...",
+      pointsDelta: 5,
+    },
+    {
+      id: "demo-activity-3",
+      type: "comment",
+      occurredAt: now - 80 * 60 * 1000,
+      postId: 9002,
+      postAuthor: "สุชาดา หน่วยงานผลิต",
+      postCategory: "PPE",
+      postPreview: "แชร์วิธีจัดมุมตรวจ PPE ก่อนเข้าพื้นที่งานร้อน...",
+      pointsDelta: 5,
+      commentText: "ทีมเราจะลองทำมุมเช็ก PPE แบบนี้บ้าง",
+    },
+  ]);
+
+  const awarenessHistory = [
+    {
+      date: todayKey(new Date(now)),
+      completedAt: new Date(now - 45 * 60 * 1000).toISOString(),
+      score: 100,
+      total: 100,
+      questions: [
+        { id: "demo-aw-1", category: "PPE", text: "หมวกนิรภัยต้องรัดสายคางเมื่ออยู่ในพื้นที่เสี่ยง", correct: true },
+      ],
+    },
+    {
+      date: todayKey(addDays(new Date(now), -1)),
+      completedAt: new Date(now - 24 * 60 * 60 * 1000).toISOString(),
+      score: 80,
+      total: 100,
+      questions: [
+        { id: "demo-aw-2", category: "KYT", text: "ควรทำ KYT ก่อนเริ่มงานทุกครั้ง", correct: true },
+      ],
+    },
+  ];
+
+  return {
+    user: demoUser,
+    currentUserPoints: 185,
+    posts,
+    feedEvents,
+    teamStandings,
+    personalRankings,
+    rewardsCatalog,
+    rewardCategories: createDefaultRewardCategories(),
+    rewardRedemptions,
+    inboxNotifications,
+    userActivityHistory,
+    awarenessQuestions: createDefaultAwarenessQuestions(),
+    awarenessHistory,
+    awarenessDoneDate: todayKey(new Date(now)),
+    awarenessHolidays: [],
+    safetyCultureEvent: createDefaultSafetyCultureEvent(),
+  };
+}
+
 export function AppProviders({ children }: { children: ReactNode }) {
   const [completedSteps, setCompletedSteps] = useState<number[]>([]);
   const [healthData, setHealthDataState] = useState<HealthData>(null);
@@ -1100,6 +1654,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
   const [awarenessHolidays, setAwarenessHolidays] = useState<AwarenessHoliday[]>([]);
   const [eventNow, setEventNow] = useState(0);
   const postsRef = useRef<Post[]>([]);
+  const demoModeRef = useRef(false);
 
   useEffect(() => {
     postsRef.current = posts;
@@ -1208,6 +1763,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
         name: String(item.name || item.team_name || item.teamName || ""),
         leaderUserId: String(item.leader_user_id || item.leaderUserId || ""),
         leaderEmail: String(item.leader_email || item.leaderEmail || ""),
+        leaderProfileImageUrl: (item.leader_profile_image_url || item.leaderProfileImageUrl || null) as string | null,
         leader: String(item.leader_name_th || item.leaderNameTh || item.leader_name_en || item.leaderNameEn || item.leader_email || item.leaderEmail || ""),
         members: Number(item.members || item.member_count || item.memberCount || 0),
         color: String(item.color || "var(--brand-accent)"),
@@ -1237,6 +1793,16 @@ export function AppProviders({ children }: { children: ReactNode }) {
     let cancelled = false;
 
     async function loadBackendState() {
+      let demoLoginAllowed = false;
+      try {
+        demoLoginAllowed =
+          process.env.NODE_ENV !== "production"
+          && isLocalDemoLoginHost(window.location.hostname)
+          && window.sessionStorage.getItem(DEMO_LOGIN_SESSION_KEY) === "true";
+      } catch {
+        demoLoginAllowed = false;
+      }
+
       // ตรวจ session ก่อน ถ้ายังไม่ล็อกอินก็ไม่ต้องเรียก API ที่ต้องยืนยันตัวตน
       let authed = false;
       let sessionUser: SessionUser | null = null;
@@ -1253,7 +1819,32 @@ export function AppProviders({ children }: { children: ReactNode }) {
       if (cancelled) return;
       isAuthenticatedRef.current = authed;
       currentUserRef.current = sessionUser;
-      if (!authed) return;
+      demoModeRef.current = false;
+
+      if (!authed) {
+        if (demoLoginAllowed) {
+          const demoUser = createDemoSessionUser();
+          const demoSnapshot = createDemoSafetyCultureSnapshot(demoUser);
+          currentUserRef.current = demoUser;
+          demoModeRef.current = true;
+          setCurrentUserPoints(demoSnapshot.currentUserPoints);
+          setPosts(demoSnapshot.posts);
+          setFeedEvents(demoSnapshot.feedEvents);
+          setTeamStandings(demoSnapshot.teamStandings);
+          setPersonalRankings(demoSnapshot.personalRankings);
+          setRewardsCatalog(demoSnapshot.rewardsCatalog);
+          setRewardCategories(demoSnapshot.rewardCategories);
+          setRewardRedemptions(demoSnapshot.rewardRedemptions);
+          setInboxNotifications(demoSnapshot.inboxNotifications);
+          setUserActivityHistory(demoSnapshot.userActivityHistory);
+          setAwarenessQuestions(demoSnapshot.awarenessQuestions);
+          setAwarenessHistory(demoSnapshot.awarenessHistory);
+          setAwarenessDoneDate(demoSnapshot.awarenessDoneDate);
+          setAwarenessHolidays(demoSnapshot.awarenessHolidays);
+          setSafetyCultureEvent(demoSnapshot.safetyCultureEvent);
+        }
+        return;
+      }
 
       const [postsResult, balanceResult, notificationsResult, rewardsResult, rewardCategoriesResult, leaderboardResult, teamsResult, awarenessResult, attemptsResult, holidaysResult, eventsResult, wereOkResult, transactionsResult] = await Promise.all([
         apiFetch<{ items: ApiPost[] }>("/api/safety-culture/posts?limit=50"),
@@ -1354,6 +1945,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
           name: String(item.name || item.team_name || item.teamName || ""),
           leaderUserId: String(item.leader_user_id || item.leaderUserId || ""),
           leaderEmail: String(item.leader_email || item.leaderEmail || ""),
+          leaderProfileImageUrl: (item.leader_profile_image_url || item.leaderProfileImageUrl || null) as string | null,
           leader: String(item.leader_name_th || item.leaderNameTh || item.leader_name_en || item.leaderNameEn || item.leader_email || item.leaderEmail || ""),
           members: Number(item.members || item.member_count || item.memberCount || 0),
           color: String(item.color || "var(--brand-accent)"),
@@ -1503,6 +2095,10 @@ export function AppProviders({ children }: { children: ReactNode }) {
   }, []);
 
   const fetchPosts = useCallback(async (options: { scope?: "all" | "my-team" | "mine"; category?: string | null; limit?: number } = {}) => {
+    if (demoModeRef.current) {
+      const currentUserId = String(currentUserRef.current?.id || currentUserRef.current?.sub || "demo-admin");
+      return filterDemoPosts(postsRef.current, currentUserId, options);
+    }
     if (!isAuthenticatedRef.current) return [];
     const params = new URLSearchParams();
     params.set("limit", String(options.limit || 50));
@@ -1673,6 +2269,10 @@ export function AppProviders({ children }: { children: ReactNode }) {
   }, [getLinkedFeedEvent, loadPostComments, safetyCultureEvent]);
 
   const fetchComments = useCallback(async (postId: number) => {
+    if (demoModeRef.current) {
+      const post = postsRef.current.find((item) => item.id === postId);
+      return post && Array.isArray(post.comments) ? post.comments : [];
+    }
     const comments = await loadPostComments(postId);
     if (!comments) return [];
     setPosts((current) => current.map((post) => (post.id === postId ? { ...post, comments } : post)));
@@ -2123,12 +2723,25 @@ export function AppProviders({ children }: { children: ReactNode }) {
     }
   }, [awarenessHolidays, refreshAwarenessAttempts, refreshPointBalance]);
 
-  const markAwarenessDone = useCallback((completion: Omit<AwarenessCompletion, "date" | "completedAt">) => {
+  const markAwarenessDone = useCallback(async (completion: Omit<AwarenessCompletion, "date" | "completedAt">) => {
     const date = todayKey();
     const occurredAt = Date.now();
     const points = getSafetyPoint("safetyAwarenessCompleted");
     const actorName = userDisplayName(currentUserRef.current);
     const alreadyCompletedToday = awarenessDoneDate === date || awarenessHistory.some((item) => item.date === date);
+
+    if (isAuthenticatedRef.current) {
+      const saved = await apiFetch<{ attempt: { attemptDate?: string; score?: number; total?: number } }>("/api/safety-awareness/attempts", apiJson("POST", {
+        score: completion.score,
+        total: completion.total,
+        questions: completion.questions,
+      }));
+      if (!saved.ok) {
+        setNotification({ type: "info", message: "บันทึก Safety Awareness ไม่สำเร็จ กรุณารีเฟรชแล้วลองอีกครั้ง" });
+        return false;
+      }
+    }
+
     setAwarenessDoneDate(date);
     setAwarenessHistory((current) => [
       ...current.filter((item) => item.date !== date),
@@ -2153,19 +2766,9 @@ export function AppProviders({ children }: { children: ReactNode }) {
       );
     }
     if (isAuthenticatedRef.current) {
-      void (async () => {
-        const saved = await apiFetch<{ attempt: { attemptDate?: string; score?: number; total?: number } }>("/api/safety-awareness/attempts", apiJson("POST", {
-          score: completion.score,
-          total: completion.total,
-          questions: completion.questions,
-        }));
-        if (!saved.ok) {
-          setNotification({ type: "info", message: "บันทึก Safety Awareness ไม่สำเร็จ กรุณารีเฟรชแล้วลองอีกครั้ง" });
-          return;
-        }
-        await Promise.all([refreshPointBalance(), refreshAwarenessAttempts()]);
-      })();
+      await Promise.all([refreshPointBalance(), refreshAwarenessAttempts()]);
     }
+    return true;
   }, [awarenessDoneDate, awarenessHistory, refreshAwarenessAttempts, refreshPointBalance]);
 
   const awardSafetyEffortCompletion = useCallback((sourceId: string, label = "Safety Effort สำเร็จ") => {

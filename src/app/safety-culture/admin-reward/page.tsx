@@ -31,14 +31,15 @@ import { SafetyCultureHero } from "@/components/safety-culture/safety-culture-he
 import { Button } from "@/components/ui/button";
 import { Combobox } from "@/components/ui/combobox";
 import { Card } from "@/components/ui/card";
+import { Dialog } from "@/components/ui/dialog";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+  AppDialogBody,
+  AppDialogContent,
+  AppDialogDescription,
+  AppDialogSectionFooter,
+  AppDialogSectionHeader,
+  AppDialogTitle,
+} from "@/components/ui/app-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -985,7 +986,7 @@ export default function AdminRewardPage() {
 
   return (
     <>
-      <div className="mx-auto w-full max-w-[1480px] bg-[var(--background)] px-3.5 pt-2.5 pb-8 font-sarabun md:px-5">
+      <div className="page-shell-wide bg-[var(--background)] pt-2.5 pb-8 font-sarabun">
         <SafetyCultureHero
           eyebrow="SAFETY CULTURE ADMIN"
           title={
@@ -995,8 +996,10 @@ export default function AdminRewardPage() {
           }
           description="จัดการแคตตาล็อกรางวัล รูปภาพ รายละเอียด คะแนนแลก และสถานะเด่นจากที่เดียว"
           variant="community"
-          backgroundImage="/images/heroes/admin-reward-hero.png"
+          backgroundImage="/images/heroes/Home01.png"
           backgroundOverlay="linear-gradient(90deg, rgba(210,235,255,.82) 0%, rgba(210,235,255,.60) 32%, rgba(210,235,255,.10) 56%, rgba(210,235,255,0) 74%)"
+          mascotSrc="/images/mascots/wangjai/4.png"
+          mascotAction="welcome"
         />
 
         <div className="mt-4 flex flex-col gap-4">
@@ -1483,20 +1486,20 @@ export default function AdminRewardPage() {
             if (!open) setRedemptionSearch("");
           }}
         >
-          <DialogContent className="grid h-[min(88vh,860px)] w-[calc(100vw-16px)] grid-rows-[auto_minmax(0,1fr)] overflow-hidden rounded-[20px] border border-[var(--border)] bg-[var(--brand-surface)] p-0 shadow-[0_24px_50px_rgba(62,36,13,0.18)] sm:w-[calc(100vw-32px)] sm:!max-w-[1040px]">
-            <DialogHeader className="border-b border-[var(--border)] bg-[linear-gradient(180deg,var(--brand-soft)_0%,var(--brand-soft)_100%)] px-5 pt-5 pb-4 sm:px-6">
-              <DialogTitle className="flex items-center gap-3 text-[24px] font-black text-[var(--brand-text)]">
+          <AppDialogContent className="grid h-[min(88vh,860px)] w-[calc(100vw-16px)] grid-rows-[auto_minmax(0,1fr)] sm:w-[calc(100vw-32px)] sm:!max-w-[1040px]">
+            <AppDialogSectionHeader className="px-5 pt-5 pb-4 sm:px-6">
+              <AppDialogTitle className="flex items-center gap-3">
                 <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white text-[var(--brand-text)]">
                   <History className="h-5 w-5" strokeWidth={2.3} />
                 </div>
                 ประวัติการแลกรางวัล
-              </DialogTitle>
-              <DialogDescription className="text-[13px] font-bold leading-relaxed text-[#8E8A81] sm:text-[14px]">
+              </AppDialogTitle>
+              <AppDialogDescription className="sm:text-[14px]">
                 ดูได้ว่าใครแลกรางวัลอะไรไปบ้าง เมื่อไร และใช้คะแนนไปเท่าไร
-              </DialogDescription>
-            </DialogHeader>
+              </AppDialogDescription>
+            </AppDialogSectionHeader>
 
-            <div className="min-h-0 overflow-y-auto px-4 py-4 sm:px-6 sm:py-5">
+            <AppDialogBody className="min-h-0 overflow-y-auto px-4 py-4 sm:px-6 sm:py-5">
               <div className="rounded-[18px] border border-[var(--border)] bg-[var(--brand-soft)] p-4">
                 <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between lg:gap-6">
                   <div className="max-w-[520px] text-[13px] font-black leading-relaxed text-[var(--brand-text)]">
@@ -1586,32 +1589,32 @@ export default function AdminRewardPage() {
                   ))}
                 </div>
               )}
-            </div>
-          </DialogContent>
+            </AppDialogBody>
+          </AppDialogContent>
         </Dialog>
 
         <Dialog open={!!editingReward} onOpenChange={(open) => !open && setEditingReward(null)}>
-          <DialogContent
+          <AppDialogContent
             className={cn(
-              "grid h-[min(90vh,960px)] w-[calc(100vw-16px)] grid-rows-[auto_minmax(0,1fr)_auto] overflow-hidden rounded-[16px] border border-[var(--border)] bg-[var(--brand-surface)] p-0 shadow-[0_24px_50px_rgba(62,36,13,0.18)] sm:w-[calc(100vw-32px)] sm:rounded-[32px]",
+              "grid h-[min(90vh,960px)] w-[calc(100vw-16px)] grid-rows-[auto_minmax(0,1fr)_auto] sm:w-[calc(100vw-32px)]",
               editingReward?.mode === "create"
                 ? "sm:!max-w-[1180px] lg:!max-w-[1280px]"
                 : "sm:!max-w-[1240px] lg:!max-w-[1360px]"
             )}
           >
-            <DialogHeader className="border-b border-[var(--border)] bg-[linear-gradient(180deg,var(--brand-soft)_0%,var(--brand-soft)_100%)] px-5 pt-5 pb-4 sm:px-6 sm:pt-6 sm:pb-5 lg:px-8">
-              <DialogTitle className="text-[24px] font-black text-[var(--brand-text)] sm:text-[30px]">
+            <AppDialogSectionHeader className="px-5 pt-5 pb-4 sm:px-6 sm:pt-6 sm:pb-5 lg:px-8">
+              <AppDialogTitle className="sm:text-[30px]">
                 {editingReward?.mode === "create" ? "สร้างรางวัลใหม่" : "แก้ไขรางวัล"}
-              </DialogTitle>
-              <DialogDescription className="max-w-[840px] text-[13px] font-bold leading-relaxed text-[#8E8A81] sm:text-[14px]">
+              </AppDialogTitle>
+              <AppDialogDescription className="max-w-[840px] sm:text-[14px]">
                 {editingReward?.mode === "create"
                   ? "ใช้มุมมองนี้เพื่อสร้างรางวัลให้ใกล้กับหน้าผู้ใช้มากขึ้น เห็นรูป คะแนนแลก รายละเอียด และสถานะเด่นได้ตั้งแต่ก่อนยืนยัน"
                   : "ปรับรายละเอียดรางวัลและเช็กตัวอย่างไปพร้อมกัน เพื่อให้แก้ไขได้แม่นขึ้นทั้งบนเดสก์ท็อปและมือถือ"}
-              </DialogDescription>
-            </DialogHeader>
+              </AppDialogDescription>
+            </AppDialogSectionHeader>
 
             {editingReward ? (
-              <div className="min-h-0 overflow-y-auto bg-[var(--brand-surface)] px-4 py-4 sm:px-6 sm:py-6 lg:px-8 lg:py-5">
+              <AppDialogBody className="min-h-0 overflow-y-auto bg-(--brand-surface) px-4 py-4 sm:px-6 sm:py-6 lg:px-8 lg:py-5">
                 <input
                   ref={fileInputRef}
                   type="file"
@@ -2110,15 +2113,15 @@ export default function AdminRewardPage() {
                     </div>
                   </div>
                 )}
-              </div>
+            </AppDialogBody>
             ) : null}
 
-            <DialogFooter className="mx-0 mb-0 rounded-b-[28px] border-t border-[var(--border)] bg-[var(--brand-soft)] px-5 py-4 sm:px-6 lg:px-8">
+            <AppDialogSectionFooter className="px-5 py-4 sm:px-6 lg:px-8">
               <div className="flex w-full justify-end sm:pr-1 lg:pr-2">
                 <Button
                   onClick={confirmRewardEdit}
                   disabled={rewardSaveState === "saving"}
-                  className="h-10 rounded-full bg-[var(--brand-text)] px-4 text-[13px] text-white hover:bg-[var(--c-4a280f)]"
+                  className="h-10 rounded-full bg-(--brand-text) px-4 text-[13px] text-white hover:bg-(--c-4a280f)"
                 >
                   {rewardSaveState === "saving"
                     ? "กำลังบันทึก..."
@@ -2127,30 +2130,30 @@ export default function AdminRewardPage() {
                       : "บันทึกการแก้ไข"}
                 </Button>
               </div>
-            </DialogFooter>
-          </DialogContent>
+            </AppDialogSectionFooter>
+          </AppDialogContent>
         </Dialog>
 
         <Dialog open={!!deletingReward} onOpenChange={(open) => !open && setDeletingReward(null)}>
-          <DialogContent className="max-w-[520px] overflow-hidden rounded-[18px] border border-[var(--border)] bg-[var(--brand-surface)] p-0 shadow-[0_24px_50px_rgba(62,36,13,0.18)] sm:rounded-[30px]">
-            <DialogHeader className="border-b border-[var(--border)] bg-[linear-gradient(180deg,var(--brand-soft)_0%,var(--brand-soft)_100%)] px-4 pt-4 pb-3 sm:px-6 sm:pt-6 sm:pb-5">
-              <DialogTitle className="text-[22px] font-black text-[#8a2f2b] sm:text-[26px]">
+          <AppDialogContent className="max-w-130">
+            <AppDialogSectionHeader className="px-4 pt-4 pb-3 sm:px-6 sm:pt-6 sm:pb-5">
+              <AppDialogTitle className="text-[#8a2f2b] sm:text-[26px]">
                 Confirm Delete
-              </DialogTitle>
-              <DialogDescription className="max-w-[420px] text-[12px] font-bold leading-relaxed text-[#8E8A81] sm:text-[14px]">
+              </AppDialogTitle>
+              <AppDialogDescription className="max-w-105 sm:text-[14px]">
                 แน่ใจใช่ไหมว่าต้องการลบรางวัลนี้ หากยืนยัน รายการจะหายจากหน้าแอดมินและหน้ารางวัลหลักทันที
-              </DialogDescription>
-            </DialogHeader>
+              </AppDialogDescription>
+            </AppDialogSectionHeader>
 
             {deletingReward ? (
-              <div className="bg-[var(--brand-surface)] px-4 py-4 sm:px-6 sm:py-6">
+              <AppDialogBody className="bg-(--brand-surface) px-4 py-4 sm:px-6 sm:py-6">
                 <div className="rounded-[16px] border border-[#f1d1cf] bg-white px-4 py-4 shadow-[0_8px_18px_rgba(62,36,13,0.04)]">
                   <div className="flex items-center gap-3">
-                    <div className="relative flex h-12 w-12 flex-shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-[var(--brand-soft)]">
+                    <div className="relative flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-(--brand-soft)">
                       {deletingReward.imageSrc ? (
                         <Image src={deletingReward.imageSrc} alt={deletingReward.name} fill sizes="48px" className="object-cover" />
                       ) : (
-                        <Gift className="h-4 w-4 text-[var(--brand-text)]" strokeWidth={2.2} />
+                        <Gift className="h-4 w-4 text-(--brand-text)" strokeWidth={2.2} />
                       )}
                     </div>
                     <div className="min-w-0">
@@ -2163,15 +2166,15 @@ export default function AdminRewardPage() {
                     </div>
                   </div>
                 </div>
-              </div>
+              </AppDialogBody>
             ) : null}
 
-            <DialogFooter className="mx-0 mb-0 rounded-b-[26px] border-t border-[var(--border)] bg-[var(--brand-soft)] px-5 py-4 sm:rounded-b-[30px] sm:px-6 sm:py-5">
+            <AppDialogSectionFooter className="px-5 py-4 sm:px-6 sm:py-5">
               <div className="flex w-full justify-end gap-2">
                 <Button
                   variant="outline"
                   onClick={() => setDeletingReward(null)}
-                  className="h-10 rounded-full border-[var(--border)] bg-white px-4 text-[13px] text-[var(--brand-text)] hover:bg-[var(--brand-soft)]"
+                  className="h-10 rounded-full border-border bg-white px-4 text-[13px] text-(--brand-text) hover:bg-(--brand-soft)"
                 >
                   Cancel
                 </Button>
@@ -2182,39 +2185,39 @@ export default function AdminRewardPage() {
                   Confirm Delete
                 </Button>
               </div>
-            </DialogFooter>
-          </DialogContent>
+            </AppDialogSectionFooter>
+          </AppDialogContent>
         </Dialog>
 
         <Dialog open={!!pendingCategoryDelete} onOpenChange={(open) => !open && setPendingCategoryDelete(null)}>
-          <DialogContent className="max-w-[560px] overflow-hidden rounded-[18px] border border-[var(--border)] bg-[var(--brand-surface)] p-0 shadow-[0_24px_50px_rgba(62,36,13,0.18)] sm:rounded-[30px]">
-            <DialogHeader className="border-b border-[var(--border)] bg-[linear-gradient(180deg,var(--brand-soft)_0%,var(--brand-soft)_100%)] px-4 pt-4 pb-3 sm:px-6 sm:pt-6 sm:pb-5">
-              <DialogTitle className="text-[22px] font-black text-[#8a2f2b] sm:text-[26px]">
+          <AppDialogContent className="max-w-140">
+            <AppDialogSectionHeader className="px-4 pt-4 pb-3 sm:px-6 sm:pt-6 sm:pb-5">
+              <AppDialogTitle className="text-[#8a2f2b] sm:text-[26px]">
                 ยืนยันการลบหมวดหมู่
-              </DialogTitle>
-              <DialogDescription className="max-w-[460px] text-[12px] font-bold leading-relaxed text-[#8E8A81] sm:text-[14px]">
+              </AppDialogTitle>
+              <AppDialogDescription className="max-w-115 sm:text-[14px]">
                 {pendingCategoryDelete?.count
                   ? "หากยืนยัน จะลบข้อมูลรางวัลทั้งหมดในหมู่นี้"
                   : "หากยืนยัน ระบบจะลบหมวดหมู่นี้ออกจากตัวเลือกของผู้ดูแลทันที"}
-              </DialogDescription>
-            </DialogHeader>
+              </AppDialogDescription>
+            </AppDialogSectionHeader>
 
             {pendingCategoryDelete ? (
-              <div className="bg-[var(--brand-surface)] px-4 py-4 sm:px-6 sm:py-6">
-                <div className="rounded-[16px] border border-[var(--border)] bg-white px-4 py-4 shadow-[0_8px_18px_rgba(62,36,13,0.04)]">
+              <AppDialogBody className="bg-(--brand-surface) px-4 py-4 sm:px-6 sm:py-6">
+                <div className="rounded-[16px] border border-border bg-white px-4 py-4 shadow-[0_8px_18px_rgba(62,36,13,0.04)]">
                   <div className="flex items-start justify-between gap-3">
                     <div>
                       <div className="text-[17px] font-black text-[#1A1A1A]">{pendingCategoryDelete.label}</div>
                       <div className="mt-1 text-[12px] font-bold text-[#8E8A81]">{pendingCategoryDelete.hint}</div>
                     </div>
-                    <div className="rounded-full bg-[var(--brand-soft)] px-3 py-1 text-[12px] font-black text-[var(--brand-text)]">
+                    <div className="rounded-full bg-(--brand-soft) px-3 py-1 text-[12px] font-black text-(--brand-text)">
                       {pendingCategoryDelete.count} items
                     </div>
                   </div>
 
                   {pendingCategoryDelete.count > 0 ? (
-                    <div className="mt-4 rounded-[14px] border border-[var(--border)] bg-[var(--brand-soft)] px-3 py-3">
-                      <div className="text-[12px] font-black text-[var(--brand-text)]">รางวัลที่ยังอยู่ในหมวดนี้</div>
+                    <div className="mt-4 rounded-[14px] border border-border bg-(--brand-soft) px-3 py-3">
+                      <div className="text-[12px] font-black text-(--brand-text)">รางวัลที่ยังอยู่ในหมวดนี้</div>
                       <div className="mt-2 flex flex-col gap-2">
                         {rewardsInPendingCategory.slice(0, 4).map((reward) => (
                           <div key={reward.id} className="flex items-center justify-between gap-3 rounded-[12px] bg-white px-3 py-2">
@@ -2222,7 +2225,7 @@ export default function AdminRewardPage() {
                               <div className="truncate text-[13px] font-black text-[#1A1A1A]">{reward.name}</div>
                               <div className="text-[11px] font-bold text-[#8E8A81]">{reward.description}</div>
                             </div>
-                            <div className="whitespace-nowrap text-[11px] font-black text-[var(--brand-accent-strong)]">
+                            <div className="whitespace-nowrap text-[11px] font-black text-(--brand-accent-strong)">
                               {reward.points.toLocaleString()} pts
                             </div>
                           </div>
@@ -2236,10 +2239,10 @@ export default function AdminRewardPage() {
                     </div>
                   ) : null}
                 </div>
-              </div>
+              </AppDialogBody>
             ) : null}
 
-            <DialogFooter className="mx-0 mb-0 rounded-b-[26px] border-t border-[var(--border)] bg-[var(--brand-soft)] px-5 py-4 sm:rounded-b-[30px] sm:px-6 sm:py-5">
+            <AppDialogSectionFooter className="px-5 py-4 sm:px-6 sm:py-5">
               <div className="flex w-full justify-end">
                 <Button
                   onClick={confirmRemoveCategory}
@@ -2248,8 +2251,8 @@ export default function AdminRewardPage() {
                   Confirm Delete
                 </Button>
               </div>
-            </DialogFooter>
-          </DialogContent>
+            </AppDialogSectionFooter>
+          </AppDialogContent>
         </Dialog>
       </div>
     </>

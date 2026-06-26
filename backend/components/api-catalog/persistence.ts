@@ -1638,20 +1638,35 @@ async function attachAwarenessAnswers(result: { items: Array<Record<string, unkn
   const params: Record<string, unknown> = {};
   ids.forEach((id, i) => { params[`id${i}`] = id; });
   const answerRows = await queryRows<DbRow>(
-    `SELECT attempt_id, question_id, answer_json, is_correct
-     FROM awareness_answers WHERE attempt_id IN (${placeholders}) ORDER BY id`,
+    `SELECT
+       aa.attempt_id,
+       aa.question_id,
+       aa.answer_json,
+       aa.is_correct,
+       aq.question_text,
+       aq.options_json
+     FROM awareness_answers aa
+     LEFT JOIN awareness_questions aq ON aq.id = aa.question_id
+     WHERE aa.attempt_id IN (${placeholders})
+     ORDER BY aa.id`,
     params,
   );
   const byAttempt = new Map<string, Array<Record<string, unknown>>>();
   for (const row of answerRows) {
-    let parsed: Record<string, unknown> = {};
-    try { parsed = row.answer_json ? JSON.parse(String(row.answer_json)) : {}; } catch { parsed = {}; }
+    const parsedAnswer = parseJson(row.answer_json);
+    const parsedOptions = parseJson(row.options_json);
+    const answer = parsedAnswer && typeof parsedAnswer === "object" && !Array.isArray(parsedAnswer)
+      ? parsedAnswer as Record<string, unknown>
+      : {};
+    const options = parsedOptions && typeof parsedOptions === "object" && !Array.isArray(parsedOptions)
+      ? parsedOptions as Record<string, unknown>
+      : {};
     const key = String(row.attempt_id);
     const list = byAttempt.get(key) || [];
     list.push({
-      id: String(parsed.id ?? row.question_id ?? ""),
-      category: parsed.category ?? "",
-      text: parsed.text ?? "",
+      id: String(answer.id ?? row.question_id ?? ""),
+      category: answer.category ?? options.category ?? "",
+      text: answer.text ?? row.question_text ?? "",
       correct: Boolean(row.is_correct),
     });
     byAttempt.set(key, list);

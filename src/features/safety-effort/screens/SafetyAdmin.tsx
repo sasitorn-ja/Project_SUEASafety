@@ -13,7 +13,8 @@ import {
 import { uploadSafetyEffortMedia } from "@/features/safety-effort/lib/upload-media";
 import { GripVertical, Eye, Trash2, Search, X, Check, Settings, ChevronDown, ChevronUp, Pencil, ClipboardList } from "lucide-react";
 import { SafetyCultureHero } from "@/components/safety-culture/safety-culture-hero";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog } from "@/components/ui/dialog";
+import { AppDialogBody, AppDialogContent } from "@/components/ui/app-dialog";
 
 
 
@@ -1130,19 +1131,8 @@ export default function SafetyAdmin() {
     </div>
 
       <Dialog open={!!deleteTargetId} onOpenChange={(open) => !open && setDeleteTargetId(null)}>
-        <DialogContent showCloseButton={false} className="safety-admin-form-popup z-[1000] p-0 sm:max-w-[460px]">
-          <div
-            style={{
-              width: "min(100%, 460px)",
-              background: "var(--brand-surface)",
-              borderRadius: 24,
-              border: `1px solid ${T.line}`,
-              boxShadow: "0 24px 60px rgba(31,26,23,0.22)",
-              padding: 24,
-              display: "grid",
-              gap: 16,
-            }}
-          >
+        <AppDialogContent showCloseButton={false} className="safety-admin-form-popup z-1000 max-w-115">
+          <AppDialogBody style={{ display: "grid", gap: 16 }}>
             <div style={{ fontSize: 22, fontWeight: 900 }}>ยืนยันการลบข้อประเมิน</div>
             <div style={{ fontSize: 14.5, color: T.sub, lineHeight: 1.7 }}>
               ข้อนี้จะถูกลบออกจากหมวด {LOCATION_TYPE_LABELS[selectedType]} ใน draft ปัจจุบัน หากยังไม่ได้กด Save Draft สามารถกด Reset เพื่อย้อนกลับได้
@@ -1151,8 +1141,8 @@ export default function SafetyAdmin() {
               <button type="button" onClick={() => setDeleteTargetId(null)} style={buttonGhostStyle}>ยกเลิก</button>
               <button type="button" onClick={handleDeleteConfirmed} style={buttonDangerStyle}>ลบข้อ</button>
             </div>
-          </div>
-        </DialogContent>
+          </AppDialogBody>
+        </AppDialogContent>
       </Dialog>
 
       <Dialog
@@ -1164,22 +1154,9 @@ export default function SafetyAdmin() {
           }
         }}
       >
-        <DialogContent showCloseButton={false} className="safety-admin-form-popup z-[1000] p-0 sm:max-w-[820px]">
+        <AppDialogContent showCloseButton={false} className="safety-admin-form-popup z-1000 max-w-205">
           {tempQuestion ? (
-          <div
-            style={{
-              width: "min(100%, 820px)",
-              background: "var(--brand-surface)",
-              borderRadius: 24,
-              border: `1px solid ${T.line}`,
-              boxShadow: "0 24px 60px rgba(31,26,23,0.22)",
-              padding: 24,
-              display: "grid",
-              gap: 16,
-              maxHeight: "90vh",
-              overflowY: "auto",
-            }}
-          >
+          <AppDialogBody className="max-h-[90vh] overflow-y-auto" style={{ display: "grid", gap: 16 }}>
             <div style={{ fontSize: 20, fontWeight: 900, textAlign: "center", borderBottom: `1px solid ${T.line}`, paddingBottom: 10 }}>
               เพิ่มข้อประเมินใหม่
             </div>
@@ -1374,27 +1351,14 @@ export default function SafetyAdmin() {
                 เพิ่มข้อประเมิน
               </button>
             </div>
-          </div>
+          </AppDialogBody>
           ) : null}
-        </DialogContent>
+        </AppDialogContent>
       </Dialog>
 
       <Dialog open={showBackdateLimitModal} onOpenChange={(open) => !open && handleCancelBackdateModal()}>
-        <DialogContent showCloseButton={false} className="safety-admin-form-popup z-[1000] p-0 sm:max-w-[460px]">
-          <div
-            style={{
-              width: "min(100%, 460px)",
-              background: "var(--brand-surface)",
-              borderRadius: 24,
-              border: `1px solid ${T.line}`,
-              boxShadow: "0 24px 60px rgba(31,26,23,0.22)",
-              padding: 24,
-              display: "grid",
-              gap: 16,
-              maxHeight: "90vh",
-              overflowY: "auto",
-            }}
-          >
+        <AppDialogContent showCloseButton={false} className="safety-admin-form-popup z-1000 max-w-115">
+          <AppDialogBody className="max-h-[90vh] overflow-y-auto" style={{ display: "grid", gap: 16 }}>
             <div style={{ fontSize: 20, fontWeight: 900, textAlign: "center" }}>ตั้งค่าระบบทำย้อนหลัง</div>
             <div style={{ fontSize: 13, color: T.sub, lineHeight: 1.5, textAlign: "center" }}>
               กำหนดจำนวนวันที่อนุญาตให้ทำรายการย้อนหลังได้ และเลือกตั้งค่าเปิดระบบเฉพาะบางวันได้
@@ -1568,8 +1532,8 @@ export default function SafetyAdmin() {
                 บันทึก
               </button>
             </div>
-          </div>
-        </DialogContent>
+          </AppDialogBody>
+        </AppDialogContent>
       </Dialog>
 
 
