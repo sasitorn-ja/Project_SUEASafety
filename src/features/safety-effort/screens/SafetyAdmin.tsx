@@ -600,199 +600,9 @@ export default function SafetyAdmin() {
             flexShrink: 0,
           }}
         >
-          {/* Left: Title + Tabs */}
-          <div style={{
-            display: "flex",
-            flexDirection: isMobile ? "column" : "row",
-            alignItems: isMobile ? "stretch" : "center",
-            gap: isMobile ? 12 : 24
-          }}>
-            <div>
-              <div style={{ fontSize: 18, fontWeight: 900, color: T.ink, lineHeight: 1.1 }}>Safety Admin</div>
-              {lastSavedAt && <div style={{ fontSize: 10, color: T.sub, marginTop: 2 }}>เซฟล่าสุด: {lastSavedAt}</div>}
-            </div>
-            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-              <div style={{ position: "relative", zIndex: 50 }}>
-                <button
-                  type="button"
-                  onClick={() => setLocationDropdownOpen(!locationDropdownOpen)}
-                  style={{
-                    height: 40,
-                    borderRadius: 12,
-                    border: `1px solid rgba(11, 78, 162, 0.18)`,
-                    background: "#fff",
-                    color: "#1d4ed8",
-                    padding: "0 16px",
-                    fontFamily: "inherit",
-                    fontWeight: 800,
-                    cursor: "pointer",
-                    fontSize: 14,
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: 8,
-                    outline: "none",
-                    boxShadow: "0 2px 6px rgba(11, 78, 162, 0.04)",
-                    transition: "all 0.2s ease",
-                  }}
-                  onMouseOver={(e) => {
-                    e.currentTarget.style.background = "#eff6ff";
-                    e.currentTarget.style.borderColor = "#3b82f6";
-                  }}
-                  onMouseOut={(e) => {
-                    e.currentTarget.style.background = "#fff";
-                    e.currentTarget.style.borderColor = "rgba(11, 78, 162, 0.18)";
-                  }}
-                >
-                  {selectedType === "factory" && <Building size={16} style={{ color: "#1d4ed8" }} />}
-                  {selectedType === "office" && <Users size={16} style={{ color: "#1d4ed8" }} />}
-                  {selectedType === "site" && <MapPin size={16} style={{ color: "#1d4ed8" }} />}
-                  <span>{LOCATION_TYPE_LABELS[selectedType]}</span>
-                  <ChevronDown size={14} style={{ color: "#1d4ed8", transform: locationDropdownOpen ? "rotate(180deg)" : "none", transition: "transform 0.15s ease" }} />
-                </button>
-
-                {/* Backdrop */}
-                {locationDropdownOpen && (
-                  <div
-                    onClick={() => setLocationDropdownOpen(false)}
-                    style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, zIndex: 40 }}
-                  />
-                )}
-
-                {/* Dropdown Menu */}
-                {locationDropdownOpen && (
-                  <div
-                    style={{
-                      position: "absolute",
-                      top: "calc(100% + 6px)",
-                      left: 0,
-                      width: 240,
-                      background: "#fff",
-                      border: `1px solid ${T.lineStrong}`,
-                      borderRadius: 16,
-                      boxShadow: "0 12px 36px rgba(6,43,99,0.16)",
-                      zIndex: 50,
-                      padding: 6,
-                      display: "grid",
-                      gap: 4,
-                    }}
-                  >
-                    {LOCATION_TYPE_OPTIONS.map((option) => {
-                      const active = selectedType === option.key;
-                      const count = draft[option.key].length;
-                      return (
-                        <button
-                          key={option.key}
-                          type="button"
-                          onClick={() => {
-                            setSelectedType(option.key);
-                            setSelectedQuestionId(draft[option.key][0]?.id || "");
-                            setLocationDropdownOpen(false);
-                            if (isMobile) setMobileActiveView("list");
-                          }}
-                          style={{
-                            width: "100%",
-                            padding: "10px 12px",
-                            borderRadius: 12,
-                            border: "none",
-                            background: active ? "#eff6ff" : "transparent",
-                            color: active ? "#1d4ed8" : T.ink,
-                            fontSize: 13.5,
-                            fontWeight: 800,
-                            textAlign: "left",
-                            cursor: "pointer",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "space-between",
-                            gap: 8,
-                            outline: "none",
-                          }}
-                          onMouseOver={(e) => { if (!active) e.currentTarget.style.background = "#f1f5f9"; }}
-                          onMouseOut={(e) => { if (!active) e.currentTarget.style.background = "transparent"; }}
-                        >
-                          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                            <div
-                              style={{
-                                width: 28,
-                                height: 28,
-                                borderRadius: "50%",
-                                background: active ? "#fff" : "#f1f5f9",
-                                display: "grid",
-                                placeItems: "center",
-                                flexShrink: 0,
-                              }}
-                            >
-                              {option.key === "factory" && <Building size={14} style={{ color: active ? "#1d4ed8" : "#475569" }} />}
-                              {option.key === "office" && <Users size={14} style={{ color: active ? "#1d4ed8" : "#475569" }} />}
-                              {option.key === "site" && <MapPin size={14} style={{ color: active ? "#1d4ed8" : "#475569" }} />}
-                            </div>
-                            <span>{option.label}</span>
-                          </div>
-                          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                            <span
-                              style={{
-                                minWidth: 22,
-                                height: 22,
-                                borderRadius: 999,
-                                background: active ? "#fff" : "#f1f5f9",
-                                color: active ? "#1d4ed8" : "#64748b",
-                                display: "grid",
-                                placeItems: "center",
-                                fontSize: 11,
-                                fontWeight: 800,
-                                padding: "0 6px",
-                              }}
-                            >
-                              {count}
-                            </span>
-                            {active && <Check size={14} style={{ color: "#1d4ed8" }} />}
-                          </div>
-                        </button>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-
-              {/* Vertical Divider and Inactive Category Badges */}
-              {LOCATION_TYPE_OPTIONS.filter(o => o.key !== selectedType).map((option) => {
-                const count = draft[option.key].length;
-                return (
-                  <div key={option.key} style={{ display: "flex", alignItems: "center" }}>
-                    <div style={{ width: 1, height: 20, background: "#e2e8f0", margin: "0 8px" }} />
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setSelectedType(option.key);
-                        setSelectedQuestionId(draft[option.key][0]?.id || "");
-                        if (isMobile) setMobileActiveView("list");
-                      }}
-                      style={{
-                        height: 38,
-                        borderRadius: 999,
-                        background: "#f1f5f9",
-                        color: "#475569",
-                        border: "none",
-                        padding: "0 14px",
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 8,
-                        cursor: "pointer",
-                        fontWeight: 800,
-                        fontSize: 13,
-                        transition: "all 0.15s ease",
-                      }}
-                      onMouseOver={(e) => { e.currentTarget.style.background = "#e2e8f0"; }}
-                      onMouseOut={(e) => { e.currentTarget.style.background = "#f1f5f9"; }}
-                    >
-                      {option.key === "factory" && <Building size={14} style={{ color: "#64748b" }} />}
-                      {option.key === "office" && <Users size={14} style={{ color: "#64748b" }} />}
-                      {option.key === "site" && <MapPin size={14} style={{ color: "#64748b" }} />}
-                      <span>{count}</span>
-                    </button>
-                  </div>
-                );
-              })}
-            </div>
+          <div>
+            <div style={{ fontSize: 18, fontWeight: 900, color: T.ink, lineHeight: 1.1 }}>Safety Admin</div>
+            {lastSavedAt && <div style={{ fontSize: 10, color: T.sub, marginTop: 2 }}>เซฟล่าสุด: {lastSavedAt}</div>}
           </div>
         </div>
 
@@ -1136,6 +946,154 @@ export default function SafetyAdmin() {
                   <span style={{ fontSize: 15, fontWeight: 900, color: T.ink }}>การตั้งค่า</span>
                 </div>
 
+                {/* เลือกหมวดหมู่สถานที่ (Location Category Selector) */}
+                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                  <label style={{ fontSize: 13, fontWeight: 900, color: T.ink }}>หมวดหมู่สถานที่</label>
+                  <div style={{ position: "relative", zIndex: 60 }}>
+                    <button
+                      type="button"
+                      onClick={() => setLocationDropdownOpen(!locationDropdownOpen)}
+                      style={{
+                        width: "100%",
+                        height: 40,
+                        borderRadius: 12,
+                        border: `1px solid rgba(11, 78, 162, 0.18)`,
+                        background: "#fff",
+                        color: "#1d4ed8",
+                        padding: "0 14px",
+                        fontFamily: "inherit",
+                        fontWeight: 800,
+                        cursor: "pointer",
+                        fontSize: 13.5,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        outline: "none",
+                        boxShadow: "0 2px 6px rgba(11, 78, 162, 0.04)",
+                        transition: "all 0.2s ease",
+                      }}
+                      onMouseOver={(e) => {
+                        e.currentTarget.style.background = "#eff6ff";
+                        e.currentTarget.style.borderColor = "#3b82f6";
+                      }}
+                      onMouseOut={(e) => {
+                        e.currentTarget.style.background = "#fff";
+                        e.currentTarget.style.borderColor = "rgba(11, 78, 162, 0.18)";
+                      }}
+                    >
+                      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                        {selectedType === "factory" && <Building size={16} style={{ color: "#1d4ed8" }} />}
+                        {selectedType === "office" && <Users size={16} style={{ color: "#1d4ed8" }} />}
+                        {selectedType === "site" && <MapPin size={16} style={{ color: "#1d4ed8" }} />}
+                        <span>{LOCATION_TYPE_LABELS[selectedType]}</span>
+                      </div>
+                      <ChevronDown size={14} style={{ color: "#1d4ed8", transform: locationDropdownOpen ? "rotate(180deg)" : "none", transition: "transform 0.15s ease" }} />
+                    </button>
+
+                    {/* Backdrop */}
+                    {locationDropdownOpen && (
+                      <div
+                        onClick={() => setLocationDropdownOpen(false)}
+                        style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, zIndex: 40 }}
+                      />
+                    )}
+
+                    {/* Dropdown Menu */}
+                    {locationDropdownOpen && (
+                      <div
+                        style={{
+                          position: "absolute",
+                          top: "calc(100% + 6px)",
+                          left: 0,
+                          width: "100%",
+                          background: "#fff",
+                          border: `1px solid ${T.lineStrong}`,
+                          borderRadius: 16,
+                          boxShadow: "0 12px 36px rgba(6,43,99,0.16)",
+                          zIndex: 50,
+                          padding: 6,
+                          display: "grid",
+                          gap: 4,
+                        }}
+                      >
+                        {LOCATION_TYPE_OPTIONS.map((option) => {
+                          const active = selectedType === option.key;
+                          const count = draft[option.key].length;
+                          return (
+                            <button
+                              key={option.key}
+                              type="button"
+                              onClick={() => {
+                                setSelectedType(option.key);
+                                setSelectedQuestionId(draft[option.key][0]?.id || "");
+                                setLocationDropdownOpen(false);
+                                if (isMobile) setMobileActiveView("list");
+                              }}
+                              style={{
+                                width: "100%",
+                                padding: "10px 12px",
+                                borderRadius: 12,
+                                border: "none",
+                                background: active ? "#eff6ff" : "transparent",
+                                color: active ? "#1d4ed8" : T.ink,
+                                fontSize: 13.5,
+                                fontWeight: 800,
+                                textAlign: "left",
+                                cursor: "pointer",
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "space-between",
+                                gap: 8,
+                                outline: "none",
+                              }}
+                              onMouseOver={(e) => { if (!active) e.currentTarget.style.background = "#f1f5f9"; }}
+                              onMouseOut={(e) => { if (!active) e.currentTarget.style.background = "transparent"; }}
+                            >
+                              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                                <div
+                                  style={{
+                                    width: 28,
+                                    height: 28,
+                                    borderRadius: "50%",
+                                    background: active ? "#fff" : "#f1f5f9",
+                                    display: "grid",
+                                    placeItems: "center",
+                                    flexShrink: 0,
+                                  }}
+                                >
+                                  {option.key === "factory" && <Building size={14} style={{ color: active ? "#1d4ed8" : "#475569" }} />}
+                                  {option.key === "office" && <Users size={14} style={{ color: active ? "#1d4ed8" : "#475569" }} />}
+                                  {option.key === "site" && <MapPin size={14} style={{ color: active ? "#1d4ed8" : "#475569" }} />}
+                                </div>
+                                <span>{option.label}</span>
+                              </div>
+                              <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                                <span
+                                  style={{
+                                    minWidth: 22,
+                                    height: 22,
+                                    borderRadius: 999,
+                                    background: active ? "#fff" : "#f1f5f9",
+                                    color: active ? "#1d4ed8" : "#64748b",
+                                    display: "grid",
+                                    placeItems: "center",
+                                    fontSize: 11,
+                                    fontWeight: 800,
+                                    padding: "0 6px",
+                                  }}
+                                >
+                                  {count}
+                                </span>
+                                {active && <Check size={14} style={{ color: "#1d4ed8" }} />}
+                              </div>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
                 {/* ระบบทำรายการ (Today/Backdate Toggle) */}
                 <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                   <label style={{ fontSize: 13, fontWeight: 900, color: T.ink }}>ระบบทำรายการ</label>
@@ -1459,6 +1417,7 @@ export default function SafetyAdmin() {
                   </>
                 )}
               </aside>
+
 
             </>
           )}
