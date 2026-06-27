@@ -7,6 +7,7 @@ import {
   getChecklistForType,
   hydrateChecklistDraft,
 } from "@/features/safety-effort/config/checklists";
+import { normalizeItemStatesEvidence } from "@/features/safety-effort/lib/evidence-media";
 import { uploadSafetyEffortMedia } from "@/features/safety-effort/lib/upload-media";
 import SafetyEffortProgressStepper from "@/features/safety-effort/components/SafetyEffortProgressStepper";
 import { useSessionUser, getSessionDisplayName } from "@/lib/session-user";
@@ -25,14 +26,6 @@ const T = {
   primaryDark:  "var(--brand-text)",
   border:      "rgba(14,15,18,0.08)",
 };
-
-const MOCK_SAFETY_IMAGES = [
-  "https://images.unsplash.com/photo-1504307651254-35680f356dfd?auto=format&fit=crop&w=600&q=80",
-  "https://images.unsplash.com/photo-1590486803833-1c5dc8ddd4c8?auto=format&fit=crop&w=600&q=80",
-  "https://images.unsplash.com/photo-1581094288338-2314dddb7ecc?auto=format&fit=crop&w=600&q=80",
-  "https://images.unsplash.com/photo-1541888946425-d81bb19240f5?auto=format&fit=crop&w=600&q=80",
-  "https://images.unsplash.com/photo-1531834672005-539f180738f8?auto=format&fit=crop&w=600&q=80"
-];
 
 // ─── Checklist data ─────────────────────────────────────────────────────────
 const FACTORY_CHECKLIST = [
@@ -535,6 +528,7 @@ export default function Linewalk() {
   }, [checkin?.type]);
 
   const isFirstRender = useRef(true);
+  const uploadInputRefs = useRef({});
   useEffect(() => {
     if (isFirstRender.current) {
       isFirstRender.current = false;
@@ -562,7 +556,8 @@ export default function Linewalk() {
     if (!locType) return;
     const cl = getChecklistForType(locType);
     setChecklist(cl);
-    setItemStates(location.state?.linewalkData?.itemStates ?? createInitialItemStates(cl));
+    const rawItemStates = location.state?.linewalkData?.itemStates;
+    setItemStates(rawItemStates ? normalizeItemStatesEvidence(rawItemStates) : createInitialItemStates(cl));
     setActiveSection(-1);
   }, [locType, checklistRevision]);
 
@@ -662,17 +657,8 @@ export default function Linewalk() {
   function handleNoteChange(id, text) {
     setItemStates(p => ({ ...p, [id]: { ...p[id], note: text } }));
   }
-  function handleMockPhotoAdd(id) {
-    const currentState = itemStates[id] || { status: null, note: "", photos: [] };
-    if (currentState.photos.length >= 5) return;
-    const nextMock = MOCK_SAFETY_IMAGES[currentState.photos.length % MOCK_SAFETY_IMAGES.length];
-    setItemStates(p => ({
-      ...p,
-      [id]: {
-        ...p[id],
-        photos: [...(p[id]?.photos || []), nextMock]
-      }
-    }));
+  function openPhotoPicker(id) {
+    uploadInputRefs.current[id]?.click();
   }
   async function handlePhotoUpload(id, e) {
     const file = e.target.files[0]; if (!file) return;
@@ -682,7 +668,16 @@ export default function Linewalk() {
         ownerId: id,
         linkType: "evidence",
       });
-      setItemStates(p => ({ ...p, [id]: { ...p[id], photos: [...p[id].photos, media.url] } }));
+      setItemStates((p) => {
+        const currentState = p[id] ?? { status: null, note: "", photos: [] };
+        return {
+          ...p,
+          [id]: {
+          ...currentState,
+            photos: [...currentState.photos, media],
+          },
+        };
+      });
     } catch (error) {
       console.error("Failed to upload answer photo", error);
       window.alert("อัปโหลดรูปภาพไม่สำเร็จ กรุณาลองใหม่อีกครั้ง");
@@ -1474,18 +1469,27 @@ export default function Linewalk() {
                           </span>
                           <div style={{ display: "flex", flexWrap: "wrap", gap: isMobileQuestionScreen ? 6 : 8, alignItems: "center" }}>
                             {currentState.photos.length < 5 && (
-                              <button
-                                type="button"
-                                className="lw-upload-trigger"
-                                onClick={() => handleMockPhotoAdd(currentItem.id)}
-                                style={isMobileQuestionScreen ? { height: 40, padding: "0 12px", borderColor: "rgba(95,64,37,0.22)", background: "var(--c-fff8ee)", color: "var(--brand-text)", fontSize: 11.5, margin: 0, display: "flex", alignItems: "center", gap: 6, border: "1px solid rgba(95,64,37,0.22)", borderRadius: 8, cursor: "pointer", fontFamily: "inherit" } : { height: 40, padding: "0 16px", borderRadius: 8, margin: 0, display: "flex", alignItems: "center", gap: 6, border: "1px solid rgba(14,15,18,0.12)", background: "#fbfbfa", cursor: "pointer", fontFamily: "inherit" }}
-                              >
-                                <IcoUpload /> Upload รูปภาพ
-                              </button>
+                              <>
+                                <input
+                                  ref={(node) => { uploadInputRefs.current[`${currentItem.id}-text`] = node; }}
+                                  type="file"
+                                  accept="image/*"
+                                  style={{ display: "none" }}
+                                  onChange={(e) => handlePhotoUpload(currentItem.id, e)}
+                                />
+                                <button
+                                  type="button"
+                                  className="lw-upload-trigger"
+                                  onClick={() => openPhotoPicker(`${currentItem.id}-text`)}
+                                  style={isMobileQuestionScreen ? { height: 40, padding: "0 12px", borderColor: "rgba(95,64,37,0.22)", background: "var(--c-fff8ee)", color: "var(--brand-text)", fontSize: 11.5, margin: 0, display: "flex", alignItems: "center", gap: 6, border: "1px solid rgba(95,64,37,0.22)", borderRadius: 8, cursor: "pointer", fontFamily: "inherit" } : { height: 40, padding: "0 16px", borderRadius: 8, margin: 0, display: "flex", alignItems: "center", gap: 6, border: "1px solid rgba(14,15,18,0.12)", background: "#fbfbfa", cursor: "pointer", fontFamily: "inherit" }}
+                                >
+                                  <IcoUpload /> Upload รูปภาพ
+                                </button>
+                              </>
                             )}
                             {currentState.photos.map((url, pi) => (
                               <div key={pi} style={{ width: 40, height: 40, borderRadius: 8, position: "relative", overflow: "hidden", border: "1px solid rgba(14,15,18,0.08)" }}>
-                                <img src={url} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                                <img src={url?.url || url} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                                 <button
                                   type="button"
                                   onClick={() => handleDeletePhoto(currentItem.id, pi)}
@@ -1590,18 +1594,27 @@ export default function Linewalk() {
                               </span>
                               <div style={{ display: "flex", flexWrap: "wrap", gap: isMobileQuestionScreen ? 6 : 8, alignItems: "center" }}>
                                 {currentState.photos.length < 5 && (
-                                  <button
-                                    type="button"
-                                    className="lw-upload-trigger"
-                                    onClick={() => handleMockPhotoAdd(currentItem.id)}
-                                    style={isMobileQuestionScreen ? { height: 40, padding: "0 12px", borderColor: "rgba(95,64,37,0.22)", background: "var(--c-fff8ee)", color: "var(--brand-text)", fontSize: 11.5, margin: 0, display: "flex", alignItems: "center", gap: 6, border: "1px solid rgba(95,64,37,0.22)", borderRadius: 8, cursor: "pointer", fontFamily: "inherit" } : { height: 40, padding: "0 16px", borderRadius: 8, margin: 0, display: "flex", alignItems: "center", gap: 6, border: "1px solid rgba(14,15,18,0.12)", background: "#fbfbfa", cursor: "pointer", fontFamily: "inherit" }}
-                                  >
-                                    <IcoUpload /> Upload รูปภาพ
-                                  </button>
+                                  <>
+                                    <input
+                                      ref={(node) => { uploadInputRefs.current[`${currentItem.id}-status`] = node; }}
+                                      type="file"
+                                      accept="image/*"
+                                      style={{ display: "none" }}
+                                      onChange={(e) => handlePhotoUpload(currentItem.id, e)}
+                                    />
+                                    <button
+                                      type="button"
+                                      className="lw-upload-trigger"
+                                      onClick={() => openPhotoPicker(`${currentItem.id}-status`)}
+                                      style={isMobileQuestionScreen ? { height: 40, padding: "0 12px", borderColor: "rgba(95,64,37,0.22)", background: "var(--c-fff8ee)", color: "var(--brand-text)", fontSize: 11.5, margin: 0, display: "flex", alignItems: "center", gap: 6, border: "1px solid rgba(95,64,37,0.22)", borderRadius: 8, cursor: "pointer", fontFamily: "inherit" } : { height: 40, padding: "0 16px", borderRadius: 8, margin: 0, display: "flex", alignItems: "center", gap: 6, border: "1px solid rgba(14,15,18,0.12)", background: "#fbfbfa", cursor: "pointer", fontFamily: "inherit" }}
+                                    >
+                                      <IcoUpload /> Upload รูปภาพ
+                                    </button>
+                                  </>
                                 )}
                                 {currentState.photos.map((url, pi) => (
                                   <div key={pi} style={{ width: 40, height: 40, borderRadius: 8, position: "relative", overflow: "hidden", border: "1px solid rgba(14,15,18,0.08)" }}>
-                                    <img src={url} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                                    <img src={url?.url || url} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                                     <button
                                       type="button"
                                       onClick={() => handleDeletePhoto(currentItem.id, pi)}
@@ -1770,18 +1783,27 @@ export default function Linewalk() {
                         <div style={{ fontFamily:"'Prompt',sans-serif", fontSize:"11.5px", fontWeight:800, color:T.foreground3, textTransform:"uppercase", margin:"14px 0 6px" }}>แนบรูปภาพ</div>
                         <div style={{ display:"flex", flexWrap:"wrap", gap:8, alignItems:"center" }}>
                           {state.photos.length < 5 && (
-                            <button
-                              type="button"
-                              className="lw-upload-trigger"
-                              onClick={() => handleMockPhotoAdd(item.id)}
-                              style={{ margin: 0 }}
-                            >
-                              <IcoUpload /> Upload รูปภาพ
-                            </button>
+                            <>
+                              <input
+                                ref={(node) => { uploadInputRefs.current[`${item.id}-accordion`] = node; }}
+                                type="file"
+                                accept="image/*"
+                                style={{ display: "none" }}
+                                onChange={(e) => handlePhotoUpload(item.id, e)}
+                              />
+                              <button
+                                type="button"
+                                className="lw-upload-trigger"
+                                onClick={() => openPhotoPicker(`${item.id}-accordion`)}
+                                style={{ margin: 0 }}
+                              >
+                                <IcoUpload /> Upload รูปภาพ
+                              </button>
+                            </>
                           )}
                            {state.photos.map((url, pi) => (
                             <div key={pi} style={{ width:64, height:64, borderRadius:8, position:"relative", overflow:"hidden", border:"1px solid rgba(14,15,18,0.08)" }}>
-                              <img src={url} alt="" style={{ width:"100%", height:"100%", objectFit:"cover" }} />
+                              <img src={url?.url || url} alt="" style={{ width:"100%", height:"100%", objectFit:"cover" }} />
                               <button
                                 type="button"
                                 onClick={() => handleDeletePhoto(item.id, pi)}

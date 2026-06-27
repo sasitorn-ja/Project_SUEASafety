@@ -787,6 +787,8 @@ async function updateSafetyEffortLocationFromPayload(id: string, input: JsonInpu
 
 function safetyEffortSubmissionDto(row: Record<string, unknown> | null | undefined) {
   if (!row) return null;
+  const answeredItemsRaw = Array.isArray(row.answers_json) ? row.answers_json : parseJson(row.answers_json) || [];
+  const metadataRaw = parseJson(row.metadata) || {};
   return {
     id: String(row.id),
     timestamp: row.created_at instanceof Date ? row.created_at.toISOString() : String(row.created_at || ""),
@@ -805,8 +807,53 @@ function safetyEffortSubmissionDto(row: Record<string, unknown> | null | undefin
     email: row.email ? String(row.email) : "",
     isSafetyContact: String(row.activity_type || "").toUpperCase() === "SAFETY_CONTACT",
     safetyContactText: String(row.safety_contact_text || ""),
-    answeredItems: Array.isArray(row.answers_json) ? row.answers_json : parseJson(row.answers_json) || [],
-    metadata: parseJson(row.metadata) || {},
+    answeredItems: normalizeSafetyEffortAnsweredItems(answeredItemsRaw),
+    metadata: normalizeSafetyEffortMetadata(metadataRaw),
+  };
+}
+
+function normalizeSafetyEffortAttachment(input: unknown) {
+  if (typeof input === "string") {
+    const url = input.trim();
+    return url ? { id: null, url, originalName: null, mimeType: null, provider: null } : null;
+  }
+  if (!input || typeof input !== "object") return null;
+  const raw = input as Record<string, unknown>;
+  const urlValue = raw.url || raw.href || raw.src;
+  if (typeof urlValue !== "string" || !urlValue.trim()) return null;
+  return {
+    id: raw.id == null ? null : String(raw.id),
+    url: urlValue.trim(),
+    originalName: raw.originalName == null ? null : String(raw.originalName),
+    mimeType: raw.mimeType == null ? null : String(raw.mimeType),
+    provider: raw.provider == null ? null : String(raw.provider),
+  };
+}
+
+function normalizeSafetyEffortAttachments(input: unknown) {
+  if (!Array.isArray(input)) return [];
+  return input
+    .map((item) => normalizeSafetyEffortAttachment(item))
+    .filter((item): item is NonNullable<ReturnType<typeof normalizeSafetyEffortAttachment>> => Boolean(item));
+}
+
+function normalizeSafetyEffortAnsweredItems(input: unknown) {
+  if (!Array.isArray(input)) return [];
+  return input.map((item) => {
+    const value = item && typeof item === "object" ? (item as Record<string, unknown>) : {};
+    const attachments = normalizeSafetyEffortAttachments(value.attachments || value.photos || []);
+    return {
+      ...value,
+      attachments,
+    };
+  });
+}
+
+function normalizeSafetyEffortMetadata(input: unknown) {
+  const value = input && typeof input === "object" ? { ...(input as Record<string, unknown>) } : {};
+  return {
+    ...value,
+    attachments: normalizeSafetyEffortAttachments(value.attachments || value.photos || []),
   };
 }
 
@@ -937,7 +984,8 @@ async function handleActivitiesAssessments(request: NextRequest, method: string,
   const route = match.route.path;
   if (method === "POST" && route === "/api/safety-effort/submissions") {
     if (!userId) return jsonError("unauthorized", 401);
-    const answers = Array.isArray(input.answeredItems || input.answers) ? (input.answeredItems || input.answers) : [];
+    const answers = normalizeSafetyEffortAnsweredItems(input.answeredItems || input.answers || []);
+    const metadata = normalizeSafetyEffortMetadata(input.metadata || {});
     const submitter = (await getRow("users", userId)) as Record<string, unknown> | null;
     const submitterName = input.name
       || (submitter ? (submitter.name_th || submitter.name_en || submitter.username) : null)
@@ -968,7 +1016,7 @@ async function handleActivitiesAssessments(request: NextRequest, method: string,
           email: submitterEmail,
           safetyContactText: input.safetyContactText || input.safety_contact_text || null,
           answersJson: JSON.stringify(answers),
-          metadata: JSON.stringify(input.metadata || {}),
+          metadata: JSON.stringify(metadata),
         },
       );
       return String(result.insertId);

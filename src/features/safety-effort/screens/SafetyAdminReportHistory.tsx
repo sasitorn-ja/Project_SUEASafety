@@ -5,6 +5,7 @@ import { Combobox } from "@/components/ui/combobox";
 import { SafetyCultureHero } from "@/components/safety-culture/safety-culture-hero";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { normalizeEvidenceMediaList } from "@/features/safety-effort/lib/evidence-media";
 
 const T = {
   page: "var(--background)",
@@ -91,7 +92,16 @@ export default function SafetyAdminReportHistory() {
       date: meta.date || String(row.completed_at || row.created_at || "").split("T")[0],
       isSafetyContact,
       safetyContactText: meta.safetyContactText || "",
-      answeredItems: Array.isArray(meta.answers) ? meta.answers : [],
+      answeredItems: Array.isArray(meta.answers)
+        ? meta.answers.map((item) => ({
+            ...item,
+            photos: normalizeEvidenceMediaList(item?.attachments ?? item?.photos ?? []),
+          }))
+        : [],
+      metadata: {
+        ...meta,
+        attachments: normalizeEvidenceMediaList(meta.attachments ?? meta.photos ?? []),
+      },
       actorName: row.name || meta.name || "-",
       actorEmail: row.email || meta.email || "",
       actorCode: row.pms || meta.pms || "",
@@ -110,6 +120,16 @@ export default function SafetyAdminReportHistory() {
             // API returns name/email/pms; this screen renders actorName/actorEmail/actorCode.
             setSubmissions(items.map((it) => ({
               ...it,
+              answeredItems: Array.isArray(it.answeredItems)
+                ? it.answeredItems.map((item) => ({
+                    ...item,
+                    photos: normalizeEvidenceMediaList(item?.attachments ?? item?.photos ?? []),
+                  }))
+                : [],
+              metadata: {
+                ...(it.metadata || {}),
+                attachments: normalizeEvidenceMediaList(it?.metadata?.attachments ?? it?.metadata?.photos ?? []),
+              },
               actorName: it.actorName || it.name || "",
               actorEmail: it.actorEmail || it.email || "",
               actorCode: it.actorCode || it.pms || "",
@@ -566,14 +586,14 @@ export default function SafetyAdminReportHistory() {
                     {selectedSub.safetyContactText || "ไม่มีการบันทึกข้อความ"}
                   </div>
 
-                  {selectedSub.metadata?.photos && selectedSub.metadata.photos.length > 0 && (
+                  {selectedSub.metadata?.attachments && selectedSub.metadata.attachments.length > 0 && (
                     <div style={{ display: "flex", flexDirection: "column", gap: 6, marginTop: 8 }}>
-                      <span style={fieldLabelStyle}>รูปภาพแนบ ({selectedSub.metadata.photos.length})</span>
+                      <span style={fieldLabelStyle}>รูปภาพแนบ ({selectedSub.metadata.attachments.length})</span>
                       <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-                        {selectedSub.metadata.photos.map((photoUrl, pIdx) => (
+                        {selectedSub.metadata.attachments.map((photo, pIdx) => (
                           <a
                             key={pIdx}
-                            href={photoUrl}
+                            href={photo.url}
                             target="_blank"
                             rel="noopener noreferrer"
                             style={{
@@ -586,7 +606,7 @@ export default function SafetyAdminReportHistory() {
                             }}
                           >
                             <img
-                              src={photoUrl}
+                              src={photo.url}
                               alt={`Evidence ${pIdx + 1}`}
                               style={{ width: "100%", height: "100%", objectFit: "cover" }}
                             />

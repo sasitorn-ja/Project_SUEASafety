@@ -1,3 +1,5 @@
+import type { EvidenceMedia } from "@/features/safety-effort/lib/evidence-media";
+
 export type ChecklistLocationType = "factory" | "office" | "site";
 
 export type ChecklistQuestion = {
@@ -148,7 +150,7 @@ export function getChecklistForType(type?: string | null) {
 
 export function createInitialItemStates(checklist: ChecklistQuestion[]) {
   return checklist.reduce((acc, item) => {
-    acc[item.id] = { status: null, note: "", photos: [] as string[] };
+    acc[item.id] = { status: null, note: "", photos: [] as EvidenceMedia[] };
     return acc;
-  }, {} as Record<string, { status: string | null; note: string; photos: string[] }>);
+  }, {} as Record<string, { status: string | null; note: string; photos: EvidenceMedia[] }>);
 }

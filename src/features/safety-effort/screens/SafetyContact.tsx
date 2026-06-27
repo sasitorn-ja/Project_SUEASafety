@@ -1,8 +1,10 @@
 // @ts-nocheck
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useLocation, useNavigate } from "@/lib/app-navigation";
 import RestrictedDatePicker from "@/components/RestrictedDatePicker";
 import SafetyEffortProgressStepper from "@/features/safety-effort/components/SafetyEffortProgressStepper";
+import { normalizeEvidenceMediaList, serializeEvidenceMediaList } from "@/features/safety-effort/lib/evidence-media";
+import { uploadSafetyEffortMedia } from "@/features/safety-effort/lib/upload-media";
 import { useSessionUser, getSessionDisplayName } from "@/lib/session-user";
 
 const T = {
@@ -87,14 +89,6 @@ const IcoInfoLocal = () => (
   </svg>
 );
 
-const MOCK_SAFETY_IMAGES = [
-  "https://images.unsplash.com/photo-1504307651254-35680f356dfd?auto=format&fit=crop&w=600&q=80",
-  "https://images.unsplash.com/photo-1590486803833-1c5dc8ddd4c8?auto=format&fit=crop&w=600&q=80",
-  "https://images.unsplash.com/photo-1581094288338-2314dddb7ecc?auto=format&fit=crop&w=600&q=80",
-  "https://images.unsplash.com/photo-1541888946425-d81bb19240f5?auto=format&fit=crop&w=600&q=80",
-  "https://images.unsplash.com/photo-1531834672005-539f180738f8?auto=format&fit=crop&w=600&q=80"
-];
-
 const IcoUpload  = () => <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>;
 const IcoX       = () => <svg width={12} height={12} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>;
 
@@ -115,12 +109,31 @@ export default function SafetyContact() {
   const [text, setText] = useState(location.state?.linewalkData?.safetyContactText ?? "");
   const [started, setStarted] = useState(!!location.state?.linewalkData);
   const [isMobileViewport, setIsMobileViewport] = useState(() => typeof window !== "undefined" ? window.innerWidth <= 480 : false);
-  const [photos, setPhotos] = useState<string[]>(location.state?.linewalkData?.photos ?? []);
+  const [photos, setPhotos] = useState(() =>
+    normalizeEvidenceMediaList(location.state?.linewalkData?.attachments ?? location.state?.linewalkData?.photos ?? []),
+  );
+  const uploadInputRef = useRef<HTMLInputElement | null>(null);
 
-  function handleMockPhotoAdd() {
-    if (photos.length >= 5) return;
-    const nextMock = MOCK_SAFETY_IMAGES[photos.length % MOCK_SAFETY_IMAGES.length];
-    setPhotos((prev) => [...prev, nextMock]);
+  function openPhotoPicker() {
+    uploadInputRef.current?.click();
+  }
+
+  async function handlePhotoUpload(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    try {
+      const media = await uploadSafetyEffortMedia(file, {
+        ownerType: "safety_contact",
+        ownerId: checkin?.id ? String(checkin.id) : activity?.id ? String(activity.id) : null,
+        linkType: "evidence",
+      });
+      setPhotos((prev) => [...prev, media]);
+    } catch (error) {
+      console.error("Failed to upload safety contact photo", error);
+      window.alert("อัปโหลดรูปภาพไม่สำเร็จ กรุณาลองใหม่อีกครั้ง");
+    } finally {
+      e.target.value = "";
+    }
   }
 
   function handleDeletePhoto(idx: number) {
@@ -159,7 +172,7 @@ export default function SafetyContact() {
           activeTab: "safety_contact",
           date,
           safetyContactText: text.trim(),
-          photos,
+          attachments: serializeEvidenceMediaList(photos),
         },
       },
     });
@@ -481,17 +494,26 @@ export default function SafetyContact() {
                 </span>
                 <div style={{ display: "flex", flexWrap: "wrap", gap: isMobileViewport ? 6 : 8, alignItems: "center" }}>
                   {photos.length < 5 && (
-                    <button
-                      type="button"
-                      onClick={handleMockPhotoAdd}
-                      style={isMobileViewport ? { height: 40, padding: "0 12px", borderColor: "rgba(95,64,37,0.22)", background: "var(--brand-soft)", color: "var(--brand-text)", fontSize: 11.5, margin: 0, display: "flex", alignItems: "center", gap: 6, border: "1px solid rgba(95,64,37,0.22)", borderRadius: 8, cursor: "pointer", fontFamily: "inherit" } : { height: 40, padding: "0 16px", borderRadius: 8, margin: 0, display: "flex", alignItems: "center", gap: 6, border: "1px solid rgba(14,15,18,0.12)", background: "#fbfbfa", cursor: "pointer", fontFamily: "inherit" }}
-                    >
-                      <IcoUpload /> Upload รูปภาพ
-                    </button>
+                    <>
+                      <input
+                        ref={uploadInputRef}
+                        type="file"
+                        accept="image/*"
+                        style={{ display: "none" }}
+                        onChange={handlePhotoUpload}
+                      />
+                      <button
+                        type="button"
+                        onClick={openPhotoPicker}
+                        style={isMobileViewport ? { height: 40, padding: "0 12px", borderColor: "rgba(95,64,37,0.22)", background: "var(--brand-soft)", color: "var(--brand-text)", fontSize: 11.5, margin: 0, display: "flex", alignItems: "center", gap: 6, border: "1px solid rgba(95,64,37,0.22)", borderRadius: 8, cursor: "pointer", fontFamily: "inherit" } : { height: 40, padding: "0 16px", borderRadius: 8, margin: 0, display: "flex", alignItems: "center", gap: 6, border: "1px solid rgba(14,15,18,0.12)", background: "#fbfbfa", cursor: "pointer", fontFamily: "inherit" }}
+                      >
+                        <IcoUpload /> Upload รูปภาพ
+                      </button>
+                    </>
                   )}
                   {photos.map((url, pi) => (
                     <div key={pi} style={{ width: 40, height: 40, borderRadius: 8, position: "relative", overflow: "hidden", border: "1px solid rgba(14,15,18,0.08)" }}>
-                      <img src={url} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                      <img src={url?.url || url} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                       <button
                         type="button"
                         onClick={() => handleDeletePhoto(pi)}

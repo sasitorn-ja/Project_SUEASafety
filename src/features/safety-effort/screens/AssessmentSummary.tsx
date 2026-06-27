@@ -3,6 +3,11 @@ import { useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "@/lib/app-navigation";
 import TigerMascot from "@/components/TigerMascot";
 import { getChecklistForType } from "@/features/safety-effort/config/checklists";
+import {
+  evidenceMediaUrls,
+  normalizeEvidenceMediaList,
+  serializeEvidenceMediaList,
+} from "@/features/safety-effort/lib/evidence-media";
 import { useAppActions } from "@/providers/app-providers";
 import { getSessionDisplayName, useSessionUser } from "@/lib/session-user";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
@@ -79,6 +84,10 @@ export default function AssessmentSummary() {
   const activity = location.state?.activity ?? null;
   const linewalkData = location.state?.linewalkData ?? null;
   const [width, setWidth] = useState(() => typeof window !== "undefined" ? window.innerWidth : 1200);
+  const topLevelAttachments = useMemo(
+    () => normalizeEvidenceMediaList(linewalkData?.attachments ?? linewalkData?.photos ?? []),
+    [linewalkData],
+  );
 
   const answeredItems = useMemo(() => {
     if (!linewalkData?.itemStates) return [];
@@ -91,7 +100,7 @@ export default function AssessmentSummary() {
         format: question?.format ?? "original",
         status: value?.status ?? null,
         note: value?.note ?? "",
-        photos: value?.photos ?? [],
+        photos: normalizeEvidenceMediaList(value?.photos ?? value?.attachments ?? []),
       };
     });
   }, [linewalkData]);
@@ -176,7 +185,7 @@ export default function AssessmentSummary() {
             locationTag: submission.locationTag,
             date: submission.date,
             safetyContactText: submission.safetyContactText,
-            photos: submission.metadata?.photos || [],
+            attachments: submission.metadata?.attachments || [],
             answers: submission.answeredItems,
             // report fields (used by Export Report) — not first-class activity columns
             pms: submission.pms,
@@ -207,7 +216,7 @@ export default function AssessmentSummary() {
         title: item.title,
         status: item.status,
         note: item.note,
-        photos: item.photos,
+        attachments: serializeEvidenceMediaList(item.photos),
       })),
       pms: sessionUser?.username || sessionUser?.id || "",
       name: getSessionDisplayName(sessionUser),
@@ -215,7 +224,7 @@ export default function AssessmentSummary() {
       activityType: linewalkData?.isSafetyContact ? "SAFETY_CONTACT" : "LINE_WALK",
       checkinId: checkin?.checkinId || null,
       metadata: {
-        photos: linewalkData?.photos || [],
+        attachments: serializeEvidenceMediaList(topLevelAttachments),
       },
     };
     try {
@@ -445,17 +454,17 @@ export default function AssessmentSummary() {
               {linewalkData?.safetyContactText || "-"}
             </div>
 
-            {linewalkData?.photos && linewalkData.photos.length > 0 && (
+            {topLevelAttachments.length > 0 && (
               <div style={{ display: "flex", flexDirection: "column", gap: 6, marginTop: 12 }}>
                 <span style={{ fontSize: 11.5, fontWeight: 800, color: "#64748B", textTransform: "uppercase", letterSpacing: "0.02em", fontFamily: "'Prompt',sans-serif" }}>
-                  รูปภาพแนบ ({linewalkData.photos.length})
+                  รูปภาพแนบ ({topLevelAttachments.length})
                 </span>
                 <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-                  {linewalkData.photos.map((photoUrl, pIdx) => (
+                  {topLevelAttachments.map((photo, pIdx) => (
                     <div
                       key={pIdx}
                       onClick={() => {
-                        setPreviewImages(linewalkData.photos);
+                        setPreviewImages(evidenceMediaUrls(topLevelAttachments));
                         setPreviewIndex(pIdx);
                       }}
                       style={{
@@ -468,7 +477,7 @@ export default function AssessmentSummary() {
                       }}
                     >
                       <img
-                        src={photoUrl}
+                        src={photo.url}
                         alt={`Safety Contact Evidence ${pIdx + 1}`}
                         style={{ width: "100%", height: "100%", objectFit: "cover" }}
                       />
@@ -589,13 +598,13 @@ export default function AssessmentSummary() {
                                     key={pIdx}
                                     type="button"
                                     onClick={() => {
-                                      setPreviewImages(item.photos);
+                                      setPreviewImages(evidenceMediaUrls(item.photos));
                                       setPreviewIndex(pIdx);
                                     }}
                                     style={{ display: "block", background: "none", border: "none", padding: 0, margin: 0, cursor: "zoom-in" }}
                                   >
                                     <img 
-                                      src={photoUrl} 
+                                      src={photoUrl?.url || photoUrl} 
                                       alt={`Evidence ${pIdx + 1}`} 
                                       style={{
                                         width: 80,
