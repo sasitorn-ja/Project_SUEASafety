@@ -41,6 +41,8 @@ export interface ComboboxProps {
   style?: React.CSSProperties;
   /** className for the popover content */
   contentClassName?: string;
+  /** keep the page scroll position stable while opening/closing the popover */
+  preserveScrollOnOpen?: boolean;
   "aria-label"?: string;
 }
 
@@ -60,21 +62,43 @@ export function Combobox({
   className,
   style,
   contentClassName,
+  preserveScrollOnOpen = true,
   "aria-label": ariaLabel,
 }: ComboboxProps) {
   const [open, setOpen] = React.useState(false);
   const [query, setQuery] = React.useState("");
+  const scrollPositionRef = React.useRef<{ x: number; y: number } | null>(null);
   const selected = options.find((option) => option.value === value);
   const customQuery = query.trim();
   const hasExactOption = options.some(
     (option) => option.value.toLowerCase() === customQuery.toLowerCase()
       || option.label.toLowerCase() === customQuery.toLowerCase()
   );
+  const preserveScrollPosition = React.useCallback(() => {
+    if (!preserveScrollOnOpen || typeof window === "undefined") return;
+    const position = { x: window.scrollX, y: window.scrollY };
+    scrollPositionRef.current = position;
+    const restore = () => {
+      const latest = scrollPositionRef.current;
+      if (!latest) return;
+      window.scrollTo(latest.x, latest.y);
+    };
+    window.requestAnimationFrame(() => {
+      restore();
+      window.requestAnimationFrame(restore);
+    });
+  }, [preserveScrollOnOpen]);
+
+  const handleValueChange = React.useCallback((nextValue: string) => {
+    preserveScrollPosition();
+    onValueChange(nextValue);
+  }, [onValueChange, preserveScrollPosition]);
 
   return (
     <Popover
       open={open}
       onOpenChange={(nextOpen) => {
+        preserveScrollPosition();
         setOpen(nextOpen);
         if (!nextOpen) setQuery("");
       }}
@@ -100,7 +124,10 @@ export function Combobox({
         <ChevronsUpDown className="h-4 w-4 shrink-0 opacity-60" strokeWidth={2.2} />
       </PopoverTrigger>
       <PopoverContent
-        className={cn("w-(--anchor-width) min-w-[180px] p-0", contentClassName)}
+        side="bottom"
+        sideOffset={6}
+        collisionAvoidance={{ side: "none", align: "shift", fallbackAxisSide: "none" }}
+        className={cn("w-(--anchor-width) min-w-[180px] overflow-hidden p-0", contentClassName)}
       >
         <Command>
           {searchable ? (
@@ -113,13 +140,13 @@ export function Combobox({
               placeholder={searchPlaceholder}
             />
           ) : null}
-          <CommandList>
+          <CommandList className="max-h-[min(320px,calc(100dvh-120px))]">
             <CommandEmpty>{emptyText}</CommandEmpty>
             {allowCustomValue && customQuery && !hasExactOption ? (
               <CommandItem
                 value={customQuery}
                 onSelect={() => {
-                  onValueChange(customQuery);
+                  handleValueChange(customQuery);
                   setOpen(false);
                   setQuery("");
                 }}
@@ -133,7 +160,7 @@ export function Combobox({
                 key={option.value}
                 value={`${option.label} ${option.value} ${(option.keywords ?? []).join(" ")}`}
                 onSelect={() => {
-                  onValueChange(option.value);
+                  handleValueChange(option.value);
                   setOpen(false);
                 }}
               >

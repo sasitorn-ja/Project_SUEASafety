@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import type { CSSProperties, MouseEvent, ReactNode } from "react";
+import type { CSSProperties, ReactNode } from "react";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { type MascotAction, useAppTheme } from "@/providers/theme-provider";
@@ -18,6 +18,7 @@ type SafetyCultureHeroProps = {
   variant?: "default" | "community";
   backgroundImage?: string;
   backgroundOverlay?: string;
+  contentFrame?: boolean;
   className?: string;
 };
 
@@ -33,6 +34,7 @@ export function SafetyCultureHero({
   variant = "default",
   backgroundImage,
   backgroundOverlay,
+  contentFrame = false,
   className,
 }: SafetyCultureHeroProps) {
   const hasActions = !!actions;
@@ -40,26 +42,12 @@ export function SafetyCultureHero({
   const { theme, mascot, themedImage } = useAppTheme();
   const showMascot = Boolean(mascotSrc);
   const isCommunity = variant === "community";
+  const shouldShowContentFrame = contentFrame || isCommunity;
   const themedMascotSrc = !mascotSrc
     ? ""
     : theme === "wangjai"
       ? mascot(mascotAction)
       : themedImage(mascotSrc);
-  const handleMascotPointer = (event: MouseEvent<HTMLElement>) => {
-    const rect = event.currentTarget.getBoundingClientRect();
-    const x = ((event.clientX - rect.left) / rect.width - 0.5) * 2;
-    const y = ((event.clientY - rect.top) / rect.height - 0.5) * 2;
-
-    event.currentTarget.style.setProperty("--mascot-look-x", `${Math.max(-1, Math.min(1, x)) * 5}px`);
-    event.currentTarget.style.setProperty("--mascot-look-y", `${Math.max(-1, Math.min(1, y)) * 4}px`);
-    event.currentTarget.style.setProperty("--mascot-look-rotate", `${Math.max(-1, Math.min(1, x)) * 2.5}deg`);
-  };
-
-  const resetMascotPointer = (event: MouseEvent<HTMLElement>) => {
-    event.currentTarget.style.setProperty("--mascot-look-x", "0px");
-    event.currentTarget.style.setProperty("--mascot-look-y", "0px");
-    event.currentTarget.style.setProperty("--mascot-look-rotate", "0deg");
-  };
 
   return (
     <Card className={cn(
@@ -80,8 +68,7 @@ export function SafetyCultureHero({
             : {}),
         } as CSSProperties)
       : undefined}
-    onMouseMove={handleMascotPointer}
-    onMouseLeave={resetMascotPointer}>
+    >
       <div
         className={cn(
           "absolute inset-0",
@@ -109,7 +96,14 @@ export function SafetyCultureHero({
             : "grid-cols-[1fr_118px] md:grid-cols-[1fr_152px]"
         )}
       >
-        <div className={cn("flex min-w-0 flex-col items-start gap-1", isCommunity && "z-[2] gap-[5px] sm:gap-1.5")}>
+        <div
+          className={cn(
+            "flex min-w-0 flex-col items-start gap-1",
+            isCommunity && "z-[2] gap-[5px] sm:gap-1.5",
+            shouldShowContentFrame &&
+              "w-fit max-w-[min(100%,540px)] rounded-[18px] border border-white/75 bg-white/60 px-3 py-2.5 shadow-[0_12px_28px_rgba(11,130,240,.16)] backdrop-blur-[4px] sm:px-4 sm:py-3"
+          )}
+        >
           <span
             className={cn(
               "mb-[4px] w-fit rounded-full border-[1.2px] px-2.5 py-[3px] text-[10px] leading-none font-extrabold tracking-[0.03em] shadow-[inset_0_1px_0_rgba(255,255,255,0.1)] md:text-[11px]",
@@ -152,7 +146,7 @@ export function SafetyCultureHero({
           >
             <div
               className={cn(
-                "suea-hero-mascot absolute right-[-2px] bottom-[-10px] h-auto sm:right-[-6px] sm:bottom-[-12px] md:right-0 md:bottom-[-14px]",
+                "suea-hero-mascot safety-culture-hero-mascot absolute right-[-2px] bottom-[-10px] h-auto sm:right-[-6px] sm:bottom-[-12px] md:right-0 md:bottom-[-14px]",
                 isCommunity && "right-[4px] bottom-[-2px] w-[92px] sm:right-[10px] sm:bottom-[-4px] sm:w-[128px] xl:right-[clamp(14px,2vw,36px)] xl:bottom-[-8px] xl:w-[clamp(142px,12vw,184px)]",
                 sideActions && "safety-culture-hero-mascot-side",
                 !isCommunity && sideActions
@@ -172,7 +166,7 @@ export function SafetyCultureHero({
                 height={180}
                 priority
                 className={cn(
-                  "h-auto w-full object-contain",
+                  "safety-culture-hero-mascot-image h-auto w-full object-contain",
                   isCommunity
                     ? "drop-shadow-[0_8px_12px_rgba(11,130,240,0.18)]"
                     : "drop-shadow-[0_12px_14px_rgba(0,0,0,0.30)]"

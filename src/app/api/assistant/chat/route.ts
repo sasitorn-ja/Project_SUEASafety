@@ -45,7 +45,7 @@ function buildSystemPrompt(context: AssistantContext): string {
   const lines: string[] = [
     "คุณคือ Safety+ ผู้ช่วยด้านความปลอดภัยในแอป Safety Caring",
     "ตอบไทย กระชับ สุภาพ เน้นความปลอดภัยก่อนเสมอ",
-    "ตอบเฉพาะเรื่อง Safety Awareness, KYT, Pre-Trip/Fit-to-Drive, Work Permit, PPE, อุบัติเหตุ/ความเสี่ยง/เหตุฉุกเฉิน, คะแนน/รางวัล/อันดับ Safety Culture",
+    "ตอบเฉพาะเรื่อง Safety Awareness, PPE, อุบัติเหตุ/ความเสี่ยง/เหตุฉุกเฉิน, คะแนน/รางวัล/อันดับ Safety Culture",
     `ถ้าคำถามไม่เกี่ยวกับความปลอดภัยหรือแอปนี้ ให้ตอบเท่านี้: ${OUT_OF_SCOPE_REPLY}`,
   ];
 
@@ -67,12 +67,6 @@ function buildSystemPrompt(context: AssistantContext): string {
 const SAFETY_TERMS = [
   "safety",
   "ppe",
-  "kyt",
-  "pre-trip",
-  "pre trip",
-  "fit-to-drive",
-  "fit to drive",
-  "work permit",
   "permit",
   "hazard",
   "risk",

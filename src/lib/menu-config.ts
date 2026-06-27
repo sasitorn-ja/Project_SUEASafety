@@ -221,7 +221,7 @@ export function getDefaultMenu(): MenuNode[] {
 
 function normalizeNode(raw: any): MenuNode | null {
   if (!raw || typeof raw !== "object") return null;
-  if (["/were-ok", "/work-permit", "/safety-culture/admin-menu"].includes(raw.href)) return null;
+  if (raw.href === "/safety-culture/admin-menu") return null;
   const children = Array.isArray(raw.children)
     ? (raw.children.map(normalizeNode).filter(Boolean) as MenuNode[])
     : [];

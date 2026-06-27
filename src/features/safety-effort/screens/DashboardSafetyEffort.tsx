@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import * as XLSX from "xlsx";
 import { Combobox } from "@/components/ui/combobox";
+import { SafetyCultureHero } from "@/components/safety-culture/safety-culture-hero";
 import dashboardStyles from "./dashboard-safety-effort.module.css";
 
 // Design tokens matching system branding
@@ -333,7 +334,7 @@ export default function DashboardSafetyEffort() {
   };
 
   return (
-    <div className={`${dashboardStyles.dashboard} db-container`}>
+    <div className="page-shell-wide pt-2.5 pb-7 font-sarabun">
       <style>{`
         .db-container {
           min-height: 100%;
@@ -353,6 +354,9 @@ export default function DashboardSafetyEffort() {
           display: grid;
           grid-template-columns: 1fr;
           gap: 12px;
+          margin-bottom: 12px;
+        }
+        .db-hero-wrap {
           margin-bottom: 12px;
         }
         .db-top-left-panel {
@@ -1334,6 +1338,21 @@ export default function DashboardSafetyEffort() {
         }
       `}</style>
 
+      <div className="db-hero-wrap">
+        <SafetyCultureHero
+          eyebrow="SAFETY EFFORT DASHBOARD"
+          title={<>Safety Effort</>}
+          description="แดชบอร์ดภาพรวมการประเมินความปลอดภัย ติดตามผล Line Walk และสถานะการแก้ไขในมุมมองเดียว"
+          variant="community"
+          backgroundImage="/images/heroes/safety-effort-hero.png"
+          backgroundOverlay="linear-gradient(90deg, rgba(210,235,255,.82) 0%, rgba(210,235,255,.60) 32%, rgba(210,235,255,.10) 56%, rgba(210,235,255,0) 74%)"
+          contentFrame
+          mascotSrc="/images/mascots/wangjai/5.png"
+          mascotAction="announce"
+        />
+      </div>
+
+      <div className={`${dashboardStyles.dashboard} db-container`}>
       <div className="db-top-layout">
         {/* Left Side: Header & KPI Cards */}
         <div className="db-top-left-panel">
@@ -1341,7 +1360,7 @@ export default function DashboardSafetyEffort() {
           <div className="db-header-row">
             <div className="db-header-left">
               <div className="db-title-area">
-                <h1 className="db-title">แดชบอร์ดประเมินความปลอดภัย</h1>
+                <h1 className="db-title">ภาพรวมการประเมินความปลอดภัย</h1>
                 <span className="db-subtitle">Safety Effort / Line Walk Analytics Overview</span>
               </div>
             </div>
@@ -1956,6 +1975,7 @@ export default function DashboardSafetyEffort() {
         <span>ข้อมูล ณ วันที่ 31 มีนาคม 2026</span>
         <span>•</span>
         <span>แหล่งข้อมูล: Safety Caring System</span>
+      </div>
       </div>
     </div>
   );

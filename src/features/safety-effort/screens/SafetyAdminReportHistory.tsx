@@ -4,6 +4,7 @@ import { Eye, Trash2, Search, X, ClipboardList } from "lucide-react";
 import { Combobox } from "@/components/ui/combobox";
 import { SafetyCultureHero } from "@/components/safety-culture/safety-culture-hero";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 
 const T = {
   page: "var(--background)",
@@ -40,29 +41,6 @@ const inputStyle = {
   outline: "none",
 };
 
-const buttonGhostStyle = {
-  height: 44,
-  borderRadius: 14,
-  border: `1px solid ${T.lineStrong}`,
-  background: "#fff",
-  color: T.ink,
-  padding: "0 16px",
-  fontWeight: 800,
-  fontFamily: "inherit",
-  cursor: "pointer",
-};
-
-const buttonDangerStyle = {
-  height: 44,
-  borderRadius: 14,
-  border: "none",
-  background: "#fbe9e4",
-  color: T.danger,
-  padding: "0 16px",
-  fontWeight: 800,
-  fontFamily: "inherit",
-  cursor: "pointer",
-};
 
 const LOCATION_TYPE_LABELS = {
   factory: "โรงงาน",
@@ -272,8 +250,10 @@ export default function SafetyAdminReportHistory() {
             </div>
 
             {submissions.length > 0 && (
-              <button
+              <Button
                 type="button"
+                variant="destructive"
+                size="lg"
                 onClick={async () => {
                   if (window.confirm("คุณต้องการล้างประวัติการส่งรายงานทั้งหมดใช่หรือไม่?")) {
                     const results = await Promise.all(submissions.map((submission) =>
@@ -286,16 +266,9 @@ export default function SafetyAdminReportHistory() {
                     else window.alert("ล้างข้อมูลได้ไม่ครบ กรุณารีเฟรชและลองใหม่");
                   }
                 }}
-                style={{
-                  ...buttonDangerStyle,
-                  height: 38,
-                  borderRadius: 10,
-                  fontSize: 12.5,
-                  padding: "0 14px"
-                }}
               >
                 ล้างข้อมูลทั้งหมด
-              </button>
+              </Button>
             )}
           </div>
 
@@ -390,42 +363,28 @@ export default function SafetyAdminReportHistory() {
                           </td>
                           <td style={{ padding: "8px 16px" }}>
                             <div style={{ display: "flex", justifyContent: "center", gap: 6 }}>
-                              <button
+                              <Button
                                 type="button"
+                                variant="outline"
+                                size="icon-xs"
                                 onClick={() => setSelectedSub(item)}
-                                style={{
-                                  ...buttonGhostStyle,
-                                  width: 30,
-                                  height: 30,
-                                  borderRadius: 6,
-                                  padding: 0,
-                                  display: "grid",
-                                  placeItems: "center"
-                                }}
                                 title="ดูรายละเอียด"
                               >
                                 <Eye size={13} />
-                              </button>
-                              <button
+                              </Button>
+                              <Button
                                 type="button"
+                                variant="destructive"
+                                size="icon-xs"
                                 onClick={() => {
                                   if (window.confirm("คุณต้องการลบรายงานฉบับนี้ใช่หรือไม่?")) {
                                     handleDeleteSubmission(item.id);
                                   }
                                 }}
-                                style={{
-                                  ...buttonDangerStyle,
-                                  width: 30,
-                                  height: 30,
-                                  borderRadius: 6,
-                                  padding: 0,
-                                  display: "grid",
-                                  placeItems: "center"
-                                }}
                                 title="ลบ"
                               >
                                 <Trash2 size={13} />
-                              </button>
+                              </Button>
                             </div>
                           </td>
                         </tr>
@@ -495,44 +454,28 @@ export default function SafetyAdminReportHistory() {
                         </div>
                       </div>
                       <div style={{ display: "flex", gap: 10, width: "100%", justifyContent: "flex-end", marginTop: 8, paddingTop: 8, borderTop: `1px solid ${T.line}` }}>
-                        <button
+                        <Button
                           type="button"
+                          variant="outline"
+                          size="xs"
                           onClick={() => setSelectedSub(item)}
-                          style={{
-                            ...buttonGhostStyle,
-                            height: 30,
-                            borderRadius: 6,
-                            fontSize: 12,
-                            padding: "0 10px",
-                            display: "flex",
-                            alignItems: "center",
-                            gap: 4
-                          }}
                         >
                           <Eye size={12} />
                           <span>ดูรายละเอียด</span>
-                        </button>
-                        <button
+                        </Button>
+                        <Button
                           type="button"
+                          variant="destructive"
+                          size="xs"
                           onClick={() => {
                             if (window.confirm("คุณต้องการลบรายงานฉบับนี้ใช่หรือไม่?")) {
                               handleDeleteSubmission(item.id);
                             }
                           }}
-                          style={{
-                            ...buttonDangerStyle,
-                            height: 30,
-                            borderRadius: 6,
-                            fontSize: 12,
-                            padding: "0 10px",
-                            display: "flex",
-                            alignItems: "center",
-                            gap: 4
-                          }}
                         >
                           <Trash2 size={12} />
                           <span>ลบ</span>
-                        </button>
+                        </Button>
                       </div>
                     </div>
                   );
@@ -566,21 +509,14 @@ export default function SafetyAdminReportHistory() {
                 <div style={{ fontSize: 11, fontWeight: 800, color: T.accentDeep, textTransform: "uppercase" }}>SUBMISSION DETAIL</div>
                 <div style={{ fontSize: 20, fontWeight: 950, color: T.ink }}>รายละเอียดรายงานความปลอดภัย</div>
               </div>
-              <button
+              <Button
                 type="button"
+                variant="outline"
+                size="icon-xs"
                 onClick={() => setSelectedSub(null)}
-                style={{
-                  ...buttonGhostStyle,
-                  width: 32,
-                  height: 32,
-                  borderRadius: 999,
-                  padding: 0,
-                  display: "grid",
-                  placeItems: "center"
-                }}
               >
                 <X size={16} />
-              </button>
+              </Button>
             </div>
 
             {/* Metadata Card */}

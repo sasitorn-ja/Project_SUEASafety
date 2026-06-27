@@ -8,13 +8,13 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default: "bg-[#0B82F0] text-white shadow-[0_8px_18px_rgba(11,130,240,0.22)] hover:bg-[#006AD6]",
+        default: "bg-[linear-gradient(135deg,#18A8FF_0%,#0B82F0_58%,#006AD6_100%)] text-white hover:brightness-[1.04]",
         brand:
-          "bg-[linear-gradient(135deg,#35A8FF_0%,#0B82F0_55%,#006AD6_100%)] text-white shadow-[0_8px_18px_rgba(11,130,240,0.22)] hover:brightness-[0.97]",
+          "bg-[linear-gradient(135deg,#35C2FF_0%,#0B82F0_55%,#0057D9_100%)] text-white hover:brightness-[1.05]",
         outline:
-          "border-[#D7EAFE] bg-white text-[#0B2F6B] hover:bg-[#F5FAFF] hover:text-[#0B82F0] aria-expanded:bg-[#F5FAFF] aria-expanded:text-[#0B82F0] dark:border-input dark:bg-input/30 dark:hover:bg-input/50",
+          "border-[#B9DCFF] bg-[#F4FAFF] text-[#075FCC] hover:border-[#35A8FF] hover:bg-[#EAF6FF] hover:text-[#0B82F0] aria-expanded:border-[#35A8FF] aria-expanded:bg-[#EAF6FF] aria-expanded:text-[#0B82F0] dark:border-input dark:bg-input/30 dark:hover:bg-input/50",
         secondary:
-          "bg-[#F5FAFF] text-[#0B82F0] hover:bg-[#EEF7FF] aria-expanded:bg-[#EEF7FF] aria-expanded:text-[#0B82F0]",
+          "bg-[#EAF6FF] text-[#075FCC] hover:bg-[#DDF0FF] aria-expanded:bg-[#DDF0FF] aria-expanded:text-[#075FCC]",
         ghost:
           "hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:hover:bg-muted/50",
         destructive:

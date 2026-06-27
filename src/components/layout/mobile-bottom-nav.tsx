@@ -19,7 +19,7 @@ const NAV_ITEMS = [
   { id: "notifications", label: "Notice", icon: Bell, href: "/notifications" },
 ];
 
-const ENABLED_HREFS = new Set(["/", "/dashboard", "/category", "/were-ok", "/work-permit", "/safety-culture", "/notifications"]);
+const ENABLED_HREFS = new Set(["/", "/dashboard", "/category", "/safety-culture", "/notifications"]);
 
 export function MobileBottomNav({ hidden = false }: { hidden?: boolean }) {
   const { inboxNotifications } = useAppState();
@@ -31,7 +31,7 @@ export function MobileBottomNav({ hidden = false }: { hidden?: boolean }) {
   return (
     <nav
       className={cn(
-        "min-[1100px]:hidden fixed bottom-0 left-0 right-0 z-50",
+        "fixed bottom-0 left-0 right-0 z-50 lg:hidden",
         "border-t border-[#D7EAFE] bg-white/95",
         "shadow-[0_-10px_28px_rgba(185,223,255,0.45)] backdrop-blur-[16px]",
         "mobile-bottom-nav",

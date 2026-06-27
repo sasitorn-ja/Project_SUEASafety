@@ -133,15 +133,12 @@ export function NotificationCenter({ compact = false, onItemClick, onNotificatio
   const activeTabClass = isWangjai ? "bg-[#69b7f2] text-[#173d62]" : "bg-[#f3c74a] text-[#553215]";
   const inactiveTabClass = isWangjai ? "bg-white text-[#49637d]" : "bg-[#fffaf3] text-[#765133]";
   const cardBorderClass = isWangjai ? "border-[#dbe8f7]" : "border-[#eedfca]";
-  const cardReadBorderClass = isWangjai ? "border-white/70 bg-white/92" : "border-[#f3e8d8] bg-[#fffdfa]";
-  const pageBackgroundClass = isWangjai
-    ? "bg-[linear-gradient(180deg,#eef4fb_0%,#f7fbff_220px,#f8fbff_100%)]"
-    : "bg-[linear-gradient(180deg,#f6efe3_0%,#fdf8f0_220px,#fffdf8_100%)]";
+  const cardReadBorderClass = isWangjai ? "border-[#dbe8f7] bg-white/78" : "border-[#f3e8d8] bg-[#fffdfa]/85";
   const heroEyebrowClass = isWangjai ? "text-[#a9d2f5]" : "text-[#ffd36f]";
   const actorDividerClass = isWangjai ? "text-[#9bb0c5]" : "text-[#cfad84]";
   const emptyStateClass = isWangjai
-    ? "rounded-[24px] border border-white/60 bg-white/92 text-center shadow-[0_10px_24px_rgba(15,34,56,0.08)]"
-    : "rounded-[24px] border border-[#f0e2cf] bg-[#fffdfa] text-center shadow-[0_10px_24px_rgba(59,29,7,0.08)]";
+    ? "rounded-[20px] border border-[#dbe8f7] bg-white/88 text-center"
+    : "rounded-[20px] border border-[#f0e2cf] bg-[#fffdfa]/88 text-center";
   const compactHeaderClass = isWangjai
     ? "rounded-[18px] bg-white px-2 py-1"
     : "rounded-[18px] bg-white px-2 py-1";
@@ -171,7 +168,7 @@ export function NotificationCenter({ compact = false, onItemClick, onNotificatio
         "flex flex-col",
         compact
           ? "max-h-[min(560px,calc(100vh-112px))] gap-3 overflow-y-auto pr-0.5 [&::-webkit-scrollbar]:hidden"
-          : cn("min-h-[calc(100vh-var(--mobile-topbar-h))] gap-5 px-3 pb-24 pt-4", pageBackgroundClass)
+          : "min-h-[calc(100vh-var(--mobile-topbar-h))] gap-4 px-0 pb-20 pt-0 md:min-h-0 md:pb-8"
       )}
       style={compact ? HIDE_SCROLLBAR_STYLE : undefined}
     >
@@ -180,7 +177,7 @@ export function NotificationCenter({ compact = false, onItemClick, onNotificatio
           compact
             ? compactHeaderClass
             : cn(
-                "overflow-hidden rounded-[28px] border border-white/10 px-4 pb-3.5 pt-4 text-white shadow-[0_14px_32px_rgba(18,52,87,0.16)]",
+                "overflow-hidden rounded-[24px] px-4 pb-3.5 pt-4 text-white md:px-6 md:py-5",
                 isWangjai
                   ? "bg-[linear-gradient(135deg,rgba(var(--brand-nav-rgb),0.98)_0%,rgba(41,120,188,0.96)_100%)]"
                   : "bg-[linear-gradient(135deg,#51301a_0%,#70411d_48%,#9f641f_100%)]"
@@ -302,14 +299,14 @@ export function NotificationCenter({ compact = false, onItemClick, onNotificatio
                       }}
                       className={cn(
                         "group relative block overflow-hidden transition-all",
-                        compact ? "rounded-[14px] p-2.5 hover:bg-[#e8edf5]" : "rounded-[26px] border p-4.5 shadow-[0_10px_24px_rgba(15,34,56,0.08)]",
+                        compact ? "rounded-[14px] p-2.5 hover:bg-[#e8edf5]" : "rounded-[18px] border p-4 transition-colors hover:bg-[#f6fbff]",
                         compact
                           ? item.read
                             ? compactReadCardClass
                             : compactCardClass
                           : item.read
                             ? cardReadBorderClass
-                            : cn(cardBorderClass, "bg-white")
+                            : cn(cardBorderClass, "bg-white/95")
                       )}
                     >
                       {!item.read ? <span className={cn("absolute rounded-full", compact ? "right-2 top-1/2 h-2 w-2 -translate-y-1/2 bg-[#1168d8]" : `${unreadDotClass} right-4 top-4 h-2.5 w-2.5`)} /> : null}

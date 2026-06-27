@@ -24,6 +24,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { SafetyCultureHero } from "@/components/safety-culture/safety-culture-hero";
+import { Button } from "@/components/ui/button";
 
 // This screen is wired to the real locations API. Fields that do not exist on
 // `locations` yet (customer/contractor/stage/approvedBy) are UI-only until the
@@ -112,42 +113,6 @@ const comboboxSelectStyle = {
   paddingRight: 12,
 };
 
-const buttonPrimaryStyle = {
-  height: 44,
-  borderRadius: 14,
-  border: "none",
-  background: "linear-gradient(135deg, var(--brand-accent-strong) 0%, var(--brand-accent) 100%)",
-  color: "#fff",
-  padding: "0 18px",
-  fontWeight: 800,
-  fontFamily: "inherit",
-  cursor: "pointer",
-  boxShadow: "0 10px 24px var(--brand-shadow)",
-};
-
-const buttonGhostStyle = {
-  height: 44,
-  borderRadius: 14,
-  border: `1px solid ${T.lineStrong}`,
-  background: "#fff",
-  color: T.ink,
-  padding: "0 16px",
-  fontWeight: 800,
-  fontFamily: "inherit",
-  cursor: "pointer",
-};
-
-const buttonDangerStyle = {
-  height: 44,
-  borderRadius: 14,
-  border: "none",
-  background: "#fbe9e4",
-  color: T.danger,
-  padding: "0 16px",
-  fontWeight: 800,
-  fontFamily: "inherit",
-  cursor: "pointer",
-};
 
 const getInitialOffices = () => {
   return [];
@@ -846,50 +811,26 @@ export default function SafetyAdminManageData() {
     const disabledTitle = "ข้อมูลจากระบบต้นทาง แสดงได้แต่แก้ไข/ลบไม่ได้";
     return (
       <div style={{ display: "flex", justifyContent: "center", gap: compact ? 10 : 6 }}>
-        <button
+        <Button
           type="button"
+          variant="outline"
+          size={compact ? "xs" : "icon-xs"}
           onClick={() => handleEditPlant(item)}
           disabled={!manageable}
-          style={{
-            ...buttonGhostStyle,
-            width: compact ? undefined : 28,
-            height: compact ? 28 : 28,
-            borderRadius: 6,
-            padding: compact ? "0 10px" : 0,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: 4,
-            fontSize: 12,
-            opacity: manageable ? 1 : 0.42,
-            cursor: manageable ? "pointer" : "not-allowed",
-          }}
           title={manageable ? "แก้ไข" : disabledTitle}
         >
           <Pencil size={compact ? 11 : 12} /> {compact ? "แก้ไข" : null}
-        </button>
-        <button
+        </Button>
+        <Button
           type="button"
+          variant="destructive"
+          size={compact ? "xs" : "icon-xs"}
           onClick={() => handleDeletePlant(item.id)}
           disabled={!manageable}
-          style={{
-            ...buttonDangerStyle,
-            width: compact ? undefined : 28,
-            height: compact ? 28 : 28,
-            borderRadius: 6,
-            padding: compact ? "0 10px" : 0,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: 4,
-            fontSize: 12,
-            opacity: manageable ? 1 : 0.42,
-            cursor: manageable ? "pointer" : "not-allowed",
-          }}
           title={manageable ? "ลบ" : disabledTitle}
         >
           <Trash2 size={compact ? 11 : 12} /> {compact ? "ลบ" : null}
-        </button>
+        </Button>
       </div>
     );
   };
@@ -1331,49 +1272,40 @@ export default function SafetyAdminManageData() {
                 </div>
                 <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
                   <div style={{ display: "flex", gap: 4 }}>
-                    <button
+                    <Button
                       type="button"
+                      variant="outline"
+                      size="default"
                       disabled={plantPage === 1}
                       onClick={() => setPlantPage(prev => Math.max(prev - 1, 1))}
-                      style={{ ...buttonGhostStyle, height: 32, borderRadius: 8, fontSize: 12.5, padding: "0 10px" }}
                     >
                       Prev
-                    </button>
+                    </Button>
                     {Array.from({ length: totalPlantPages }).map((_, idx) => {
                       const pageNum = idx + 1;
                       const isCurrent = pageNum === plantPage;
                       return (
-                        <button
+                        <Button
                           key={pageNum}
                           type="button"
+                          variant={isCurrent ? "brand" : "outline"}
+                          size="default"
                           onClick={() => setPlantPage(pageNum)}
-                          style={isCurrent 
-                            ? {
-                                height: 32,
-                                minWidth: 32,
-                                borderRadius: 8,
-                                border: "none",
-                                background: T.accent,
-                                color: "#fff",
-                                fontWeight: 800,
-                                fontSize: 12.5,
-                                cursor: "pointer"
-                              }
-                            : { ...buttonGhostStyle, height: 32, minWidth: 32, borderRadius: 8, fontSize: 12.5, padding: 0 }
-                          }
+                          className="min-w-8"
                         >
                           {pageNum}
-                        </button>
+                        </Button>
                       );
                     })}
-                    <button
+                    <Button
                       type="button"
+                      variant="outline"
+                      size="default"
                       disabled={plantPage === totalPlantPages}
                       onClick={() => setPlantPage(prev => Math.min(prev + 1, totalPlantPages))}
-                      style={{ ...buttonGhostStyle, height: 32, borderRadius: 8, fontSize: 12.5, padding: "0 10px" }}
                     >
                       Next
-                    </button>
+                    </Button>
                   </div>
 
                   <Combobox
@@ -1821,62 +1753,73 @@ export default function SafetyAdminManageData() {
 
           <DialogFooter className="mx-0 mb-0">
             <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, width: "100%" }}>
-              <button
-                type="button"
-                onClick={() => {
-                  setAddingPlant(false);
-                  setEditingPlant(null);
-                }}
-                style={selectedType === "factory" 
-                  ? {
-                      background: "#ffffff",
-                      border: "1px solid #d1d5db",
-                      color: "#374151",
-                      height: 38,
-                      padding: "0 18px",
-                      borderRadius: 8,
-                      fontSize: 13.5,
-                      fontWeight: 600,
-                      cursor: "pointer",
-                      fontFamily: "inherit"
-                    }
-                  : { ...buttonGhostStyle, height: 40, borderRadius: 10, fontSize: 13 }
-                }
-              >
-                {selectedType === "factory" ? "Cancel" : "ยกเลิก"}
-              </button>
-              <button
-                type="button"
-                onClick={addingPlant ? submitAddPlant : submitEditPlant}
-                style={selectedType === "factory"
-                  ? {
-                      background: "var(--brand-text)",
-                      border: "none",
-                      color: "#ffffff",
-                      height: 38,
-                      padding: "0 18px",
-                      borderRadius: 8,
-                      fontSize: 13.5,
-                      fontWeight: 600,
-                      cursor: "pointer",
-                      fontFamily: "inherit"
-                    }
-                  : {
-                      ...buttonPrimaryStyle,
-                      height: 40,
-                      borderRadius: 10,
-                      fontSize: 13,
-                      background: `linear-gradient(135deg, ${T.accent} 0%, ${T.accentDeep} 100%)`,
-                      boxShadow: "none"
-                    }
-                }
-              >
-                {selectedType === "factory" 
-                  ? (addingPlant ? "Add" : "Update")
-                  : (addingPlant 
-                      ? (selectedType === "office" ? "เพิ่มสำนักงาน" : "เพิ่มไซต์งาน") 
-                      : "บันทึกการแก้ไข")}
-              </button>
+              {selectedType === "factory" ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAddingPlant(false);
+                    setEditingPlant(null);
+                  }}
+                  style={{
+                    background: "#ffffff",
+                    border: "1px solid #d1d5db",
+                    color: "#374151",
+                    height: 38,
+                    padding: "0 18px",
+                    borderRadius: 8,
+                    fontSize: 13.5,
+                    fontWeight: 600,
+                    cursor: "pointer",
+                    fontFamily: "inherit"
+                  }}
+                >
+                  Cancel
+                </button>
+              ) : (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="lg"
+                  onClick={() => {
+                    setAddingPlant(false);
+                    setEditingPlant(null);
+                  }}
+                >
+                  ยกเลิก
+                </Button>
+              )}
+              {selectedType === "factory" ? (
+                <button
+                  type="button"
+                  onClick={addingPlant ? submitAddPlant : submitEditPlant}
+                  style={{
+                    background: "var(--brand-text)",
+                    border: "none",
+                    color: "#ffffff",
+                    height: 38,
+                    padding: "0 18px",
+                    borderRadius: 8,
+                    fontSize: 13.5,
+                    fontWeight: 600,
+                    cursor: "pointer",
+                    fontFamily: "inherit"
+                  }}
+                >
+                  {addingPlant ? "Add" : "Update"}
+                </button>
+              ) : (
+                <Button
+                  type="button"
+                  variant="brand"
+                  size="lg"
+                  onClick={addingPlant ? submitAddPlant : submitEditPlant}
+                  style={{ background: `linear-gradient(135deg, ${T.accent} 0%, ${T.accentDeep} 100%)` }}
+                >
+                  {addingPlant
+                    ? (selectedType === "office" ? "เพิ่มสำนักงาน" : "เพิ่มไซต์งาน")
+                    : "บันทึกการแก้ไข"}
+                </Button>
+              )}
             </div>
           </DialogFooter>
         </DialogContent>
@@ -1893,20 +1836,22 @@ export default function SafetyAdminManageData() {
           </DialogHeader>
           <DialogFooter className="mx-0 mb-0">
             <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, width: "100%" }}>
-              <button
+              <Button
                 type="button"
+                variant="outline"
+                size="lg"
                 onClick={() => setDeletePlantId(null)}
-                style={{ ...buttonGhostStyle, height: 38, borderRadius: 10, fontSize: 12.5 }}
               >
                 ยกเลิก
-              </button>
-              <button
+              </Button>
+              <Button
                 type="button"
+                variant="destructive"
+                size="lg"
                 onClick={confirmDeletePlant}
-                style={{ ...buttonDangerStyle, height: 38, borderRadius: 10, fontSize: 12.5 }}
               >
                 ลบสถานที่
-              </button>
+              </Button>
             </div>
           </DialogFooter>
         </DialogContent>

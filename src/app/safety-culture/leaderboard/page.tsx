@@ -55,7 +55,7 @@ export default function LeaderboardPage() {
   return (
     <>
       <div className="page-shell-wide bg-[var(--background)] pt-2.5 pb-8 font-sarabun">
-        <div className="anim-fade" style={animStyle(0)}>
+        <div className="mb-3 anim-fade md:mb-4" style={animStyle(0)}>
           <SafetyCultureHero
             eyebrow="SAFETY CARING SCOREBOARD"
             title={
@@ -65,8 +65,9 @@ export default function LeaderboardPage() {
             }
             description="สรุปคะแนน Safety ให้เห็นภาพรวม ทั้งอันดับทีมและอันดับสมาชิกในทีมของคุณ"
             variant="community"
-            backgroundImage="/images/heroes/Home01.png"
+            backgroundImage="/images/heroes/safety-culture-leaderboard-custom.png"
             backgroundOverlay="linear-gradient(90deg, rgba(210,235,255,.82) 0%, rgba(210,235,255,.56) 42%, rgba(210,235,255,0) 100%)"
+            contentFrame
             mascotSrc="/images/mascots/wangjai/1.png"
             mascotAction="cheer"
           />

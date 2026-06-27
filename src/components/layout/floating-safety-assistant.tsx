@@ -468,7 +468,7 @@ export function FloatingSafetyAssistant() {
       ref={asideRef}
       style={assistantStyle}
       className={cn(
-        "floating-safety-assistant fixed bottom-[calc(var(--mobile-bottomnav-h)+14px)] right-3 z-[60] flex flex-col font-sans min-[1100px]:bottom-5 min-[1100px]:right-5",
+        "floating-safety-assistant fixed bottom-[calc(var(--mobile-bottomnav-h)+14px)] right-3 z-[60] flex flex-col font-sans lg:bottom-5 lg:right-5",
         position && (isDragging ? "transition-none" : "transition-[right,bottom] duration-200 ease-out"),
         isDockedLeft ? "items-start" : "items-end"
       )}

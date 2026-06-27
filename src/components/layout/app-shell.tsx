@@ -155,6 +155,9 @@ export function AppShell({ children }: { children: ReactNode }) {
     };
 
     resetScroll();
+    lastScrollY.current = 0;
+    setTopHidden(false);
+    setBtmHidden(false);
 
     const animId = requestAnimationFrame(resetScroll);
     const timeoutId = setTimeout(resetScroll, 50);
@@ -228,7 +231,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 
       {!isSafetyCulturePost && <MobileBottomNav hidden={btmHidden} />}
 
-      {!isSafetyEffort && !isSafetyCulturePost && pathname !== "/dashboard" && <FloatingSafetyAssistant />}
+      {!isSafetyEffort && <FloatingSafetyAssistant />}
 
       <SafetyAwarenessGate />
     </div>

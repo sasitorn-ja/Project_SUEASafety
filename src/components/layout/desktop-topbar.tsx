@@ -4,11 +4,10 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { Bell, ChevronDown, FileText, Gift, Heart, Home, LayoutDashboard, LogOut, Menu, ShieldCheck, Trophy, UserRound, X } from "lucide-react";
+import { Bell, ChevronDown, FileText, Gift, Heart, Home, LayoutDashboard, LogOut, ShieldCheck, Trophy, UserRound } from "lucide-react";
 import { NotificationCenter } from "@/components/notifications/notification-center";
 import { cn } from "@/lib/utils";
 import { isExactNavActive, isMainNavActive } from "@/lib/navigation";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useAppState } from "@/providers/app-providers";
 import { useAppTheme } from "@/providers/theme-provider";
 import { getSessionDisplayName, getSessionProfileImage, hasAdminAccess, useSessionUser } from "@/lib/session-user";
@@ -72,7 +71,7 @@ const PROFILE_ITEMS = [
   },
 ] as const;
 
-const ENABLED_HREFS = new Set(["/", "/dashboard", "/category", "/were-ok", "/work-permit", "/safety-culture", "/safety-admin", "/notifications", "/login"]);
+const ENABLED_HREFS = new Set(["/", "/dashboard", "/category", "/safety-culture", "/safety-admin", "/notifications", "/login"]);
 
 function ConfiguredMenuLink({
   node,
@@ -121,30 +120,65 @@ function ConfiguredMenuLink({
   );
 }
 
-function AdminFlyoutSection({ section, pathname }: { section: MenuNode; pathname: string }) {
+function AdminFlyoutSection({
+  section,
+  pathname,
+  onNavigate,
+  open,
+  onOpen,
+  onClose,
+}: {
+  section: MenuNode;
+  pathname: string;
+  onNavigate: () => void;
+  open: boolean;
+  onOpen: () => void;
+  onClose: () => void;
+}) {
   const children = section.children.filter((node) => node.enabled);
+  const submenuId = `admin-submenu-${section.id}`;
 
   if (children.length === 0) {
-    return <ConfiguredMenuLink node={section} pathname={pathname} compact />;
+    return <ConfiguredMenuLink node={section} pathname={pathname} onClick={onNavigate} compact />;
   }
 
   return (
-    <div className="group/admin-section relative">
-      <div className="flex cursor-default items-center rounded-lg hover:bg-[#F5FAFF]">
+    <div className="relative" onMouseEnter={onOpen} onMouseLeave={onClose}>
+      <button
+        type="button"
+        className="flex w-full cursor-pointer items-center rounded-lg text-left transition-colors hover:bg-[#F5FAFF] focus-visible:bg-[#F5FAFF] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8FC8FF]"
+        aria-expanded={open}
+        aria-controls={submenuId}
+        onFocus={onOpen}
+        onClick={onOpen}
+        onKeyDown={(event) => {
+          if (event.key === "Enter" || event.key === " ") {
+            event.preventDefault();
+            onOpen();
+          }
+        }}
+      >
         <div className="min-w-0 flex-1">
           <ConfiguredMenuLink node={section} pathname={pathname} compact asLabel />
         </div>
-        {children.length > 0 && <ChevronDown className="mr-1.5 h-3 w-3 -rotate-90 text-[#55739B]" strokeWidth={2.5} />}
-      </div>
-      {children.length > 0 && (
-        <div className="invisible absolute left-full top-0 z-50 w-[min(300px,calc(100vw-32px))] -translate-x-1 pl-1.5 opacity-0 transition-all duration-150 group-hover/admin-section:visible group-hover/admin-section:translate-x-0 group-hover/admin-section:opacity-100">
-          <div className="max-h-[calc(100vh-var(--topbar-h)-24px)] overflow-y-auto rounded-xl border border-[#D7EAFE] bg-white p-1.5 shadow-[0_18px_44px_rgba(185,223,255,0.55)] backdrop-blur-xl">
-            {children.map((child) => (
-              <ConfiguredMenuLink key={child.id} node={child} pathname={pathname} />
-            ))}
-          </div>
+        <ChevronDown
+          className={cn("mr-2 h-3.5 w-3.5 shrink-0 -rotate-90 text-[#55739B] transition-transform", open && "text-[#0B82F0]")}
+          strokeWidth={2.5}
+        />
+      </button>
+      <div
+        id={submenuId}
+        className={cn(
+          "invisible absolute left-full top-0 z-50 w-[min(300px,calc(100vw-32px))] -translate-x-1 pl-1.5 opacity-0 transition-all duration-150",
+          open && "visible translate-x-0 opacity-100",
+        )}
+      >
+        <div className="max-h-[calc(100dvh-var(--topbar-h)-24px)] overflow-y-auto rounded-xl border border-[#D7EAFE] bg-white p-1.5 shadow-[0_18px_44px_rgba(185,223,255,0.55)] backdrop-blur-xl">
+          {children.map((child) => (
+            <ConfiguredMenuLink key={child.id} node={child} pathname={pathname} onClick={onNavigate} compact />
+          ))}
         </div>
-      )}
+      </div>
     </div>
   );
 }
@@ -153,11 +187,11 @@ export function DesktopTopbar() {
   const { mascot, theme } = useAppTheme();
   const { inboxNotifications } = useAppState();
   const pathname = usePathname() ?? "";
-  const [open, setOpen] = useState(false);
   const [configuredMenu, setConfiguredMenu] = useState<MenuNode[]>([]);
   const { user: sessionUser } = useSessionUser();
   const isWangjai = theme === "wangjai";
   const [desktopMenu, setDesktopMenu] = useState<"dashboard" | "safety-culture" | "admin" | "profile" | null>(null);
+  const [adminSubmenuId, setAdminSubmenuId] = useState<string | null>(null);
   const [notificationOpen, setNotificationOpen] = useState(false);
   const [profileImageFailed, setProfileImageFailed] = useState(false);
   const notificationRef = useRef<HTMLDivElement>(null);
@@ -168,6 +202,7 @@ export function DesktopTopbar() {
 
   useEffect(() => {
     setDesktopMenu(null);
+    setAdminSubmenuId(null);
     setNotificationOpen(false);
   }, [pathname]);
 
@@ -212,6 +247,12 @@ export function DesktopTopbar() {
   const canUseAdmin = hasAdminAccess(sessionUser);
   const navItems = canUseAdmin ? NAV_ITEMS : NAV_ITEMS.filter((item) => item.id !== "admin");
   const adminSections = canUseAdmin ? configuredAdmin?.children.filter((node) => node.enabled) ?? [] : [];
+  const activeAdminSectionId = adminSections.find((section) =>
+    section.children.some(
+      (child) => child.enabled && child.href && (pathname === child.href || pathname.startsWith(`${child.href}/`)),
+    ),
+  )?.id;
+  const visibleAdminSubmenuId = adminSubmenuId === null ? activeAdminSectionId : adminSubmenuId;
   const displayName = sessionUser ? getSessionDisplayName(sessionUser) : "ผู้ใช้งาน";
   const displayImage = getSessionProfileImage(sessionUser);
 
@@ -222,113 +263,19 @@ export function DesktopTopbar() {
   return (
     <header
       className={cn(
-        "hidden min-[1100px]:flex fixed top-0 left-0 right-0 z-50 items-center",
+        "fixed top-0 left-0 right-0 z-50 hidden items-center lg:flex",
         "border-b border-[#D7EAFE] bg-white/95 shadow-[0_6px_20px_rgba(185,223,255,0.45)] backdrop-blur-xl",
         "[transition:margin-left_200ms_ease-out]",
         "ml-0"
       )}
       style={{ fontFamily: "var(--font-sans)", height: "var(--topbar-h)" }}
     >
-      <div className="flex h-full w-full items-center justify-between gap-2 px-6">
+      <div className="desktop-topbar-inner flex h-full w-full items-center justify-between gap-2 px-6">
         <NavTo href="/" className="flex min-w-[234px] items-center gap-3.5">
           <Image src="/images/brand/LOGO1_trim.png" alt="Safety Caring" width={300} height={52} priority className="h-[40px] w-auto object-contain" />
         </NavTo>
 
-        <Sheet open={open} onOpenChange={setOpen}>
-          <SheetTrigger
-            className={cn(
-              "compact-toggle-visible hidden h-11 w-11 flex-shrink-0 items-center justify-center rounded-full",
-              "border border-[#D7EAFE] bg-white text-[#0B82F0]",
-              "cursor-pointer hover:bg-[#F5FAFF]"
-            )}
-            aria-label={open ? "ปิดเมนู" : "เปิดเมนู"}
-            title={open ? "ปิดเมนู" : "เปิดเมนู"}
-          >
-            {open ? <X className="h-5 w-5" strokeWidth={2.35} /> : <Menu className="h-5 w-5" strokeWidth={2.35} />}
-          </SheetTrigger>
-          <SheetContent side="top" showCloseButton={false} className="desktop-compact-menu-sheet">
-            <div className="flex flex-col gap-3">
-              <div className="desktop-compact-grid">
-                {navItems.map((item) => {
-                  const Icon = item.icon;
-                  const active = isActive(item.href);
-                  const enabled = ENABLED_HREFS.has(item.href);
-
-                  return (
-                    <NavTo
-                      key={item.id}
-                      href={enabled ? item.href : "#"}
-                      onClick={() => enabled && setOpen(false)}
-                      className={cn(
-                        "flex min-h-11 items-center gap-2.5 rounded-lg px-3 text-sm font-bold transition-colors",
-                        active && enabled ? "bg-[#0B82F0] text-white" : "bg-white text-[#0B2F6B] hover:bg-[#F5FAFF]",
-                        !enabled && "cursor-not-allowed opacity-[0.58]"
-                      )}
-                    >
-                      <Icon className="h-[17px] w-[17px]" />
-                      {item.label}
-                    </NavTo>
-                  );
-                })}
-              </div>
-
-              <div className="rounded-2xl border border-[#D7EAFE] bg-white p-2.5">
-                <div className="mb-2 flex items-center gap-2 px-1.5 text-[10px] font-extrabold uppercase tracking-[0.18em] text-[#0B82F0]">
-                  <Heart className="h-3.5 w-3.5" strokeWidth={2.3} />
-                  <span>Safety Culture</span>
-                </div>
-                <div className="grid grid-cols-1 gap-1.5 md:grid-cols-2">
-                  {SAFETY_CULTURE_ITEMS.map((item) => {
-                    const Icon = item.icon;
-                    return (
-                      <NavTo
-                        key={item.href}
-                        href={item.href}
-                        onClick={() => setOpen(false)}
-                        className={cn(
-                          "flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-bold transition-colors hover:bg-[#F5FAFF]",
-                          isExactNavActive(pathname, item.href) ? "bg-[#EEF7FF] text-[#0B82F0]" : "text-[#0B2F6B]"
-                        )}
-                      >
-                        <Icon className="h-[17px] w-[17px] text-[#0B82F0]" strokeWidth={2.3} />
-                        {item.label}
-                      </NavTo>
-                    );
-                  })}
-                </div>
-              </div>
-
-              <div className="rounded-2xl border border-[#D7EAFE] bg-white p-2.5">
-                <div className="mb-2 flex items-center gap-2 px-1.5 text-[10px] font-extrabold uppercase tracking-[0.18em] text-[#0B82F0]">
-                  <UserRound className="h-3.5 w-3.5" strokeWidth={2.3} />
-                  <span>Admin</span>
-                </div>
-                <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
-                  {adminSections.map((section) => (
-                    <div key={section.id} className="rounded-xl border border-[#D7EAFE] bg-[#F5FAFF] p-1.5">
-                      <ConfiguredMenuLink
-                        node={section}
-                        pathname={pathname}
-                        onClick={() => setOpen(false)}
-                        compact
-                        asLabel={section.children.filter((node) => node.enabled).length > 0}
-                      />
-                      {section.children.filter((node) => node.enabled).length > 0 && (
-                          <div className="ml-3 border-l border-[#D7EAFE] pl-2">
-                          {section.children.filter((node) => node.enabled).map((child) => (
-                            <ConfiguredMenuLink key={child.id} node={child} pathname={pathname} onClick={() => setOpen(false)} compact />
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </SheetContent>
-        </Sheet>
-
-        <nav ref={desktopNavRef} className="flex min-w-0 flex-1 items-center justify-center gap-1" aria-label="Main navigation">
+        <nav ref={desktopNavRef} className="desktop-nav-visible flex min-w-0 flex-1 items-center justify-center gap-1" aria-label="Main navigation">
           {navItems.map((item) => {
             const Icon = item.icon;
             const active = isActive(item.href);
@@ -340,17 +287,28 @@ export function DesktopTopbar() {
                   key={item.id}
                   className="relative"
                   onMouseEnter={() => setDesktopMenu("admin")}
-                  onMouseLeave={() => setDesktopMenu((current) => (current === "admin" ? null : current))}
+                  onMouseLeave={() => {
+                    setDesktopMenu((current) => (current === "admin" ? null : current));
+                    setAdminSubmenuId(null);
+                  }}
                 >
-                  <button type="button" onFocus={() => setDesktopMenu("admin")} onClick={() => setDesktopMenu((current) => current === "admin" ? null : "admin")} aria-expanded={desktopMenu === "admin"} aria-haspopup="menu" className={cn("inline-flex h-11 min-w-[100px] items-center justify-center gap-2 rounded-[13px] border border-transparent px-[15px] text-[14.5px] font-bold whitespace-nowrap transition-all", active ? "bg-[linear-gradient(135deg,#35A8FF_0%,#0B82F0_55%,#006AD6_100%)] text-white shadow-[0_8px_20px_rgba(11,130,240,0.22)]" : "bg-transparent text-[#0B2F6B] hover:border-[#D7EAFE] hover:bg-[#F5FAFF] hover:text-[#0B82F0]")}>
+                  <button type="button" onFocus={() => setDesktopMenu("admin")} onClick={() => setDesktopMenu((current) => current === "admin" ? null : "admin")} aria-expanded={desktopMenu === "admin"} aria-haspopup="menu" className={cn("desktop-nav-item inline-flex h-11 min-w-[100px] items-center justify-center gap-2 rounded-[13px] border border-transparent px-[15px] text-[14.5px] font-bold whitespace-nowrap transition-all", active ? "bg-[linear-gradient(135deg,#35A8FF_0%,#0B82F0_55%,#006AD6_100%)] text-white" : "bg-transparent text-[#0B2F6B] hover:border-[#D7EAFE] hover:bg-[#F5FAFF] hover:text-[#0B82F0]")}>
                     <Icon className="h-[17px] w-[17px]" strokeWidth={2.35} />
                     <span className="desktop-nav-label">{item.label}</span>
                     <ChevronDown className={cn("h-3.5 w-3.5 transition-transform", desktopMenu === "admin" && "rotate-180")} />
                   </button>
-                  <div className={cn("absolute right-0 top-full z-50 w-[320px] pt-2 transition-all duration-150", desktopMenu === "admin" ? "visible translate-y-0 opacity-100" : "invisible -translate-y-1 opacity-0")}>
+                  <div className={cn("absolute right-[clamp(0px,calc(1400px-100vw),170px)] top-full z-50 w-[320px] pt-2 transition-all duration-150", desktopMenu === "admin" ? "visible translate-y-0 opacity-100" : "invisible -translate-y-1 opacity-0")}>
                     <div className="overflow-visible rounded-xl border border-[#D7EAFE] bg-white p-1.5 text-[#0B2F6B] shadow-[0_18px_44px_rgba(185,223,255,0.55)] backdrop-blur-xl">
                       {adminSections.map((section) => (
-                        <AdminFlyoutSection key={section.id} section={section} pathname={pathname} />
+                        <AdminFlyoutSection
+                          key={section.id}
+                          section={section}
+                          pathname={pathname}
+                          onNavigate={() => setDesktopMenu(null)}
+                          open={visibleAdminSubmenuId === section.id}
+                          onOpen={() => setAdminSubmenuId(section.id)}
+                          onClose={() => setAdminSubmenuId((current) => current === section.id ? "" : current)}
+                        />
                       ))}
                       {adminSections.length === 0 && (
                         <div className="px-3 py-4 text-center text-xs font-bold text-[#55739B]">ยังไม่มีเมนูย่อย Admin</div>
@@ -378,7 +336,7 @@ export function DesktopTopbar() {
                     aria-expanded={desktopMenu === menuId}
                     aria-haspopup="menu"
                     className={cn(
-                      "inline-flex h-11 min-w-[100px] items-center justify-center gap-2 rounded-[13px] border border-transparent px-[15px] text-[14.5px] font-bold whitespace-nowrap transition-all",
+                      "desktop-nav-item inline-flex h-11 min-w-[100px] items-center justify-center gap-2 rounded-[13px] border border-transparent px-[15px] text-[14.5px] font-bold whitespace-nowrap transition-all",
                       active ? "bg-[linear-gradient(135deg,#35A8FF_0%,#0B82F0_55%,#006AD6_100%)] text-white shadow-[0_8px_20px_rgba(11,130,240,0.22)]" : "bg-transparent text-[#0B2F6B] hover:border-[#D7EAFE] hover:bg-[#F5FAFF] hover:text-[#0B82F0]"
                     )}
                   >
@@ -428,7 +386,7 @@ export function DesktopTopbar() {
                 key={item.id}
                 href={enabled ? item.href : "#"}
                 className={cn(
-                  "inline-flex h-11 min-w-[100px] items-center justify-center gap-2 rounded-[13px] border border-transparent px-[15px] text-[14.5px] font-bold whitespace-nowrap transition-all",
+                  "desktop-nav-item inline-flex h-11 min-w-[100px] items-center justify-center gap-2 rounded-[13px] border border-transparent px-[15px] text-[14.5px] font-bold whitespace-nowrap transition-all",
                   active && enabled ? "bg-[linear-gradient(135deg,#35A8FF_0%,#0B82F0_55%,#006AD6_100%)] text-white shadow-[0_8px_20px_rgba(11,130,240,0.22)]" : "bg-transparent text-[#0B2F6B] hover:border-[#D7EAFE] hover:bg-[#F5FAFF] hover:text-[#0B82F0]",
                   !enabled && "cursor-not-allowed opacity-[0.62] hover:bg-transparent"
                 )}

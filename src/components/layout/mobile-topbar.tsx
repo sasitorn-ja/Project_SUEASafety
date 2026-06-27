@@ -67,8 +67,6 @@ const ENABLED_HREFS = new Set([
   "/category",
   "/",
   "/dashboard",
-  "/were-ok",
-  "/work-permit",
   "/safety-culture",
   "/safety-culture/leaderboard",
   "/safety-culture/rewards",
@@ -234,7 +232,7 @@ export function MobileTopbar({ hidden = false }: { hidden?: boolean }) {
     <>
       <div
         className={cn(
-          "fixed top-0 right-0 left-0 flex items-center justify-between gap-2 px-2.5 min-[1100px]:hidden",
+          "fixed top-0 right-0 left-0 flex items-center justify-between gap-2 px-2.5 lg:hidden",
           open ? "z-[80]" : "z-50",
           "border-b border-[#D7EAFE] bg-white/95 shadow-[0_6px_20px_rgba(185,223,255,0.45)] backdrop-blur-[14px]",
           "transition-transform duration-200",
@@ -263,7 +261,7 @@ export function MobileTopbar({ hidden = false }: { hidden?: boolean }) {
       </div>
 
       {open && (
-        <div className="fixed inset-x-0 top-[var(--mobile-topbar-h)] z-[70] h-[calc(100vh-var(--mobile-topbar-h))] min-[1100px]:hidden">
+        <div className="fixed inset-x-0 top-[var(--mobile-topbar-h)] z-[70] h-[calc(100vh-var(--mobile-topbar-h))] lg:hidden">
           <button className="absolute inset-0 cursor-pointer bg-[#0B2F6B]/20 backdrop-blur-[2px]" aria-label="ปิดเมนู" onClick={closeDrawer} />
           <aside className="relative flex h-full w-[min(318px,86vw)] flex-col border-r border-[#D7EAFE] bg-white/98 shadow-[18px_0_34px_rgba(185,223,255,0.48)] backdrop-blur-[16px]" aria-label="เมนูหลัก">
 

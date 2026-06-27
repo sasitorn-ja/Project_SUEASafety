@@ -270,7 +270,7 @@ export default function PostSocialPage() {
           <Button
             onClick={handleSubmit}
             disabled={isProcessingPhotos || isSubmitting}
-            className="rounded-full bg-[#1A1A1A] px-6 text-sm font-extrabold text-white shadow-[0_4px_10px_rgba(0,0,0,0.1)] transition-all hover:bg-[var(--brand-accent)] hover:text-[#1A1A1A] disabled:cursor-wait disabled:opacity-70"
+            className="rounded-full bg-[#1A1A1A] px-6 text-sm font-extrabold text-white transition-all hover:bg-[var(--brand-accent)] hover:text-[#1A1A1A] disabled:cursor-wait disabled:opacity-70"
           >
             {isSubmitting ? "กำลังโพสต์..." : isProcessingPhotos ? "กำลังเตรียมรูปภาพ..." : "โพสต์"}
           </Button>

@@ -1740,7 +1740,7 @@ export default function Checkin() {
 
   // ── Compact Sub-header (User Feedback Optimization)
   const StepHeader = () => (
-    <div className="relative overflow-hidden rounded-[20px] border border-[#B9DDFF]/60 bg-[#EEF7FF] p-3.5 sm:p-5 lg:p-6 min-h-[120px] sm:min-h-[145px] xl:min-h-[160px] flex items-center shadow-[0_12px_30px_rgba(185,223,255,0.4)]">
+    <div className="relative flex min-h-[100px] items-center overflow-hidden rounded-[20px] border border-[#B9DDFF]/60 bg-[#EEF7FF] px-3 py-2 shadow-[0_12px_30px_rgba(185,223,255,0.4)] sm:min-h-[116px] sm:px-[18px] sm:py-2.5 xl:min-h-[148px] xl:px-[28px] xl:py-3">
       {/* Background image container */}
       <div 
         className="absolute inset-0 bg-[url('/images/heroes/safety-effort-category-hero.png')] bg-no-repeat"
@@ -1758,7 +1758,7 @@ export default function Checkin() {
         <div className="flex flex-col items-start gap-2">
           <div className="flex items-center gap-3">
             <button 
-              className="flex h-8 w-8 items-center justify-center rounded-[8px] bg-white border border-[#D7EAFE] text-[#0B82F0] shadow-[0_2px_8px_rgba(11,130,240,0.06)] hover:bg-[#0B82F0] hover:text-white transition-all duration-300 active:scale-95"
+              className="flex h-8 w-8 items-center justify-center rounded-[8px] bg-white border border-[#D7EAFE] text-[#0B82F0] hover:bg-[#0B82F0] hover:text-white transition-all duration-300 active:scale-95"
               onClick={handleBack} 
               aria-label="ย้อนกลับ"
             >

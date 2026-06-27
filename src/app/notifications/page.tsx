@@ -60,7 +60,7 @@ export default function NotificationsPage() {
   const openMobilePost = useCallback(
     (notification: AppInboxNotification) => {
       const targetHref = notification.postId
-        ? `/safety-culture?postId=${notification.postId}`
+        ? `/safety-culture/posts/${notification.postId}`
         : notification.feedEventId
           ? `/safety-culture?activityId=${encodeURIComponent(notification.feedEventId)}`
           : notification.href && notification.href !== "/notifications"
@@ -77,7 +77,7 @@ export default function NotificationsPage() {
 
   return (
     <div className="page-shell-wide">
-      <section className="hidden min-h-[calc(100vh-var(--mobile-topbar-h)-var(--mobile-bottomnav-h))] overflow-hidden rounded-none bg-transparent md:block md:min-h-0 md:rounded-[28px] md:border md:border-[var(--border)] md:bg-[var(--brand-surface)] md:px-2 md:py-2">
+      <section className="hidden md:block">
         <NotificationCenter />
       </section>
 

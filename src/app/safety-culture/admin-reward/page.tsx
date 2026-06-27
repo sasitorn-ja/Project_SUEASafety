@@ -1210,7 +1210,7 @@ export default function AdminRewardPage() {
                   type="button"
                   variant="outline"
                   onClick={() => setIsRedemptionLogOpen(true)}
-                  className="h-11 rounded-[16px] border-[var(--brand-accent)] bg-white px-4 text-[13px] font-black text-[var(--brand-text)] shadow-[0_8px_18px_rgba(var(--brand-accent-rgb),0.14)] hover:bg-[var(--brand-surface)]"
+                  className="h-11 rounded-[16px] border-[var(--brand-accent)] bg-white px-4 text-[13px] font-black text-[var(--brand-text)] hover:bg-[var(--brand-surface)]"
                 >
                   <History className="mr-1.5 h-4 w-4" />
                   ประวัติรางวัล
@@ -1833,7 +1833,7 @@ export default function AdminRewardPage() {
                                 className={cn(
                                   "rounded-[16px] border p-4 text-left transition-colors",
                                   isActive
-                                    ? "border-[var(--brand-accent)] bg-[var(--brand-soft)] shadow-[0_8px_18px_rgba(var(--brand-accent-rgb),0.14)]"
+                                    ? "border-[var(--brand-accent)] bg-[var(--brand-soft)]"
                                     : "border-[var(--border)] bg-[var(--brand-surface)] hover:bg-[var(--brand-soft)]"
                                 )}
                               >

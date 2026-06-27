@@ -599,7 +599,7 @@ export async function createComment(postId: string, authorId: string, content: s
       await createNotification(connection, {
         userId: String(owner.author_id), actorId: authorId, type: "COMMENT",
         title: `${owner.actor_name || "มีผู้ใช้"} แสดงความคิดเห็นในโพสต์ของคุณ`, body: text,
-        metadata: { postId, commentId: String(result.insertId), href: `/safety-culture?postId=${postId}` },
+        metadata: { postId, commentId: String(result.insertId), href: `/safety-culture/posts/${postId}` },
       });
     }
     return String(result.insertId);
@@ -701,7 +701,7 @@ export async function setReaction(postId: string, userId: string, reactionType =
         if (owner?.author_id) await createNotification(connection, {
           userId: String(owner.author_id), actorId: userId, type: "LIKE",
           title: `${owner.actor_name || "มีผู้ใช้"} กดถูกใจโพสต์ของคุณ`, body: "กดเพื่อดูโพสต์",
-          metadata: { postId, href: `/safety-culture?postId=${postId}` },
+          metadata: { postId, href: `/safety-culture/posts/${postId}` },
         });
       } catch {
         // ignore notification errors
@@ -754,7 +754,7 @@ export async function setCommentReaction(commentId: string, userId: string, reac
       if (owner?.author_id && owner.post_id) await createNotification(connection, {
         userId: String(owner.author_id), actorId: userId, type: "COMMENT_REACTION",
         title: `${owner.actor_name || "มีผู้ใช้"} แสดงความรู้สึกต่อความคิดเห็นของคุณ`, body: "กดเพื่อดูความคิดเห็น",
-        metadata: { postId: String(owner.post_id), commentId, href: `/safety-culture?postId=${owner.post_id}` },
+        metadata: { postId: String(owner.post_id), commentId, href: `/safety-culture/posts/${owner.post_id}` },
       });
     }
   });

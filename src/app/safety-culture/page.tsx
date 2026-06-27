@@ -33,6 +33,7 @@ import {
 } from "@/lib/safety-culture";
 import { CalendarDays, ChevronLeft, ChevronRight, ClipboardList, Clock3, ImageIcon, MessageCircle, ThumbsUp, Pencil, Sparkles, Trash2, Trophy, UsersRound, X } from "lucide-react";
 import { SafetyCultureHero } from "@/components/safety-culture/safety-culture-hero";
+import { FullscreenImageViewer } from "@/components/safety-culture/fullscreen-image-viewer";
 import { useAppTheme } from "@/providers/theme-provider";
 import styles from "./safety-culture-community.module.css";
 
@@ -270,6 +271,8 @@ function getActivityCardCopy(activity: Pick<SafetyCultureFeedEvent, "details" | 
   return activity.details?.trim() || activity.summary?.trim() || "รายละเอียดกิจกรรมจะแสดงที่นี่";
 }
 
+const MY_POSTS_CATEGORY = "โพสต์ของฉัน";
+
 export default function Page() {
   const { posts, feedEvents } = useAppState();
   const { toggleLike, addComment, fetchComments, fetchPosts, updatePost, deletePost, updateComment, deleteComment } = useAppActions();
@@ -279,9 +282,11 @@ export default function Page() {
 
   // แสดงชิปทีมเมื่อมี session แล้วให้ backend เป็นผู้ตัดสินว่าผู้ใช้มีทีมจริงหรือไม่
   const hasTeam = Boolean(sessionUser?.id);
-  const visibleCategories = SAFETY_CULTURE_CATEGORIES.filter(
-    (category) => category !== "ทีมของฉัน" || hasTeam
-  );
+  const visibleCategories = [
+    "ทั้งหมด",
+    MY_POSTS_CATEGORY,
+    ...SAFETY_CULTURE_CATEGORIES.filter((category) => category !== "ทั้งหมด" && (category !== "ทีมของฉัน" || hasTeam)),
+  ];
 
   const [activeCategory, setActiveCategory] = useState("ทั้งหมด");
   const [myTeamPosts, setMyTeamPosts] = useState<Post[]>([]);
@@ -309,6 +314,7 @@ export default function Page() {
   const [expandedActivity, setExpandedActivity] = useState<SafetyCultureFeedEvent | null>(null);
   const [mobileActivityStartIndex, setMobileActivityStartIndex] = useState(0);
   const [desktopActivityStartIndex, setDesktopActivityStartIndex] = useState(0);
+  const [isActivityCarouselPaused, setIsActivityCarouselPaused] = useState(false);
   const [commentReactionState, setCommentReactionState] = useState<Record<string, { selected: string | null; counts: Record<string, number> }>>({});
   const [openCommentReactionPicker, setOpenCommentReactionPicker] = useState<string | null>(null);
   const expandedPost = expandedPostId
@@ -333,6 +339,12 @@ export default function Page() {
       setActiveCategory("ทั้งหมด");
     }
   }, [visibleCategories, activeCategory]);
+
+  useEffect(() => {
+    if (searchParams?.get("view") === "my-posts") {
+      setActiveCategory(MY_POSTS_CATEGORY);
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     if (activeCategory !== "ทีมของฉัน" || !sessionUser?.id) return;
@@ -370,6 +382,8 @@ export default function Page() {
 
   const filtered = activeCategory === "ทั้งหมด"
     ? posts
+    : activeCategory === MY_POSTS_CATEGORY
+      ? posts.filter((post) => post.isYou)
     : activeCategory === "ทีมของฉัน"
       ? myTeamPosts
       : posts.filter((post) => post.category === activeCategory);
@@ -406,28 +420,18 @@ export default function Page() {
   }, []);
 
   useEffect(() => {
-    if (!expandedPhoto && !expandedActivity && !expandedPost) return;
+    if (!expandedActivity && !expandedPost) return;
 
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
-        setExpandedPhoto(null);
         setExpandedActivity(null);
         setExpandedPostId(null);
-        return;
-      }
-
-      if (expandedPhoto && expandedPhoto.photos.length > 1) {
-        if (event.key === "ArrowLeft") {
-          goToExpandedPhoto(-1);
-        } else if (event.key === "ArrowRight") {
-          goToExpandedPhoto(1);
-        }
       }
     };
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [expandedActivity, expandedPhoto, expandedPost, goToExpandedPhoto]);
+  }, [expandedActivity, expandedPost]);
 
   useEffect(() => {
     const postIdParam = searchParams?.get("postId");
@@ -436,70 +440,7 @@ export default function Page() {
     if (postIdParam) {
       const numericPostId = Number(postIdParam);
       if (Number.isFinite(numericPostId)) {
-        const targetPost = posts.find((post) => post.id === numericPostId);
-        if (targetPost) {
-          setExpandedPostId(targetPost.id);
-          setExpandedActivity(null);
-        }
-        void (async () => {
-          try {
-            const [postRes, comments] = await Promise.all([
-              fetch(`/api/safety-culture/posts/${numericPostId}`, {
-                credentials: "include",
-                cache: "no-store",
-              }).then((response) => response.ok ? response.json() : null),
-              fetchComments(numericPostId).catch(() => []),
-            ]);
-
-            const apiPost = postRes?.data?.post;
-            if (!apiPost) return;
-
-            const latestPost: Post = {
-              id: Number(apiPost.id),
-              author: String(apiPost.authorName || targetPost?.author || "Unknown user"),
-              avatarBg: targetPost?.avatarBg || "var(--brand-accent)",
-              avatarColor: targetPost?.avatarColor || "#1A1A1A",
-              avatarText: String(apiPost.authorName || targetPost?.author || "U").charAt(0).toUpperCase(),
-              avatarImageUrl: apiPost.authorProfileImageUrl || targetPost?.avatarImageUrl || null,
-              subtext: targetPost?.subtext || "",
-              category: String(apiPost.category || targetPost?.category || "ทั่วไป"),
-              body: String(apiPost.content || targetPost?.body || ""),
-              photos: Array.isArray(apiPost.photos)
-                ? apiPost.photos.map((photo: { id?: string; url?: string; dataUrl?: string; type?: string }, index: number) => ({
-                    id: String(photo.id || `${apiPost.id}-photo-${index + 1}`),
-                    dataUrl: photo.url || photo.dataUrl || "",
-                    type: String(photo.type || "upload"),
-                  })).filter((photo: { dataUrl: string }) => photo.dataUrl)
-                : (targetPost?.photos || []),
-              likes: Math.max(0, Number(apiPost.likeCount) || 0),
-              comments: Array.isArray(comments) && comments.length > 0 ? comments : Math.max(0, Number(apiPost.commentCount) || 0),
-              points: Math.max(0, Number(apiPost.pointsAwarded) || targetPost?.points || 0),
-              hasLiked: Boolean(apiPost.hasLiked),
-              likedBy: Array.isArray(apiPost.likedBy)
-                ? apiPost.likedBy.map((person: { userId?: string; name?: string; profileImageUrl?: string | null }) => ({
-                    userId: String(person.userId || ""),
-                    name: String(person.name || "ผู้ใช้งาน"),
-                    profileImageUrl: person.profileImageUrl || null,
-                  }))
-                : [],
-              isYou: targetPost?.isYou,
-              createdAt: new Date(apiPost.createdAt).getTime() || targetPost?.createdAt,
-              imageData: targetPost?.imageData || null,
-              feedEventId: apiPost.eventId ? String(apiPost.eventId) : targetPost?.feedEventId,
-              authorId: apiPost.authorId ? String(apiPost.authorId) : targetPost?.authorId,
-              authorEmail: apiPost.authorEmail ?? targetPost?.authorEmail ?? null,
-              organizationId: apiPost.organizationId ? String(apiPost.organizationId) : targetPost?.organizationId ?? null,
-              organizationName: apiPost.organizationName || targetPost?.organizationName || null,
-              teamId: apiPost.teamId ? String(apiPost.teamId) : targetPost?.teamId ?? null,
-              teamName: apiPost.teamName || targetPost?.teamName || null,
-              location: targetPost?.location,
-              team: targetPost?.team,
-            };
-            setLiveExpandedPost(latestPost);
-          } catch {
-            // Keep the currently rendered post if the refresh fails.
-          }
-        })();
+        router.replace(`/safety-culture/posts/${numericPostId}`, { scroll: false });
       }
     } else if (activityIdParam) {
       const targetActivity = feedEvents.find((event) => event.id === activityIdParam);
@@ -511,7 +452,7 @@ export default function Page() {
     } else {
       setLiveExpandedPost(null);
     }
-  }, [feedEvents, fetchComments, posts, searchParams]);
+  }, [feedEvents, fetchComments, posts, router, searchParams]);
 
   useEffect(() => {
     if (!expandedPostId) return;
@@ -639,7 +580,7 @@ export default function Page() {
   const tipText = "โพสต์เรื่องความปลอดภัยให้ชัดเจน กระชับ และถ้าเข้ากิจกรรมแบบ Card อย่าลืมเลือกกิจกรรมก่อนโพสต์";
   const visibleFeedEvents = feedEvents.filter((event) => event.published && event.status === "open");
   const maxMobileActivityStartIndex = Math.max(0, visibleFeedEvents.length - 1);
-  const maxDesktopActivityStartIndex = Math.max(0, visibleFeedEvents.length - 3);
+  const maxDesktopActivityStartIndex = Math.max(0, visibleFeedEvents.length - 1);
   const expandedPostPhotos = expandedPost ? getPostPhotos(expandedPost) : [];
   const expandedPostActivePhotoIndex = expandedPost ? activePhotoByPost[expandedPost.id] || 0 : 0;
   const expandedPostActivePhoto = expandedPostPhotos[expandedPostActivePhotoIndex] || expandedPostPhotos[0];
@@ -653,6 +594,18 @@ export default function Page() {
   useEffect(() => {
     setDesktopActivityStartIndex((current) => Math.min(current, Math.max(0, visibleFeedEvents.length - 3)));
   }, [visibleFeedEvents.length]);
+
+  useEffect(() => {
+    if (visibleFeedEvents.length <= 1 || isActivityCarouselPaused) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+    const timer = window.setInterval(() => {
+      setMobileActivityStartIndex((current) => (current >= maxMobileActivityStartIndex ? 0 : current + 1));
+      setDesktopActivityStartIndex((current) => (current >= maxDesktopActivityStartIndex ? 0 : current + 1));
+    }, 4600);
+
+    return () => window.clearInterval(timer);
+  }, [isActivityCarouselPaused, maxDesktopActivityStartIndex, maxMobileActivityStartIndex, visibleFeedEvents.length]);
 
   const handleCommentReaction = async (postId: number, commentId: string, reactionId: string) => {
     const key = getCommentReactionKey(postId, commentId);
@@ -691,15 +644,16 @@ export default function Page() {
             variant="community"
             backgroundImage="/images/heroes/safety-culture-hero-custom.png"
             backgroundOverlay="linear-gradient(90deg, rgba(210,235,255,.82) 0%, rgba(210,235,255,.60) 32%, rgba(210,235,255,.10) 56%, rgba(210,235,255,0) 74%)"
+            contentFrame
             mascotSrc="/images/mascots/wangjai/5.png"
             mascotAction="announce"
           />
         </div>
 
         {visibleFeedEvents.length > 0 ? (
-          <Card className="mb-3 overflow-hidden rounded-[18px] border border-[var(--c-e4d3b3)] bg-[var(--c-fffdfa)] p-3 shadow-[0_8px_18px_rgba(62,36,13,0.04)] anim-fade md:p-3.5" style={animStyle(0.03)}>
-            <div className="mb-1 flex items-start gap-2.5 text-[var(--c-5c3214)]">
-              <div className="flex h-9 w-9 items-center justify-center rounded-[18px] bg-[var(--c-fff1c9)] text-[var(--c-f0a400)] shadow-[0_6px_14px_rgba(240,164,0,0.15)]">
+          <Card className="mb-3 overflow-hidden rounded-[18px] border border-[#B9E0FF] bg-white p-2.5 anim-fade md:p-3" style={animStyle(0.03)}>
+            <div className="mb-2 flex items-center gap-2.5 px-1 text-[#0B2F6B]">
+              <div className="flex h-9 w-9 items-center justify-center rounded-[14px] bg-[#0B82F0] text-white">
                 <Sparkles className="h-4.5 w-4.5" strokeWidth={2.2} />
               </div>
               <div className="flex-1 pt-0.5">
@@ -707,12 +661,18 @@ export default function Page() {
               </div>
             </div>
 
-            <div className="relative lg:hidden">
+            <div
+              className="relative lg:hidden"
+              onMouseEnter={() => setIsActivityCarouselPaused(true)}
+              onMouseLeave={() => setIsActivityCarouselPaused(false)}
+              onFocusCapture={() => setIsActivityCarouselPaused(true)}
+              onBlurCapture={() => setIsActivityCarouselPaused(false)}
+            >
               <button
                 type="button"
-                onClick={() => setMobileActivityStartIndex((current) => Math.max(0, current - 1))}
-                disabled={mobileActivityStartIndex === 0}
-                className="absolute top-1/2 left-[-10px] z-10 inline-flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-[var(--c-d7c5a7)] bg-white text-[var(--c-5c3214)] shadow-[0_8px_18px_rgba(62,36,13,0.08)] transition-all duration-200 hover:-translate-x-0.5 hover:bg-[var(--c-fff4df)] disabled:cursor-not-allowed disabled:opacity-45 disabled:hover:translate-x-0"
+                onClick={() => setMobileActivityStartIndex((current) => (current <= 0 ? maxMobileActivityStartIndex : current - 1))}
+                disabled={visibleFeedEvents.length <= 1}
+                className="absolute top-1/2 left-[-10px] z-10 inline-flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-[#B9E0FF] bg-white/95 text-[#0B82F0] transition-all duration-200 hover:-translate-x-0.5 hover:bg-[#EAF6FF] disabled:cursor-not-allowed disabled:opacity-45 disabled:hover:translate-x-0"
                 aria-label="เลื่อนดูกิจกรรมก่อนหน้า"
               >
                 <ChevronLeft className="h-4.5 w-4.5" strokeWidth={2.5} />
@@ -720,15 +680,15 @@ export default function Page() {
 
               <button
                 type="button"
-                onClick={() => setMobileActivityStartIndex((current) => Math.min(maxMobileActivityStartIndex, current + 1))}
-                disabled={mobileActivityStartIndex >= maxMobileActivityStartIndex}
-                className="absolute top-1/2 right-[-10px] z-10 inline-flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-[var(--c-d7c5a7)] bg-white text-[var(--c-5c3214)] shadow-[0_8px_18px_rgba(62,36,13,0.08)] transition-all duration-200 hover:translate-x-0.5 hover:bg-[var(--c-fff4df)] disabled:cursor-not-allowed disabled:opacity-45 disabled:hover:translate-x-0"
+                onClick={() => setMobileActivityStartIndex((current) => (current >= maxMobileActivityStartIndex ? 0 : current + 1))}
+                disabled={visibleFeedEvents.length <= 1}
+                className="absolute top-1/2 right-[-10px] z-10 inline-flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-[#B9E0FF] bg-white/95 text-[#0B82F0] transition-all duration-200 hover:translate-x-0.5 hover:bg-[#EAF6FF] disabled:cursor-not-allowed disabled:opacity-45 disabled:hover:translate-x-0"
                 aria-label="เลื่อนดูกิจกรรมถัดไป"
               >
                 <ChevronRight className="h-4.5 w-4.5" strokeWidth={2.5} />
               </button>
 
-              <div className="overflow-hidden rounded-[24px]">
+              <div className="overflow-hidden rounded-[18px] bg-[#DFF1FF]">
                 <div
                   className="flex transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] will-change-transform"
                   style={{ transform: `translateX(-${mobileActivityStartIndex * 100}%)` }}
@@ -739,55 +699,67 @@ export default function Page() {
                 return (
                   <article
                     key={activity.id}
-                    className="flex min-w-full flex-[0_0_100%] flex-col rounded-[14px] border border-[var(--c-e4d3b3)] bg-white shadow-[0_8px_18px_rgba(62,36,13,0.05)]"
+                    className="relative min-h-[260px] min-w-full flex-[0_0_100%] overflow-hidden text-white"
                   >
-                      <div className="relative aspect-[1.62/1] overflow-hidden rounded-t-[18px] bg-[var(--c-f7e7cf)] sm:aspect-[1.48/1]">
-                        {activity.imageSrc ? (
-                        <Image src={activity.imageSrc} alt={activity.title} fill sizes="(max-width: 1023px) 100vw, 33vw" className="object-cover" />
-                        ) : (
-                          <div className="flex h-full items-center justify-center px-5 text-center text-[16px] font-black text-[#5f7591]">
-                            {activity.imageText}
-                        </div>
-                      )}
-                      <span className={cn("absolute top-2.5 right-2.5 rounded-full border px-2.5 py-1 text-[10px] font-black backdrop-blur-[2px]", statusMeta.badgeClass)}>
+                    {activity.imageSrc ? (
+                      <Image src={activity.imageSrc} alt={activity.title} fill sizes="100vw" className="object-cover" />
+                    ) : (
+                      <div className="absolute inset-0 flex items-center justify-center bg-[linear-gradient(135deg,#0794FF_0%,#0B2F6B_62%,#FFB020_100%)] px-5 text-center text-[22px] font-black">
+                        {activity.imageText}
+                      </div>
+                    )}
+                    <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(3,18,48,.88)_0%,rgba(4,35,82,.60)_48%,rgba(4,35,82,.12)_100%)]" />
+                    <div className="absolute inset-x-0 top-0 flex items-center justify-between gap-3 px-4 py-3">
+                      <span className={cn("rounded-full border px-2.5 py-1 text-[10px] font-black backdrop-blur-[3px]", statusMeta.badgeClass)}>
                         {statusMeta.label}
                       </span>
+                      <span className="rounded-full bg-white/92 px-3 py-1 text-[11px] font-black text-[#0B2F6B]">
+                        {activity.dateLabel}
+                      </span>
                     </div>
-
-                    <div className="flex flex-1 flex-col px-3.5 pt-3.5 pb-3">
-                      <h3 className="text-[14px] font-black text-[var(--c-2f261d)]">{activity.title}</h3>
-                      <p className="mt-1 line-clamp-2 text-[11px] font-bold leading-relaxed text-[#667085]">{getActivityCardCopy(activity)}</p>
-
-                      <div className="mt-2.5 flex flex-wrap items-center justify-between gap-2 text-[11px] font-black">
-                        <span className="inline-flex items-center gap-1.5 text-[#5f7591]">
-                          <CalendarDays className="h-[14px] w-[14px]" strokeWidth={2.1} />
-                          {activity.dateLabel}
-                        </span>
-                        <span className="text-[#18b989]">+{activity.points} คะแนน</span>
+                    <div className="absolute inset-x-0 bottom-0 px-4 pb-8 pt-14">
+                      <div className="max-w-[78%]">
+                        <h3 className="line-clamp-2 text-[24px] font-black leading-tight text-white [text-shadow:0_2px_10px_rgba(0,0,0,.45)]">{activity.title}</h3>
+                        <p className="mt-1.5 line-clamp-2 text-[12px] font-bold leading-relaxed text-white/88">{getActivityCardCopy(activity)}</p>
+                        <div className="mt-3 flex flex-wrap items-center gap-2">
+                          <span className="rounded-full bg-[#18B989] px-3 py-1.5 text-[12px] font-black text-white">+{activity.points} คะแนน</span>
+                          <Button
+                            type="button"
+                            variant="secondary"
+                            onClick={() => setExpandedActivity(activity)}
+                            className="h-8 rounded-full bg-white px-4 text-[12px] font-black text-[#0B2F6B] hover:bg-[#EAF6FF]"
+                          >
+                            ดูรายละเอียด
+                          </Button>
+                        </div>
                       </div>
-
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={() => setExpandedActivity(activity)}
-                        className="mt-2.5 h-9 rounded-[12px] border-[var(--c-d7c5a7)] bg-[var(--c-faf8f2)] text-[12px] font-black text-[var(--c-5c3214)] hover:bg-[var(--c-fff2d8)]"
-                      >
-                        ดูรายละเอียด
-                      </Button>
                     </div>
                   </article>
                 );
                   })}
                 </div>
+                {visibleFeedEvents.length > 1 ? (
+                  <div className="absolute bottom-3 left-1/2 z-10 flex -translate-x-1/2 gap-1.5" aria-hidden="true">
+                    {visibleFeedEvents.map((activity, index) => (
+                      <span key={activity.id} className={cn("h-2 rounded-full transition-all", index === mobileActivityStartIndex ? "w-5 bg-[#FF6B35]" : "w-2 bg-white/65")} />
+                    ))}
+                  </div>
+                ) : null}
               </div>
             </div>
 
-            <div className="relative hidden lg:block">
+            <div
+              className="relative hidden lg:block"
+              onMouseEnter={() => setIsActivityCarouselPaused(true)}
+              onMouseLeave={() => setIsActivityCarouselPaused(false)}
+              onFocusCapture={() => setIsActivityCarouselPaused(true)}
+              onBlurCapture={() => setIsActivityCarouselPaused(false)}
+            >
               <button
                 type="button"
-                onClick={() => setDesktopActivityStartIndex((current) => Math.max(0, current - 1))}
-                disabled={desktopActivityStartIndex === 0}
-                className="absolute top-1/2 left-[-18px] z-10 inline-flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-[var(--c-d7c5a7)] bg-white text-[var(--c-5c3214)] shadow-[0_8px_20px_rgba(62,36,13,0.08)] transition-all duration-200 hover:-translate-x-0.5 hover:bg-[var(--c-fff4df)] disabled:cursor-not-allowed disabled:opacity-45 disabled:hover:translate-x-0"
+                onClick={() => setDesktopActivityStartIndex((current) => (current <= 0 ? maxDesktopActivityStartIndex : current - 1))}
+                disabled={visibleFeedEvents.length <= 1}
+                className="absolute top-1/2 left-[-18px] z-10 inline-flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-[#B9E0FF] bg-white/95 text-[#0B82F0] transition-all duration-200 hover:-translate-x-0.5 hover:bg-[#EAF6FF] disabled:cursor-not-allowed disabled:opacity-45 disabled:hover:translate-x-0"
                 aria-label="เลื่อนดูกิจกรรมก่อนหน้า"
               >
                 <ChevronLeft className="h-4.5 w-4.5" strokeWidth={2.5} />
@@ -795,18 +767,18 @@ export default function Page() {
 
               <button
                 type="button"
-                onClick={() => setDesktopActivityStartIndex((current) => Math.min(maxDesktopActivityStartIndex, current + 1))}
-                disabled={desktopActivityStartIndex >= maxDesktopActivityStartIndex}
-                className="absolute top-1/2 right-[-18px] z-10 inline-flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-[var(--c-d7c5a7)] bg-white text-[var(--c-5c3214)] shadow-[0_8px_20px_rgba(62,36,13,0.08)] transition-all duration-200 hover:translate-x-0.5 hover:bg-[var(--c-fff4df)] disabled:cursor-not-allowed disabled:opacity-45 disabled:hover:translate-x-0"
+                onClick={() => setDesktopActivityStartIndex((current) => (current >= maxDesktopActivityStartIndex ? 0 : current + 1))}
+                disabled={visibleFeedEvents.length <= 1}
+                className="absolute top-1/2 right-[-18px] z-10 inline-flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-[#B9E0FF] bg-white/95 text-[#0B82F0] transition-all duration-200 hover:translate-x-0.5 hover:bg-[#EAF6FF] disabled:cursor-not-allowed disabled:opacity-45 disabled:hover:translate-x-0"
                 aria-label="เลื่อนดูกิจกรรมถัดไป"
               >
                 <ChevronRight className="h-4.5 w-4.5" strokeWidth={2.5} />
               </button>
 
-              <div className="overflow-hidden rounded-[24px]">
+              <div className="overflow-hidden rounded-[18px] bg-[#DFF1FF]">
                 <div
-                  className="flex gap-4 transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] will-change-transform"
-                  style={{ transform: `translateX(calc(-${desktopActivityStartIndex} * ((100% - 2rem) / 3 + 1rem)))` }}
+                  className="flex transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] will-change-transform"
+                  style={{ transform: `translateX(-${desktopActivityStartIndex * 100}%)` }}
                 >
                   {visibleFeedEvents.map((activity) => {
                   const statusMeta = getActivityStatusMeta(activity.status);
@@ -814,46 +786,50 @@ export default function Page() {
                   return (
                     <article
                       key={activity.id}
-                      className="flex min-w-[calc((100%-1.5rem)/3)] flex-[0_0_calc((100%-1.5rem)/3)] flex-col rounded-[14px] border border-[var(--c-e4d3b3)] bg-white shadow-[0_8px_18px_rgba(62,36,13,0.05)] transition-transform duration-300 hover:-translate-y-0.5"
+                      className="relative h-[250px] min-w-full flex-[0_0_100%] overflow-hidden text-white xl:h-[280px]"
                     >
-                      <div className="relative aspect-[1.42/1] overflow-hidden rounded-t-[18px] bg-[var(--c-f7e7cf)]">
-                        {activity.imageSrc ? (
-                          <Image src={activity.imageSrc} alt={activity.title} fill sizes="(max-width: 1023px) 100vw, 33vw" className="object-cover" />
-                        ) : (
-                          <div className="flex h-full items-center justify-center px-5 text-center text-[16px] font-black text-[#5f7591]">
-                            {activity.imageText}
-                          </div>
-                        )}
-                        <span className={cn("absolute top-2.5 right-2.5 rounded-full border px-2.5 py-1 text-[10px] font-black backdrop-blur-[2px]", statusMeta.badgeClass)}>
+                      {activity.imageSrc ? (
+                        <Image src={activity.imageSrc} alt={activity.title} fill sizes="100vw" className="object-cover transition-transform duration-500 hover:scale-[1.025]" />
+                      ) : (
+                        <div className="absolute inset-0 flex items-center justify-center bg-[linear-gradient(135deg,#0794FF_0%,#0B2F6B_62%,#FFB020_100%)] px-10 text-center text-[34px] font-black">
+                          {activity.imageText}
+                        </div>
+                      )}
+                      <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(3,18,48,.90)_0%,rgba(4,35,82,.64)_42%,rgba(4,35,82,.10)_100%)]" />
+                      <div className="absolute inset-x-0 top-0 flex items-center justify-between gap-3 px-7 py-5">
+                        <span className={cn("rounded-full border px-3 py-1.5 text-[11px] font-black backdrop-blur-[3px]", statusMeta.badgeClass)}>
                           {statusMeta.label}
                         </span>
+                        <span className="rounded-full bg-white/92 px-4 py-1.5 text-[13px] font-black text-[#0B2F6B]">
+                          {activity.dateLabel}
+                        </span>
                       </div>
-
-                      <div className="flex flex-1 flex-col p-2.5">
-                        <h3 className="text-[14px] font-black text-[var(--c-2f261d)]">{activity.title}</h3>
-                        <p className="mt-1.5 line-clamp-2 text-[12px] font-bold leading-relaxed text-[#667085]">{getActivityCardCopy(activity)}</p>
-
-                        <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-[11px] font-black">
-                          <span className="inline-flex items-center gap-1.5 text-[#5f7591]">
-                            <CalendarDays className="h-[14px] w-[14px]" strokeWidth={2.1} />
-                            {activity.dateLabel}
-                          </span>
-                          <span className="text-[#18b989]">+{activity.points} คะแนน</span>
+                      <div className="absolute inset-y-0 left-0 flex w-[62%] flex-col justify-center px-8 py-8 xl:px-10">
+                        <h3 className="line-clamp-2 text-[34px] font-black leading-[1.05] text-white [text-shadow:0_2px_12px_rgba(0,0,0,.45)] xl:text-[42px]">{activity.title}</h3>
+                        <p className="mt-3 line-clamp-2 text-[15px] font-bold leading-relaxed text-white/88">{getActivityCardCopy(activity)}</p>
+                        <div className="mt-5 flex flex-wrap items-center gap-3">
+                          <span className="rounded-full bg-[#18B989] px-4 py-2 text-[15px] font-black text-white">+{activity.points} คะแนน</span>
+                          <Button
+                            type="button"
+                            variant="secondary"
+                            onClick={() => setExpandedActivity(activity)}
+                            className="h-10 rounded-full bg-white px-5 text-[14px] font-black text-[#0B2F6B] hover:bg-[#EAF6FF]"
+                          >
+                            ดูรายละเอียด
+                          </Button>
                         </div>
-
-                        <Button
-                        type="button"
-                        variant="outline"
-                        onClick={() => setExpandedActivity(activity)}
-                        className="mt-3 h-9 rounded-[12px] border-[var(--c-d7c5a7)] bg-[var(--c-faf8f2)] text-[12px] font-black text-[var(--c-5c3214)] hover:bg-[var(--c-fff2d8)]"
-                      >
-                        ดูรายละเอียด
-                      </Button>
                       </div>
                     </article>
                   );
                   })}
                 </div>
+                {visibleFeedEvents.length > 1 ? (
+                  <div className="absolute bottom-4 left-1/2 z-10 flex -translate-x-1/2 gap-2" aria-hidden="true">
+                    {visibleFeedEvents.map((activity, index) => (
+                      <span key={activity.id} className={cn("h-2 rounded-full transition-all", index === desktopActivityStartIndex ? "w-6 bg-[#FF6B35]" : "w-2 bg-white/65")} />
+                    ))}
+                  </div>
+                ) : null}
               </div>
             </div>
           </Card>
@@ -928,7 +904,7 @@ export default function Page() {
                   style={animStyle(0.05 + idx * 0.05)}
                 >
                   <div className="flex items-start justify-between gap-2.5 font-sarabun">
-                    <div className="flex min-w-0 items-center gap-2.5">
+                    <Link href={`/safety-culture/posts/${post.id}`} className="flex min-w-0 items-center gap-2.5 rounded-[12px] outline-none transition-opacity hover:opacity-85 focus-visible:ring-2 focus-visible:ring-[#8FC8FF]">
                       <ProfileAvatar imageUrl={post.avatarImageUrl || (post.isYou ? getSessionProfileImage(sessionUser) : null)} text={post.avatarText} />
                       <div className="min-w-0 flex flex-col gap-0">
                         <div className="flex flex-wrap items-center gap-1">
@@ -941,7 +917,7 @@ export default function Page() {
                         </div>
                         <span className="text-[11.5px] font-bold text-[var(--c-9f988d)]">{formatPostSubtext(post)}</span>
                       </div>
-                    </div>
+                    </Link>
                     <div className="flex items-center gap-1.5">
                       <span className="mt-0.5 w-fit rounded-full border border-[var(--c-e8cda4)] bg-[var(--c-fff7e8)] px-2 py-0.5 text-[10.5px] font-black tracking-wide text-[var(--c-7b5625)]">
                         {post.category}
@@ -1000,7 +976,9 @@ export default function Page() {
                       </div>
                     </div>
                   ) : (
-                    <p className="text-[13px] md:text-[14px] font-bold leading-relaxed text-[var(--c-33271a)] font-sarabun">{post.body}</p>
+                    <Link href={`/safety-culture/posts/${post.id}`} className="rounded-[10px] outline-none focus-visible:ring-2 focus-visible:ring-[#8FC8FF]">
+                      <p className="text-[13px] md:text-[14px] font-bold leading-relaxed text-[var(--c-33271a)] font-sarabun hover:text-[#173b6b]">{post.body}</p>
+                    </Link>
                   )}
 
                   {(postPhotos.length > 0 || post.imageText) && (
@@ -1077,16 +1055,22 @@ export default function Page() {
                       >
                         {post.likes}
                       </button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleToggleComments(post)}
-                        className="h-auto gap-1.5 rounded-lg px-0 py-0 text-[13.5px] font-black text-[#5f7591] hover:bg-transparent hover:text-foreground"
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleToggleComments(post)}
+                      className="h-auto gap-1.5 rounded-lg px-0 py-0 text-[13.5px] font-black text-[#5f7591] hover:bg-transparent hover:text-foreground"
                       >
-                        <MessageCircle className="h-[18px] w-[18px] text-[#5f7591]" strokeWidth={2.2} />
-                        <span style={{ color: "#5f7591" }}>{commentCount}</span>
-                      </Button>
-                    </div>
+                      <MessageCircle className="h-[18px] w-[18px] text-[#5f7591]" strokeWidth={2.2} />
+                      <span style={{ color: "#5f7591" }}>{commentCount}</span>
+                    </Button>
+                    <Link
+                      href={`/safety-culture/posts/${post.id}`}
+                      className="rounded-lg px-1.5 py-0 text-[13.5px] font-black text-[#0B82F0] hover:underline"
+                    >
+                      ดูโพสต์เต็ม
+                    </Link>
+                  </div>
                     <span className="w-fit rounded-full bg-[#e9fff4] px-2 py-0.5 text-[12px] font-black tracking-normal text-[#3D9A6A]">
                       + {post.points} pts
                     </span>
@@ -1234,7 +1218,9 @@ export default function Page() {
 
             {filtered.length === 0 && (
               <Card className="py-10 text-center font-bold text-muted-foreground text-[18px] font-sarabun">
-                {activeCategory === "ทีมของฉัน"
+                {activeCategory === MY_POSTS_CATEGORY
+                  ? "ยังไม่มีโพสต์ของฉัน"
+                  : activeCategory === "ทีมของฉัน"
                   ? myTeamLoading
                     ? "กำลังโหลดโพสต์ทีมของฉัน..."
                     : myTeamLoaded
@@ -1253,69 +1239,15 @@ export default function Page() {
         </div>
       </div>
 
-      <Dialog open={!!expandedPhoto} onOpenChange={(open) => !open && setExpandedPhoto(null)}>
-        <AppDialogContent
-          size="xl"
-          showCloseButton={false}
-          aria-label="ภาพเต็มของโพสต์"
-          className="z-[90] max-h-[min(88vh,760px)] w-[calc(100vw-20px)] overflow-hidden border-[#d7e6f6] bg-[linear-gradient(180deg,#ffffff,#f8fcff)] p-0 shadow-[0_28px_80px_rgba(6,43,99,0.28)] sm:w-[calc(100vw-32px)] sm:!max-w-[860px]"
-        >
-          {expandedPhoto ? (
-            <>
-              <AppDialogSectionHeader className="flex-row items-start justify-between gap-3 border-[#d7e6f6] bg-[linear-gradient(135deg,#ffffff_0%,#f4f9ff_56%,#eaf4ff_100%)] px-4 py-3 sm:px-5 sm:py-3.5">
-                <div className="min-w-0">
-                  <AppDialogTitle className="truncate text-[15px] text-[var(--c-2f261d)] sm:text-[17px]">
-                    {expandedPhoto.postAuthor}
-                  </AppDialogTitle>
-                  <AppDialogDescription className="mt-0.5 text-[10px] text-[#667085] sm:text-[11px]">
-                    {expandedPhoto.photos.length > 1 ? `รูปที่ ${expandedPhoto.index + 1} จาก ${expandedPhoto.photos.length}` : "ภาพเต็ม"}
-                  </AppDialogDescription>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setExpandedPhoto(null)}
-                  className="inline-flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-[12px] border border-[#cfe0f2] bg-[linear-gradient(180deg,#f7fbff,#edf5ff)] text-[#6c7f99] shadow-[0_8px_20px_rgba(185,223,255,.2)] transition-colors hover:text-[#173b6b] sm:h-10 sm:w-10"
-                  aria-label="ปิดภาพเต็ม"
-                >
-                  <X className="h-4 w-4 sm:h-4.5 sm:w-4.5" strokeWidth={2.2} />
-                </button>
-              </AppDialogSectionHeader>
-
-              <AppDialogBody className="relative min-h-0 overflow-y-auto px-3 py-3 sm:px-4 sm:py-4">
-                <div className="relative flex min-h-[220px] items-center justify-center overflow-hidden rounded-[22px] border border-[#cfe0f2] bg-[linear-gradient(180deg,#f7fbff,#edf5ff)] px-10 py-4 shadow-[0_14px_32px_rgba(185,223,255,.18)] sm:min-h-[280px] sm:px-12 md:min-h-[360px]">
-                  {expandedPhoto.photos.length > 1 ? (
-                    <button
-                      type="button"
-                      onClick={() => goToExpandedPhoto(-1)}
-                      className="absolute top-1/2 left-3 z-10 inline-flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-[#cfe0f2] bg-white/92 text-[#173b6b] shadow-[0_8px_18px_rgba(185,223,255,.24)] transition-all duration-200 hover:-translate-x-0.5 hover:bg-white sm:h-10 sm:w-10"
-                      aria-label="ดูรูปก่อนหน้า"
-                    >
-                      <ChevronLeft className="h-4.5 w-4.5" strokeWidth={2.4} />
-                    </button>
-                  ) : null}
-
-                  <img
-                    src={expandedPhoto.photos[expandedPhoto.index]?.dataUrl}
-                    alt={expandedPhoto.alt}
-                    className="block max-h-[65vh] max-w-full rounded-[18px] object-contain sm:max-h-[68vh]"
-                  />
-
-                  {expandedPhoto.photos.length > 1 ? (
-                    <button
-                      type="button"
-                      onClick={() => goToExpandedPhoto(1)}
-                      className="absolute top-1/2 right-3 z-10 inline-flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-[#cfe0f2] bg-white/92 text-[#173b6b] shadow-[0_8px_18px_rgba(185,223,255,.24)] transition-all duration-200 hover:translate-x-0.5 hover:bg-white sm:h-10 sm:w-10"
-                      aria-label="ดูรูปถัดไป"
-                    >
-                      <ChevronRight className="h-4.5 w-4.5" strokeWidth={2.4} />
-                    </button>
-                  ) : null}
-                </div>
-              </AppDialogBody>
-            </>
-          ) : null}
-        </AppDialogContent>
-      </Dialog>
+      <FullscreenImageViewer
+        open={!!expandedPhoto}
+        photos={expandedPhoto?.photos ?? []}
+        index={expandedPhoto?.index ?? 0}
+        alt={expandedPhoto?.alt ?? "ภาพเต็มของโพสต์"}
+        onClose={() => setExpandedPhoto(null)}
+        onPrevious={() => goToExpandedPhoto(-1)}
+        onNext={() => goToExpandedPhoto(1)}
+      />
 
       <Dialog open={!!expandedPost} onOpenChange={(open) => !open && closeExpandedPost()}>
         <AppDialogContent
@@ -1684,7 +1616,7 @@ export default function Page() {
                 <button
                   type="button"
                   onClick={closeExpandedActivity}
-                  className="inline-flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-[12px] border border-[#cfe0f2] bg-[linear-gradient(180deg,#f7fbff,#edf5ff)] text-[#6c7f99] shadow-[0_8px_20px_rgba(185,223,255,.2)] transition-colors hover:text-[#173b6b] sm:h-10 sm:w-10 md:h-11 md:w-11"
+                  className="inline-flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-[12px] border border-[#cfe0f2] bg-[linear-gradient(180deg,#f7fbff,#edf5ff)] text-[#6c7f99] transition-colors hover:text-[#173b6b] sm:h-10 sm:w-10 md:h-11 md:w-11"
                   aria-label="ปิดรายละเอียดกิจกรรม"
                 >
                   <X className="h-4 w-4 sm:h-4.5 sm:w-4.5 md:h-5 md:w-5" strokeWidth={2.2} />

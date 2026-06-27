@@ -18,6 +18,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { SafetyCultureHero } from "@/components/safety-culture/safety-culture-hero";
+import { Button } from "@/components/ui/button";
 
 const T = {
   page: "var(--background)",
@@ -59,42 +60,6 @@ const inputStyle = {
   outline: "none",
 };
 
-const buttonPrimaryStyle = {
-  height: 44,
-  borderRadius: 14,
-  border: "none",
-  background: "linear-gradient(135deg, var(--brand-accent-strong) 0%, var(--brand-accent) 100%)",
-  color: "#fff",
-  padding: "0 18px",
-  fontWeight: 800,
-  fontFamily: "inherit",
-  cursor: "pointer",
-  boxShadow: "0 10px 24px var(--brand-shadow)",
-};
-
-const buttonGhostStyle = {
-  height: 44,
-  borderRadius: 14,
-  border: `1px solid ${T.lineStrong}`,
-  background: "#fff",
-  color: T.ink,
-  padding: "0 16px",
-  fontWeight: 800,
-  fontFamily: "inherit",
-  cursor: "pointer",
-};
-
-const buttonDangerStyle = {
-  height: 44,
-  borderRadius: 14,
-  border: "none",
-  background: "#fbe9e4",
-  color: T.danger,
-  padding: "0 16px",
-  fontWeight: 800,
-  fontFamily: "inherit",
-  cursor: "pointer",
-};
 
 const REPORT_DEFAULT_PROFILE = {
   pms: "",
@@ -505,14 +470,18 @@ export default function SafetyAdminExportReport() {
             <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
               <label
                 style={{
-                  ...buttonGhostStyle,
-                  height: 38,
+                  height: 36,
                   borderRadius: 10,
                   fontSize: 12.5,
                   padding: "0 14px",
                   display: "inline-flex",
                   alignItems: "center",
                   gap: 6,
+                  cursor: "pointer",
+                  background: "#fff",
+                  border: `1px solid ${T.lineStrong}`,
+                  fontWeight: 800,
+                  color: T.ink,
                 }}
               >
                 <Upload size={14} />
@@ -524,24 +493,15 @@ export default function SafetyAdminExportReport() {
                   style={{ display: "none" }}
                 />
               </label>
-              <button
+              <Button
                 type="button"
+                variant="brand"
+                size="lg"
                 onClick={handleExportReports}
-                style={{
-                  ...buttonPrimaryStyle,
-                  height: 38,
-                  borderRadius: 10,
-                  fontSize: 12.5,
-                  padding: "0 14px",
-                  boxShadow: "none",
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: 6,
-                }}
               >
                 <Download size={14} />
                 <span>ดาวน์โหลดรายงาน (Excel)</span>
-              </button>
+              </Button>
             </div>
           </div>
 
@@ -722,38 +682,24 @@ export default function SafetyAdminExportReport() {
                           <td style={{ padding: "8px 16px" }}>{item.email || "-"}</td>
                           <td style={{ padding: "8px 16px" }}>
                             <div style={{ display: "flex", justifyContent: "center", gap: 6 }}>
-                              <button
+                              <Button
                                 type="button"
+                                variant="outline"
+                                size="icon-xs"
                                 onClick={() => handleOpenEditReport(item)}
-                                style={{
-                                  ...buttonGhostStyle,
-                                  width: 30,
-                                  height: 30,
-                                  borderRadius: 6,
-                                  padding: 0,
-                                  display: "grid",
-                                  placeItems: "center",
-                                }}
                                 title="แก้ไข"
                               >
                                 <Pencil size={13} />
-                              </button>
-                              <button
+                              </Button>
+                              <Button
                                 type="button"
+                                variant="destructive"
+                                size="icon-xs"
                                 onClick={() => handleDeleteReportRecord(item)}
-                                style={{
-                                  ...buttonDangerStyle,
-                                  width: 30,
-                                  height: 30,
-                                  borderRadius: 6,
-                                  padding: 0,
-                                  display: "grid",
-                                  placeItems: "center",
-                                }}
                                 title="ลบ"
                               >
                                 <Trash2 size={13} />
-                              </button>
+                              </Button>
                             </div>
                           </td>
                         </tr>
@@ -831,40 +777,24 @@ export default function SafetyAdminExportReport() {
                         borderTop: `1px solid ${T.line}`,
                       }}
                     >
-                      <button
+                      <Button
                         type="button"
+                        variant="outline"
+                        size="default"
                         onClick={() => handleOpenEditReport(item)}
-                        style={{
-                          ...buttonGhostStyle,
-                          height: 32,
-                          borderRadius: 8,
-                          fontSize: 12,
-                          padding: "0 12px",
-                          display: "inline-flex",
-                          alignItems: "center",
-                          gap: 6,
-                        }}
                       >
                         <Pencil size={12} />
                         <span>แก้ไข</span>
-                      </button>
-                      <button
+                      </Button>
+                      <Button
                         type="button"
+                        variant="destructive"
+                        size="default"
                         onClick={() => handleDeleteReportRecord(item)}
-                        style={{
-                          ...buttonDangerStyle,
-                          height: 32,
-                          borderRadius: 8,
-                          fontSize: 12,
-                          padding: "0 12px",
-                          display: "inline-flex",
-                          alignItems: "center",
-                          gap: 6,
-                        }}
                       >
                         <Trash2 size={12} />
                         <span>ลบ</span>
-                      </button>
+                      </Button>
                     </div>
                   </div>
                 ))}
@@ -1004,27 +934,23 @@ export default function SafetyAdminExportReport() {
             </div>
 
             <DialogFooter>
-              <button
+              <Button
                 type="button"
+                variant="outline"
+                size="lg"
                 onClick={() => setEditingReport(null)}
-                style={{ ...buttonGhostStyle, height: 40, borderRadius: 10, fontSize: 13 }}
               >
                 ยกเลิก
-              </button>
-              <button
+              </Button>
+              <Button
                 type="button"
+                variant="brand"
+                size="lg"
                 onClick={handleSaveEditedReport}
-                style={{
-                  ...buttonPrimaryStyle,
-                  height: 40,
-                  borderRadius: 10,
-                  fontSize: 13,
-                  background: `linear-gradient(135deg, ${T.accent} 0%, ${T.accentDeep} 100%)`,
-                  boxShadow: "none",
-                }}
+                style={{ background: `linear-gradient(135deg, ${T.accent} 0%, ${T.accentDeep} 100%)` }}
               >
                 บันทึกการแก้ไข
-              </button>
+              </Button>
             </DialogFooter>
           </>
           ) : null}

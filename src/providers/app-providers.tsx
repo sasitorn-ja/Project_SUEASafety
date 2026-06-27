@@ -23,36 +23,6 @@ import {
   type SessionUser,
 } from "@/lib/session-user";
 
-export type HealthData = {
-  systolic?: number;
-  diastolic?: number;
-  pulse?: number;
-  alcohol?: number;
-  bpStatus?: string;
-  alcStatus?: string;
-  bpPhoto?: string | null;
-  alcPhoto?: string | null;
-} | null;
-
-export type PreTripData = {
-  checkedStates: Record<number, "pass" | "fail">;
-  hasFailures: boolean;
-} | null;
-
-export type KytData = {
-  photo?: string | null;
-  isPhotoConfirmed?: boolean;
-  isSubmitted?: boolean;
-  hasRetaken?: boolean;
-} | null;
-
-export type SosData = {
-  restHours: number;
-  restMinutes: number;
-  reason: string;
-  timestamp: string;
-} | null;
-
 export type PostPhoto = {
   id: string;
   dataUrl: string;
@@ -240,12 +210,6 @@ export type AwarenessHoliday = {
 };
 
 type AppState = {
-  completedSteps: number[];
-  healthData: HealthData;
-  kytData: KytData;
-  preTripData: PreTripData;
-  queueConfirmed: boolean;
-  sosData: SosData;
   posts: Post[];
   userActivityHistory: SafetyCultureUserActivity[];
   notification: NotificationType;
@@ -271,12 +235,6 @@ type AppState = {
 };
 
 type AppActions = {
-  completeSteps: (stepIds: number[]) => void;
-  setHealthData: (data: HealthData) => Promise<boolean>;
-  setKytData: (data: KytData) => Promise<boolean>;
-  setPreTripData: (data: PreTripData) => Promise<boolean>;
-  confirmQueue: () => void;
-  setSosData: (data: SosData) => Promise<boolean>;
   showNotification: (notification: NotificationType) => void;
   dismissNotification: () => void;
   markInboxNotificationRead: (notificationId: string) => void;
@@ -373,7 +331,7 @@ function repairMojibakeText(value?: string | null) {
 function buildNotificationHref(
   notification: Pick<AppInboxNotification, "postId" | "feedEventId" | "href" | "kind">,
 ) {
-  if (notification.postId) return `/safety-culture?postId=${notification.postId}`;
+  if (notification.postId) return `/safety-culture/posts/${notification.postId}`;
   if (notification.feedEventId) return `/safety-culture?activityId=${encodeURIComponent(notification.feedEventId)}`;
   if (notification.href) return notification.href;
   // Send each notification kind to its relevant area instead of looping back to
@@ -1627,12 +1585,6 @@ function createDemoSafetyCultureSnapshot(demoUser: SessionUser, now = Date.now()
 }
 
 export function AppProviders({ children }: { children: ReactNode }) {
-  const [completedSteps, setCompletedSteps] = useState<number[]>([]);
-  const [healthData, setHealthDataState] = useState<HealthData>(null);
-  const [kytData, setKytDataState] = useState<KytData>(null);
-  const [preTripData, setPreTripDataState] = useState<PreTripData>(null);
-  const [queueConfirmed, setQueueConfirmed] = useState(false);
-  const [sosData, setSosDataState] = useState<SosData>(null);
   const [posts, setPosts] = useState<Post[]>([]);
   const [userActivityHistory, setUserActivityHistory] = useState<SafetyCultureUserActivity[]>([]);
   const [notification, setNotification] = useState<NotificationType>(null);
@@ -1847,7 +1799,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
         return;
       }
 
-      const [postsResult, balanceResult, notificationsResult, rewardsResult, rewardCategoriesResult, leaderboardResult, teamsResult, awarenessResult, attemptsResult, holidaysResult, eventsResult, wereOkResult, transactionsResult] = await Promise.all([
+      const [postsResult, balanceResult, notificationsResult, rewardsResult, rewardCategoriesResult, leaderboardResult, teamsResult, awarenessResult, attemptsResult, holidaysResult, eventsResult, transactionsResult] = await Promise.all([
         apiFetch<{ items: ApiPost[] }>("/api/safety-culture/posts?limit=50"),
         apiFetch<{ balance: { balance: number } }>("/api/safety-culture/points/me"),
         apiFetch<{ items: Array<Record<string, unknown>> }>("/api/notifications?limit=100"),
@@ -1859,7 +1811,6 @@ export function AppProviders({ children }: { children: ReactNode }) {
         apiFetch<{ items: ApiAwarenessAttempt[] }>("/api/safety-awareness/attempts/me?pageSize=120"),
         apiFetch<{ items: Array<Record<string, unknown>> }>(`/api/holidays?year=${new Date().getFullYear()}`),
         apiFetch<{ items: Array<Record<string, unknown>> }>("/api/safety-culture/events?pageSize=100"),
-        apiFetch<{ healthData: HealthData; preTripData: PreTripData; kytData: KytData; sosData: SosData }>("/api/were-ok/state/me"),
         apiFetch<{ items: Array<{ id: string; amount: number; sourceType: string; sourceId?: string | null; description?: string | null; occurredAt: string }> }>("/api/safety-culture/points/me/transactions?limit=100"),
       ]);
 
@@ -1885,17 +1836,6 @@ export function AppProviders({ children }: { children: ReactNode }) {
 
       if (balanceResult.ok && typeof balanceResult.data?.balance?.balance === "number") {
         setCurrentUserPoints(Math.max(0, balanceResult.data.balance.balance));
-      }
-      if (wereOkResult.ok && wereOkResult.data) {
-        setHealthDataState(wereOkResult.data.healthData || null);
-        setPreTripDataState(wereOkResult.data.preTripData || null);
-        setKytDataState(wereOkResult.data.kytData || null);
-        setSosDataState(wereOkResult.data.sosData || null);
-        const restoredSteps: number[] = [];
-        if (wereOkResult.data.kytData) restoredSteps.push(1);
-        if (wereOkResult.data.healthData) restoredSteps.push(2, 3);
-        if (wereOkResult.data.preTripData) restoredSteps.push(4);
-        setCompletedSteps(restoredSteps);
       }
       if (transactionsResult.ok && Array.isArray(transactionsResult.data?.items)) {
         setUserActivityHistory(normalizeUserActivityHistory(transactionsResult.data.items.map((item) => ({
@@ -2039,32 +1979,6 @@ export function AppProviders({ children }: { children: ReactNode }) {
     }, 1000 * 15);
 
     return () => window.clearInterval(timer);
-  }, []);
-
-  const completeSteps = useCallback((stepIds: number[]) => {
-    setCompletedSteps((prev) => {
-      const next = [...prev];
-      stepIds.forEach((id) => {
-        if (!next.includes(id)) next.push(id);
-      });
-      return next;
-    });
-  }, []);
-
-  const persistWereOk = useCallback(async <T,>(path: string, data: T, setter: (value: T) => void) => {
-    if (!isAuthenticatedRef.current || !data) return false;
-    const result = await apiFetch(path, apiJson("POST", { status: "COMPLETED", payload: data }));
-    if (!result.ok) return false;
-    setter(data);
-    return true;
-  }, []);
-  const setHealthData = useCallback((data: HealthData) => persistWereOk("/api/were-ok/health-checks", data, setHealthDataState), [persistWereOk]);
-  const setKytData = useCallback((data: KytData) => persistWereOk("/api/were-ok/kyt-records", data, setKytDataState), [persistWereOk]);
-  const setPreTripData = useCallback((data: PreTripData) => persistWereOk("/api/were-ok/pretrip-checks", data, setPreTripDataState), [persistWereOk]);
-  const setSosData = useCallback((data: SosData) => persistWereOk("/api/were-ok/sos-events", data, setSosDataState), [persistWereOk]);
-
-  const confirmQueue = useCallback(() => {
-    setQueueConfirmed(true);
   }, []);
 
   const showNotification = useCallback((n: NotificationType) => {
@@ -2880,12 +2794,6 @@ export function AppProviders({ children }: { children: ReactNode }) {
       : awarenessTodayKey;
 
   const state: AppState = {
-    completedSteps,
-    healthData,
-    kytData,
-    preTripData,
-    queueConfirmed,
-    sosData,
     posts,
     userActivityHistory,
     notification,
@@ -2909,12 +2817,6 @@ export function AppProviders({ children }: { children: ReactNode }) {
   };
 
   const actions: AppActions = {
-    completeSteps,
-    setHealthData,
-    setKytData,
-    setPreTripData,
-    confirmQueue,
-    setSosData,
     showNotification,
     dismissNotification,
     markInboxNotificationRead,

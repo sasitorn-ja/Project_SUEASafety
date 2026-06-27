@@ -3,7 +3,7 @@
 โปรเจครวมของแอป **SUEA Safety** ที่นำสองโปรเจคที่ทีมแยกกันทำมารวมเป็นโค้ดเบสเดียว:
 
 - **Safety Effort** — จากโปรเจค `SueaSafety-main` (ฐาน)
-- **We're OK** + **Safety Culture** — จากโปรเจค `Safety Hub`
+- **Safety Culture** — จากโปรเจค `Safety Hub`
 
 ## Stack
 
@@ -26,9 +26,9 @@ npm run start    # serve production build
 โปรเจคนี้รวมสองรูปแบบ routing ไว้ในแอปเดียวอย่างตั้งใจ:
 
 - **Safety Effort** วิ่งผ่าน *client bridge* เดิม: `[[...slug]]` (optional catch-all) → `LegacyShell` → `NextAppClient` → `App.tsx` → `router-compat`
-- **We're OK** และ **Safety Culture** เป็น *App Router page* จริง: `src/app/were-ok/**`, `src/app/safety-culture/**`
+- **Safety Culture** เป็น *App Router page* จริง: `src/app/safety-culture/**`
 
-route ที่เจาะจง (`/were-ok`, `/safety-culture`) จะถูกจับโดยเพจจริงก่อน catch-all เสมอ ส่วน `/` และ route ของ Safety Effort ตกไปที่ bridge
+route ที่เจาะจง (`/safety-culture`) จะถูกจับโดยเพจจริงก่อน catch-all เสมอ ส่วน `/` และ route ของ Safety Effort ตกไปที่ bridge
 
 เมนูของ Safety Effort (`App.tsx`) จะนำทางไปโมดูล Hub ด้วย full-page navigation (`window.location.assign`) ส่วนหน้า Hub ใช้ `AppShell` (topbar/bottom-nav) ของตัวเอง
 
@@ -40,7 +40,6 @@ src/
     layout.tsx              # layout รวม: fonts (Noto Sans Thai, Sarabun) + AppProviders + Tooltip + Toaster
     globals.css             # Tailwind v4 + design tokens + custom classes (รวมจากสองฝั่ง)
     [[...slug]]/            # bridge → Safety Effort
-    were-ok/                # โมดูล We're OK (จาก Hub)
     safety-culture/         # โมดูล Safety Culture (จาก Hub)
   features/safety-effort/   # หน้าจอ Safety Effort (จากฐาน)
   components/

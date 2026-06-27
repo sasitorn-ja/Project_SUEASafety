@@ -8,13 +8,26 @@ import { apiFetch } from "@/lib/api-client";
 import { isLocalDemoLoginHost } from "@/lib/session-user";
 import { cn } from "@/lib/utils";
 import { Card } from "@/components/ui/card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  LabelList,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
+import {
+  BarChart3,
   CalendarDays,
   Check,
   CheckCircle2,
   ChevronRight,
   Gift,
   ShieldCheck,
+  ThumbsUp,
   Trophy,
   XCircle,
   Zap,
@@ -25,6 +38,7 @@ const MOBILE_HERO_MASCOT = "/images/mascots/scenes/wangjai-mobile-hero-thumbsup.
 const ACTIVITY_MASCOT = "/images/mascots/scenes/wangjai-level-jump.png";
 const SAFETY_AWARENESS_ICON = "/images/dashboard/safety-awareness-icon.png";
 const HERO_BG = "/images/heroes/Home01.png";
+const HERO_ANNOUNCEMENT_BG = "/images/heroes/home-launch-announcement.png";
 const ACTIVITY_BANNER_BG = "/images/dashboard/cpac-activity-banner-bg.png";
 const DEMO_LOGIN_SESSION_KEY = "cpac-safety-login-session";
 
@@ -90,6 +104,23 @@ const DEMO_ACTIVITY_EVENTS: SafetyCultureFeedEvent[] = [
   },
 ];
 
+const HOME_HERO_SLIDES = [
+  {
+    id: "home-hero-news",
+    imageSrc: HERO_BG,
+    eyebrow: "ข่าวสารระบบ",
+    title: "Safety Caring",
+    description: "ศูนย์กลางสำหรับการสื่อสาร ติดตาม และยกระดับความปลอดภัยในการทำงานของทีม",
+  },
+  {
+    id: "home-hero-launch",
+    imageSrc: HERO_ANNOUNCEMENT_BG,
+    eyebrow: "ประกาศเปิดตัว",
+    title: "ระบบจะเปิดตัววันที่ 7 กรกฎาคม 2569",
+    description: "เตรียมพบกับ Safety Caring เวอร์ชันใหม่สำหรับข่าวสาร กิจกรรม และการมีส่วนร่วมด้านความปลอดภัย",
+  },
+] as const;
+
 function bangkokDateKey(date: Date) {
   const parts = new Intl.DateTimeFormat("en-CA", {
     timeZone: "Asia/Bangkok",
@@ -135,6 +166,9 @@ export default function SafePlusDashboard() {
     rewardsCatalog,
   } = useAppState();
   const [isDemoLogin, setIsDemoLogin] = useState(false);
+  const currentYear = new Date().getFullYear();
+  const [effortYear, setEffortYear] = useState(currentYear);
+  const [effortChartData, setEffortChartData] = useState<Array<{ month: string; linewalk: number; contact: number }>>([]);
 
   const activeEvents = useMemo(
     () => feedEvents.filter((event) => event.published && event.status === "open"),
@@ -144,8 +178,10 @@ export default function SafePlusDashboard() {
     () => (activeEvents.length > 0 ? activeEvents : isDemoLogin ? DEMO_ACTIVITY_EVENTS : []),
     [activeEvents, isDemoLogin],
   );
+  const heroBannerSlides = HOME_HERO_SLIDES;
+  const [activeHeroIndex, setActiveHeroIndex] = useState(0);
 
-  const [, setPointTransactions] = useState<Array<{ amount: number; occurredAt: string }>>([]);
+  const [pointTransactions, setPointTransactions] = useState<Array<{ amount: number; occurredAt: string }>>([]);
 
   useEffect(() => {
     try {
@@ -160,6 +196,14 @@ export default function SafePlusDashboard() {
   }, []);
 
   useEffect(() => {
+    if (heroBannerSlides.length <= 1) return;
+    const intervalId = window.setInterval(() => {
+      setActiveHeroIndex((current) => (current + 1) % heroBannerSlides.length);
+    }, 5000);
+    return () => window.clearInterval(intervalId);
+  }, [heroBannerSlides.length]);
+
+  useEffect(() => {
     let cancelled = false;
     void apiFetch<{ items: Array<{ amount: number; occurredAt: string }> }>("/api/safety-culture/points/me/transactions?limit=100")
       .then((result) => {
@@ -169,6 +213,73 @@ export default function SafePlusDashboard() {
       });
     return () => { cancelled = true; };
   }, [currentUserPoints]);
+
+  useEffect(() => {
+    const THAI_MONTHS = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.ค.", "มิ.ย.", "ก.ค.", "ส.ค.", "ก.ย.", "ต.ค.", "พ.ย.", "ธ.ค."];
+
+    const buildMonthMap = () => {
+      const map = new Map<string, { linewalk: number; contact: number }>();
+      for (let m = 0; m < 12; m++) {
+        const key = `${effortYear}-${String(m + 1).padStart(2, "0")}`;
+        map.set(key, { linewalk: 0, contact: 0 });
+      }
+      return map;
+    };
+
+    const toChartData = (monthMap: Map<string, { linewalk: number; contact: number }>) =>
+      Array.from(monthMap.entries()).map(([key, val]) => ({
+        month: THAI_MONTHS[parseInt(key.slice(5, 7), 10) - 1],
+        ...val,
+      }));
+
+    if (isDemoLogin) {
+      const DEMO_POOL: Array<[number, number]> = [[3, 2], [4, 3], [2, 4], [5, 2], [3, 3], [2, 1], [4, 2], [3, 4], [5, 1], [2, 3], [4, 4], [3, 2]];
+      const monthMap = buildMonthMap();
+      let idx = 0;
+      for (const entry of monthMap.values()) {
+        const [lw, sc] = DEMO_POOL[idx++ % DEMO_POOL.length];
+        entry.linewalk = lw;
+        entry.contact = sc;
+      }
+      setEffortChartData(toChartData(monthMap));
+      return;
+    }
+
+    let cancelled = false;
+    const fromStr = `${effortYear}-01-01`;
+    const toStr = `${effortYear}-12-31`;
+    fetch(`/api/safety-effort/submissions/me?from=${fromStr}&to=${toStr}&pageSize=500`, {
+      credentials: "include",
+      cache: "no-store",
+    })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((payload) => {
+        if (cancelled) return;
+        const items: Array<{ activityType?: string; activity_type?: string; date?: string; timestamp?: string }> =
+          Array.isArray(payload?.data?.items) ? payload.data.items : [];
+        const legacyMonthly: Array<{ month?: string; linewalk?: number; contact?: number }> =
+          Array.isArray(payload?.data?.legacy?.monthlyCounts) ? payload.data.legacy.monthlyCounts : [];
+        const monthMap = buildMonthMap();
+        for (const item of items) {
+          const monthKey = String(item.date || item.timestamp || "").slice(0, 7);
+          if (!monthMap.has(monthKey)) continue;
+          const type = String(item.activityType || item.activity_type || "").toUpperCase();
+          const entry = monthMap.get(monthKey)!;
+          if (type === "LINE_WALK") entry.linewalk += 1;
+          else if (type === "SAFETY_CONTACT") entry.contact += 1;
+        }
+        for (const item of legacyMonthly) {
+          const monthKey = String(item.month || "").slice(0, 7);
+          if (!monthMap.has(monthKey)) continue;
+          const entry = monthMap.get(monthKey)!;
+          entry.linewalk += Number(item.linewalk || 0);
+          entry.contact += Number(item.contact || 0);
+        }
+        setEffortChartData(toChartData(monthMap));
+      })
+      .catch(() => { /* keep empty state */ });
+    return () => { cancelled = true; };
+  }, [isDemoLogin, effortYear]);
 
   const dashboardData = useMemo(() => {
     const now = new Date();
@@ -225,68 +336,113 @@ export default function SafePlusDashboard() {
 
   const latestQuestions = (dashboardData.latest?.questions ?? []).filter((q) => q.text?.trim());
   const latestHasWrongAnswer = latestQuestions.some((q) => !q.correct);
+  const latestCorrectCount = latestQuestions.filter((q) => q.correct).length;
+
+  const weeklyPoints = useMemo(() => {
+    const cutoff = Date.now() - 7 * 24 * 60 * 60 * 1000;
+    return pointTransactions
+      .filter((tx) => new Date(tx.occurredAt).getTime() >= cutoff)
+      .reduce((sum, tx) => sum + tx.amount, 0);
+  }, [pointTransactions]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-white via-[#f3f9ff] to-[#f0f7ff] pb-24 font-sarabun sm:pb-8 lg:pb-5">
+    <div className="min-h-screen bg-white pb-24 font-sarabun sm:pb-8 lg:pb-5">
 
       {/* ===== HERO ===== */}
       <section
         aria-label="คะแนน Safety ของฉัน"
-        className="relative mx-2.5 mt-2 overflow-hidden rounded-[18px] border border-[rgba(215,234,254,.72)] text-[#0B2F6B] shadow-[0_10px_22px_rgba(185,223,255,.28)] lg:mx-6 lg:mt-3"
+        className="relative mx-2.5 mt-2 min-h-[212px] overflow-hidden rounded-[18px] border border-[rgba(215,234,254,.72)] text-[#0B2F6B] shadow-[0_10px_22px_rgba(185,223,255,.28)] lg:mx-6 lg:mt-3 lg:min-h-[280px] xl:min-h-[300px] 2xl:min-h-[330px]"
         style={{
           background: `linear-gradient(rgba(226,241,255,.26),rgba(226,241,255,.26)), url("${HERO_BG}") center 64%/cover no-repeat`,
-          minHeight: 212,
         }}
       >
-        <div className="pointer-events-none absolute inset-0 bg-[rgba(255,255,255,0.06)]" />
-
-        {/* desktop score block */}
-        <div className="relative z-10 hidden flex-col justify-center px-5 py-4 lg:flex lg:px-7 lg:py-5" style={{ maxWidth: "26%" }}>
-          <div className="inline-flex w-fit flex-col rounded-[18px] border border-white/75 bg-white/58 px-4 py-3.5 shadow-[0_12px_28px_rgba(11,130,240,.16)] backdrop-blur-[4px]">
-          <div className="flex items-center gap-2 text-[11px] font-black text-[#083B84] [text-shadow:0_1px_0_rgba(255,255,255,.78)]">
-            <ShieldCheck className="h-[20px] w-[20px] text-[#0077F0]" strokeWidth={2.7} />
-            <span>คะแนน SAFETY ของฉัน</span>
-          </div>
-          <div className="mt-1 flex items-end gap-2">
-            <strong className="text-[54px] font-black leading-none text-[#006CE0] [text-shadow:0_8px_16px_rgba(11,130,240,.22)]">
-              {currentUserPoints.toLocaleString()}
-            </strong>
-            <span className="mb-1.5 text-[13px] font-black text-[#083B84] [text-shadow:0_1px_0_rgba(255,255,255,.78)]">แต้ม</span>
-          </div>
+        <div className="pointer-events-none absolute inset-0 hidden lg:block" aria-hidden="true">
+          <div
+            className="flex h-full transition-transform duration-700 ease-out"
+            style={{ transform: `translateX(-${activeHeroIndex * 100}%)` }}
+          >
+            {heroBannerSlides.map((slide) => (
+              <div key={slide.id} className="relative h-full flex-[0_0_100%] overflow-hidden">
+                <img
+                  src={slide.imageSrc}
+                  alt=""
+                  className="absolute inset-0 h-full w-full object-cover object-center"
+                />
+                <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(226,241,255,.36)_0%,rgba(226,241,255,.18)_30%,rgba(226,241,255,.06)_58%,rgba(226,241,255,.2)_100%)]" />
+                <div className="absolute top-5 hidden max-w-[280px] rounded-[18px] border border-white/80 bg-white/60 px-5 py-4 text-left shadow-[0_14px_30px_rgba(11,130,240,.18)] backdrop-blur-[8px] lg:block xl:max-w-[320px]" style={{ right: "clamp(250px, 24vw, 360px)" }}>
+                  <div className="text-[11px] font-black uppercase tracking-[0.16em] text-[#0B82F0]">{slide.eyebrow}</div>
+                  <div className="mt-1 text-[24px] font-black leading-tight text-[#0B2F6B]">{slide.title}</div>
+                  <div className="mt-1.5 text-[12.5px] font-bold leading-relaxed text-[#55739B]">{slide.description}</div>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
+        <div className="pointer-events-none absolute inset-0 bg-[rgba(255,255,255,0.06)]" />
+        {heroBannerSlides.length > 1 ? (
+          <div className="pointer-events-none absolute right-4 bottom-3 z-[12] hidden gap-1.5 lg:flex" aria-hidden="true">
+            {heroBannerSlides.map((slide, index) => (
+              <span
+                key={slide.id}
+                className={cn(
+                  "rounded-full ring-1 ring-[#0B82F0]/20 transition-all duration-300",
+                  index === activeHeroIndex ? "h-1.5 w-5 bg-[#0B82F0]" : "h-1.5 w-1.5 bg-white/90",
+                )}
+              />
+            ))}
+          </div>
+        ) : null}
 
-        {/* reward panel + mascot group (desktop) */}
-        <div className="absolute inset-y-0 left-[26%] right-0 z-10 hidden items-center justify-center gap-4 lg:flex">
-          {/* reward panel */}
-          <div
-            className="flex shrink-0 flex-col gap-2.5 rounded-[16px] border border-[#D7EAFE] bg-white/92 p-3.5 backdrop-blur-sm"
-            style={{ width: "clamp(260px,26vw,390px)", boxShadow: "0 14px 30px rgba(185,223,255,.5), inset 0 1px rgba(255,255,255,.85)" }}
-          >
-            <div className="flex items-center gap-2.5">
-              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[12px] border border-[#D7EAFE] bg-[#F5FAFF] shadow-[inset_0_1px_rgba(255,255,255,.9)]">
-                <Trophy className="h-6 w-6 text-[#0B82F0]" strokeWidth={2.15} />
+        {/* desktop info rail + mascot group */}
+        <div className="absolute inset-y-0 left-0 right-0 z-10 hidden items-center justify-between px-6 lg:flex xl:px-7">
+          <div className="flex w-[min(320px,24vw)] flex-col gap-3">
+            <div className="rounded-[18px] border border-white/75 bg-white/58 px-4 py-3.5 shadow-[0_12px_28px_rgba(11,130,240,.16)] backdrop-blur-[4px]">
+              <div className="flex items-center gap-2 text-[11px] font-black text-[#083B84] [text-shadow:0_1px_0_rgba(255,255,255,.78)]">
+                <ShieldCheck className="h-[20px] w-[20px] text-[#0077F0]" strokeWidth={2.7} />
+                <span>คะแนน SAFETY ของฉัน</span>
               </div>
-              <div className="flex min-w-0 flex-col gap-1">
-                <strong className="text-[15px] font-black leading-tight text-[#0B2F6B]">
-                  {rewardsCatalog.length > 0 ? "คะแนนของคุณสามารถนำมาแลกของรางวัลได้" : "ยังไม่มีรางวัลในระบบ"}
+              <div className="mt-1 flex items-end gap-2">
+                <strong className="text-[54px] font-black leading-none text-[#006CE0] [text-shadow:0_8px_16px_rgba(11,130,240,.22)]">
+                  {currentUserPoints.toLocaleString()}
                 </strong>
-                <span className="text-[10.5px] font-bold leading-snug text-[#55739B]">
-                  {rewardsCatalog.length > 0 ? "ใช้คะแนน Safety เพื่อรับสิทธิ์แลกรางวัล" : "เมื่อมีรางวัลในระบบ รายการจะแสดงที่นี่"}
-                </span>
+                <span className="mb-1.5 text-[13px] font-black text-[#083B84] [text-shadow:0_1px_0_rgba(255,255,255,.78)]">แต้ม</span>
               </div>
+              {weeklyPoints > 0 && (
+                <span className="mt-1.5 inline-flex w-fit items-center gap-1 rounded-full bg-[#e6f9ef] px-2.5 py-1 text-[10.5px] font-black text-[#1a8c52] shadow-[inset_0_0_0_1px_rgba(26,140,82,.18)]">
+                  <Zap className="h-3 w-3" />+{weeklyPoints} แต้ม จากสัปดาห์ที่แล้ว
+                </span>
+              )}
             </div>
-            <div className="grid grid-cols-2 gap-2">
-              <Link href="/safety-culture/rewards" className="flex min-h-8.5 items-center justify-center gap-1.5 rounded-xl border border-[#0B82F0] bg-linear-to-r from-[#35A8FF] via-[#0B82F0] to-[#006AD6] text-[11px] font-black text-white shadow-[0_8px_20px_rgba(11,130,240,.22),inset_0_1px_rgba(255,255,255,.35)]">
-                <Gift size={14} /><span>ดูของรางวัลที่นี่</span>
-              </Link>
-              <Link href="/safety-culture/leaderboard" className="flex min-h-8.5 items-center justify-center gap-1.5 rounded-xl border border-[#D7EAFE] bg-white text-[11px] font-black text-[#0B82F0]">
-                <Trophy size={14} /><span>ดูอันดับ Leaderboard</span>
-              </Link>
+
+            <div
+              className="flex flex-col gap-2.5 rounded-[16px] border border-[#D7EAFE] bg-white/92 p-3.5 backdrop-blur-sm"
+              style={{ boxShadow: "0 14px 30px rgba(185,223,255,.5), inset 0 1px rgba(255,255,255,.85)" }}
+            >
+              <div className="flex items-center gap-2.5">
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[12px] border border-[#D7EAFE] bg-[#F5FAFF] shadow-[inset_0_1px_rgba(255,255,255,.9)]">
+                  <Trophy className="h-6 w-6 text-[#0B82F0]" strokeWidth={2.15} />
+                </div>
+                <div className="flex min-w-0 flex-col gap-1">
+                  <strong className="text-[15px] font-black leading-tight text-[#0B2F6B]">
+                    {rewardsCatalog.length > 0 ? "คะแนนของคุณสามารถนำมาแลกของรางวัลได้" : "ยังไม่มีรางวัลในระบบ"}
+                  </strong>
+                  <span className="text-[10.5px] font-bold leading-snug text-[#55739B]">
+                    {rewardsCatalog.length > 0 ? "ใช้คะแนน Safety เพื่อรับสิทธิ์แลกรางวัล" : "เมื่อมีรางวัลในระบบ รายการจะแสดงที่นี่"}
+                  </span>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <Link href="/safety-culture/rewards" className="flex min-h-8.5 items-center justify-center gap-1.5 rounded-xl border border-[#0B82F0] bg-linear-to-r from-[#35A8FF] via-[#0B82F0] to-[#006AD6] text-[11px] font-black text-white shadow-[0_8px_20px_rgba(11,130,240,.22),inset_0_1px_rgba(255,255,255,.35)]">
+                  <Gift size={14} /><span>ดูของรางวัลที่นี่</span>
+                </Link>
+                <Link href="/safety-culture/leaderboard" className="flex min-h-8.5 items-center justify-center gap-1.5 rounded-xl border border-[#D7EAFE] bg-white text-[11px] font-black text-[#0B82F0]">
+                  <Trophy size={14} /><span>ดูอันดับ Leaderboard</span>
+                </Link>
+              </div>
             </div>
           </div>
 
-          {/* mascot ติดกับ reward panel */}
+          {/* mascot ตำแหน่งเดิม */}
           <Image
             src={HERO_MASCOT}
             alt="น้องวางใจ"
@@ -294,62 +450,59 @@ export default function SafePlusDashboard() {
             height={1402}
             priority
             quality={100}
-            sizes="(min-width: 1024px) 226px, 0px"
-            className="home-hero-mascot mascot-motion mascot-motion-hero pointer-events-none h-full w-auto shrink-0 max-w-75 object-contain object-bottom filter-[drop-shadow(0_12px_14px_rgba(4,37,86,.18))]"
+            sizes="(min-width: 1600px) 380px, (min-width: 1024px) 27vw, 0px"
+            className="home-hero-mascot pointer-events-none h-auto max-h-[95%] w-[clamp(240px,27vw,380px)] shrink-0 translate-y-[7%] self-end object-contain object-bottom filter-[drop-shadow(0_12px_14px_rgba(4,37,86,.18))]"
           />
         </div>
 
         {/* mobile layout — activity images เป็น hero background slideshow */}
-        <div className="relative block lg:hidden overflow-hidden" style={{ minHeight: 340 }}>
-
-          {/* sliding backgrounds */}
-          <div
-            className="activity-viewport absolute inset-0"
-            style={{ "--activity-count": Math.max(1, displayedEvents.length) } as CSSProperties}
-          >
-            <div className={cn("activity-track flex h-full", displayedEvents.length > 1 && "activity-track-auto")}>
-              {displayedEvents.length > 0 ? displayedEvents.map((activity) => (
-                <div key={activity.id} className="relative flex-[0_0_100%] h-full overflow-hidden">
-                  {activity.imageSrc ? (
-                    <img src={activity.imageSrc} alt="" className="absolute inset-0 h-full w-full object-cover object-center" />
-                  ) : (
-                    <div className="absolute inset-0" style={{ background: `url("${HERO_BG}") center/cover no-repeat` }} />
-                  )}
-                  {/* gradient overlay */}
+        <div className="relative block min-h-[320px] overflow-hidden sm:min-h-[340px] md:min-h-[360px] lg:hidden">
+          <div className="absolute inset-0">
+            <div
+              className="flex h-full transition-transform duration-700 ease-out"
+              style={{ transform: `translateX(-${activeHeroIndex * 100}%)` }}
+            >
+              {heroBannerSlides.map((slide) => (
+                <div key={slide.id} className="relative h-full flex-[0_0_100%] overflow-hidden">
+                  <img src={slide.imageSrc} alt="" className="absolute inset-0 h-full w-full object-cover object-center" />
                   <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(5,18,55,.55)_0%,rgba(8,28,75,.20)_45%,rgba(5,30,90,.72)_100%)]" />
-                  {/* activity info at bottom of each slide */}
-                  <Link
-                    href={`/safety-culture?activityId=${encodeURIComponent(activity.id)}`}
-                    className="absolute bottom-0 left-0 right-0 z-[2] px-[5%] pb-3.5 pt-10"
-                  >
-                    <span className="text-[9px] font-black uppercase tracking-[0.1em] text-white/65">กิจกรรมเด่น</span>
-                    <div className="mt-0.5 line-clamp-1 text-[15px] font-black leading-tight text-white [text-shadow:0_2px_8px_rgba(0,0,0,.5)]">{activity.title}</div>
-                    <div className="mt-0.5 text-[10px] font-bold text-white/80">
-                      {[activity.dateLabel, activityBonusLabel(activity)].filter(Boolean).join(" · ")}
-                    </div>
-                  </Link>
                 </div>
-              )) : (
-                <div className="relative flex-[0_0_100%] h-full">
-                  <div className="absolute inset-0" style={{ background: `url("${HERO_BG}") center/cover no-repeat` }} />
-                  <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(5,18,55,.45)_0%,rgba(8,28,75,.15)_50%,rgba(5,30,90,.55)_100%)]" />
-                </div>
-              )}
+              ))}
             </div>
           </div>
 
-          {/* score card — fixed overlay */}
-          <div className="absolute left-[5%] top-4 z-[4] w-[56%] max-w-[230px] rounded-[18px] border border-white/70 bg-white/62 px-3.5 py-3 shadow-[0_12px_28px_rgba(0,92,180,.16)] backdrop-blur-[5px]">
-            <div className="flex items-center gap-1.5 text-[11.5px] font-black leading-tight text-[#0B2F6B]">
-              <ShieldCheck className="h-[18px] w-[18px] flex-shrink-0 text-[#0B82F0]" strokeWidth={2.4} />
-              <span>คะแนน SAFETY ของฉัน</span>
+          <div className="absolute bottom-4 left-[5%] z-[5] w-[58%] max-w-[250px] rounded-[20px] border border-white/20 bg-[linear-gradient(180deg,rgba(6,43,99,.52),rgba(11,130,240,.18))] px-4 py-3 text-white shadow-[0_12px_24px_rgba(0,24,68,.25)] backdrop-blur-[10px]">
+            <div className="text-[10px] font-black uppercase tracking-[0.14em] text-white/72">
+              {heroBannerSlides[activeHeroIndex]?.eyebrow}
             </div>
-            <div className="mt-2 flex items-baseline gap-2">
-              <strong className="min-w-0 text-[42px] font-black leading-none text-[#087dff] [text-shadow:0_8px_18px_rgba(0,150,245,.18)]">
-                {currentUserPoints.toLocaleString()}
-              </strong>
-              <span className="rounded-full bg-[#e4f3ff] px-2.5 py-1 text-[12px] font-black leading-none text-[#0B2F6B] shadow-[inset_0_0_0_1px_rgba(11,130,240,.12)]">แต้ม</span>
+            <div className="mt-1 text-[17px] font-black leading-tight [text-shadow:0_2px_10px_rgba(0,0,0,.38)] sm:text-[18px]">
+              {heroBannerSlides[activeHeroIndex]?.title}
             </div>
+            <div className="mt-1 text-[10.5px] font-bold leading-relaxed text-white/82 sm:text-[11px]">
+              {heroBannerSlides[activeHeroIndex]?.description}
+            </div>
+          </div>
+
+          {/* score card + reward button — grouped overlay */}
+          <div className="absolute top-4 left-[5%] z-[4] flex w-[56%] max-w-[230px] flex-col gap-2">
+            <div className="rounded-[18px] border border-white/70 bg-white/62 px-3.5 py-3 shadow-[0_12px_28px_rgba(0,92,180,.16)] backdrop-blur-[5px]">
+              <div className="flex items-center gap-1.5 text-[11.5px] font-black leading-tight text-[#0B2F6B]">
+                <ShieldCheck className="h-[18px] w-[18px] flex-shrink-0 text-[#0B82F0]" strokeWidth={2.4} />
+                <span>คะแนน SAFETY ของฉัน</span>
+              </div>
+              <div className="mt-2 flex items-baseline gap-2">
+                <strong className="min-w-0 text-[42px] font-black leading-none text-[#087dff] [text-shadow:0_8px_18px_rgba(0,150,245,.18)]">
+                  {currentUserPoints.toLocaleString()}
+                </strong>
+                <span className="rounded-full bg-[#e4f3ff] px-2.5 py-1 text-[12px] font-black leading-none text-[#0B2F6B] shadow-[inset_0_0_0_1px_rgba(11,130,240,.12)]">แต้ม</span>
+              </div>
+            </div>
+            <Link
+              href="/safety-culture/rewards"
+              className="flex min-h-[36px] w-full items-center justify-center gap-1.5 rounded-full border border-[#40c7ff] bg-gradient-to-b from-[#119cff] to-[#006bdf] text-[12px] font-black text-white shadow-[0_0_22px_rgba(0,166,255,.34)]"
+            >
+              <Gift size={14} />แลกรางวัล
+            </Link>
           </div>
 
           {/* mascot — fixed overlay */}
@@ -360,23 +513,21 @@ export default function SafePlusDashboard() {
             height={1536}
             priority
             quality={100}
-            sizes="(max-width: 1023px) 60vw, 0px"
-            className="mascot-motion mascot-motion-hero pointer-events-none absolute bottom-[48px] right-[-7%] z-[3] h-[220px] w-[58%] object-contain object-bottom [filter:drop-shadow(0_10px_12px_rgba(0,20,55,.28))]"
+            sizes="(max-width: 480px) 48vw, (max-width: 1023px) 32vw, 0px"
+            className="pointer-events-none absolute right-[-2%] bottom-0 z-[3] h-[clamp(230px,42vw,340px)] w-auto max-w-[48%] translate-y-[6%] object-contain object-bottom [filter:drop-shadow(0_10px_12px_rgba(0,20,55,.28))]"
           />
 
-          {/* แลกรางวัล — fixed overlay */}
-          <Link
-            href="/safety-culture/rewards"
-            className="absolute bottom-[100px] left-[5%] z-[5] flex min-h-[36px] w-[42%] items-center justify-center gap-1.5 rounded-full border border-[#40c7ff] bg-gradient-to-b from-[#119cff] to-[#006bdf] text-[12px] font-black text-white shadow-[0_0_22px_rgba(0,166,255,.34)]"
-          >
-            <Gift size={14} />แลกรางวัล
-          </Link>
-
           {/* dots — fixed overlay */}
-          {displayedEvents.length > 1 && (
-            <div className="absolute bottom-3.5 right-[5%] z-[6] flex gap-1.5" aria-hidden="true">
-              {displayedEvents.map((activity) => (
-                <span key={activity.id} className="h-1.5 w-1.5 rounded-full bg-white/85 shadow-[0_1px_4px_rgba(0,0,0,.4)]" />
+          {heroBannerSlides.length > 1 && (
+            <div className="absolute top-4 right-[5%] z-[6] flex gap-1.5" aria-hidden="true">
+              {heroBannerSlides.map((slide, index) => (
+                <span
+                  key={slide.id}
+                  className={cn(
+                    "rounded-full bg-white/85 shadow-[0_1px_4px_rgba(0,0,0,.4)] transition-all duration-300",
+                    index === activeHeroIndex ? "h-1.5 w-5" : "h-1.5 w-1.5",
+                  )}
+                />
               ))}
             </div>
           )}
@@ -491,9 +642,9 @@ export default function SafePlusDashboard() {
           </div>
 
           <div className="rounded-[16px] border border-[#dbe9fa] bg-[#f9fbff] p-1.5">
-            {/* mobile: horizontal scroll — xl: full 11-column grid */}
-            <div className="scrollbar-hide overflow-x-auto xl:overflow-visible">
-              <div className="flex gap-1.5 xl:grid xl:grid-cols-11 xl:gap-2">
+            {/* mobile/tablet: horizontal scroll — desktop: full 11-column grid */}
+            <div className="scrollbar-hide overflow-x-auto lg:overflow-visible">
+              <div className="flex gap-1.5 lg:grid lg:grid-cols-11 lg:gap-2">
                 {dashboardData.days.map((day) => {
                   const isToday = day.dateKey === todayKey;
                   const dayStatus = day.completion
@@ -508,7 +659,7 @@ export default function SafePlusDashboard() {
                       key={day.dateKey}
                       ref={isToday ? todayCalendarRef : undefined}
                       className={cn(
-                        "relative flex w-[48px] flex-shrink-0 flex-col items-center justify-center rounded-[13px] border-[1.5px] py-1.5 text-center transition-colors xl:w-auto xl:min-h-[58px] xl:rounded-[15px] xl:px-2 xl:py-1",
+                        "relative flex w-[48px] flex-shrink-0 flex-col items-center justify-center rounded-[13px] border-[1.5px] py-1.5 text-center transition-colors lg:w-auto lg:min-h-[58px] lg:rounded-[15px] lg:px-2 lg:py-1",
                         isToday
                           ? "border-[3px] border-[#087dff] bg-gradient-to-b from-[#d6ecff] to-[#b9dcff] text-[#073f87] shadow-[inset_0_1px_0_rgba(255,255,255,.7),0_0_0_3px_rgba(8,125,255,.14),0_12px_28px_rgba(8,125,255,.28)]"
                           : day.completion
@@ -523,11 +674,11 @@ export default function SafePlusDashboard() {
                       )}
                     >
                       <span className="text-[8.5px] font-extrabold opacity-70">{day.weekday}</span>
-                      <strong className="mt-0.5 text-[14px] font-black leading-none xl:mt-0 xl:text-[16px]">{day.day}</strong>
+                      <strong className="mt-0.5 text-[14px] font-black leading-none lg:mt-0 lg:text-[16px]">{day.day}</strong>
                       {day.completion ? (
-                        <Check className="mt-1 h-3 w-3 rounded-full border-2 border-current p-[2px] xl:mt-0.5 xl:h-3.5 xl:w-3.5" />
+                        <Check className="mt-1 h-3 w-3 rounded-full border-2 border-current p-[2px] lg:mt-0.5 lg:h-3.5 lg:w-3.5" />
                       ) : (
-                        <span className="mt-1 text-[7.5px] font-black leading-none xl:mt-0.5 xl:text-[8.5px]">{dayStatus}</span>
+                        <span className="mt-1 text-[7.5px] font-black leading-none lg:mt-0.5 lg:text-[8.5px]">{dayStatus}</span>
                       )}
                     </div>
                   );
@@ -537,52 +688,80 @@ export default function SafePlusDashboard() {
           </div>
 
           {/* latest record */}
-          <div
-            className={cn(
-              "rounded-[12px] border-[1.5px] p-1.5",
-              latestHasWrongAnswer ? "border-[#ffc8c2] bg-[#fff3f1]" : "border-[#c5d9f5] bg-[#f7fbff]",
-            )}
-          >
-            <div className="flex items-center gap-2">
-              <CalendarDays className={cn("h-3.5 w-3.5", latestHasWrongAnswer ? "text-[#c9352b]" : "text-[#087dff]")} strokeWidth={2.4} />
-              <b className={cn("app-card-title", latestHasWrongAnswer ? "text-[#b3271a]" : "text-[#0b3572]")}>รายการล่าสุด</b>
+          <div className="rounded-[12px] border-[1.5px] border-[#c5d9f5] bg-[#f7fbff] p-2">
+            {/* header row */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-1.5">
+                <CalendarDays className="h-3.5 w-3.5 text-[#087dff]" strokeWidth={2.4} />
+                <b className="app-card-title text-[#0b3572]">รายการล่าสุด</b>
+              </div>
+              {dashboardData.latest && latestQuestions.length > 0 && (
+                <div className="flex items-center gap-1">
+                  <span
+                    className={cn(
+                      "rounded-full px-2 py-0.5 text-[9px] font-black",
+                      latestCorrectCount === latestQuestions.length
+                        ? "bg-[#d1fae5] text-[#065f46]"
+                        : "bg-[#fee2e2] text-[#991b1b]",
+                    )}
+                  >
+                    ถูก {latestCorrectCount}/{latestQuestions.length}
+                  </span>
+                </div>
+              )}
             </div>
-            <div className="mt-1 grid gap-1.5 sm:grid-cols-[auto_1fr] sm:items-center sm:gap-2">
-              <strong
-                className={cn(
-                  "rounded-xl px-2.5 py-1 text-[10px] font-black",
-                  latestHasWrongAnswer ? "bg-[#fde1dc] text-[#b3271a]" : "bg-[#eef5ff] text-[#0b3572]",
-                )}
-              >
-                {dashboardData.latest
-                  ? `${formatThaiDate(dashboardData.latest.date)}`
-                  : "ยังไม่มีประวัติการทำ"}
-              </strong>
+
+            {/* date + subtitle */}
+            <div className="mt-1.5 flex items-center gap-1.5">
+              <span className="rounded-lg bg-[#eef5ff] px-2 py-0.5 text-[9.5px] font-black text-[#0b3572]">
+                {dashboardData.latest ? formatThaiDate(dashboardData.latest.date) : "ยังไม่มีประวัติการทำ"}
+              </span>
               {!dashboardData.latest && (
-                <p className="m-0 text-[9.5px] font-bold leading-snug text-[#687b96] sm:text-[10px]">เมื่อทำ Safety Awareness แล้ว รายการล่าสุดจะแสดงที่นี่</p>
-              )}
-              {dashboardData.latest && (
-                <p className={cn("m-0 text-[9.5px] font-bold leading-snug sm:text-[10px]", latestHasWrongAnswer ? "text-[#b3271a]" : "text-[#687b96]")}>
-                  {latestHasWrongAnswer ? "รายการล่าสุดมีคำตอบผิด แสดงด้วยสีแดงด้านล่าง" : "คำถามที่ทำในวันล่าสุดจะแสดงด้านล่าง"}
-                </p>
+                <span className="text-[9px] font-medium text-[#687b96]">เมื่อทำ Safety Awareness แล้ว รายการล่าสุดจะแสดงที่นี่</span>
               )}
             </div>
+
+            {/* question list */}
             {dashboardData.latest && latestQuestions.length > 0 && (
-              <div className="mt-1 grid max-h-[56px] gap-1 overflow-y-auto pr-1">
+              <div className="mt-1.5 grid max-h-[90px] gap-1 overflow-y-auto pr-0.5">
                 {latestQuestions.map((q) => (
                   <div
                     key={q.id}
                     className={cn(
-                      "flex items-start gap-1.5 rounded-[9px] px-2 py-1 text-[9px] font-bold sm:px-2 sm:text-[9px]",
-                      q.correct ? "bg-[#daf5e6] text-[#19734a]" : "bg-[#fdeee9] text-[#b3271a]",
+                      "flex items-start gap-2 overflow-hidden rounded-[8px] border-l-[3px]",
+                      q.correct
+                        ? "border-l-[#22c55e] bg-white"
+                        : "border-l-[#ef4444] bg-[#fff5f5]",
                     )}
                   >
-                    {q.correct ? (
-                      <CheckCircle2 className="mt-0.5 h-[13px] w-[13px] flex-shrink-0" strokeWidth={2.6} />
-                    ) : (
-                      <XCircle className="mt-0.5 h-[13px] w-[13px] flex-shrink-0" strokeWidth={2.6} />
-                    )}
-                    <span className="line-clamp-1 leading-[1.35]"><b className="mr-1 font-black">{q.category}</b>{q.text}</span>
+                    <div className="flex min-w-0 flex-1 flex-col gap-0.5 px-2 py-1">
+                      <div className="flex items-center gap-1">
+                        <span
+                          className={cn(
+                            "shrink-0 rounded px-1 py-0 text-[8px] font-black leading-tight",
+                            q.correct ? "bg-[#dcfce7] text-[#15803d]" : "bg-[#fee2e2] text-[#b91c1c]",
+                          )}
+                        >
+                          {q.category}
+                        </span>
+                        <span
+                          className={cn(
+                            "shrink-0 text-[8px] font-bold",
+                            q.correct ? "text-[#16a34a]" : "text-[#dc2626]",
+                          )}
+                        >
+                          {q.correct ? "ตอบถูก" : "ตอบผิด"}
+                        </span>
+                      </div>
+                      <span className="line-clamp-2 text-[8.5px] font-medium leading-[1.4] text-[#374151]">{q.text}</span>
+                    </div>
+                    <div className={cn("flex h-full items-center px-1.5", q.correct ? "text-[#22c55e]" : "text-[#ef4444]")}>
+                      {q.correct ? (
+                        <CheckCircle2 className="h-[14px] w-[14px] flex-shrink-0" strokeWidth={2.5} />
+                      ) : (
+                        <XCircle className="h-[14px] w-[14px] flex-shrink-0" strokeWidth={2.5} />
+                      )}
+                    </div>
                   </div>
                 ))}
               </div>
@@ -591,7 +770,7 @@ export default function SafePlusDashboard() {
         </Card>
 
         {/* ── Activity card ── */}
-        <div className="hidden flex-col self-start md:flex">
+        <div className="hidden flex-col self-start lg:flex">
           <Card className="flex flex-col rounded-[18px] border border-[rgba(13,80,165,0.18)] bg-white p-2.5 shadow-[0_4px_18px_rgba(11,53,110,0.10),0_1px_4px_rgba(11,53,110,0.06)] lg:p-3">
             <div className="mb-2 flex items-center justify-between">
               <div className="flex items-center gap-2">
@@ -669,6 +848,122 @@ export default function SafePlusDashboard() {
             )}
           </Card>
         </div>
+
+      {/* ── Safety Effort Chart ── */}
+      <Card className="rounded-[18px] border border-[rgba(13,80,165,0.18)] bg-white p-3 shadow-[0_4px_18px_rgba(11,53,110,0.10),0_1px_4px_rgba(11,53,110,0.06)] lg:p-4">
+        {/* header */}
+        <div className="mb-2.5 flex flex-wrap items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <BarChart3 className="h-3.5 w-3.5 text-[#087bff]" strokeWidth={2.4} />
+            <b className="app-card-title text-[#0b3572]">ประวัติ Linewalk &amp; Safety Contact</b>
+          </div>
+          {/* year selector */}
+          <Select value={String(effortYear)} onValueChange={(v) => setEffortYear(Number(v))}>
+            <SelectTrigger className="h-7 w-22.5 rounded-[8px] border-[#d7eafe] text-[10px] font-black text-[#0b3572]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {Array.from({ length: 3 }, (_, i) => currentYear - i).map((y) => (
+                <SelectItem key={y} value={String(y)} className="text-[11px] font-bold">
+                  {y + 543}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* legend */}
+        <div className="mb-2 flex items-center gap-3">
+          <span className="flex items-center gap-1 text-[9.5px] font-bold text-[#687b96]">
+            <span className="inline-block h-2 w-2 rounded-sm bg-[#087dff]" />Linewalk
+          </span>
+          <span className="flex items-center gap-1 text-[9.5px] font-bold text-[#687b96]">
+            <span className="inline-block h-2 w-2 rounded-sm bg-[#0bb4a0]" />Safety Contact
+          </span>
+        </div>
+
+        {effortChartData.length > 0 ? (
+          <div className="-mx-1 overflow-x-auto overflow-y-visible px-1 pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            <div className="h-[210px] min-w-[640px] sm:h-[190px] sm:min-w-0 lg:h-[184px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={effortChartData} barCategoryGap="24%" barGap={3} margin={{ top: 28, right: 8, left: 0, bottom: 6 }}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(13,80,165,0.08)" />
+                  <XAxis
+                    dataKey="month"
+                    tick={{ fontSize: 11, fill: "#687b96", fontWeight: 800 }}
+                    tickLine={false}
+                    axisLine={false}
+                    interval={0}
+                  />
+                  <YAxis
+                    allowDecimals={false}
+                    domain={[0, (dataMax: number) => Math.max(8, dataMax + 1)]}
+                    tick={{ fontSize: 11, fill: "#687b96", fontWeight: 800 }}
+                    tickLine={false}
+                    axisLine={false}
+                    width={24}
+                  />
+                  <Tooltip
+                    cursor={{ fill: "rgba(13,80,165,0.05)" }}
+                    contentStyle={{
+                      borderRadius: 10,
+                      border: "1px solid rgba(13,80,165,0.14)",
+                      fontSize: 11,
+                      fontWeight: 700,
+                      color: "#0b3572",
+                      boxShadow: "0 4px 12px rgba(11,53,110,0.12)",
+                    }}
+                    formatter={(value: number, name: string) => [
+                      value,
+                      name === "linewalk" ? "Linewalk" : "Safety Contact",
+                    ]}
+                  />
+                  <Bar dataKey="linewalk" fill="#087dff" stackId="a" maxBarSize={34}>
+                    <LabelList
+                      dataKey="linewalk"
+                      position="center"
+                      formatter={(v: number) => (v > 0 ? v : "")}
+                      style={{ fill: "#fff", fontSize: 10, fontWeight: 900 }}
+                    />
+                  </Bar>
+                  <Bar dataKey="contact" fill="#0bb4a0" stackId="a" radius={[5, 5, 0, 0]} maxBarSize={34}>
+                    <LabelList
+                      dataKey="contact"
+                      position="center"
+                      formatter={(v: number) => (v > 0 ? v : "")}
+                      style={{ fill: "#fff", fontSize: 10, fontWeight: 900 }}
+                    />
+                    <LabelList
+                      dataKey="contact"
+                      position="insideTop"
+                      content={({ x, y, width, value, index }) => {
+                        const total = (effortChartData[index as number]?.linewalk ?? 0) + (value as number);
+                        if (!total) return null;
+                        return (
+                          <text
+                            x={(x as number) + (width as number) / 2}
+                            y={(y as number) - 10}
+                            textAnchor="middle"
+                            fill="#0b3572"
+                            fontSize={10}
+                            fontWeight={900}
+                          >
+                            {total}
+                          </text>
+                        );
+                      }}
+                    />
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+        ) : (
+          <div className="flex h-40 items-center justify-center">
+            <p className="text-[10px] font-bold text-[#687b96]">ยังไม่มีข้อมูล เมื่อทำ Linewalk หรือ Safety Contact แล้ว กราฟจะแสดงที่นี่</p>
+          </div>
+        )}
+      </Card>
 
       </div>
     </div>

@@ -80,14 +80,14 @@ function SectionCard({
   children: React.ReactNode;
 }) {
   return (
-    <Card className="rounded-[18px] border border-[var(--c-e6dcc6)] bg-white p-4 md:p-5">
+    <Card className="rounded-[18px] border border-[#B9E0FF] bg-white p-4 md:p-5">
       <div className="mb-4 flex items-start gap-3">
-        <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-2xl bg-[var(--c-fff1c9)] text-[var(--c-6d4716)]">
+        <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-2xl bg-[#EAF6FF] text-[#0B82F0]">
           {icon}
         </div>
         <div className="min-w-0 flex-1">
-          <h2 className="text-[16px] font-black text-[var(--c-3b1d07)]">{title}</h2>
-          <p className="text-[12.5px] font-bold text-[var(--c-6d5a46)]">{description}</p>
+          <h2 className="text-[16px] font-black text-[#0B2F6B]">{title}</h2>
+          <p className="text-[12.5px] font-bold text-[#55739B]">{description}</p>
         </div>
         {actions}
       </div>
@@ -111,6 +111,7 @@ export default function AdminAwarenessPage() {
   const [importErrors, setImportErrors] = useState<string[]>([]);
   const [holidayDate, setHolidayDate] = useState("");
   const [holidayName, setHolidayName] = useState("");
+  const [holidayYearFilter, setHolidayYearFilter] = useState("all");
 
   const categories = useMemo(() => {
     const set = new Set<string>();
@@ -142,6 +143,21 @@ export default function AdminAwarenessPage() {
     });
     return Array.from(map.entries());
   }, [filtered]);
+
+  const sortedHolidays = useMemo(
+    () => [...awarenessHolidays].sort((a, b) => a.date.localeCompare(b.date)),
+    [awarenessHolidays],
+  );
+
+  const holidayYears = useMemo(
+    () => Array.from(new Set(sortedHolidays.map((holiday) => holiday.date.slice(0, 4)))).sort((a, b) => b.localeCompare(a)),
+    [sortedHolidays],
+  );
+
+  const visibleHolidays = useMemo(
+    () => sortedHolidays.filter((holiday) => holidayYearFilter === "all" || holiday.date.startsWith(holidayYearFilter)),
+    [holidayYearFilter, sortedHolidays],
+  );
 
   const toggleEnabled = (id: string) => {
     updateAwarenessQuestions(
@@ -309,7 +325,7 @@ export default function AdminAwarenessPage() {
       />
 
       {/* Stat strip */}
-      <div className="mt-4 grid grid-cols-2 gap-3 md:grid-cols-4">
+      <div className="mt-3 grid grid-cols-2 gap-2 md:grid-cols-4">
         <StatCard label="คำถามทั้งหมด" value={awarenessQuestions.length} icon={<ListChecks className="h-5 w-5" />} />
         <StatCard label="เปิดใช้งาน" value={enabledCount} icon={<CheckCircle2 className="h-5 w-5" />} tone="ok" />
         <StatCard label="ปิดใช้งาน" value={awarenessQuestions.length - enabledCount} icon={<CircleSlash className="h-5 w-5" />} tone="muted" />
@@ -322,14 +338,26 @@ export default function AdminAwarenessPage() {
           description="วันเสาร์และวันอาทิตย์ไม่นับอัตโนมัติ เพิ่มวันหยุดบริษัทหรือวันหยุดพิเศษที่ตรงกับวันทำงานได้ที่นี่ ระบบจะหักคะแนน Awareness ของวันที่ถูกเพิ่มย้อนหลังถ้ามีคนทำไว้แล้ว"
           icon={<CalendarOff className="h-6 w-6" strokeWidth={2.2} />}
         >
-          <div className="rounded-xl border border-[#cfe3f4] bg-[#f1f8fe] px-3.5 py-3 text-[12.5px] font-bold text-[#24567f]">
-            <div className="flex items-center gap-2 font-black">
-              <Info className="h-4 w-4 flex-shrink-0" />
-              ระบบไม่นับวันเสาร์และวันอาทิตย์ทุกสัปดาห์
+          <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_220px]">
+            <div className="rounded-xl border border-[#CFE3F4] bg-[#F1F8FE] px-3.5 py-3 text-[12.5px] font-bold text-[#24567F]">
+              <div className="flex items-center gap-2 font-black">
+                <Info className="h-4 w-4 flex-shrink-0" />
+                ระบบไม่นับวันเสาร์และวันอาทิตย์ทุกสัปดาห์
+              </div>
+              <p className="mt-1 pl-6">
+                วันที่เพิ่มด้านล่างจะไม่แสดงป็อปอัพคำถาม และไม่ถูกนำไปคิดเปอร์เซ็นต์ KPI บนหน้า Home
+              </p>
             </div>
-            <p className="mt-1 pl-6">
-              วันที่เพิ่มด้านล่างจะไม่แสดงป็อปอัพคำถาม และไม่ถูกนำไปคิดเปอร์เซ็นต์ KPI บนหน้า Home
-            </p>
+            <div className="grid grid-cols-2 gap-2 rounded-xl border border-[#D7EAFE] bg-[#F8FCFF] p-3 text-center">
+              <div>
+                <div className="text-[22px] font-black leading-none text-[#0B82F0]">{awarenessHolidays.length}</div>
+                <div className="mt-1 text-[10.5px] font-black text-[#55739B]">วันหยุดเพิ่มเอง</div>
+              </div>
+              <div>
+                <div className="text-[22px] font-black leading-none text-[#0B2F6B]">{holidayYears.length}</div>
+                <div className="mt-1 text-[10.5px] font-black text-[#55739B]">ปีที่มีข้อมูล</div>
+              </div>
+            </div>
           </div>
 
           <div className="mt-3 grid gap-2 md:grid-cols-[190px_1fr_auto]">
@@ -337,42 +365,65 @@ export default function AdminAwarenessPage() {
               type="date"
               value={holidayDate}
               onChange={(event) => setHolidayDate(event.target.value)}
-              className="h-10 rounded-xl border-[var(--c-d7c5a7)] bg-[var(--c-fffdf8)] text-[13px] font-bold"
+              className="h-10 rounded-xl border-[#B9E0FF] bg-white text-[13px] font-bold"
             />
             <Input
               value={holidayName}
               onChange={(event) => setHolidayName(event.target.value)}
               onKeyDown={(event) => event.key === "Enter" && addHoliday()}
               placeholder="ชื่อวันหยุด เช่น วันหยุดบริษัทประจำปี"
-              className="h-10 rounded-xl border-[var(--c-d7c5a7)] bg-[var(--c-fffdf8)] text-[13px] font-bold"
+              className="h-10 rounded-xl border-[#B9E0FF] bg-white text-[13px] font-bold"
             />
             <Button
               onClick={addHoliday}
               disabled={!holidayDate || !holidayName.trim()}
-              className="h-10 rounded-xl bg-[var(--c-5c3214)] px-4 text-[12.5px] font-black text-white hover:bg-[var(--c-4a280f)] disabled:opacity-50"
+              variant="brand"
+              className="h-10 rounded-xl px-4 text-[12.5px] font-black disabled:opacity-50"
             >
               <Plus className="h-4 w-4" /> เพิ่มวันไม่นับคะแนน
             </Button>
           </div>
 
-          <div className="mt-3">
+          <div className="mt-3 rounded-2xl border border-[#D7EAFE] bg-[#F8FCFF] p-3">
+            <div className="mb-2 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <div className="text-[13px] font-black text-[#0B2F6B]">รายการวันไม่นับคะแนนเพิ่มเติม</div>
+                <div className="text-[11px] font-bold text-[#55739B]">แสดง {visibleHolidays.length} จาก {awarenessHolidays.length} รายการ</div>
+              </div>
+              <Combobox
+                value={holidayYearFilter}
+                onValueChange={setHolidayYearFilter}
+                aria-label="กรองปีวันหยุด"
+                searchPlaceholder="ค้นหาปี"
+                searchable={false}
+                preserveScrollOnOpen
+                className="h-9 border-[#B9E0FF] bg-white text-[12px] font-black text-[#0B2F6B] sm:w-[170px]"
+                options={[
+                  { value: "all", label: "ทุกปี" },
+                  ...holidayYears.map((year) => ({ value: year, label: year })),
+                ]}
+              />
+            </div>
             {awarenessHolidays.length === 0 ? (
-              <p className="rounded-xl border border-dashed border-[var(--c-d7c5a7)] bg-[var(--c-fffdf8)] px-4 py-4 text-center text-[12.5px] font-bold text-[var(--c-6d5a46)]">
+              <p className="rounded-xl border border-dashed border-[#B9E0FF] bg-white px-4 py-4 text-center text-[12.5px] font-bold text-[#55739B]">
                 ยังไม่มีวันหยุดเพิ่มเติม ระบบไม่นับเฉพาะวันเสาร์และวันอาทิตย์
               </p>
+            ) : visibleHolidays.length === 0 ? (
+              <p className="rounded-xl border border-dashed border-[#B9E0FF] bg-white px-4 py-4 text-center text-[12.5px] font-bold text-[#55739B]">
+                ไม่พบรายการในปีที่เลือก
+              </p>
             ) : (
-              <div className="grid gap-2 md:grid-cols-2">
-                {[...awarenessHolidays]
-                  .sort((a, b) => a.date.localeCompare(b.date))
-                  .map((holiday) => (
+              <div className="max-h-[280px] overflow-y-auto pr-1 [scrollbar-width:thin]">
+                <div className="grid gap-2 md:grid-cols-2">
+                  {visibleHolidays.map((holiday) => (
                     <div
                       key={holiday.date}
-                      className="flex items-center gap-3 rounded-xl border border-[var(--c-e6dcc6)] bg-[var(--c-fffdf8)] px-3 py-2.5"
+                      className="flex items-center gap-3 rounded-xl border border-[#D7EAFE] bg-white px-3 py-2.5"
                     >
                       <CalendarOff className="h-4 w-4 flex-shrink-0 text-[#b3271a]" />
                       <div className="min-w-0 flex-1">
-                        <p className="text-[12.5px] font-black text-[var(--c-3b1d07)]">{holiday.name}</p>
-                        <p className="text-[11.5px] font-bold text-[var(--c-6d5a46)]">{holiday.date}</p>
+                        <p className="truncate text-[12.5px] font-black text-[#0B2F6B]">{holiday.name}</p>
+                        <p className="text-[11.5px] font-bold text-[#55739B]">{holiday.date}</p>
                       </div>
                       <button
                         type="button"
@@ -382,12 +433,13 @@ export default function AdminAwarenessPage() {
                             awarenessHolidays.filter((item) => item.date !== holiday.date),
                           )
                         }
-                        className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg border border-[#eccdc6] bg-white text-[#b3271a] hover:bg-[#fbe3df]"
+                        className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg border border-[#ECCDC6] bg-white text-[#B3271A] hover:bg-[#FBE3DF]"
                       >
                         <Trash2 className="h-4 w-4" />
                       </button>
                     </div>
                   ))}
+                </div>
               </div>
             )}
           </div>
@@ -403,13 +455,15 @@ export default function AdminAwarenessPage() {
             <div className="flex flex-wrap gap-2">
               <Button
                 onClick={() => setImportOpen(true)}
-                className="h-9 rounded-xl border border-[var(--c-d7c5a7)] bg-[var(--c-fff8eb)] px-3.5 text-[12.5px] font-black text-[var(--c-5c3214)] hover:bg-[var(--c-fff2d8)]"
+                variant="outline"
+                className="h-9 rounded-xl border-[#B9E0FF] bg-[#F5FAFF] px-3.5 text-[12.5px] font-black text-[#0B82F0] hover:bg-[#EAF6FF]"
               >
                 <FileSpreadsheet className="h-4 w-4" /> นำเข้า XLSX
               </Button>
               <Button
                 onClick={() => setEditor({ ...EMPTY_EDITOR })}
-                className="h-9 rounded-xl bg-[var(--c-5c3214)] px-3.5 text-[12.5px] font-black text-white hover:bg-[var(--c-4a280f)]"
+                variant="brand"
+                className="h-9 rounded-xl px-3.5 text-[12.5px] font-black"
               >
                 <Plus className="h-4 w-4" /> เพิ่มคำถาม
               </Button>
@@ -424,7 +478,7 @@ export default function AdminAwarenessPage() {
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="ค้นหาคำถาม / หมวด / เฉลย"
-                className="h-10 rounded-xl border-[var(--c-d7c5a7)] bg-[var(--c-fffdf8)] pl-9 text-[13px] font-bold"
+                className="h-10 rounded-xl border-[#B9E0FF] bg-white pl-9 text-[13px] font-bold"
               />
             </div>
             <Combobox
@@ -432,7 +486,7 @@ export default function AdminAwarenessPage() {
               onValueChange={setCategoryFilter}
               aria-label="กรองตามหมวดหมู่"
               searchPlaceholder="ค้นหาหมวดหมู่"
-              className="h-10 border-[var(--c-d7c5a7)] bg-[var(--c-fffdf8)] text-[13px] font-black text-[var(--c-5c3214)] md:w-[280px]"
+              className="h-10 border-[#B9E0FF] bg-white text-[13px] font-black text-[#0B2F6B] md:w-[280px]"
               options={[
                 { value: "all", label: `ทุกหมวดหมู่ (${awarenessQuestions.length})` },
                 ...categories.map((c) => ({ value: c, label: c })),
@@ -441,22 +495,18 @@ export default function AdminAwarenessPage() {
           </div>
 
           {grouped.length === 0 ? (
-            <p className="rounded-xl border border-dashed border-[var(--c-d7c5a7)] bg-[var(--c-fffdf8)] px-4 py-8 text-center text-[13px] font-bold text-[var(--c-6d5a46)]">
+            <p className="rounded-xl border border-dashed border-[#B9E0FF] bg-[#F8FCFF] px-4 py-8 text-center text-[13px] font-bold text-[#55739B]">
               ไม่พบคำถามที่ตรงกับเงื่อนไข
             </p>
           ) : (
-            <div className="flex flex-col gap-4">
+            <div className="overflow-hidden rounded-2xl border border-[#D7EAFE] bg-[#F8FCFF]">
               {grouped.map(([category, items]) => (
-                <div key={category}>
-                  <div className="mb-1.5 flex items-center gap-2">
-                    <h3 className="text-[13px] font-black text-[var(--c-3b1d07)]">{category}</h3>
-                    <Badge className="rounded-full border border-[var(--c-d7c5a7)] bg-[var(--c-fff6d6)] px-2 py-0.5 text-[10.5px] font-black text-[var(--c-8b5a12)]">
-                      {items.length} ข้อ
-                    </Badge>
+                <div key={category} className="border-b border-[#D7EAFE] last:border-b-0">
+                  <div className="flex items-center gap-2 bg-white px-3 py-2.5 md:px-4">
                     <button
                       type="button"
                       onClick={() => toggleCategoryCollapsed(category)}
-                      className="ml-auto flex h-7 w-7 items-center justify-center rounded-full border border-[var(--c-d7c5a7)] bg-white text-[var(--c-5c3214)] hover:bg-[var(--c-fff2d8)]"
+                      className="flex h-8 w-8 items-center justify-center rounded-full border border-[#B9E0FF] bg-[#F5FAFF] text-[#0B82F0] hover:bg-[#EAF6FF]"
                       aria-label={`สลับการแสดงหมวด ${category}`}
                     >
                       <ChevronDown
@@ -467,45 +517,66 @@ export default function AdminAwarenessPage() {
                         strokeWidth={2.4}
                       />
                     </button>
+                    <div className="min-w-0 flex-1">
+                      <h3 className="truncate text-[13.5px] font-black text-[#0B2F6B]">{category}</h3>
+                      <p className="text-[11px] font-bold text-[#55739B]">
+                        เปิดใช้งาน {items.filter((item) => item.enabled).length} / {items.length} ข้อ
+                      </p>
+                    </div>
+                    <Badge className="rounded-full border border-[#B9E0FF] bg-[#EAF6FF] px-2.5 py-1 text-[10.5px] font-black text-[#0B82F0]">
+                      {items.length} ข้อ
+                    </Badge>
                   </div>
-                  {!collapsedCategories[category] ? <div className="flex flex-col gap-2">
-                    {items.map((q) => (
+                  {!collapsedCategories[category] ? <div className="divide-y divide-[#D7EAFE]">
+                    {items.map((q, index) => (
                       <div
                         key={q.id}
                         className={cn(
-                          "flex items-start gap-3 rounded-xl border-[1.5px] px-3 py-2.5",
+                          "grid gap-3 px-3 py-3 md:grid-cols-[48px_minmax(0,1fr)_112px_112px] md:items-center md:px-4",
                           q.enabled
-                            ? "border-[var(--c-e6dcc6)] bg-white"
-                            : "border-[var(--c-e6dcc6)] bg-[var(--c-f6f1e6)] opacity-70",
+                            ? "bg-white"
+                            : "bg-[#F4F8FC] opacity-75",
                         )}
                       >
+                        <div className="hidden h-9 w-9 items-center justify-center rounded-xl bg-[#EAF6FF] text-[12px] font-black text-[#0B82F0] md:flex">
+                          {index + 1}
+                        </div>
+                        <div className="min-w-0">
+                          <div className="mb-1.5 flex flex-wrap items-center gap-1.5 md:hidden">
+                            <span className="rounded-full bg-[#EAF6FF] px-2 py-0.5 text-[10px] font-black text-[#0B82F0]">#{index + 1}</span>
+                            <span className={cn("rounded-full px-2 py-0.5 text-[10px] font-black", q.enabled ? "bg-[#EAFBF3] text-[#16845A]" : "bg-[#EEF2F7] text-[#667085]")}>
+                              {q.enabled ? "เปิดใช้งาน" : "ปิดใช้งาน"}
+                            </span>
+                          </div>
+                          <p className="text-[13.5px] font-bold leading-relaxed text-[#0B2F6B]">
+                            {q.text}
+                          </p>
+                          {q.note && (
+                            <p className="mt-1 line-clamp-2 text-[12px] font-bold text-[#55739B]">เฉลย: {q.note}</p>
+                          )}
+                        </div>
                         <span
                           className={cn(
-                            "mt-0.5 flex h-6 flex-shrink-0 items-center gap-1 rounded-full px-2 text-[10.5px] font-black",
-                            q.answer ? "bg-[#daf5e6] text-[#19734a]" : "bg-[#fbe3df] text-[#b3271a]",
+                            "flex h-8 w-fit items-center gap-1 rounded-full px-2.5 text-[10.5px] font-black md:justify-self-start",
+                            q.answer ? "bg-[#DAF5E6] text-[#19734A]" : "bg-[#FBE3DF] text-[#B3271A]",
                           )}
                         >
                           {q.answer ? <CheckCircle2 className="h-3.5 w-3.5" /> : <XCircle className="h-3.5 w-3.5" />}
                           {q.answer ? "ถูก" : "ผิด"}
                         </span>
-                        <div className="min-w-0 flex-1">
-                          <p className="text-[13.5px] font-bold leading-relaxed text-[var(--c-2c2c2c,#2c2c2c)]">
-                            {q.text}
-                          </p>
-                          {q.note && (
-                            <p className="mt-0.5 text-[12px] font-bold text-[var(--c-9a6a24)]">เฉลย: {q.note}</p>
-                          )}
-                        </div>
-                        <div className="flex flex-shrink-0 items-center gap-1">
+                        <div className="flex items-center justify-between gap-2 md:justify-end">
+                          <span className={cn("hidden rounded-full px-2.5 py-1 text-[10.5px] font-black md:inline-flex", q.enabled ? "bg-[#EAFBF3] text-[#16845A]" : "bg-[#EEF2F7] text-[#667085]")}>
+                            {q.enabled ? "เปิด" : "ปิด"}
+                          </span>
                           <button
                             type="button"
                             title={q.enabled ? "ปิดใช้งาน" : "เปิดใช้งาน"}
                             onClick={() => toggleEnabled(q.id)}
                             className={cn(
-                              "flex h-8 w-8 items-center justify-center rounded-lg border",
+                              "inline-flex size-8 min-h-0 min-w-0 flex-shrink-0 items-center justify-center rounded-[10px] border p-0 transition-colors",
                               q.enabled
-                                ? "border-[#bfe6cf] bg-[#eafaf1] text-[#19734a]"
-                                : "border-[var(--c-d7c5a7)] bg-white text-[var(--c-9a8a72,#9a8a72)]",
+                                ? "border-[#B8E7D2] bg-[#EFFCF6] text-[#16845A] hover:bg-[#E5F8EF]"
+                                : "border-[#D7EAFE] bg-white text-[#667085] hover:bg-[#F5FAFF]",
                             )}
                           >
                             {q.enabled ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
@@ -524,7 +595,7 @@ export default function AdminAwarenessPage() {
                                 enabled: q.enabled,
                               })
                             }
-                            className="flex h-8 w-8 items-center justify-center rounded-lg border border-[var(--c-d7c5a7)] bg-white text-[var(--c-5c3214)] hover:bg-[var(--c-fff2d8)]"
+                            className="inline-flex size-8 min-h-0 min-w-0 flex-shrink-0 items-center justify-center rounded-[10px] border border-[#B9E0FF] bg-white p-0 text-[#0B82F0] transition-colors hover:bg-[#EAF6FF]"
                           >
                             <Pencil className="h-4 w-4" />
                           </button>
@@ -532,7 +603,7 @@ export default function AdminAwarenessPage() {
                             type="button"
                             title="ลบ"
                             onClick={() => setPendingDeleteQuestion(q)}
-                            className="flex h-8 w-8 items-center justify-center rounded-lg border border-[#eccdc6] bg-white text-[#b3271a] hover:bg-[#fbe3df]"
+                            className="inline-flex size-8 min-h-0 min-w-0 flex-shrink-0 items-center justify-center rounded-[10px] border border-[#F3B9AE] bg-white p-0 text-[#D92D20] transition-colors hover:bg-[#FFF1EE]"
                           >
                             <Trash2 className="h-4 w-4" />
                           </button>
@@ -545,14 +616,15 @@ export default function AdminAwarenessPage() {
             </div>
           )}
 
-          <div className="mt-4 border-t border-[var(--c-e6dcc6)] pt-3">
+          <div className="mt-4 border-t border-[#D7EAFE] pt-3">
             <Button
               onClick={resetToDefault}
-              className="h-8 rounded-lg border border-[var(--c-d7c5a7)] bg-white px-3 text-[12px] font-black text-[var(--c-5c3214)] hover:bg-[var(--c-fff2d8)]"
+              variant="outline"
+              className="h-8 rounded-lg border-[#B9E0FF] bg-white px-3 text-[12px] font-black text-[#0B82F0] hover:bg-[#EAF6FF]"
             >
               คืนค่าชุดคำถามเริ่มต้น
             </Button>
-            <span className="ml-2 text-[11.5px] font-bold text-[var(--c-6d5a46)]">
+            <span className="ml-2 text-[11.5px] font-bold text-[#55739B]">
               (แทนที่คลังปัจจุบันด้วยชุดมาตรฐาน 120 ข้อ)
             </span>
           </div>
@@ -818,11 +890,11 @@ function StatCard({
         ? "text-[var(--c-9a8a72,#9a8a72)] bg-[var(--c-f6f1e6)]"
         : "text-[var(--c-6d4716)] bg-[var(--c-fff1c9)]";
   return (
-    <Card className="flex min-h-[122px] flex-col items-center justify-center gap-3 rounded-2xl border border-[var(--c-e6dcc6)] bg-white p-3 text-center">
-      <div className={cn("flex h-10 w-10 items-center justify-center rounded-xl", toneCls)}>{icon}</div>
+    <Card className="flex min-h-[68px] items-center justify-center gap-2 rounded-xl border border-[#B9E0FF] bg-white px-3 py-2 text-center">
+      <div className={cn("flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg [&_svg]:h-4 [&_svg]:w-4", toneCls)}>{icon}</div>
       <div className="min-w-0">
-        <div className="text-[20px] font-black leading-none text-[var(--c-3b1d07)]">{value}</div>
-        <div className="text-[11.5px] font-bold text-[var(--c-6d5a46)]">{label}</div>
+        <div className="text-[18px] font-black leading-none text-[#0B2F6B]">{value}</div>
+        <div className="text-[10.5px] font-bold leading-tight text-[#55739B]">{label}</div>
       </div>
     </Card>
   );

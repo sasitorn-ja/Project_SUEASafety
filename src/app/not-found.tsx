@@ -9,7 +9,7 @@ export default function NotFound() {
       <p className="text-sm text-muted-foreground font-semibold mb-6 max-w-md">
         หน้าที่คุณกำลังค้นหาอาจถูกย้ายหรือลบไปแล้ว
       </p>
-      <Link href="/were-ok">
+      <Link href="/">
         <Button className="bg-[#121214] hover:bg-[#252528] text-white font-extrabold rounded-xl px-6">
           กลับหน้าหลัก
         </Button>

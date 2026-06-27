@@ -301,7 +301,7 @@ export default function AssessmentSummary() {
       `}</style>
       <div style={{ width: "100%", maxWidth: isMobile ? "100%" : 1500, margin: "0 auto", display: "grid", gap: 16 }}>
         <section
-          className="relative overflow-hidden border border-[#B9DDFF]/60 bg-[#EEF7FF] shadow-[0_12px_30px_rgba(185,223,255,0.4)]"
+          className="relative min-h-[100px] overflow-hidden border border-[#B9DDFF]/60 bg-[#EEF7FF] shadow-[0_12px_30px_rgba(185,223,255,0.4)] sm:min-h-[116px] xl:min-h-[148px]"
           style={{
             borderRadius: isMobile ? 14 : 18,
           }}
@@ -317,11 +317,11 @@ export default function AssessmentSummary() {
           {/* Gradient overlay to blend the image and ensure readability */}
           <div className="absolute inset-0 bg-gradient-to-r from-[#EEF7FF] via-[#EEF7FF]/90 sm:via-[#EEF7FF]/40 to-transparent pointer-events-none" />
 
-          <div style={{ position: "relative", zIndex: 1, padding: isMobile ? "14px 14px 16px" : "22px 20px 26px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: isMobile ? 10 : 16, fontFamily: "'Sarabun', sans-serif" }}>
+          <div className="relative z-10 flex min-h-[100px] items-center justify-between gap-[10px] px-3 py-2 font-sarabun sm:min-h-[116px] sm:gap-4 sm:px-[18px] sm:py-2.5 xl:min-h-[148px] xl:px-[28px] xl:py-3">
             <div style={{ display: "flex", alignItems: "center", gap: isMobile ? 10 : 16, minWidth: 0, flex: 1 }}>
               <button 
                 type="button" 
-                className="flex h-8 w-8 items-center justify-center rounded-[8px] bg-white border border-[#D7EAFE] text-[#0B82F0] shadow-[0_2px_8px_rgba(11,130,240,0.06)] hover:bg-[#0B82F0] hover:text-white transition-all duration-300 active:scale-95" 
+                className="flex h-8 w-8 items-center justify-center rounded-[8px] bg-white border border-[#D7EAFE] text-[#0B82F0] hover:bg-[#0B82F0] hover:text-white transition-all duration-300 active:scale-95" 
                 onClick={handleBack} 
                 aria-label="ย้อนกลับ"
               >
@@ -733,7 +733,6 @@ export default function AssessmentSummary() {
                   fontSize: 14.5,
                   fontWeight: 800,
                   cursor: "pointer",
-                  boxShadow: "0 12px 24px rgba(7,92,200,0.22)",
                 }}
               >
                 กลับหน้าหลัก

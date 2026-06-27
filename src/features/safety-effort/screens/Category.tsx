@@ -68,11 +68,12 @@ export default function Category() {
       .then((payload) => {
         if (cancelled) return;
         const items = Array.isArray(payload?.data?.items) ? payload.data.items : [];
+        const legacyTotals = payload?.data?.legacy?.totals || null;
         const countedItems = items.filter((item) => {
           const activityType = String(item?.activityType || item?.activity_type || "").toUpperCase();
           return activityType === "LINE_WALK" || activityType === "SAFETY_CONTACT";
         });
-        const total = countedItems.length;
+        const total = countedItems.length + Number(legacyTotals?.linewalk || 0) + Number(legacyTotals?.contact || 0);
         setMonthlyStats({ count: total, loading: false });
       })
       .catch(() => {
@@ -85,40 +86,20 @@ export default function Category() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-[#EEF7FF] px-3 py-2.5 text-[#0B2F6B] sm:px-4 lg:px-6">
-      <div className="mx-auto flex w-full max-w-[1500px] flex-col gap-2.5">
+    <div className="page-shell-wide min-h-screen pt-2.5 pb-7 font-sarabun text-[#0B2F6B]">
+      <div className="flex w-full flex-col gap-2.5">
         <div className="mb-2">
-          <div className="relative overflow-hidden rounded-[20px] border border-[#B9DDFF]/60 bg-[#EEF7FF] p-3.5 sm:p-5 lg:p-6 min-h-[120px] sm:min-h-[145px] xl:min-h-[160px] flex items-center shadow-[0_12px_30px_rgba(185,223,255,0.4)]">
-            {/* Background image container */}
-            <div 
-              className="absolute inset-0 bg-[url('/images/heroes/safety-effort-category-hero.png')] bg-no-repeat"
-              style={{
-                backgroundSize: 'auto 108%',
-                backgroundPosition: 'right -20px bottom -5px',
-              }}
-            />
-            {/* Gradient overlay to blend the image and ensure readability */}
-            <div className="absolute inset-0 bg-gradient-to-r from-[#EEF7FF] via-[#EEF7FF]/90 sm:via-[#EEF7FF]/40 to-transparent pointer-events-none" />
-            
-            {/* Text content directly on the banner background */}
-            <div className="relative z-10 flex flex-col items-start max-w-[580px] font-sarabun">
-              <span className="inline-flex items-center gap-1.5 rounded-[8px] bg-gradient-to-r from-[#0B82F0] to-[#35A8FF] px-2 py-0.5 text-[9px] font-extrabold tracking-wider text-white shadow-[0_4px_12px_rgba(11,130,240,0.2)]">
-                <span className="relative flex h-1.5 w-1.5">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-white"></span>
-                </span>
-                SAFETY EFFORT
-              </span>
-              
-              <h1 className="mt-2 text-[20px] sm:text-[24px] xl:text-[28px] font-black leading-tight tracking-tight text-[#0B2F6B]">
-                Safety <span className="bg-gradient-to-r from-[#0B82F0] to-[#005DCC] bg-clip-text text-transparent">Effort</span>
-              </h1>
-              
-              <p className="mt-1 text-[11.5px] sm:text-[12.5px] xl:text-[13px] font-bold leading-relaxed text-[#55739B]">
-                ตรวจ Linewalk และบันทึก Safety Contact เพื่อสร้างสภาพแวดล้อมการทำงานที่ปลอดภัยยิ่งขึ้น
-              </p>
-            </div>
-          </div>
+          <SafetyCultureHero
+            eyebrow="SAFETY EFFORT"
+            title={<>Safety Effort</>}
+            description="ตรวจ Linewalk และบันทึก Safety Contact เพื่อสร้างสภาพแวดล้อมการทำงานที่ปลอดภัยยิ่งขึ้น"
+            variant="community"
+            backgroundImage="/images/heroes/safety-effort-category-hero.png"
+            backgroundOverlay="linear-gradient(90deg, rgba(210,235,255,.82) 0%, rgba(210,235,255,.60) 32%, rgba(210,235,255,.10) 56%, rgba(210,235,255,0) 74%)"
+            contentFrame
+            mascotSrc="/images/mascots/wangjai/5.png"
+            mascotAction="announce"
+          />
         </div>
 
         <div className="grid grid-cols-1 gap-3 lg:grid-cols-[minmax(0,1.08fr)_minmax(360px,0.92fr)]">

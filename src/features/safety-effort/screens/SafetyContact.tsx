@@ -189,7 +189,7 @@ export default function SafetyContact() {
       >
         <div style={{ width: "100%", maxWidth: isMobileViewport ? "100%" : 1500, margin: "0 auto", display: "flex", flexDirection: "column", gap: isMobileInputScreen ? 8 : (isMobileViewport ? 10 : 16) }}>
           {!isMobileInputScreen && (
-            <div className="relative overflow-hidden rounded-[20px] border border-[#B9DDFF]/60 bg-[#EEF7FF] p-3.5 sm:p-5 lg:p-6 min-h-[120px] sm:min-h-[145px] xl:min-h-[160px] flex items-center shadow-[0_12px_30px_rgba(185,223,255,0.4)]" style={{ marginBottom: isMobileViewport ? 2 : (started ? 2 : 6) }}>
+            <div className="relative flex min-h-[100px] items-center overflow-hidden rounded-[20px] border border-[#B9DDFF]/60 bg-[#EEF7FF] px-3 py-2 shadow-[0_12px_30px_rgba(185,223,255,0.4)] sm:min-h-[116px] sm:px-[18px] sm:py-2.5 xl:min-h-[148px] xl:px-[28px] xl:py-3" style={{ marginBottom: isMobileViewport ? 2 : (started ? 2 : 6) }}>
               <div
                 className="absolute inset-0 bg-[url('/images/heroes/safety-effort-category-hero.png')] bg-no-repeat"
                 style={{
@@ -226,7 +226,7 @@ export default function SafetyContact() {
 
                   <div className="flex items-center gap-3">
                     <button
-                      className="flex h-8 w-8 items-center justify-center rounded-[8px] bg-white border border-[#D7EAFE] text-[#0B82F0] shadow-[0_2px_8px_rgba(11,130,240,0.06)] hover:bg-[#0B82F0] hover:text-white transition-all duration-300 active:scale-95"
+                      className="flex h-8 w-8 items-center justify-center rounded-[8px] bg-white border border-[#D7EAFE] text-[#0B82F0] hover:bg-[#0B82F0] hover:text-white transition-all duration-300 active:scale-95"
                       onClick={handleBack}
                       aria-label="ย้อนกลับ"
                     >
@@ -401,7 +401,6 @@ export default function SafetyContact() {
                           ? "linear-gradient(135deg, #cbd5e1 0%, #94a3b8 100%)"
                           : "linear-gradient(135deg, #0B2F6B 0%, #081C43 100%)",
                         cursor: !step1Complete ? "not-allowed" : "pointer",
-                        boxShadow: !step1Complete ? "none" : "0 4px 14px rgba(11, 47, 107, 0.25)",
                         border: "none",
                         color: "#fff",
                         display: "flex",
