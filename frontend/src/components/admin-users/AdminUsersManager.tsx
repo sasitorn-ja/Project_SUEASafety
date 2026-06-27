@@ -1,7 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { RefreshCcw, Search, ShieldCheck, ShieldMinus, UserCog, UsersRound } from "lucide-react";
+import { RefreshCcw, Search, ShieldCheck, ShieldMinus, UsersRound } from "lucide-react";
+
 import { SafetyCultureHero } from "@/components/safety-culture/safety-culture-hero";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -19,75 +20,23 @@ import {
 } from "@/components/ui/pagination";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
-import { useSessionUser } from "@/lib/session-user";
+import { getAdminRoles, getAdminUsers, updateAdminUserRoles } from "@/services/adminUsersServices";
+import type { AdminRole, AdminUser } from "@/types/adminUsersType";
+import {
+  ADMIN_ROLE_CODES,
+  ADMIN_USERS_PAGE_SIZE_OPTIONS,
+  getAdminRoleIds,
+  getAdminUserName,
+  getAdminUserRoleCodes,
+  getSafetyAdminRole,
+  getVisibleAdminUserPages,
+} from "@/utils/admin-users/adminUsersTable";
 
-type ApiRole = {
-  id: string | number;
-  code: string;
-  name?: string;
-};
-
-type ApiUser = {
-  id: string | number;
-  employee_no?: string | null;
-  email?: string | null;
-  name_th?: string | null;
-  name_en?: string | null;
-  position_name?: string | null;
-  status?: string | null;
-  roles?: ApiRole[];
-  role_codes?: string[];
-};
-
-type ListPayload<T> = {
-  items: T[];
-  page: number;
-  pageSize: number;
-  total: number;
-  totalPages: number;
-};
-
-function listPayload<T>(payload: unknown): ListPayload<T> {
-  const data = (payload as { data?: Partial<ListPayload<T>> })?.data;
-  return {
-    items: Array.isArray(data?.items) ? data.items : [],
-    page: Number(data?.page || 1),
-    pageSize: Number(data?.pageSize || 25),
-    total: Number(data?.total || 0),
-    totalPages: Math.max(1, Number(data?.totalPages || 1)),
-  };
-}
-
-function getUserName(user: ApiUser) {
-  return user.name_th || user.name_en || user.email || `User #${user.id}`;
-}
-
-function getRoleCodes(user: ApiUser) {
-  const fromRoles = Array.isArray(user.roles) ? user.roles.map((role) => role.code).filter(Boolean) : [];
-  const fromCodes = Array.isArray(user.role_codes) ? user.role_codes.filter(Boolean) : [];
-  return Array.from(new Set([...fromRoles, ...fromCodes].map((code) => code.toUpperCase())));
-}
-
-function visiblePages(current: number, total: number): Array<number | "ellipsis-start" | "ellipsis-end"> {
-  if (total <= 7) return Array.from({ length: total }, (_, index) => index + 1);
-  const pages: Array<number | "ellipsis-start" | "ellipsis-end"> = [1];
-  if (current > 4) pages.push("ellipsis-start");
-  const start = Math.max(2, current - 1);
-  const end = Math.min(total - 1, current + 1);
-  for (let page = start; page <= end; page += 1) pages.push(page);
-  if (current < total - 3) pages.push("ellipsis-end");
-  pages.push(total);
-  return pages;
-}
-
-const ADMIN_ROLE_CODES = new Set(["ADMIN", "SAFETY_ADMIN"]);
-
-export default function AdminUsersPage() {
-  const { user: sessionUser } = useSessionUser();
+export function AdminUsersManager() {
   const [search, setSearch] = useState("");
   const [query, setQuery] = useState("");
-  const [users, setUsers] = useState<ApiUser[]>([]);
-  const [roles, setRoles] = useState<ApiRole[]>([]);
+  const [users, setUsers] = useState<AdminUser[]>([]);
+  const [roles, setRoles] = useState<AdminRole[]>([]);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(25);
   const [total, setTotal] = useState(0);
@@ -97,34 +46,25 @@ export default function AdminUsersPage() {
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
 
-  const safetyAdminRole = useMemo(
-    () => roles.find((role) => role.code?.toUpperCase() === "SAFETY_ADMIN") ?? roles.find((role) => role.code?.toUpperCase() === "ADMIN"),
-    [roles],
-  );
-
-  const adminRoleIds = useMemo(
-    () => new Set(roles.filter((role) => ADMIN_ROLE_CODES.has(role.code?.toUpperCase())).map((role) => String(role.id))),
-    [roles],
-  );
+  const safetyAdminRole = useMemo(() => getSafetyAdminRole(roles), [roles]);
+  const adminRoleIds = useMemo(() => getAdminRoleIds(roles), [roles]);
 
   const loadUsers = useCallback(async () => {
     setLoading(true);
     setError("");
-    try {
-      const params = new URLSearchParams({ page: String(page), pageSize: String(pageSize) });
-      if (query) params.set("search", query);
-      const response = await fetch(`/api/users?${params}`, { credentials: "include", cache: "no-store" });
-      if (!response.ok) throw new Error("โหลดรายชื่อผู้ใช้ไม่สำเร็จ");
-      const result = listPayload<ApiUser>(await response.json());
-      setUsers(result.items);
-      setTotal(result.total);
-      setTotalPages(result.totalPages);
-      if (result.page !== page) setPage(result.page);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "เกิดข้อผิดพลาด");
-    } finally {
+
+    const result = await getAdminUsers({ page, pageSize, search: query || undefined });
+    if (!result.ok || !result.data) {
+      setError(result.error || "เกิดข้อผิดพลาด");
       setLoading(false);
+      return;
     }
+
+    setUsers(result.data.items);
+    setTotal(result.data.total);
+    setTotalPages(result.data.totalPages);
+    if (result.data.page !== page) setPage(result.data.page);
+    setLoading(false);
   }, [page, pageSize, query]);
 
   useEffect(() => {
@@ -133,13 +73,12 @@ export default function AdminUsersPage() {
 
   useEffect(() => {
     void (async () => {
-      try {
-        const response = await fetch("/api/roles?pageSize=500", { credentials: "include", cache: "no-store" });
-        if (!response.ok) throw new Error("โหลด role ไม่สำเร็จ");
-        setRoles(listPayload<ApiRole>(await response.json()).items);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "โหลด role ไม่สำเร็จ");
+      const result = await getAdminRoles();
+      if (!result.ok || !result.data) {
+        setError(result.error || "โหลด role ไม่สำเร็จ");
+        return;
       }
+      setRoles(result.data.items);
     })();
   }, []);
 
@@ -154,13 +93,15 @@ export default function AdminUsersPage() {
     setQuery(nextQuery);
   };
 
-  const updateAdminRole = async (target: ApiUser, shouldBeAdmin: boolean) => {
+  const onUpdateAdminRole = async (target: AdminUser, shouldBeAdmin: boolean) => {
     if (!safetyAdminRole) {
       setError("ยังไม่มีสิทธิ์ SAFETY_ADMIN ในระบบ กรุณาตั้งค่าสิทธิ์ก่อน");
       return;
     }
 
-    const currentRoleIds = Array.isArray(target.roles) ? target.roles.map((role) => String(role.id)).filter(Boolean) : [];
+    const currentRoleIds = Array.isArray(target.roles)
+      ? target.roles.map((role) => String(role.id)).filter(Boolean)
+      : [];
     const nextRoleIds = shouldBeAdmin
       ? Array.from(new Set([...currentRoleIds, String(safetyAdminRole.id)]))
       : currentRoleIds.filter((roleId) => !adminRoleIds.has(roleId));
@@ -168,18 +109,14 @@ export default function AdminUsersPage() {
     setSavingUserId(String(target.id));
     setError("");
     setMessage("");
+
     try {
-      const response = await fetch(`/api/users/${target.id}/roles`, {
-        method: "PUT",
-        credentials: "include",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ roleIds: nextRoleIds }),
-      });
-      if (!response.ok) throw new Error("บันทึกสิทธิ์ไม่สำเร็จ");
-      setMessage(`${shouldBeAdmin ? "เพิ่ม" : "ถอด"}สิทธิ์ Admin ให้ ${getUserName(target)} แล้ว`);
+      const result = await updateAdminUserRoles(target.id, { roleIds: nextRoleIds });
+      if (!result.ok) throw new Error("บันทึกสิทธิ์ไม่สำเร็จ");
+      setMessage(`${shouldBeAdmin ? "เพิ่ม" : "ถอด"}สิทธิ์ Admin ให้ ${getAdminUserName(target)} แล้ว`);
       await loadUsers();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "บันทึกสิทธิ์ไม่สำเร็จ");
+    } catch (saveError) {
+      setError(saveError instanceof Error ? saveError.message : "บันทึกสิทธิ์ไม่สำเร็จ");
     } finally {
       setSavingUserId(null);
     }
@@ -225,12 +162,7 @@ export default function AdminUsersPage() {
             searchable={false}
             className="h-10 min-w-[130px] rounded-xl border-[var(--border)] bg-background text-[13px] font-black"
             contentClassName="min-w-[130px]"
-            options={[
-              { value: "10", label: "10 แถว" },
-              { value: "25", label: "25 แถว" },
-              { value: "50", label: "50 แถว" },
-              { value: "100", label: "100 แถว" },
-            ]}
+            options={ADMIN_USERS_PAGE_SIZE_OPTIONS}
           />
           <Button onClick={submitSearch} className="h-10 rounded-xl bg-[var(--brand-accent)] px-4 font-black text-[var(--brand-accent-contrast)]">
             <Search className="h-4 w-4" strokeWidth={2.5} />
@@ -284,14 +216,14 @@ export default function AdminUsersPage() {
                   </TableRow>
                 ))
               ) : users.map((item) => {
-                const roleCodes = getRoleCodes(item);
+                const roleCodes = getAdminUserRoleCodes(item);
                 const isAdmin = roleCodes.some((role) => ADMIN_ROLE_CODES.has(role));
                 const isSaving = savingUserId === String(item.id);
 
                 return (
                   <TableRow key={item.id}>
                     <TableCell>
-                      <p className="max-w-[260px] truncate text-[14px] font-black text-[var(--foreground)]">{getUserName(item)}</p>
+                      <p className="max-w-[260px] truncate text-[14px] font-black text-[var(--foreground)]">{getAdminUserName(item)}</p>
                       <p className="mt-0.5 text-[10px] font-bold text-[var(--brand-muted-text)]">ID: {item.id}</p>
                     </TableCell>
                     <TableCell>
@@ -315,12 +247,12 @@ export default function AdminUsersPage() {
                     </TableCell>
                     <TableCell className="text-right">
                       {isAdmin ? (
-                        <Button variant="destructive" size="sm" disabled={isSaving} onClick={() => void updateAdminRole(item, false)} className="font-black">
+                        <Button variant="destructive" size="sm" disabled={isSaving} onClick={() => void onUpdateAdminRole(item, false)} className="font-black">
                           <ShieldMinus strokeWidth={2.5} />
                           ถอด Admin
                         </Button>
                       ) : (
-                        <Button size="sm" disabled={isSaving || !safetyAdminRole} onClick={() => void updateAdminRole(item, true)} className="bg-[var(--brand-accent)] font-black text-[var(--brand-accent-contrast)]">
+                        <Button size="sm" disabled={isSaving || !safetyAdminRole} onClick={() => void onUpdateAdminRole(item, true)} className="bg-[var(--brand-accent)] font-black text-[var(--brand-accent-contrast)]">
                           <ShieldCheck strokeWidth={2.5} />
                           เพิ่ม Admin
                         </Button>
@@ -342,7 +274,7 @@ export default function AdminUsersPage() {
               <PaginationItem>
                 <PaginationPrevious disabled={page <= 1 || loading} onClick={() => setPage((current) => Math.max(1, current - 1))} />
               </PaginationItem>
-              {visiblePages(page, totalPages).map((item) => (
+              {getVisibleAdminUserPages(page, totalPages).map((item) => (
                 typeof item === "number" ? (
                   <PaginationItem key={item}>
                     <PaginationLink isActive={item === page} disabled={loading} onClick={() => setPage(item)}>

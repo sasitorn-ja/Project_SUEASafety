@@ -7,8 +7,8 @@
       "tests/e2e/domain-architecture-pilot.spec.ts",
       "--project=chromium-desktop"
     ],
-    "configFile": "/Users/sasitorn/Project_SUEASafety/playwright.config.ts",
-    "rootDir": "/Users/sasitorn/Project_SUEASafety/tests/e2e",
+    "configFile": "/Users/sasitorn/Project_SUEASafety/frontend/playwright.config.ts",
+    "rootDir": "/Users/sasitorn/Project_SUEASafety/frontend/tests/e2e",
     "failOnFlakyTests": false,
     "forbidOnly": false,
     "fullyParallel": false,
@@ -24,7 +24,7 @@
     "preserveOutput": "always",
     "projects": [
       {
-        "outputDir": "/Users/sasitorn/Project_SUEASafety/test-results",
+        "outputDir": "/Users/sasitorn/Project_SUEASafety/frontend/test-results",
         "repeatEach": 1,
         "retries": 0,
         "metadata": {
@@ -32,7 +32,7 @@
         },
         "id": "chromium-desktop",
         "name": "chromium-desktop",
-        "testDir": "/Users/sasitorn/Project_SUEASafety/tests/e2e",
+        "testDir": "/Users/sasitorn/Project_SUEASafety/frontend/tests/e2e",
         "testIgnore": [],
         "testMatch": [
           "**/*.@(spec|test).?(c|m)[jt]s?(x)"
@@ -40,7 +40,7 @@
         "timeout": 90000
       },
       {
-        "outputDir": "/Users/sasitorn/Project_SUEASafety/test-results",
+        "outputDir": "/Users/sasitorn/Project_SUEASafety/frontend/test-results",
         "repeatEach": 1,
         "retries": 0,
         "metadata": {
@@ -48,7 +48,7 @@
         },
         "id": "mobile-chrome",
         "name": "mobile-chrome",
-        "testDir": "/Users/sasitorn/Project_SUEASafety/tests/e2e",
+        "testDir": "/Users/sasitorn/Project_SUEASafety/frontend/tests/e2e",
         "testIgnore": [],
         "testMatch": [
           "**/*.@(spec|test).?(c|m)[jt]s?(x)"
@@ -65,13 +65,13 @@
       [
         "json",
         {
-          "outputFile": "test-results/safety-agent-report.json"
+          "outputFile": "/Users/sasitorn/Project_SUEASafety/frontend/test-results/safety-agent-report.json"
         }
       ],
       [
         "html",
         {
-          "outputFolder": "playwright-report",
+          "outputFolder": "/Users/sasitorn/Project_SUEASafety/frontend/playwright-report",
           "open": "never"
         }
       ]
@@ -87,7 +87,8 @@
     "version": "1.61.0",
     "workers": 1,
     "webServer": {
-      "command": "rm -rf .next/standalone/.next/static .next/standalone/public && mkdir -p .next/standalone/.next && cp -R .next/static .next/standalone/.next/static && cp -R public .next/standalone/public && PORT=3100 HOSTNAME=127.0.0.1 node .next/standalone/server.js",
+      "command": "PORT=3100 HOSTNAME=127.0.0.1 npm run start",
+      "cwd": "/Users/sasitorn/Project_SUEASafety/frontend",
       "url": "http://127.0.0.1:3100",
       "reuseExistingServer": true,
       "timeout": 120000
@@ -123,12 +124,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 1856,
+                      "duration": 1872,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-06-27T15:17:53.528Z",
+                      "startTime": "2026-06-27T15:40:26.533Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -157,12 +158,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 1316,
+                      "duration": 1584,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-06-27T15:17:55.672Z",
+                      "startTime": "2026-06-27T15:40:28.700Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -182,8 +183,8 @@
   ],
   "errors": [],
   "stats": {
-    "startTime": "2026-06-27T15:17:52.207Z",
-    "duration": 4851.63,
+    "startTime": "2026-06-27T15:40:25.487Z",
+    "duration": 4896.207,
     "expected": 2,
     "skipped": 0,
     "unexpected": 0,

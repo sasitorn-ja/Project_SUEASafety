@@ -1,41 +1,17 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { RefreshCcw, Save, Star, Trophy } from "lucide-react";
+import { RefreshCcw, Save, Trophy } from "lucide-react";
 
+import { SafetyCultureHero } from "@/components/safety-culture/safety-culture-hero";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { SafetyCultureHero } from "@/components/safety-culture/safety-culture-hero";
-import { apiFetch, apiJson } from "@/lib/api-client";
+import { getPointRules, savePointRule } from "@/services/pointRulesServices";
+import type { PointRule } from "@/types/pointRulesType";
+import { POINT_RULE_HINTS, POINT_RULE_ORDER } from "@/utils/point-rules/pointRulesConfig";
 
-type PointRule = {
-  id: string | null;
-  code: string;
-  label: string;
-  sourceType: string;
-  points: number;
-  status: string;
-  source: string;
-};
-
-const RULE_ORDER = [
-  "safetyAwarenessCompleted",
-  "safetyPostApproved",
-  "commentCreated",
-  "reactionCreated",
-  "safetyEffortCompleted",
-] as const;
-
-const RULE_HINTS: Record<string, string> = {
-  safetyAwarenessCompleted: "ได้คะแนนเมื่อผู้ใช้ผ่าน Safety Awareness ประจำวัน",
-  safetyPostApproved: "ได้คะแนนเมื่อโพสต์ Safety Post ถูกอนุมัติให้เผยแพร่",
-  commentCreated: "ได้คะแนนเมื่อมีการคอมเมนต์ใน Safety Culture",
-  reactionCreated: "ได้คะแนนเมื่อมีการกด Reaction",
-  safetyEffortCompleted: "ได้คะแนนเมื่อทำรายการ Safety Effort สำเร็จ",
-};
-
-export default function AdminPointsPage() {
+export function PointRulesManager() {
   const [rules, setRules] = useState<PointRule[]>([]);
   const [draft, setDraft] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
@@ -47,7 +23,8 @@ export default function AdminPointsPage() {
     setLoading(true);
     setError("");
     setMessage("");
-    const result = await apiFetch<{ rules: PointRule[] }>("/api/safety-culture/points/rules");
+
+    const result = await getPointRules();
     if (!result.ok || !Array.isArray(result.data?.rules)) {
       setError("โหลดข้อมูลคะแนนไม่สำเร็จ");
       setLoading(false);
@@ -55,8 +32,8 @@ export default function AdminPointsPage() {
     }
 
     const ordered = [...result.data.rules].sort((a, b) => {
-      const left = RULE_ORDER.indexOf(a.code as typeof RULE_ORDER[number]);
-      const right = RULE_ORDER.indexOf(b.code as typeof RULE_ORDER[number]);
+      const left = POINT_RULE_ORDER.indexOf(a.code as typeof POINT_RULE_ORDER[number]);
+      const right = POINT_RULE_ORDER.indexOf(b.code as typeof POINT_RULE_ORDER[number]);
       return (left === -1 ? 999 : left) - (right === -1 ? 999 : right);
     });
 
@@ -84,10 +61,11 @@ export default function AdminPointsPage() {
     [draft, rules],
   );
 
-  const saveRules = async () => {
+  const onSaveRules = async () => {
     setSaving(true);
     setError("");
     setMessage("");
+
     try {
       for (const rule of rules) {
         const nextPoints = Number(draft[rule.code]);
@@ -97,15 +75,13 @@ export default function AdminPointsPage() {
 
         if (nextPoints === rule.points) continue;
 
-        const result = await apiFetch<{ rule: PointRule }>(
-          "/api/safety-culture/points/rules",
-          apiJson("POST", {
-            id: rule.id,
-            code: rule.code,
-            points: nextPoints,
-            status: rule.status || "ACTIVE",
-          }),
-        );
+        const result = await savePointRule({
+          id: rule.id,
+          code: rule.code,
+          points: nextPoints,
+          status: rule.status || "ACTIVE",
+        });
+
         if (!result.ok) {
           throw new Error(`บันทึก "${rule.label}" ไม่สำเร็จ`);
         }
@@ -148,7 +124,7 @@ export default function AdminPointsPage() {
               <RefreshCcw className="mr-2 h-4 w-4" />
               โหลดใหม่
             </Button>
-            <Button type="button" onClick={() => void saveRules()} disabled={loading || saving || !hasChanges} className="h-10 rounded-xl bg-[#0B82F0]">
+            <Button type="button" onClick={() => void onSaveRules()} disabled={loading || saving || !hasChanges} className="h-10 rounded-xl bg-[#0B82F0]">
               <Save className="mr-2 h-4 w-4" />
               {saving ? "กำลังบันทึก..." : "บันทึกคะแนน"}
             </Button>
@@ -164,7 +140,7 @@ export default function AdminPointsPage() {
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
                   <h3 className="text-[16px] font-black leading-tight text-[#0B2F6B]">{rule.label}</h3>
-                  <p className="mt-1 text-[11px] font-bold leading-relaxed text-[#55739B]">{RULE_HINTS[rule.code] || rule.sourceType}</p>
+                  <p className="mt-1 text-[11px] font-bold leading-relaxed text-[#55739B]">{POINT_RULE_HINTS[rule.code] || rule.sourceType}</p>
                 </div>
                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-[#F5FAFF] text-[#0B82F0]">
                   <Trophy className="h-5 w-5" strokeWidth={2.3} />

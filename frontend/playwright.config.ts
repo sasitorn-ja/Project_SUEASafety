@@ -1,10 +1,13 @@
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { defineConfig, devices } from "@playwright/test";
 
 const baseURL = process.env.PLAYWRIGHT_BASE_URL || "http://127.0.0.1:3100";
 const port = new URL(baseURL).port || "3100";
+const frontendRoot = path.dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig({
-  testDir: "./tests/e2e",
+  testDir: path.join(frontendRoot, "tests/e2e"),
   timeout: 90_000,
   expect: {
     timeout: 10_000,
@@ -14,8 +17,8 @@ export default defineConfig({
   retries: process.env.CI ? 1 : 0,
   reporter: [
     ["list"],
-    ["json", { outputFile: "test-results/safety-agent-report.json" }],
-    ["html", { outputFolder: "playwright-report", open: "never" }],
+    ["json", { outputFile: path.join(frontendRoot, "test-results/safety-agent-report.json") }],
+    ["html", { outputFolder: path.join(frontendRoot, "playwright-report"), open: "never" }],
   ],
   use: {
     baseURL,
@@ -37,7 +40,8 @@ export default defineConfig({
   webServer: process.env.PLAYWRIGHT_SKIP_WEB_SERVER
     ? undefined
     : {
-        command: `rm -rf .next/standalone/.next/static .next/standalone/public && mkdir -p .next/standalone/.next && cp -R .next/static .next/standalone/.next/static && cp -R public .next/standalone/public && PORT=${port} HOSTNAME=127.0.0.1 node .next/standalone/server.js`,
+        command: `PORT=${port} HOSTNAME=127.0.0.1 npm run start`,
+        cwd: frontendRoot,
         url: baseURL,
         reuseExistingServer: true,
         timeout: 120_000,

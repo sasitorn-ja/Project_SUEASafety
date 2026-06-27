@@ -22,7 +22,7 @@
         "./src/*"
       ],
       "@backend/*": [
-        "./backend/*"
+        "../backend/*"
       ]
     },
     "plugins": [
