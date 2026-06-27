@@ -1,8 +1,8 @@
 FROM node:24-alpine AS deps
 WORKDIR /app
 
-COPY frontend/package.json frontend/package-lock.json ./frontend/
-WORKDIR /app/frontend
+COPY frontend/package.json ./package.json
+COPY frontend/package-lock.json ./package-lock.json
 RUN npm ci
 
 FROM node:24-alpine AS migrator
@@ -15,7 +15,7 @@ WORKDIR /app/frontend
 
 ENV NEXT_TELEMETRY_DISABLED=1
 
-COPY --from=deps /app/frontend/node_modules ./node_modules
+COPY --from=deps /app/node_modules /app/node_modules
 COPY frontend ./ 
 COPY backend /app/backend
 RUN npm run build
