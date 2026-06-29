@@ -67,8 +67,9 @@ export default function LeaderboardPage() {
             }
             description="สรุปคะแนน Safety ให้เห็นภาพรวม ทั้งอันดับทีมและอันดับสมาชิกในทีมของคุณ"
             variant="community"
-            backgroundImage="/images/heroes/safety-culture-leaderboard-custom.png"
+            backgroundImage="/images/heroes/safety-culture-leaderboard-hero-construction.png"
             backgroundOverlay="linear-gradient(90deg, rgba(210,235,255,.82) 0%, rgba(210,235,255,.56) 42%, rgba(210,235,255,0) 100%)"
+            backgroundPosition="78% center"
             contentFrame
             mascotSrc="/images/mascots/wangjai/1.png"
             mascotAction="cheer"

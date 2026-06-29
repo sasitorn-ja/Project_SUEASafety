@@ -36,6 +36,8 @@ import {
   Zap,
 } from "lucide-react";
 
+const HERO_MASCOT = "/images/mascots/scenes/wangjai-dashboard-hero-v2.png";
+const MOBILE_HERO_MASCOT = "/images/mascots/scenes/wangjai-mobile-hero-thumbsup.png";
 const ACTIVITY_MASCOT = "/images/mascots/scenes/wangjai-level-jump.png";
 const SAFETY_AWARENESS_ICON = "/images/dashboard/safety-awareness-icon.png";
 const HERO_BG = "/images/heroes/Home01.png";
@@ -582,6 +584,17 @@ export default function SafePlusDashboard() {
             </div>
           </div>
 
+          <Image
+            src={HERO_MASCOT}
+            alt="น้องวางใจ"
+            width={1122}
+            height={1402}
+            priority
+            quality={100}
+            sizes="(min-width: 1600px) 380px, (min-width: 1024px) 27vw, 0px"
+            className="home-hero-mascot pointer-events-none h-auto max-h-[95%] w-[clamp(240px,27vw,380px)] shrink-0 translate-y-[7%] self-end object-contain object-bottom filter-[drop-shadow(0_12px_14px_rgba(4,37,86,.18))]"
+          />
+
         </div>
 
         {/* mobile layout — activity images เป็น hero background slideshow */}
@@ -633,6 +646,17 @@ export default function SafePlusDashboard() {
               <Gift size={14} />แลกรางวัล
             </Link>
           </div>
+
+          <Image
+            src={MOBILE_HERO_MASCOT}
+            alt="น้องวางใจ"
+            width={1024}
+            height={1536}
+            priority
+            quality={100}
+            sizes="(max-width: 480px) 48vw, (max-width: 1023px) 32vw, 0px"
+            className="pointer-events-none absolute right-[-2%] bottom-0 z-[3] h-[clamp(230px,42vw,340px)] w-auto max-w-[48%] translate-y-[6%] object-contain object-bottom [filter:drop-shadow(0_10px_12px_rgba(0,20,55,.28))]"
+          />
 
           {/* dots — fixed overlay */}
           {heroBannerSlides.length > 1 && (

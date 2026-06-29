@@ -81,7 +81,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           setSessionUser(DEMO_ADMIN_USER);
           return;
         }
-        router.replace(`/login?returnTo=${encodeURIComponent(getSafeReturnTo(pathname))}`);
+        router.replace(`/login?returnTo=${encodeURIComponent(getSafeReturnTo(window.location.pathname || "/"))}`);
       })
       .catch(() => {
         if (!cancelled) {
@@ -90,14 +90,17 @@ export function AppShell({ children }: { children: ReactNode }) {
             setSessionUser(DEMO_ADMIN_USER);
             return;
           }
-          router.replace(`/login?returnTo=${encodeURIComponent(getSafeReturnTo(pathname))}`);
+          router.replace(`/login?returnTo=${encodeURIComponent(getSafeReturnTo(window.location.pathname || "/"))}`);
         }
       });
 
     return () => {
       cancelled = true;
     };
-  }, [pathname, router]);
+  // Intentionally run only once on app bootstrap. Re-checking auth on every pathname
+  // change causes the whole shell to fall back to its loading state and feels like a full reload.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [router]);
 
   useEffect(() => {
     if (!loginChecked || !sessionChecked || pathname === "/login") return;

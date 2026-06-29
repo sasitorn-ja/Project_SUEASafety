@@ -8,7 +8,6 @@ import {
   CheckCircle2,
   Link2,
   Mail,
-  MapPin,
   ShieldCheck,
   Trash2,
   UserRound,
@@ -43,15 +42,11 @@ export default function ProfilePage() {
   const displayUsername = sessionUser?.username || "-";
   const displayImage = profileImage || getSessionProfileImage(sessionUser);
   const connections = getConnections(sessionUser);
-  const displayCompany = "-";
-  const displayWorkLocation = "-";
   const profileFields = [
     { label: "ชื่อภาษาไทย", value: displayName, icon: UserRound },
     { label: "ชื่อภาษาอังกฤษ", value: displayNameEn, icon: UserRound },
     { label: "ตำแหน่ง", value: displayPosition, icon: BadgeCheck },
     { label: "หน่วยงาน", value: displayDivision, icon: Building2 },
-    { label: "บริษัท", value: displayCompany, icon: ShieldCheck },
-    { label: "สถานที่ทำงาน", value: displayWorkLocation, icon: MapPin },
     { label: "อีเมล", value: displayEmail, icon: Mail },
     { label: "ชื่อผู้ใช้งาน", value: displayUsername, icon: UserRound },
   ];
@@ -134,31 +129,31 @@ export default function ProfilePage() {
                     <UserRound className="h-14 w-14 text-[#0B82F0]/60 md:h-16 md:w-16" strokeWidth={1.7} />
                   </div>
                 )}
-                <div className="absolute inset-x-0 bottom-0 flex items-center justify-between gap-1.5 border-t border-white/20 bg-gradient-to-t from-[rgba(7,22,40,.80)] via-[rgba(7,22,40,.60)] to-transparent px-2 pb-2 pt-5 text-[11px] font-extrabold text-white opacity-100 backdrop-blur-[2px] transition-opacity md:opacity-0 md:group-hover:opacity-100">
-                  <button
-                    type="button"
-                    onClick={() => inputRef.current?.click()}
-                    className="inline-flex min-w-0 flex-1 items-center gap-1.5 rounded-full bg-white/20 px-2 py-1.5 text-left text-[11px] font-extrabold text-white shadow-[inset_0_0_0_1px_rgba(255,255,255,.15)] hover:bg-white/30"
-                    aria-label="เลือกรูปโปรไฟล์"
-                  >
-                    <Camera className="h-3.5 w-3.5 shrink-0" />
-                    <span className="truncate [text-shadow:0_1px_2px_rgba(0,0,0,.4)]">เปลี่ยนรูป</span>
-                  </button>
-                  {profileImage && (
-                    <button
-                      type="button"
-                      onClick={removeImage}
-                      className="inline-flex h-7 items-center gap-1 rounded-full bg-[rgba(215,46,46,.88)] px-2 text-[10px] font-black text-white hover:bg-[rgba(229,61,61,.96)]"
-                    >
-                      <Trash2 className="h-3 w-3" strokeWidth={2.5} />
-                      ลบรูป
-                    </button>
-                  )}
-                </div>
               </div>
               <span className="absolute bottom-1.5 right-0.5 flex h-6 w-6 items-center justify-center rounded-full border-[2.5px] border-white bg-emerald-500">
                 <CheckCircle2 className="h-3.5 w-3.5 text-white" strokeWidth={3} />
               </span>
+              <div className="mt-3 flex flex-wrap justify-center gap-2 sm:justify-start">
+                <button
+                  type="button"
+                  onClick={() => inputRef.current?.click()}
+                  className="inline-flex items-center gap-1.5 rounded-full border border-[#B9E0FF] bg-white px-3 py-1.5 text-[11px] font-extrabold text-[#0B82F0] shadow-[0_8px_18px_rgba(11,130,240,.12)] hover:bg-[#F5FAFF]"
+                  aria-label="เลือกรูปโปรไฟล์"
+                >
+                  <Camera className="h-3.5 w-3.5 shrink-0" />
+                  <span>เปลี่ยนรูป</span>
+                </button>
+                {profileImage && (
+                  <button
+                    type="button"
+                    onClick={removeImage}
+                    className="inline-flex items-center gap-1.5 rounded-full border border-[#F4C7C3] bg-[#FFF5F4] px-3 py-1.5 text-[11px] font-black text-[#C9362A] shadow-[0_8px_18px_rgba(201,54,42,.08)] hover:bg-[#FFEAE7]"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" strokeWidth={2.5} />
+                    <span>ลบรูป</span>
+                  </button>
+                )}
+              </div>
             </div>
 
             {/* name info */}

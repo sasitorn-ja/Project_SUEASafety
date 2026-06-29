@@ -673,25 +673,27 @@ export default function Page() {
               onFocusCapture={() => setIsActivityCarouselPaused(true)}
               onBlurCapture={() => setIsActivityCarouselPaused(false)}
             >
-              <button
-                type="button"
-                onClick={() => setMobileActivityStartIndex((current) => (current <= 0 ? maxMobileActivityStartIndex : current - 1))}
-                disabled={visibleFeedEvents.length <= 1}
-                className="absolute top-1/2 left-[-10px] z-10 inline-flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-[#B9E0FF] bg-white/95 text-[#0B82F0] transition-all duration-200 hover:-translate-x-0.5 hover:bg-[#EAF6FF] disabled:cursor-not-allowed disabled:opacity-45 disabled:hover:translate-x-0"
-                aria-label="เลื่อนดูกิจกรรมก่อนหน้า"
-              >
-                <ChevronLeft className="h-4.5 w-4.5" strokeWidth={2.5} />
-              </button>
+              {visibleFeedEvents.length > 1 ? (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => setMobileActivityStartIndex((current) => (current <= 0 ? maxMobileActivityStartIndex : current - 1))}
+                    className="absolute top-1/2 left-[-10px] z-10 inline-flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-[#B9E0FF] bg-white/95 text-[#0B82F0] transition-all duration-200 hover:-translate-x-0.5 hover:bg-[#EAF6FF]"
+                    aria-label="เลื่อนดูกิจกรรมก่อนหน้า"
+                  >
+                    <ChevronLeft className="h-4.5 w-4.5" strokeWidth={2.5} />
+                  </button>
 
-              <button
-                type="button"
-                onClick={() => setMobileActivityStartIndex((current) => (current >= maxMobileActivityStartIndex ? 0 : current + 1))}
-                disabled={visibleFeedEvents.length <= 1}
-                className="absolute top-1/2 right-[-10px] z-10 inline-flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-[#B9E0FF] bg-white/95 text-[#0B82F0] transition-all duration-200 hover:translate-x-0.5 hover:bg-[#EAF6FF] disabled:cursor-not-allowed disabled:opacity-45 disabled:hover:translate-x-0"
-                aria-label="เลื่อนดูกิจกรรมถัดไป"
-              >
-                <ChevronRight className="h-4.5 w-4.5" strokeWidth={2.5} />
-              </button>
+                  <button
+                    type="button"
+                    onClick={() => setMobileActivityStartIndex((current) => (current >= maxMobileActivityStartIndex ? 0 : current + 1))}
+                    className="absolute top-1/2 right-[-10px] z-10 inline-flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-[#B9E0FF] bg-white/95 text-[#0B82F0] transition-all duration-200 hover:translate-x-0.5 hover:bg-[#EAF6FF]"
+                    aria-label="เลื่อนดูกิจกรรมถัดไป"
+                  >
+                    <ChevronRight className="h-4.5 w-4.5" strokeWidth={2.5} />
+                  </button>
+                </>
+              ) : null}
 
               <div className="overflow-hidden rounded-[18px] bg-[#DFF1FF]">
                 <div
@@ -760,25 +762,27 @@ export default function Page() {
               onFocusCapture={() => setIsActivityCarouselPaused(true)}
               onBlurCapture={() => setIsActivityCarouselPaused(false)}
             >
-              <button
-                type="button"
-                onClick={() => setDesktopActivityStartIndex((current) => (current <= 0 ? maxDesktopActivityStartIndex : current - 1))}
-                disabled={visibleFeedEvents.length <= 1}
-                className="absolute top-1/2 left-[-18px] z-10 inline-flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-[#B9E0FF] bg-white/95 text-[#0B82F0] transition-all duration-200 hover:-translate-x-0.5 hover:bg-[#EAF6FF] disabled:cursor-not-allowed disabled:opacity-45 disabled:hover:translate-x-0"
-                aria-label="เลื่อนดูกิจกรรมก่อนหน้า"
-              >
-                <ChevronLeft className="h-4.5 w-4.5" strokeWidth={2.5} />
-              </button>
+              {visibleFeedEvents.length > 1 ? (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => setDesktopActivityStartIndex((current) => (current <= 0 ? maxDesktopActivityStartIndex : current - 1))}
+                    className="absolute top-1/2 left-[-18px] z-10 inline-flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-[#B9E0FF] bg-white/95 text-[#0B82F0] transition-all duration-200 hover:-translate-x-0.5 hover:bg-[#EAF6FF]"
+                    aria-label="เลื่อนดูกิจกรรมก่อนหน้า"
+                  >
+                    <ChevronLeft className="h-4.5 w-4.5" strokeWidth={2.5} />
+                  </button>
 
-              <button
-                type="button"
-                onClick={() => setDesktopActivityStartIndex((current) => (current >= maxDesktopActivityStartIndex ? 0 : current + 1))}
-                disabled={visibleFeedEvents.length <= 1}
-                className="absolute top-1/2 right-[-18px] z-10 inline-flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-[#B9E0FF] bg-white/95 text-[#0B82F0] transition-all duration-200 hover:translate-x-0.5 hover:bg-[#EAF6FF] disabled:cursor-not-allowed disabled:opacity-45 disabled:hover:translate-x-0"
-                aria-label="เลื่อนดูกิจกรรมถัดไป"
-              >
-                <ChevronRight className="h-4.5 w-4.5" strokeWidth={2.5} />
-              </button>
+                  <button
+                    type="button"
+                    onClick={() => setDesktopActivityStartIndex((current) => (current >= maxDesktopActivityStartIndex ? 0 : current + 1))}
+                    className="absolute top-1/2 right-[-18px] z-10 inline-flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-[#B9E0FF] bg-white/95 text-[#0B82F0] transition-all duration-200 hover:translate-x-0.5 hover:bg-[#EAF6FF]"
+                    aria-label="เลื่อนดูกิจกรรมถัดไป"
+                  >
+                    <ChevronRight className="h-4.5 w-4.5" strokeWidth={2.5} />
+                  </button>
+                </>
+              ) : null}
 
               <div className="overflow-hidden rounded-[18px] bg-[#DFF1FF]">
                 <div
