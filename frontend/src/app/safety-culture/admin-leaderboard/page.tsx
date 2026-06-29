@@ -1,7 +1,7 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { LayoutList, Pencil, Plus, Trash2 } from "lucide-react";
+import { Building2, ChevronDown, LayoutList, Pencil, Plus, Trash2 } from "lucide-react";
 import { SafetyCultureHero } from "@/components/safety-culture/safety-culture-hero";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -142,7 +142,16 @@ export default function AdminLeaderboardPage() {
   const [leaderSearch, setLeaderSearch] = useState("");
   const [leaderUsers, setLeaderUsers] = useState<ApiUser[]>([]);
   const [leaderUsersLoading, setLeaderUsersLoading] = useState(false);
-  const [divisions, setDivisions] = useState<string[]>([]);
+  const [divisions, setDivisions] = useState<string[]>([
+    "Metro",
+    "East",
+    "West",
+    "North",
+    "Northeast",
+    "RMC",
+    "SMART Structure"
+  ]);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
 
   useEffect(() => {
     setDraftTeams(teamStandings);
@@ -159,10 +168,12 @@ export default function AdminLeaderboardPage() {
           .filter((item) => String(item.organization_type ?? item.organizationType ?? "").toUpperCase() === "DIVISION")
           .map((item) => String(item.name_th ?? item.nameTh ?? item.name_en ?? item.nameEn ?? "").trim())
           .filter(Boolean);
-        setDivisions(Array.from(new Set(names)));
+        
+        const mockupDivs = ["Metro", "East", "West", "North", "Northeast", "RMC", "SMART Structure"];
+        setDivisions(Array.from(new Set([...mockupDivs, ...names])));
       } catch (error) {
         console.error("Failed to load organizations", error);
-        setDivisions([]);
+        setDivisions(["Metro", "East", "West", "North", "Northeast", "RMC", "SMART Structure"]);
       }
     })();
   }, []);
@@ -356,7 +367,7 @@ export default function AdminLeaderboardPage() {
             actions={
               <Button
                 onClick={addTeam}
-                className="h-11 rounded-xl bg-[var(--brand-accent-strong)] px-5 text-[13px] font-black text-white hover:bg-[var(--brand-accent)]"
+                className="h-11 rounded-full bg-[#0B82F0] px-5 text-[13px] font-black text-white hover:bg-[#0973d6] transition-colors"
               >
                 <Plus className="mr-1.5 h-4 w-4" />
                 เพิ่มหน่วยงาน
@@ -427,13 +438,21 @@ export default function AdminLeaderboardPage() {
           </SectionCard>
         </div>
 
-        <Dialog open={!!editingTeam} onOpenChange={(open) => !open && setEditingTeam(null)}>
-          <AppDialogContent className="grid h-[min(88vh,720px)] max-w-155 grid-rows-[auto_minmax(0,1fr)_auto] sm:max-w-170">
-            <AppDialogSectionHeader className="px-4 pt-4 pb-3 sm:px-6 sm:pt-6 sm:pb-5">
-              <AppDialogTitle className="sm:text-[28px]">
+        <Dialog open={!!editingTeam} onOpenChange={(open) => {
+          if (!open) {
+            setEditingTeam(null);
+            setDropdownOpen(false);
+          }
+        }}>
+          <AppDialogContent 
+            className="max-w-[485px] w-[92vw] overflow-visible"
+            onOpenAutoFocus={(e) => e.preventDefault()}
+          >
+            <AppDialogSectionHeader className="px-5 pt-5 pb-3 sm:px-6 sm:pt-6 sm:pb-4 border-b border-[#F1F1F1]">
+              <AppDialogTitle className="text-[22px] sm:text-[24px] font-black text-[#1A1A1A]">
                 {editingTeam?.mode === "create" ? "เพิ่มหน่วยงาน" : "แก้ไขหน่วยงาน"}
               </AppDialogTitle>
-              <AppDialogDescription className="max-w-115 sm:text-[14px]">
+              <AppDialogDescription className="text-[13px] sm:text-[14px] text-[#8E8A81] mt-1">
                 {editingTeam?.mode === "create"
                   ? "กรอกข้อมูลหน่วยงานใหม่ แล้วกดยืนยันเพื่อบันทึกลงระบบ"
                   : "ปรับข้อมูลหน่วยงาน แล้วกดยืนยันเพื่ออัปเดตกลับไปยังระบบ"}
@@ -441,41 +460,120 @@ export default function AdminLeaderboardPage() {
             </AppDialogSectionHeader>
 
             {editingTeam ? (
-              <AppDialogBody className="min-h-0 overflow-y-auto overscroll-contain bg-(--brand-surface) px-4 py-4 sm:px-6 sm:py-6">
-                <div className="mb-4 rounded-[18px] border border-[var(--border)] bg-white px-4 py-3 shadow-[0_8px_18px_rgba(62,36,13,0.04)] sm:mb-5 sm:rounded-[16px] sm:px-5 sm:py-4">
+              <AppDialogBody className="overflow-visible bg-[var(--brand-surface)] px-5 py-5 sm:px-6 sm:py-6">
+                {/* Preview Badge */}
+                <div className="mb-5 rounded-xl border border-[var(--border)] bg-white px-4 py-3.5 shadow-[0_2px_8px_rgba(0,0,0,0.02)]">
                   <div className="flex items-center gap-3">
                     <span
-                      className="h-5 w-5 flex-shrink-0 rounded-full ring-4 ring-[var(--brand-soft)]"
+                      className="h-5 w-5 flex-shrink-0 rounded-full ring-4 ring-[var(--brand-soft)] transition-all duration-300"
                       style={{ backgroundColor: editingTeam.color }}
                     />
-                    <div className="min-w-0">
-                      <div className="truncate text-[14px] font-black text-[#1A1A1A] sm:text-[16px]">
+                    <div className="min-w-0 flex-1">
+                      <div className="truncate text-[15px] font-black text-[#1A1A1A]">
                         {editingTeam.name || "ชื่อหน่วยงาน"}
                       </div>
-                      <div className="text-[11px] font-bold text-[#8E8A81] sm:text-[13px]">
+                      <div className="text-[12px] font-bold text-[#8E8A81]">
                         {editingTeam.mode === "create"
-                          ? "ตั้งค่าหน่วยงานใหม่ก่อนยืนยัน"
-                          : "อัปเดตข้อมูลหน่วยงานก่อนยืนยัน"}
+                          ? "หน่วยงานใหม่"
+                          : `หัวหน้า: ${editingTeam.leader || "ยังไม่ได้เลือก"}`}
                       </div>
                     </div>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 gap-3 pb-2 sm:grid-cols-2 sm:gap-4 sm:pb-1">
-                  <div className="flex flex-col gap-2">
+                {/* Single Column Fields */}
+                <div className="flex flex-col gap-4.5">
+                  {/* Agency Name */}
+                  <div className="flex flex-col gap-1.5 relative">
                     <Label className="text-[12px] font-black text-[var(--brand-text)]">ชื่อหน่วยงาน</Label>
-                    <Combobox
-                      value={editingTeam.name}
-                      onValueChange={(name) => updateEditingTeam("name", name)}
-                      options={divisionOptions}
-                      placeholder="เลือกหน่วยงาน"
-                      searchPlaceholder="ค้นหาหน่วยงาน"
-                      emptyText="ไม่พบหน่วยงาน"
-                      className="h-11 rounded-[18px] border-[var(--border)] bg-white px-4 text-[14px] font-bold text-[var(--foreground)] sm:h-12 sm:text-[15px]"
-                      contentClassName="min-w-[300px]"
-                    />
+                    <div className="relative flex items-center w-full">
+                      <span className="absolute left-3.5 text-[#8E8A81] pointer-events-none">
+                        <Building2 className="h-4.5 w-4.5" />
+                      </span>
+                      <input
+                        type="text"
+                        value={editingTeam.name}
+                        onChange={(e) => {
+                          updateEditingTeam("name", e.target.value);
+                          setDropdownOpen(true);
+                        }}
+                        placeholder="พิมพ์หรือเลือกชื่อหน่วยงาน"
+                        className="w-full h-11 rounded-xl border border-[var(--border)] bg-white pl-10 pr-9 text-[14px] font-bold text-[var(--foreground)] outline-none focus:border-[#0B82F0] focus:ring-1 focus:ring-[#0B82F0] transition-all shadow-sm"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setDropdownOpen(!dropdownOpen)}
+                        className="absolute right-2.5 h-6 w-6 text-[#8E8A81] hover:text-[#1A1A1A] hover:bg-[#F1F8FE] rounded-lg transition-all flex items-center justify-center cursor-pointer"
+                      >
+                        <ChevronDown className="h-4 w-4" />
+                      </button>
+
+                      {dropdownOpen && (
+                        <>
+                          <div 
+                            className="fixed inset-0 z-40" 
+                            onClick={() => setDropdownOpen(false)} 
+                          />
+                          <div className="absolute top-[100%] left-0 w-full mt-1.5 max-h-[190px] overflow-y-auto rounded-xl border border-[#CFE3F4] bg-white shadow-xl z-50 py-1.5 divide-y divide-[#F1F8FE] [scrollbar-width:thin]">
+                            {(() => {
+                              const filteredDivs = divisions.filter((name) =>
+                                name.toLowerCase().includes((editingTeam.name || "").toLowerCase())
+                              );
+                              
+                              const itemsToShow = filteredDivs.length > 0 ? filteredDivs : divisions;
+                              
+                              return (
+                                <>
+                                  {itemsToShow.map((name) => (
+                                    <button
+                                      key={name}
+                                      type="button"
+                                      onClick={() => {
+                                        updateEditingTeam("name", name);
+                                        setDropdownOpen(false);
+                                      }}
+                                      className={cn(
+                                        "w-full text-left px-4 py-2.5 text-[13.5px] font-bold transition-colors cursor-pointer flex items-center justify-between",
+                                        editingTeam.name === name 
+                                          ? "bg-[#EAF6FF] text-[#0B82F0]" 
+                                          : "text-[#0B2F6B] hover:bg-[#F8FCFF]"
+                                      )}
+                                    >
+                                      <span className="truncate pr-3">{name}</span>
+                                      {editingTeam.name === name && (
+                                        <span className="h-1.5 w-1.5 rounded-full bg-[#0B82F0] flex-shrink-0" />
+                                      )}
+                                    </button>
+                                  ))}
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      updateEditingTeam("name", UNASSIGNED_DIVISION);
+                                      setDropdownOpen(false);
+                                    }}
+                                    className={cn(
+                                      "w-full text-left px-4 py-2.5 text-[13.5px] font-bold transition-colors cursor-pointer flex items-center justify-between",
+                                      editingTeam.name === UNASSIGNED_DIVISION 
+                                        ? "bg-[#EAF6FF] text-[#0B82F0]" 
+                                        : "text-[#8E8A81] hover:bg-[#F8FCFF]"
+                                    )}
+                                  >
+                                    <span>{UNASSIGNED_DIVISION} (ไม่มีหน่วยงาน)</span>
+                                    {editingTeam.name === UNASSIGNED_DIVISION && (
+                                      <span className="h-1.5 w-1.5 rounded-full bg-[#0B82F0] flex-shrink-0" />
+                                    )}
+                                  </button>
+                                </>
+                              );
+                            })()}
+                          </div>
+                        </>
+                      )}
+                    </div>
                   </div>
-                  <div className="flex flex-col gap-2">
+
+                  {/* Leader */}
+                  <div className="flex flex-col gap-1.5">
                     <Label className="text-[12px] font-black text-[var(--brand-text)]">หัวหน้าหน่วยงาน</Label>
                     <Combobox
                       value={editingTeam.leaderUserId}
@@ -493,26 +591,52 @@ export default function AdminLeaderboardPage() {
                       placeholder="เลือกหัวหน้าหน่วยงานจากรายชื่อผู้ใช้"
                       searchPlaceholder="พิมพ์ชื่อ อีเมล หรือรหัสพนักงาน"
                       emptyText={leaderUsersLoading ? "กำลังค้นหาผู้ใช้..." : "ไม่พบผู้ใช้"}
-                      className="h-11 rounded-[18px] border-[var(--border)] bg-white px-4 text-[14px] font-bold text-[var(--foreground)] sm:h-12 sm:text-[15px]"
-                      contentClassName="min-w-[360px]"
+                      className="w-full h-11 rounded-xl border border-[var(--border)] bg-white px-4 text-[14px] font-bold text-[var(--foreground)] outline-none focus:border-[#0B82F0] focus:ring-1 focus:ring-[#0B82F0] transition-all shadow-sm"
+                      contentClassName="min-w-[320px] max-w-[420px]"
                     />
-                    <p className="px-1 text-[11px] font-bold text-[#8E8A81]">
-                      เลือกหัวหน้าหน่วยงานจากรายชื่อผู้ใช้ในระบบ
-                      {editingTeam.leaderEmail ? ` · ${editingTeam.leaderEmail}` : ""}
-                    </p>
+                    {editingTeam.leaderEmail && (
+                      <p className="px-1 text-[11px] font-bold text-[#8E8A81] truncate">
+                        อีเมลหัวหน้า: {editingTeam.leaderEmail}
+                      </p>
+                    )}
                   </div>
-                  <div className="flex flex-col gap-2 sm:col-span-2">
+
+                  {/* Colors */}
+                  <div className="flex flex-col gap-1.5">
                     <Label className="text-[12px] font-black text-[var(--brand-text)]">สีประจำหน่วยงาน</Label>
-                    <div className="flex h-11 items-center gap-3 rounded-[18px] border border-[var(--border)] bg-white px-4 sm:h-12">
-                      <input
-                        type="color"
-                        value={editingTeam.color}
-                        onChange={(event) => updateEditingTeam("color", event.target.value)}
-                        className="h-7 w-9 cursor-pointer border-0 bg-transparent p-0 sm:h-8 sm:w-10"
-                      />
-                      <span className="text-[12px] font-bold text-[var(--brand-text)] sm:text-[14px]">
-                        {editingTeam.color}
-                      </span>
+                    <div className="flex flex-wrap items-center gap-2 rounded-xl border border-[var(--border)] bg-white p-2.5 shadow-sm">
+                      {["#0B82F0", "#10B981", "#F59E0B", "#8B5CF6", "#EF4444", "#EC4899", "#6B7280"].map((c) => (
+                        <button
+                          key={c}
+                          type="button"
+                          onClick={() => updateEditingTeam("color", c)}
+                          className={cn(
+                            "h-6 w-6 rounded-full border transition-all duration-150 cursor-pointer flex items-center justify-center relative hover:scale-105",
+                            editingTeam.color === c 
+                              ? "border-black ring-2 ring-offset-2 ring-black scale-105" 
+                              : "border-transparent"
+                          )}
+                          style={{ backgroundColor: c }}
+                          title={c}
+                        >
+                          {editingTeam.color === c && (
+                            <span className="block h-1 w-1 rounded-full bg-white shadow-sm" />
+                          )}
+                        </button>
+                      ))}
+
+                      {/* Custom Color Input */}
+                      <div className="ml-auto flex items-center gap-1.5 border-l border-[#F1F1F1] pl-2.5">
+                        <input
+                          type="color"
+                          value={editingTeam.color.startsWith("#") ? editingTeam.color : "#0B82F0"}
+                          onChange={(event) => updateEditingTeam("color", event.target.value)}
+                          className="h-7 w-7 cursor-pointer rounded-lg border border-[var(--border)] bg-transparent p-0 overflow-hidden"
+                        />
+                        <span className="text-[11px] font-mono font-bold text-[var(--brand-text)] uppercase">
+                          {editingTeam.color}
+                        </span>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -523,9 +647,9 @@ export default function AdminLeaderboardPage() {
               <div className="flex w-full justify-end pr-1 pb-1 sm:pr-0 sm:pb-0">
                 <Button
                   onClick={confirmTeamEdit}
-                  className="h-10 rounded-full bg-(--brand-text) px-4 text-[13px] text-white hover:bg-(--c-4a280f) sm:h-11 sm:px-5 sm:text-[14px]"
+                  className="h-10 rounded-full bg-[#0B82F0] px-4 text-[13px] text-white hover:bg-[#0973d6] sm:h-11 sm:px-5 sm:text-[14px] transition-colors"
                 >
-                  {editingTeam?.mode === "create" ? "Confirm Create" : "Confirm Update"}
+                  บันทึก
                 </Button>
               </div>
             </AppDialogSectionFooter>

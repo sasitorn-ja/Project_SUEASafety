@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import Image from "next/image";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -81,15 +81,15 @@ const CATEGORY_ICON_OPTIONS: Array<{
   label: string;
   description: string;
 }> = [
-  { value: "gift", label: "ทั่วไป", description: "เหมาะกับของรางวัลทั่วไป" },
-  { value: "ticket", label: "บัตร", description: "คูปอง ตั๋ว หรือ voucher" },
-  { value: "shield", label: "ความปลอดภัย", description: "PPE อุปกรณ์เซฟตี้" },
-  { value: "users", label: "ทีม", description: "ของรางวัลแบบทีม" },
-  { value: "heart", label: "สุขภาพ", description: "wellness และสุขภาพ" },
-  { value: "wrench", label: "อุปกรณ์", description: "เครื่องมือ อะไหล่" },
-  { value: "sparkles", label: "พิเศษ", description: "limited หรือ campaign" },
-  { value: "shopping", label: "สินค้า", description: "สินค้าทั่วไปและช้อปปิง" },
-];
+    { value: "gift", label: "ทั่วไป", description: "เหมาะกับของรางวัลทั่วไป" },
+    { value: "ticket", label: "บัตร", description: "คูปอง ตั๋ว หรือ voucher" },
+    { value: "shield", label: "ความปลอดภัย", description: "PPE อุปกรณ์เซฟตี้" },
+    { value: "users", label: "ทีม", description: "ของรางวัลแบบทีม" },
+    { value: "heart", label: "สุขภาพ", description: "wellness และสุขภาพ" },
+    { value: "wrench", label: "อุปกรณ์", description: "เครื่องมือ อะไหล่" },
+    { value: "sparkles", label: "พิเศษ", description: "limited หรือ campaign" },
+    { value: "shopping", label: "สินค้า", description: "สินค้าทั่วไปและช้อปปิง" },
+  ];
 
 function SectionCard({
   title,
@@ -158,12 +158,12 @@ function makeRewardDraft(rewards: RewardCatalogItem[]): RewardCatalogItem {
 
   return {
     id: nextId,
-    name: `รางวัล ${nextId}`,
+    name: "",
     category: "merch",
-    description: "รายละเอียดรางวัลใหม่",
-    imageText: "// merch",
+    description: "",
+    imageText: "",
     imageSrc: null,
-    points: 100,
+    points: 0,
     isHot: false,
     redeemStartAt: null,
     redeemEndAt: null,
@@ -337,29 +337,29 @@ function RewardPreviewPanelLegacy({
 
         <div className="min-w-0 rounded-[18px] border border-[var(--border)] bg-white/55 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.72)] sm:p-4">
           <div className="flex h-full min-w-0 flex-col gap-4 lg:min-h-[220px]">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="inline-flex items-center rounded-full border border-[var(--border)] bg-white px-3 py-1 text-[11px] font-black uppercase tracking-[0.16em] text-[var(--brand-text)]">
-              Public Preview
-            </span>
-            <span className="inline-flex items-center rounded-full border border-[var(--border)] bg-[var(--brand-soft)] px-3 py-1 text-[12px] font-black text-[var(--c-6f665b)]">
-              {getCategoryMeta(reward.category, categories).label}
-            </span>
-            {reward.isHot ? (
-              <span className="inline-flex items-center gap-1 rounded-full border border-[#f1c6c6] bg-[#fff3f3] px-3 py-1 text-[12px] font-black text-[#c03c3c]">
-                <Star className="h-3.5 w-3.5 fill-current" />
-                HOT
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="inline-flex items-center rounded-full border border-[var(--border)] bg-white px-3 py-1 text-[11px] font-black uppercase tracking-[0.16em] text-[var(--brand-text)]">
+                Public Preview
               </span>
-            ) : null}
-          </div>
+              <span className="inline-flex items-center rounded-full border border-[var(--border)] bg-[var(--brand-soft)] px-3 py-1 text-[12px] font-black text-[var(--c-6f665b)]">
+                {getCategoryMeta(reward.category, categories).label}
+              </span>
+              {reward.isHot ? (
+                <span className="inline-flex items-center gap-1 rounded-full border border-[#f1c6c6] bg-[#fff3f3] px-3 py-1 text-[12px] font-black text-[#c03c3c]">
+                  <Star className="h-3.5 w-3.5 fill-current" />
+                  HOT
+                </span>
+              ) : null}
+            </div>
 
             <div className="min-w-0">
               <div className="line-clamp-2 text-[28px] font-black leading-[0.92] text-[#1A1A1A] [overflow-wrap:anywhere] sm:text-[34px]">
-              {reward.name || "ชื่อรางวัล"}
-            </div>
+                {reward.name || "ชื่อรางวัล"}
+              </div>
               <div className="mt-3 rounded-[18px] border border-[var(--border)] bg-[var(--brand-surface)] px-4 py-3">
                 <p className="line-clamp-6 min-h-[8.1rem] text-[14px] font-bold leading-relaxed text-[var(--c-6f665b)] [overflow-wrap:anywhere] sm:text-[15px]">
 
-              {reward.description || "รายละเอียดรางวัลจะแสดงตรงนี้บนหน้ารางวัล"}
+                  {reward.description || "รายละเอียดรางวัลจะแสดงตรงนี้บนหน้ารางวัล"}
 
                 </p>
               </div>
@@ -367,18 +367,18 @@ function RewardPreviewPanelLegacy({
 
             <div className="mt-auto flex flex-wrap items-end justify-between gap-4 border-t border-[var(--border)] pt-4">
               <div className="rounded-[16px] border border-[var(--border)] bg-white px-4 py-3 shadow-[0_8px_18px_rgba(62,36,13,0.04)]">
-              <div className="text-[11px] font-black uppercase tracking-[0.16em] text-[var(--brand-accent-strong)]">Points</div>
-              <div className="mt-1 text-[30px] font-black leading-none text-[var(--brand-text)]">
-                {reward.points.toLocaleString()}
+                <div className="text-[11px] font-black uppercase tracking-[0.16em] text-[var(--brand-accent-strong)]">Coin</div>
+                <div className="mt-1 text-[30px] font-black leading-none text-[var(--brand-text)]">
+                  {reward.points.toLocaleString()}
+                </div>
               </div>
-            </div>
               <div className="max-w-[250px] text-right text-[12px] font-bold leading-relaxed text-[#8E8A81] sm:text-[13px]">
-              เช็กหน้าตา reward card ได้ทันที ทั้งรูป ชื่อ รายละเอียด และราคา ก่อนกดยืนยัน
+                เช็กหน้าตา reward card ได้ทันที ทั้งรูป ชื่อ รายละเอียด และราคา ก่อนกดยืนยัน
+              </div>
             </div>
           </div>
         </div>
       </div>
-    </div>
     </div>
   );
 }
@@ -433,7 +433,7 @@ function RewardPreviewPanel({
           </span>
         </div>
         <span className="pt-1 text-[12.5px] font-extrabold text-[var(--brand-accent-strong)]">
-          {reward.points.toLocaleString()} <span className="ml-0.5 text-[10px] font-bold text-muted-foreground">POINTS</span>
+          {reward.points.toLocaleString()} <span className="ml-0.5 text-[10px] font-bold text-muted-foreground">Coin</span>
         </span>
       </div>
 
@@ -783,9 +783,9 @@ export default function AdminRewardPage() {
       stockRemaining:
         editingReward.stockMode === "limited"
           ? Math.min(
-              Math.max(0, Number(editingReward.stockTotal) || 0),
-              Math.max(0, Number(editingReward.stockRemaining) || 0)
-            )
+            Math.max(0, Number(editingReward.stockTotal) || 0),
+            Math.max(0, Number(editingReward.stockRemaining) || 0)
+          )
           : null,
     };
 
@@ -1210,14 +1210,14 @@ export default function AdminRewardPage() {
                   type="button"
                   variant="outline"
                   onClick={() => setIsRedemptionLogOpen(true)}
-                  className="h-11 rounded-[16px] border-[var(--brand-accent)] bg-white px-4 text-[13px] font-black text-[var(--brand-text)] hover:bg-[var(--brand-surface)]"
+                  className="h-11 rounded-full border-[#0B82F0]/20 bg-white px-4 text-[13px] font-black text-[#0B82F0] hover:bg-[#F1F8FE] transition-colors"
                 >
                   <History className="mr-1.5 h-4 w-4" />
                   ประวัติรางวัล
                 </Button>
                 <Button
                   onClick={addReward}
-                  className="h-11 rounded-xl bg-[var(--brand-accent-strong)] px-5 text-[13px] font-black text-white hover:bg-[var(--brand-accent)]"
+                  className="h-11 rounded-full bg-[#0B82F0] px-5 text-[13px] font-black text-white hover:bg-[#0973d6] transition-colors"
                 >
                   <Plus className="mr-1.5 h-4 w-4" />
                   สร้างรางวัล
@@ -1400,7 +1400,7 @@ export default function AdminRewardPage() {
                           <div className="truncate text-[17px] font-black text-[#1A1A1A]">{reward.name}</div>
                         </div>
                         <div className="rounded-full bg-[var(--brand-soft)] px-3 py-1 text-[12px] font-black text-[var(--brand-text)]">
-                          {reward.points.toLocaleString()} pts
+                          {reward.points.toLocaleString()} Coin
                         </div>
                       </div>
 
@@ -1573,7 +1573,7 @@ export default function AdminRewardPage() {
                         </div>
                         <div className="flex flex-wrap gap-2 md:justify-end">
                           <div className="rounded-full bg-[var(--brand-soft)] px-3 py-1 text-[12px] font-black text-[var(--brand-text)]">
-                            {record.pointsSpent.toLocaleString()} pts
+                            {record.pointsSpent.toLocaleString()} Coin
                           </div>
                           <div className="rounded-full border border-[var(--border)] bg-white px-3 py-1 text-[12px] font-black text-[#8E8A81]">
                             {record.rewardCategory}
@@ -1657,34 +1657,38 @@ export default function AdminRewardPage() {
                             <Input
                               value={editingReward.name}
                               onChange={(event) => updateEditingReward("name", event.target.value)}
+                              placeholder="กรอกชื่อรางวัล เช่น เสื้อยืด CPAC"
                               className="h-12 rounded-[18px] border-[var(--border)] bg-white px-4 text-[15px] font-bold text-[var(--foreground)] focus-visible:border-[var(--brand-accent)] focus-visible:ring-0"
                             />
                           </div>
 
-                          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                            <div className="flex flex-col gap-2">
-                              <Label className="text-[12px] font-black text-[var(--brand-text)]">Points</Label>
-                              <Input
-                                value={`${editingReward.points}`}
-                                onChange={(event) => updateEditingReward("points", Number(event.target.value) || 0)}
-                                className="h-12 rounded-[18px] border-[var(--border)] bg-white px-4 text-[15px] font-bold text-[var(--foreground)] focus-visible:border-[var(--brand-accent)] focus-visible:ring-0"
-                              />
-                            </div>
-                            <div className="flex flex-col gap-2">
-                              <Label className="text-[12px] font-black text-[var(--brand-text)]">Image Text Fallback</Label>
-                              <Input
-                                value={editingReward.imageText}
-                                onChange={(event) => updateEditingReward("imageText", event.target.value)}
-                                className="h-12 rounded-[18px] border-[var(--border)] bg-white px-4 text-[15px] font-bold text-[var(--foreground)] focus-visible:border-[var(--brand-accent)] focus-visible:ring-0"
-                              />
-                            </div>
+                          <div className="flex flex-col gap-2">
+                            <Label className="text-[12px] font-black text-[var(--brand-text)]">Coin</Label>
+                            <Input
+                              type="text"
+                              value={editingReward.points === 0 ? "" : editingReward.points}
+                              onChange={(event) => {
+                                const val = event.target.value;
+                                if (val === "") {
+                                  updateEditingReward("points", 0);
+                                } else {
+                                  const num = Number(val);
+                                  if (!Number.isNaN(num)) {
+                                    updateEditingReward("points", num);
+                                  }
+                                }
+                              }}
+                              placeholder="เช่น 100"
+                              className="h-12 rounded-[18px] border-[var(--border)] bg-white px-4 text-[15px] font-bold text-[var(--foreground)] focus-visible:border-[var(--brand-accent)] focus-visible:ring-0"
+                            />
                           </div>
 
                           <div className="flex flex-col gap-2">
-                            <Label className="text-[12px] font-black text-[var(--brand-text)]">Description</Label>
+                            <Label className="text-[12px] font-black text-[var(--brand-text)]">รายละเอียดของรางวัล</Label>
                             <Textarea
                               value={editingReward.description}
                               onChange={(event) => updateEditingReward("description", event.target.value)}
+                              placeholder="ระบุรายละเอียดของรางวัล"
                               className="min-h-[156px] rounded-[18px] border-[var(--border)] bg-white px-4 py-3 text-[14px] font-bold leading-relaxed text-[var(--foreground)] focus-visible:border-[var(--brand-accent)] focus-visible:ring-0"
                             />
                           </div>
@@ -1821,37 +1825,37 @@ export default function AdminRewardPage() {
                         </div>
                         <div className="max-h-[520px] overflow-y-auto pr-1">
                           <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-                          {pickerCategoryOptions.map((option) => {
-                            const Icon = CATEGORY_ICON_MAP[option.icon];
-                            const isActive = option.value === editingReward.category;
+                            {pickerCategoryOptions.map((option) => {
+                              const Icon = CATEGORY_ICON_MAP[option.icon];
+                              const isActive = option.value === editingReward.category;
 
-                            return (
-                              <button
-                                key={option.value}
-                                type="button"
-                                onClick={() => updateEditingReward("category", option.value)}
-                                className={cn(
-                                  "rounded-[16px] border p-4 text-left transition-colors",
-                                  isActive
-                                    ? "border-[var(--brand-accent)] bg-[var(--brand-soft)]"
-                                    : "border-[var(--border)] bg-[var(--brand-surface)] hover:bg-[var(--brand-soft)]"
-                                )}
-                              >
-                                <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-2xl bg-white text-[var(--brand-text)]">
-                                  <Icon className="h-4 w-4" strokeWidth={2.2} />
-                                </div>
-                                <div className="flex items-center justify-between gap-2">
-                                  <div className="text-[15px] font-black text-[#1A1A1A]">{option.label}</div>
-                                  <div className="rounded-full bg-white px-2.5 py-1 text-[11px] font-black text-[var(--brand-text)]">
-                                    {option.count} items
+                              return (
+                                <button
+                                  key={option.value}
+                                  type="button"
+                                  onClick={() => updateEditingReward("category", option.value)}
+                                  className={cn(
+                                    "rounded-[16px] border p-4 text-left transition-colors",
+                                    isActive
+                                      ? "border-[var(--brand-accent)] bg-[var(--brand-soft)]"
+                                      : "border-[var(--border)] bg-[var(--brand-surface)] hover:bg-[var(--brand-soft)]"
+                                  )}
+                                >
+                                  <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-2xl bg-white text-[var(--brand-text)]">
+                                    <Icon className="h-4 w-4" strokeWidth={2.2} />
                                   </div>
-                                </div>
-                                <div className="mt-1 text-[12px] font-bold leading-relaxed text-[#8E8A81]">
-                                  {option.hint}
-                                </div>
-                              </button>
-                            );
-                          })}
+                                  <div className="flex items-center justify-between gap-2">
+                                    <div className="text-[15px] font-black text-[#1A1A1A]">{option.label}</div>
+                                    <div className="rounded-full bg-white px-2.5 py-1 text-[11px] font-black text-[var(--brand-text)]">
+                                      {option.count} items
+                                    </div>
+                                  </div>
+                                  <div className="mt-1 text-[12px] font-bold leading-relaxed text-[#8E8A81]">
+                                    {option.hint}
+                                  </div>
+                                </button>
+                              );
+                            })}
                           </div>
                         </div>
                         {pickerCategoryOptions.length === 0 ? (
@@ -1919,30 +1923,36 @@ export default function AdminRewardPage() {
                             <Input
                               value={editingReward.name}
                               onChange={(event) => updateEditingReward("name", event.target.value)}
+                              placeholder="กรอกชื่อรางวัล เช่น เสื้อยืด CPAC"
                               className="h-12 rounded-[18px] border-[var(--border)] bg-white px-4 text-[15px] font-bold text-[var(--foreground)] focus-visible:border-[var(--brand-accent)] focus-visible:ring-0"
                             />
                           </div>
                           <div className="flex flex-col gap-2">
-                            <Label className="text-[12px] font-black text-[var(--brand-text)]">Points</Label>
+                            <Label className="text-[12px] font-black text-[var(--brand-text)]">Coin</Label>
                             <Input
-                              value={`${editingReward.points}`}
-                              onChange={(event) => updateEditingReward("points", Number(event.target.value) || 0)}
-                              className="h-12 rounded-[18px] border-[var(--border)] bg-white px-4 text-[15px] font-bold text-[var(--foreground)] focus-visible:border-[var(--brand-accent)] focus-visible:ring-0"
-                            />
-                          </div>
-                          <div className="flex flex-col gap-2">
-                            <Label className="text-[12px] font-black text-[var(--brand-text)]">Image Text Fallback</Label>
-                            <Input
-                              value={editingReward.imageText}
-                              onChange={(event) => updateEditingReward("imageText", event.target.value)}
+                              type="text"
+                              value={editingReward.points === 0 ? "" : editingReward.points}
+                              onChange={(event) => {
+                                const val = event.target.value;
+                                if (val === "") {
+                                  updateEditingReward("points", 0);
+                                } else {
+                                  const num = Number(val);
+                                  if (!Number.isNaN(num)) {
+                                    updateEditingReward("points", num);
+                                  }
+                                }
+                              }}
+                              placeholder="เช่น 100"
                               className="h-12 rounded-[18px] border-[var(--border)] bg-white px-4 text-[15px] font-bold text-[var(--foreground)] focus-visible:border-[var(--brand-accent)] focus-visible:ring-0"
                             />
                           </div>
                           <div className="flex flex-col gap-2 lg:col-span-2">
-                            <Label className="text-[12px] font-black text-[var(--brand-text)]">Description</Label>
+                            <Label className="text-[12px] font-black text-[var(--brand-text)]">รายละเอียดของรางวัล</Label>
                             <Textarea
                               value={editingReward.description}
                               onChange={(event) => updateEditingReward("description", event.target.value)}
+                              placeholder="ระบุรายละเอียดของรางวัล"
                               className="min-h-[160px] rounded-[18px] border-[var(--border)] bg-white px-4 py-3 text-[14px] font-bold leading-relaxed text-[var(--foreground)] focus-visible:border-[var(--brand-accent)] focus-visible:ring-0"
                             />
                           </div>
@@ -2063,29 +2073,20 @@ export default function AdminRewardPage() {
                       </DetailCard>
 
                       <DetailCard title="การแสดงผล" subtitle="หมวดหมู่ และสถานะเด่น">
-                        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-                          <div className="flex flex-col gap-2">
-                            <Label className="text-[12px] font-black text-[var(--brand-text)]">หมวดหมู่</Label>
-                            <Combobox
-                              value={editingReward.category}
-                              onValueChange={(value) =>
-                                updateEditingReward("category", value as RewardCatalogItem["category"])
-                              }
-                              aria-label="หมวดหมู่"
-                              searchPlaceholder="ค้นหาหมวดหมู่"
-                              className="h-12 rounded-[18px] border-[var(--border)] bg-white text-[15px] font-bold text-[var(--foreground)]"
-                              options={categoryOptions.map((option) => ({ value: option.value, label: option.label }))}
-                            />
-                            <div className="text-[12px] font-bold text-[#8E8A81]">
-                              {getCategoryMeta(editingReward.category, categoryOptions).hint}
-                            </div>
-                          </div>
-
-                          <div className="rounded-[18px] border border-[var(--border)] bg-[var(--brand-surface)] px-4 py-3">
-                            <div className="text-[12px] font-black text-[var(--brand-text)]">Current Fallback</div>
-                            <div className="mt-2 text-[15px] font-black text-[#1A1A1A]">
-                              {editingReward.imageText || "ยังไม่มีข้อความสำรอง"}
-                            </div>
+                        <div className="flex flex-col gap-2">
+                          <Label className="text-[12px] font-black text-[var(--brand-text)]">หมวดหมู่</Label>
+                          <Combobox
+                            value={editingReward.category}
+                            onValueChange={(value) =>
+                              updateEditingReward("category", value as RewardCatalogItem["category"])
+                            }
+                            aria-label="หมวดหมู่"
+                            searchPlaceholder="ค้นหาหมวดหมู่"
+                            className="h-12 rounded-[18px] border-[var(--border)] bg-white text-[15px] font-bold text-[var(--foreground)]"
+                            options={categoryOptions.map((option) => ({ value: option.value, label: option.label }))}
+                          />
+                          <div className="text-[12px] font-bold text-[#8E8A81]">
+                            {getCategoryMeta(editingReward.category, categoryOptions).hint}
                           </div>
                         </div>
 
@@ -2113,7 +2114,7 @@ export default function AdminRewardPage() {
                     </div>
                   </div>
                 )}
-            </AppDialogBody>
+              </AppDialogBody>
             ) : null}
 
             <AppDialogSectionFooter className="px-5 py-4 sm:px-6 lg:px-8">
@@ -2121,7 +2122,7 @@ export default function AdminRewardPage() {
                 <Button
                   onClick={confirmRewardEdit}
                   disabled={rewardSaveState === "saving"}
-                  className="h-10 rounded-full bg-(--brand-text) px-4 text-[13px] text-white hover:bg-(--c-4a280f)"
+                  className="h-10 rounded-full bg-[#0B82F0] px-4 text-[13px] text-white hover:bg-[#0973d6] transition-colors"
                 >
                   {rewardSaveState === "saving"
                     ? "กำลังบันทึก..."
@@ -2161,7 +2162,7 @@ export default function AdminRewardPage() {
                         {deletingReward.name}
                       </div>
                       <div className="text-[12px] font-bold text-[#8E8A81]">
-                        {getCategoryMeta(deletingReward.category, categoryOptions).label} · {deletingReward.points.toLocaleString()} points
+                        {getCategoryMeta(deletingReward.category, categoryOptions).label} · {deletingReward.points.toLocaleString()} Coin
                       </div>
                     </div>
                   </div>
@@ -2226,7 +2227,7 @@ export default function AdminRewardPage() {
                               <div className="text-[11px] font-bold text-[#8E8A81]">{reward.description}</div>
                             </div>
                             <div className="whitespace-nowrap text-[11px] font-black text-(--brand-accent-strong)">
-                              {reward.points.toLocaleString()} pts
+                              {reward.points.toLocaleString()} Coin
                             </div>
                           </div>
                         ))}

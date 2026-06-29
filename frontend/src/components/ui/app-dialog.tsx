@@ -60,7 +60,7 @@ function AppDialogSectionFooter({
   return (
     <DialogFooter
       className={cn(
-        "border-t border-[var(--border)] bg-[var(--brand-soft)] px-4 py-3.5 sm:px-5 sm:py-4",
+        "border-t border-[var(--border)] bg-[var(--brand-soft)] px-4 py-3.5 sm:px-5 sm:py-4 rounded-b-[22px] sm:rounded-b-[26px]",
         className,
       )}
       {...props}

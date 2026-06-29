@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import React, { createContext, useContext, useState, useCallback, ReactNode, useEffect, useRef } from "react";
 import {
@@ -228,6 +228,10 @@ type AppState = {
   awarenessHistory: AwarenessCompletion[];
   awarenessHolidays: AwarenessHoliday[];
   awarenessRequiredToday: boolean;
+  awarenessEnabled: boolean;
+  awarenessWeekdays: number[];
+  awarenessActiveStartTime: string;
+  awarenessActiveEndTime: string;
   /** วันแรกที่ผู้ใช้เริ่มใช้งาน (YYYY-MM-DD). วันก่อนหน้านี้จะไม่ถูกนับใน KPI. */
   awarenessStartDate: string;
   isEventLive: boolean;
@@ -257,6 +261,9 @@ type AppActions = {
   updateRewardCategories: (categories: RewardCategory[]) => Promise<boolean>;
   updateAwarenessQuestions: (questions: SafetyAwarenessQuestion[]) => void;
   updateAwarenessHolidays: (holidays: AwarenessHoliday[]) => void;
+  updateAwarenessEnabled: (enabled: boolean) => Promise<boolean>;
+  updateAwarenessWeekdays: (weekdays: number[]) => Promise<boolean>;
+  updateAwarenessTimeWindow: (startTime: string, endTime: string) => Promise<boolean>;
   /** Mark today's Safety Awareness popup as completed. */
   markAwarenessDone: (completion: Omit<AwarenessCompletion, "date" | "completedAt">) => Promise<boolean>;
   awardSafetyEffortCompletion: (sourceId: string, label?: string) => void;
@@ -1605,9 +1612,18 @@ export function AppProviders({ children }: { children: ReactNode }) {
   const [awarenessDoneDate, setAwarenessDoneDate] = useState<string>("");
   const [awarenessHistory, setAwarenessHistory] = useState<AwarenessCompletion[]>([]);
   const [awarenessHolidays, setAwarenessHolidays] = useState<AwarenessHoliday[]>([]);
+  const [awarenessEnabled, setAwarenessEnabledState] = useState<boolean>(true);
+  const [awarenessWeekdays, setAwarenessWeekdaysState] = useState<number[]>([1, 2, 3, 4, 5]);
+  const [awarenessActiveStartTime, setAwarenessActiveStartTimeState] = useState<string>("08:00");
+  const [awarenessActiveEndTime, setAwarenessActiveEndTimeState] = useState<string>("17:00");
   const [eventNow, setEventNow] = useState(0);
   const postsRef = useRef<Post[]>([]);
   const demoModeRef = useRef(false);
+
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     postsRef.current = posts;
@@ -1795,11 +1811,30 @@ export function AppProviders({ children }: { children: ReactNode }) {
           setAwarenessDoneDate(demoSnapshot.awarenessDoneDate);
           setAwarenessHolidays(demoSnapshot.awarenessHolidays);
           setSafetyCultureEvent(demoSnapshot.safetyCultureEvent);
+          setAwarenessActiveStartTimeState("08:00");
+          setAwarenessActiveEndTimeState("17:00");
         }
         return;
       }
 
-      const [postsResult, balanceResult, notificationsResult, rewardsResult, rewardCategoriesResult, leaderboardResult, teamsResult, awarenessResult, attemptsResult, holidaysResult, eventsResult, transactionsResult] = await Promise.all([
+      const [
+        postsResult,
+        balanceResult,
+        notificationsResult,
+        rewardsResult,
+        rewardCategoriesResult,
+        leaderboardResult,
+        teamsResult,
+        awarenessResult,
+        attemptsResult,
+        holidaysResult,
+        eventsResult,
+        transactionsResult,
+        awarenessEnabledResult,
+        awarenessWeekdaysResult,
+        campaignStartDateResult,
+        campaignEndDateResult
+      ] = await Promise.all([
         apiFetch<{ items: ApiPost[] }>("/api/safety-culture/posts?limit=50"),
         apiFetch<{ balance: { balance: number } }>("/api/safety-culture/points/me"),
         apiFetch<{ items: Array<Record<string, unknown>> }>("/api/notifications?limit=100"),
@@ -1812,6 +1847,10 @@ export function AppProviders({ children }: { children: ReactNode }) {
         apiFetch<{ items: Array<Record<string, unknown>> }>(`/api/holidays?year=${new Date().getFullYear()}`),
         apiFetch<{ items: Array<Record<string, unknown>> }>("/api/safety-culture/events?pageSize=100"),
         apiFetch<{ items: Array<{ id: string; amount: number; sourceType: string; sourceId?: string | null; description?: string | null; occurredAt: string }> }>("/api/safety-culture/points/me/transactions?limit=100"),
+        apiFetch<{ setting: { setting_value?: unknown } | null }>("/api/safety-settings?key=safety_awareness_enabled"),
+        apiFetch<{ setting: { setting_value?: unknown } | null }>("/api/safety-settings?key=safety_awareness_weekdays"),
+        apiFetch<{ setting: { setting_value?: unknown } | null }>("/api/safety-settings?key=safety_awareness_active_start_time"),
+        apiFetch<{ setting: { setting_value?: unknown } | null }>("/api/safety-settings?key=safety_awareness_active_end_time"),
       ]);
 
       if (cancelled) return;
@@ -1931,6 +1970,38 @@ export function AppProviders({ children }: { children: ReactNode }) {
           date: String(item.holiday_date || "").slice(0, 10),
           name: String(item.name || ""),
         })));
+      }
+
+      if (awarenessEnabledResult.ok && awarenessEnabledResult.data?.setting) {
+        const raw = awarenessEnabledResult.data.setting.setting_value;
+        const value = typeof raw === "string" ? JSON.parse(raw) : raw;
+        if (value && typeof value === "object" && value.enabled !== undefined) {
+          setAwarenessEnabledState(Boolean(value.enabled));
+        }
+      }
+
+      if (awarenessWeekdaysResult && awarenessWeekdaysResult.ok && awarenessWeekdaysResult.data?.setting) {
+        const raw = awarenessWeekdaysResult.data.setting.setting_value;
+        const value = typeof raw === "string" ? JSON.parse(raw) : raw;
+        if (value && typeof value === "object" && Array.isArray(value.weekdays)) {
+          setAwarenessWeekdaysState(value.weekdays.map(Number));
+        }
+      }
+
+      if (campaignStartDateResult && campaignStartDateResult.ok && campaignStartDateResult.data?.setting) {
+        const raw = campaignStartDateResult.data.setting.setting_value;
+        const value = typeof raw === "string" ? JSON.parse(raw) : raw;
+        if (value && typeof value === "object" && value.startTime !== undefined) {
+          setAwarenessActiveStartTimeState(String(value.startTime));
+        }
+      }
+
+      if (campaignEndDateResult && campaignEndDateResult.ok && campaignEndDateResult.data?.setting) {
+        const raw = campaignEndDateResult.data.setting.setting_value;
+        const value = typeof raw === "string" ? JSON.parse(raw) : raw;
+        if (value && typeof value === "object" && value.endTime !== undefined) {
+          setAwarenessActiveEndTimeState(String(value.endTime));
+        }
       }
 
       if (eventsResult.ok && Array.isArray(eventsResult.data?.items)) {
@@ -2547,6 +2618,32 @@ export function AppProviders({ children }: { children: ReactNode }) {
     return true;
   }, []);
 
+  const updateAwarenessEnabled = useCallback(async (enabled: boolean) => {
+    setAwarenessEnabledState(enabled);
+    if (isAuthenticatedRef.current) {
+      void apiFetch("/api/safety-settings?key=safety_awareness_enabled", apiJson("PUT", { value: { enabled } })).catch(() => null);
+    }
+    return true;
+  }, []);
+
+  const updateAwarenessWeekdays = useCallback(async (weekdays: number[]) => {
+    setAwarenessWeekdaysState(weekdays);
+    if (isAuthenticatedRef.current) {
+      void apiFetch("/api/safety-settings?key=safety_awareness_weekdays", apiJson("PUT", { value: { weekdays } })).catch(() => null);
+    }
+    return true;
+  }, []);
+
+  const updateAwarenessTimeWindow = useCallback(async (startTime: string, endTime: string) => {
+    setAwarenessActiveStartTimeState(startTime);
+    setAwarenessActiveEndTimeState(endTime);
+    if (isAuthenticatedRef.current) {
+      void apiFetch("/api/safety-settings?key=safety_awareness_active_start_time", apiJson("PUT", { value: { startTime } })).catch(() => null);
+      void apiFetch("/api/safety-settings?key=safety_awareness_active_end_time", apiJson("PUT", { value: { endTime } })).catch(() => null);
+    }
+    return true;
+  }, []);
+
   const updateAwarenessQuestions = useCallback((questions: SafetyAwarenessQuestion[]) => {
     const existingByText = new Map(
       awarenessQuestions.map((question) => [question.text.trim(), question]),
@@ -2810,7 +2907,27 @@ export function AppProviders({ children }: { children: ReactNode }) {
     awarenessDoneToday: awarenessDoneDate === awarenessTodayKey,
     awarenessHistory,
     awarenessHolidays,
-    awarenessRequiredToday: ![0, 6].includes(awarenessBangkokDay) && !awarenessHolidays.some((holiday) => holiday.date === awarenessTodayKey),
+    awarenessRequiredToday:
+      mounted &&
+      awarenessEnabled &&
+      (() => {
+        if (!awarenessActiveStartTime || !awarenessActiveEndTime) return true;
+        const now = new Date();
+        const utc = now.getTime() + now.getTimezoneOffset() * 60000;
+        const bkk = new Date(utc + 7 * 60 * 60 * 1000);
+        const currentMin = bkk.getHours() * 60 + bkk.getMinutes();
+        const [startH, startM] = awarenessActiveStartTime.split(":").map(Number);
+        const [endH, endM] = awarenessActiveEndTime.split(":").map(Number);
+        const startMin = startH * 60 + startM;
+        const endMin = endH * 60 + endM;
+        return currentMin >= startMin && currentMin <= endMin;
+      })() &&
+      !awarenessHolidays.some((holiday) => holiday.date === awarenessTodayKey) &&
+      ![0, 6].includes(awarenessBangkokDay),
+    awarenessEnabled,
+    awarenessWeekdays,
+    awarenessActiveStartTime,
+    awarenessActiveEndTime,
     awarenessStartDate,
     isEventLive: isSafetyCultureEventLive(safetyCultureEvent, eventNow),
     eventNow,
@@ -2839,6 +2956,9 @@ export function AppProviders({ children }: { children: ReactNode }) {
     updateRewardCategories,
     updateAwarenessQuestions,
     updateAwarenessHolidays,
+    updateAwarenessEnabled,
+    updateAwarenessWeekdays,
+    updateAwarenessTimeWindow,
     markAwarenessDone,
     awardSafetyEffortCompletion,
     redeemPoints,

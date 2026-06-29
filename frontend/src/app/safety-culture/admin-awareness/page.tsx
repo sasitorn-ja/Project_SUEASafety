@@ -1,11 +1,14 @@
 "use client";
 
-import { type ChangeEvent, useMemo, useState } from "react";
+import { type ChangeEvent, useEffect, useMemo, useState } from "react";
 import {
   CalendarOff,
+  Calendar,
   ChevronDown,
+  Check,
   CheckCircle2,
   CircleSlash,
+  Clock,
   Download,
   Eye,
   EyeOff,
@@ -66,6 +69,9 @@ const EMPTY_EDITOR: EditorState = {
   enabled: true,
 };
 
+const HOURS = Array.from({ length: 24 }, (_, i) => String(i).padStart(2, "0"));
+const MINUTES = Array.from({ length: 60 }, (_, i) => String(i).padStart(2, "0"));
+
 function SectionCard({
   title,
   description,
@@ -97,8 +103,41 @@ function SectionCard({
 }
 
 export default function AdminAwarenessPage() {
-  const { awarenessQuestions, awarenessHolidays } = useAppState();
-  const { updateAwarenessQuestions, updateAwarenessHolidays } = useAppActions();
+  const { awarenessQuestions, awarenessHolidays, awarenessEnabled, awarenessActiveStartTime, awarenessActiveEndTime } = useAppState();
+  const { updateAwarenessQuestions, updateAwarenessHolidays, updateAwarenessEnabled, updateAwarenessTimeWindow, showNotification } = useAppActions();
+
+  const [startHour, startMinute] = (awarenessActiveStartTime || "08:00").split(":");
+  const [endHour, endMinute] = (awarenessActiveEndTime || "17:00").split(":");
+
+  const [tempStartHour, setTempStartHour] = useState(startHour);
+  const [tempStartMinute, setTempStartMinute] = useState(startMinute);
+  const [tempEndHour, setTempEndHour] = useState(endHour);
+  const [tempEndMinute, setTempEndMinute] = useState(endMinute);
+
+  const [savingTime, setSavingTime] = useState(false);
+
+  useEffect(() => {
+    const [sh, sm] = (awarenessActiveStartTime || "08:00").split(":");
+    const [eh, em] = (awarenessActiveEndTime || "17:00").split(":");
+    setTempStartHour(sh);
+    setTempStartMinute(sm);
+    setTempEndHour(eh);
+    setTempEndMinute(em);
+  }, [awarenessActiveStartTime, awarenessActiveEndTime]);
+
+  const handleSaveTime = async () => {
+    setSavingTime(true);
+    const newStart = `${tempStartHour}:${tempStartMinute}`;
+    const newEnd = `${tempEndHour}:${tempEndMinute}`;
+    const ok = await updateAwarenessTimeWindow(newStart, newEnd);
+    setSavingTime(false);
+    if (ok) {
+      showNotification({
+        type: "success",
+        message: `บันทึกเวลาสำเร็จ: เปลี่ยนเวลาขึ้น-ลงคำถามเป็น ${newStart} น. ถึง ${newEnd} น. เรียบร้อยแล้ว`,
+      });
+    }
+  };
 
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
@@ -112,6 +151,15 @@ export default function AdminAwarenessPage() {
   const [holidayDate, setHolidayDate] = useState("");
   const [holidayName, setHolidayName] = useState("");
   const [holidayYearFilter, setHolidayYearFilter] = useState("all");
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [holidayYearFilter, awarenessHolidays.length]);
+
+
 
   const categories = useMemo(() => {
     const set = new Set<string>();
@@ -158,6 +206,13 @@ export default function AdminAwarenessPage() {
     () => sortedHolidays.filter((holiday) => holidayYearFilter === "all" || holiday.date.startsWith(holidayYearFilter)),
     [holidayYearFilter, sortedHolidays],
   );
+
+  const paginatedHolidays = useMemo(() => {
+    const startIndex = (currentPage - 1) * pageSize;
+    return visibleHolidays.slice(startIndex, startIndex + pageSize);
+  }, [visibleHolidays, currentPage, pageSize]);
+
+  const totalPages = Math.ceil(visibleHolidays.length / pageSize) || 1;
 
   const toggleEnabled = (id: string) => {
     updateAwarenessQuestions(
@@ -332,6 +387,140 @@ export default function AdminAwarenessPage() {
         <StatCard label="หมวดหมู่" value={categories.length} icon={<ShieldCheck className="h-5 w-5" />} />
       </div>
 
+      {/* Settings Card (Global Status & Active Hours) */}
+      <Card className="mt-3 rounded-[18px] border border-[#B9E0FF] bg-white p-4 md:p-5 shadow-sm">
+        <div className="grid gap-6 md:grid-cols-2 items-center divide-y md:divide-y-0 md:divide-x divide-[#D7EAFE]">
+          {/* Global Toggle */}
+          <div className="pb-4 md:pb-0 md:pr-6 flex items-center justify-between gap-4">
+            <div className="flex items-start gap-3">
+              <div className={cn(
+                "flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl transition-all duration-200",
+                awarenessEnabled ? "bg-[#EAF6FF] text-[#0B82F0] shadow-sm shadow-blue-50" : "bg-[#F1F5F9] text-[#94A3B8]"
+              )}>
+                <ShieldCheck className="h-5.5 w-5.5" strokeWidth={2.2} />
+              </div>
+              <div className="min-w-0">
+                <h3 className="text-[14px] font-black text-[#0B2F6B]">สถานะระบบ Safety Awareness</h3>
+                <p className="text-[11.5px] font-bold text-[#55739B] mt-0.5">เปิด/ปิดการแสดงหน้าต่างคำถามประจำวันแก่ผู้ใช้ทั่วไป</p>
+              </div>
+            </div>
+            
+            <div className="flex items-center gap-2 flex-shrink-0">
+              <span className={cn("text-[12.5px] font-black transition-colors hidden sm:inline", awarenessEnabled ? "text-[#0B82F0]" : "text-[#94A3B8]")}>
+                {awarenessEnabled ? "เปิดใช้งาน" : "ปิดใช้งาน"}
+              </span>
+              <button
+                type="button"
+                onClick={async () => {
+                  await updateAwarenessEnabled(!awarenessEnabled);
+                }}
+                className={cn(
+                  "relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none",
+                  awarenessEnabled ? "bg-[#0B82F0]" : "bg-[#cbd5e1]"
+                )}
+              >
+                <span
+                  className={cn(
+                    "pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out",
+                    awarenessEnabled ? "translate-x-5" : "translate-x-0"
+                  )}
+                />
+              </button>
+            </div>
+          </div>
+
+          {/* Daily Time Window Selector */}
+          <div className="pt-4 md:pt-0 md:pl-6 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+              {/* Start Time */}
+              <div className="flex flex-col gap-1">
+                <span className="text-[12px] font-bold text-[#55739B]">เวลาเริ่มต้น</span>
+                <div className="flex items-center gap-2">
+                  <div className="relative flex items-center h-10 rounded-xl border border-[#CFE3F4] bg-white px-2.5 min-w-[90px] focus-within:border-[#0B82F0] focus-within:ring-1 focus-within:ring-[#0B82F0]">
+                    <Clock className="h-4 w-4 text-[#0B82F0] mr-2" />
+                    <div className="h-5 w-px bg-[#CFE3F4] mr-2" />
+                    <select
+                      disabled={!awarenessEnabled}
+                      value={tempStartHour}
+                      onChange={(e) => setTempStartHour(e.target.value)}
+                      className="w-full bg-transparent border-none outline-none text-[14px] font-black text-[#0B2F6B] appearance-none pr-4 cursor-pointer"
+                    >
+                      {HOURS.map((h) => (
+                        <option key={h} value={h}>{h}</option>
+                      ))}
+                    </select>
+                    <ChevronDown className="absolute right-2.5 h-3.5 w-3.5 text-[#55739B] pointer-events-none" />
+                  </div>
+
+                  <div className="relative flex items-center h-10 rounded-xl border border-[#CFE3F4] bg-white px-2.5 min-w-[70px] focus-within:border-[#0B82F0] focus-within:ring-1 focus-within:ring-[#0B82F0]">
+                    <select
+                      disabled={!awarenessEnabled}
+                      value={tempStartMinute}
+                      onChange={(e) => setTempStartMinute(e.target.value)}
+                      className="w-full bg-transparent border-none outline-none text-[14px] font-black text-[#0B2F6B] appearance-none pr-4 cursor-pointer"
+                    >
+                      {MINUTES.map((m) => (
+                        <option key={m} value={m}>{m}</option>
+                      ))}
+                    </select>
+                    <ChevronDown className="absolute right-2.5 h-3.5 w-3.5 text-[#55739B] pointer-events-none" />
+                  </div>
+                  <span className="text-[13px] font-black text-[#0B2F6B]">น.</span>
+                </div>
+              </div>
+
+              <span className="text-[13px] font-black text-[#55739B] mt-5 self-center">ถึง</span>
+
+              {/* End Time */}
+              <div className="flex flex-col gap-1">
+                <span className="text-[12px] font-bold text-[#55739B]">เวลาสิ้นสุด</span>
+                <div className="flex items-center gap-2">
+                  <div className="relative flex items-center h-10 rounded-xl border border-[#CFE3F4] bg-white px-2.5 min-w-[90px] focus-within:border-[#0B82F0] focus-within:ring-1 focus-within:ring-[#0B82F0]">
+                    <Clock className="h-4 w-4 text-[#0B82F0] mr-2" />
+                    <div className="h-5 w-px bg-[#CFE3F4] mr-2" />
+                    <select
+                      disabled={!awarenessEnabled}
+                      value={tempEndHour}
+                      onChange={(e) => setTempEndHour(e.target.value)}
+                      className="w-full bg-transparent border-none outline-none text-[14px] font-black text-[#0B2F6B] appearance-none pr-4 cursor-pointer"
+                    >
+                      {HOURS.map((h) => (
+                        <option key={h} value={h}>{h}</option>
+                      ))}
+                    </select>
+                    <ChevronDown className="absolute right-2.5 h-3.5 w-3.5 text-[#55739B] pointer-events-none" />
+                  </div>
+
+                  <div className="relative flex items-center h-10 rounded-xl border border-[#CFE3F4] bg-white px-2.5 min-w-[70px] focus-within:border-[#0B82F0] focus-within:ring-1 focus-within:ring-[#0B82F0]">
+                    <select
+                      disabled={!awarenessEnabled}
+                      value={tempEndMinute}
+                      onChange={(e) => setTempEndMinute(e.target.value)}
+                      className="w-full bg-transparent border-none outline-none text-[14px] font-black text-[#0B2F6B] appearance-none pr-4 cursor-pointer"
+                    >
+                      {MINUTES.map((m) => (
+                        <option key={m} value={m}>{m}</option>
+                      ))}
+                    </select>
+                    <ChevronDown className="absolute right-2.5 h-3.5 w-3.5 text-[#55739B] pointer-events-none" />
+                  </div>
+                  <span className="text-[13px] font-black text-[#0B2F6B]">น.</span>
+                </div>
+              </div>
+            </div>
+
+            <Button
+              onClick={handleSaveTime}
+              disabled={!awarenessEnabled || savingTime}
+              className="h-10 px-5 rounded-full bg-[#0B82F0] text-white hover:bg-[#0973d6] font-black text-[13.5px] shadow-sm flex items-center gap-2 cursor-pointer mt-5 lg:mt-5 self-end lg:self-center transition-colors"
+            >
+              <Check className="h-4.5 w-4.5" strokeWidth={3} />
+              {savingTime ? "กำลังบันทึก..." : "บันทึกเวลา"}
+            </Button>
+          </div>
+        </div>
+      </Card>
+
       <div className="mt-4">
         <SectionCard
           title="วันที่ไม่นับคะแนน Safety Awareness KPI"
@@ -377,33 +566,41 @@ export default function AdminAwarenessPage() {
             <Button
               onClick={addHoliday}
               disabled={!holidayDate || !holidayName.trim()}
-              variant="brand"
-              className="h-10 rounded-xl px-4 text-[12.5px] font-black disabled:opacity-50"
+              className="h-10 rounded-full bg-[#0B82F0] px-4 text-[12.5px] font-black text-white hover:bg-[#0973d6] disabled:opacity-50 transition-colors"
             >
               <Plus className="h-4 w-4" /> เพิ่มวันไม่นับคะแนน
             </Button>
           </div>
 
           <div className="mt-3 rounded-2xl border border-[#D7EAFE] bg-[#F8FCFF] p-3">
-            <div className="mb-2 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <div className="text-[13px] font-black text-[#0B2F6B]">รายการวันไม่นับคะแนนเพิ่มเติม</div>
-                <div className="text-[11px] font-bold text-[#55739B]">แสดง {visibleHolidays.length} จาก {awarenessHolidays.length} รายการ</div>
+            <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex items-center gap-2">
+                <div className="text-[14px] font-black text-[#0B2F6B]">รายการวันที่ไม่นับคะแนนเพิ่มเติม</div>
+                <div className="rounded-full bg-[#E5F2FF] px-2 py-0.5 text-[11px] font-bold text-[#0B82F0]">
+                  {visibleHolidays.length} รายการ
+                </div>
               </div>
-              <Combobox
-                value={holidayYearFilter}
-                onValueChange={setHolidayYearFilter}
-                aria-label="กรองปีวันหยุด"
-                searchPlaceholder="ค้นหาปี"
-                searchable={false}
-                preserveScrollOnOpen
-                className="h-9 border-[#B9E0FF] bg-white text-[12px] font-black text-[#0B2F6B] sm:w-[170px]"
-                options={[
-                  { value: "all", label: "ทุกปี" },
-                  ...holidayYears.map((year) => ({ value: year, label: year })),
-                ]}
-              />
+              <div className="flex items-center gap-2">
+                <span className="text-[12px] font-bold text-[#55739B]">กรองตามปี</span>
+                <Combobox
+                  value={holidayYearFilter}
+                  onValueChange={setHolidayYearFilter}
+                  aria-label="กรองปีวันหยุด"
+                  searchPlaceholder="ค้นหาปี"
+                  searchable={false}
+                  preserveScrollOnOpen
+                  className="h-9 border-[#B9E0FF] bg-white text-[12.5px] font-bold text-[#0B2F6B] sm:w-[130px] rounded-xl"
+                  options={[
+                    { value: "all", label: "ทุกปี" },
+                    ...holidayYears.map((year) => ({ value: year, label: String(Number(year) + 543) })),
+                  ]}
+                />
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl border border-[#B9E0FF] bg-white text-[#0B82F0]">
+                  <Calendar className="h-4.5 w-4.5" />
+                </div>
+              </div>
             </div>
+            
             {awarenessHolidays.length === 0 ? (
               <p className="rounded-xl border border-dashed border-[#B9E0FF] bg-white px-4 py-4 text-center text-[12.5px] font-bold text-[#55739B]">
                 ยังไม่มีวันหยุดเพิ่มเติม ระบบไม่นับเฉพาะวันเสาร์และวันอาทิตย์
@@ -413,32 +610,163 @@ export default function AdminAwarenessPage() {
                 ไม่พบรายการในปีที่เลือก
               </p>
             ) : (
-              <div className="max-h-[280px] overflow-y-auto pr-1 [scrollbar-width:thin]">
-                <div className="grid gap-2 md:grid-cols-2">
-                  {visibleHolidays.map((holiday) => (
-                    <div
-                      key={holiday.date}
-                      className="flex items-center gap-3 rounded-xl border border-[#D7EAFE] bg-white px-3 py-2.5"
-                    >
-                      <CalendarOff className="h-4 w-4 flex-shrink-0 text-[#b3271a]" />
-                      <div className="min-w-0 flex-1">
-                        <p className="truncate text-[12.5px] font-black text-[#0B2F6B]">{holiday.name}</p>
-                        <p className="text-[11.5px] font-bold text-[#55739B]">{holiday.date}</p>
-                      </div>
+              <div>
+                <div className="overflow-hidden border border-[#D7EAFE] rounded-xl bg-white">
+                  <table className="w-full text-left border-collapse">
+                    <thead>
+                      <tr className="border-b border-[#D7EAFE] bg-[#F8FCFF] text-[12px] font-black text-[#55739B]">
+                        <th className="px-4 py-3">วันที่</th>
+                        <th className="px-4 py-3">ชื่อวันหยุด</th>
+                        <th className="px-4 py-3">เพิ่มโดย</th>
+                        <th className="px-4 py-3">ปี</th>
+                        <th className="px-4 py-3 text-center w-28">จัดการ</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-[#D7EAFE]">
+                      {paginatedHolidays.map((holiday) => {
+                        const [y, m, d] = holiday.date.split("-");
+                        const monthsShort = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.ค.", "มิ.ย.", "ก.ค.", "ส.ค.", "ก.ย.", "ต.ค.", "พ.ย.", "ธ.ค."];
+                        const monthsFull = ["มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน", "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"];
+                        const dayNum = Number(d);
+                        const monthShort = monthsShort[Number(m) - 1] || "";
+                        const monthFull = monthsFull[Number(m) - 1] || "";
+                        const thaiYear = Number(y) + 543;
+                        
+                        const daysOfWeek = ["วันอาทิตย์", "วันจันทร์", "วันอังคาร", "วันพุธ", "วันพฤหัสบดี", "วันศุกร์", "วันเสาร์"];
+                        const dayOfWeek = daysOfWeek[new Date(holiday.date).getDay()];
+
+                        return (
+                          <tr key={holiday.date} className="hover:bg-[#F8FCFF] transition-colors">
+                            <td className="px-4 py-2.5">
+                              <div className="flex items-center gap-3">
+                                <div className="flex flex-col items-center justify-center w-12 h-12 rounded-xl bg-[#F0F7FF] text-[#0A82F0] border border-[#B9E0FF] flex-shrink-0">
+                                  <span className="text-[16px] font-black leading-none">{dayNum}</span>
+                                  <span className="text-[10px] font-bold mt-0.5">{monthShort}</span>
+                                </div>
+                                <div className="flex flex-col">
+                                  <span className="text-[13px] font-black text-[#0B2F6B]">
+                                    {dayNum} {monthFull} {thaiYear}
+                                  </span>
+                                  <span className="text-[11.5px] font-bold text-[#55739B] mt-0.5">
+                                    {dayOfWeek}
+                                  </span>
+                                </div>
+                              </div>
+                            </td>
+                            <td className="px-4 py-2.5 text-[13.5px] font-black text-[#0B2F6B] truncate max-w-[220px]">
+                              {holiday.name}
+                            </td>
+                            <td className="px-4 py-2.5 text-[13px] font-bold text-[#0B2F6B]">
+                              Admin
+                            </td>
+                            <td className="px-4 py-2.5 text-[13px] font-bold text-[#0B2F6B]">
+                              {thaiYear}
+                            </td>
+                            <td className="px-4 py-2.5">
+                              <div className="flex items-center justify-center gap-2">
+                                <button
+                                  type="button"
+                                  title="แก้ไขวันไม่นับ"
+                                  onClick={() => {
+                                    const newName = prompt("แก้ไขชื่อวันหยุด", holiday.name);
+                                    if (newName && newName.trim() && newName.trim() !== holiday.name) {
+                                      updateAwarenessHolidays(
+                                        awarenessHolidays.map((item) =>
+                                          item.date === holiday.date ? { ...item, name: newName.trim() } : item
+                                        )
+                                      );
+                                    }
+                                  }}
+                                  className="inline-flex h-8 w-8 items-center justify-center rounded-xl border border-[#CFE3F4] bg-white text-[#0B82F0] hover:bg-[#F0F7FF] transition-colors cursor-pointer"
+                                >
+                                  <Pencil className="h-4 w-4" />
+                                </button>
+                                <button
+                                  type="button"
+                                  title="ลบวันไม่นับ"
+                                  onClick={() =>
+                                    updateAwarenessHolidays(
+                                      awarenessHolidays.filter((item) => item.date !== holiday.date),
+                                    )
+                                  }
+                                  className="inline-flex h-8 w-8 items-center justify-center rounded-xl border border-[#ECCDC6] bg-white text-[#B3271A] hover:bg-[#FBE3DF] transition-colors cursor-pointer"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Pagination Controls */}
+                <div className="mt-3.5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between px-1 py-1">
+                  <div className="flex items-center gap-2 text-[12.5px] font-bold text-[#55739B]">
+                    <span>แสดง</span>
+                    <div className="relative flex items-center h-8 rounded-xl border border-[#CFE3F4] bg-white px-2 pr-6 focus-within:border-[#0B82F0] focus-within:ring-1 focus-within:ring-[#0B82F0]">
+                      <select
+                        value={pageSize}
+                        onChange={(e) => setPageSize(Number(e.target.value))}
+                        className="bg-transparent border-none outline-none text-[12.5px] font-black text-[#0B2F6B] appearance-none cursor-pointer w-10"
+                      >
+                        <option value={5}>5</option>
+                        <option value={10}>10</option>
+                        <option value={20}>20</option>
+                        <option value={50}>50</option>
+                      </select>
+                      <ChevronDown className="absolute right-1.5 h-3.5 w-3.5 text-[#55739B] pointer-events-none" />
+                    </div>
+                    <span>รายการต่อหน้า</span>
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-4 justify-between sm:justify-end">
+                    <div className="flex items-center gap-1">
                       <button
                         type="button"
-                        title="ลบวันไม่นับ"
-                        onClick={() =>
-                          updateAwarenessHolidays(
-                            awarenessHolidays.filter((item) => item.date !== holiday.date),
-                          )
-                        }
-                        className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg border border-[#ECCDC6] bg-white text-[#B3271A] hover:bg-[#FBE3DF]"
+                        disabled={currentPage === 1}
+                        onClick={() => setCurrentPage(1)}
+                        className="flex h-8 w-8 items-center justify-center rounded-xl border border-[#CFE3F4] bg-white text-[#55739B] hover:bg-[#F8FCFF] disabled:opacity-40 disabled:hover:bg-white transition-colors cursor-pointer"
                       >
-                        <Trash2 className="h-4 w-4" />
+                        {"<<"}
+                      </button>
+                      <button
+                        type="button"
+                        disabled={currentPage === 1}
+                        onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
+                        className="flex h-8 w-8 items-center justify-center rounded-xl border border-[#CFE3F4] bg-white text-[#55739B] hover:bg-[#F8FCFF] disabled:opacity-40 disabled:hover:bg-white transition-colors cursor-pointer"
+                      >
+                        {"<"}
+                      </button>
+
+                      <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-[#0B82F0] text-white font-black text-[13px] shadow-sm shadow-blue-100">
+                        {currentPage}
+                      </div>
+
+                      <button
+                        type="button"
+                        disabled={currentPage === totalPages}
+                        onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
+                        className="flex h-8 w-8 items-center justify-center rounded-xl border border-[#CFE3F4] bg-white text-[#55739B] hover:bg-[#F8FCFF] disabled:opacity-40 disabled:hover:bg-white transition-colors cursor-pointer"
+                      >
+                        {">"}
+                      </button>
+                      <button
+                        type="button"
+                        disabled={currentPage === totalPages}
+                        onClick={() => setCurrentPage(totalPages)}
+                        className="flex h-8 w-8 items-center justify-center rounded-xl border border-[#CFE3F4] bg-white text-[#55739B] hover:bg-[#F8FCFF] disabled:opacity-40 disabled:hover:bg-white transition-colors cursor-pointer"
+                      >
+                        {">>"}
                       </button>
                     </div>
-                  ))}
+
+                    <span className="text-[12.5px] font-bold text-[#55739B]">
+                      {currentPage} จาก {totalPages} หน้า
+                    </span>
+                  </div>
                 </div>
               </div>
             )}
@@ -462,8 +790,7 @@ export default function AdminAwarenessPage() {
               </Button>
               <Button
                 onClick={() => setEditor({ ...EMPTY_EDITOR })}
-                variant="brand"
-                className="h-9 rounded-xl px-3.5 text-[12.5px] font-black"
+                className="h-9 rounded-full bg-[#0B82F0] px-3.5 text-[12.5px] font-black text-white hover:bg-[#0973d6] transition-colors"
               >
                 <Plus className="h-4 w-4" /> เพิ่มคำถาม
               </Button>
@@ -732,7 +1059,7 @@ export default function AdminAwarenessPage() {
             <Button
               onClick={saveEditor}
               disabled={!editor?.text.trim()}
-              className="h-9 rounded-xl bg-[var(--c-5c3214)] px-4 text-[12.5px] font-black text-white hover:bg-[var(--c-4a280f)] disabled:opacity-50"
+              className="h-9 rounded-full bg-[#0B82F0] px-4 text-[12.5px] font-black text-white hover:bg-[#0973d6] disabled:opacity-50 transition-colors"
             >
               บันทึก
             </Button>

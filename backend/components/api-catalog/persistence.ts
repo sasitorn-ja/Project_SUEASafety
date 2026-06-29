@@ -814,6 +814,8 @@ function safetyEffortSubmissionDto(row: Record<string, unknown> | null | undefin
     safetyContactText: String(row.safety_contact_text || ""),
     answeredItems: normalizeSafetyEffortAnsweredItems(answeredItemsRaw),
     metadata: normalizeSafetyEffortMetadata(metadataRaw),
+    actualLat: row.actual_lat == null ? null : Number(row.actual_lat),
+    actualLng: row.actual_lng == null ? null : Number(row.actual_lng),
   };
 }
 
@@ -1056,17 +1058,25 @@ async function handleActivitiesAssessments(request: NextRequest, method: string,
     if (to) { where.push("s.submission_date <= :to"); params.to = to; }
     if (activityType) { where.push("s.activity_type = :activityType"); params.activityType = activityType; }
     // Join users so the submitter name/email/code falls back to their profile
-    // for older rows that were saved without a name snapshot.
-    const result = await listRows("safety_effort_submissions s LEFT JOIN users u ON u.id = s.user_id", request, {
-      where,
-      params,
-      orderBy: "s.created_at DESC, s.id DESC",
-      select:
-        "s.*, COALESCE(NULLIF(s.name, ''), u.name_th, u.name_en, u.username) AS name, " +
-        "COALESCE(NULLIF(s.email, ''), u.email) AS email, " +
-        "COALESCE(NULLIF(s.pms, ''), u.employee_no) AS pms",
-      maxPageSize: 500,
-    });
+    // for older rows that were saved without a name snapshot. Also join checkins to get actual coordinates.
+    const result = await listRows(
+      "safety_effort_submissions s " +
+      "LEFT JOIN users u ON u.id = s.user_id " +
+      "LEFT JOIN checkins c ON c.id = s.checkin_id",
+      request,
+      {
+        where,
+        params,
+        orderBy: "s.created_at DESC, s.id DESC",
+        select:
+          "s.*, COALESCE(NULLIF(s.name, ''), u.name_th, u.name_en, u.username) AS name, " +
+          "COALESCE(NULLIF(s.email, ''), u.email) AS email, " +
+          "COALESCE(NULLIF(s.pms, ''), u.employee_no) AS pms, " +
+          "ST_Latitude(c.actual_position) AS actual_lat, " +
+          "ST_Longitude(c.actual_position) AS actual_lng",
+        maxPageSize: 500,
+      }
+    );
     const items = result.items.map(safetyEffortSubmissionDto);
     if (route.endsWith("/me") && userId) {
       const legacy = await getLegacySafetyEffortSummaryForUser(String(userId), from, to);

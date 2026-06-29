@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import {
@@ -1450,7 +1450,7 @@ export default function AdminEventPage() {
                         type="button"
                         onClick={handleAddFeedEvent}
                         disabled={isSavingFeedEvents}
-                        className="h-10 rounded-[14px] bg-[var(--brand-text)] px-4 text-[13px] font-black text-white hover:bg-[var(--brand-nav)]"
+                        className="h-10 rounded-full bg-[#0B82F0] px-4 text-[13px] font-black text-white hover:bg-[#0973d6] transition-colors"
                       >
                         <Plus className="mr-1 h-4 w-4" />
                         สร้างกิจกรรม
@@ -1460,7 +1460,7 @@ export default function AdminEventPage() {
                         variant="outline"
                         onClick={handleSaveFeedEvents}
                         disabled={isSavingFeedEvents}
-                        className="h-10 rounded-[14px] border-[var(--c-d7c5a7)] bg-[var(--c-fff8eb)] px-4 text-[13px] font-black text-[var(--c-5c3214)] hover:bg-[var(--c-fff2d8)]"
+                        className="h-10 rounded-full border-[#0B82F0]/20 bg-white px-4 text-[13px] font-black text-[#0B82F0] hover:bg-[#F1F8FE] transition-colors"
                       >
                         {isSavingFeedEvents ? "กำลังบันทึก..." : "บันทึกรายการ"}
                       </Button>
@@ -2038,10 +2038,9 @@ export default function AdminEventPage() {
             <AppDialogSectionFooter className="px-4 py-3 sm:px-5">
               <Button
                 type="button"
-                variant="brand"
                 onClick={handleApplyFeedModal}
                 disabled={isSavingFeedEvents}
-                className="h-11 rounded-[14px] px-6 text-[13px] font-black"
+                className="h-11 rounded-full bg-[#0B82F0] px-6 text-[13px] font-black text-white hover:bg-[#0973d6] disabled:opacity-50 transition-colors"
               >
                 {isSavingFeedEvents ? "กำลังบันทึก..." : "บันทึก"}
               </Button>

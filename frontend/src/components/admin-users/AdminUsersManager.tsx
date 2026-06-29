@@ -164,11 +164,11 @@ export function AdminUsersManager() {
             contentClassName="min-w-[130px]"
             options={ADMIN_USERS_PAGE_SIZE_OPTIONS}
           />
-          <Button onClick={submitSearch} className="h-10 rounded-xl bg-[var(--brand-accent)] px-4 font-black text-[var(--brand-accent-contrast)]">
+          <Button onClick={submitSearch} className="h-10 rounded-full bg-[#0B82F0] px-4 font-black text-white hover:bg-[#0973d6] transition-colors">
             <Search className="h-4 w-4" strokeWidth={2.5} />
             ค้นหา
           </Button>
-          <Button variant="outline" onClick={() => void loadUsers()} className="h-10 rounded-xl px-4 font-black">
+          <Button variant="outline" onClick={() => void loadUsers()} className="h-10 rounded-full px-4 font-black">
             <RefreshCcw className={cn("h-4 w-4", loading && "animate-spin")} strokeWidth={2.5} />
             รีเฟรช
           </Button>
@@ -247,12 +247,12 @@ export function AdminUsersManager() {
                     </TableCell>
                     <TableCell className="text-right">
                       {isAdmin ? (
-                        <Button variant="destructive" size="sm" disabled={isSaving} onClick={() => void onUpdateAdminRole(item, false)} className="font-black">
+                        <Button variant="destructive" size="sm" disabled={isSaving} onClick={() => void onUpdateAdminRole(item, false)} className="rounded-full font-black">
                           <ShieldMinus strokeWidth={2.5} />
                           ถอด Admin
                         </Button>
                       ) : (
-                        <Button size="sm" disabled={isSaving || !safetyAdminRole} onClick={() => void onUpdateAdminRole(item, true)} className="bg-[var(--brand-accent)] font-black text-[var(--brand-accent-contrast)]">
+                        <Button size="sm" disabled={isSaving || !safetyAdminRole} onClick={() => void onUpdateAdminRole(item, true)} className="rounded-full bg-[#0B82F0] font-black text-white hover:bg-[#0973d6] transition-colors">
                           <ShieldCheck strokeWidth={2.5} />
                           เพิ่ม Admin
                         </Button>

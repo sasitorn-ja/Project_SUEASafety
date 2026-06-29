@@ -114,6 +114,8 @@ const MOCKUP_SUBMISSIONS = [
     actorName: "นายมานพ ปลอดภัย",
     actorEmail: "manop.p@cpac.co.th",
     actorCode: "0012345",
+    actualLat: 13.81930,
+    actualLng: 100.51430,
   },
   {
     id: "mock-2",
@@ -130,6 +132,8 @@ const MOCKUP_SUBMISSIONS = [
     actorName: "นางสาวศิริลักษณ์ วิริยะ",
     actorEmail: "sirilak.w@cpac.co.th",
     actorCode: "0025678",
+    actualLat: 13.82050,
+    actualLng: 100.51520,
   },
   {
     id: "mock-3",
@@ -150,6 +154,8 @@ const MOCKUP_SUBMISSIONS = [
     actorName: "นายวิศรุต การช่าง",
     actorEmail: "witsarut.k@cpac.co.th",
     actorCode: "0039876",
+    actualLat: 13.79980,
+    actualLng: 100.50850,
   }
 ];
 
@@ -271,6 +277,7 @@ export default function SafetyAdminReportHistory() {
         "กิจกรรม": item.activityLabel,
         "หมวดหมู่สถานที่": LOCATION_TYPE_LABELS[item.locType] || item.locType,
         "สถานที่ตรวจ": item.locationName,
+        "สถานที่จริง": item.actualLat && item.actualLng ? `${item.actualLat}, ${item.actualLng}` : "-",
         "รหัสสถานที่/Zone": item.locationTag,
         "รหัสผู้ตรวจ": item.actorCode || "",
         "ผู้ทำกิจกรรม": item.actorName || "",
@@ -437,6 +444,7 @@ export default function SafetyAdminReportHistory() {
                       <th style={{ padding: "10px 16px", fontWeight: 800, color: T.sub, width: 140 }}>วันที่ทำรายการ</th>
                       <th style={{ padding: "10px 16px", fontWeight: 800, color: T.sub, width: 130 }}>กิจกรรม</th>
                       <th style={{ padding: "10px 16px", fontWeight: 800, color: T.sub, width: 220 }}>สถานที่ตรวจ</th>
+                      <th style={{ padding: "10px 16px", fontWeight: 800, color: T.sub, width: 180 }}>สถานที่จริง</th>
                       <th style={{ padding: "10px 16px", fontWeight: 800, color: T.sub, width: 220 }}>ผู้ทำกิจกรรม</th>
                       <th style={{ padding: "10px 16px", fontWeight: 800, color: T.sub, width: 120 }}>ประเภทสถานที่</th>
                       <th style={{ padding: "10px 16px", fontWeight: 800, color: T.sub }}>ผลประเมิน / รายละเอียด</th>
@@ -494,6 +502,21 @@ export default function SafetyAdminReportHistory() {
                           <td style={{ padding: "8px 16px" }}>
                             <div style={{ fontWeight: 700 }}>{item.locationName}</div>
                             <div style={{ fontSize: 11, color: T.sub }}>{item.locationTag}</div>
+                          </td>
+                          <td style={{ padding: "8px 16px" }}>
+                            {item.actualLat && item.actualLng ? (
+                              <a
+                                href={`https://www.google.com/maps?q=${item.actualLat},${item.actualLng}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                style={{ color: "#0B82F0", fontWeight: 700, textDecoration: "underline" }}
+                                title="ดูแผนที่ Google Maps"
+                              >
+                                {item.actualLat.toFixed(5)}, {item.actualLng.toFixed(5)}
+                              </a>
+                            ) : (
+                              <span style={{ color: T.sub }}>-</span>
+                            )}
                           </td>
                           <td style={{ padding: "8px 16px" }}>
                             <div style={{ fontWeight: 700 }}>{item.actorName || "-"}</div>
@@ -655,8 +678,25 @@ export default function SafetyAdminReportHistory() {
                 <div style={{ fontSize: 14, fontWeight: 800 }}>{selectedSub.date}</div>
               </div>
               <div>
-                <div style={{ fontSize: 11, color: T.sub, fontWeight: 800 }}>สถานที่ / รหัส</div>
+                <div style={{ fontSize: 11, color: T.sub, fontWeight: 800 }}>สถานที่ตรวจ / รหัส</div>
                 <div style={{ fontSize: 14, fontWeight: 800 }}>{selectedSub.locationName} ({selectedSub.locationTag})</div>
+              </div>
+              <div>
+                <div style={{ fontSize: 11, color: T.sub, fontWeight: 800 }}>สถานที่จริง (GPS)</div>
+                <div style={{ fontSize: 14, fontWeight: 800 }}>
+                  {selectedSub.actualLat && selectedSub.actualLng ? (
+                    <a
+                      href={`https://www.google.com/maps?q=${selectedSub.actualLat},${selectedSub.actualLng}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{ color: "#0B82F0", textDecoration: "underline", fontWeight: 700 }}
+                    >
+                      {selectedSub.actualLat.toFixed(5)}, {selectedSub.actualLng.toFixed(5)}
+                    </a>
+                  ) : (
+                    "-"
+                  )}
+                </div>
               </div>
               <div>
                 <div style={{ fontSize: 11, color: T.sub, fontWeight: 800 }}>ผู้ทำกิจกรรม</div>

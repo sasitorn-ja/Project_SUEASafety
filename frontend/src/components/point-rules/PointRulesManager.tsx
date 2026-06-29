@@ -61,6 +61,33 @@ export function PointRulesManager() {
     [draft, rules],
   );
 
+  const groups = useMemo(() => {
+    const awareness: PointRule[] = [];
+    const culture: PointRule[] = [];
+    const effort: PointRule[] = [];
+    const other: PointRule[] = [];
+
+    rules.forEach((rule) => {
+      const code = rule.code.toLowerCase();
+      if (code.includes("awareness")) {
+        awareness.push(rule);
+      } else if (code.includes("post") || code.includes("comment") || code.includes("reaction") || code.includes("reply") || code.includes("culture")) {
+        culture.push(rule);
+      } else if (code.includes("effort") || code.includes("linewalk") || code.includes("checklist")) {
+        effort.push(rule);
+      } else {
+        other.push(rule);
+      }
+    });
+
+    return [
+      { id: "awareness", name: "Safety Awareness", rules: awareness, color: "text-[#0B82F0] bg-[#EAF6FF] border-[#B9DDFF]" },
+      { id: "culture", name: "Safety Culture", rules: culture, color: "text-[#E67E22] bg-[#FDF2E9] border-[#FADBD8]" },
+      { id: "effort", name: "Safety Effort", rules: effort, color: "text-[#27AE60] bg-[#E8F8F5] border-[#D1F2EB]" },
+      ...(other.length > 0 ? [{ id: "other", name: "อื่นๆ", rules: other, color: "text-[#7F8C8D] bg-[#F2F4F4] border-[#E5E8E8]" }] : []),
+    ];
+  }, [rules]);
+
   const onSaveRules = async () => {
     setSaving(true);
     setError("");
@@ -124,7 +151,7 @@ export function PointRulesManager() {
               <RefreshCcw className="mr-2 h-4 w-4" />
               โหลดใหม่
             </Button>
-            <Button type="button" onClick={() => void onSaveRules()} disabled={loading || saving || !hasChanges} className="h-10 rounded-xl bg-[#0B82F0]">
+            <Button type="button" onClick={() => void onSaveRules()} disabled={loading || saving || !hasChanges} className="h-10 rounded-full bg-[#0B82F0] hover:bg-[#0973d6] text-white transition-colors">
               <Save className="mr-2 h-4 w-4" />
               {saving ? "กำลังบันทึก..." : "บันทึกคะแนน"}
             </Button>
@@ -134,40 +161,57 @@ export function PointRulesManager() {
         {message && <div className="mt-3 rounded-xl border border-[#C8E9D2] bg-[#EEFFF3] px-3 py-2 text-[12px] font-bold text-[#19734A]">{message}</div>}
         {error && <div className="mt-3 rounded-xl border border-[#FFD3D0] bg-[#FFF4F3] px-3 py-2 text-[12px] font-bold text-[#C7352B]">{error}</div>}
 
-        <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-          {rules.map((rule) => (
-            <div key={rule.code} className="rounded-[18px] border border-[#D7EAFE] bg-white p-4 shadow-[0_6px_18px_rgba(185,223,255,0.22)]">
-              <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <h3 className="text-[16px] font-black leading-tight text-[#0B2F6B]">{rule.label}</h3>
-                  <p className="mt-1 text-[11px] font-bold leading-relaxed text-[#55739B]">{POINT_RULE_HINTS[rule.code] || rule.sourceType}</p>
-                </div>
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-[#F5FAFF] text-[#0B82F0]">
-                  <Trophy className="h-5 w-5" strokeWidth={2.3} />
-                </div>
-              </div>
+        {groups.map((group) => {
+          if (group.rules.length === 0) return null;
 
-              <div className="mt-4">
-                <label className="mb-1.5 block text-[11px] font-black text-[#55739B]">คะแนน</label>
-                <Input
-                  type="number"
-                  min="0"
-                  step="1"
-                  value={draft[rule.code] ?? ""}
-                  onChange={(event) => setDraft((current) => ({ ...current, [rule.code]: event.target.value }))}
-                  className="h-11 rounded-xl border-[#D7EAFE] text-[18px] font-black text-[#0B2F6B]"
-                />
-              </div>
-
-              <div className="mt-3 flex flex-wrap items-center gap-2">
-                <span className="rounded-full bg-[#F5FAFF] px-2.5 py-1 text-[10px] font-black text-[#0B82F0]">{rule.code}</span>
-                <span className="rounded-full bg-[#FFF7E8] px-2.5 py-1 text-[10px] font-black text-[#A56A00]">
-                  {rule.source === "database" ? "ข้อมูลจริงจากระบบ" : "ค่าเริ่มต้นของระบบ"}
+          return (
+            <div key={group.id} className="mt-6 first:mt-4">
+              {/* Group Section Title */}
+              <div className="flex items-center gap-2.5 mb-3">
+                <span className={`inline-flex items-center rounded-xl border px-3 py-1.5 text-[11px] font-black uppercase tracking-wider ${group.color}`}>
+                  {group.name}
                 </span>
+                <div className="h-[1px] flex-1 bg-[var(--border)]" />
+              </div>
+
+              {/* Group Grid Cards */}
+              <div className="grid gap-3.5 md:grid-cols-2 xl:grid-cols-3">
+                {group.rules.map((rule) => (
+                  <div key={rule.code} className="rounded-[18px] border border-[#D7EAFE] bg-white p-4 shadow-[0_6px_18px_rgba(185,223,255,0.12)] transition-all duration-200 hover:border-[#0B82F0] hover:shadow-[0_8px_22px_var(--brand-shadow)]">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <h3 className="text-[16px] font-black leading-tight text-[#0B2F6B]">{rule.label}</h3>
+                        <p className="mt-1 text-[11px] font-bold leading-relaxed text-[#55739B]">{POINT_RULE_HINTS[rule.code] || rule.sourceType}</p>
+                      </div>
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-[#F5FAFF] text-[#0B82F0]">
+                        <Trophy className="h-5 w-5" strokeWidth={2.3} />
+                      </div>
+                    </div>
+
+                    <div className="mt-4">
+                      <label className="mb-1.5 block text-[11px] font-black text-[#55739B]">คะแนน</label>
+                      <Input
+                        type="number"
+                        min="0"
+                        step="1"
+                        value={draft[rule.code] ?? ""}
+                        onChange={(event) => setDraft((current) => ({ ...current, [rule.code]: event.target.value }))}
+                        className="h-11 rounded-xl border-[#D7EAFE] text-[18px] font-black text-[#0B2F6B] focus:border-[#0B82F0]"
+                      />
+                    </div>
+
+                    <div className="mt-3 flex flex-wrap items-center gap-2">
+                      <span className="rounded-full bg-[#F5FAFF] px-2.5 py-1 text-[10px] font-black text-[#0B82F0]">{rule.code}</span>
+                      <span className="rounded-full bg-[#FFF7E8] px-2.5 py-1 text-[10px] font-black text-[#A56A00]">
+                        {rule.source === "database" ? "ข้อมูลจริงจากระบบ" : "ค่าเริ่มต้นของระบบ"}
+                      </span>
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
-          ))}
-        </div>
+          );
+        })}
 
         {!loading && rules.length === 0 && (
           <div className="mt-4 rounded-xl border border-dashed border-[#D7EAFE] bg-[#F9FBFF] px-4 py-6 text-center text-[13px] font-bold text-[#55739B]">
