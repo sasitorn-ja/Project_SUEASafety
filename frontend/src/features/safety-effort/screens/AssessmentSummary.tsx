@@ -70,6 +70,12 @@ function statusMeta(status) {
   return { label: "N/A", color: T.foreground3, bg: "var(--c-f8f6f1)", border: "rgba(14,15,18,0.08)" };
 }
 
+function normalizeNumericId(value) {
+  if (value == null) return null;
+  const normalized = String(value).trim();
+  return /^\d+$/.test(normalized) ? normalized : null;
+}
+
 export default function AssessmentSummary() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -166,7 +172,7 @@ export default function AssessmentSummary() {
   };
 
   const persistActivityToDb = async (submission) => {
-    const checkinId = checkin?.checkinId ?? null;
+    const checkinId = normalizeNumericId(checkin?.checkinId);
     if (!checkinId) return; // no DB checkin → cannot satisfy safety_activities FK yet
     try {
       await fetch("/api/safety-effort/activities", {
@@ -202,6 +208,7 @@ export default function AssessmentSummary() {
 
   const handleConfirmSave = async () => {
     const submissionDate = linewalkData?.date || new Date().toISOString().split("T")[0];
+    const normalizedCheckinId = normalizeNumericId(checkin?.checkinId);
     const newSubmission = {
       timestamp: new Date().toISOString(),
       activityLabel: activity?.label || (linewalkData?.isSafetyContact ? "Safety Contact" : "Line Walk"),
@@ -222,7 +229,7 @@ export default function AssessmentSummary() {
       name: getSessionDisplayName(sessionUser),
       email: sessionUser?.email || "",
       activityType: linewalkData?.isSafetyContact ? "SAFETY_CONTACT" : "LINE_WALK",
-      checkinId: checkin?.checkinId || null,
+      checkinId: normalizedCheckinId,
       metadata: {
         attachments: serializeEvidenceMediaList(topLevelAttachments),
       },
