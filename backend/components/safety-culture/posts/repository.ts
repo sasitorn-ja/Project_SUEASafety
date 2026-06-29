@@ -182,25 +182,38 @@ async function createNotification(connection: any, input: { userId: string; acto
 
 async function deleteLikeNotification(connection: any, input: { postId: string; actorId: string }) {
   const [owners] = await connection.execute(
-    `SELECT author_id
-     FROM posts
-     WHERE id = :postId
+    `SELECT p.author_id, COALESCE(u.name_th, u.name_en, u.email, '') AS actor_name
+     FROM posts p
+     LEFT JOIN users u ON u.id = :actorId
+     WHERE p.id = :postId
      LIMIT 1`,
-    { postId: input.postId },
+    { postId: input.postId, actorId: input.actorId },
   );
-  const owner = owners[0] as (RowDataPacket & { author_id?: string | number | null }) | undefined;
+  const owner = owners[0] as (RowDataPacket & { author_id?: string | number | null; actor_name?: string | null }) | undefined;
   if (!owner?.author_id || String(owner.author_id) === String(input.actorId)) return;
 
   await connection.execute(
     `DELETE FROM notifications
      WHERE user_id = :ownerId
        AND notification_type = 'LIKE'
-       AND JSON_UNQUOTE(JSON_EXTRACT(metadata, '$.postId')) = :postId
-       AND JSON_UNQUOTE(JSON_EXTRACT(metadata, '$.actorUserId')) = :actorId`,
+       AND (
+         JSON_UNQUOTE(JSON_EXTRACT(metadata, '$.postId')) = :postId
+         OR JSON_UNQUOTE(JSON_EXTRACT(metadata, '$.href')) = :postHref
+       )
+       AND (
+         JSON_UNQUOTE(JSON_EXTRACT(metadata, '$.actorUserId')) = :actorId
+         OR JSON_UNQUOTE(JSON_EXTRACT(metadata, '$.actorId')) = :actorId
+         OR (
+           :actorName <> ''
+           AND title LIKE CONCAT(:actorName, '%')
+         )
+       )`,
     {
       ownerId: String(owner.author_id),
       postId: String(input.postId),
+      postHref: `/safety-culture/posts/${String(input.postId)}`,
       actorId: String(input.actorId),
+      actorName: String(owner.actor_name || ""),
     },
   );
 }

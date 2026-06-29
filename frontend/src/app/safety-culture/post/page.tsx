@@ -4,12 +4,14 @@ import { useId, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Camera, Plus, X } from "lucide-react";
+import { ArrowLeft, Camera, CheckCircle2, Plus, X } from "lucide-react";
 import { toast } from "sonner";
 import { useAppActions, useAppState } from "@/providers/app-providers";
 import { SafetyCultureHero } from "@/components/safety-culture/safety-culture-hero";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { Dialog } from "@/components/ui/dialog";
+import { AppDialogBody, AppDialogContent, AppDialogDescription, AppDialogTitle } from "@/components/ui/app-dialog";
 import { uploadMedia } from "@/features/safety-effort/lib/upload-media";
 import { SAFETY_CULTURE_CATEGORIES } from "@/lib/safety-culture";
 import { getSafetyPoint } from "@/lib/point-rules";
@@ -22,10 +24,16 @@ const CATEGORIES = SAFETY_CULTURE_CATEGORIES.filter(
 const MAX_PHOTOS = 5;
 const MAX_PHOTO_EDGE = 1600;
 const PHOTO_OUTPUT_QUALITY = 0.78;
+const POINT_UNIT = "Coin";
 
 type DraftPhoto = {
   type: string;
   dataUrl: string;
+};
+
+type PostSuccessPopup = {
+  title: string;
+  description: string;
 };
 
 function loadImage(src: string) {
@@ -93,6 +101,7 @@ export default function PostSocialPage() {
   const [photos, setPhotos] = useState<DraftPhoto[]>([]);
   const [isProcessingPhotos, setIsProcessingPhotos] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [postSuccessPopup, setPostSuccessPopup] = useState<PostSuccessPopup | null>(null);
   const selectedFeedEvent = availableFeedEvents.find((event) => event.id === selectedFeedEventId) ?? null;
   const basePostPoints = getSafetyPoint("safetyPostApproved");
   const selectedFeedEventBonusPoints = selectedFeedEvent?.enabledActions.includes("theme-post")
@@ -107,6 +116,11 @@ export default function PostSocialPage() {
   const animStyle = (delay: number) => ({
     animationDelay: `${delay}s`,
   });
+
+  const closePostSuccessPopup = () => {
+    setPostSuccessPopup(null);
+    router.push("/safety-culture");
+  };
 
   const appendFiles = async (files: File[], type: "capture" | "upload") => {
     if (!files.length) return;
@@ -223,20 +237,21 @@ export default function PostSocialPage() {
       selectedFeedEvent
         ? selectedFeedEvent.bonusMode === "multiplier"
           ? `x${selectedFeedEvent.multiplier}`
-          : `+${selectedFeedEvent.fixedPoints} แต้มเพิ่ม`
+          : `+${selectedFeedEvent.fixedPoints} ${POINT_UNIT} เพิ่ม`
         : safetyCultureEvent.bonusMode === "multiplier"
           ? `x${safetyCultureEvent.multiplier}`
-          : `+${safetyCultureEvent.fixedPoints} แต้มเพิ่ม`;
+          : `+${safetyCultureEvent.fixedPoints} ${POINT_UNIT} เพิ่ม`;
+    const successDescription = selectedFeedEvent
+      ? `โพสต์เข้ากิจกรรม ${selectedFeedEvent.title} แล้ว ฐาน ${basePostPoints} ${POINT_UNIT} และโบนัส ${selectedFeedEventBonusPoints > 0 ? `+${selectedFeedEventBonusPoints} ${POINT_UNIT}` : `+0 ${POINT_UNIT}`} เพิ่ม`
+      : isEventLive
+        ? `แชร์เรื่องความปลอดภัยแล้ว ได้ฐาน +${basePostPoints} ${POINT_UNIT} และโบนัสอีเว้น ${nextBonusLabel}`
+        : `แชร์เรื่องความปลอดภัยแล้ว ได้รับ +${basePostPoints} ${POINT_UNIT}`;
 
-    toast.success("โพสต์สำเร็จ", {
-      description: selectedFeedEvent
-        ? `โพสต์เข้ากิจกรรม ${selectedFeedEvent.title} แล้ว ได้ทั้งหมด +${selectedFeedEventPoints} แต้ม (ฐาน ${basePostPoints} + กิจกรรม ${selectedFeedEventBonusPoints})`
-        : isEventLive
-          ? `แชร์เรื่องความปลอดภัยแล้ว ได้ฐาน +${basePostPoints} แต้ม และโบนัสอีเว้น ${nextBonusLabel}`
-          : `แชร์เรื่องความปลอดภัยแล้ว ได้รับ +${basePostPoints} แต้ม`,
+    setIsSubmitting(false);
+    setPostSuccessPopup({
+      title: "โพสต์สำเร็จ",
+      description: successDescription,
     });
-
-    setTimeout(() => router.push("/safety-culture"), 800);
   };
 
   return (
@@ -324,7 +339,7 @@ export default function PostSocialPage() {
                 </div>
                 {selectedFeedEvent ? (
                   <span className="rounded-full bg-[#ecfff7] px-2.5 py-1 text-[11px] font-extrabold text-[#13885d]">
-                    +{selectedFeedEventPoints} pts
+                    +{selectedFeedEventPoints} {POINT_UNIT}
                   </span>
                 ) : null}
               </div>
@@ -357,12 +372,12 @@ export default function PostSocialPage() {
                   </button>
                 ))}
               </div>
-              {selectedFeedEvent ? (
-                <div className="rounded-[14px] border border-[var(--c-e4cdac)] bg-[#fff7e8] px-3 py-2 text-[12px] font-bold leading-relaxed text-[#6d5a46]">
-                  กิจกรรม {selectedFeedEvent.title} ได้ทั้งหมด {selectedFeedEventPoints} แต้มเมื่อโพสต์สำเร็จ
+                {selectedFeedEvent ? (
+                  <div className="rounded-[14px] border border-[var(--c-e4cdac)] bg-[#fff7e8] px-3 py-2 text-[12px] font-bold leading-relaxed text-[#6d5a46]">
+                  กิจกรรม {selectedFeedEvent.title} ได้ทั้งหมด {selectedFeedEventPoints} {POINT_UNIT} เมื่อโพสต์สำเร็จ
                   <span className="ml-1 text-[#8E8A81]">(ฐาน {basePostPoints} + กิจกรรม {selectedFeedEventBonusPoints})</span>
-                </div>
-              ) : null}
+                  </div>
+                ) : null}
             </div>
           </div>
         ) : null}
@@ -497,6 +512,27 @@ export default function PostSocialPage() {
         </div>
 
       </div>
+
+      <Dialog open={!!postSuccessPopup} onOpenChange={(open) => !open && closePostSuccessPopup()}>
+        <AppDialogContent
+          size="sm"
+          className="w-[calc(100vw-24px)] max-w-[420px] border-[#cfead9] bg-[linear-gradient(180deg,#f7fff8_0%,#effaf1_100%)] shadow-[0_28px_64px_rgba(16,91,51,0.18)]"
+        >
+          <AppDialogBody className="grid-cols-[auto_1fr] items-start gap-3 px-4 py-4 sm:px-5 sm:py-4.5">
+            <div className="mt-0.5 flex h-7 w-7 items-center justify-center rounded-full border border-[#a9e2ba] bg-white text-[#2c9a57] shadow-[0_4px_10px_rgba(44,154,87,0.12)]">
+              <CheckCircle2 className="h-4.5 w-4.5" strokeWidth={2.6} />
+            </div>
+            <div className="space-y-1 text-left">
+              <AppDialogTitle className="text-[26px] leading-none text-[#1e9b55] sm:text-[28px]">
+                {postSuccessPopup?.title}
+              </AppDialogTitle>
+              <AppDialogDescription className="mt-0 text-[14px] leading-[1.45] font-extrabold text-[#36a862] sm:text-[15px]">
+                {postSuccessPopup?.description}
+              </AppDialogDescription>
+            </div>
+          </AppDialogBody>
+        </AppDialogContent>
+      </Dialog>
     </>
   );
 }

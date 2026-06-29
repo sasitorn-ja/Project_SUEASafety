@@ -81,7 +81,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           setSessionUser(DEMO_ADMIN_USER);
           return;
         }
-        router.replace(`/login?returnTo=${encodeURIComponent(getSafeReturnTo(pathname))}`);
+        router.replace(`/login?returnTo=${encodeURIComponent(getSafeReturnTo(window.location.pathname || "/"))}`);
       })
       .catch(() => {
         if (!cancelled) {
@@ -90,14 +90,17 @@ export function AppShell({ children }: { children: ReactNode }) {
             setSessionUser(DEMO_ADMIN_USER);
             return;
           }
-          router.replace(`/login?returnTo=${encodeURIComponent(getSafeReturnTo(pathname))}`);
+          router.replace(`/login?returnTo=${encodeURIComponent(getSafeReturnTo(window.location.pathname || "/"))}`);
         }
       });
 
     return () => {
       cancelled = true;
     };
-  }, [pathname, router]);
+  // Intentionally run only once on app bootstrap. Re-checking auth on every pathname
+  // change causes the whole shell to fall back to its loading state and feels like a full reload.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [router]);
 
   useEffect(() => {
     if (!loginChecked || !sessionChecked || pathname === "/login") return;
@@ -172,8 +175,15 @@ export function AppShell({ children }: { children: ReactNode }) {
     return <main className="app-login-main">{children}</main>;
   }
 
-  if (!loginChecked) {
-    return <div className="app-shell-loading" />;
+  if (!loginChecked || !sessionChecked) {
+    return (
+      <div className="app-shell-loading flex items-center justify-center px-6">
+        <div className="rounded-[24px] border border-[var(--border)] bg-white/90 px-6 py-5 text-center shadow-[0_18px_44px_rgba(11,130,240,0.12)] backdrop-blur">
+          <div className="text-[16px] font-black text-[var(--brand-text)]">กำลังโหลด...</div>
+          <div className="mt-1 text-[12px] font-bold text-[var(--muted-foreground)]">กรุณารอสักครู่ ระบบกำลังเตรียมหน้าจอให้พร้อม</div>
+        </div>
+      </div>
+    );
   }
 
   return (

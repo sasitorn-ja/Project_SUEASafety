@@ -20,6 +20,8 @@ import { useAppActions, useAppState } from "@/providers/app-providers";
 import { cn } from "@/lib/utils";
 import { useAppTheme } from "@/providers/theme-provider";
 
+const POINT_UNIT = "Coin";
+
 function formatRewardDateTime(value?: string | null) {
   if (!value) return null;
 
@@ -146,7 +148,7 @@ export default function RewardsPage() {
       setResult({
         type: "error",
         title: "คะแนนยังไม่พอ",
-        desc: `ต้องใช้ ${item.points.toLocaleString()} แต้ม แต่คุณมี ${currentUserPoints.toLocaleString()} แต้ม`,
+        desc: `ต้องใช้ ${item.points.toLocaleString()} ${POINT_UNIT} แต่คุณมี ${currentUserPoints.toLocaleString()} ${POINT_UNIT}`,
       });
       return;
     }
@@ -235,7 +237,7 @@ export default function RewardsPage() {
             rightSlot={
               <div className="flex items-center gap-1.5 rounded-xl border-2 border-[var(--brand-accent)] bg-[var(--brand-soft)] px-3.5 py-1.5 text-[13.5px] font-black text-[var(--brand-text)] shadow-[0_2px_6px_rgba(var(--brand-accent-rgb),0.12)]">
                 <Gift className="h-4 w-4 text-[var(--brand-accent)]" strokeWidth={2.5} />
-                <span>{currentUserPoints.toLocaleString()} แต้ม</span>
+                <span>{currentUserPoints.toLocaleString()} {POINT_UNIT}</span>
               </div>
             }
           />
@@ -310,9 +312,12 @@ export default function RewardsPage() {
                   <div className="flex items-start justify-between gap-3">
                     <span className="line-clamp-2 text-[14.5px] font-[850] text-foreground">{reward.name}</span>
                     <span className="flex-shrink-0 rounded-full bg-[var(--brand-soft)] px-2.5 py-1 text-[11px] font-black text-[var(--brand-text)]">
-                      {reward.points.toLocaleString()} pts
+                      {reward.points.toLocaleString()} {POINT_UNIT}
                     </span>
                   </div>
+                  <p className="line-clamp-2 min-h-[2.5rem] text-[12.5px] font-bold leading-relaxed text-[#7d766b]">
+                    {reward.description || "ยังไม่มีรายละเอียดรางวัล"}
+                  </p>
                   <div className="flex min-h-[58px] flex-wrap content-start gap-1.5 pt-2">
                     <span className="rounded-full bg-[var(--brand-soft)] px-2.5 py-1 text-[11px] font-black text-[var(--brand-text)]">
                       {getRewardRemainingOnlyLabel(reward)}
@@ -374,7 +379,7 @@ export default function RewardsPage() {
               />
             </div>
             <p className="text-sm font-semibold leading-relaxed text-[#555149]">
-              คุณต้องการใช้คะแนนจำนวน <strong className="text-(--brand-accent-strong)">{redeeming?.points} แต้ม</strong> เพื่อแลก
+              คุณต้องการใช้คะแนนจำนวน <strong className="text-(--brand-accent-strong)">{redeeming?.points} {POINT_UNIT}</strong> เพื่อแลก
               <br />
               <strong>&quot;{redeeming?.name}&quot;</strong> ใช่หรือไม่?
             </p>

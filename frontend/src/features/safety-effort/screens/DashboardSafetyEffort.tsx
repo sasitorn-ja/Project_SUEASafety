@@ -16,7 +16,6 @@ import {
 } from "lucide-react";
 import * as XLSX from "xlsx";
 import { Combobox } from "@/components/ui/combobox";
-import { SafetyCultureHero } from "@/components/safety-culture/safety-culture-hero";
 import dashboardStyles from "./dashboard-safety-effort.module.css";
 
 // Design tokens matching system branding
@@ -338,7 +337,7 @@ export default function DashboardSafetyEffort() {
       <style>{`
         .db-container {
           min-height: 100%;
-          background: linear-gradient(180deg, var(--secondary) 0%, ${T.background} 220px, ${T.background} 100%);
+          background: transparent;
           font-family: 'Prompt', 'Sarabun', sans-serif;
           color: ${T.foreground};
           padding: 16px;
@@ -1337,20 +1336,6 @@ export default function DashboardSafetyEffort() {
           }
         }
       `}</style>
-
-      <div className="db-hero-wrap">
-        <SafetyCultureHero
-          eyebrow="SAFETY EFFORT DASHBOARD"
-          title={<>Safety Effort</>}
-          description="แดชบอร์ดภาพรวมการประเมินความปลอดภัย ติดตามผล Line Walk และสถานะการแก้ไขในมุมมองเดียว"
-          variant="community"
-          backgroundImage="/images/heroes/safety-effort-hero.png"
-          backgroundOverlay="linear-gradient(90deg, rgba(210,235,255,.82) 0%, rgba(210,235,255,.60) 32%, rgba(210,235,255,.10) 56%, rgba(210,235,255,0) 74%)"
-          contentFrame
-          mascotSrc="/images/mascots/wangjai/5.png"
-          mascotAction="announce"
-        />
-      </div>
 
       <div className={`${dashboardStyles.dashboard} db-container`}>
       <div className="db-top-layout">

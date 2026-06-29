@@ -864,6 +864,12 @@ function normalizeSafetyEffortMetadata(input: unknown) {
   };
 }
 
+function normalizeOptionalNumericId(value: unknown) {
+  if (value == null) return null;
+  const normalized = String(value).trim();
+  return /^\d+$/.test(normalized) ? normalized : null;
+}
+
 function normalizeLegacyUsername(value: unknown) {
   return typeof value === "string" && value.trim().length > 0 ? value.trim().toLowerCase() : "";
 }
@@ -993,6 +999,8 @@ async function handleActivitiesAssessments(request: NextRequest, method: string,
     if (!userId) return jsonError("unauthorized", 401);
     const answers = normalizeSafetyEffortAnsweredItems(input.answeredItems || input.answers || []);
     const metadata = normalizeSafetyEffortMetadata(input.metadata || {});
+    const checkinId = normalizeOptionalNumericId(input.checkinId || input.checkin_id || null);
+    const activityId = normalizeOptionalNumericId(input.activityDbId || input.activity_db_id || null);
     const submitter = (await getRow("users", userId)) as Record<string, unknown> | null;
     const submitterName = input.name
       || (submitter ? (submitter.name_th || submitter.name_en || submitter.username) : null)
@@ -1010,8 +1018,8 @@ async function handleActivitiesAssessments(request: NextRequest, method: string,
           :safetyContactText, :answersJson, :metadata)`,
         {
           userId,
-          checkinId: input.checkinId || input.checkin_id || null,
-          activityId: input.activityDbId || input.activity_db_id || null,
+          checkinId,
+          activityId,
           activityType: input.activityType || input.activity_type || "LINE_WALK",
           activityLabel: input.activityLabel || input.activity_label || null,
           locType: input.locType || input.loc_type || null,

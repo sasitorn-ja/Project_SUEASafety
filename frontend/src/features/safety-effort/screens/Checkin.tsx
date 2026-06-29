@@ -1971,87 +1971,114 @@ export default function Checkin() {
 
       {/* ── Mobile layout ───────────────────────────────────────────────── */}
       {isMobile && (
-        // ↓ onScroll forwarded to App.jsx for scroll-hide behaviour
-        <div
-          id="ci-mobile-scroll-area"
-          className="ci-list"
-          style={{ flex: 1, overflowY: "auto", display: "flex", flexDirection: "column", background: "var(--c-faf9f6)", padding: "10px 12px calc(80px + env(safe-area-inset-bottom))", gap: 10 }}
-        >
-          <StepHeader />
+        <>
+          {/* ↓ onScroll forwarded to App.jsx for scroll-hide behaviour */}
+          <div
+            id="ci-mobile-scroll-area"
+            className="ci-list"
+            style={{ flex: 1, overflowY: "auto", display: "flex", flexDirection: "column", background: "var(--c-faf9f6)", padding: "12px 12px calc(112px + env(safe-area-inset-bottom))", gap: 12 }}
+          >
+            <StepHeader />
 
-          <div style={{ flexShrink: 0, height: 230, borderRadius: "16px", overflow: "hidden", border: "1px solid rgba(14,15,18,0.06)", boxShadow: "0 4px 12px rgba(0,0,0,0.04)" }}>
-             <CheckinMapView height="230px" mapMounted={mapMounted} mapInstanceKey={mapInstanceKey} mapCenter={mapCenter} userPos={userPos} allLocations={allLocations} selected={selected} setSelected={setSelected} fitPoints={fitPoints} windowWidth={width} />
-          </div>
+            <div style={{ flexShrink: 0, height: 220, borderRadius: "20px", overflow: "hidden", border: "1px solid rgba(14,15,18,0.06)", boxShadow: "0 8px 20px rgba(0,0,0,0.05)", background: "#fff" }}>
+              <CheckinMapView height="220px" mapMounted={mapMounted} mapInstanceKey={mapInstanceKey} mapCenter={mapCenter} userPos={userPos} allLocations={allLocations} selected={selected} setSelected={setSelected} fitPoints={fitPoints} windowWidth={width} />
+            </div>
 
-          <div style={{ flexShrink: 0, padding: "14px 16px", borderRadius: "16px", border: `1px solid rgba(14,15,18,0.06)`, background: "#ffffff", boxShadow: "0 4px 12px rgba(34,25,11,0.04)" }}>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
-              <div>
-                <span className="ci-panel-label">ใกล้คุณที่สุด</span>
-                <div style={{ marginTop: 3, fontSize: 15, fontWeight: 800, color: T.foreground, fontFamily: "'Prompt',sans-serif" }}>
-                  เลือกสถานที่ตรวจ
+            <div
+              style={{
+                flexShrink: 0,
+                padding: "16px",
+                borderRadius: "20px",
+                border: "1px solid rgba(14,15,18,0.06)",
+                background: "linear-gradient(180deg, rgba(255,255,255,0.96) 0%, rgba(250,252,255,0.98) 100%)",
+                boxShadow: "0 10px 24px rgba(34,25,11,0.05)",
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12 }}>
+                <div style={{ minWidth: 0 }}>
+                  <span className="ci-panel-label">ใกล้คุณที่สุด</span>
+                  <div style={{ marginTop: 3, fontSize: 18, fontWeight: 800, color: T.foreground, fontFamily: "'Prompt',sans-serif", lineHeight: 1.15 }}>
+                    เลือกสถานที่ตรวจ
+                  </div>
+                  <div style={{ marginTop: 5, fontSize: 11.5, fontWeight: 700, color: T.foreground3 }}>
+                    เลือกจากรายการใกล้คุณ หรือค้นหาสถานที่ที่ต้องการ
+                  </div>
                 </div>
-              </div>
-              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <LocateButton />
-                <span style={{ fontSize: 11, color: T.foreground3, fontFamily: "'Prompt',sans-serif", fontWeight: 700, background: "var(--secondary)", padding: "3px 8px", borderRadius: "6px" }}>
+                <span
+                  style={{
+                    flexShrink: 0,
+                    fontSize: 11,
+                    color: "#4B6B96",
+                    fontFamily: "'Prompt',sans-serif",
+                    fontWeight: 800,
+                    background: "#F4F8FF",
+                    padding: "6px 10px",
+                    borderRadius: "999px",
+                    border: "1px solid #D7EAFE",
+                    boxShadow: "inset 0 1px 0 rgba(255,255,255,0.7)",
+                  }}
+                >
                   {visibleLocations.length} สถานที่
                 </span>
               </div>
-            </div>
 
-            {loadingLocations && (
-              <div style={{ marginTop: 10, fontSize: 12, fontWeight: 700, color: T.foreground3 }}>
-                กำลังโหลดสถานที่จาก API จริง...
+              <div style={{ marginTop: 12 }}>
+                <LocateButton />
               </div>
-            )}
-            {apiError && (
-              <div style={{ marginTop: 10, fontSize: 12, fontWeight: 800, color: T.danger }}>
-                {apiError}
-              </div>
-            )}
 
-            {/* Sleek Search Box */}
-            <div className="ci-search-box" style={{ marginTop: 10 }}>
-              <IcoSearch s={16} c={T.foreground3} />
-              <input
-                type="text"
-                placeholder="ค้นหาชื่อ หรือ รหัสสถานที่..."
-                value={searchQuery}
-                onChange={e => setSearchQuery(e.target.value)}
-              />
-              {searchQuery && (
-                <button onClick={() => setSearchQuery("")} className="ci-search-clear" aria-label="ล้างคำค้นหา">
-                  <IcoX />
-                </button>
+              {loadingLocations && (
+                <div style={{ marginTop: 10, fontSize: 12, fontWeight: 700, color: T.foreground3 }}>
+                  กำลังโหลดสถานที่จาก API จริง...
+                </div>
               )}
+              {apiError && (
+                <div style={{ marginTop: 10, fontSize: 12, fontWeight: 800, color: T.danger }}>
+                  {apiError}
+                </div>
+              )}
+
+              {/* Sleek Search Box */}
+              <div className="ci-search-box" style={{ marginTop: 12 }}>
+                <IcoSearch s={16} c={T.foreground3} />
+                <input
+                  type="text"
+                  placeholder="ค้นหาชื่อ หรือ รหัสสถานที่..."
+                  value={searchQuery}
+                  onChange={e => setSearchQuery(e.target.value)}
+                />
+                {searchQuery && (
+                  <button onClick={() => setSearchQuery("")} className="ci-search-clear" aria-label="ล้างคำค้นหา">
+                    <IcoX />
+                  </button>
+                )}
+              </div>
+
+              {/* Filter Chips */}
+              <div className="ci-filter-row" style={{ paddingBottom: 0, paddingTop: 12 }}>
+                {LOCATION_FILTERS.map(type => (
+                  <button
+                    key={type.key}
+                    className={`ci-filter-chip ${selectedTypeKey === type.key ? "active" : ""}`}
+                    onClick={() => setSelectedType(type.key)}
+                  >
+                    {type.label}
+                  </button>
+                ))}
+              </div>
+              <div className="ci-filter-row" style={{ paddingBottom: 0, display: "none" }}>
+                {["ทั้งหมด", "โรงงาน", "ก่อสร้าง", "สำนักงาน", "บริษัท"].map(type => (
+                  <button
+                    key={type}
+                    className={`ci-filter-chip ${selectedType === type ? "active" : ""}`}
+                    onClick={() => setSelectedType(type)}
+                  >
+                    {type}
+                  </button>
+                ))}
+              </div>
             </div>
 
-            {/* Filter Chips */}
-            <div className="ci-filter-row" style={{ paddingBottom: 0 }}>
-              {LOCATION_FILTERS.map(type => (
-                <button
-                  key={type.key}
-                  className={`ci-filter-chip ${selectedTypeKey === type.key ? "active" : ""}`}
-                  onClick={() => setSelectedType(type.key)}
-                >
-                  {type.label}
-                </button>
-              ))}
-            </div>
-            <div className="ci-filter-row" style={{ paddingBottom: 0, display: "none" }}>
-              {["ทั้งหมด", "โรงงาน", "ก่อสร้าง", "สำนักงาน", "บริษัท"].map(type => (
-                <button
-                  key={type}
-                  className={`ci-filter-chip ${selectedType === type ? "active" : ""}`}
-                  onClick={() => setSelectedType(type)}
-                >
-                  {type}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div style={{ padding: "0px", display: "flex", flexDirection: "column", gap: 9, flex: 1 }}>
+            <div style={{ padding: "2px 0 0", display: "flex", flexDirection: "column", gap: 9, flex: 1 }}>
             {visibleLocations.length > 0 ? (
               <>
                 {pagedLocations.map(loc => (
@@ -2088,8 +2115,20 @@ export default function Checkin() {
 
           </div>
 
-          <FooterPanel />
-        </div>
+          </div>
+
+          <div
+            style={{
+              position: "sticky",
+              bottom: 0,
+              zIndex: 12,
+              background: "linear-gradient(180deg, rgba(250,249,246,0) 0%, rgba(250,249,246,0.88) 18%, rgba(250,249,246,1) 100%)",
+              paddingBottom: "env(safe-area-inset-bottom)",
+            }}
+          >
+            <FooterPanel />
+          </div>
+        </>
       )}
 
       {showModal && (

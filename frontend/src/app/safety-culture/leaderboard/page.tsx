@@ -8,6 +8,8 @@ import { cn } from "@/lib/utils";
 import { useAppState } from "@/providers/app-providers";
 import { useAppTheme } from "@/providers/theme-provider";
 
+const POINT_UNIT = "Coin";
+
 const TOP_RANK_STYLES = [
   {
     badgeClassName:
@@ -65,8 +67,9 @@ export default function LeaderboardPage() {
             }
             description="สรุปคะแนน Safety ให้เห็นภาพรวม ทั้งอันดับทีมและอันดับสมาชิกในทีมของคุณ"
             variant="community"
-            backgroundImage="/images/heroes/safety-culture-leaderboard-custom.png"
+            backgroundImage="/images/heroes/safety-culture-leaderboard-hero-construction.png"
             backgroundOverlay="linear-gradient(90deg, rgba(210,235,255,.82) 0%, rgba(210,235,255,.56) 42%, rgba(210,235,255,0) 100%)"
+            backgroundPosition="78% center"
             contentFrame
             mascotSrc="/images/mascots/wangjai/1.png"
             mascotAction="cheer"
@@ -143,7 +146,7 @@ export default function LeaderboardPage() {
                   {/* points */}
                   <div className="flex-shrink-0 text-right">
                     <p className="text-[16px] leading-none font-black text-[var(--foreground)] md:text-[20px]">{team.points.toLocaleString()}</p>
-                    <p className="mt-0.5 text-[9px] font-bold uppercase tracking-[0.1em] text-[var(--brand-muted-text)]">คะแนน</p>
+                    <p className="mt-0.5 text-[9px] font-bold uppercase tracking-[0.1em] text-[var(--brand-muted-text)]">{POINT_UNIT}</p>
                   </div>
                 </article>
               ))}
@@ -207,7 +210,7 @@ export default function LeaderboardPage() {
 
                     <div className="flex-shrink-0 text-right">
                       <p className="text-[16px] leading-none font-black text-[var(--foreground)] md:text-[20px]">{user.points}</p>
-                      <p className="mt-0.5 text-[9px] font-bold uppercase tracking-[0.1em] text-[var(--brand-muted-text)]">คะแนน</p>
+                      <p className="mt-0.5 text-[9px] font-bold uppercase tracking-[0.1em] text-[var(--brand-muted-text)]">{POINT_UNIT}</p>
                     </div>
                   </article>
                 );

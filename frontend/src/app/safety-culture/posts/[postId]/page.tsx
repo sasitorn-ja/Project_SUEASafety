@@ -15,6 +15,8 @@ import { cn } from "@/lib/utils";
 import { useAppActions, type Comment as CommentType, type Post } from "@/providers/app-providers";
 import { getSessionInitials, getSessionProfileImage, useSessionUser } from "@/lib/session-user";
 
+const POINT_UNIT = "Coin";
+
 type ApiPost = {
   id: string;
   authorId?: string;
@@ -152,6 +154,7 @@ export default function SafetyCulturePostDetailPage() {
   const [post, setPost] = useState<Post | null>(null);
   const [comments, setComments] = useState<CommentType[]>([]);
   const [commentDraft, setCommentDraft] = useState("");
+  const [selectedPhotoIndex, setSelectedPhotoIndex] = useState(0);
   const [fullscreenPhotoIndex, setFullscreenPhotoIndex] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -184,6 +187,7 @@ export default function SafetyCulturePostDetailPage() {
   }, [loadPost]);
 
   const photos = useMemo(() => post?.photos.filter((photo) => photo.dataUrl) ?? [], [post]);
+  const selectedPhoto = photos[selectedPhotoIndex] || photos[0] || null;
   const commentCount = comments.length || (post && !Array.isArray(post.comments) ? post.comments : 0) || 0;
   const goToFullscreenPhoto = useCallback((direction: -1 | 1) => {
     setFullscreenPhotoIndex((current) => {
@@ -191,6 +195,15 @@ export default function SafetyCulturePostDetailPage() {
       return (current + direction + photos.length) % photos.length;
     });
   }, [photos.length]);
+
+  useEffect(() => {
+    setSelectedPhotoIndex(0);
+  }, [post?.id]);
+
+  useEffect(() => {
+    if (selectedPhotoIndex < photos.length) return;
+    setSelectedPhotoIndex(0);
+  }, [photos.length, selectedPhotoIndex]);
 
   const handleLike = () => {
     if (!post) return;
@@ -268,25 +281,61 @@ export default function SafetyCulturePostDetailPage() {
 
               {photos.length > 0 ? (
                 <div className="flex flex-col gap-2">
-                  {photos.map((photo, photoIndex) => (
-                    <div key={photo.id} className="relative overflow-hidden rounded-[16px] border border-[#d8e5f3] bg-[#eef3f8]">
-                      <button
-                        type="button"
-                        onClick={() => setFullscreenPhotoIndex(photoIndex)}
-                        className="flex w-full cursor-zoom-in items-center justify-center"
-                        aria-label={`ดูรูปภาพเต็ม รูปที่ ${photoIndex + 1}`}
-                      >
+                  <div className="relative overflow-hidden rounded-[16px] border border-[#d8e5f3] bg-[#eef3f8]">
+                    <button
+                      type="button"
+                      onClick={() => setFullscreenPhotoIndex(selectedPhotoIndex)}
+                      className="relative flex aspect-[16/10] w-full cursor-zoom-in items-center justify-center"
+                      aria-label={`ดูรูปภาพเต็ม รูปที่ ${selectedPhotoIndex + 1}`}
+                    >
+                      {selectedPhoto ? (
                         <Image
-                          src={photo.dataUrl}
+                          src={selectedPhoto.dataUrl}
                           alt={`Attached post scene by ${post.author}`}
-                          width={1400}
-                          height={1000}
+                          fill
                           sizes="(max-width: 900px) 100vw, 860px"
-                          className="h-auto max-h-[720px] w-full object-contain"
+                          className="object-cover"
                         />
-                      </button>
+                      ) : null}
+                      {photos.length > 1 ? (
+                        <span className="absolute right-3 top-3 rounded-full bg-[rgba(23,59,107,0.72)] px-2.5 py-1 text-[11px] font-black text-white">
+                          {selectedPhotoIndex + 1}/{photos.length}
+                        </span>
+                      ) : null}
+                    </button>
+                  </div>
+
+                  {photos.length > 1 ? (
+                    <div className="scrollbar-hide grid grid-cols-4 gap-2 overflow-x-auto sm:grid-cols-5">
+                      {photos.map((photo, photoIndex) => (
+                        <button
+                          key={photo.id}
+                          type="button"
+                          onClick={() => setSelectedPhotoIndex(photoIndex)}
+                          className={cn(
+                            "relative aspect-square overflow-hidden rounded-[14px] border-2 bg-[#eef3f8] transition-all",
+                            photoIndex === selectedPhotoIndex
+                              ? "border-[#0B82F0] shadow-[0_8px_18px_rgba(11,130,240,0.18)]"
+                              : "border-[#d8e5f3] hover:border-[#8fc6f8]"
+                          )}
+                          aria-label={`เลือกรูปที่ ${photoIndex + 1}`}
+                        >
+                          <Image
+                            src={photo.dataUrl}
+                            alt={`Thumbnail ${photoIndex + 1} by ${post.author}`}
+                            fill
+                            sizes="(max-width: 640px) 22vw, 120px"
+                            className="object-cover"
+                          />
+                          {photoIndex === selectedPhotoIndex ? (
+                            <span className="absolute inset-x-0 bottom-0 bg-[rgba(11,130,240,0.86)] py-1 text-center text-[10px] font-black text-white">
+                              กำลังดู
+                            </span>
+                          ) : null}
+                        </button>
+                      ))}
                     </div>
-                  ))}
+                  ) : null}
                 </div>
               ) : post.imageText ? (
                 <div className="flex min-h-[220px] flex-col items-center justify-center gap-2 rounded-[16px] border border-[#d8e5f3] bg-[#eef3f8] text-[15px] font-black text-[#5f7591]">
@@ -306,7 +355,7 @@ export default function SafetyCulturePostDetailPage() {
                     <span>{commentCount}</span>
                   </div>
                 </div>
-                <span className="rounded-full bg-[#e9fff4] px-2.5 py-1 text-[12px] font-black text-[#3D9A6A]">+ {post.points} pts</span>
+                <span className="rounded-full bg-[#e9fff4] px-2.5 py-1 text-[12px] font-black text-[#3D9A6A]">+ {post.points} {POINT_UNIT}</span>
               </div>
             </div>
 
