@@ -315,6 +315,9 @@ export default function RewardsPage() {
                       {reward.points.toLocaleString()} {POINT_UNIT}
                     </span>
                   </div>
+                  <p className="line-clamp-2 min-h-[2.5rem] text-[12.5px] font-bold leading-relaxed text-[#7d766b]">
+                    {reward.description || "ยังไม่มีรายละเอียดรางวัล"}
+                  </p>
                   <div className="flex min-h-[58px] flex-wrap content-start gap-1.5 pt-2">
                     <span className="rounded-full bg-[var(--brand-soft)] px-2.5 py-1 text-[11px] font-black text-[var(--brand-text)]">
                       {getRewardRemainingOnlyLabel(reward)}

@@ -172,8 +172,15 @@ export function AppShell({ children }: { children: ReactNode }) {
     return <main className="app-login-main">{children}</main>;
   }
 
-  if (!loginChecked) {
-    return <div className="app-shell-loading" />;
+  if (!loginChecked || !sessionChecked) {
+    return (
+      <div className="app-shell-loading flex items-center justify-center px-6">
+        <div className="rounded-[24px] border border-[var(--border)] bg-white/90 px-6 py-5 text-center shadow-[0_18px_44px_rgba(11,130,240,0.12)] backdrop-blur">
+          <div className="text-[16px] font-black text-[var(--brand-text)]">กำลังโหลด...</div>
+          <div className="mt-1 text-[12px] font-bold text-[var(--muted-foreground)]">กรุณารอสักครู่ ระบบกำลังเตรียมหน้าจอให้พร้อม</div>
+        </div>
+      </div>
+    );
   }
 
   return (

@@ -625,7 +625,9 @@ function rewardFromApi(item: Record<string, unknown>, index: number): RewardCata
       redeemEndAt: metadata.redeemEndAt || null,
       stockMode,
       stockTotal: stockMode === "limited" ? Number(metadata.stockTotal ?? stockQty) : null,
-      stockRemaining: stockMode === "limited" ? Number(metadata.stockRemaining ?? stockQty) : null,
+      // `stock_qty` is the live remaining inventory in DB. Metadata may contain
+      // the original admin-edited snapshot, so prefer the column value here.
+      stockRemaining: stockMode === "limited" ? Number(stockQty) : null,
     },
   ])[0];
 }
@@ -2719,12 +2721,16 @@ export function AppProviders({ children }: { children: ReactNode }) {
 
       const occurredAt = Date.now();
       const redeemedAtIso = new Date(occurredAt).toISOString();
-      const persisted = await apiFetch(`/api/safety-culture/rewards/${rewardId}/redeem`, apiJson("POST", { points }));
+      const persisted = await apiFetch<{ redemption?: { balance?: number; pointsUsed?: number; rewardId?: string } }>(
+        `/api/safety-culture/rewards/${rewardId}/redeem`,
+        apiJson("POST", { points })
+      );
       if (!persisted.ok) {
         return { ok: false as const, reason: "api-error" as const };
       }
 
-      setCurrentUserPoints((prev) => prev - points);
+      const nextBalance = Number(persisted.data?.redemption?.balance);
+      setCurrentUserPoints((prev) => (Number.isFinite(nextBalance) ? Math.max(0, nextBalance) : Math.max(0, prev - points)));
       setRewardRedemptions((current) =>
         normalizeRewardRedemptions([
           {
@@ -2779,9 +2785,11 @@ export function AppProviders({ children }: { children: ReactNode }) {
           })
         )
       );
+      void refreshPointBalance();
+      void refreshRewardsState();
       return { ok: true as const };
     },
-    [currentUserPoints, rewardsCatalog]
+    [currentUserPoints, refreshPointBalance, refreshRewardsState, rewardsCatalog]
   );
 
   const awarenessNow = new Date(eventNow);

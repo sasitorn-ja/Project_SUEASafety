@@ -195,6 +195,7 @@ export default function SafePlusDashboard() {
   const currentYear = new Date().getFullYear();
   const [effortYear, setEffortYear] = useState(currentYear);
   const [effortChartData, setEffortChartData] = useState<Array<{ month: string; linewalk: number; contact: number }>>([]);
+  const [effortYearOptions, setEffortYearOptions] = useState<number[]>([currentYear]);
   const [awarenessUserStartDate, setAwarenessUserStartDate] = useState<string | null>(null);
   const [awarenessCalendarMode, setAwarenessCalendarMode] = useState<"done" | "missed" | null>(null);
 
@@ -268,6 +269,52 @@ export default function SafePlusDashboard() {
       return current;
     });
   }, [effectiveAwarenessStartDate]);
+
+  useEffect(() => {
+    if (isDemoLogin) {
+      setEffortYearOptions(Array.from({ length: 3 }, (_, i) => currentYear - i));
+      return;
+    }
+
+    let cancelled = false;
+    void apiFetch<{
+      items?: Array<{ submissionDate?: string; submission_date?: string; date?: string; timestamp?: string }>;
+      legacy?: { monthlyCounts?: Array<{ month?: string | null }> };
+    }>("/api/safety-effort/submissions/me?pageSize=500")
+      .then((result) => {
+        if (cancelled || !result.ok) return;
+
+        const years = new Set<number>();
+        const items = Array.isArray(result.data?.items) ? result.data.items : [];
+        const legacyMonthly = Array.isArray(result.data?.legacy?.monthlyCounts) ? result.data.legacy.monthlyCounts : [];
+
+        for (const item of items) {
+          const rawDate = String(item.submissionDate || item.submission_date || item.date || item.timestamp || "");
+          const year = Number(rawDate.slice(0, 4));
+          if (Number.isInteger(year) && year > 2000) years.add(year);
+        }
+
+        for (const item of legacyMonthly) {
+          const year = Number(String(item.month || "").slice(0, 4));
+          if (Number.isInteger(year) && year > 2000) years.add(year);
+        }
+
+        const nextOptions = Array.from(years).sort((left, right) => right - left);
+        setEffortYearOptions(nextOptions.length > 0 ? nextOptions : [currentYear]);
+      })
+      .catch(() => {
+        if (!cancelled) setEffortYearOptions([currentYear]);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [currentYear, isDemoLogin]);
+
+  useEffect(() => {
+    if (effortYearOptions.includes(effortYear)) return;
+    setEffortYear(effortYearOptions[0] ?? currentYear);
+  }, [currentYear, effortYear, effortYearOptions]);
 
   useEffect(() => {
     const THAI_MONTHS = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.ค.", "มิ.ย.", "ก.ค.", "ส.ค.", "ก.ย.", "ต.ค.", "พ.ย.", "ธ.ค."];
@@ -935,7 +982,7 @@ export default function SafePlusDashboard() {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              {Array.from({ length: 3 }, (_, i) => currentYear - i).map((y) => (
+              {effortYearOptions.map((y) => (
                 <SelectItem key={y} value={String(y)} className="text-[11px] font-bold">
                   {y + 543}
                 </SelectItem>
