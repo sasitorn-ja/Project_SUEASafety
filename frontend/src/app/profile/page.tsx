@@ -16,6 +16,7 @@ import {
 import { notifyProfileImageUpdated } from "@/lib/profile";
 import { useAppTheme } from "@/providers/theme-provider";
 import { getSessionDisplayName, getSessionEnglishName, getSessionProfileImage, useSessionUser } from "@/lib/session-user";
+import { uploadMedia } from "@/features/safety-effort/lib/upload-media";
 
 const MAX_IMAGE_SIZE = 3 * 1024 * 1024;
 
@@ -74,18 +75,12 @@ export default function ProfilePage() {
     }
 
     try {
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("module", "profile");
-      formData.append("ownerType", "USER_PROFILE");
-      const uploadResponse = await fetch("/api/uploads", {
-        method: "POST",
-        credentials: "include",
-        body: formData,
+      const media = await uploadMedia(file, {
+        module: "profile",
+        ownerType: "USER_PROFILE",
+        linkType: "profile_image",
       });
-      const uploadPayload = await uploadResponse.json().catch(() => null);
-      if (!uploadResponse.ok || !uploadPayload?.ok) throw new Error(uploadPayload?.error || "profile_upload_failed");
-      const mediaId = uploadPayload.data?.media?.id || uploadPayload.data?.attachment?.id;
+      const mediaId = media.id;
       const imageUrl = `/api/uploads/${mediaId}/download`;
       const updateResponse = await fetch("/api/users/me", {
         method: "PATCH",

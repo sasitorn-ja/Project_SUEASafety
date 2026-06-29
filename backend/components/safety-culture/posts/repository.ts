@@ -180,6 +180,31 @@ async function createNotification(connection: any, input: { userId: string; acto
   );
 }
 
+async function deleteLikeNotification(connection: any, input: { postId: string; actorId: string }) {
+  const [owners] = await connection.execute(
+    `SELECT author_id
+     FROM posts
+     WHERE id = :postId
+     LIMIT 1`,
+    { postId: input.postId },
+  );
+  const owner = owners[0] as (RowDataPacket & { author_id?: string | number | null }) | undefined;
+  if (!owner?.author_id || String(owner.author_id) === String(input.actorId)) return;
+
+  await connection.execute(
+    `DELETE FROM notifications
+     WHERE user_id = :ownerId
+       AND notification_type = 'LIKE'
+       AND JSON_UNQUOTE(JSON_EXTRACT(metadata, '$.postId')) = :postId
+       AND JSON_UNQUOTE(JSON_EXTRACT(metadata, '$.actorUserId')) = :actorId`,
+    {
+      ownerId: String(owner.author_id),
+      postId: String(input.postId),
+      actorId: String(input.actorId),
+    },
+  );
+}
+
 const SELECT_POSTS_SQL = `
   SELECT
     p.id,
@@ -727,6 +752,7 @@ export async function deleteReaction(postId: string, userId: string) {
       "DELETE FROM reactions WHERE post_id = :postId AND user_id = :userId",
       { postId, userId },
     );
+    await deleteLikeNotification(connection, { postId, actorId: userId });
   });
   return { deleted: true };
 }

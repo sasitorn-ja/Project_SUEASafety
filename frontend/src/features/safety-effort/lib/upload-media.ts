@@ -6,9 +6,9 @@ export type UploadedMedia = {
   provider?: string | null;
 };
 
-const MAX_UPLOAD_BYTES = 8 * 1024 * 1024;
-const TARGET_UPLOAD_BYTES = Math.floor(MAX_UPLOAD_BYTES * 0.92);
-const MAX_IMAGE_DIMENSION = 2048;
+const MAX_SERVER_UPLOAD_BYTES = 8 * 1024 * 1024;
+const TARGET_UPLOAD_BYTES = Math.floor(2.5 * 1024 * 1024);
+const MAX_IMAGE_DIMENSION = 1600;
 const DIRECT_UPLOAD_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "image/gif"]);
 
 function canUploadDirectly(file: File) {
@@ -36,10 +36,11 @@ async function canvasToBlob(canvas: HTMLCanvasElement, type: string, quality?: n
   return blob;
 }
 
-async function normalizeImageForUpload(file: File) {
+export async function normalizeImageForUpload(file: File) {
   if (canUploadDirectly(file)) return file;
   if (!file.type.startsWith("image/")) throw new Error("unsupported_file_type");
   if (file.type === "image/gif" && file.size > TARGET_UPLOAD_BYTES) throw new Error("file_too_large");
+  if (file.size > MAX_SERVER_UPLOAD_BYTES * 4) throw new Error("file_too_large");
 
   const image = await loadImageElement(file);
   let width = image.naturalWidth || image.width;
@@ -83,9 +84,10 @@ async function normalizeImageForUpload(file: File) {
   throw new Error("file_too_large");
 }
 
-export async function uploadSafetyEffortMedia(
+export async function uploadMedia(
   file: File,
   options: {
+    module: string;
     ownerType: string;
     ownerId?: string | null;
     linkType: string;
@@ -94,7 +96,7 @@ export async function uploadSafetyEffortMedia(
   const normalizedFile = await normalizeImageForUpload(file);
   const formData = new FormData();
   formData.set("file", normalizedFile);
-  formData.set("module", "safety-effort");
+  formData.set("module", options.module);
   formData.set("ownerType", options.ownerType);
   formData.set("linkType", options.linkType);
   if (options.ownerId) formData.set("ownerId", options.ownerId);
@@ -112,6 +114,17 @@ export async function uploadSafetyEffortMedia(
   }
 
   return media;
+}
+
+export async function uploadSafetyEffortMedia(
+  file: File,
+  options: {
+    ownerType: string;
+    ownerId?: string | null;
+    linkType: string;
+  },
+): Promise<UploadedMedia> {
+  return uploadMedia(file, { ...options, module: "safety-effort" });
 }
 
 export async function uploadSafetyEffortMediaSource(

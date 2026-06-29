@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
 import { Gift } from "lucide-react";
+import { FullscreenImageViewer, type FullscreenImageViewerPhoto } from "@/components/safety-culture/fullscreen-image-viewer";
 import { SafetyCultureHero } from "@/components/safety-culture/safety-culture-hero";
 import { SafetyCulturePageHeader } from "@/components/safety-culture/safety-culture-page-header";
 import { Card } from "@/components/ui/card";
@@ -81,6 +82,7 @@ export default function RewardsPage() {
   const [filter, setFilter] = useState("all");
   const [redeeming, setRedeeming] = useState<(typeof rewardsCatalog)[number] | null>(null);
   const [result, setResult] = useState<{ type: "success" | "error"; title: string; desc: string } | null>(null);
+  const [fullscreenRewardId, setFullscreenRewardId] = useState<number | null>(null);
 
   const animStyle = (delay: number) => ({
     animationDelay: `${delay}s`,
@@ -191,6 +193,20 @@ export default function RewardsPage() {
   };
 
   const filtered = filter === "all" ? rewardsCatalog : rewardsCatalog.filter((reward) => reward.category === filter);
+  const fullscreenReward = rewardsCatalog.find((reward) => reward.id === fullscreenRewardId) ?? null;
+  const fullscreenPhotos = useMemo<FullscreenImageViewerPhoto[]>(
+    () =>
+      fullscreenReward?.imageSrc
+        ? [
+            {
+              id: `reward-${fullscreenReward.id}`,
+              dataUrl: themedImage(fullscreenReward.imageSrc),
+              type: "reward",
+            },
+          ]
+        : [],
+    [fullscreenReward, themedImage]
+  );
 
   return (
     <>
@@ -272,7 +288,17 @@ export default function RewardsPage() {
 
                 <div className="relative flex aspect-[4/3] w-full items-center justify-center overflow-hidden rounded-[14px] border-[1.5px] border-[var(--border)] bg-[var(--brand-image-placeholder)]">
                   {reward.imageSrc ? (
-                    <Image src={themedImage(reward.imageSrc)} alt={reward.name} fill sizes="(max-width: 768px) 50vw, 220px" className="object-cover" />
+                    <button
+                      type="button"
+                      onClick={() => setFullscreenRewardId(reward.id)}
+                      className="relative h-full w-full cursor-zoom-in outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-accent)]"
+                      aria-label={`ดูรูปภาพใหญ่ของ ${reward.name}`}
+                    >
+                      <Image src={themedImage(reward.imageSrc)} alt={reward.name} fill sizes="(max-width: 768px) 50vw, 220px" className="object-cover" />
+                      <span className="pointer-events-none absolute right-2 top-2 rounded-full bg-[rgba(53,50,48,0.72)] px-2 py-1 text-[10px] font-black text-white">
+                        แตะเพื่อดูเต็มรูป
+                      </span>
+                    </button>
                   ) : reward.isHot ? (
                     <Image src={mascot("welcome")} alt="น้องวางใจ reward" fill sizes="(max-width: 768px) 50vw, 220px" className="object-cover" />
                   ) : (
@@ -386,6 +412,16 @@ export default function RewardsPage() {
           </AppDialogBody>
         </AppDialogContent>
       </Dialog>
+
+      <FullscreenImageViewer
+        open={fullscreenPhotos.length > 0}
+        photos={fullscreenPhotos}
+        index={0}
+        alt={fullscreenReward?.name || "Reward image"}
+        onClose={() => setFullscreenRewardId(null)}
+        onPrevious={() => undefined}
+        onNext={() => undefined}
+      />
     </>
   );
 }

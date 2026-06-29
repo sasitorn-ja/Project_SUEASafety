@@ -10,6 +10,7 @@ import { useAppActions, useAppState } from "@/providers/app-providers";
 import { SafetyCultureHero } from "@/components/safety-culture/safety-culture-hero";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { uploadMedia } from "@/features/safety-effort/lib/upload-media";
 import { SAFETY_CULTURE_CATEGORIES } from "@/lib/safety-culture";
 import { getSafetyPoint } from "@/lib/point-rules";
 import { cn } from "@/lib/utils";
@@ -70,20 +71,12 @@ async function dataUrlToFile(dataUrl: string, fileName: string) {
 
 async function uploadDraftPhoto(photo: DraftPhoto, index: number) {
   const file = await dataUrlToFile(photo.dataUrl, `safety-post-${Date.now()}-${index}.jpg`);
-  const formData = new FormData();
-  formData.append("file", file);
-  formData.append("module", "safety-culture");
-  formData.append("ownerType", "post");
-  formData.append("linkType", "attachment");
-
-  const response = await fetch("/api/uploads", {
-    method: "POST",
-    credentials: "include",
-    body: formData,
+  const media = await uploadMedia(file, {
+    module: "safety-culture",
+    ownerType: "post",
+    linkType: "attachment",
   });
-  const payload = await response.json().catch(() => null);
-  if (!response.ok || !payload?.ok) throw new Error(payload?.error || "post_photo_upload_failed");
-  return String(payload.data?.media?.id || payload.data?.attachment?.id || "");
+  return String(media.id || "");
 }
 
 export default function PostSocialPage() {

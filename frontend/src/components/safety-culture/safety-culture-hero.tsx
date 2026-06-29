@@ -118,9 +118,13 @@ export function SafetyCultureHero({
             className={cn(
               "font-extrabold leading-tight",
               isCommunity
-                ? "whitespace-nowrap text-[21px] text-[#0B2F6B] [&_span]:text-[#0B82F0] [&_strong]:text-[#0B82F0] sm:text-[24px] xl:text-[30px]"
+                ? "text-[21px] leading-[1.12] text-[#0B2F6B] [text-wrap:balance] [&_span]:text-[#0B82F0] [&_strong]:text-[#0B82F0] sm:text-[24px] xl:text-[30px]"
                 : "text-[22px] text-white sm:text-[28px] md:text-[42px]",
-              sideActions ? "max-w-[220px] whitespace-normal sm:max-w-[260px] md:max-w-none md:whitespace-nowrap" : "whitespace-nowrap"
+              sideActions
+                ? "max-w-[220px] whitespace-normal sm:max-w-[260px] md:max-w-none md:whitespace-nowrap"
+                : isCommunity
+                  ? "max-w-[190px] whitespace-normal sm:max-w-[250px] sm:whitespace-normal md:max-w-none"
+                  : "whitespace-nowrap"
             )}
           >
             {title}
