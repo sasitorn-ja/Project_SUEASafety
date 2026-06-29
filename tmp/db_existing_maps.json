@@ -1,0 +1,4381 @@
+{
+  "summary_map": {
+    "organizations": {
+      "module": "Foundation",
+      "purpose_th": "โครงสร้างองค์กรแบบลำดับชั้น Company / Division / Fact / Section",
+      "primary_key": "id",
+      "linked_tables": "organizations",
+      "phase": "Phase 1",
+      "priority": "Critical",
+      "column_count": 10
+    },
+    "users": {
+      "module": "IAM",
+      "purpose_th": "เก็บข้อมูลผู้ใช้งานจาก SSO, normalized profile, raw claims, status และข้อมูลแสดงผลในระบบ",
+      "primary_key": "id",
+      "linked_tables": "organizations",
+      "phase": "Phase 1",
+      "priority": "Critical",
+      "column_count": 13
+    },
+    "roles": {
+      "module": "IAM",
+      "purpose_th": "บทบาทสำหรับควบคุมสิทธิ์",
+      "primary_key": "id",
+      "linked_tables": null,
+      "phase": "Phase 1",
+      "priority": "High",
+      "column_count": 6
+    },
+    "permissions": {
+      "module": "IAM",
+      "purpose_th": "สิทธิ์ย่อยของฟังก์ชันระบบ",
+      "primary_key": "id",
+      "linked_tables": null,
+      "phase": "Phase 1",
+      "priority": "High",
+      "column_count": 5
+    },
+    "user_roles": {
+      "module": "IAM",
+      "purpose_th": "เชื่อมผู้ใช้กับบทบาท",
+      "primary_key": "user_id, role_id",
+      "linked_tables": "users, roles",
+      "phase": "Phase 1",
+      "priority": "High",
+      "column_count": 4
+    },
+    "role_permissions": {
+      "module": "IAM",
+      "purpose_th": "เชื่อมบทบาทกับสิทธิ์",
+      "primary_key": "role_id, permission_id",
+      "linked_tables": "roles, permissions",
+      "phase": "Phase 1",
+      "priority": "High",
+      "column_count": 2
+    },
+    "teams": {
+      "module": "Foundation",
+      "purpose_th": "ทีมสำหรับกิจกรรมและ Leaderboard พร้อมกำหนด Leader จาก users",
+      "primary_key": "id",
+      "linked_tables": "organizations, users",
+      "phase": "Phase 3",
+      "priority": "Medium",
+      "column_count": 8
+    },
+    "team_members": {
+      "module": "Foundation",
+      "purpose_th": "สมาชิกของทีม",
+      "primary_key": "team_id, user_id",
+      "linked_tables": "teams, users",
+      "phase": "Phase 3",
+      "priority": "Medium",
+      "column_count": 4
+    },
+    "locations": {
+      "module": "Location",
+      "purpose_th": "Master สถานที่ภายใน CPAC Safety รวม mirror โรงงานจาก RMR SSO และโรงงานที่ Admin เพิ่ม",
+      "primary_key": "id",
+      "linked_tables": "organizations, users",
+      "phase": "Phase 1",
+      "priority": "Critical",
+      "column_count": 23
+    },
+    "location_import_batches": {
+      "module": "Location",
+      "purpose_th": "หัวรายการ sync/import Master สถานที่จาก RMR SSO และแหล่งภายนอก",
+      "primary_key": "id",
+      "linked_tables": "users",
+      "phase": "Phase 1",
+      "priority": "High",
+      "column_count": 10
+    },
+    "location_import_rows": {
+      "module": "Location",
+      "purpose_th": "ผล sync/import และข้อมูลต้นฉบับรายแถวจากแต่ละ source",
+      "primary_key": "id",
+      "linked_tables": "location_import_batches",
+      "phase": "Phase 1",
+      "priority": "High",
+      "column_count": 9
+    },
+    "checkins": {
+      "module": "Check-in",
+      "purpose_th": "ประวัติ Check-in โดยเก็บ GPS จริงและสถานที่ที่ผู้ใช้เลือกแยกกัน",
+      "primary_key": "id",
+      "linked_tables": "users, locations",
+      "phase": "Phase 1",
+      "priority": "Critical",
+      "column_count": 14
+    },
+    "checkin_attachments": {
+      "module": "Check-in",
+      "purpose_th": "รูปหรือหลักฐานประกอบ Check-in",
+      "primary_key": "id",
+      "linked_tables": "checkins, users",
+      "phase": "Phase 1",
+      "priority": "Medium",
+      "column_count": 7
+    },
+    "safety_activities": {
+      "module": "Safety Effort",
+      "purpose_th": "กิจกรรม Safety Effort ที่เริ่มจาก Check-in",
+      "primary_key": "id",
+      "linked_tables": "checkins",
+      "phase": "Phase 2",
+      "priority": "Critical",
+      "column_count": 11
+    },
+    "assessment_templates": {
+      "module": "Assessment",
+      "purpose_th": "Template แบบประเมินที่แก้ไขเป็นเวอร์ชันได้",
+      "primary_key": "id",
+      "linked_tables": "users",
+      "phase": "Phase 2",
+      "priority": "High",
+      "column_count": 9
+    },
+    "assessment_questions": {
+      "module": "Assessment",
+      "purpose_th": "คำถามใน Template แบบประเมิน",
+      "primary_key": "id",
+      "linked_tables": "assessment_templates",
+      "phase": "Phase 2",
+      "priority": "High",
+      "column_count": 10
+    },
+    "assessment_runs": {
+      "module": "Assessment",
+      "purpose_th": "การทำแบบประเมินแต่ละครั้ง",
+      "primary_key": "id",
+      "linked_tables": "safety_activities, assessment_templates, users",
+      "phase": "Phase 2",
+      "priority": "Critical",
+      "column_count": 9
+    },
+    "assessment_answers": {
+      "module": "Assessment",
+      "purpose_th": "คำตอบรายข้อของแบบประเมิน",
+      "primary_key": "id",
+      "linked_tables": "assessment_runs, assessment_questions",
+      "phase": "Phase 2",
+      "priority": "Critical",
+      "column_count": 8
+    },
+    "safety_findings": {
+      "module": "Safety Effort",
+      "purpose_th": "ประเด็นความปลอดภัยที่พบจากกิจกรรม",
+      "primary_key": "id",
+      "linked_tables": "safety_activities, users",
+      "phase": "Phase 2",
+      "priority": "High",
+      "column_count": 10
+    },
+    "corrective_actions": {
+      "module": "Safety Effort",
+      "purpose_th": "งานแก้ไขจาก Safety Finding",
+      "primary_key": "id",
+      "linked_tables": "safety_findings, users",
+      "phase": "Phase 2",
+      "priority": "High",
+      "column_count": 9
+    },
+    "health_checks": {
+      "module": "Safety Effort",
+      "purpose_th": "บันทึก Health Check ก่อนกิจกรรม",
+      "primary_key": "id",
+      "linked_tables": "safety_activities, users",
+      "phase": "Phase 2",
+      "priority": "Medium",
+      "column_count": 8
+    },
+    "pretrip_checks": {
+      "module": "Safety Effort",
+      "purpose_th": "บันทึก Pre-trip Check",
+      "primary_key": "id",
+      "linked_tables": "safety_activities, users",
+      "phase": "Phase 2",
+      "priority": "Medium",
+      "column_count": 8
+    },
+    "kyt_records": {
+      "module": "Safety Effort",
+      "purpose_th": "บันทึก KYT",
+      "primary_key": "id",
+      "linked_tables": "safety_activities, users",
+      "phase": "Phase 2",
+      "priority": "Medium",
+      "column_count": 8
+    },
+    "sos_events": {
+      "module": "Safety Effort",
+      "purpose_th": "บันทึกเหตุการณ์ SOS",
+      "primary_key": "id",
+      "linked_tables": "safety_activities, users",
+      "phase": "Phase 2",
+      "priority": "Medium",
+      "column_count": 8
+    },
+    "posts": {
+      "module": "Safety Culture",
+      "purpose_th": "โพสต์ Safety Culture พร้อมทีม/หน่วยงาน/หมวด/คะแนนและสถานะเผยแพร่",
+      "primary_key": "id",
+      "linked_tables": "users, organizations, teams, safety_culture_events, post_media, comments, reactions",
+      "phase": "Phase 3",
+      "priority": "Medium",
+      "column_count": 13
+    },
+    "comments": {
+      "module": "Safety Culture",
+      "purpose_th": "ความคิดเห็นใต้โพสต์",
+      "primary_key": "id",
+      "linked_tables": "posts, users",
+      "phase": "Phase 3",
+      "priority": "Medium",
+      "column_count": 7
+    },
+    "reactions": {
+      "module": "Safety Culture",
+      "purpose_th": "ปฏิกิริยาต่อโพสต์",
+      "primary_key": "post_id, user_id",
+      "linked_tables": "posts, users",
+      "phase": "Phase 3",
+      "priority": "Low",
+      "column_count": 4
+    },
+    "awareness_questions": {
+      "module": "Awareness",
+      "purpose_th": "คลังคำถาม Safety Awareness",
+      "primary_key": "id",
+      "linked_tables": null,
+      "phase": "Phase 3",
+      "priority": "Medium",
+      "column_count": 7
+    },
+    "awareness_attempts": {
+      "module": "Awareness",
+      "purpose_th": "การทำ Safety Awareness ของผู้ใช้",
+      "primary_key": "id",
+      "linked_tables": "users",
+      "phase": "Phase 3",
+      "priority": "Medium",
+      "column_count": 7
+    },
+    "awareness_answers": {
+      "module": "Awareness",
+      "purpose_th": "คำตอบ Awareness รายข้อ",
+      "primary_key": "id",
+      "linked_tables": "awareness_attempts, awareness_questions",
+      "phase": "Phase 3",
+      "priority": "Medium",
+      "column_count": 7
+    },
+    "holidays": {
+      "module": "Foundation",
+      "purpose_th": "วันหยุดสำหรับกติกากิจกรรมรายวัน",
+      "primary_key": "id",
+      "linked_tables": null,
+      "phase": "Phase 3",
+      "priority": "Low",
+      "column_count": 5
+    },
+    "point_rules": {
+      "module": "Points & Rewards",
+      "purpose_th": "กติกาการให้/หักคะแนน",
+      "primary_key": "id",
+      "linked_tables": null,
+      "phase": "Phase 3",
+      "priority": "High",
+      "column_count": 7
+    },
+    "point_transactions": {
+      "module": "Points & Rewards",
+      "purpose_th": "Ledger คะแนนเข้าและออกที่ตรวจสอบย้อนหลังได้",
+      "primary_key": "id",
+      "linked_tables": "users, point_rules",
+      "phase": "Phase 3",
+      "priority": "Critical",
+      "column_count": 12
+    },
+    "point_balances": {
+      "module": "Points & Rewards",
+      "purpose_th": "ยอดคะแนนปัจจุบันแบบ Cache",
+      "primary_key": "user_id",
+      "linked_tables": "users",
+      "phase": "Phase 3",
+      "priority": "High",
+      "column_count": 3
+    },
+    "rewards": {
+      "module": "Points & Rewards",
+      "purpose_th": "Master ของรางวัล",
+      "primary_key": "id",
+      "linked_tables": null,
+      "phase": "Phase 3",
+      "priority": "High",
+      "column_count": 9
+    },
+    "reward_redemptions": {
+      "module": "Points & Rewards",
+      "purpose_th": "รายการแลกรางวัล",
+      "primary_key": "id",
+      "linked_tables": "users, rewards, point_transactions",
+      "phase": "Phase 3",
+      "priority": "Critical",
+      "column_count": 9
+    },
+    "reward_inventory_transactions": {
+      "module": "Points & Rewards",
+      "purpose_th": "Ledger การเปลี่ยนแปลง Stock ของรางวัล",
+      "primary_key": "id",
+      "linked_tables": "rewards",
+      "phase": "Phase 3",
+      "priority": "High",
+      "column_count": 8
+    },
+    "notifications": {
+      "module": "Shared",
+      "purpose_th": "การแจ้งเตือนในระบบ",
+      "primary_key": "id",
+      "linked_tables": "users",
+      "phase": "Shared",
+      "priority": "Medium",
+      "column_count": 8
+    },
+    "audit_logs": {
+      "module": "Shared",
+      "purpose_th": "Audit trail ของการเข้าถึงและแก้ไขข้อมูลสำคัญ",
+      "primary_key": "id",
+      "linked_tables": "users",
+      "phase": "Shared",
+      "priority": "Critical",
+      "column_count": 9
+    },
+    "plant_location_details": {
+      "module": "Locations",
+      "purpose_th": "รายละเอียดโรงงานจาก rmr_sso.Plant แบบ read-only mirror และโรงงาน source=ADMIN",
+      "primary_key": "location_id",
+      "linked_tables": "locations",
+      "phase": "Phase 1",
+      "priority": "High",
+      "column_count": "23"
+    },
+    "site_location_details": {
+      "module": "Locations",
+      "purpose_th": "รายละเอียดเฉพาะ Site งานจาก DataOcean/Site API โดยผูกกับ locations กลางเพื่อใช้เช็กอินหน้างาน",
+      "primary_key": "location_id",
+      "linked_tables": "locations, plant_location_details",
+      "phase": "Phase 1",
+      "priority": "High",
+      "column_count": "37"
+    },
+    "office_location_details": {
+      "module": "Locations",
+      "purpose_th": "รายละเอียดเฉพาะสำนักงาน รองรับคอลัมน์จริงในอนาคตและผูกกับ locations กลางเพื่อใช้เช็กอิน",
+      "primary_key": "location_id",
+      "linked_tables": "locations",
+      "phase": "Phase 2",
+      "priority": "Medium",
+      "column_count": "23"
+    },
+    "safety_culture_events": {
+      "module": "Safety Culture",
+      "purpose_th": "กิจกรรมและแคมเปญ Safety Culture ที่บันทึกในฐานจริง",
+      "primary_key": "id",
+      "linked_tables": "users",
+      "phase": "Phase 3",
+      "priority": "High",
+      "column_count": 12
+    },
+    "media_assets": {
+      "module": "Shared",
+      "purpose_th": "Metadata ไฟล์จริง รองรับ Cloudinary primary และ local fallback โดยไม่เก็บ base64 ใน business data",
+      "primary_key": "id",
+      "linked_tables": "users, post_media",
+      "phase": "Shared",
+      "priority": "Critical",
+      "column_count": 24
+    },
+    "export_jobs": {
+      "module": "Reports",
+      "purpose_th": "งาน export และผลลัพธ์ไฟล์จริงที่ตรวจสอบสถานะย้อนหลังได้",
+      "primary_key": "id",
+      "linked_tables": "users",
+      "phase": "Shared",
+      "priority": "High",
+      "column_count": 11
+    },
+    "notification_preferences": {
+      "module": "Notifications",
+      "purpose_th": "การตั้งค่าช่องทางแจ้งเตือนรายผู้ใช้",
+      "primary_key": "user_id",
+      "linked_tables": "users",
+      "phase": "Shared",
+      "priority": "Medium",
+      "column_count": 6
+    },
+    "assessment_attachments": {
+      "module": "Assessment",
+      "purpose_th": "หลักฐานไฟล์ที่ผูกกับ assessment run ผ่าน media_assets",
+      "primary_key": "id",
+      "linked_tables": "users, media_assets, assessment_runs",
+      "phase": "Phase 2",
+      "priority": "High",
+      "column_count": 9
+    },
+    "corrective_action_comments": {
+      "module": "Safety Effort",
+      "purpose_th": "ความคิดเห็นและประวัติสนทนาของ corrective action",
+      "primary_key": "id",
+      "linked_tables": "corrective_actions, users",
+      "phase": "Phase 2",
+      "priority": "High",
+      "column_count": 8
+    },
+    "archived_notifications": {
+      "module": "Notifications",
+      "purpose_th": "สำเนาการแจ้งเตือนที่ผู้ใช้ archive แล้ว",
+      "primary_key": "id",
+      "linked_tables": "users",
+      "phase": "Shared",
+      "priority": "Medium",
+      "column_count": 9
+    },
+    "safety_settings": {
+      "module": "Shared",
+      "purpose_th": "ค่าตั้งค่าระบบ Safety ที่ Admin แก้ไขผ่าน API",
+      "primary_key": "setting_key",
+      "linked_tables": "users",
+      "phase": "Shared",
+      "priority": "High",
+      "column_count": 5
+    },
+    "post_media": {
+      "module": "Safety Culture",
+      "purpose_th": "เชื่อมโพสต์กับรูป/ไฟล์ใน media_assets พร้อมลำดับรูป",
+      "primary_key": "post_id, media_asset_id",
+      "linked_tables": "posts, media_assets",
+      "phase": "Phase 3",
+      "priority": "High",
+      "column_count": 4
+    }
+  },
+  "column_map": {
+    "organizations.id": {
+      "description_th": "รหัสภายในของรายการ",
+      "example_value": "1001",
+      "validation_rule": "> 0",
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "organizations.parent_id": {
+      "description_th": "หน่วยงานแม่ของรายการ",
+      "example_value": "12",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": "NULL สำหรับระดับบนสุด"
+    },
+    "organizations.organization_type": {
+      "description_th": "ประเภทหน่วยงาน",
+      "example_value": "SECTION",
+      "validation_rule": "ค่าใน organization_type enum",
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "organizations.external_code": {
+      "description_th": "รหัสจากระบบต้นทาง",
+      "example_value": "M1",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": "Unique ภายในประเภทเดียวกัน"
+    },
+    "organizations.name_th": {
+      "description_th": "ชื่อหน่วยงานภาษาไทย",
+      "example_value": "Prod.พระราม 4",
+      "validation_rule": "ไม่เป็นค่าว่าง",
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "organizations.name_en": {
+      "description_th": "ชื่อหน่วยงานภาษาอังกฤษ",
+      "example_value": "RMC Metro",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "organizations.status": {
+      "description_th": "สถานะหน่วยงาน",
+      "example_value": "ACTIVE",
+      "validation_rule": "ค่าใน record_status enum",
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "organizations.created_at": {
+      "description_th": "วันที่และเวลาที่สร้างรายการ",
+      "example_value": "2026-06-15 09:30:00",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": "ใช้เวลา UTC"
+    },
+    "organizations.updated_at": {
+      "description_th": "วันที่และเวลาที่แก้ไขล่าสุด",
+      "example_value": "2026-06-15 10:00:00",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": "ใช้เวลา UTC"
+    },
+    "organizations.deleted_at": {
+      "description_th": "วันที่ลบแบบ Soft delete",
+      "example_value": null,
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": "ไม่ลบข้อมูลจริงทันที"
+    },
+    "users.id": {
+      "description_th": "รหัสภายในของรายการ",
+      "example_value": "1001",
+      "validation_rule": "> 0",
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "users.organization_id": {
+      "description_th": "หน่วยงานหลักของผู้ใช้",
+      "example_value": "301",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "users.sso_external_id": {
+      "description_th": "รหัสผู้ใช้จาก SSO",
+      "example_value": "aad:abc123",
+      "validation_rule": "ไม่ซ้ำ",
+      "personal_data_classification": "IDENTIFIER",
+      "notes": null
+    },
+    "users.employee_no": {
+      "description_th": "รหัสพนักงาน",
+      "example_value": "00012345",
+      "validation_rule": null,
+      "personal_data_classification": "IDENTIFIER",
+      "notes": null
+    },
+    "users.email": {
+      "description_th": "อีเมลบริษัท",
+      "example_value": "user@scg.com",
+      "validation_rule": "รูปแบบอีเมล",
+      "personal_data_classification": "CONTACT",
+      "notes": null
+    },
+    "users.name_th": {
+      "description_th": "ชื่อ-นามสกุลภาษาไทย",
+      "example_value": "นางสาว ตัวอย่าง ปลอดภัย",
+      "validation_rule": null,
+      "personal_data_classification": "IDENTIFIER",
+      "notes": null
+    },
+    "users.name_en": {
+      "description_th": "ชื่อ-นามสกุลภาษาอังกฤษ",
+      "example_value": "Ms. Safety Example",
+      "validation_rule": null,
+      "personal_data_classification": "IDENTIFIER",
+      "notes": null
+    },
+    "users.position_name": {
+      "description_th": "ชื่อตำแหน่งงาน",
+      "example_value": "Developer",
+      "validation_rule": null,
+      "personal_data_classification": "EMPLOYMENT",
+      "notes": null
+    },
+    "users.profile_image_url": {
+      "description_th": "URL รูปโปรไฟล์",
+      "example_value": "https://.../profile.jpg",
+      "validation_rule": "URL ที่อนุญาต",
+      "personal_data_classification": "PROFILE",
+      "notes": null
+    },
+    "users.status": {
+      "description_th": "สถานะบัญชีผู้ใช้",
+      "example_value": "ACTIVE",
+      "validation_rule": "ค่าใน user_status enum",
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "users.created_at": {
+      "description_th": "วันที่และเวลาที่สร้างรายการ",
+      "example_value": "2026-06-15 09:30:00",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": "ใช้เวลา UTC"
+    },
+    "users.updated_at": {
+      "description_th": "วันที่และเวลาที่แก้ไขล่าสุด",
+      "example_value": "2026-06-15 10:00:00",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": "ใช้เวลา UTC"
+    },
+    "users.deleted_at": {
+      "description_th": "วันที่ลบแบบ Soft delete",
+      "example_value": null,
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": "ไม่ลบข้อมูลจริงทันที"
+    },
+    "roles.id": {
+      "description_th": "รหัสภายในของรายการ",
+      "example_value": "1001",
+      "validation_rule": "> 0",
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "roles.code": {
+      "description_th": "รหัสบทบาท",
+      "example_value": "ADMIN",
+      "validation_rule": "ตัวอักษรใหญ่และ underscore",
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "roles.name": {
+      "description_th": "ชื่อบทบาท",
+      "example_value": "ผู้ดูแลระบบ",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "roles.description": {
+      "description_th": "คำอธิบายบทบาท",
+      "example_value": "จัดการข้อมูลหลัก",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "roles.created_at": {
+      "description_th": "วันที่และเวลาที่สร้างรายการ",
+      "example_value": "2026-06-15 09:30:00",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": "ใช้เวลา UTC"
+    },
+    "roles.updated_at": {
+      "description_th": "วันที่และเวลาที่แก้ไขล่าสุด",
+      "example_value": "2026-06-15 10:00:00",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": "ใช้เวลา UTC"
+    },
+    "permissions.id": {
+      "description_th": "รหัสภายในของรายการ",
+      "example_value": "1001",
+      "validation_rule": "> 0",
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "permissions.code": {
+      "description_th": "รหัสสิทธิ์",
+      "example_value": "CHECKIN.ACTUAL_LOCATION.READ",
+      "validation_rule": "module.action",
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "permissions.description": {
+      "description_th": "คำอธิบายสิทธิ์",
+      "example_value": "ดู GPS จริงของผู้เช็กอิน",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "permissions.created_at": {
+      "description_th": "วันที่และเวลาที่สร้างรายการ",
+      "example_value": "2026-06-15 09:30:00",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": "ใช้เวลา UTC"
+    },
+    "permissions.updated_at": {
+      "description_th": "วันที่และเวลาที่แก้ไขล่าสุด",
+      "example_value": "2026-06-15 10:00:00",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": "ใช้เวลา UTC"
+    },
+    "user_roles.user_id": {
+      "description_th": "ผู้ใช้",
+      "example_value": "1001",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "user_roles.role_id": {
+      "description_th": "บทบาท",
+      "example_value": "2",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "user_roles.assigned_by": {
+      "description_th": "ผู้มอบบทบาท",
+      "example_value": "1",
+      "validation_rule": null,
+      "personal_data_classification": "IDENTIFIER",
+      "notes": null
+    },
+    "user_roles.assigned_at": {
+      "description_th": "เวลาที่มอบบทบาท",
+      "example_value": "2026-06-15 09:00:00",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "role_permissions.role_id": {
+      "description_th": "บทบาท",
+      "example_value": "2",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "role_permissions.permission_id": {
+      "description_th": "สิทธิ์",
+      "example_value": "15",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "teams.id": {
+      "description_th": "รหัสภายในของรายการ",
+      "example_value": "1001",
+      "validation_rule": "> 0",
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "teams.organization_id": {
+      "description_th": "หน่วยงานที่สังกัด",
+      "example_value": "301",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "teams.leader_user_id": {
+      "description_th": "ผู้ใช้งานที่เป็นหัวหน้าทีมสำหรับ Leaderboard",
+      "example_value": "17",
+      "validation_rule": null,
+      "personal_data_classification": "IDENTIFIER",
+      "notes": "nullable; FK ON DELETE SET NULL; ใช้ join users เพื่อแสดงชื่อ/อีเมลหัวหน้าทีม"
+    },
+    "teams.name": {
+      "description_th": "ชื่อทีม",
+      "example_value": "RMC East",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "teams.status": {
+      "description_th": "สถานะทีม",
+      "example_value": "ACTIVE",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "teams.created_at": {
+      "description_th": "วันที่และเวลาที่สร้างรายการ",
+      "example_value": "2026-06-15 09:30:00",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": "ใช้เวลา UTC"
+    },
+    "teams.updated_at": {
+      "description_th": "วันที่และเวลาที่แก้ไขล่าสุด",
+      "example_value": "2026-06-15 10:00:00",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": "ใช้เวลา UTC"
+    },
+    "teams.deleted_at": {
+      "description_th": "วันที่ลบแบบ Soft delete",
+      "example_value": null,
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": "ไม่ลบข้อมูลจริงทันที"
+    },
+    "team_members.team_id": {
+      "description_th": "ทีม",
+      "example_value": "4",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "team_members.user_id": {
+      "description_th": "สมาชิก",
+      "example_value": "1001",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "team_members.joined_at": {
+      "description_th": "วันที่เข้าร่วมทีม",
+      "example_value": "2026-06-15 09:00:00",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "team_members.left_at": {
+      "description_th": "วันที่ออกจากทีม",
+      "example_value": null,
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "locations.id": {
+      "description_th": "รหัสภายในของรายการ",
+      "example_value": "1001",
+      "validation_rule": "> 0",
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "locations.organization_id": {
+      "description_th": "หน่วยงานเจ้าของสถานที่",
+      "example_value": "301",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "locations.location_type": {
+      "description_th": "ประเภทสถานที่",
+      "example_value": "PLANT",
+      "validation_rule": "ค่าใน location_type enum",
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "locations.source": {
+      "description_th": "แหล่งที่มาของสถานที่และสิทธิ์แก้ไข",
+      "example_value": "RMR_SSO_PLANT",
+      "validation_rule": "ค่าใน location_source enum; RMR_SSO_PLANT เป็น read-only, ADMIN แก้ไขได้",
+      "personal_data_classification": "NONE",
+      "notes": "Plant Master ห้ามแก้/ลบผ่านเว็บเมื่อ source=RMR_SSO_PLANT"
+    },
+    "locations.external_key": {
+      "description_th": "รหัสจากระบบต้นทาง เช่น Plant key",
+      "example_value": "13A1",
+      "validation_rule": "Unique ร่วมกับ source; RMR ใช้ Plant key",
+      "personal_data_classification": "NONE",
+      "notes": "Sync upsert ด้วย (source, external_key)"
+    },
+    "locations.code": {
+      "description_th": "รหัสใช้งานภายใน/ภายนอก",
+      "example_value": "13A1",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "locations.name_th": {
+      "description_th": "ชื่อสถานที่ภาษาไทย",
+      "example_value": "คลองเตย 3",
+      "validation_rule": "ไม่เป็นค่าว่าง",
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "locations.name_en": {
+      "description_th": "ชื่อสถานที่ภาษาอังกฤษ",
+      "example_value": "Khlong Toei 3",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "locations.name_cn": {
+      "description_th": "ชื่อสถานที่ภาษาจีน",
+      "example_value": null,
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "locations.position": {
+      "description_th": "พิกัดสถานที่ Longitude/Latitude",
+      "example_value": "POINT(100.56 13.72)",
+      "validation_rule": "SRID 4326",
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "locations.province_name": {
+      "description_th": "จังหวัด",
+      "example_value": "กรุงเทพมหานคร",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "locations.district_name": {
+      "description_th": "อำเภอ/เขต",
+      "example_value": "คลองเตย",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "locations.plant_type": {
+      "description_th": "ประเภทโรงงานจาก rmr_sso.Plant หรือข้อมูลที่ Admin ระบุ",
+      "example_value": "CPAC",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "locations.production_type": {
+      "description_th": "ประเภทการผลิต",
+      "example_value": "RMC",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "locations.sap_code": {
+      "description_th": "รหัสโรงงาน SAP",
+      "example_value": "SAP001",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "locations.site_material_code": {
+      "description_th": "รหัส Site Material จากต้นทาง",
+      "example_value": "MAT001",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "locations.status": {
+      "description_th": "สถานะสถานที่",
+      "example_value": "ACTIVE",
+      "validation_rule": "ค่าใน location_status enum",
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "locations.map_visible": {
+      "description_th": "แสดงบนแผนที่หรือไม่",
+      "example_value": "TRUE",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "locations.checkin_enabled": {
+      "description_th": "อนุญาตให้เลือกเช็กอินหรือไม่",
+      "example_value": "TRUE",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "locations.created_by": {
+      "description_th": "ผู้สร้างกรณี USER/ADMIN; รายการ sync จาก RMR อาจเป็น NULL",
+      "example_value": "1001",
+      "validation_rule": null,
+      "personal_data_classification": "IDENTIFIER",
+      "notes": "โรงงานที่เพิ่มจากเว็บต้องเก็บ Admin user id"
+    },
+    "locations.created_at": {
+      "description_th": "วันที่และเวลาที่สร้างรายการ",
+      "example_value": "2026-06-15 09:30:00",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": "ใช้เวลา UTC"
+    },
+    "locations.updated_at": {
+      "description_th": "วันที่และเวลาที่แก้ไขล่าสุด",
+      "example_value": "2026-06-15 10:00:00",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": "ใช้เวลา UTC"
+    },
+    "locations.deleted_at": {
+      "description_th": "วันที่ลบแบบ Soft delete",
+      "example_value": null,
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": "ไม่ลบข้อมูลจริงทันที"
+    },
+    "location_import_batches.id": {
+      "description_th": "รหัสภายในของรายการ",
+      "example_value": "1001",
+      "validation_rule": "> 0",
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "location_import_batches.file_name": {
+      "description_th": "ชื่อไฟล์หรือตัวระบุ sync job ต้นทาง",
+      "example_value": "rmr_sso_plant_incremental",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": "RMR sync อาจไม่มีไฟล์จริง ให้เก็บชื่อ job/run"
+    },
+    "location_import_batches.source": {
+      "description_th": "ระบบต้นทางของ sync/import",
+      "example_value": "RMR_SSO_PLANT",
+      "validation_rule": "ค่าใน external source enum",
+      "personal_data_classification": "NONE",
+      "notes": "ค่า default DATAOCEAN เป็น legacy; job ต้องส่ง source ชัดเจน"
+    },
+    "location_import_batches.imported_by": {
+      "description_th": "ผู้สั่งนำเข้า",
+      "example_value": "1",
+      "validation_rule": null,
+      "personal_data_classification": "IDENTIFIER",
+      "notes": null
+    },
+    "location_import_batches.status": {
+      "description_th": "สถานะการนำเข้า",
+      "example_value": "COMPLETED",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "location_import_batches.total_rows": {
+      "description_th": "จำนวนแถวทั้งหมด",
+      "example_value": "1180",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "location_import_batches.success_rows": {
+      "description_th": "จำนวนแถวสำเร็จ",
+      "example_value": "1180",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "location_import_batches.failed_rows": {
+      "description_th": "จำนวนแถวผิดพลาด",
+      "example_value": "0",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "location_import_batches.started_at": {
+      "description_th": "เวลาเริ่มนำเข้า",
+      "example_value": "2026-06-05 15:38:00",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "location_import_batches.completed_at": {
+      "description_th": "เวลาจบการนำเข้า",
+      "example_value": "2026-06-05 15:39:00",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "location_import_rows.id": {
+      "description_th": "รหัสภายในของรายการ",
+      "example_value": "1001",
+      "validation_rule": "> 0",
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "location_import_rows.import_batch_id": {
+      "description_th": "Batch ที่สังกัด",
+      "example_value": "20",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "location_import_rows.row_number": {
+      "description_th": "ลำดับแถวในไฟล์",
+      "example_value": "2",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "location_import_rows.external_key": {
+      "description_th": "Plant key หรือ external key ที่อ่านได้",
+      "example_value": "13A1",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": "ใช้คู่กับ source ของ import batch"
+    },
+    "location_import_rows.action": {
+      "description_th": "ผลการทำรายการ",
+      "example_value": "UPDATE",
+      "validation_rule": "INSERT/UPDATE/SKIP/ERROR",
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "location_import_rows.raw_data": {
+      "description_th": "ข้อมูลต้นฉบับทั้งแถวสำหรับ Audit",
+      "example_value": "{\"PLANT_NO\":\"13A1\"}",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "location_import_rows.error_message": {
+      "description_th": "รายละเอียดข้อผิดพลาด",
+      "example_value": null,
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "location_import_rows.created_at": {
+      "description_th": "วันที่และเวลาที่สร้างรายการ",
+      "example_value": "2026-06-15 09:30:00",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": "ใช้เวลา UTC"
+    },
+    "location_import_rows.updated_at": {
+      "description_th": "วันที่และเวลาที่แก้ไขล่าสุด",
+      "example_value": "2026-06-15 10:00:00",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": "ใช้เวลา UTC"
+    },
+    "checkins.id": {
+      "description_th": "รหัสภายในของรายการ",
+      "example_value": "1001",
+      "validation_rule": "> 0",
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "checkins.user_id": {
+      "description_th": "ผู้ทำรายการ",
+      "example_value": "1001",
+      "validation_rule": null,
+      "personal_data_classification": "IDENTIFIER",
+      "notes": null
+    },
+    "checkins.selected_location_id": {
+      "description_th": "สถานที่ที่ผู้ใช้เลือก",
+      "example_value": "500",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "checkins.selected_location_name_snapshot": {
+      "description_th": "ชื่อสถานที่ ณ เวลาที่เลือก",
+      "example_value": "คลองเตย 3",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "checkins.selected_location_position_snapshot": {
+      "description_th": "พิกัดสถานที่ที่เลือก ณ เวลานั้น",
+      "example_value": "POINT(100.56 13.72)",
+      "validation_rule": "SRID 4326",
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "checkins.actual_position": {
+      "description_th": "GPS จริงของผู้ใช้ขณะทำ Safety Effort",
+      "example_value": "POINT(100.57 13.73)",
+      "validation_rule": "SRID 4326",
+      "personal_data_classification": "PRECISE_LOCATION",
+      "notes": "จำกัดสิทธิ์การอ่าน"
+    },
+    "checkins.actual_accuracy_m": {
+      "description_th": "ค่าความแม่นยำ GPS หน่วยเมตร",
+      "example_value": "12.50",
+      "validation_rule": ">= 0",
+      "personal_data_classification": "PRECISE_LOCATION",
+      "notes": null
+    },
+    "checkins.distance_from_selected_m": {
+      "description_th": "ระยะจาก GPS จริงถึงสถานที่เลือก หน่วยเมตร",
+      "example_value": "1450.25",
+      "validation_rule": ">= 0",
+      "personal_data_classification": "SENSITIVE_DERIVED",
+      "notes": null
+    },
+    "checkins.location_match_status": {
+      "description_th": "ผลเปรียบเทียบตำแหน่ง",
+      "example_value": "DIFFERENT_LOCATION",
+      "validation_rule": "ค่าใน checkin_match_status enum",
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "checkins.location_source": {
+      "description_th": "วิธีได้พิกัดจริง",
+      "example_value": "GPS",
+      "validation_rule": "GPS/MAP_PIN",
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "checkins.device_metadata": {
+      "description_th": "ข้อมูลอุปกรณ์ที่จำเป็นต่อการตรวจสอบ",
+      "example_value": "{\"platform\":\"web\"}",
+      "validation_rule": null,
+      "personal_data_classification": "DEVICE",
+      "notes": null
+    },
+    "checkins.checked_in_at": {
+      "description_th": "เวลาที่เช็กอิน",
+      "example_value": "2026-06-15 09:30:00",
+      "validation_rule": null,
+      "personal_data_classification": "BEHAVIORAL",
+      "notes": null
+    },
+    "checkins.created_at": {
+      "description_th": "วันที่และเวลาที่สร้างรายการ",
+      "example_value": "2026-06-15 09:30:00",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": "ใช้เวลา UTC"
+    },
+    "checkins.updated_at": {
+      "description_th": "วันที่และเวลาที่แก้ไขล่าสุด",
+      "example_value": "2026-06-15 10:00:00",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": "ใช้เวลา UTC"
+    },
+    "checkin_attachments.id": {
+      "description_th": "รหัสภายในของรายการ",
+      "example_value": "1001",
+      "validation_rule": "> 0",
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "checkin_attachments.checkin_id": {
+      "description_th": "Check-in เจ้าของไฟล์",
+      "example_value": "9001",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "checkin_attachments.file_url": {
+      "description_th": "URL ไฟล์",
+      "example_value": "https://.../photo.jpg",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "checkin_attachments.attachment_type": {
+      "description_th": "ชนิดไฟล์",
+      "example_value": "PHOTO",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "checkin_attachments.created_by": {
+      "description_th": "ผู้เพิ่มไฟล์",
+      "example_value": "1001",
+      "validation_rule": null,
+      "personal_data_classification": "IDENTIFIER",
+      "notes": null
+    },
+    "checkin_attachments.created_at": {
+      "description_th": "วันที่และเวลาที่สร้างรายการ",
+      "example_value": "2026-06-15 09:30:00",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": "ใช้เวลา UTC"
+    },
+    "checkin_attachments.updated_at": {
+      "description_th": "วันที่และเวลาที่แก้ไขล่าสุด",
+      "example_value": "2026-06-15 10:00:00",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": "ใช้เวลา UTC"
+    },
+    "safety_activities.id": {
+      "description_th": "รหัสภายในของรายการ",
+      "example_value": "1001",
+      "validation_rule": "> 0",
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "safety_activities.checkin_id": {
+      "description_th": "Check-in ต้นทาง",
+      "example_value": "9001",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "safety_activities.activity_type": {
+      "description_th": "ประเภทกิจกรรม",
+      "example_value": "LINEWALK",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "safety_activities.title": {
+      "description_th": "ชื่อกิจกรรม",
+      "example_value": "ตรวจความปลอดภัยประจำวัน",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "safety_activities.status": {
+      "description_th": "สถานะกิจกรรม",
+      "example_value": "COMPLETED",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "safety_activities.started_at": {
+      "description_th": "เวลาเริ่ม",
+      "example_value": "2026-06-15 09:35:00",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "safety_activities.completed_at": {
+      "description_th": "เวลาสำเร็จ",
+      "example_value": "2026-06-15 10:20:00",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "safety_activities.notes": {
+      "description_th": "บันทึกเพิ่มเติม",
+      "example_value": "พบพื้นที่ต้องปรับปรุง",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "safety_activities.created_at": {
+      "description_th": "วันที่และเวลาที่สร้างรายการ",
+      "example_value": "2026-06-15 09:30:00",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": "ใช้เวลา UTC"
+    },
+    "safety_activities.updated_at": {
+      "description_th": "วันที่และเวลาที่แก้ไขล่าสุด",
+      "example_value": "2026-06-15 10:00:00",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": "ใช้เวลา UTC"
+    },
+    "safety_activities.deleted_at": {
+      "description_th": "วันที่ลบแบบ Soft delete",
+      "example_value": null,
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": "ไม่ลบข้อมูลจริงทันที"
+    },
+    "assessment_templates.id": {
+      "description_th": "รหัสภายในของรายการ",
+      "example_value": "1001",
+      "validation_rule": "> 0",
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "assessment_templates.code": {
+      "description_th": "รหัส Template",
+      "example_value": "LINEWALK_V1",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "assessment_templates.name": {
+      "description_th": "ชื่อ Template",
+      "example_value": "Line Walk",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "assessment_templates.version": {
+      "description_th": "เวอร์ชัน",
+      "example_value": "1",
+      "validation_rule": "> 0",
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "assessment_templates.status": {
+      "description_th": "สถานะ Template",
+      "example_value": "PUBLISHED",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "assessment_templates.created_by": {
+      "description_th": "ผู้สร้าง",
+      "example_value": "1",
+      "validation_rule": null,
+      "personal_data_classification": "IDENTIFIER",
+      "notes": null
+    },
+    "assessment_templates.created_at": {
+      "description_th": "วันที่และเวลาที่สร้างรายการ",
+      "example_value": "2026-06-15 09:30:00",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": "ใช้เวลา UTC"
+    },
+    "assessment_templates.updated_at": {
+      "description_th": "วันที่และเวลาที่แก้ไขล่าสุด",
+      "example_value": "2026-06-15 10:00:00",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": "ใช้เวลา UTC"
+    },
+    "assessment_templates.deleted_at": {
+      "description_th": "วันที่ลบแบบ Soft delete",
+      "example_value": null,
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": "ไม่ลบข้อมูลจริงทันที"
+    },
+    "assessment_questions.id": {
+      "description_th": "รหัสภายในของรายการ",
+      "example_value": "1001",
+      "validation_rule": "> 0",
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "assessment_questions.template_id": {
+      "description_th": "Template เจ้าของคำถาม",
+      "example_value": "50",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "assessment_questions.question_code": {
+      "description_th": "รหัสคำถาม",
+      "example_value": "Q001",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "assessment_questions.question_text": {
+      "description_th": "ข้อความคำถาม",
+      "example_value": "มี PPE ครบหรือไม่",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "assessment_questions.answer_type": {
+      "description_th": "ชนิดคำตอบ",
+      "example_value": "YES_NO",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "assessment_questions.options_json": {
+      "description_th": "ตัวเลือกคำตอบ",
+      "example_value": "[\"YES\",\"NO\"]",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "assessment_questions.is_required": {
+      "description_th": "ต้องตอบหรือไม่",
+      "example_value": "TRUE",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "assessment_questions.sort_order": {
+      "description_th": "ลำดับคำถาม",
+      "example_value": "1",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "assessment_questions.created_at": {
+      "description_th": "วันที่และเวลาที่สร้างรายการ",
+      "example_value": "2026-06-15 09:30:00",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": "ใช้เวลา UTC"
+    },
+    "assessment_questions.updated_at": {
+      "description_th": "วันที่และเวลาที่แก้ไขล่าสุด",
+      "example_value": "2026-06-15 10:00:00",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": "ใช้เวลา UTC"
+    },
+    "assessment_runs.id": {
+      "description_th": "รหัสภายในของรายการ",
+      "example_value": "1001",
+      "validation_rule": "> 0",
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "assessment_runs.activity_id": {
+      "description_th": "กิจกรรมต้นทาง",
+      "example_value": "7001",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "assessment_runs.template_id": {
+      "description_th": "Template ที่ใช้",
+      "example_value": "50",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "assessment_runs.assessor_id": {
+      "description_th": "ผู้ประเมิน",
+      "example_value": "1001",
+      "validation_rule": null,
+      "personal_data_classification": "IDENTIFIER",
+      "notes": null
+    },
+    "assessment_runs.status": {
+      "description_th": "สถานะการประเมิน",
+      "example_value": "SUBMITTED",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "assessment_runs.score": {
+      "description_th": "คะแนนรวม",
+      "example_value": "85.00",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "assessment_runs.submitted_at": {
+      "description_th": "เวลาส่งแบบประเมิน",
+      "example_value": "2026-06-15 10:10:00",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "assessment_runs.created_at": {
+      "description_th": "วันที่และเวลาที่สร้างรายการ",
+      "example_value": "2026-06-15 09:30:00",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": "ใช้เวลา UTC"
+    },
+    "assessment_runs.updated_at": {
+      "description_th": "วันที่และเวลาที่แก้ไขล่าสุด",
+      "example_value": "2026-06-15 10:00:00",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": "ใช้เวลา UTC"
+    },
+    "assessment_answers.id": {
+      "description_th": "รหัสภายในของรายการ",
+      "example_value": "1001",
+      "validation_rule": "> 0",
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "assessment_answers.assessment_run_id": {
+      "description_th": "ชุดการประเมิน",
+      "example_value": "8001",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "assessment_answers.question_id": {
+      "description_th": "คำถาม",
+      "example_value": "501",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "assessment_answers.answer_json": {
+      "description_th": "คำตอบที่รองรับหลายชนิด",
+      "example_value": "{\"value\":\"YES\"}",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "assessment_answers.score": {
+      "description_th": "คะแนนข้อนี้",
+      "example_value": "5.00",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "assessment_answers.notes": {
+      "description_th": "หมายเหตุ",
+      "example_value": null,
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "assessment_answers.created_at": {
+      "description_th": "วันที่และเวลาที่สร้างรายการ",
+      "example_value": "2026-06-15 09:30:00",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": "ใช้เวลา UTC"
+    },
+    "assessment_answers.updated_at": {
+      "description_th": "วันที่และเวลาที่แก้ไขล่าสุด",
+      "example_value": "2026-06-15 10:00:00",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": "ใช้เวลา UTC"
+    },
+    "safety_findings.id": {
+      "description_th": "รหัสภายในของรายการ",
+      "example_value": "1001",
+      "validation_rule": "> 0",
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "safety_findings.activity_id": {
+      "description_th": "กิจกรรมที่พบ",
+      "example_value": "7001",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "safety_findings.reported_by": {
+      "description_th": "ผู้รายงาน",
+      "example_value": "1001",
+      "validation_rule": null,
+      "personal_data_classification": "IDENTIFIER",
+      "notes": null
+    },
+    "safety_findings.severity": {
+      "description_th": "ระดับความรุนแรง",
+      "example_value": "HIGH",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "safety_findings.description": {
+      "description_th": "รายละเอียดสิ่งที่พบ",
+      "example_value": "พื้นลื่น",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "safety_findings.status": {
+      "description_th": "สถานะประเด็น",
+      "example_value": "OPEN",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "safety_findings.due_at": {
+      "description_th": "กำหนดแก้ไข",
+      "example_value": "2026-06-20 17:00:00",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "safety_findings.created_at": {
+      "description_th": "วันที่และเวลาที่สร้างรายการ",
+      "example_value": "2026-06-15 09:30:00",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": "ใช้เวลา UTC"
+    },
+    "safety_findings.updated_at": {
+      "description_th": "วันที่และเวลาที่แก้ไขล่าสุด",
+      "example_value": "2026-06-15 10:00:00",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": "ใช้เวลา UTC"
+    },
+    "safety_findings.deleted_at": {
+      "description_th": "วันที่ลบแบบ Soft delete",
+      "example_value": null,
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": "ไม่ลบข้อมูลจริงทันที"
+    },
+    "corrective_actions.id": {
+      "description_th": "รหัสภายในของรายการ",
+      "example_value": "1001",
+      "validation_rule": "> 0",
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "corrective_actions.finding_id": {
+      "description_th": "ประเด็นต้นทาง",
+      "example_value": "601",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "corrective_actions.assignee_id": {
+      "description_th": "ผู้รับผิดชอบ",
+      "example_value": "1002",
+      "validation_rule": null,
+      "personal_data_classification": "IDENTIFIER",
+      "notes": null
+    },
+    "corrective_actions.action_text": {
+      "description_th": "รายละเอียดการแก้ไข",
+      "example_value": "ติดตั้งป้ายเตือนและแก้พื้น",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "corrective_actions.status": {
+      "description_th": "สถานะงานแก้ไข",
+      "example_value": "IN_PROGRESS",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "corrective_actions.due_at": {
+      "description_th": "กำหนดเสร็จ",
+      "example_value": "2026-06-20 17:00:00",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "corrective_actions.completed_at": {
+      "description_th": "เวลาที่เสร็จ",
+      "example_value": null,
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "corrective_actions.created_at": {
+      "description_th": "วันที่และเวลาที่สร้างรายการ",
+      "example_value": "2026-06-15 09:30:00",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": "ใช้เวลา UTC"
+    },
+    "corrective_actions.updated_at": {
+      "description_th": "วันที่และเวลาที่แก้ไขล่าสุด",
+      "example_value": "2026-06-15 10:00:00",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": "ใช้เวลา UTC"
+    },
+    "health_checks.id": {
+      "description_th": "รหัสภายในของรายการ",
+      "example_value": "1001",
+      "validation_rule": "> 0",
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "health_checks.activity_id": {
+      "description_th": "กิจกรรมที่เกี่ยวข้อง",
+      "example_value": "7001",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "health_checks.user_id": {
+      "description_th": "ผู้ทำรายการ",
+      "example_value": "1001",
+      "validation_rule": null,
+      "personal_data_classification": "IDENTIFIER",
+      "notes": null
+    },
+    "health_checks.status": {
+      "description_th": "สถานะ/ผลรายการ",
+      "example_value": "PASS",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "health_checks.payload": {
+      "description_th": "รายละเอียดเฉพาะ Workflow",
+      "example_value": "{\"result\":\"PASS\"}",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "health_checks.occurred_at": {
+      "description_th": "เวลาที่เกิดรายการ",
+      "example_value": "2026-06-15 09:00:00",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "health_checks.created_at": {
+      "description_th": "วันที่และเวลาที่สร้างรายการ",
+      "example_value": "2026-06-15 09:30:00",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": "ใช้เวลา UTC"
+    },
+    "health_checks.updated_at": {
+      "description_th": "วันที่และเวลาที่แก้ไขล่าสุด",
+      "example_value": "2026-06-15 10:00:00",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": "ใช้เวลา UTC"
+    },
+    "pretrip_checks.id": {
+      "description_th": "รหัสภายในของรายการ",
+      "example_value": "1001",
+      "validation_rule": "> 0",
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "pretrip_checks.activity_id": {
+      "description_th": "กิจกรรมที่เกี่ยวข้อง",
+      "example_value": "7001",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "pretrip_checks.user_id": {
+      "description_th": "ผู้ทำรายการ",
+      "example_value": "1001",
+      "validation_rule": null,
+      "personal_data_classification": "IDENTIFIER",
+      "notes": null
+    },
+    "pretrip_checks.status": {
+      "description_th": "สถานะ/ผลรายการ",
+      "example_value": "PASS",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "pretrip_checks.payload": {
+      "description_th": "รายละเอียดเฉพาะ Workflow",
+      "example_value": "{\"result\":\"PASS\"}",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "pretrip_checks.occurred_at": {
+      "description_th": "เวลาที่เกิดรายการ",
+      "example_value": "2026-06-15 09:00:00",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "pretrip_checks.created_at": {
+      "description_th": "วันที่และเวลาที่สร้างรายการ",
+      "example_value": "2026-06-15 09:30:00",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": "ใช้เวลา UTC"
+    },
+    "pretrip_checks.updated_at": {
+      "description_th": "วันที่และเวลาที่แก้ไขล่าสุด",
+      "example_value": "2026-06-15 10:00:00",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": "ใช้เวลา UTC"
+    },
+    "kyt_records.id": {
+      "description_th": "รหัสภายในของรายการ",
+      "example_value": "1001",
+      "validation_rule": "> 0",
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "kyt_records.activity_id": {
+      "description_th": "กิจกรรมที่เกี่ยวข้อง",
+      "example_value": "7001",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "kyt_records.user_id": {
+      "description_th": "ผู้ทำรายการ",
+      "example_value": "1001",
+      "validation_rule": null,
+      "personal_data_classification": "IDENTIFIER",
+      "notes": null
+    },
+    "kyt_records.status": {
+      "description_th": "สถานะ/ผลรายการ",
+      "example_value": "PASS",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "kyt_records.payload": {
+      "description_th": "รายละเอียดเฉพาะ Workflow",
+      "example_value": "{\"result\":\"PASS\"}",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "kyt_records.occurred_at": {
+      "description_th": "เวลาที่เกิดรายการ",
+      "example_value": "2026-06-15 09:00:00",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "kyt_records.created_at": {
+      "description_th": "วันที่และเวลาที่สร้างรายการ",
+      "example_value": "2026-06-15 09:30:00",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": "ใช้เวลา UTC"
+    },
+    "kyt_records.updated_at": {
+      "description_th": "วันที่และเวลาที่แก้ไขล่าสุด",
+      "example_value": "2026-06-15 10:00:00",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": "ใช้เวลา UTC"
+    },
+    "sos_events.id": {
+      "description_th": "รหัสภายในของรายการ",
+      "example_value": "1001",
+      "validation_rule": "> 0",
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "sos_events.activity_id": {
+      "description_th": "กิจกรรมที่เกี่ยวข้อง",
+      "example_value": "7001",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "sos_events.user_id": {
+      "description_th": "ผู้ทำรายการ",
+      "example_value": "1001",
+      "validation_rule": null,
+      "personal_data_classification": "IDENTIFIER",
+      "notes": null
+    },
+    "sos_events.status": {
+      "description_th": "สถานะ/ผลรายการ",
+      "example_value": "PASS",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "sos_events.payload": {
+      "description_th": "รายละเอียดเฉพาะ Workflow",
+      "example_value": "{\"result\":\"PASS\"}",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "sos_events.occurred_at": {
+      "description_th": "เวลาที่เกิดรายการ",
+      "example_value": "2026-06-15 09:00:00",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "sos_events.created_at": {
+      "description_th": "วันที่และเวลาที่สร้างรายการ",
+      "example_value": "2026-06-15 09:30:00",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": "ใช้เวลา UTC"
+    },
+    "sos_events.updated_at": {
+      "description_th": "วันที่และเวลาที่แก้ไขล่าสุด",
+      "example_value": "2026-06-15 10:00:00",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": "ใช้เวลา UTC"
+    },
+    "posts.id": {
+      "description_th": "รหัสโพสต์ Safety Culture",
+      "example_value": "1001",
+      "validation_rule": "> 0",
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "posts.author_id": {
+      "description_th": "ผู้เขียนโพสต์",
+      "example_value": "1001",
+      "validation_rule": null,
+      "personal_data_classification": "IDENTIFIER",
+      "notes": "ใช้ให้คะแนนส่วนตัว"
+    },
+    "posts.content": {
+      "description_th": "เนื้อหาโพสต์",
+      "example_value": "แชร์กิจกรรมความปลอดภัยวันนี้",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "posts.status": {
+      "description_th": "สถานะโพสต์",
+      "example_value": "PUBLISHED",
+      "validation_rule": "DRAFT/PUBLISHED/REJECTED",
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "posts.published_at": {
+      "description_th": "เวลาที่เผยแพร่",
+      "example_value": "2026-06-19 09:30:00",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": "UTC"
+    },
+    "posts.created_at": {
+      "description_th": "เวลาสร้าง",
+      "example_value": "2026-06-19 09:30:00",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": "UTC"
+    },
+    "posts.updated_at": {
+      "description_th": "เวลาแก้ไขล่าสุด",
+      "example_value": "2026-06-19 09:30:00",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": "UTC"
+    },
+    "posts.deleted_at": {
+      "description_th": "เวลาลบแบบ soft delete",
+      "example_value": null,
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "comments.id": {
+      "description_th": "รหัสภายในของรายการ",
+      "example_value": "1001",
+      "validation_rule": "> 0",
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "comments.post_id": {
+      "description_th": "โพสต์",
+      "example_value": "101",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "comments.author_id": {
+      "description_th": "ผู้แสดงความคิดเห็น",
+      "example_value": "1002",
+      "validation_rule": null,
+      "personal_data_classification": "IDENTIFIER",
+      "notes": null
+    },
+    "comments.content": {
+      "description_th": "ความคิดเห็น",
+      "example_value": "ขอบคุณสำหรับข้อมูล",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "comments.created_at": {
+      "description_th": "วันที่และเวลาที่สร้างรายการ",
+      "example_value": "2026-06-15 09:30:00",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": "ใช้เวลา UTC"
+    },
+    "comments.updated_at": {
+      "description_th": "วันที่และเวลาที่แก้ไขล่าสุด",
+      "example_value": "2026-06-15 10:00:00",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": "ใช้เวลา UTC"
+    },
+    "comments.deleted_at": {
+      "description_th": "วันที่ลบแบบ Soft delete",
+      "example_value": null,
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": "ไม่ลบข้อมูลจริงทันที"
+    },
+    "reactions.post_id": {
+      "description_th": "โพสต์",
+      "example_value": "101",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "reactions.user_id": {
+      "description_th": "ผู้กด Reaction",
+      "example_value": "1002",
+      "validation_rule": null,
+      "personal_data_classification": "IDENTIFIER",
+      "notes": null
+    },
+    "reactions.reaction_type": {
+      "description_th": "ชนิด Reaction",
+      "example_value": "LIKE",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "reactions.created_at": {
+      "description_th": "เวลาที่กด",
+      "example_value": "2026-06-15 12:10:00",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "awareness_questions.id": {
+      "description_th": "รหัสภายในของรายการ",
+      "example_value": "1001",
+      "validation_rule": "> 0",
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "awareness_questions.question_text": {
+      "description_th": "คำถาม",
+      "example_value": "ควรสวม PPE เมื่อใด",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "awareness_questions.options_json": {
+      "description_th": "ตัวเลือก",
+      "example_value": "[\"ทุกครั้ง\",\"บางครั้ง\"]",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "awareness_questions.correct_answer_json": {
+      "description_th": "เฉลย",
+      "example_value": "{\"value\":\"ทุกครั้ง\"}",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "awareness_questions.status": {
+      "description_th": "สถานะคำถาม",
+      "example_value": "ACTIVE",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "awareness_questions.created_at": {
+      "description_th": "วันที่และเวลาที่สร้างรายการ",
+      "example_value": "2026-06-15 09:30:00",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": "ใช้เวลา UTC"
+    },
+    "awareness_questions.updated_at": {
+      "description_th": "วันที่และเวลาที่แก้ไขล่าสุด",
+      "example_value": "2026-06-15 10:00:00",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": "ใช้เวลา UTC"
+    },
+    "awareness_attempts.id": {
+      "description_th": "รหัสภายในของรายการ",
+      "example_value": "1001",
+      "validation_rule": "> 0",
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "awareness_attempts.user_id": {
+      "description_th": "ผู้ทำแบบทดสอบ",
+      "example_value": "1001",
+      "validation_rule": null,
+      "personal_data_classification": "IDENTIFIER",
+      "notes": null
+    },
+    "awareness_attempts.attempt_date": {
+      "description_th": "วันที่ทำ",
+      "example_value": "2026-06-15",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "awareness_attempts.score": {
+      "description_th": "คะแนน",
+      "example_value": "10.00",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "awareness_attempts.completed_at": {
+      "description_th": "เวลาสำเร็จ",
+      "example_value": "2026-06-15 08:30:00",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "awareness_attempts.created_at": {
+      "description_th": "วันที่และเวลาที่สร้างรายการ",
+      "example_value": "2026-06-15 09:30:00",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": "ใช้เวลา UTC"
+    },
+    "awareness_attempts.updated_at": {
+      "description_th": "วันที่และเวลาที่แก้ไขล่าสุด",
+      "example_value": "2026-06-15 10:00:00",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": "ใช้เวลา UTC"
+    },
+    "awareness_answers.id": {
+      "description_th": "รหัสภายในของรายการ",
+      "example_value": "1001",
+      "validation_rule": "> 0",
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "awareness_answers.attempt_id": {
+      "description_th": "Attempt",
+      "example_value": "301",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "awareness_answers.question_id": {
+      "description_th": "คำถาม",
+      "example_value": "201",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "awareness_answers.answer_json": {
+      "description_th": "คำตอบ",
+      "example_value": "{\"value\":\"ทุกครั้ง\"}",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "awareness_answers.is_correct": {
+      "description_th": "ตอบถูกหรือไม่",
+      "example_value": "TRUE",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "awareness_answers.created_at": {
+      "description_th": "วันที่และเวลาที่สร้างรายการ",
+      "example_value": "2026-06-15 09:30:00",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": "ใช้เวลา UTC"
+    },
+    "awareness_answers.updated_at": {
+      "description_th": "วันที่และเวลาที่แก้ไขล่าสุด",
+      "example_value": "2026-06-15 10:00:00",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": "ใช้เวลา UTC"
+    },
+    "holidays.id": {
+      "description_th": "รหัสภายในของรายการ",
+      "example_value": "1001",
+      "validation_rule": "> 0",
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "holidays.holiday_date": {
+      "description_th": "วันหยุด",
+      "example_value": "2026-04-13",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "holidays.name": {
+      "description_th": "ชื่อวันหยุด",
+      "example_value": "สงกรานต์",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "holidays.created_at": {
+      "description_th": "วันที่และเวลาที่สร้างรายการ",
+      "example_value": "2026-06-15 09:30:00",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": "ใช้เวลา UTC"
+    },
+    "holidays.updated_at": {
+      "description_th": "วันที่และเวลาที่แก้ไขล่าสุด",
+      "example_value": "2026-06-15 10:00:00",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": "ใช้เวลา UTC"
+    },
+    "point_rules.id": {
+      "description_th": "รหัสภายในของรายการ",
+      "example_value": "1001",
+      "validation_rule": "> 0",
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "point_rules.code": {
+      "description_th": "รหัสกติกา",
+      "example_value": "SAFETY_ACTIVITY_COMPLETE",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "point_rules.source_type": {
+      "description_th": "ประเภทแหล่งคะแนน",
+      "example_value": "SAFETY_ACTIVITY",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "point_rules.points": {
+      "description_th": "จำนวนคะแนน",
+      "example_value": "10",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "point_rules.status": {
+      "description_th": "สถานะกติกา",
+      "example_value": "ACTIVE",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "point_rules.created_at": {
+      "description_th": "วันที่และเวลาที่สร้างรายการ",
+      "example_value": "2026-06-15 09:30:00",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": "ใช้เวลา UTC"
+    },
+    "point_rules.updated_at": {
+      "description_th": "วันที่และเวลาที่แก้ไขล่าสุด",
+      "example_value": "2026-06-15 10:00:00",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": "ใช้เวลา UTC"
+    },
+    "point_transactions.id": {
+      "description_th": "รหัสภายในของรายการ",
+      "example_value": "1001",
+      "validation_rule": "> 0",
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "point_transactions.user_id": {
+      "description_th": "เจ้าของคะแนน",
+      "example_value": "1001",
+      "validation_rule": null,
+      "personal_data_classification": "IDENTIFIER",
+      "notes": null
+    },
+    "point_transactions.point_rule_id": {
+      "description_th": "กติกาคะแนน",
+      "example_value": "10",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "point_transactions.transaction_type": {
+      "description_th": "ประเภทคะแนน",
+      "example_value": "EARN",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "point_transactions.amount": {
+      "description_th": "จำนวนคะแนน บวกหรือหัก",
+      "example_value": "10",
+      "validation_rule": "<> 0",
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "point_transactions.source_type": {
+      "description_th": "ประเภทเอกสารต้นทาง",
+      "example_value": "SAFETY_ACTIVITY",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "point_transactions.source_id": {
+      "description_th": "รหัสเอกสารต้นทาง",
+      "example_value": "7001",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "point_transactions.idempotency_key": {
+      "description_th": "Key ป้องกันให้คะแนนซ้ำ",
+      "example_value": "activity:7001:complete",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "point_transactions.description": {
+      "description_th": "คำอธิบาย",
+      "example_value": "คะแนนกิจกรรมสำเร็จ",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "point_transactions.occurred_at": {
+      "description_th": "เวลาที่เกิดรายการ",
+      "example_value": "2026-06-15 10:20:00",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "point_transactions.created_at": {
+      "description_th": "วันที่และเวลาที่สร้างรายการ",
+      "example_value": "2026-06-15 09:30:00",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": "ใช้เวลา UTC"
+    },
+    "point_transactions.updated_at": {
+      "description_th": "วันที่และเวลาที่แก้ไขล่าสุด",
+      "example_value": "2026-06-15 10:00:00",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": "ใช้เวลา UTC"
+    },
+    "point_balances.user_id": {
+      "description_th": "เจ้าของยอดคะแนน",
+      "example_value": "1001",
+      "validation_rule": null,
+      "personal_data_classification": "IDENTIFIER",
+      "notes": null
+    },
+    "point_balances.balance": {
+      "description_th": "ยอดคะแนนปัจจุบัน",
+      "example_value": "254",
+      "validation_rule": ">= 0",
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "point_balances.updated_at": {
+      "description_th": "เวลาคำนวณล่าสุด",
+      "example_value": "2026-06-15 10:20:00",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "rewards.id": {
+      "description_th": "รหัสภายในของรายการ",
+      "example_value": "1001",
+      "validation_rule": "> 0",
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "rewards.code": {
+      "description_th": "รหัสของรางวัล",
+      "example_value": "RW001",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "rewards.name": {
+      "description_th": "ชื่อของรางวัล",
+      "example_value": "ผ้าขนหนู Safety",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "rewards.points_required": {
+      "description_th": "คะแนนที่ใช้แลก",
+      "example_value": "320",
+      "validation_rule": "> 0",
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "rewards.stock_qty": {
+      "description_th": "จำนวนคงเหลือ",
+      "example_value": "50",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "rewards.status": {
+      "description_th": "สถานะของรางวัล",
+      "example_value": "ACTIVE",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "rewards.created_at": {
+      "description_th": "วันที่และเวลาที่สร้างรายการ",
+      "example_value": "2026-06-15 09:30:00",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": "ใช้เวลา UTC"
+    },
+    "rewards.updated_at": {
+      "description_th": "วันที่และเวลาที่แก้ไขล่าสุด",
+      "example_value": "2026-06-15 10:00:00",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": "ใช้เวลา UTC"
+    },
+    "rewards.deleted_at": {
+      "description_th": "วันที่ลบแบบ Soft delete",
+      "example_value": null,
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": "ไม่ลบข้อมูลจริงทันที"
+    },
+    "reward_redemptions.id": {
+      "description_th": "รหัสภายในของรายการ",
+      "example_value": "1001",
+      "validation_rule": "> 0",
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "reward_redemptions.user_id": {
+      "description_th": "ผู้แลก",
+      "example_value": "1001",
+      "validation_rule": null,
+      "personal_data_classification": "IDENTIFIER",
+      "notes": null
+    },
+    "reward_redemptions.reward_id": {
+      "description_th": "ของรางวัล",
+      "example_value": "21",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "reward_redemptions.point_transaction_id": {
+      "description_th": "รายการตัดคะแนน",
+      "example_value": "4501",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "reward_redemptions.points_used": {
+      "description_th": "คะแนนที่ใช้จริง",
+      "example_value": "320",
+      "validation_rule": "> 0",
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "reward_redemptions.status": {
+      "description_th": "สถานะการแลก",
+      "example_value": "APPROVED",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "reward_redemptions.redeemed_at": {
+      "description_th": "เวลาแลก",
+      "example_value": "2026-06-15 11:00:00",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "reward_redemptions.created_at": {
+      "description_th": "วันที่และเวลาที่สร้างรายการ",
+      "example_value": "2026-06-15 09:30:00",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": "ใช้เวลา UTC"
+    },
+    "reward_redemptions.updated_at": {
+      "description_th": "วันที่และเวลาที่แก้ไขล่าสุด",
+      "example_value": "2026-06-15 10:00:00",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": "ใช้เวลา UTC"
+    },
+    "reward_inventory_transactions.id": {
+      "description_th": "รหัสภายในของรายการ",
+      "example_value": "1001",
+      "validation_rule": "> 0",
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "reward_inventory_transactions.reward_id": {
+      "description_th": "ของรางวัล",
+      "example_value": "21",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "reward_inventory_transactions.transaction_type": {
+      "description_th": "ประเภท Stock movement",
+      "example_value": "OUT",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "reward_inventory_transactions.quantity": {
+      "description_th": "จำนวนเปลี่ยนแปลง",
+      "example_value": "-1",
+      "validation_rule": "<> 0",
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "reward_inventory_transactions.source_type": {
+      "description_th": "แหล่งที่มา",
+      "example_value": "REDEMPTION",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "reward_inventory_transactions.source_id": {
+      "description_th": "รหัสเอกสารต้นทาง",
+      "example_value": "501",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "reward_inventory_transactions.created_at": {
+      "description_th": "วันที่และเวลาที่สร้างรายการ",
+      "example_value": "2026-06-15 09:30:00",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": "ใช้เวลา UTC"
+    },
+    "reward_inventory_transactions.updated_at": {
+      "description_th": "วันที่และเวลาที่แก้ไขล่าสุด",
+      "example_value": "2026-06-15 10:00:00",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": "ใช้เวลา UTC"
+    },
+    "notifications.id": {
+      "description_th": "รหัสภายในของรายการ",
+      "example_value": "1001",
+      "validation_rule": "> 0",
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "notifications.user_id": {
+      "description_th": "ผู้รับ",
+      "example_value": "1001",
+      "validation_rule": null,
+      "personal_data_classification": "IDENTIFIER",
+      "notes": null
+    },
+    "notifications.notification_type": {
+      "description_th": "ประเภทแจ้งเตือน",
+      "example_value": "ACTION_DUE",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "notifications.title": {
+      "description_th": "หัวข้อ",
+      "example_value": "งานแก้ไขใกล้ครบกำหนด",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "notifications.body": {
+      "description_th": "ข้อความ",
+      "example_value": "กรุณาตรวจสอบงาน",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "notifications.read_at": {
+      "description_th": "เวลาอ่าน",
+      "example_value": null,
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "notifications.created_at": {
+      "description_th": "วันที่และเวลาที่สร้างรายการ",
+      "example_value": "2026-06-15 09:30:00",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": "ใช้เวลา UTC"
+    },
+    "notifications.updated_at": {
+      "description_th": "วันที่และเวลาที่แก้ไขล่าสุด",
+      "example_value": "2026-06-15 10:00:00",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": "ใช้เวลา UTC"
+    },
+    "audit_logs.id": {
+      "description_th": "รหัสภายในของรายการ",
+      "example_value": "1001",
+      "validation_rule": "> 0",
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "audit_logs.actor_user_id": {
+      "description_th": "ผู้กระทำ",
+      "example_value": "1",
+      "validation_rule": null,
+      "personal_data_classification": "IDENTIFIER",
+      "notes": null
+    },
+    "audit_logs.action": {
+      "description_th": "การกระทำ",
+      "example_value": "CHECKIN.ACTUAL_LOCATION.READ",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "audit_logs.entity_type": {
+      "description_th": "ประเภทข้อมูล",
+      "example_value": "checkins",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "audit_logs.entity_id": {
+      "description_th": "รหัสข้อมูล",
+      "example_value": "9001",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "audit_logs.before_data": {
+      "description_th": "ค่าก่อนแก้ไข",
+      "example_value": "{}",
+      "validation_rule": null,
+      "personal_data_classification": "SENSITIVE",
+      "notes": null
+    },
+    "audit_logs.after_data": {
+      "description_th": "ค่าหลังแก้ไข",
+      "example_value": "{}",
+      "validation_rule": null,
+      "personal_data_classification": "SENSITIVE",
+      "notes": null
+    },
+    "audit_logs.ip_address": {
+      "description_th": "IP ผู้ใช้งาน",
+      "example_value": "10.0.0.1",
+      "validation_rule": null,
+      "personal_data_classification": "DEVICE",
+      "notes": null
+    },
+    "audit_logs.created_at": {
+      "description_th": "เวลาที่เกิดเหตุการณ์",
+      "example_value": "2026-06-15 09:30:00",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "users.username": {
+      "description_th": "ชื่อผู้ใช้งานจาก SSO / Username claim สำหรับแสดงบน Profile และ Topbar",
+      "example_value": "SASITOJA",
+      "validation_rule": "trim, max 100 chars",
+      "personal_data_classification": "INTERNAL",
+      "notes": "อัปเดตทุกครั้งที่ SSO login สำเร็จ"
+    },
+    "users.first_name_th": {
+      "description_th": "ชื่อจริงภาษาไทยจาก SSO claim FIRSTNAME_TH",
+      "example_value": "ศศิธร",
+      "validation_rule": "trim, max 150 chars",
+      "personal_data_classification": "PERSONAL",
+      "notes": "Normalized SSO field"
+    },
+    "users.last_name_th": {
+      "description_th": "นามสกุลภาษาไทยจาก SSO claim LASTNAME_TH",
+      "example_value": "จรุงจรรยาพงศ์",
+      "validation_rule": "trim, max 150 chars",
+      "personal_data_classification": "PERSONAL",
+      "notes": "Normalized SSO field"
+    },
+    "users.first_name_en": {
+      "description_th": "ชื่อจริงภาษาอังกฤษจาก SSO claim FIRSTNAME_EN",
+      "example_value": "Sasitorn",
+      "validation_rule": "trim, max 150 chars",
+      "personal_data_classification": "PERSONAL",
+      "notes": "Normalized SSO field"
+    },
+    "users.last_name_en": {
+      "description_th": "นามสกุลภาษาอังกฤษจาก SSO claim LASTNAME_EN",
+      "example_value": "Jarungjanyaphong",
+      "validation_rule": "trim, max 150 chars",
+      "personal_data_classification": "PERSONAL",
+      "notes": "Normalized SSO field"
+    },
+    "users.division": {
+      "description_th": "หน่วยงาน / Division จาก SSO สำหรับแสดง Profile และใช้รายงาน",
+      "example_value": "RMC Excellence",
+      "validation_rule": "trim, max 255 chars",
+      "personal_data_classification": "INTERNAL",
+      "notes": "อาจ map กับ organizations ใน phase ถัดไป"
+    },
+    "users.position_th": {
+      "description_th": "ตำแหน่งภาษาไทยจาก SSO claim POSITION_TH",
+      "example_value": "Developer",
+      "validation_rule": "trim, max 150 chars",
+      "personal_data_classification": "INTERNAL",
+      "notes": "ใช้แสดงผล Profile"
+    },
+    "users.position_en": {
+      "description_th": "ตำแหน่งภาษาอังกฤษจาก SSO claim POSITION_EN",
+      "example_value": "Developer",
+      "validation_rule": "trim, max 150 chars",
+      "personal_data_classification": "INTERNAL",
+      "notes": "ใช้ fallback เมื่อไม่มี position_th"
+    },
+    "users.report_to_email": {
+      "description_th": "อีเมลหัวหน้างานจาก SSO claim REPORTTO_EMAIL",
+      "example_value": "manager@scg.com",
+      "validation_rule": "valid email if present",
+      "personal_data_classification": "PERSONAL",
+      "notes": "ใช้สำหรับ workflow อนุมัติ/แจ้งเตือนในอนาคต"
+    },
+    "users.line_profile_image_url": {
+      "description_th": "URL รูปโปรไฟล์จาก SSO/LINE claim LINE_PROFILE_IMAGE_URL",
+      "example_value": "https://...",
+      "validation_rule": "valid URL if present",
+      "personal_data_classification": "PERSONAL",
+      "notes": "ยังไม่ download รูปมาเก็บใน storage"
+    },
+    "users.sso_provider": {
+      "description_th": "ชื่อ provider ของ SSO ที่ login เข้ามา",
+      "example_value": "rmc-sso",
+      "validation_rule": "lowercase slug",
+      "personal_data_classification": "INTERNAL",
+      "notes": "ใช้ร่วมกับ sso_subject"
+    },
+    "users.sso_subject": {
+      "description_th": "Subject หลักจาก SSO provider",
+      "example_value": "00u123",
+      "validation_rule": "required after SSO login",
+      "personal_data_classification": "PERSONAL",
+      "notes": "เก็บซ้ำกับ sso_external_id เพื่อ audit provider subject"
+    },
+    "users.sso_raw_claims": {
+      "description_th": "Raw claims ล่าสุดทั้งหมดจาก SSO หลังตัด token ลับออก",
+      "example_value": "{\"sub\":\"...\"}",
+      "validation_rule": "valid JSON object; no OAuth tokens",
+      "personal_data_classification": "CONFIDENTIAL",
+      "notes": "ห้ามเก็บ access_token, id_token, refresh_token"
+    },
+    "users.sso_last_login_at": {
+      "description_th": "เวลาล่าสุดที่ user login ผ่าน SSO สำเร็จ",
+      "example_value": "2026-06-17 14:30:00.000",
+      "validation_rule": "UTC timestamp",
+      "personal_data_classification": "INTERNAL",
+      "notes": "ใช้ตรวจสอบ activity และ support"
+    },
+    "plant_location_details.location_id": {
+      "description_th": "รหัส locations กลางของโรงงาน",
+      "example_value": "1001",
+      "validation_rule": "ต้องมี location_type=PLANT",
+      "personal_data_classification": "NONE",
+      "notes": "One-to-one กับ locations"
+    },
+    "plant_location_details.division_no": {
+      "description_th": "รหัส Division จากไฟล์โรงงาน",
+      "example_value": "90000140",
+      "validation_rule": "trim",
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "plant_location_details.division_name": {
+      "description_th": "ชื่อ Division จากไฟล์โรงงาน",
+      "example_value": "RMC Metro",
+      "validation_rule": "trim",
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "plant_location_details.fact_no": {
+      "description_th": "รหัส Fact จากไฟล์โรงงาน",
+      "example_value": "14300",
+      "validation_rule": "trim",
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "plant_location_details.fact_name": {
+      "description_th": "ชื่อ Fact จากไฟล์โรงงาน",
+      "example_value": "Metro 1",
+      "validation_rule": "trim",
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "plant_location_details.sect_no": {
+      "description_th": "รหัส Section จากไฟล์โรงงาน",
+      "example_value": "14264",
+      "validation_rule": "trim",
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "plant_location_details.sect_name": {
+      "description_th": "ชื่อ Section จากไฟล์โรงงาน",
+      "example_value": "Prod.พระราม 4",
+      "validation_rule": "trim",
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "plant_location_details.plant_no": {
+      "description_th": "Plant key/รหัสโรงงานจาก rmr_sso.Plant หรือรหัสที่ Admin กำหนด",
+      "example_value": "13A1",
+      "validation_rule": "required, unique",
+      "personal_data_classification": "NONE",
+      "notes": "ใช้คู่กับ locations.external_key; source แยก RMR_SSO_PLANT กับ ADMIN"
+    },
+    "plant_location_details.plant_name": {
+      "description_th": "ชื่อโรงงานภาษาไทย",
+      "example_value": "คลองเตย 3",
+      "validation_rule": "required",
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "plant_location_details.plant_name_cn": {
+      "description_th": "ชื่อโรงงานภาษาจีนจาก source",
+      "example_value": "卡阿拉巴巴阿厂",
+      "validation_rule": "trim",
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "plant_location_details.plant_name_en": {
+      "description_th": "ชื่อโรงงานภาษาอังกฤษจาก source",
+      "example_value": "kharabaw",
+      "validation_rule": "trim",
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "plant_location_details.status_code": {
+      "description_th": "สถานะจาก source เช่น A/C",
+      "example_value": "A",
+      "validation_rule": "A=ACTIVE, C=CLOSED",
+      "personal_data_classification": "NONE",
+      "notes": "locations.status เก็บค่าที่ normalize แล้ว"
+    },
+    "plant_location_details.plant_type_prod": {
+      "description_th": "ประเภทการผลิตจาก source",
+      "example_value": "RMC",
+      "validation_rule": "trim",
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "plant_location_details.plant_type": {
+      "description_th": "ประเภทโรงงานจาก source",
+      "example_value": "CPAC",
+      "validation_rule": "trim",
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "plant_location_details.plant_no_sap": {
+      "description_th": "รหัสโรงงานใน SAP",
+      "example_value": "13A1",
+      "validation_rule": "trim",
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "plant_location_details.site_material_code": {
+      "description_th": "รหัส SITEMATERIAL จาก source",
+      "example_value": "0003053520",
+      "validation_rule": "trim",
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "plant_location_details.source_latitude": {
+      "description_th": "Latitude ต้นฉบับจากไฟล์โรงงาน",
+      "example_value": "13.7073760",
+      "validation_rule": "-90..90",
+      "personal_data_classification": "LOCATION",
+      "notes": "locations.position เป็นจุดใช้งานจริง"
+    },
+    "plant_location_details.source_longitude": {
+      "description_th": "Longitude ต้นฉบับจากไฟล์โรงงาน",
+      "example_value": "100.5547420",
+      "validation_rule": "-180..180",
+      "personal_data_classification": "LOCATION",
+      "notes": "locations.position เป็นจุดใช้งานจริง"
+    },
+    "plant_location_details.province_name": {
+      "description_th": "จังหวัดจาก source",
+      "example_value": "กรุงเทพมหานคร",
+      "validation_rule": "trim",
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "plant_location_details.district_name": {
+      "description_th": "อำเภอ/เขตจาก source",
+      "example_value": "คลองเตย",
+      "validation_rule": "trim",
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "plant_location_details.source_raw": {
+      "description_th": "ข้อมูลต้นฉบับจาก rmr_sso.Plant เพื่อ audit การ sync",
+      "example_value": "{\"PLANT_NO\":\"13A1\"}",
+      "validation_rule": "valid JSON",
+      "personal_data_classification": "INTERNAL",
+      "notes": "รายการ ADMIN เก็บ payload form ที่จำเป็นหรือ NULL"
+    },
+    "plant_location_details.created_at": {
+      "description_th": "เวลาสร้างรายการ",
+      "example_value": "2026-06-17 15:10:00.000",
+      "validation_rule": "UTC",
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "plant_location_details.updated_at": {
+      "description_th": "เวลาแก้ไขล่าสุด",
+      "example_value": "2026-06-17 15:10:00.000",
+      "validation_rule": "UTC",
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "site_location_details.location_id": {
+      "description_th": "รหัส locations กลางของ Site งาน",
+      "example_value": "2001",
+      "validation_rule": "ต้องมี location_type=SITE",
+      "personal_data_classification": "NONE",
+      "notes": "One-to-one กับ locations"
+    },
+    "site_location_details.site_no": {
+      "description_th": "รหัส Site งาน ใช้เป็น external unique key",
+      "example_value": "KY1222",
+      "validation_rule": "required, unique",
+      "personal_data_classification": "NONE",
+      "notes": "ใช้คู่กับ locations.external_key"
+    },
+    "site_location_details.site_name": {
+      "description_th": "ชื่อ Site งาน",
+      "example_value": "(Supe)(VA)KD017งานบ้านบางมะฝ่อ ช่างติ๋ม",
+      "validation_rule": "required",
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "site_location_details.customer_no": {
+      "description_th": "รหัสลูกค้าหลัก",
+      "example_value": "4999534",
+      "validation_rule": "trim",
+      "personal_data_classification": "IDENTIFIER",
+      "notes": null
+    },
+    "site_location_details.customer_name": {
+      "description_th": "ชื่อลูกค้าหลัก",
+      "example_value": "ลูกค้าทั่วไป ***",
+      "validation_rule": "trim",
+      "personal_data_classification": "PERSONAL",
+      "notes": "อาจเป็นข้อมูลลูกค้า"
+    },
+    "site_location_details.sub_customer_no": {
+      "description_th": "รหัสลูกค้าย่อย/เจ้าของงาน",
+      "example_value": "1015369",
+      "validation_rule": "trim",
+      "personal_data_classification": "IDENTIFIER",
+      "notes": null
+    },
+    "site_location_details.sub_customer_name": {
+      "description_th": "ชื่อลูกค้าย่อย/เจ้าของงาน",
+      "example_value": "นายจรูญ รอดรัตน์",
+      "validation_rule": "trim",
+      "personal_data_classification": "PERSONAL",
+      "notes": "อาจเป็นบุคคลธรรมดา"
+    },
+    "site_location_details.district_id": {
+      "description_th": "รหัสอำเภอ/เขตจาก source",
+      "example_value": "6002",
+      "validation_rule": "trim",
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "site_location_details.district_name": {
+      "description_th": "ชื่ออำเภอ/เขตของ Site",
+      "example_value": "โกรกพระ",
+      "validation_rule": "trim",
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "site_location_details.province_id": {
+      "description_th": "รหัสจังหวัดจาก source",
+      "example_value": "ZM0023",
+      "validation_rule": "trim",
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "site_location_details.province_name": {
+      "description_th": "ชื่อจังหวัดของ Site",
+      "example_value": "นครสวรรค์",
+      "validation_rule": "trim",
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "site_location_details.source_latitude": {
+      "description_th": "Latitude ต้นฉบับของ Site",
+      "example_value": "15.6021790",
+      "validation_rule": "-90..90",
+      "personal_data_classification": "LOCATION",
+      "notes": "locations.position เป็นจุดใช้งานจริง"
+    },
+    "site_location_details.source_longitude": {
+      "description_th": "Longitude ต้นฉบับของ Site",
+      "example_value": "100.0863270",
+      "validation_rule": "-180..180",
+      "personal_data_classification": "LOCATION",
+      "notes": "locations.position เป็นจุดใช้งานจริง"
+    },
+    "site_location_details.segment_no": {
+      "description_th": "รหัส Segment จาก source",
+      "example_value": null,
+      "validation_rule": "trim",
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "site_location_details.division_no": {
+      "description_th": "รหัส Division ที่รับผิดชอบ Site",
+      "example_value": "90000144",
+      "validation_rule": "trim",
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "site_location_details.company_code": {
+      "description_th": "Company Code จาก source",
+      "example_value": "0190",
+      "validation_rule": "trim",
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "site_location_details.status_code": {
+      "description_th": "สถานะจาก source เช่น A/C",
+      "example_value": "C",
+      "validation_rule": "A=ACTIVE, C=CLOSED",
+      "personal_data_classification": "NONE",
+      "notes": "locations.status เก็บค่าที่ normalize แล้ว"
+    },
+    "site_location_details.source_created_date": {
+      "description_th": "วันที่สร้าง Site จาก source",
+      "example_value": "2023-03-07",
+      "validation_rule": "YYYY-MM-DD",
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "site_location_details.source_updated_date": {
+      "description_th": "วันที่แก้ไข Site จาก source",
+      "example_value": "2023-03-08",
+      "validation_rule": "YYYY-MM-DD",
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "site_location_details.total_quantity": {
+      "description_th": "ปริมาณรวมของงาน",
+      "example_value": "50.000",
+      "validation_rule": ">=0",
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "site_location_details.used_quantity": {
+      "description_th": "ปริมาณที่ใช้ไป",
+      "example_value": "11.500",
+      "validation_rule": ">=0",
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "site_location_details.zone_no": {
+      "description_th": "รหัส Zone",
+      "example_value": "KN7",
+      "validation_rule": "trim",
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "site_location_details.main_plant_no": {
+      "description_th": "รหัสโรงงานหลักที่ดูแล Site",
+      "example_value": "31WZ",
+      "validation_rule": "trim",
+      "personal_data_classification": "NONE",
+      "notes": "อาจเชื่อม plant_location_details.plant_no"
+    },
+    "site_location_details.plant_name": {
+      "description_th": "ชื่อโรงงานหลักจาก source",
+      "example_value": "นครสวรรค์-สามแยกเลี่ยงเมือง",
+      "validation_rule": "trim",
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "site_location_details.section_name": {
+      "description_th": "ชื่อ Section จาก source",
+      "example_value": null,
+      "validation_rule": "trim",
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "site_location_details.channel": {
+      "description_th": "ช่องทางขาย/งาน",
+      "example_value": "Direct",
+      "validation_rule": "trim",
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "site_location_details.distance_id": {
+      "description_th": "รหัสช่วงระยะทาง",
+      "example_value": "3",
+      "validation_rule": "trim",
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "site_location_details.distance_name": {
+      "description_th": "ชื่อช่วงระยะทาง",
+      "example_value": "เกิน 10-15 กม.",
+      "validation_rule": "trim",
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "site_location_details.site_user": {
+      "description_th": "Username ผู้ดูแล Site",
+      "example_value": "eakmanek",
+      "validation_rule": "trim",
+      "personal_data_classification": "IDENTIFIER",
+      "notes": null
+    },
+    "site_location_details.site_sales_name": {
+      "description_th": "ชื่อผู้ขาย/ผู้ดูแล Site",
+      "example_value": "เอกมณี ประภาศักดิ์",
+      "validation_rule": "trim",
+      "personal_data_classification": "PERSONAL",
+      "notes": null
+    },
+    "site_location_details.area_user": {
+      "description_th": "Username ผู้ดูแล Area",
+      "example_value": "sanaes",
+      "validation_rule": "trim",
+      "personal_data_classification": "IDENTIFIER",
+      "notes": null
+    },
+    "site_location_details.area_sales_name": {
+      "description_th": "ชื่อผู้ดูแล Area",
+      "example_value": "เสน่ห์ สิงห์รัตน์",
+      "validation_rule": "trim",
+      "personal_data_classification": "PERSONAL",
+      "notes": null
+    },
+    "site_location_details.osr_user": {
+      "description_th": "Username OSR",
+      "example_value": "eakmanek",
+      "validation_rule": "trim",
+      "personal_data_classification": "IDENTIFIER",
+      "notes": null
+    },
+    "site_location_details.osr_sales_name": {
+      "description_th": "ชื่อ OSR",
+      "example_value": "เอกมณี ประภาศักดิ์",
+      "validation_rule": "trim",
+      "personal_data_classification": "PERSONAL",
+      "notes": null
+    },
+    "site_location_details.source_raw": {
+      "description_th": "JSON ต้นฉบับของ Site ทั้งก้อนเพื่อ audit",
+      "example_value": "{\"siteNo\":\"KY1222\"}",
+      "validation_rule": "valid JSON",
+      "personal_data_classification": "INTERNAL",
+      "notes": "รองรับ field ใหม่จาก source โดยไม่ต้อง migrate ทันที"
+    },
+    "site_location_details.created_at": {
+      "description_th": "เวลาสร้างรายการ",
+      "example_value": "2026-06-17 15:10:00.000",
+      "validation_rule": "UTC",
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "site_location_details.updated_at": {
+      "description_th": "เวลาแก้ไขล่าสุด",
+      "example_value": "2026-06-17 15:10:00.000",
+      "validation_rule": "UTC",
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "office_location_details.location_id": {
+      "description_th": "รหัส locations กลางของสำนักงาน",
+      "example_value": "3001",
+      "validation_rule": "ต้องมี location_type=OFFICE",
+      "personal_data_classification": "NONE",
+      "notes": "One-to-one กับ locations"
+    },
+    "office_location_details.office_no": {
+      "description_th": "รหัสสำนักงาน เมื่อได้จาก source จริง",
+      "example_value": "BKK-HQ",
+      "validation_rule": "unique if present",
+      "personal_data_classification": "NONE",
+      "notes": "ยังไม่รู้ column จริง จึง nullable"
+    },
+    "office_location_details.office_name": {
+      "description_th": "ชื่อสำนักงาน",
+      "example_value": "สำนักงานใหญ่",
+      "validation_rule": "required",
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "office_location_details.office_type": {
+      "description_th": "ประเภทสำนักงาน",
+      "example_value": "HEAD_OFFICE",
+      "validation_rule": "enum ในอนาคต",
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "office_location_details.company_code": {
+      "description_th": "Company Code",
+      "example_value": "0190",
+      "validation_rule": "trim",
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "office_location_details.division_no": {
+      "description_th": "รหัส Division",
+      "example_value": "90000144",
+      "validation_rule": "trim",
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "office_location_details.division_name": {
+      "description_th": "ชื่อ Division",
+      "example_value": "RMC Metro",
+      "validation_rule": "trim",
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "office_location_details.department_no": {
+      "description_th": "รหัส Department/Section",
+      "example_value": "D001",
+      "validation_rule": "trim",
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "office_location_details.department_name": {
+      "description_th": "ชื่อ Department/Section",
+      "example_value": "Safety",
+      "validation_rule": "trim",
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "office_location_details.address_text": {
+      "description_th": "ที่อยู่สำนักงานแบบเต็ม",
+      "example_value": "1 Siam Cement Road",
+      "validation_rule": "trim",
+      "personal_data_classification": "LOCATION",
+      "notes": null
+    },
+    "office_location_details.province_id": {
+      "description_th": "รหัสจังหวัด",
+      "example_value": "10",
+      "validation_rule": "trim",
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "office_location_details.province_name": {
+      "description_th": "จังหวัด",
+      "example_value": "กรุงเทพมหานคร",
+      "validation_rule": "trim",
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "office_location_details.district_id": {
+      "description_th": "รหัสอำเภอ/เขต",
+      "example_value": "1030",
+      "validation_rule": "trim",
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "office_location_details.district_name": {
+      "description_th": "อำเภอ/เขต",
+      "example_value": "บางซื่อ",
+      "validation_rule": "trim",
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "office_location_details.source_latitude": {
+      "description_th": "Latitude ต้นฉบับของสำนักงาน",
+      "example_value": "13.8060000",
+      "validation_rule": "-90..90",
+      "personal_data_classification": "LOCATION",
+      "notes": "locations.position เป็นจุดใช้งานจริง"
+    },
+    "office_location_details.source_longitude": {
+      "description_th": "Longitude ต้นฉบับของสำนักงาน",
+      "example_value": "100.5370000",
+      "validation_rule": "-180..180",
+      "personal_data_classification": "LOCATION",
+      "notes": "locations.position เป็นจุดใช้งานจริง"
+    },
+    "office_location_details.contact_user": {
+      "description_th": "Username ผู้ประสานงานสำนักงาน",
+      "example_value": "sasitorn",
+      "validation_rule": "trim",
+      "personal_data_classification": "IDENTIFIER",
+      "notes": null
+    },
+    "office_location_details.contact_email": {
+      "description_th": "อีเมลผู้ประสานงาน",
+      "example_value": "user@scg.com",
+      "validation_rule": "valid email",
+      "personal_data_classification": "CONTACT",
+      "notes": null
+    },
+    "office_location_details.contact_phone": {
+      "description_th": "เบอร์ผู้ประสานงาน",
+      "example_value": "02-xxx-xxxx",
+      "validation_rule": "phone text",
+      "personal_data_classification": "CONTACT",
+      "notes": null
+    },
+    "office_location_details.status_code": {
+      "description_th": "สถานะสำนักงานจาก source",
+      "example_value": "ACTIVE",
+      "validation_rule": "ACTIVE/INACTIVE/CLOSED",
+      "personal_data_classification": "NONE",
+      "notes": "รอ mapping source จริง"
+    },
+    "office_location_details.source_raw": {
+      "description_th": "JSON ต้นฉบับของสำนักงานเพื่อรองรับคอลัมน์ที่ยังไม่ทราบ",
+      "example_value": "{\"officeNo\":\"BKK-HQ\"}",
+      "validation_rule": "valid JSON",
+      "personal_data_classification": "INTERNAL",
+      "notes": "ใช้ชั่วคราวจนได้ spec สำนักงานจริง"
+    },
+    "office_location_details.created_at": {
+      "description_th": "เวลาสร้างรายการ",
+      "example_value": "2026-06-17 15:10:00.000",
+      "validation_rule": "UTC",
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "office_location_details.updated_at": {
+      "description_th": "เวลาแก้ไขล่าสุด",
+      "example_value": "2026-06-17 15:10:00.000",
+      "validation_rule": "UTC",
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "safety_culture_events.id": {
+      "description_th": "รหัสภายในของรายการ",
+      "example_value": null,
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "safety_culture_events.title": {
+      "description_th": "ชื่อหรือหัวข้อ",
+      "example_value": null,
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "safety_culture_events.description": {
+      "description_th": "รายละเอียด",
+      "example_value": null,
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "safety_culture_events.event_start_at": {
+      "description_th": "event start at",
+      "example_value": null,
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "safety_culture_events.event_end_at": {
+      "description_th": "event end at",
+      "example_value": null,
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "safety_culture_events.location_text": {
+      "description_th": "location text",
+      "example_value": null,
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "safety_culture_events.status": {
+      "description_th": "สถานะรายการ",
+      "example_value": null,
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "safety_culture_events.metadata": {
+      "description_th": "ข้อมูลประกอบแบบ JSON",
+      "example_value": null,
+      "validation_rule": "valid JSON",
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "safety_culture_events.created_by": {
+      "description_th": "ผู้สร้างรายการ",
+      "example_value": null,
+      "validation_rule": null,
+      "personal_data_classification": "IDENTIFIER",
+      "notes": null
+    },
+    "safety_culture_events.created_at": {
+      "description_th": "วันที่และเวลาที่สร้างรายการ",
+      "example_value": null,
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "safety_culture_events.updated_at": {
+      "description_th": "วันที่และเวลาที่แก้ไขล่าสุด",
+      "example_value": null,
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "safety_culture_events.deleted_at": {
+      "description_th": "วันที่และเวลาที่ soft-delete",
+      "example_value": null,
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "media_assets.id": {
+      "description_th": "รหัสไฟล์/รูปภาพ",
+      "example_value": null,
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "media_assets.file_name": {
+      "description_th": "ชื่อไฟล์ในระบบ",
+      "example_value": null,
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "media_assets.original_name": {
+      "description_th": "ชื่อไฟล์ต้นฉบับ",
+      "example_value": null,
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "media_assets.mime_type": {
+      "description_th": "ชนิดไฟล์",
+      "example_value": "image/jpeg",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "media_assets.size_bytes": {
+      "description_th": "ขนาดไฟล์",
+      "example_value": null,
+      "validation_rule": ">=0",
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "media_assets.status": {
+      "description_th": "สถานะไฟล์",
+      "example_value": "READY",
+      "validation_rule": "DRAFT/READY/LINKED/DELETED",
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "media_assets.module": {
+      "description_th": "โมดูลที่ upload",
+      "example_value": "safety-culture",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "media_assets.owner_type": {
+      "description_th": "ชนิด owner",
+      "example_value": "post",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "media_assets.owner_id": {
+      "description_th": "id ของ owner",
+      "example_value": "1001",
+      "validation_rule": null,
+      "personal_data_classification": "IDENTIFIER",
+      "notes": null
+    },
+    "media_assets.link_type": {
+      "description_th": "ชนิดการผูก",
+      "example_value": "attachment",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "media_assets.upload_mode": {
+      "description_th": "วิธี upload",
+      "example_value": "server",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "media_assets.storage_path": {
+      "description_th": "path local fallback",
+      "example_value": null,
+      "validation_rule": null,
+      "personal_data_classification": "SENSITIVE",
+      "notes": "ใช้เมื่อ Cloudinary env ไม่ครบ"
+    },
+    "media_assets.public_url": {
+      "description_th": "URL ใช้แสดงรูปหลัง reload",
+      "example_value": "https://res.cloudinary.com/...",
+      "validation_rule": null,
+      "personal_data_classification": "SENSITIVE",
+      "notes": "frontend ใช้ URL นี้ ไม่ใช้ base64"
+    },
+    "media_assets.metadata": {
+      "description_th": "metadata เพิ่มเติม",
+      "example_value": "{}",
+      "validation_rule": null,
+      "personal_data_classification": "SENSITIVE",
+      "notes": null
+    },
+    "media_assets.created_by": {
+      "description_th": "ผู้อัปโหลด",
+      "example_value": "1001",
+      "validation_rule": null,
+      "personal_data_classification": "IDENTIFIER",
+      "notes": null
+    },
+    "media_assets.created_at": {
+      "description_th": "เวลาสร้าง",
+      "example_value": null,
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": "UTC"
+    },
+    "media_assets.updated_at": {
+      "description_th": "เวลาแก้ไข",
+      "example_value": null,
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": "UTC"
+    },
+    "media_assets.deleted_at": {
+      "description_th": "เวลาลบแบบ soft delete",
+      "example_value": null,
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "export_jobs.id": {
+      "description_th": "รหัสภายในของรายการ",
+      "example_value": null,
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "export_jobs.job_type": {
+      "description_th": "job type",
+      "example_value": null,
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "export_jobs.status": {
+      "description_th": "สถานะรายการ",
+      "example_value": null,
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "export_jobs.params": {
+      "description_th": "params",
+      "example_value": null,
+      "validation_rule": "valid JSON",
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "export_jobs.result_json": {
+      "description_th": "result json",
+      "example_value": null,
+      "validation_rule": "valid JSON",
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "export_jobs.file_name": {
+      "description_th": "ชื่อไฟล์ในระบบ",
+      "example_value": null,
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "export_jobs.created_by": {
+      "description_th": "ผู้สร้างรายการ",
+      "example_value": null,
+      "validation_rule": null,
+      "personal_data_classification": "IDENTIFIER",
+      "notes": null
+    },
+    "export_jobs.started_at": {
+      "description_th": "started at",
+      "example_value": null,
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "export_jobs.completed_at": {
+      "description_th": "completed at",
+      "example_value": null,
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "export_jobs.created_at": {
+      "description_th": "วันที่และเวลาที่สร้างรายการ",
+      "example_value": null,
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "export_jobs.updated_at": {
+      "description_th": "วันที่และเวลาที่แก้ไขล่าสุด",
+      "example_value": null,
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "notification_preferences.user_id": {
+      "description_th": "ผู้ใช้งานเจ้าของรายการ",
+      "example_value": null,
+      "validation_rule": null,
+      "personal_data_classification": "IDENTIFIER",
+      "notes": null
+    },
+    "notification_preferences.email_enabled": {
+      "description_th": "email enabled",
+      "example_value": null,
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "notification_preferences.in_app_enabled": {
+      "description_th": "in app enabled",
+      "example_value": null,
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "notification_preferences.preferences_json": {
+      "description_th": "การตั้งค่าเพิ่มเติมแบบ JSON",
+      "example_value": null,
+      "validation_rule": "valid JSON",
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "notification_preferences.created_at": {
+      "description_th": "วันที่และเวลาที่สร้างรายการ",
+      "example_value": null,
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "notification_preferences.updated_at": {
+      "description_th": "วันที่และเวลาที่แก้ไขล่าสุด",
+      "example_value": null,
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "assessment_attachments.id": {
+      "description_th": "รหัสภายในของรายการ",
+      "example_value": null,
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "assessment_attachments.assessment_run_id": {
+      "description_th": "Assessment run ที่แนบไฟล์",
+      "example_value": null,
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "assessment_attachments.media_asset_id": {
+      "description_th": "ไฟล์ metadata ที่อ้างอิง",
+      "example_value": null,
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "assessment_attachments.file_url": {
+      "description_th": "file url",
+      "example_value": null,
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "assessment_attachments.attachment_type": {
+      "description_th": "attachment type",
+      "example_value": null,
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "assessment_attachments.metadata": {
+      "description_th": "ข้อมูลประกอบแบบ JSON",
+      "example_value": null,
+      "validation_rule": "valid JSON",
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "assessment_attachments.created_by": {
+      "description_th": "ผู้สร้างรายการ",
+      "example_value": null,
+      "validation_rule": null,
+      "personal_data_classification": "IDENTIFIER",
+      "notes": null
+    },
+    "assessment_attachments.created_at": {
+      "description_th": "วันที่และเวลาที่สร้างรายการ",
+      "example_value": null,
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "assessment_attachments.updated_at": {
+      "description_th": "วันที่และเวลาที่แก้ไขล่าสุด",
+      "example_value": null,
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "corrective_action_comments.id": {
+      "description_th": "รหัสภายในของรายการ",
+      "example_value": null,
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "corrective_action_comments.corrective_action_id": {
+      "description_th": "Corrective action ที่แสดงความคิดเห็น",
+      "example_value": null,
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "corrective_action_comments.author_id": {
+      "description_th": "ผู้เขียนความคิดเห็น",
+      "example_value": null,
+      "validation_rule": null,
+      "personal_data_classification": "IDENTIFIER",
+      "notes": null
+    },
+    "corrective_action_comments.content": {
+      "description_th": "ข้อความความคิดเห็น",
+      "example_value": null,
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "corrective_action_comments.metadata": {
+      "description_th": "ข้อมูลประกอบแบบ JSON",
+      "example_value": null,
+      "validation_rule": "valid JSON",
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "corrective_action_comments.created_at": {
+      "description_th": "วันที่และเวลาที่สร้างรายการ",
+      "example_value": null,
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "corrective_action_comments.updated_at": {
+      "description_th": "วันที่และเวลาที่แก้ไขล่าสุด",
+      "example_value": null,
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "corrective_action_comments.deleted_at": {
+      "description_th": "วันที่และเวลาที่ soft-delete",
+      "example_value": null,
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "archived_notifications.id": {
+      "description_th": "รหัสภายในของรายการ",
+      "example_value": null,
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "archived_notifications.notification_id": {
+      "description_th": "Notification ต้นฉบับ",
+      "example_value": null,
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "archived_notifications.user_id": {
+      "description_th": "ผู้ใช้งานเจ้าของรายการ",
+      "example_value": null,
+      "validation_rule": null,
+      "personal_data_classification": "IDENTIFIER",
+      "notes": null
+    },
+    "archived_notifications.notification_type": {
+      "description_th": "notification type",
+      "example_value": null,
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "archived_notifications.title": {
+      "description_th": "ชื่อหรือหัวข้อ",
+      "example_value": null,
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "archived_notifications.body": {
+      "description_th": "body",
+      "example_value": null,
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "archived_notifications.read_at": {
+      "description_th": "read at",
+      "example_value": null,
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "archived_notifications.original_created_at": {
+      "description_th": "original created at",
+      "example_value": null,
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "archived_notifications.archived_at": {
+      "description_th": "วันที่และเวลาที่ archive",
+      "example_value": null,
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "safety_settings.setting_key": {
+      "description_th": "คีย์ค่าตั้งค่าระบบ",
+      "example_value": null,
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "safety_settings.setting_value": {
+      "description_th": "ค่าตั้งค่าระบบแบบ JSON",
+      "example_value": null,
+      "validation_rule": "valid JSON",
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "safety_settings.updated_by": {
+      "description_th": "ผู้แก้ไขค่าล่าสุด",
+      "example_value": null,
+      "validation_rule": null,
+      "personal_data_classification": "IDENTIFIER",
+      "notes": null
+    },
+    "safety_settings.created_at": {
+      "description_th": "วันที่และเวลาที่สร้างรายการ",
+      "example_value": null,
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "safety_settings.updated_at": {
+      "description_th": "วันที่และเวลาที่แก้ไขล่าสุด",
+      "example_value": null,
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "posts.organization_id": {
+      "description_th": "หน่วยงานของผู้โพสต์ ณ วันที่สร้างโพสต์",
+      "example_value": "12",
+      "validation_rule": null,
+      "personal_data_classification": "IDENTIFIER",
+      "notes": "NULL ได้ถ้าบัญชีไม่มีหน่วยงาน"
+    },
+    "posts.team_id": {
+      "description_th": "ทีมของผู้โพสต์ ณ วันที่สร้างโพสต์",
+      "example_value": "3",
+      "validation_rule": null,
+      "personal_data_classification": "IDENTIFIER",
+      "notes": "NULL ได้และไม่รวมคะแนนทีม"
+    },
+    "posts.event_id": {
+      "description_th": "กิจกรรม/แคมเปญที่ผูกกับโพสต์",
+      "example_value": "8",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": "รับจาก feedEventId/eventId"
+    },
+    "posts.category": {
+      "description_th": "หมวดหมู่โพสต์",
+      "example_value": "KYT",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": "frontend ไม่ hardcode แล้ว รับจาก API"
+    },
+    "posts.points_awarded": {
+      "description_th": "คะแนนที่ server ให้กับโพสต์นี้",
+      "example_value": "100",
+      "validation_rule": ">= 0",
+      "personal_data_classification": "NONE",
+      "notes": "ใช้แสดงหลัง reload"
+    },
+    "media_assets.provider": {
+      "description_th": "storage provider",
+      "example_value": "cloudinary",
+      "validation_rule": "cloudinary/local",
+      "personal_data_classification": "NONE",
+      "notes": "Cloudinary เป็น primary เมื่อ env ครบ"
+    },
+    "media_assets.provider_asset_id": {
+      "description_th": "asset id จาก provider",
+      "example_value": null,
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": "Cloudinary asset_id"
+    },
+    "media_assets.provider_public_id": {
+      "description_th": "public id จาก provider",
+      "example_value": "cpac-safety/...",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": "ใช้ลบ/จัดการบน Cloudinary"
+    },
+    "media_assets.width_px": {
+      "description_th": "ความกว้างรูป",
+      "example_value": "1200",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": "จาก Cloudinary metadata"
+    },
+    "media_assets.height_px": {
+      "description_th": "ความสูงรูป",
+      "example_value": "900",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": "จาก Cloudinary metadata"
+    },
+    "media_assets.format": {
+      "description_th": "format provider",
+      "example_value": "jpg",
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "post_media.post_id": {
+      "description_th": "โพสต์ที่ผูกรูป",
+      "example_value": "1001",
+      "validation_rule": null,
+      "personal_data_classification": "IDENTIFIER",
+      "notes": "ON DELETE CASCADE"
+    },
+    "post_media.media_asset_id": {
+      "description_th": "รูป/ไฟล์ที่ผูกกับโพสต์",
+      "example_value": "5001",
+      "validation_rule": null,
+      "personal_data_classification": "IDENTIFIER",
+      "notes": "ON DELETE CASCADE"
+    },
+    "post_media.sort_order": {
+      "description_th": "ลำดับรูปในโพสต์",
+      "example_value": "0",
+      "validation_rule": ">=0",
+      "personal_data_classification": "NONE",
+      "notes": null
+    },
+    "post_media.created_at": {
+      "description_th": "เวลาผูกไฟล์กับโพสต์",
+      "example_value": null,
+      "validation_rule": null,
+      "personal_data_classification": "NONE",
+      "notes": "UTC"
+    }
+  },
+  "rel_map": {
+    "organizations|organizations|parent_id": {
+      "description_th": "organizations.parent_id อ้างอิง organizations.id"
+    },
+    "organizations|users|organization_id": {
+      "description_th": "users.organization_id อ้างอิง organizations.id"
+    },
+    "users|user_roles|user_id": {
+      "description_th": "user_roles.user_id อ้างอิง users.id"
+    },
+    "roles|user_roles|role_id": {
+      "description_th": "user_roles.role_id อ้างอิง roles.id"
+    },
+    "users|user_roles|assigned_by": {
+      "description_th": "user_roles.assigned_by อ้างอิง users.id"
+    },
+    "roles|role_permissions|role_id": {
+      "description_th": "role_permissions.role_id อ้างอิง roles.id"
+    },
+    "permissions|role_permissions|permission_id": {
+      "description_th": "role_permissions.permission_id อ้างอิง permissions.id"
+    },
+    "organizations|teams|organization_id": {
+      "description_th": "teams.organization_id อ้างอิง organizations.id"
+    },
+    "users|teams|leader_user_id": {
+      "description_th": "teams.leader_user_id อ้างอิง users.id เพื่อระบุหัวหน้าทีมของ Leaderboard"
+    },
+    "teams|team_members|team_id": {
+      "description_th": "team_members.team_id อ้างอิง teams.id"
+    },
+    "users|team_members|user_id": {
+      "description_th": "team_members.user_id อ้างอิง users.id"
+    },
+    "organizations|locations|organization_id": {
+      "description_th": "locations.organization_id อ้างอิง organizations.id"
+    },
+    "users|locations|created_by": {
+      "description_th": "locations.created_by อ้างอิง users.id"
+    },
+    "users|location_import_batches|imported_by": {
+      "description_th": "location_import_batches.imported_by อ้างอิง users.id"
+    },
+    "location_import_batches|location_import_rows|import_batch_id": {
+      "description_th": "location_import_rows.import_batch_id อ้างอิง location_import_batches.id"
+    },
+    "users|checkins|user_id": {
+      "description_th": "checkins.user_id อ้างอิง users.id"
+    },
+    "locations|checkins|selected_location_id": {
+      "description_th": "checkins.selected_location_id อ้างอิง locations.id"
+    },
+    "checkins|checkin_attachments|checkin_id": {
+      "description_th": "checkin_attachments.checkin_id อ้างอิง checkins.id"
+    },
+    "users|checkin_attachments|created_by": {
+      "description_th": "checkin_attachments.created_by อ้างอิง users.id"
+    },
+    "checkins|safety_activities|checkin_id": {
+      "description_th": "safety_activities.checkin_id อ้างอิง checkins.id"
+    },
+    "users|assessment_templates|created_by": {
+      "description_th": "assessment_templates.created_by อ้างอิง users.id"
+    },
+    "assessment_templates|assessment_questions|template_id": {
+      "description_th": "assessment_questions.template_id อ้างอิง assessment_templates.id"
+    },
+    "safety_activities|assessment_runs|activity_id": {
+      "description_th": "assessment_runs.activity_id อ้างอิง safety_activities.id"
+    },
+    "assessment_templates|assessment_runs|template_id": {
+      "description_th": "assessment_runs.template_id อ้างอิง assessment_templates.id"
+    },
+    "users|assessment_runs|assessor_id": {
+      "description_th": "assessment_runs.assessor_id อ้างอิง users.id"
+    },
+    "assessment_runs|assessment_answers|assessment_run_id": {
+      "description_th": "assessment_answers.assessment_run_id อ้างอิง assessment_runs.id"
+    },
+    "assessment_questions|assessment_answers|question_id": {
+      "description_th": "assessment_answers.question_id อ้างอิง assessment_questions.id"
+    },
+    "safety_activities|safety_findings|activity_id": {
+      "description_th": "safety_findings.activity_id อ้างอิง safety_activities.id"
+    },
+    "users|safety_findings|reported_by": {
+      "description_th": "safety_findings.reported_by อ้างอิง users.id"
+    },
+    "safety_findings|corrective_actions|finding_id": {
+      "description_th": "corrective_actions.finding_id อ้างอิง safety_findings.id"
+    },
+    "users|corrective_actions|assignee_id": {
+      "description_th": "corrective_actions.assignee_id อ้างอิง users.id"
+    },
+    "safety_activities|health_checks|activity_id": {
+      "description_th": "health_checks.activity_id อ้างอิง safety_activities.id"
+    },
+    "users|health_checks|user_id": {
+      "description_th": "health_checks.user_id อ้างอิง users.id"
+    },
+    "safety_activities|pretrip_checks|activity_id": {
+      "description_th": "pretrip_checks.activity_id อ้างอิง safety_activities.id"
+    },
+    "users|pretrip_checks|user_id": {
+      "description_th": "pretrip_checks.user_id อ้างอิง users.id"
+    },
+    "safety_activities|kyt_records|activity_id": {
+      "description_th": "kyt_records.activity_id อ้างอิง safety_activities.id"
+    },
+    "users|kyt_records|user_id": {
+      "description_th": "kyt_records.user_id อ้างอิง users.id"
+    },
+    "safety_activities|sos_events|activity_id": {
+      "description_th": "sos_events.activity_id อ้างอิง safety_activities.id"
+    },
+    "users|sos_events|user_id": {
+      "description_th": "sos_events.user_id อ้างอิง users.id"
+    },
+    "users|posts|author_id": {
+      "description_th": "posts.author_id อ้างอิง users.id"
+    },
+    "posts|comments|post_id": {
+      "description_th": "comments.post_id อ้างอิง posts.id"
+    },
+    "users|comments|author_id": {
+      "description_th": "comments.author_id อ้างอิง users.id"
+    },
+    "posts|reactions|post_id": {
+      "description_th": "reactions.post_id อ้างอิง posts.id"
+    },
+    "users|reactions|user_id": {
+      "description_th": "reactions.user_id อ้างอิง users.id"
+    },
+    "users|awareness_attempts|user_id": {
+      "description_th": "awareness_attempts.user_id อ้างอิง users.id"
+    },
+    "awareness_attempts|awareness_answers|attempt_id": {
+      "description_th": "awareness_answers.attempt_id อ้างอิง awareness_attempts.id"
+    },
+    "awareness_questions|awareness_answers|question_id": {
+      "description_th": "awareness_answers.question_id อ้างอิง awareness_questions.id"
+    },
+    "users|point_transactions|user_id": {
+      "description_th": "point_transactions.user_id อ้างอิง users.id"
+    },
+    "point_rules|point_transactions|point_rule_id": {
+      "description_th": "point_transactions.point_rule_id อ้างอิง point_rules.id"
+    },
+    "users|point_balances|user_id": {
+      "description_th": "point_balances.user_id อ้างอิง users.id"
+    },
+    "users|reward_redemptions|user_id": {
+      "description_th": "reward_redemptions.user_id อ้างอิง users.id"
+    },
+    "rewards|reward_redemptions|reward_id": {
+      "description_th": "reward_redemptions.reward_id อ้างอิง rewards.id"
+    },
+    "point_transactions|reward_redemptions|point_transaction_id": {
+      "description_th": "reward_redemptions.point_transaction_id อ้างอิง point_transactions.id"
+    },
+    "rewards|reward_inventory_transactions|reward_id": {
+      "description_th": "reward_inventory_transactions.reward_id อ้างอิง rewards.id"
+    },
+    "users|notifications|user_id": {
+      "description_th": "notifications.user_id อ้างอิง users.id"
+    },
+    "users|audit_logs|actor_user_id": {
+      "description_th": "audit_logs.actor_user_id อ้างอิง users.id"
+    },
+    "locations|plant_location_details|location_id": {
+      "description_th": "โรงงานเป็นรายละเอียดหนึ่งต่อหนึ่งของ locations สำหรับเช็กอิน"
+    },
+    "locations|site_location_details|location_id": {
+      "description_th": "Site งานเป็นรายละเอียดหนึ่งต่อหนึ่งของ locations สำหรับเช็กอิน"
+    },
+    "locations|office_location_details|location_id": {
+      "description_th": "สำนักงานเป็นรายละเอียดหนึ่งต่อหนึ่งของ locations สำหรับเช็กอิน"
+    },
+    "users|archived_notifications|user_id": {
+      "description_th": "archived_notifications.user_id อ้างอิง users.id"
+    },
+    "users|assessment_attachments|created_by": {
+      "description_th": "assessment_attachments.created_by อ้างอิง users.id"
+    },
+    "media_assets|assessment_attachments|media_asset_id": {
+      "description_th": "assessment_attachments.media_asset_id อ้างอิง media_assets.id"
+    },
+    "assessment_runs|assessment_attachments|assessment_run_id": {
+      "description_th": "assessment_attachments.assessment_run_id อ้างอิง assessment_runs.id"
+    },
+    "corrective_actions|corrective_action_comments|corrective_action_id": {
+      "description_th": "corrective_action_comments.corrective_action_id อ้างอิง corrective_actions.id"
+    },
+    "users|corrective_action_comments|author_id": {
+      "description_th": "corrective_action_comments.author_id อ้างอิง users.id"
+    },
+    "users|export_jobs|created_by": {
+      "description_th": "export_jobs.created_by อ้างอิง users.id"
+    },
+    "users|media_assets|created_by": {
+      "description_th": "media_assets.created_by อ้างอิง users.id"
+    },
+    "users|notification_preferences|user_id": {
+      "description_th": "notification_preferences.user_id อ้างอิง users.id"
+    },
+    "users|safety_culture_events|created_by": {
+      "description_th": "safety_culture_events.created_by อ้างอิง users.id"
+    },
+    "users|safety_settings|updated_by": {
+      "description_th": "safety_settings.updated_by อ้างอิง users.id"
+    },
+    "organizations|posts|organization_id": {
+      "description_th": "posts.organization_id เก็บหน่วยงานของผู้โพสต์ ณ เวลาสร้างโพสต์"
+    },
+    "teams|posts|team_id": {
+      "description_th": "posts.team_id ใช้ scope=my-team และ leaderboard ทีม"
+    },
+    "safety_culture_events|posts|event_id": {
+      "description_th": "posts.event_id ผูกโพสต์กับ activity/campaign"
+    },
+    "posts|post_media|post_id": {
+      "description_th": "post_media.post_id อ้างอิง posts.id"
+    },
+    "media_assets|post_media|media_asset_id": {
+      "description_th": "post_media.media_asset_id อ้างอิง media_assets.id"
+    }
+  },
+  "idx_map": {
+    "locations|uq_locations_source_external_key": {
+      "purpose_th": "ป้องกันนำเข้าสถานที่ซ้ำจากแหล่งเดียวกัน"
+    },
+    "locations|sp_locations_position": {
+      "purpose_th": "ค้นหาสถานที่ใกล้เคียงบนแผนที่"
+    },
+    "locations|idx_locations_map_filter": {
+      "purpose_th": "Filter จุดบนแผนที่"
+    },
+    "checkins|sp_checkins_actual_position": {
+      "purpose_th": "วิเคราะห์พิกัดจริงตามสิทธิ์"
+    },
+    "checkins|idx_checkins_user_time": {
+      "purpose_th": "ประวัติเช็กอินของผู้ใช้"
+    },
+    "checkins|idx_checkins_location_time": {
+      "purpose_th": "ประวัติตามสถานที่เลือก"
+    },
+    "point_transactions|uq_point_transactions_idempotency": {
+      "purpose_th": "ป้องกันให้/หักคะแนนซ้ำ"
+    },
+    "point_transactions|idx_point_transactions_user_time": {
+      "purpose_th": "คำนวณและแสดงประวัติคะแนน"
+    },
+    "reward_redemptions|idx_redemptions_user_time": {
+      "purpose_th": "ประวัติแลกรางวัล"
+    },
+    "audit_logs|idx_audit_entity": {
+      "purpose_th": "ค้น Audit ตามข้อมูล"
+    },
+    "locations|ck_location_source_external_key": {
+      "purpose_th": "DataOcean ต้องมี External Key"
+    },
+    "checkins|ck_checkin_accuracy": {
+      "purpose_th": "Accuracy ห้ามติดลบ"
+    },
+    "checkins|ck_checkin_distance": {
+      "purpose_th": "ระยะห้ามติดลบ"
+    },
+    "point_transactions|ck_point_amount": {
+      "purpose_th": "Ledger ห้ามมีรายการศูนย์คะแนน"
+    },
+    "rewards|ck_reward_points": {
+      "purpose_th": "คะแนนแลกต้องมากกว่าศูนย์"
+    },
+    "teams|idx_teams_leader_user": {
+      "purpose_th": "ค้น/แสดงทีมตามหัวหน้าทีม และรองรับ FK ไป users"
+    },
+    "posts|idx_posts_status_team_id": {
+      "purpose_th": "feed scope=my-team แบบ cursor/keyset"
+    },
+    "posts|idx_posts_status_category_id": {
+      "purpose_th": "filter หมวด Safety Culture"
+    },
+    "posts|idx_posts_status_deleted_id": {
+      "purpose_th": "feed หลักและ admin moderation"
+    },
+    "posts|idx_posts_author_status_id": {
+      "purpose_th": "scope=mine และประวัติผู้ใช้"
+    },
+    "post_media|idx_post_media_post_order": {
+      "purpose_th": "ดึงรูปของโพสต์ตามลำดับ"
+    },
+    "post_media|idx_post_media_media_post": {
+      "purpose_th": "ย้อนหา owner ของ media"
+    },
+    "media_assets|idx_media_assets_status_deleted_created": {
+      "purpose_th": "cleanup draft และ list media"
+    },
+    "media_assets|idx_media_assets_created_by_created": {
+      "purpose_th": "validate attachment owner และประวัติ upload"
+    },
+    "media_assets|idx_media_assets_provider_asset": {
+      "purpose_th": "ค้น Cloudinary/local asset"
+    },
+    "checkins|idx_checkins_user_time_id": {
+      "purpose_th": "ประวัติ check-in แบบ keyset"
+    },
+    "checkins|idx_checkins_location_time_id": {
+      "purpose_th": "รายงานตามสถานที่"
+    },
+    "locations|idx_locations_type_status_deleted": {
+      "purpose_th": "filter locations ปริมาณมาก"
+    },
+    "notifications|idx_notifications_user_read_id": {
+      "purpose_th": "inbox unread/read pagination"
+    },
+    "awareness_attempts|idx_awareness_attempts_user_date_id": {
+      "purpose_th": "ประวัติ Safety Awareness รายคน"
+    },
+    "team_members|idx_team_members_user_active_joined": {
+      "purpose_th": "หา team ปัจจุบันของ user"
+    },
+    "point_balances|idx_point_balances_balance_user": {
+      "purpose_th": "leaderboard คะแนน"
+    }
+  }
+}

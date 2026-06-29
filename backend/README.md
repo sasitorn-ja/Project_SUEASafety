@@ -1,6 +1,6 @@
 # Backend Structure
 
-Backend code lives under `backend/components`. API route files in `src/app/api`
+Backend code lives under `backend/components`. API route files in `frontend/src/app/api`
 should stay thin: validate HTTP input, call a backend component, then return a
 response.
 
@@ -21,7 +21,7 @@ response.
 
 ## Rules
 
-- Do not put business logic directly in `src/app/api/**/route.ts`.
+- Do not put business logic directly in `frontend/src/app/api/**/route.ts`.
 - Do not store uploaded production images as base64 in DB payloads.
 - Keep repositories close to their domain component and use `components/core/db`
   for database access.

@@ -406,6 +406,11 @@ async function updateCultureEvent(id: string, input: JsonInput) {
 }
 
 async function createMediaAsset(input: JsonInput, userId?: string | null) {
+  const normalizedOwnerId = typeof input.ownerId === "string" || typeof input.ownerId === "number"
+    ? /^\d+$/.test(String(input.ownerId).trim())
+      ? String(input.ownerId).trim()
+      : null
+    : null;
   const id = await withTransaction(async (connection) => {
     const [result] = await connection.execute<ResultSetHeader>(
       `INSERT INTO media_assets
@@ -421,7 +426,7 @@ async function createMediaAsset(input: JsonInput, userId?: string | null) {
         status: input.status || "READY",
         module: input.module || null,
         ownerType: input.ownerType || null,
-        ownerId: input.ownerId || null,
+        ownerId: normalizedOwnerId,
         linkType: input.linkType || null,
         uploadMode: input.uploadMode || "server",
         provider: input.provider || "local",
@@ -787,6 +792,8 @@ async function updateSafetyEffortLocationFromPayload(id: string, input: JsonInpu
 
 function safetyEffortSubmissionDto(row: Record<string, unknown> | null | undefined) {
   if (!row) return null;
+  const answeredItemsRaw = Array.isArray(row.answers_json) ? row.answers_json : parseJson(row.answers_json) || [];
+  const metadataRaw = parseJson(row.metadata) || {};
   return {
     id: String(row.id),
     timestamp: row.created_at instanceof Date ? row.created_at.toISOString() : String(row.created_at || ""),
@@ -805,8 +812,176 @@ function safetyEffortSubmissionDto(row: Record<string, unknown> | null | undefin
     email: row.email ? String(row.email) : "",
     isSafetyContact: String(row.activity_type || "").toUpperCase() === "SAFETY_CONTACT",
     safetyContactText: String(row.safety_contact_text || ""),
-    answeredItems: Array.isArray(row.answers_json) ? row.answers_json : parseJson(row.answers_json) || [],
-    metadata: parseJson(row.metadata) || {},
+    answeredItems: normalizeSafetyEffortAnsweredItems(answeredItemsRaw),
+    metadata: normalizeSafetyEffortMetadata(metadataRaw),
+  };
+}
+
+function normalizeSafetyEffortAttachment(input: unknown) {
+  if (typeof input === "string") {
+    const url = input.trim();
+    return url ? { id: null, url, originalName: null, mimeType: null, provider: null } : null;
+  }
+  if (!input || typeof input !== "object") return null;
+  const raw = input as Record<string, unknown>;
+  const urlValue = raw.url || raw.href || raw.src;
+  if (typeof urlValue !== "string" || !urlValue.trim()) return null;
+  return {
+    id: raw.id == null ? null : String(raw.id),
+    url: urlValue.trim(),
+    originalName: raw.originalName == null ? null : String(raw.originalName),
+    mimeType: raw.mimeType == null ? null : String(raw.mimeType),
+    provider: raw.provider == null ? null : String(raw.provider),
+  };
+}
+
+function normalizeSafetyEffortAttachments(input: unknown) {
+  if (!Array.isArray(input)) return [];
+  return input
+    .map((item) => normalizeSafetyEffortAttachment(item))
+    .filter((item): item is NonNullable<ReturnType<typeof normalizeSafetyEffortAttachment>> => Boolean(item));
+}
+
+function normalizeSafetyEffortAnsweredItems(input: unknown) {
+  if (!Array.isArray(input)) return [];
+  return input.map((item) => {
+    const value = item && typeof item === "object" ? (item as Record<string, unknown>) : {};
+    const attachments = normalizeSafetyEffortAttachments(value.attachments || value.photos || []);
+    return {
+      ...value,
+      attachments,
+    };
+  });
+}
+
+function normalizeSafetyEffortMetadata(input: unknown) {
+  const value = input && typeof input === "object" ? { ...(input as Record<string, unknown>) } : {};
+  return {
+    ...value,
+    attachments: normalizeSafetyEffortAttachments(value.attachments || value.photos || []),
+  };
+}
+
+function normalizeLegacyUsername(value: unknown) {
+  return typeof value === "string" && value.trim().length > 0 ? value.trim().toLowerCase() : "";
+}
+
+function toLegacyMonth(value: string | null) {
+  return value && /^\d{4}-\d{2}/.test(value) ? value.slice(0, 7) : null;
+}
+
+type LegacyMonthlyCount = {
+  month: string;
+  linewalk: number;
+  contact: number;
+};
+
+async function getLegacySafetyEffortSummaryForUser(userId: string, from?: string | null, to?: string | null) {
+  const user = (await getRow("users", userId, "id, username")) as Record<string, unknown> | null;
+  const username = normalizeLegacyUsername(user?.username);
+  const fromMonth = toLegacyMonth(from || null);
+  const toMonth = toLegacyMonth(to || null);
+
+  if (!username) {
+    return {
+      source: "safety_old",
+      joinKey: "users.username = safety_old.CreatedBy",
+      username: null,
+      matched: false,
+      monthlyCounts: [] as LegacyMonthlyCount[],
+      totals: { linewalk: 0, contact: 0 },
+    };
+  }
+
+  const where = ["LOWER(CreatedBy) = :username"];
+  const params: Record<string, unknown> = { username };
+  if (fromMonth) {
+    where.push("Month >= :fromMonth");
+    params.fromMonth = fromMonth;
+  }
+  if (toMonth) {
+    where.push("Month <= :toMonth");
+    params.toMonth = toMonth;
+  }
+
+  const rows = await queryRows<DbRow>(
+    `SELECT Month,
+            SUM(COALESCE(LineWalk_Count, 0)) AS linewalk,
+            SUM(COALESCE(SafetyContact_Count, 0)) AS contact
+       FROM safety_old
+      WHERE ${where.join(" AND ")}
+      GROUP BY Month
+      ORDER BY Month`,
+    params,
+  );
+
+  const monthlyCounts = rows.map((row) => ({
+    month: String(row.Month || ""),
+    linewalk: Number(row.linewalk || 0),
+    contact: Number(row.contact || 0),
+  }));
+
+  return {
+    source: "safety_old",
+    joinKey: "users.username = safety_old.CreatedBy",
+    username,
+    matched: monthlyCounts.length > 0,
+    monthlyCounts,
+    totals: monthlyCounts.reduce(
+      (acc, item) => ({
+        linewalk: acc.linewalk + item.linewalk,
+        contact: acc.contact + item.contact,
+      }),
+      { linewalk: 0, contact: 0 },
+    ),
+  };
+}
+
+async function getLegacySafetyEffortCoverage(limit = 20) {
+  const [summaryRows, unmatchedRows] = await Promise.all([
+    queryRows<DbRow>(
+      `SELECT COUNT(DISTINCT so.CreatedBy) AS legacy_users,
+              COUNT(DISTINCT CASE WHEN u.id IS NOT NULL THEN so.CreatedBy END) AS matched_users,
+              COUNT(DISTINCT CASE WHEN u.id IS NULL THEN so.CreatedBy END) AS unmatched_users
+         FROM safety_old so
+         LEFT JOIN users u ON LOWER(u.username) = LOWER(so.CreatedBy)
+        WHERE so.CreatedBy IS NOT NULL
+          AND so.CreatedBy <> ''
+          AND so.CreatedBy <> '0'
+          AND so.CreatedBy REGEXP '[A-Za-z]'`,
+    ),
+    queryRows<DbRow>(
+      `SELECT so.CreatedBy,
+              COUNT(*) AS months,
+              SUM(COALESCE(so.LineWalk_Count, 0)) AS linewalk,
+              SUM(COALESCE(so.SafetyContact_Count, 0)) AS contact
+         FROM safety_old so
+         LEFT JOIN users u ON LOWER(u.username) = LOWER(so.CreatedBy)
+        WHERE so.CreatedBy IS NOT NULL
+          AND so.CreatedBy <> ''
+          AND so.CreatedBy <> '0'
+          AND so.CreatedBy REGEXP '[A-Za-z]'
+          AND u.id IS NULL
+        GROUP BY so.CreatedBy
+        ORDER BY months DESC, linewalk DESC, so.CreatedBy
+        LIMIT :limit`,
+      { limit },
+    ),
+  ]);
+
+  const summary = summaryRows[0] || {};
+  return {
+    source: "safety_old",
+    joinKey: "users.username = safety_old.CreatedBy",
+    legacyUsers: Number(summary.legacy_users || 0),
+    matchedUsers: Number(summary.matched_users || 0),
+    unmatchedUsers: Number(summary.unmatched_users || 0),
+    unmatched: unmatchedRows.map((row) => ({
+      createdBy: String(row.CreatedBy || ""),
+      months: Number(row.months || 0),
+      linewalk: Number(row.linewalk || 0),
+      contact: Number(row.contact || 0),
+    })),
   };
 }
 
@@ -814,7 +989,8 @@ async function handleActivitiesAssessments(request: NextRequest, method: string,
   const route = match.route.path;
   if (method === "POST" && route === "/api/safety-effort/submissions") {
     if (!userId) return jsonError("unauthorized", 401);
-    const answers = Array.isArray(input.answeredItems || input.answers) ? (input.answeredItems || input.answers) : [];
+    const answers = normalizeSafetyEffortAnsweredItems(input.answeredItems || input.answers || []);
+    const metadata = normalizeSafetyEffortMetadata(input.metadata || {});
     const submitter = (await getRow("users", userId)) as Record<string, unknown> | null;
     const submitterName = input.name
       || (submitter ? (submitter.name_th || submitter.name_en || submitter.username) : null)
@@ -845,7 +1021,7 @@ async function handleActivitiesAssessments(request: NextRequest, method: string,
           email: submitterEmail,
           safetyContactText: input.safetyContactText || input.safety_contact_text || null,
           answersJson: JSON.stringify(answers),
-          metadata: JSON.stringify(input.metadata || {}),
+          metadata: JSON.stringify(metadata),
         },
       );
       return String(result.insertId);
@@ -855,6 +1031,16 @@ async function handleActivitiesAssessments(request: NextRequest, method: string,
       idempotencyKey: `safety-effort:${id}:completed`, description: String(input.activityLabel || input.activity_label || "Safety Effort สำเร็จ"),
     });
     return jsonData({ submission: safetyEffortSubmissionDto(await getRow("safety_effort_submissions", id)), balance }, { status: 201 });
+  }
+  if (method === "GET" && route === "/api/safety-effort/submissions/legacy/me") {
+    if (!userId) return jsonError("unauthorized", 401);
+    const from = request.nextUrl.searchParams.get("from");
+    const to = request.nextUrl.searchParams.get("to");
+    return jsonData(await getLegacySafetyEffortSummaryForUser(String(userId), from, to));
+  }
+  if (method === "GET" && route === "/api/safety-effort/submissions/legacy/coverage") {
+    const limit = Math.min(Math.max(Number(request.nextUrl.searchParams.get("limit") || 20), 1), 100);
+    return jsonData(await getLegacySafetyEffortCoverage(limit));
   }
   if (method === "GET" && ["/api/safety-effort/submissions", "/api/safety-effort/submissions/me"].includes(route)) {
     const where = ["s.deleted_at IS NULL"];
@@ -881,7 +1067,12 @@ async function handleActivitiesAssessments(request: NextRequest, method: string,
         "COALESCE(NULLIF(s.pms, ''), u.employee_no) AS pms",
       maxPageSize: 500,
     });
-    return jsonData({ ...result, items: result.items.map(safetyEffortSubmissionDto) });
+    const items = result.items.map(safetyEffortSubmissionDto);
+    if (route.endsWith("/me") && userId) {
+      const legacy = await getLegacySafetyEffortSummaryForUser(String(userId), from, to);
+      return jsonData({ ...result, items, legacy });
+    }
+    return jsonData({ ...result, items });
   }
   if (method === "PATCH" && route === "/api/safety-effort/submissions/:id") {
     await withTransaction(async (connection) => connection.execute(
@@ -1110,226 +1301,6 @@ async function handleFindingsActions(request: NextRequest, method: string, match
     return jsonData({ comment: await getRow("corrective_action_comments", id) }, { status: 201 });
   }
   return null;
-}
-
-async function handleWereOk(method: string, match: RouteMatch, input: JsonInput, userId?: string) {
-  if (method === "GET" && match.route.path === "/api/were-ok/state/me") {
-    if (!userId) return jsonError("unauthorized", 401);
-    const latest: Record<string, unknown> = {};
-    for (const [key, table] of Object.entries({ healthData: "health_checks", preTripData: "pretrip_checks", kytData: "kyt_records", sosData: "sos_events" })) {
-      const rows = await queryRows<DbRow>(
-        `SELECT payload, occurred_at FROM ${table} WHERE user_id=:userId ORDER BY occurred_at DESC, id DESC LIMIT 1`,
-        { userId },
-      );
-      latest[key] = rows[0] ? parseJson(rows[0].payload) : null;
-    }
-    return jsonData(latest);
-  }
-  const route = match.route.path;
-  if (method === "GET" && route === "/api/were-ok/jobs/current") {
-    if (!userId) return jsonError("unauthorized", 401);
-    return jsonData({ job: await getCurrentWereOkJob(userId) });
-  }
-  if (method === "POST" && route === "/api/were-ok/jobs") {
-    if (!userId) return jsonError("unauthorized", 401);
-    return jsonData({ job: await createWereOkJob(input, userId) }, { status: 201 });
-  }
-  if (method === "GET" && route === "/api/were-ok/jobs/:id") {
-    if (!userId) return jsonError("unauthorized", 401);
-    const job = await getWereOkJob(match.params.id, userId);
-    return job ? jsonData({ job }) : jsonError("job_not_found", 404);
-  }
-  if (method === "POST" && route === "/api/were-ok/jobs/:id/acknowledge") {
-    if (!userId) return jsonError("unauthorized", 401);
-    await withTransaction(async (connection) => {
-      await connection.execute(
-        `UPDATE were_ok_jobs
-         SET status = 'ACKNOWLEDGED', acknowledged_at = UTC_TIMESTAMP(3)
-         WHERE id = :id AND (user_id = :userId OR user_id IS NULL) AND deleted_at IS NULL`,
-        { id: match.params.id, userId },
-      );
-    });
-    const job = await getWereOkJob(match.params.id, userId);
-    return job ? jsonData({ job }) : jsonError("job_not_found", 404);
-  }
-
-  if (method !== "POST") return null;
-  const tableByRoute: Record<string, string> = {
-    "/api/were-ok/health-checks": "health_checks",
-    "/api/were-ok/pretrip-checks": "pretrip_checks",
-    "/api/were-ok/kyt-records": "kyt_records",
-    "/api/were-ok/sos-events": "sos_events",
-  };
-  const table = tableByRoute[match.route.path];
-  if (!table) return null;
-  if (!userId) return jsonError("unauthorized", 401);
-  const id = await withTransaction(async (connection) => {
-    const [result] = await connection.execute<ResultSetHeader>(
-      `INSERT INTO ${table} (activity_id, user_id, status, payload, occurred_at)
-       VALUES (:activityId, :userId, :status, :payload, UTC_TIMESTAMP(3))`,
-      {
-        activityId: input.activityId || input.activity_id || null,
-        userId,
-        status: input.status || "COMPLETED",
-        payload: JSON.stringify(input.payload || input),
-      } as never,
-    );
-    return String(result.insertId);
-  });
-  const balance = table === "kyt_records"
-    ? await awardPoints({ userId, action: "safetyEffortCompleted", sourceType: "KYT", sourceId: id, idempotencyKey: `kyt:${id}:completed`, description: "KYT ก่อนขับรถสำเร็จ" })
-    : null;
-  return jsonData({ record: await getRow(table, id), balance }, { status: 201 });
-}
-
-function wereOkJobDto(row: DbRow | null | undefined, warnings: DbRow[] = [], sleep?: DbRow | null) {
-  if (!row) return null;
-  const payload = parseJson(row.payload) || {};
-  const sleepPayload = sleep ? parseJson(sleep.payload) || {} : {};
-  return {
-    id: String(row.id),
-    userId: row.user_id == null ? null : String(row.user_id),
-    jobCode: String(row.job_code),
-    jobLabel: row.job_label ? String(row.job_label) : null,
-    startNode: row.start_node ? String(row.start_node) : null,
-    endNode: row.end_node ? String(row.end_node) : null,
-    distanceKm: row.distance_km == null ? null : Number(row.distance_km),
-    estimatedMinutes: row.estimated_minutes == null ? null : Number(row.estimated_minutes),
-    slump: row.slump ? String(row.slump) : null,
-    status: row.status ? String(row.status) : "ASSIGNED",
-    scheduledAt: row.scheduled_at instanceof Date ? row.scheduled_at.toISOString() : row.scheduled_at ? String(row.scheduled_at) : null,
-    acknowledgedAt: row.acknowledged_at instanceof Date ? row.acknowledged_at.toISOString() : row.acknowledged_at ? String(row.acknowledged_at) : null,
-    routeWarnings: warnings.map((warning) => ({
-      id: String(warning.id),
-      type: warning.warning_type ? String(warning.warning_type) : "warning",
-      title: warning.title ? String(warning.title) : "",
-      desc: warning.description ? String(warning.description) : "",
-      km: warning.km_label ? String(warning.km_label) : "",
-      sortOrder: Number(warning.sort_order || 0),
-    })),
-    sleepSummary: sleep ? {
-      sleepMinutes: sleep.sleep_minutes == null ? null : Number(sleep.sleep_minutes),
-      summaryText: sleep.summary_text ? String(sleep.summary_text) : null,
-      description: sleep.description ? String(sleep.description) : null,
-      payload: sleepPayload,
-    } : null,
-    payload,
-  };
-}
-
-async function getWereOkJob(id: string, userId?: string) {
-  const rows = await queryRows<DbRow>(
-    `SELECT * FROM were_ok_jobs
-     WHERE id = :id AND deleted_at IS NULL AND (:userId IS NULL OR user_id = :userId OR user_id IS NULL)
-     LIMIT 1`,
-    { id, userId: userId || null },
-  );
-  const row = rows[0];
-  if (!row) return null;
-  const warnings = await queryRows<DbRow>(
-    `SELECT * FROM were_ok_route_warnings WHERE job_id = :id ORDER BY sort_order, id`,
-    { id: row.id },
-  );
-  const sleepRows = await queryRows<DbRow>(
-    `SELECT * FROM were_ok_sleep_summaries WHERE job_id = :id LIMIT 1`,
-    { id: row.id },
-  );
-  return wereOkJobDto(row, warnings, sleepRows[0]);
-}
-
-async function getCurrentWereOkJob(userId: string) {
-  const rows = await queryRows<DbRow>(
-    `SELECT * FROM were_ok_jobs
-     WHERE deleted_at IS NULL
-       AND status IN ('ASSIGNED', 'ACKNOWLEDGED', 'IN_PROGRESS')
-       AND (user_id = :userId OR user_id IS NULL)
-     ORDER BY CASE WHEN user_id = :userId THEN 0 ELSE 1 END, scheduled_at DESC, id DESC
-     LIMIT 1`,
-    { userId },
-  );
-  return rows[0] ? getWereOkJob(String(rows[0].id), userId) : null;
-}
-
-async function createWereOkJob(input: JsonInput, userId?: string) {
-  const jobCode = String(input.jobCode || input.job_code || "").trim();
-  if (!jobCode) throw new Error("job_code_required");
-  const targetUserId = input.userId || input.user_id || null;
-  const warnings = Array.isArray(input.routeWarnings || input.warnings)
-    ? (input.routeWarnings || input.warnings) as JsonInput[]
-    : [];
-  const sleepSummary = input.sleepSummary && typeof input.sleepSummary === "object" ? input.sleepSummary as JsonInput : null;
-
-  const id = await withTransaction(async (connection) => {
-    const [result] = await connection.execute<ResultSetHeader>(
-      `INSERT INTO were_ok_jobs
-       (user_id, job_code, job_label, start_node, end_node, distance_km, estimated_minutes, slump, status, scheduled_at, payload, created_by)
-       VALUES (:userId, :jobCode, :jobLabel, :startNode, :endNode, :distanceKm, :estimatedMinutes, :slump, :status, :scheduledAt, :payload, :createdBy)
-       ON DUPLICATE KEY UPDATE
-         user_id = VALUES(user_id),
-         job_label = VALUES(job_label),
-         start_node = VALUES(start_node),
-         end_node = VALUES(end_node),
-         distance_km = VALUES(distance_km),
-         estimated_minutes = VALUES(estimated_minutes),
-         slump = VALUES(slump),
-         status = VALUES(status),
-         scheduled_at = VALUES(scheduled_at),
-         payload = VALUES(payload),
-         deleted_at = NULL`,
-      {
-        userId: targetUserId || null,
-        jobCode,
-        jobLabel: input.jobLabel || input.job_label || null,
-        startNode: input.startNode || input.start_node || null,
-        endNode: input.endNode || input.end_node || null,
-        distanceKm: input.distanceKm ?? input.distance_km ?? null,
-        estimatedMinutes: input.estimatedMinutes ?? input.estimated_minutes ?? null,
-        slump: input.slump || null,
-        status: input.status || "ASSIGNED",
-        scheduledAt: input.scheduledAt || input.scheduled_at || null,
-        payload: JSON.stringify(input.payload || {}),
-        createdBy: userId || null,
-      },
-    );
-    const jobRows = await connection.query<RowDataPacket[]>(
-      "SELECT id FROM were_ok_jobs WHERE job_code = :jobCode LIMIT 1",
-      { jobCode },
-    );
-    const insertedId = String((jobRows[0] as DbRow[])[0]?.id || result.insertId);
-    await connection.execute("DELETE FROM were_ok_route_warnings WHERE job_id = :jobId", { jobId: insertedId });
-    for (let index = 0; index < warnings.length; index += 1) {
-      const warning = warnings[index];
-      await connection.execute(
-        `INSERT INTO were_ok_route_warnings (job_id, warning_type, title, description, km_label, sort_order)
-         VALUES (:jobId, :type, :title, :description, :kmLabel, :sortOrder)`,
-        {
-          jobId: insertedId,
-          type: warning.type || warning.warningType || "warning",
-          title: warning.title || "",
-          description: warning.desc || warning.description || null,
-          kmLabel: warning.km || warning.kmLabel || null,
-          sortOrder: warning.sortOrder ?? index,
-        },
-      );
-    }
-    await connection.execute("DELETE FROM were_ok_sleep_summaries WHERE job_id = :jobId", { jobId: insertedId });
-    if (sleepSummary) {
-      await connection.execute(
-        `INSERT INTO were_ok_sleep_summaries (job_id, sleep_minutes, summary_text, description, payload)
-         VALUES (:jobId, :sleepMinutes, :summaryText, :description, :payload)`,
-        {
-          jobId: insertedId,
-          sleepMinutes: sleepSummary.sleepMinutes ?? sleepSummary.sleep_minutes ?? null,
-          summaryText: sleepSummary.summaryText || sleepSummary.summary_text || null,
-          description: sleepSummary.description || null,
-          payload: JSON.stringify(sleepSummary.payload || sleepSummary),
-        },
-      );
-    }
-    return insertedId;
-  });
-
-  return getWereOkJob(id, targetUserId ? String(targetUserId) : userId);
 }
 
 async function handleCultureRewards(request: NextRequest, method: string, match: RouteMatch, input: JsonInput, userId?: string) {
@@ -2276,7 +2247,6 @@ export async function handlePersistedCatalogRoute(
       () => handleCheckinExtras(request, method, match, input, userId),
       () => handleActivitiesAssessments(request, method, match, input, userId),
       () => handleFindingsActions(request, method, match, input, userId),
-      () => handleWereOk(method, match, input, userId),
       () => handleCultureRewards(request, method, match, input, userId),
       () => handleAwarenessHolidays(request, method, match, input, userId),
       () => handleNotifications(request, method, match, input, userId),

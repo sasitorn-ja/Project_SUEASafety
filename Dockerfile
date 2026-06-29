@@ -1,7 +1,8 @@
 FROM node:24-alpine AS deps
 WORKDIR /app
 
-COPY package.json package-lock.json ./
+COPY frontend/package.json ./package.json
+COPY frontend/package-lock.json ./package-lock.json
 RUN npm ci
 
 FROM node:24-alpine AS migrator
@@ -10,12 +11,13 @@ RUN npm install --no-save --omit=dev mysql2@3.22.5
 COPY scripts ./scripts
 
 FROM node:24-alpine AS builder
-WORKDIR /app
+WORKDIR /app/frontend
 
 ENV NEXT_TELEMETRY_DISABLED=1
 
-COPY --from=deps /app/node_modules ./node_modules
-COPY . .
+COPY --from=deps /app/node_modules /app/node_modules
+COPY frontend ./ 
+COPY backend /app/backend
 RUN npm run build
 
 FROM node:24-alpine AS runner
@@ -29,9 +31,10 @@ ENV HOSTNAME=0.0.0.0
 RUN addgroup --system --gid 1001 nodejs \
   && adduser --system --uid 1001 nextjs
 
-COPY --from=builder --chown=nextjs:nodejs /app/public ./public
-COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
-COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+COPY --from=deps /app/node_modules ./node_modules
+COPY --from=builder --chown=nextjs:nodejs /app/frontend/public ./public
+COPY --from=builder --chown=nextjs:nodejs /app/frontend/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/frontend/.next/static ./.next/static
 RUN chmod -R a+rX ./public
 
 USER nextjs

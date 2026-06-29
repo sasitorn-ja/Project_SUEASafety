@@ -1,0 +1,193 @@
+{
+  "config": {
+    "argv": [
+      "/usr/local/bin/node",
+      "/Users/sasitorn/Project_SUEASafety/node_modules/.bin/playwright",
+      "test",
+      "tests/e2e/domain-architecture-pilot.spec.ts",
+      "--project=chromium-desktop"
+    ],
+    "configFile": "/Users/sasitorn/Project_SUEASafety/frontend/playwright.config.ts",
+    "rootDir": "/Users/sasitorn/Project_SUEASafety/frontend/tests/e2e",
+    "failOnFlakyTests": false,
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 1
+    },
+    "preserveOutput": "always",
+    "projects": [
+      {
+        "outputDir": "/Users/sasitorn/Project_SUEASafety/frontend/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "chromium-desktop",
+        "name": "chromium-desktop",
+        "testDir": "/Users/sasitorn/Project_SUEASafety/frontend/tests/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 90000
+      },
+      {
+        "outputDir": "/Users/sasitorn/Project_SUEASafety/frontend/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "mobile-chrome",
+        "name": "mobile-chrome",
+        "testDir": "/Users/sasitorn/Project_SUEASafety/frontend/tests/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 90000
+      }
+    ],
+    "quiet": false,
+    "reporter": [
+      [
+        "list",
+        null
+      ],
+      [
+        "json",
+        {
+          "outputFile": "/Users/sasitorn/Project_SUEASafety/frontend/test-results/safety-agent-report.json"
+        }
+      ],
+      [
+        "html",
+        {
+          "outputFolder": "/Users/sasitorn/Project_SUEASafety/frontend/playwright-report",
+          "open": "never"
+        }
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.61.0",
+    "workers": 1,
+    "webServer": {
+      "command": "PORT=3100 HOSTNAME=127.0.0.1 npm run start",
+      "cwd": "/Users/sasitorn/Project_SUEASafety/frontend",
+      "url": "http://127.0.0.1:3100",
+      "reuseExistingServer": true,
+      "timeout": 120000
+    }
+  },
+  "suites": [
+    {
+      "title": "domain-architecture-pilot.spec.ts",
+      "file": "domain-architecture-pilot.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "domain architecture pilot routes",
+          "file": "domain-architecture-pilot.spec.ts",
+          "line": 12,
+          "column": 6,
+          "specs": [
+            {
+              "title": "admin points page still renders after domain extraction",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium-desktop",
+                  "projectName": "chromium-desktop",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1872,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-06-27T15:40:26.533Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "75032f0f41b1e70e2504-861972e13284b512c7d9",
+              "file": "domain-architecture-pilot.spec.ts",
+              "line": 13,
+              "column": 3
+            },
+            {
+              "title": "admin users page still renders after domain extraction",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium-desktop",
+                  "projectName": "chromium-desktop",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1584,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-06-27T15:40:28.700Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "75032f0f41b1e70e2504-21dab0caeb8f461747fe",
+              "file": "domain-architecture-pilot.spec.ts",
+              "line": 18,
+              "column": 3
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-06-27T15:40:25.487Z",
+    "duration": 4896.207,
+    "expected": 2,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  }
+}

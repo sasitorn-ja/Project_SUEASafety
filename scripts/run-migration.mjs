@@ -5,7 +5,7 @@ import mysql from "mysql2/promise";
 const migrationPath = process.argv[2];
 
 if (!migrationPath) {
-  console.error("Usage: node --env-file=.env.local scripts/run-migration.mjs <migration.sql>");
+  console.error("Usage: node --env-file=frontend/.env.local scripts/run-migration.mjs <migration.sql>");
   process.exit(1);
 }
 

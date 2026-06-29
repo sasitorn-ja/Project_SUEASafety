@@ -1,0 +1,2105 @@
+// @ts-nocheck
+import { useState, useEffect, useRef } from "react";
+import { useLocation, useNavigate } from "@/lib/app-navigation";
+import { MapContainer, TileLayer, Marker, Popup, useMap, useMapEvents } from "react-leaflet";
+import L from "leaflet";
+import "leaflet/dist/leaflet.css";
+import { useAppTheme } from "@/providers/theme-provider";
+import SafetyEffortProgressStepper from "@/features/safety-effort/components/SafetyEffortProgressStepper";
+import { Combobox } from "@/components/ui/combobox";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
+
+// ─── Fix default Leaflet icon paths ───────────────────────────────────────────
+delete L.Icon.Default.prototype._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
+  iconUrl:       "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
+  shadowUrl:     "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
+});
+
+// ─── Haversine distance (km) ──────────────────────────────────────────────────
+function haversine(lat1, lng1, lat2, lng2) {
+  const R = 6371;
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLng = (lng2 - lng1) * Math.PI / 180;
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+    Math.sin(dLng / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+const DEFAULT_CENTER = { lat: 13.819307, lng: 100.514304 };
+
+const MOCK_CPAC_LOCATION = {
+  id: "mock-cpac",
+  name: "Cpac",
+  tag: "CPAC-01",
+  type: "โรงงาน",
+  lat: 13.819307,
+  lng: 100.514304,
+  source: "MOCK",
+  readOnly: true,
+};
+
+function isValidPoint(point) {
+  if (!point) return false;
+  const lat = Number(point.lat);
+  const lng = Number(point.lng);
+  return Number.isFinite(lat) && Number.isFinite(lng) && lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180;
+}
+
+function pointToArray(point) {
+  return isValidPoint(point) ? [Number(point.lat), Number(point.lng)] : null;
+}
+
+function normalizePoint(point, fallback = null) {
+  if (!isValidPoint(point)) return fallback;
+  return { ...point, lat: Number(point.lat), lng: Number(point.lng) };
+}
+
+const LOCATION_FILTERS = [
+  { key: "all", label: "ทั้งหมด" },
+  { key: "factory", label: "โรงงาน" },
+  { key: "office", label: "สำนักงาน" },
+  { key: "site", label: "Site งาน" },
+];
+
+function normalizeLocationType(type, id = "") {
+  const raw = String(type ?? "");
+  const normalized = raw.toLowerCase();
+
+  if (
+    raw === "โรงงาน" ||
+    normalized.includes("factory") ||
+    id === "OBK-C2"
+  ) {
+    return "factory";
+  }
+
+  if (
+    raw === "สำนักงาน" ||
+    raw === "บริษัท" ||
+    normalized.includes("office") ||
+    normalized.includes("company") ||
+    id === "BPI-04"
+  ) {
+    return "office";
+  }
+
+  if (
+    raw === "Site งาน" ||
+    raw === "ก่อสร้าง" ||
+    normalized.includes("site") ||
+    normalized.includes("construction") ||
+    id === "MRT-PS"
+  ) {
+    return "site";
+  }
+
+  return "other";
+}
+
+function getLocationTypeLabel(type, id = "") {
+  const kind = normalizeLocationType(type, id);
+
+  if (kind === "factory") return "โรงงาน";
+  if (kind === "office") return "สำนักงาน";
+  if (kind === "site") return "Site งาน";
+  return String(type ?? "");
+}
+
+function apiLocationToCheckinLocation(location) {
+  const labelByType = {
+    PLANT: "โรงงาน",
+    OFFICE: "สำนักงาน",
+    SITE: "Site งาน",
+    CUSTOM: "สถานที่อื่น",
+  };
+  return {
+    id: String(location.id),
+    name: location.nameTh || location.name_th || location.name || "-",
+    tag: location.code || location.externalKey || location.external_key || String(location.id),
+    type: labelByType[location.locationType || location.location_type] || "สถานที่",
+    lat: location.lat === null || location.lat === undefined ? null : Number(location.lat),
+    lng: location.lng === null || location.lng === undefined ? null : Number(location.lng),
+    source: location.source,
+    readOnly: Boolean(location.readOnly),
+  };
+}
+
+// ─── Design tokens ────────────────────────────────────────────────────────────
+const T = {
+  background:   "var(--background)",
+  background2:  "var(--secondary)",
+  foreground:   "#0e0f12",
+  foreground2:  "#33312c",
+  foreground3:  "#767269",
+  card:         "#ffffff",
+  surface2:     "var(--secondary)",
+  primary:      "var(--brand-accent)",
+  primaryFg:    "var(--brand-accent-contrast)",
+  primarySoft:  "var(--brand-soft)",
+  danger:       "#d5301a",
+  ok:           "#1f7a55",
+  border:       "rgba(14,15,18,0.08)",
+  borderStrong: "#0e0f12",
+  radius:       "16px",
+};
+
+const yellow     = T.primary;
+const yellowBg   = T.primarySoft;
+const yellowBdr  = "var(--brand-accent)";
+const yellowDark = "var(--brand-text)";
+const navy       = "#1C2B4A";
+const navyDeep   = "#0F172A";
+
+
+// ─── Leaflet custom icons ─────────────────────────────────────────────────────
+const makePin = (fill, size = 28, selected = false) => {
+  const glowHtml = selected
+    ? `<div style="position:absolute;bottom:-6px;left:50%;transform:translateX(-50%);width:18px;height:6px;background:rgba(var(--brand-accent-rgb),0.4);border-radius:50%;box-shadow:0 0 10px 4px rgba(var(--brand-accent-rgb),0.8);animation:pulse-marker 1.5s infinite;"></div>`
+    : `<div style="position:absolute;bottom:-4px;left:50%;transform:translateX(-50%);width:12px;height:4px;background:rgba(0,0,0,0.15);border-radius:50%;"></div>`;
+
+  return L.divIcon({
+    className: "",
+    html: `
+      <div style="position:relative;width:${size}px;height:${size * 1.3}px;display:flex;flex-direction:column;align-items:center;animation: ${selected ? "marker-bounce 1s infinite alternate" : "none"};">
+        ${glowHtml}
+        <div style="width:${size}px;height:${size}px;border-radius:50% 50% 50% 0;background:${fill};border:2.5px solid #fff;box-shadow:0 4px 14px rgba(0,0,0,0.2);transform:rotate(-45deg);flex-shrink:0;display:flex;align-items:center;justify-content:center;position:relative;z-index:2;">
+          <div style="width:7px;height:7px;background:#fff;border-radius:50%;transform:rotate(45deg);"></div>
+        </div>
+        <div style="width:2.5px;height:${size * 0.25}px;background:${fill};border-radius:0 0 2px 2px;margin-top:-2px;position:relative;z-index:1;"></div>
+      </div>
+      <style>
+        @keyframes marker-bounce {
+          0% { transform: translateY(0); }
+          100% { transform: translateY(-4px); }
+        }
+        @keyframes pulse-marker {
+          0%, 100% { transform: translateX(-50%) scale(1); opacity: 0.8; }
+          50% { transform: translateX(-50%) scale(1.6); opacity: 0.2; }
+        }
+      </style>
+    `,
+    iconSize:    [size, size * 1.4],
+    iconAnchor:  [size / 2, size * 1.4],
+    popupAnchor: [0, -size * 1.4],
+  });
+};
+
+const meIcon = L.divIcon({
+  className: "",
+  html: `
+    <div style="position:relative;width:34px;height:34px;display:flex;align-items:center;justify-content:center;">
+      <div style="position:absolute;width:34px;height:34px;border-radius:50%;background:rgba(var(--brand-accent-rgb),0.2);animation:ci-me-pulse 2.2s ease-in-out infinite;"></div>
+      <div style="position:absolute;width:24px;height:24px;border-radius:50%;background:rgba(var(--brand-accent-rgb),0.4);animation:ci-me-pulse2 2.2s ease-in-out infinite;"></div>
+      <div style="width:16px;height:16px;border-radius:50%;background:${yellow};border:3px solid #fff;box-shadow:0 3px 10px rgba(var(--brand-accent-rgb),0.6);position:relative;z-index:1;"></div>
+    </div>
+    <style>
+      @keyframes ci-me-pulse{0%,100%{transform:scale(1);opacity:0.7;}50%{transform:scale(1.8);opacity:0.15;}}
+      @keyframes ci-me-pulse2{0%,100%{transform:scale(1);opacity:0.6;}50%{transform:scale(1.4);opacity:0.05;}}
+    </style>`,
+  iconSize:   [34, 34],
+  iconAnchor: [17, 17],
+});
+
+// ─── Map helper components ────────────────────────────────────────────────────
+function FlyTo({ target }) {
+  const map = useMap();
+  useEffect(() => {
+    const targetPoint = pointToArray(target);
+    if (targetPoint) {
+      map.flyTo(targetPoint, 14, { duration: 0.8 });
+    }
+  }, [target, map]);
+  return null;
+}
+
+function Recenter({ position, zoom }) {
+  const map = useMap();
+  useEffect(() => {
+    const targetPoint = pointToArray(position);
+    if (targetPoint) {
+      map.setView(targetPoint, zoom ?? map.getZoom());
+    }
+  }, [position, map, zoom]);
+  return null;
+}
+
+function FitAll({ points }) {
+  const map  = useMap();
+  const done = useRef(false);
+  useEffect(() => {
+    if (done.current || points.length === 0) return;
+    map.fitBounds(points, { padding: [60, 60] });
+    done.current = true;
+  }, []);
+  return null;
+}
+
+function InvalidateMapSize({ trigger }) {
+  const map = useMap();
+  useEffect(() => {
+    map.invalidateSize();
+    const timer = setTimeout(() => {
+      map.invalidateSize();
+    }, 200);
+    return () => clearTimeout(timer);
+  }, [map, trigger]);
+  return null;
+}
+
+// ─── Map View (top-level to prevent re-creation on each render) ─────────────
+function CheckinMapView({ height = "100%", mapMounted, mapInstanceKey, mapCenter, userPos, allLocations, selected, setSelected, fitPoints, windowWidth }) {
+  const safeMapCenter = pointToArray(mapCenter) || pointToArray(DEFAULT_CENTER);
+  const safeUserPos = normalizePoint(userPos);
+  const safeSelected = normalizePoint(selected);
+  return (
+    <div className="ci-map-wrap" style={{ height, width: "100%" }}>
+      {mapMounted ? (
+        <MapContainer
+          key={mapInstanceKey}
+          center={safeMapCenter}
+          zoom={10}
+          style={{ width: "100%", height: "100%" }}
+          zoomControl
+        >
+          <TileLayer
+            attribution='&copy; <a href="https://carto.com/attributions">CARTO</a> &copy; <a href="https://www.openstreetmap.org/copyright">OSM</a>'
+            url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
+            subdomains="abcd"
+            maxZoom={20}
+          />
+          {safeUserPos && (
+            <Marker position={[safeUserPos.lat, safeUserPos.lng]} icon={meIcon}>
+              <Popup>ตำแหน่งของคุณ</Popup>
+            </Marker>
+          )}
+          {allLocations
+            .filter(isValidPoint)
+            .map(loc => (
+              <Marker
+                key={loc.id}
+                position={[Number(loc.lat), Number(loc.lng)]}
+                icon={makePin(selected?.id === loc.id ? yellow : navy, selected?.id === loc.id ? 32 : 26, selected?.id === loc.id)}
+                eventHandlers={{ click: () => setSelected(loc) }}
+              >
+                <Popup>
+                  <b style={{ fontFamily: "'Sarabun',sans-serif" }}>{loc.name}</b><br />
+                  <span style={{ fontSize: 12, color: T.foreground3 }}>
+                    {loc.tag}{loc.dist != null ? ` · ${loc.dist.toFixed(1)} กม.` : ""}
+                  </span>
+                </Popup>
+              </Marker>
+            ))}
+          <FlyTo target={safeSelected} />
+          <Recenter position={safeUserPos} zoom={13} />
+          {!safeUserPos ? <FitAll points={fitPoints} /> : null}
+          <InvalidateMapSize trigger={windowWidth} />
+        </MapContainer>
+      ) : (
+        <div style={{ width: "100%", height: "100%", background: T.surface2 }} />
+      )}
+      {safeUserPos && (
+        <div className="ci-coords-badge">
+          📍 {safeUserPos.lat.toFixed(4)}°N &nbsp;·&nbsp; {safeUserPos.lng.toFixed(4)}°E
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Inline SVG icons ─────────────────────────────────────────────────────────
+const IcoBack = () => (
+  <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+    <polyline points="15 18 9 12 15 6"/>
+  </svg>
+);
+const IcoPin = ({ s = 16, c = "currentColor" }) => (
+  <svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>
+  </svg>
+);
+const IcoFactory = ({ s = 16, c = "currentColor" }) => (
+  <svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
+    <path d="M2 20V9l6-4v4l6-4v4l6-4v15H2z"/>
+    <rect x="6" y="14" width="3" height="6"/><rect x="11" y="14" width="3" height="6"/>
+  </svg>
+);
+const IcoCrane = ({ s = 16, c = "currentColor" }) => (
+  <svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
+    <line x1="12" y1="3" x2="12" y2="21"/>
+    <line x1="5"  y1="6" x2="12" y2="3"/>
+    <line x1="12" y1="3" x2="19" y2="6"/>
+    <line x1="12" y1="10" x2="19" y2="7"/>
+    <line x1="19" y1="6"  x2="19" y2="14"/>
+    <rect x="7" y="14" width="5" height="7"/>
+  </svg>
+);
+const IcoCheck = () => (
+  <svg width={10} height={10} viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth={3.8} strokeLinecap="round" strokeLinejoin="round">
+    <polyline points="20 6 9 17 4 12"/>
+  </svg>
+);
+const IcoPlus = () => (
+  <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round">
+    <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+  </svg>
+);
+const IcoArrow = ({ c = "#fff" }) => (
+  <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+    <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
+  </svg>
+);
+const IcoLocate = ({ spin }) => (
+  <svg
+    width={13} height={13}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth={2}
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    style={spin ? { animation: "ci-spin 0.8s linear infinite" } : undefined}
+  >
+    <circle cx="12" cy="12" r="3"/>
+    <path d="M12 2v3M12 19v3M2 12h3M19 12h3"/>
+    <circle cx="12" cy="12" r="8"/>
+  </svg>
+);
+const IcoSearch = ({ s = 15, c = "currentColor" }) => (
+  <svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="11" cy="11" r="7" />
+    <line x1="16.65" y1="16.65" x2="21" y2="21" />
+  </svg>
+);
+const IcoX = () => (
+  <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+    <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+  </svg>
+);
+const IcoCalendar = ({ s = 16, c = "currentColor" }) => (
+  <svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+    <line x1="16" y1="2" x2="16" y2="6"/>
+    <line x1="8" y1="2" x2="8" y2="6"/>
+    <line x1="3" y1="10" x2="21" y2="10"/>
+  </svg>
+);
+
+
+// ─── TypeIcon ─────────────────────────────────────────────────────────────────
+function TypeIcon({ type, selected, size = 16 }) {
+  const c = selected ? T.primaryFg : T.foreground3;
+  return type === "ก่อสร้าง"
+    ? <IcoCrane s={size} c={c} />
+    : <IcoFactory s={size} c={c} />;
+}
+
+// ─── Location card ────────────────────────────────────────────────────────────
+function LocCard({ loc, isSelected, onClick }) {
+  let typeClass = "type-others";
+  if (loc.type === "โรงงาน") typeClass = "type-factory";
+  else if (loc.type === "ก่อสร้าง") typeClass = "type-construction";
+  else if (loc.type === "คลังสินค้า") typeClass = "type-warehouse";
+  else if (loc.type === "สำนักงาน" || loc.type === "บริษัท") typeClass = "type-office";
+
+  return (
+    <div
+      className={`ci-loc-card ${typeClass}${isSelected ? " sel" : ""}`}
+      onClick={onClick}
+    >
+      <div className="ci-loc-icon">
+        <TypeIcon type={loc.type} selected={isSelected} size={18} />
+      </div>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div className="ci-loc-name">{loc.name}</div>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 4 }}>
+          <span className={`ci-tag ${isSelected ? "ci-tag-sel" : "ci-tag-def"}`}>{loc.tag}</span>
+          <span className={`ci-type-badge ${typeClass}`}>{loc.type}</span>
+        </div>
+      </div>
+      {loc.dist != null && (
+        <div className="ci-dist">
+          <svg style={{ marginRight: 3 }} width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+            <circle cx="12" cy="12" r="10"/>
+            <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+            <path d="M2 12h20"/>
+          </svg>
+          {loc.dist.toFixed(1)} km
+        </div>
+      )}
+      <div className="ci-check-wrapper">
+        {isSelected ? (
+          <div className="ci-check-circle"><IcoCheck /></div>
+        ) : (
+          <div className="ci-check-circle-placeholder" />
+        )}
+      </div>
+    </div>
+  );
+}
+
+function FilteredTypeIcon({ type, id, selected, size = 16 }) {
+  const c = selected ? T.primaryFg : T.foreground3;
+  return normalizeLocationType(type, id) === "site"
+    ? <IcoCrane s={size} c={c} />
+    : <IcoFactory s={size} c={c} />;
+}
+
+function FilteredLocCard({ loc, isSelected, onClick }) {
+  const typeKind = normalizeLocationType(loc.type, loc.id);
+  const typeClass = `type-${typeKind}`;
+  const typeLabel = getLocationTypeLabel(loc.type, loc.id);
+
+  return (
+    <div
+      className={`ci-loc-card ${typeClass}${isSelected ? " sel" : ""}`}
+      onClick={onClick}
+    >
+      <div className="ci-loc-icon">
+        <FilteredTypeIcon type={loc.type} id={loc.id} selected={isSelected} size={18} />
+      </div>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div className="ci-loc-name">{loc.name}</div>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 4 }}>
+          <span className={`ci-tag ${isSelected ? "ci-tag-sel" : "ci-tag-def"}`}>{loc.tag}</span>
+          <span className={`ci-type-badge ${typeClass}`}>{typeLabel}</span>
+        </div>
+      </div>
+      {loc.dist != null && (
+        <div className="ci-dist">
+          <svg style={{ marginRight: 3 }} width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+            <circle cx="12" cy="12" r="10"/>
+            <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+            <path d="M2 12h20"/>
+          </svg>
+          {loc.dist.toFixed(1)} km
+        </div>
+      )}
+      <div className="ci-check-wrapper">
+        {isSelected ? (
+          <div className="ci-check-circle"><IcoCheck /></div>
+        ) : (
+          <div className="ci-check-circle-placeholder" />
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ─── Map click picker (used inside AddModal) ──────────────────────────────────
+function MapPicker({ position, onPick }) {
+  const pinIcon = makePin(yellow, 28, false);
+  const safePosition = normalizePoint(position);
+  useMapEvents({ click(e) { onPick({ lat: e.latlng.lat, lng: e.latlng.lng }); } });
+  return safePosition
+    ? <Marker position={[safePosition.lat, safePosition.lng]} icon={pinIcon} />
+    : null;
+}
+
+// ─── Add-location modal ───────────────────────────────────────────────────────
+function AddModal({ onAdd, onClose, userPos }) {
+  const seed = normalizePoint(userPos, DEFAULT_CENTER);
+  const sanitizeModalType = value => {
+    const label = getLocationTypeLabel(value);
+    return label === "สำนักงาน" || label === "Site งาน" || label === "โรงงาน" ? label : "โรงงาน";
+  };
+
+  const [name,     setName]     = useState("");
+  const [type,     setType]     = useState("โรงงาน");
+  const [pinPos,   setPinPos]   = useState(seed);
+  const [error,    setError]    = useState("");
+  const [locating, setLocating] = useState(false);
+  const [recenterTarget, setRecenterTarget] = useState(seed);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    setIsMobile(window.innerWidth < 768);
+  }, []);
+
+  useEffect(() => {
+    setType(current => sanitizeModalType(current));
+  }, []);
+
+  function reLocate() {
+    if (typeof navigator === "undefined" || !navigator.geolocation) return;
+    setLocating(true);
+    navigator.geolocation.getCurrentPosition(
+      pos => {
+        const p = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+        setPinPos(p);
+        setRecenterTarget(p);
+        setLocating(false);
+      },
+      () => setLocating(false),
+      { enableHighAccuracy: true, timeout: 8000 },
+    );
+  }
+
+  function handleSubmit() {
+    const normalizedName = name.trim();
+    if (!normalizedName) {
+      setError("กรุณากรอกชื่อสถานที่");
+      return;
+    }
+    onAdd({
+      id:   `CUSTOM-${Date.now()}`,
+      name: normalizedName,
+      tag:  "CUSTOM",
+      type: sanitizeModalType(type),
+      lat:  Number(pinPos.lat),
+      lng:  Number(pinPos.lng),
+      dist: null,
+    });
+  }
+
+  return (
+    <Dialog open onOpenChange={(open) => !open && onClose()}>
+      <DialogContent showCloseButton={false} className="ci-modal p-0" style={{ maxHeight: "98vh", overflow: "hidden", display: "flex", flexDirection: "column", padding: "18px 20px 20px" }}>
+        <div style={{ display: "flex", justifyContent: "center", marginBottom: 10 }}>
+          <div style={{ width: 36, height: 4, borderRadius: 99, background: "rgba(14,15,18,0.15)" }} />
+        </div>
+
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
+          <div>
+            <h2 style={{ margin: 0, fontSize: 17, fontWeight: 800, color: T.foreground, fontFamily: "'Prompt',sans-serif" }}>
+              ระบุสถานที่ใหม่
+            </h2>
+            <p style={{ margin: "2px 0 0", fontSize: 11.5, color: T.foreground3 }}>
+              แตะบนแผนที่เพื่อปักหมุดตำแหน่งที่ถูกต้อง
+            </p>
+          </div>
+          <button className="ci-modal-close" onClick={onClose}><IcoX /></button>
+        </div>
+
+        <div style={{ position: "relative", borderRadius: 16, overflow: "hidden", marginBottom: 10, border: `1px solid ${T.border}`, boxShadow: "0 6px 20px rgba(0,0,0,0.05)", isolation: "isolate", zIndex: 0 }}>
+          <MapContainer
+            key="modal-map"
+            center={pointToArray(seed)}
+            zoom={15}
+            style={{ width: "100%", height: isMobile ? 300 : 180 }}
+            zoomControl={false}
+            attributionControl={false}
+          >
+            <TileLayer
+              attribution='&copy; <a href="https://carto.com/attributions">CARTO</a> &copy; <a href="https://www.openstreetmap.org/copyright">OSM</a>'
+              url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
+              subdomains="abcd"
+              maxZoom={20}
+            />
+            <MapPicker position={pinPos} onPick={setPinPos} />
+            <Recenter position={recenterTarget} />
+            <InvalidateMapSize />
+          </MapContainer>
+
+          <div style={{
+            position: "absolute", top: 8, left: "50%", transform: "translateX(-50%)",
+            zIndex: 1000, background: "rgba(255,255,255,0.92)", backdropFilter: "blur(6px)",
+            borderRadius: 99, padding: "4px 12px", fontSize: 11, fontWeight: 700,
+            color: yellowDark, pointerEvents: "none", whiteSpace: "nowrap",
+            boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
+            border: `1px solid rgba(var(--brand-accent-rgb),0.3)`,
+          }}>
+            แตะแผนที่เพื่อเลือกตำแหน่ง
+          </div>
+
+          <button
+            onClick={reLocate}
+            style={{
+              position: "absolute", bottom: 8, right: 8, zIndex: 1000,
+              display: "flex", alignItems: "center", gap: 5,
+              background: "#ffffff", border: `1px solid ${T.border}`,
+              borderRadius: 99, padding: "5px 12px", fontSize: 11, fontWeight: 700,
+              color: T.foreground2, cursor: "pointer", fontFamily: "inherit",
+              boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
+            }}
+          >
+            <IcoLocate spin={locating} />
+            {locating ? "กำลังระบุ…" : "ตำแหน่งฉัน"}
+          </button>
+        </div>
+
+        <div style={{
+          display: "flex", gap: 6, marginBottom: 10,
+          padding: "6px 12px", borderRadius: 10,
+          background: "var(--c-f4eedf)", border: `1px solid rgba(14,15,18,0.06)`,
+          fontSize: 11, fontFamily: "'Prompt',monospace", color: T.foreground3, fontWeight: 700,
+          letterSpacing: "0.02em",
+        }}>
+          <span>📍</span>
+          <span>{Number(pinPos.lat).toFixed(5)}°N &nbsp;·&nbsp; {Number(pinPos.lng).toFixed(5)}°E</span>
+        </div>
+
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 140px", gap: 10 }}>
+          <div>
+            <label className="ci-label" style={{ marginBottom: 4 }}>ชื่อสถานที่</label>
+            <input
+              className="ci-input"
+              placeholder="เช่น โรงงานลาดกระบัง"
+              value={name}
+              onChange={e => { setName(e.target.value); setError(""); }}
+              autoFocus
+            />
+          </div>
+          <div>
+            <label className="ci-label" style={{ marginBottom: 4 }}>ประเภท</label>
+            <Combobox
+              value={type}
+              onValueChange={setType}
+              aria-label="ประเภท"
+              options={[
+                { value: "โรงงาน", label: "โรงงาน" },
+                { value: "สำนักงาน", label: "สำนักงาน" },
+                { value: "Site งาน", label: "Site งาน" },
+              ]}
+            />
+          </div>
+        </div>
+
+        {error && (
+          <p style={{ margin: "10px 0 0", fontSize: 13, color: T.danger, fontWeight: 700 }}>{error}</p>
+        )}
+
+        <div style={{ display: "flex", gap: 12, marginTop: 14 }}>
+          <button
+            onClick={onClose}
+            style={{
+              flex: 1, padding: "12px", borderRadius: T.radius,
+              border: `1px solid ${T.border}`, background: "transparent",
+              color: T.foreground3, fontSize: 14, fontWeight: 700,
+              cursor: "pointer", fontFamily: "inherit", transition: "background 0.15s",
+            }}
+            onMouseEnter={e => e.currentTarget.style.background = "var(--secondary)"}
+            onMouseLeave={e => e.currentTarget.style.background = "transparent"}
+          >
+            ยกเลิก
+          </button>
+          <button
+            onClick={handleSubmit}
+            style={{
+              flex: 2, padding: "12px", borderRadius: T.radius,
+              border: "none", background: navyDeep, color: "#fff",
+              fontSize: 14, fontWeight: 800, cursor: "pointer",
+              fontFamily: "inherit", boxShadow: "0 6px 20px rgba(15,23,42,0.25)",
+              transition: "all 0.2s",
+            }}
+            onMouseEnter={e => { e.currentTarget.style.opacity = "0.9"; e.currentTarget.style.transform = "translateY(-1.5px)"; }}
+            onMouseLeave={e => { e.currentTarget.style.opacity = "1";   e.currentTarget.style.transform = "none"; }}
+          >
+            เพิ่มสถานที่
+          </button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// ─── Component styles ─────────────────────────────────────────────────────────
+const STYLES = `
+  @import url('https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700;800;900&family=Sarabun:wght@300;400;500;600;700&display=swap');
+
+  .ci, .ci * { box-sizing: border-box; }
+  .ci {
+    font-family: 'Sarabun', 'Prompt', sans-serif;
+    background: linear-gradient(180deg, var(--secondary) 0%, ${T.background} 190px, ${T.background} 100%);
+    color: ${T.foreground};
+    min-height: 100%;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .ci-workspace {
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+    padding: 16px;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(360px, 400px);
+    gap: 16px;
+    background:
+      linear-gradient(180deg, rgba(255,248,230,0.55), rgba(241,236,223,0)),
+      ${T.background};
+  }
+
+  .ci-map-panel,
+  .ci-side-panel {
+    min-height: 0;
+    overflow: hidden;
+    border: 1px solid ${T.border};
+    border-radius: 20px;
+    background: #ffffff;
+    box-shadow: 0 12px 30px rgba(34,25,11,0.06);
+  }
+
+  .ci-map-panel {
+    position: relative;
+  }
+
+  .ci-side-panel {
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ── Compact & Elegant StepHeader ── */
+  .ci-step-header-compact {
+    background: linear-gradient(105deg, var(--brand-hero-start) 0%, var(--brand-hero-end) 48%, var(--brand-nav) 100%);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    padding: 12px 20px 20px;
+    flex-shrink: 0;
+    color: var(--brand-soft);
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 8px 24px rgba(42,26,9,0.15);
+    z-index: 10;
+  }
+  @media (min-width: 768px) {
+    .ci-step-header-compact {
+      border-radius: 16px;
+      border: 1px solid rgba(255,255,255,0.08);
+      margin-bottom: 6px;
+    }
+  }
+  .ci-step-header-compact::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(var(--brand-accent-rgb),0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(var(--brand-accent-rgb),0.03) 1px, transparent 1px);
+    background-size: 22px 22px;
+    opacity: 0.6;
+    pointer-events: none;
+    z-index: 0;
+  }
+  .ci-step-header-compact::after {
+    content: '';
+    position: absolute;
+    right: -40px; top: -40px;
+    width: 200px; height: 200px;
+    background: radial-gradient(circle, rgba(var(--brand-accent-rgb),0.10) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+  }
+  .ci-step-header-compact > * {
+    position: relative;
+    z-index: 1;
+  }
+
+  .ci-hdr-flex {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+  }
+
+  .ci-hdr-title {
+    margin: 2px 0 0;
+    font-size: 19px;
+    font-weight: 900;
+    color: #ffffff;
+    font-family: 'Prompt', sans-serif;
+    letter-spacing: -0.01em;
+    line-height: 1.25;
+  }
+
+  .ci-hero-badge-compact {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 8px;
+    border-radius: 99px;
+    border: 1px solid rgba(255,255,255,0.12);
+    background: rgba(255,255,255,0.06);
+    color: rgba(255,248,230,0.85);
+    font-size: 9.5px;
+    font-weight: 800;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+  }
+
+  .ci-hdr-mascot-compact {
+    width: 46px;
+    height: 46px;
+    object-fit: contain;
+    filter: drop-shadow(0 6px 12px rgba(0,0,0,0.25));
+    animation: mascot-float 3s ease-in-out infinite;
+    flex-shrink: 0;
+  }
+
+  .ci-hdr-divider {
+    width: 1px;
+    height: 24px;
+    background: rgba(255,255,255,0.15);
+  }
+
+  @keyframes mascot-float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-4px); }
+  }
+
+  /* ── Custom Progress Stepper ── */
+  .ci-stepper-container {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .ci-stepper-item-wrap {
+    display: flex;
+    align-items: center;
+  }
+  .ci-stepper-line {
+    width: 12px;
+    height: 2px;
+    background: rgba(255, 255, 255, 0.15);
+    transition: all 0.3s;
+  }
+  .ci-stepper-line.active {
+    background: var(--brand-accent);
+  }
+  .ci-stepper-node {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 9.5px;
+    font-weight: 900;
+    font-family: 'Prompt', sans-serif;
+    transition: all 0.3s;
+  }
+  .ci-stepper-node.active {
+    background: var(--brand-accent);
+    color: var(--c-1a1613);
+    box-shadow: 0 0 0 3px rgba(var(--brand-accent-rgb), 0.18);
+  }
+  .ci-stepper-node.done {
+    background: #1f7a55;
+    color: #fff;
+  }
+  .ci-stepper-node.idle {
+    background: rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  .ci-back-btn {
+    width: 32px; height: 32px;
+    border-radius: 10px;
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.15);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    flex-shrink: 0;
+    color: var(--brand-soft);
+  }
+  .ci-back-btn:hover {
+    background: rgba(255,255,255,0.16);
+    border-color: ${yellow};
+    color: #fff;
+    transform: translateX(-2px);
+    box-shadow: 0 0 10px rgba(var(--brand-accent-rgb), 0.22);
+  }
+
+  .ci-locate-btn {
+    display: flex; align-items: center; gap: 6px;
+    border-radius: 999px;
+    border: 1px solid rgba(255,255,255,0.16);
+    font-family: 'Prompt', 'Sarabun', inherit;
+    cursor: pointer;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    white-space: nowrap;
+    font-weight: 700;
+    font-size: 11px;
+    padding: 6px 14px;
+    letter-spacing: 0.01em;
+  }
+  .ci-locate-btn:hover {
+    transform: translateY(-1.5px);
+    box-shadow: 0 5px 14px rgba(var(--brand-accent-rgb),0.18);
+    border-color: ${yellow};
+  }
+  .ci-locate-btn.active {
+    border-color: ${yellow};
+    background: ${yellow};
+    color: ${T.primaryFg};
+    box-shadow: 0 0 10px rgba(var(--brand-accent-rgb),0.4);
+  }
+  .ci-locate-btn.idle {
+    background: rgba(255,255,255,0.08);
+    color: var(--brand-soft);
+    backdrop-filter: blur(8px);
+  }
+
+  .ci-panel-label {
+    font-size: 10px; font-weight: 800; color: ${T.foreground3};
+    text-transform: uppercase; letter-spacing: 0.12em;
+    font-family: 'Prompt', sans-serif;
+  }
+
+  .ci-list::-webkit-scrollbar { width: 4px; }
+  .ci-list::-webkit-scrollbar-track { background: transparent; }
+  .ci-list::-webkit-scrollbar-thumb { background: rgba(14,15,18,0.12); border-radius: 99px; }
+
+  /* ── Search & Filter Box ── */
+  .ci-search-box {
+    margin-top: 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 38px;
+    border-radius: 12px;
+    border: 1px solid rgba(14,15,18,0.08);
+    background: #ffffff;
+    padding: 0 12px;
+    color: ${T.foreground3};
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.01);
+    transition: all 0.2s;
+  }
+  .ci-search-box:focus-within {
+    border-color: ${yellowBdr};
+    box-shadow: 0 0 0 3px rgba(var(--brand-accent-rgb),0.15), inset 0 2px 4px rgba(0,0,0,0.01);
+  }
+  .ci-search-box input {
+    width: 100%;
+    border: 0;
+    outline: 0;
+    background: transparent;
+    color: ${T.foreground};
+    font-family: inherit;
+    font-size: 13.5px;
+    font-weight: 600;
+  }
+  .ci-search-box input::placeholder {
+    color: #a3a199;
+    font-weight: 500;
+  }
+  .ci-search-clear {
+    border: none;
+    background: transparent;
+    padding: 2px;
+    cursor: pointer;
+    color: ${T.foreground3};
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: background 0.15s, color 0.15s;
+  }
+  .ci-search-clear:hover {
+    background: rgba(14,15,18,0.06);
+    color: ${T.foreground};
+  }
+
+  .ci-filter-row {
+    display: flex;
+    gap: 6px;
+    overflow-x: auto;
+    padding: 10px 0 2px;
+    scrollbar-width: none;
+  }
+  .ci-filter-row::-webkit-scrollbar { display: none; }
+  .ci-filter-chip {
+    border: 1px solid rgba(14,15,18,0.08);
+    background: #ffffff;
+    color: ${T.foreground3};
+    border-radius: 8px;
+    padding: 5px 12px;
+    font-family: 'Prompt', 'Sarabun', sans-serif;
+    font-size: 11.5px;
+    font-weight: 700;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .ci-filter-chip:hover:not(.active) {
+    background: var(--c-f7f6f2);
+    border-color: rgba(14,15,18,0.15);
+    color: ${T.foreground};
+  }
+  .ci-filter-chip.active {
+    background: linear-gradient(135deg, ${yellow} 0%, var(--brand-accent-strong) 100%);
+    border-color: transparent;
+    color: ${T.primaryFg};
+    box-shadow: 0 4px 10px rgba(var(--brand-accent-rgb),0.22);
+  }
+
+  /* ── Ultra-compact tip style ── */
+  .ci-side-tip-compact {
+    margin: 10px 16px 4px;
+    border: 1px solid rgba(var(--brand-accent-rgb), 0.24);
+    border-radius: 12px;
+    background: linear-gradient(135deg, #ffffff 0%, var(--brand-surface) 100%);
+    padding: 8px 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    box-shadow: 0 4px 12px rgba(var(--brand-accent-rgb), 0.03);
+    flex-shrink: 0;
+  }
+
+  /* ── Premium Location Card ── */
+  .ci-loc-card {
+    display: flex; align-items: center; gap: 14px;
+    background: #ffffff;
+    border: 1px solid rgba(14,15,18,0.06);
+    border-radius: 16px;
+    padding: 12px 14px;
+    min-height: 74px;
+    cursor: pointer;
+    transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+    -webkit-tap-highlight-color: transparent;
+    position: relative;
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+  .ci-loc-card::before {
+    content: '';
+    position: absolute; left: 0; top: 0; bottom: 0;
+    width: 4px;
+    background: transparent;
+    transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+    border-radius: 16px 0 0 16px;
+  }
+  .ci-loc-card:hover {
+    border-color: rgba(var(--brand-accent-rgb), 0.35);
+    box-shadow: 0 8px 20px rgba(34,25,11,0.05);
+    transform: translateY(-1.5px);
+  }
+  .ci-loc-card.sel {
+    background: linear-gradient(135deg, #ffffff 0%, var(--brand-surface) 100%);
+    border-color: ${yellowBdr};
+    box-shadow: 0 8px 24px rgba(var(--brand-accent-rgb),0.14);
+  }
+  .ci-loc-card.sel::before {
+    background: ${yellow};
+    box-shadow: 2px 0 8px rgba(var(--brand-accent-rgb),0.6);
+  }
+
+  .ci-loc-icon {
+    border-radius: 12px; flex-shrink: 0;
+    width: 42px; height: 42px; min-width: 42px; min-height: 42px;
+    display: flex; align-items: center; justify-content: center;
+    background: var(--c-f7f6f2);
+    color: #767269;
+    transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+    border: 1px solid rgba(0,0,0,0.02);
+  }
+  .ci-loc-card.sel .ci-loc-icon {
+    background: linear-gradient(135deg, ${yellow} 0%, var(--brand-accent-strong) 100%);
+    color: ${T.primaryFg};
+    box-shadow: 0 3px 10px rgba(var(--brand-accent-rgb),0.25);
+    border-color: transparent;
+  }
+  .ci-loc-card:hover:not(.sel) .ci-loc-icon {
+    background: var(--secondary);
+    color: #0e0f12;
+  }
+
+  .ci-loc-name {
+    font-size: 14px; font-weight: 800; color: ${T.foreground};
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    margin-bottom: 2px; font-family: 'Prompt', sans-serif;
+  }
+
+  .ci-tag {
+    font-size: 9.5px; font-weight: 700;
+    border-radius: 5px; padding: 1.5px 6px;
+    letter-spacing: 0.04em; font-family: 'Prompt', monospace;
+    border: 1px solid transparent;
+  }
+  .ci-tag-sel {
+    background: rgba(var(--brand-accent-rgb),0.12);
+    color: ${yellowDark};
+    border-color: rgba(var(--brand-accent-rgb),0.18);
+  }
+  .ci-tag-def {
+    background: var(--background);
+    color: #767269;
+    border-color: rgba(14,15,18,0.06);
+  }
+
+  /* ── Location Badges ── */
+  .ci-type-badge {
+    font-size: 10.5px;
+    font-weight: 700;
+    font-family: 'Prompt', sans-serif;
+    border-radius: 5px;
+    padding: 1.5px 6px;
+    letter-spacing: 0.01em;
+  }
+  .ci-type-badge.type-factory { background: var(--c-fff2e6); color: var(--c-e65c00); border: 1px solid var(--c-ffe0cc); }
+  .ci-type-badge.type-site { background: var(--c-fefcee); color: var(--c-a16207); border: 1px solid var(--c-fef08a); }
+  .ci-type-badge.type-construction { background: var(--c-fefcee); color: var(--c-a16207); border: 1px solid var(--c-fef08a); }
+  .ci-type-badge.type-warehouse { background: #eff6ff; color: #1d4ed8; border: 1px solid #dbeafe; }
+  .ci-type-badge.type-office { background: #f0fdf4; color: #15803d; border: 1px solid #dcfce7; }
+  .ci-type-badge.type-others { background: #f5f5f5; color: #525252; border: 1px solid #e5e5e5; }
+
+  .ci-dist {
+    font-size: 11px; font-weight: 800; color: ${T.foreground3};
+    font-family: 'Prompt', sans-serif; white-space: nowrap;
+    margin-left: auto; margin-right: 10px; flex-shrink: 0;
+    background: var(--c-f7f6f2);
+    padding: 3px 8px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    border: 1px solid rgba(0,0,0,0.02);
+  }
+  .ci-loc-card.sel .ci-dist {
+    color: ${yellowDark};
+    background: var(--c-fffbeb);
+    border-color: rgba(var(--brand-accent-rgb),0.15);
+  }
+
+  /* ── Bouncing Check Circle ── */
+  .ci-check-wrapper {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    flex-shrink: 0;
+  }
+  .ci-check-circle {
+    width: 22px; height: 22px; border-radius: 50%;
+    background: linear-gradient(135deg, ${yellow} 0%, var(--brand-accent-strong) 100%);
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 3px 8px rgba(var(--brand-accent-rgb),0.3);
+    animation: ci-pop 0.3s cubic-bezier(0.34,1.56,0.64,1) forwards;
+  }
+  .ci-check-circle-placeholder {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    border: 2px solid rgba(14, 15, 18, 0.1);
+    transition: border-color 0.2s;
+  }
+  .ci-loc-card:hover .ci-check-circle-placeholder {
+    border-color: rgba(var(--brand-accent-rgb), 0.4);
+  }
+
+  @keyframes ci-pop { from { transform: scale(0); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+  .ci-add-btn {
+    width: 100%; border-radius: 14px;
+    border: 1.5px dashed rgba(14,15,18,0.15);
+    background: rgba(255,255,255,0.6); color: ${T.foreground3};
+    font-family: 'Prompt', 'Sarabun', inherit; font-weight: 700;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    cursor: pointer; transition: all 0.2s; font-size: 13px;
+    padding: 12px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.02);
+  }
+  .ci-add-btn:hover {
+    background: #ffffff;
+    border-color: ${yellow};
+    color: ${T.foreground};
+    box-shadow: 0 6px 16px rgba(var(--brand-accent-rgb),0.08);
+    transform: translateY(-1px);
+  }
+
+  .ci-preview {
+    background: linear-gradient(135deg, #ffffff 0%, var(--brand-surface) 100%);
+    border: 1px solid rgba(var(--brand-accent-rgb),0.35);
+    border-radius: 16px;
+    animation: ci-slide 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    box-shadow: 0 10px 24px rgba(var(--brand-accent-rgb),0.1);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 14px;
+    margin-bottom: 10px;
+  }
+  @keyframes ci-slide { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+  .ci-cta {
+    width: 100%; border-radius: 14px; border: none;
+    font-family: 'Prompt', inherit; font-weight: 700;
+    display: flex; align-items: center; justify-content: center; gap: 10px;
+    cursor: pointer; transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    position: relative; overflow: hidden; letter-spacing: 0.02em;
+    font-size: 15px;
+  }
+  .ci-cta.ready {
+    background: linear-gradient(135deg, var(--brand-text) 0%, var(--c-1a1613) 100%);
+    color: #fff;
+    box-shadow: 0 10px 25px rgba(26, 22, 19, 0.25);
+    padding: 14px;
+  }
+  .ci-cta.ready::after {
+    content: ''; position: absolute; inset: 0;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
+    transform: translateX(-100%); animation: ci-shimmer 2.5s infinite;
+  }
+  @keyframes ci-shimmer { to { transform: translateX(100%); } }
+  .ci-cta.ready:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 28px rgba(26,22,19,0.32);
+    background: linear-gradient(135deg, var(--c-3d2f24) 0%, var(--brand-text) 100%);
+  }
+  .ci-cta.ready:active { transform: scale(0.985) translateY(-1px); }
+  .ci-cta.disabled {
+    background: var(--c-e8e5dc);
+    color: #9c988f;
+    cursor: not-allowed;
+    box-shadow: none;
+    padding: 14px;
+    border: 1px solid rgba(0,0,0,0.03);
+  }
+
+  @keyframes ci-spin { to { transform: rotate(360deg); } }
+
+  .ci-coords-badge {
+    position: absolute; bottom: 18px; left: 18px; z-index: 1000;
+    background: rgba(255, 255, 255, 0.92); backdrop-filter: blur(8px);
+    border-radius: 999px; border: 1px solid rgba(14,15,18,0.08);
+    padding: 7px 14px; font-size: 11px; color: ${T.foreground3};
+    font-weight: 700; pointer-events: none;
+    font-family: 'Prompt', monospace; letter-spacing: 0.03em;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.06);
+  }
+
+  .ci-map-wrap { position: relative; overflow: hidden; background: ${T.surface2}; isolation: isolate; z-index: 0; }
+  .ci-map-wrap .leaflet-container { background: ${T.surface2}; }
+  .ci-map-wrap::after {
+    content: '';
+    position: absolute;
+    inset: 14px;
+    border: 1.5px solid rgba(255,255,255,0.7);
+    border-radius: 14px;
+    pointer-events: none;
+    z-index: 650;
+    box-shadow: inset 0 0 15px rgba(0,0,0,0.03);
+  }
+
+  .ci-modal-overlay {
+    position: fixed; inset: 0; z-index: 9999;
+    background: rgba(20,13,7,0.55); backdrop-filter: blur(4px);
+    display: flex; align-items: flex-end; justify-content: center;
+  }
+  .ci-modal {
+    width: min(100%, 680px); max-width: 680px;
+    background: var(--brand-surface); border-radius: 24px 24px 0 0;
+    padding: 28px 28px 42px;
+    font-family: 'Sarabun', sans-serif;
+    animation: ci-modal-in 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+    border-top: 1px solid var(--border);
+    box-shadow: 0 -15px 40px rgba(0, 0, 0, 0.18);
+  }
+  @keyframes ci-modal-in {
+    from { transform: translateY(100%); opacity: 0; }
+    to   { transform: translateY(0);    opacity: 1; }
+  }
+
+  @media (min-width: 768px) {
+    .ci-modal-overlay {
+      align-items: center;
+    }
+    .ci-modal {
+      border-radius: 30px;
+      animation: ci-modal-in-desktop 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+      border: 1px solid var(--border);
+      box-shadow: 0 28px 60px rgba(0,0,0,0.22);
+    }
+  }
+  @keyframes ci-modal-in-desktop {
+    from { transform: scale(0.92) translateY(20px); opacity: 0; }
+    to   { transform: scale(1) translateY(0);    opacity: 1; }
+  }
+
+  .ci-modal-close {
+    width: 40px; height: 40px; border-radius: 999px;
+    background: #fff; border: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; transition: all 0.2s; color: ${T.foreground3};
+  }
+  .ci-modal-close:hover { background: var(--secondary); transform: rotate(90deg); color: ${T.foreground}; }
+
+  .ci-input {
+    width: 100%; padding: 12px 14px;
+    border: 1px solid rgba(14,15,18,0.1); border-radius: 12px;
+    font-size: 14px; font-family: 'Sarabun', inherit; color: ${T.foreground};
+    background: #ffffff; outline: none;
+    transition: all 0.2s;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.01);
+  }
+  .ci-input:focus { border-color: ${yellow}; box-shadow: 0 0 0 3.5px rgba(var(--brand-accent-rgb),0.18), inset 0 2px 4px rgba(0,0,0,0.01); }
+
+  .ci-label {
+    font-size: 11px; font-weight: 800; color: ${T.foreground3};
+    text-transform: uppercase; letter-spacing: 0.10em;
+    display: block; margin-bottom: 6px; font-family: 'Prompt', sans-serif;
+  }
+
+  .ci-sidebar-section {
+    padding: 14px 16px 12px;
+    border-bottom: 1px solid rgba(14,15,18,0.06);
+    flex-shrink: 0;
+    background: linear-gradient(180deg, color-mix(in srgb, var(--brand-soft) 72%, transparent) 0%, color-mix(in srgb, var(--brand-surface) 92%, transparent) 100%);
+  }
+
+  .ci-footer-panel {
+    flex-shrink: 0; border-top: 1px solid rgba(14,15,18,0.08);
+    padding: 12px 16px 16px;
+    background: color-mix(in srgb, var(--brand-surface) 85%, transparent);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+  }
+
+  .ci-show-more {
+    margin-top: 4px;
+    width: 100%;
+    padding: 11px 14px;
+    border-radius: 12px;
+    border: 1px solid rgba(14,15,18,0.12);
+    background: var(--brand-surface, #fff);
+    color: var(--brand-text, #5c3214);
+    font-family: 'Prompt', sans-serif;
+    font-size: 13px;
+    font-weight: 800;
+    cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease;
+  }
+  .ci-show-more:hover {
+    background: var(--brand-soft, #fff4cf);
+    border-color: var(--brand-accent, #f5bb00);
+  }
+
+  @media (max-width: 767px) {
+    /* Keep the "next" action pinned to the bottom of the viewport on mobile
+       so users never have to scroll past the whole location list to reach it. */
+    .ci-footer-panel {
+      position: sticky;
+      bottom: 0;
+      z-index: 6;
+      box-shadow: 0 -6px 18px rgba(14,15,18,0.08);
+    }
+  }
+
+  @media (max-width: 767px) {
+    .ci-workspace {
+      display: block;
+      padding: 0;
+      overflow: visible;
+    }
+    .ci-map-panel,
+    .ci-side-panel {
+      border-radius: 0;
+      border-left: 0;
+      border-right: 0;
+      box-shadow: none;
+    }
+    .ci-map-overlay {
+      top: 12px;
+      left: 12px;
+      right: 12px;
+    }
+    .ci-hdr-flex {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 10px;
+    }
+    .ci-hdr-divider {
+      display: none;
+    }
+    .ci-hdr-mascot-compact {
+      position: absolute;
+      right: 0;
+      top: -4px;
+      width: 40px;
+      height: 40px;
+    }
+    .ci-hdr-title {
+      font-size: 17px;
+    }
+    .ci-hdr-flex > div:last-child {
+      justify-content: space-between;
+      width: 100%;
+      margin-top: 2px;
+      padding-top: 6px;
+      border-top: 1px solid rgba(255,255,255,0.08);
+    }
+  }
+`;
+
+// ─── Main component ───────────────────────────────────────────────────────────
+export default function Checkin() {
+  const { mascot, theme } = useAppTheme();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const activity = location.state?.activity ?? null;
+
+  const [selected,  setSelected]  = useState(null);
+  const [userPos,   setUserPos]   = useState(DEFAULT_CENTER);
+  const [locating,  setLocating]  = useState(false);
+  const [showModal, setShowModal] = useState(false);
+  const [extraLocs, setExtraLocs] = useState([]);
+  const [loadingLocations, setLoadingLocations] = useState(true);
+  const [apiError, setApiError] = useState("");
+  const [savingCheckin, setSavingCheckin] = useState(false);
+  const [mapMounted, setMapMounted] = useState(false);
+  const [width, setWidth] = useState(1024);
+
+  // Instant Search and Quick Filter state
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedType, setSelectedType] = useState("ทั้งหมด");
+
+  // How many location cards to render at once (avoid rendering the entire list).
+  const LOCATIONS_PAGE_SIZE = 20;
+  const [visibleCount, setVisibleCount] = useState(LOCATIONS_PAGE_SIZE);
+  // Reset paging whenever the result set changes (new search / filter).
+  useEffect(() => {
+    setVisibleCount(LOCATIONS_PAGE_SIZE);
+  }, [searchQuery, selectedType]);
+
+  useEffect(() => {
+    setWidth(window.innerWidth);
+    const fn = () => setWidth(window.innerWidth);
+    window.addEventListener("resize", fn);
+    return () => window.removeEventListener("resize", fn);
+  }, []);
+
+  useEffect(() => {
+    setMapMounted(true);
+    return () => setMapMounted(false);
+  }, []);
+
+  const isMobile = width < 768;
+  const center   = userPos ?? DEFAULT_CENTER;
+
+  useEffect(() => {
+    setSelected(null);
+    setSearchQuery("");
+    setSelectedType("ทั้งหมด");
+    setApiError("");
+    locateUser();
+  }, [location.pathname, location.state]);
+
+  useEffect(() => {
+    let cancelled = false;
+    setLoadingLocations(true);
+    setApiError("");
+    const loadLocations = async (url) => {
+      const response = await fetch(url, { credentials: "include" });
+      const payload = await response.json().catch(() => null);
+      if (!response.ok || !payload?.ok) throw new Error(payload?.error || "locations_load_failed");
+      return payload.data?.items || payload.data?.locations || [];
+    };
+    Promise.all([
+      loadLocations("/api/locations/map?limit=1000"),
+      loadLocations("/api/locations/offices?limit=30"),
+    ])
+      .then(([mapItems, officeItems]) => {
+        if (cancelled) return;
+        const merged = new Map();
+        merged.set(MOCK_CPAC_LOCATION.id, MOCK_CPAC_LOCATION);
+        [...mapItems, ...officeItems]
+          .map(apiLocationToCheckinLocation)
+          .forEach(item => merged.set(item.id, item));
+        setExtraLocs(Array.from(merged.values()));
+      })
+      .catch(error => {
+        if (cancelled) return;
+        setExtraLocs([MOCK_CPAC_LOCATION]);
+        setApiError(error?.message || "ไม่สามารถโหลดสถานที่จาก API ได้");
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingLocations(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    const keyword = searchQuery.trim();
+    if (keyword.length < 3 || !["ทั้งหมด", "all", "site"].includes(selectedType)) return;
+    const controller = new AbortController();
+    const timer = window.setTimeout(() => {
+      fetch(`/api/locations/search?type=SITE&q=${encodeURIComponent(keyword)}&limit=30`, {
+        credentials: "include",
+        signal: controller.signal,
+      })
+        .then(async response => {
+          const payload = await response.json().catch(() => null);
+          if (!response.ok || !payload?.ok) throw new Error(payload?.error || "sites_search_failed");
+          return payload.data?.items || [];
+        })
+        .then(items => {
+          const remoteSites = items.map(apiLocationToCheckinLocation);
+          setExtraLocs(current => {
+            const merged = new Map(current.map(item => [item.id, item]));
+            remoteSites.forEach(item => merged.set(item.id, item));
+            return Array.from(merged.values());
+          });
+        })
+        .catch(error => {
+          if (error?.name !== "AbortError") setApiError(error?.message || "ไม่สามารถค้นหา Site ได้");
+        });
+    }, 400);
+    return () => {
+      window.clearTimeout(timer);
+      controller.abort();
+    };
+  }, [searchQuery, selectedType]);
+
+  const allLocations = extraLocs
+    .map(l => ({
+      ...l,
+      dist: isValidPoint(l)
+        ? haversine(center.lat, center.lng, l.lat, l.lng)
+        : null,
+    }))
+    .sort((a, b) => (a.dist ?? 9999) - (b.dist ?? 9999));
+
+  const selectedTypeKey = LOCATION_FILTERS.some(filter => filter.key === selectedType) ? selectedType : "all";
+  const visibleLocations = allLocations.filter(loc => {
+    const typeKind = normalizeLocationType(loc.type, loc.id);
+
+    if (selectedTypeKey !== "all" && typeKind !== selectedTypeKey) {
+      return false;
+    }
+
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase().trim();
+      const normalizedType = getLocationTypeLabel(loc.type, loc.id).toLowerCase();
+      return (
+        loc.name.toLowerCase().includes(q) ||
+        loc.tag.toLowerCase().includes(q) ||
+        normalizedType.includes(q)
+      );
+    }
+
+    return true;
+  });
+  const searchKeyword = searchQuery.trim();
+  const locationDataHint = selectedTypeKey === "site"
+    ? searchKeyword.length < 3
+      ? "Site งานดึงจาก rmc_sso.sites แบบค้นหาเท่านั้น กรุณาพิมพ์ชื่อ/รหัสอย่างน้อย 3 ตัว"
+      : "กำลังแสดง Site งานจาก rmc_sso.sites ตามคำค้นหา"
+    : selectedTypeKey === "office"
+      ? "สำนักงานดึงจาก rmc_sso.offices โดยตรง"
+      : "โรงงาน/สำนักงานแสดงจากระบบ ส่วน Site งานให้ค้นหาอย่างน้อย 3 ตัว";
+  const emptyLocationMessage = selectedTypeKey === "site" && searchKeyword.length < 3
+    ? "พิมพ์ชื่อหรือรหัส Site อย่างน้อย 3 ตัว เพื่อดึงข้อมูลจาก rmc_sso.sites"
+    : "ไม่พบสถานที่ที่ค้นหา";
+
+  // Only render the first `visibleCount` results; "show more" reveals the rest.
+  const pagedLocations = visibleLocations.slice(0, visibleCount);
+  const hasMoreLocations = visibleLocations.length > visibleCount;
+  const remainingLocations = visibleLocations.length - visibleCount;
+
+  useEffect(() => {
+    if (selected) {
+      const fresh = allLocations.find(l => l.id === selected.id)
+        || allLocations.find(l => selected.tag && l.tag === selected.tag)
+        || allLocations.find(l => selected.name && l.name === selected.name);
+      if (fresh && (fresh !== selected || !isValidPoint(selected))) setSelected(fresh);
+    }
+  }, [userPos, extraLocs]);
+
+  function handleBack() {
+    navigate(activity ? "/activity" : "/category", {
+      state: activity ? { activity } : undefined,
+    });
+  }
+
+  function locateUser() {
+    if (typeof navigator === "undefined" || !navigator.geolocation) {
+      setUserPos(DEFAULT_CENTER);
+      return;
+    }
+    setLocating(true);
+    navigator.geolocation.getCurrentPosition(
+      pos => {
+        setUserPos({ lat: pos.coords.latitude, lng: pos.coords.longitude, accuracy: pos.coords.accuracy });
+        setLocating(false);
+      },
+      () => {
+        setApiError("ระบบจำลองตำแหน่งอัตโนมัติเนื่องจากไม่สามารถระบุตำแหน่ง GPS จริงได้");
+        setUserPos(DEFAULT_CENTER);
+        setLocating(false);
+      },
+      { enableHighAccuracy: true, timeout: 8000 },
+    );
+  }
+
+  async function handleAddLocation(loc) {
+    setApiError("");
+    const typeCodeByLabel = {
+      "โรงงาน": "PLANT",
+      "สำนักงาน": "OFFICE",
+      "Site งาน": "SITE",
+    };
+    const locationType = typeCodeByLabel[loc.type] || "CUSTOM";
+    try {
+      const response = await fetch("/api/locations", {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          locationType,
+          nameTh: loc.name,
+          lat: Number(loc.lat),
+          lng: Number(loc.lng),
+        }),
+      });
+      const payload = await response.json().catch(() => null);
+      if (!response.ok || !payload?.ok) throw new Error(payload?.error || "location_create_failed");
+      const saved = apiLocationToCheckinLocation(payload.data?.location || {});
+      setExtraLocs(prev => [...prev, saved]);
+      setSelected(saved);
+      setShowModal(false);
+    } catch (error) {
+      setApiError(error?.message || "ไม่สามารถบันทึกสถานที่ใหม่ได้");
+    }
+  }
+
+  async function handleContinue() {
+    if (!selected) return;
+    setSavingCheckin(true);
+    setApiError("");
+    try {
+      const selectedForSubmit = allLocations.find(l => l.id === selected.id)
+        || allLocations.find(l => selected.tag && l.tag === selected.tag)
+        || allLocations.find(l => selected.name && l.name === selected.name)
+        || selected;
+      if (!isValidPoint(selectedForSubmit)) {
+        throw new Error("สถานที่นี้ยังไม่มีพิกัด กรุณาเลือกสถานที่จากรายการอีกครั้ง");
+      }
+      const actualUserPos = userPos ?? DEFAULT_CENTER;
+      let checkinRecord = null;
+      if (selectedForSubmit.id === "mock-cpac") {
+        checkinRecord = { id: "mock-checkin-id-" + Date.now() };
+      } else {
+        const response = await fetch("/api/checkins", {
+          method: "POST",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            locationId: selectedForSubmit.id,
+            locationCode: selectedForSubmit.tag,
+            locationName: selectedForSubmit.name,
+            actualLat: Number(actualUserPos.lat),
+            actualLng: Number(actualUserPos.lng),
+            actualAccuracyM: Number.isFinite(Number(actualUserPos.accuracy)) ? Number(actualUserPos.accuracy) : null,
+            locationSource: "GPS",
+          }),
+        });
+        const payload = await response.json().catch(() => null);
+        if (!response.ok || !payload?.ok) throw new Error(payload?.error || "checkin_create_failed");
+        checkinRecord = payload.data?.checkin || null;
+      }
+      navigate(nextPath, {
+        state: {
+          checkin: {
+            id: selectedForSubmit.id,
+            checkinId: checkinRecord?.id || null,
+            name: selectedForSubmit.name,
+            tag: selectedForSubmit.tag,
+            type: selectedForSubmit.type,
+            lat: Number(selectedForSubmit.lat),
+            lng: Number(selectedForSubmit.lng),
+            dist: selectedForSubmit.dist,
+          },
+          ...(activity ? { activity, fromActivity: true } : {}),
+        },
+      });
+    } catch (error) {
+      setApiError(error?.message || "ไม่สามารถบันทึก check-in ได้");
+    } finally {
+      setSavingCheckin(false);
+    }
+  }
+
+  const mapCenter = normalizePoint(center, DEFAULT_CENTER);
+  const fitPoints = allLocations.filter(isValidPoint).map(l => [Number(l.lat), Number(l.lng)]);
+  const mapInstanceKey = isMobile ? "mobile" : "desktop";
+  const selectedForAction = selected
+    ? allLocations.find(l => l.id === selected.id)
+      || allLocations.find(l => selected.tag && l.tag === selected.tag)
+      || allLocations.find(l => selected.name && l.name === selected.name)
+      || selected
+    : null;
+  const canContinue = Boolean(selectedForAction && isValidPoint(selectedForAction) && isValidPoint(userPos) && !savingCheckin);
+  const nextPath = activity?.id === "safety-contact"
+    ? "/safety-contact"
+    : activity
+      ? "/linewalk"
+      : "/activity";
+
+  // ── Locate Button helper component
+  const LocateButton = () => (
+    <button 
+      className={`flex items-center gap-1.5 h-8 rounded-[8px] px-3 font-extrabold text-[11px] font-sarabun transition-all duration-200 active:scale-95 border cursor-pointer ${
+        locating
+          ? "bg-[#0B82F0] text-white border-transparent shadow-[0_4px_10px_rgba(11,130,240,0.15)]"
+          : "bg-white text-[#0B82F0] border-[#D7EAFE] shadow-[0_2px_6px_rgba(11,130,240,0.04)] hover:bg-[#0B82F0] hover:text-white"
+      }`}
+      onClick={locateUser}
+    >
+      <IcoLocate spin={locating} />
+      <span>{locating ? "กำลังระบุ..." : "ระบุตำแหน่ง"}</span>
+    </button>
+  );
+
+  // ── Compact Sub-header (User Feedback Optimization)
+  const StepHeader = () => (
+    <div className="relative flex min-h-[100px] items-center overflow-hidden rounded-[20px] border border-[#B9DDFF]/60 bg-[#EEF7FF] px-3 py-2 shadow-[0_12px_30px_rgba(185,223,255,0.4)] sm:min-h-[116px] sm:px-[18px] sm:py-2.5 xl:min-h-[148px] xl:px-[28px] xl:py-3">
+      {/* Background image container */}
+      <div 
+        className="absolute inset-0 bg-[url('/images/heroes/safety-effort-category-hero.png')] bg-no-repeat"
+        style={{
+          backgroundSize: 'auto 108%',
+          backgroundPosition: 'right -20px bottom -5px',
+        }}
+      />
+      {/* Gradient overlay to blend the image and ensure readability */}
+      <div className="absolute inset-0 bg-gradient-to-r from-[#EEF7FF] via-[#EEF7FF]/90 sm:via-[#EEF7FF]/40 to-transparent pointer-events-none" />
+
+      {/* Main content container directly on the background (no glassmorphic inner container) */}
+      <div className="relative z-10 w-full flex items-center justify-between font-sarabun">
+        {/* Left column: Back button, Title, and Stepper info */}
+        <div className="flex flex-col items-start gap-2">
+          <div className="flex items-center gap-3">
+            <button 
+              className="flex h-8 w-8 items-center justify-center rounded-[8px] bg-white border border-[#D7EAFE] text-[#0B82F0] hover:bg-[#0B82F0] hover:text-white transition-all duration-300 active:scale-95"
+              onClick={handleBack} 
+              aria-label="ย้อนกลับ"
+            >
+              <IcoBack />
+            </button>
+            <h1 className="text-[20px] sm:text-[24px] xl:text-[26px] font-black leading-tight tracking-tight text-[#0B2F6B]">
+              เช็คอินสถานที่ตรวจ
+            </h1>
+          </div>
+          <div className="flex flex-col items-start gap-1 mt-1 sm:mt-1.5">
+            <span className="text-[10px] sm:text-[11px] font-extrabold tracking-wider text-[#55739B] uppercase">
+              ความคืบหน้า
+            </span>
+            <SafetyEffortProgressStepper current={2} total={4} compact />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  // ── Footer Panel (revamped action drawer)
+  const FooterPanel = () => (
+    <div className="ci-footer-panel">
+      <button
+        className="ci-add-btn"
+        onClick={() => setShowModal(true)}
+        style={{ marginBottom: 10 }}
+      >
+        <IcoPlus /> ระบุสถานที่อื่น
+      </button>
+      <button
+        className={`ci-cta ${canContinue ? "ready" : "disabled"}`}
+        disabled={!canContinue}
+        onClick={handleContinue}
+      >
+        <IcoCalendar s={18} c={canContinue ? "#fff" : T.foreground3} />
+        {savingCheckin ? "กำลังบันทึก..." : "ถัดไป เลือกวัน"}
+        <IcoArrow c={canContinue ? "#fff" : T.foreground3} />
+      </button>
+    </div>
+  );
+
+  // ══════════════════════════════════════════════════════════════════════════
+  // Render
+  // ══════════════════════════════════════════════════════════════════════════
+  return (
+    <div
+      className="ci"
+      style={{ height: isMobile ? "100%" : "auto", minHeight: "100%", background: T.background, display: "flex", flexDirection: "column" }}
+    >
+      <style>{STYLES}</style>
+
+      {/* ── Desktop layout ──────────────────────────────────────────────── */}
+      {!isMobile && (
+        <div style={{
+          width: "100%",
+          maxWidth: 1500,
+          margin: "0 auto",
+          display: "flex",
+          flexDirection: "column",
+          gap: 16,
+          padding: "8px 20px 40px",
+        }}>
+          <StepHeader />
+          <div style={{
+            display: "grid",
+            gridTemplateColumns: "1fr 370px",
+            gap: 18,
+          }}>
+            <CheckinMapView height="clamp(380px, calc(100vh - 240px), 550px)" mapMounted={mapMounted} mapInstanceKey={mapInstanceKey} mapCenter={mapCenter} userPos={userPos} allLocations={allLocations} selected={selected} setSelected={setSelected} fitPoints={fitPoints} windowWidth={width} />
+
+            {/* Right panel — this is the scrollable area on desktop */}
+            <div style={{
+              display: "flex", flexDirection: "column",
+              border: `1px solid ${T.border}`,
+              borderRadius: "20px",
+              background: "var(--c-faf9f6)",
+              boxShadow: "0 12px 30px rgba(34,25,11,0.06)",
+              height: "clamp(380px, calc(100vh - 240px), 550px)",
+              overflow: "hidden",
+            }}>
+              <div className="ci-sidebar-section">
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+                  <div>
+                    <span className="ci-panel-label">ใกล้คุณที่สุด</span>
+                    <div style={{ marginTop: 2, fontSize: 15, fontWeight: 800, color: T.foreground, fontFamily: "'Prompt',sans-serif" }}>
+                      เลือกสถานที่ตรวจ
+                    </div>
+                  </div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <LocateButton />
+                    <span style={{ fontSize: 11, color: T.foreground3, fontFamily: "'Prompt',sans-serif", fontWeight: 700, background: "var(--secondary)", padding: "3px 8px", borderRadius: "6px" }}>
+                      {visibleLocations.length} สถานที่
+                    </span>
+                  </div>
+                </div>
+
+                {loadingLocations && (
+                  <div style={{ marginTop: 10, fontSize: 12, fontWeight: 700, color: T.foreground3 }}>
+                    กำลังโหลดสถานที่จาก API จริง...
+                  </div>
+                )}
+                {apiError && (
+                  <div style={{ marginTop: 10, fontSize: 12, fontWeight: 800, color: T.danger }}>
+                    {apiError}
+                  </div>
+                )}
+
+                {/* Sleek Search Box */}
+                <div className="ci-search-box">
+                  <IcoSearch s={16} c={T.foreground3} />
+                  <input
+                    type="text"
+                    placeholder="ค้นหาชื่อ หรือ รหัสสถานที่..."
+                    value={searchQuery}
+                    onChange={e => setSearchQuery(e.target.value)}
+                  />
+                  {searchQuery && (
+                    <button onClick={() => setSearchQuery("")} className="ci-search-clear" aria-label="ล้างคำค้นหา">
+                      <IcoX />
+                    </button>
+                  )}
+                </div>
+
+                {/* Filter Chips */}
+                <div className="ci-filter-row">
+                  {LOCATION_FILTERS.map(type => (
+                    <button
+                      key={type.key}
+                      className={`ci-filter-chip ${selectedTypeKey === type.key ? "active" : ""}`}
+                      onClick={() => setSelectedType(type.key)}
+                    >
+                      {type.label}
+                    </button>
+                  ))}
+                </div>
+                <div className="ci-filter-row" style={{ display: "none" }}>
+                  {["ทั้งหมด", "โรงงาน", "ก่อสร้าง", "สำนักงาน", "บริษัท"].map(type => (
+                    <button
+                      key={type}
+                      className={`ci-filter-chip ${selectedType === type ? "active" : ""}`}
+                      onClick={() => setSelectedType(type)}
+                    >
+                      {type}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+
+              {/* ↓ onScroll forwarded to App.jsx for scroll-hide behaviour */}
+              <div
+                className="ci-list"
+                style={{
+                  flex: 1, overflowY: "auto",
+                  padding: "10px 16px 12px",
+                  display: "flex", flexDirection: "column", gap: 9,
+                }}
+              >
+                {visibleLocations.length > 0 ? (
+                  <>
+                    {pagedLocations.map(loc => (
+                      <FilteredLocCard
+                        key={loc.id}
+                        loc={loc}
+                        isSelected={selected?.id === loc.id}
+                        onClick={() => setSelected(loc)}
+                      />
+                    ))}
+                    {hasMoreLocations && (
+                      <button
+                        type="button"
+                        className="ci-show-more"
+                        onClick={() => setVisibleCount(c => c + LOCATIONS_PAGE_SIZE)}
+                      >
+                        แสดงเพิ่มเติม (เหลืออีก {remainingLocations})
+                      </button>
+                    )}
+                  </>
+                ) : (
+                  <div style={{
+                    padding: "36px 16px", textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 10,
+                    color: T.foreground3, fontSize: 13, fontWeight: 600
+                  }}>
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" style={{ opacity: 0.5 }}>
+                      <circle cx="11" cy="11" r="8"/>
+                      <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                      <line x1="8" y1="11" x2="14" y2="11"/>
+                    </svg>
+                    <span>{emptyLocationMessage}</span>
+                  </div>
+                )}
+
+              </div>
+
+              <FooterPanel />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Mobile layout ───────────────────────────────────────────────── */}
+      {isMobile && (
+        // ↓ onScroll forwarded to App.jsx for scroll-hide behaviour
+        <div
+          id="ci-mobile-scroll-area"
+          className="ci-list"
+          style={{ flex: 1, overflowY: "auto", display: "flex", flexDirection: "column", background: "var(--c-faf9f6)", padding: "10px 12px calc(80px + env(safe-area-inset-bottom))", gap: 10 }}
+        >
+          <StepHeader />
+
+          <div style={{ flexShrink: 0, height: 230, borderRadius: "16px", overflow: "hidden", border: "1px solid rgba(14,15,18,0.06)", boxShadow: "0 4px 12px rgba(0,0,0,0.04)" }}>
+             <CheckinMapView height="230px" mapMounted={mapMounted} mapInstanceKey={mapInstanceKey} mapCenter={mapCenter} userPos={userPos} allLocations={allLocations} selected={selected} setSelected={setSelected} fitPoints={fitPoints} windowWidth={width} />
+          </div>
+
+          <div style={{ flexShrink: 0, padding: "14px 16px", borderRadius: "16px", border: `1px solid rgba(14,15,18,0.06)`, background: "#ffffff", boxShadow: "0 4px 12px rgba(34,25,11,0.04)" }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+              <div>
+                <span className="ci-panel-label">ใกล้คุณที่สุด</span>
+                <div style={{ marginTop: 3, fontSize: 15, fontWeight: 800, color: T.foreground, fontFamily: "'Prompt',sans-serif" }}>
+                  เลือกสถานที่ตรวจ
+                </div>
+              </div>
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <LocateButton />
+                <span style={{ fontSize: 11, color: T.foreground3, fontFamily: "'Prompt',sans-serif", fontWeight: 700, background: "var(--secondary)", padding: "3px 8px", borderRadius: "6px" }}>
+                  {visibleLocations.length} สถานที่
+                </span>
+              </div>
+            </div>
+
+            {loadingLocations && (
+              <div style={{ marginTop: 10, fontSize: 12, fontWeight: 700, color: T.foreground3 }}>
+                กำลังโหลดสถานที่จาก API จริง...
+              </div>
+            )}
+            {apiError && (
+              <div style={{ marginTop: 10, fontSize: 12, fontWeight: 800, color: T.danger }}>
+                {apiError}
+              </div>
+            )}
+
+            {/* Sleek Search Box */}
+            <div className="ci-search-box" style={{ marginTop: 10 }}>
+              <IcoSearch s={16} c={T.foreground3} />
+              <input
+                type="text"
+                placeholder="ค้นหาชื่อ หรือ รหัสสถานที่..."
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+              />
+              {searchQuery && (
+                <button onClick={() => setSearchQuery("")} className="ci-search-clear" aria-label="ล้างคำค้นหา">
+                  <IcoX />
+                </button>
+              )}
+            </div>
+
+            {/* Filter Chips */}
+            <div className="ci-filter-row" style={{ paddingBottom: 0 }}>
+              {LOCATION_FILTERS.map(type => (
+                <button
+                  key={type.key}
+                  className={`ci-filter-chip ${selectedTypeKey === type.key ? "active" : ""}`}
+                  onClick={() => setSelectedType(type.key)}
+                >
+                  {type.label}
+                </button>
+              ))}
+            </div>
+            <div className="ci-filter-row" style={{ paddingBottom: 0, display: "none" }}>
+              {["ทั้งหมด", "โรงงาน", "ก่อสร้าง", "สำนักงาน", "บริษัท"].map(type => (
+                <button
+                  key={type}
+                  className={`ci-filter-chip ${selectedType === type ? "active" : ""}`}
+                  onClick={() => setSelectedType(type)}
+                >
+                  {type}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div style={{ padding: "0px", display: "flex", flexDirection: "column", gap: 9, flex: 1 }}>
+            {visibleLocations.length > 0 ? (
+              <>
+                {pagedLocations.map(loc => (
+                  <FilteredLocCard
+                    key={loc.id}
+                    loc={loc}
+                    isSelected={selected?.id === loc.id}
+                    onClick={() => setSelected(loc)}
+                  />
+                ))}
+                {hasMoreLocations && (
+                  <button
+                    type="button"
+                    className="ci-show-more"
+                    onClick={() => setVisibleCount(c => c + LOCATIONS_PAGE_SIZE)}
+                  >
+                    แสดงเพิ่มเติม (เหลืออีก {remainingLocations})
+                  </button>
+                )}
+              </>
+            ) : (
+              <div style={{
+                padding: "36px 16px", textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 10,
+                color: T.foreground3, fontSize: 13, fontWeight: 600
+              }}>
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" style={{ opacity: 0.5 }}>
+                  <circle cx="11" cy="11" r="8"/>
+                  <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                  <line x1="8" y1="11" x2="14" y2="11"/>
+                </svg>
+                <span>{emptyLocationMessage}</span>
+              </div>
+            )}
+
+          </div>
+
+          <FooterPanel />
+        </div>
+      )}
+
+      {showModal && (
+        <AddModal
+          onAdd={handleAddLocation}
+          onClose={() => setShowModal(false)}
+          userPos={userPos}
+        />
+      )}
+    </div>
+  );
+}
+// @ts-nocheck

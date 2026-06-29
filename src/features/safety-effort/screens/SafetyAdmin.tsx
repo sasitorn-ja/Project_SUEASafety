@@ -1036,7 +1036,7 @@ export default function SafetyAdmin() {
                 {/* เลือกหมวดหมู่สถานที่ (Location Category Selector) */}
                 <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                   <label style={{ fontSize: 13, fontWeight: 900, color: T.ink }}>หมวดหมู่สถานที่</label>
-                  <div style={{ position: "relative", zIndex: 60 }}>
+                  <div style={{ position: "relative", zIndex: 30 }}>
                     <button
                       type="button"
                       onClick={() => setLocationDropdownOpen(!locationDropdownOpen)}

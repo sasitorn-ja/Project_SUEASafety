@@ -13,6 +13,7 @@ import {
   createSafetyEffortLocation,
   deleteSafetyEffortLocation,
   getSafetyEffortLocation,
+  getSafetyEffortLocationSourceDetail,
   listSafetyEffortLocations,
   normalizeLocationType,
   parseLocationInput,
@@ -409,6 +410,17 @@ async function tryHandleConcreteRoute(
         await deleteSafetyEffortLocation(match.params.id);
         return jsonData({ deleted: true });
       }
+    }
+
+    if (method === "GET" && match.route.path === "/api/locations/:id/source-detail") {
+      const location = await getSafetyEffortLocation(match.params.id);
+      if (!location) return jsonError("location_not_found", 404);
+      return jsonData({
+        locationId: match.params.id,
+        locationType: location.locationType,
+        source: location.source,
+        sourceDetail: await getSafetyEffortLocationSourceDetail(match.params.id),
+      });
     }
 
     if (path === "/api/checkins" && method === "POST" && userId) {

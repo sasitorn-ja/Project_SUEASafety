@@ -3,7 +3,9 @@
     "argv": [
       "/usr/local/bin/node",
       "/Users/sasitorn/Project_SUEASafety/node_modules/.bin/playwright",
-      "test"
+      "test",
+      "tests/e2e/domain-architecture-pilot.spec.ts",
+      "--project=chromium-desktop"
     ],
     "configFile": "/Users/sasitorn/Project_SUEASafety/playwright.config.ts",
     "rootDir": "/Users/sasitorn/Project_SUEASafety/tests/e2e",
@@ -93,20 +95,20 @@
   },
   "suites": [
     {
-      "title": "safety-agent.spec.ts",
-      "file": "safety-agent.spec.ts",
+      "title": "domain-architecture-pilot.spec.ts",
+      "file": "domain-architecture-pilot.spec.ts",
       "column": 0,
       "line": 0,
       "specs": [],
       "suites": [
         {
-          "title": "SUEA Safety automated audit agent",
-          "file": "safety-agent.spec.ts",
-          "line": 121,
+          "title": "domain architecture pilot routes",
+          "file": "domain-architecture-pilot.spec.ts",
+          "line": 12,
           "column": 6,
           "specs": [
             {
-              "title": "dashboard does not expose the retired hardcoded KPI snapshot",
+              "title": "admin points page still renders after domain extraction",
               "ok": true,
               "tags": [],
               "tests": [
@@ -121,12 +123,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 718,
+                      "duration": 1856,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-06-22T06:38:14.194Z",
+                      "startTime": "2026-06-27T15:17:53.528Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -134,13 +136,13 @@
                   "status": "expected"
                 }
               ],
-              "id": "267b93de8bbc5d8e035f-c6b2db57be4fa5985d49",
-              "file": "safety-agent.spec.ts",
-              "line": 122,
+              "id": "75032f0f41b1e70e2504-861972e13284b512c7d9",
+              "file": "domain-architecture-pilot.spec.ts",
+              "line": 13,
               "column": 3
             },
             {
-              "title": "walks menus, buttons, network, console, and image upload controls",
+              "title": "admin users page still renders after domain extraction",
               "ok": true,
               "tags": [],
               "tests": [
@@ -155,12 +157,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 10425,
+                      "duration": 1316,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-06-22T06:38:15.614Z",
+                      "startTime": "2026-06-27T15:17:55.672Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -168,77 +170,9 @@
                   "status": "expected"
                 }
               ],
-              "id": "267b93de8bbc5d8e035f-6745001d76da04b8977c",
-              "file": "safety-agent.spec.ts",
-              "line": 128,
-              "column": 3
-            },
-            {
-              "title": "dashboard does not expose the retired hardcoded KPI snapshot",
-              "ok": true,
-              "tags": [],
-              "tests": [
-                {
-                  "timeout": 90000,
-                  "annotations": [],
-                  "expectedStatus": "passed",
-                  "projectId": "mobile-chrome",
-                  "projectName": "mobile-chrome",
-                  "results": [
-                    {
-                      "workerIndex": 1,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 420,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-06-22T06:38:26.575Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
-                }
-              ],
-              "id": "267b93de8bbc5d8e035f-267676d81ab680cf1a35",
-              "file": "safety-agent.spec.ts",
-              "line": 122,
-              "column": 3
-            },
-            {
-              "title": "walks menus, buttons, network, console, and image upload controls",
-              "ok": true,
-              "tags": [],
-              "tests": [
-                {
-                  "timeout": 90000,
-                  "annotations": [],
-                  "expectedStatus": "passed",
-                  "projectId": "mobile-chrome",
-                  "projectName": "mobile-chrome",
-                  "results": [
-                    {
-                      "workerIndex": 1,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 10854,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-06-22T06:38:27.409Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
-                }
-              ],
-              "id": "267b93de8bbc5d8e035f-26022c92e4233d55d293",
-              "file": "safety-agent.spec.ts",
-              "line": 128,
+              "id": "75032f0f41b1e70e2504-21dab0caeb8f461747fe",
+              "file": "domain-architecture-pilot.spec.ts",
+              "line": 18,
               "column": 3
             }
           ]
@@ -248,9 +182,9 @@
   ],
   "errors": [],
   "stats": {
-    "startTime": "2026-06-22T06:38:12.815Z",
-    "duration": 25625.165,
-    "expected": 4,
+    "startTime": "2026-06-27T15:17:52.207Z",
+    "duration": 4851.63,
+    "expected": 2,
     "skipped": 0,
     "unexpected": 0,
     "flaky": 0
