@@ -2171,6 +2171,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
                   : post
               )
             );
+            await refreshInboxNotifications();
             return;
           }
 
@@ -2181,7 +2182,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
           }
         });
     }
-  }, [getLinkedFeedEvent, loadPostComments, safetyCultureEvent]);
+  }, [getLinkedFeedEvent, loadPostComments, refreshInboxNotifications, safetyCultureEvent]);
 
   const fetchComments = useCallback(async (postId: number) => {
     if (demoModeRef.current) {

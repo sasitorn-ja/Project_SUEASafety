@@ -8,6 +8,8 @@ import { apiFetch } from "@/lib/api-client";
 import { isLocalDemoLoginHost } from "@/lib/session-user";
 import { cn } from "@/lib/utils";
 import { Card } from "@/components/ui/card";
+import { Dialog } from "@/components/ui/dialog";
+import { AppDialogBody, AppDialogContent, AppDialogDescription, AppDialogSectionHeader, AppDialogTitle } from "@/components/ui/app-dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   Bar,
@@ -24,6 +26,7 @@ import {
   CalendarDays,
   Check,
   CheckCircle2,
+  ChevronLeft,
   ChevronRight,
   Gift,
   ShieldCheck,
@@ -33,8 +36,6 @@ import {
   Zap,
 } from "lucide-react";
 
-const HERO_MASCOT = "/images/mascots/scenes/wangjai-dashboard-hero-v2.png";
-const MOBILE_HERO_MASCOT = "/images/mascots/scenes/wangjai-mobile-hero-thumbsup.png";
 const ACTIVITY_MASCOT = "/images/mascots/scenes/wangjai-level-jump.png";
 const SAFETY_AWARENESS_ICON = "/images/dashboard/safety-awareness-icon.png";
 const HERO_BG = "/images/heroes/Home01.png";
@@ -148,6 +149,31 @@ function previousBangkokDateKey(dateKey: string) {
   return bangkokDateKey(date);
 }
 
+function addBangkokDays(dateKey: string, amount: number) {
+  const date = new Date(`${dateKey}T12:00:00+07:00`);
+  date.setUTCDate(date.getUTCDate() + amount);
+  return bangkokDateKey(date);
+}
+
+function startOfBangkokMonth(dateKey: string) {
+  return `${dateKey.slice(0, 7)}-01`;
+}
+
+function shiftBangkokMonth(dateKey: string, amount: number) {
+  const [year, month] = dateKey.slice(0, 7).split("-").map(Number);
+  const shifted = new Date(Date.UTC(year, month - 1 + amount, 1));
+  return `${shifted.getUTCFullYear()}-${String(shifted.getUTCMonth() + 1).padStart(2, "0")}-01`;
+}
+
+function formatThaiMonthYear(dateKey: string) {
+  const date = new Date(`${startOfBangkokMonth(dateKey)}T00:00:00+07:00`);
+  return new Intl.DateTimeFormat("th-TH", {
+    timeZone: "Asia/Bangkok",
+    month: "long",
+    year: "numeric",
+  }).format(date);
+}
+
 function activityBonusLabel(event: { points: number; bonusMode: string; multiplier: number; fixedPoints: number }) {
   if (event.bonusMode === "multiplier") return `x${event.multiplier}`;
   if (event.fixedPoints > 0) return `+${event.fixedPoints} คะแนน`;
@@ -169,6 +195,8 @@ export default function SafePlusDashboard() {
   const currentYear = new Date().getFullYear();
   const [effortYear, setEffortYear] = useState(currentYear);
   const [effortChartData, setEffortChartData] = useState<Array<{ month: string; linewalk: number; contact: number }>>([]);
+  const [awarenessUserStartDate, setAwarenessUserStartDate] = useState<string | null>(null);
+  const [awarenessCalendarMode, setAwarenessCalendarMode] = useState<"done" | "missed" | null>(null);
 
   const activeEvents = useMemo(
     () => feedEvents.filter((event) => event.published && event.status === "open"),
@@ -182,6 +210,8 @@ export default function SafePlusDashboard() {
   const [activeHeroIndex, setActiveHeroIndex] = useState(0);
 
   const [pointTransactions, setPointTransactions] = useState<Array<{ amount: number; occurredAt: string }>>([]);
+  const effectiveAwarenessStartDate = awarenessUserStartDate || awarenessStartDate;
+  const [awarenessCalendarMonth, setAwarenessCalendarMonth] = useState(startOfBangkokMonth(effectiveAwarenessStartDate));
 
   useEffect(() => {
     try {
@@ -213,6 +243,31 @@ export default function SafePlusDashboard() {
       });
     return () => { cancelled = true; };
   }, [currentUserPoints]);
+
+  useEffect(() => {
+    let cancelled = false;
+    void apiFetch<{ user?: { created_at?: string | null; createdAt?: string | null } }>("/api/users/me")
+      .then((result) => {
+        if (cancelled || !result.ok) return;
+        const rawCreatedAt = result.data?.user?.created_at || result.data?.user?.createdAt;
+        if (!rawCreatedAt) return;
+        const createdDateKey = bangkokDateKey(new Date(String(rawCreatedAt)));
+        if (!createdDateKey || Number.isNaN(new Date(String(rawCreatedAt)).getTime())) return;
+        setAwarenessUserStartDate(createdDateKey);
+      })
+      .catch(() => null);
+    return () => { cancelled = true; };
+  }, []);
+
+  useEffect(() => {
+    setAwarenessCalendarMonth((current) => {
+      const minMonth = startOfBangkokMonth(effectiveAwarenessStartDate);
+      const maxMonth = startOfBangkokMonth(bangkokDateKey(new Date()));
+      if (current < minMonth) return minMonth;
+      if (current > maxMonth) return maxMonth;
+      return current;
+    });
+  }, [effectiveAwarenessStartDate]);
 
   useEffect(() => {
     const THAI_MONTHS = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.ค.", "มิ.ย.", "ก.ค.", "ส.ค.", "ก.ย.", "ต.ค.", "พ.ย.", "ธ.ค."];
@@ -291,7 +346,7 @@ export default function SafePlusDashboard() {
       date.setDate(now.getDate() + (index - 5));
       const dateKey = bangkokDateKey(date);
       const bkDate = new Date(`${dateKey}T00:00:00+07:00`);
-      const required = ![0, 6].includes(bkDate.getDay()) && !holidayDates.has(dateKey) && dateKey >= awarenessStartDate;
+      const required = ![0, 6].includes(bkDate.getDay()) && !holidayDates.has(dateKey) && dateKey >= effectiveAwarenessStartDate;
       const completion = historyByDate.get(dateKey) || null;
       const isFuture = dateKey > today;
       return {
@@ -315,7 +370,7 @@ export default function SafePlusDashboard() {
     if (!historyByDate.has(today)) {
       streakDate = previousBangkokDateKey(streakDate);
     }
-    while (streakDate >= awarenessStartDate) {
+    while (streakDate >= effectiveAwarenessStartDate) {
       const date = new Date(`${streakDate}T00:00:00+07:00`);
       const required = ![0, 6].includes(date.getDay()) && !holidayDates.has(streakDate);
       if (required) {
@@ -325,7 +380,7 @@ export default function SafePlusDashboard() {
       streakDate = previousBangkokDateKey(streakDate);
     }
     return { days, done, missed, completionRate, latest, streak };
-  }, [awarenessHistory, awarenessHolidays, awarenessStartDate]);
+  }, [awarenessHistory, awarenessHolidays, effectiveAwarenessStartDate]);
 
   const todayKey = bangkokDateKey(new Date());
   const doneToday = awarenessHistory.some((item) => item.date === todayKey);
@@ -337,6 +392,44 @@ export default function SafePlusDashboard() {
   const latestQuestions = (dashboardData.latest?.questions ?? []).filter((q) => q.text?.trim());
   const latestHasWrongAnswer = latestQuestions.some((q) => !q.correct);
   const latestCorrectCount = latestQuestions.filter((q) => q.correct).length;
+  const awarenessCalendarTodayKey = bangkokDateKey(new Date());
+  const awarenessCalendarMinMonth = startOfBangkokMonth(effectiveAwarenessStartDate);
+  const awarenessCalendarMaxMonth = startOfBangkokMonth(awarenessCalendarTodayKey);
+
+  const awarenessCalendarDays = useMemo(() => {
+    const holidayDates = new Set(awarenessHolidays.map((item) => item.date));
+    const historyByDate = new Map(awarenessHistory.map((item) => [item.date, item]));
+    const monthStart = startOfBangkokMonth(awarenessCalendarMonth);
+    const monthStartDate = new Date(`${monthStart}T00:00:00+07:00`);
+    const monthStartWeekday = monthStartDate.getDay();
+    const firstGridDateKey = addBangkokDays(monthStart, -monthStartWeekday);
+
+    return Array.from({ length: 42 }, (_, index) => {
+      const dateKey = addBangkokDays(firstGridDateKey, index);
+      const date = new Date(`${dateKey}T00:00:00+07:00`);
+      const required = ![0, 6].includes(date.getDay()) && !holidayDates.has(dateKey) && dateKey >= effectiveAwarenessStartDate && dateKey <= awarenessCalendarTodayKey;
+      const completion = historyByDate.get(dateKey) || null;
+      const isCurrentMonth = dateKey.slice(0, 7) === awarenessCalendarMonth.slice(0, 7);
+      const isFuture = dateKey > awarenessCalendarTodayKey;
+      const isDone = Boolean(completion);
+      const isMissed = required && !completion;
+      return {
+        dateKey,
+        day: date.getDate(),
+        isCurrentMonth,
+        isFuture,
+        required,
+        isDone,
+        isMissed,
+        isToday: dateKey === awarenessCalendarTodayKey,
+      };
+    });
+  }, [awarenessCalendarMaxMonth, awarenessCalendarMonth, awarenessCalendarTodayKey, awarenessHistory, awarenessHolidays, effectiveAwarenessStartDate]);
+
+  const openAwarenessCalendar = (mode: "done" | "missed") => {
+    setAwarenessCalendarMode(mode);
+    setAwarenessCalendarMonth(awarenessCalendarMaxMonth);
+  };
 
   const weeklyPoints = useMemo(() => {
     const cutoff = Date.now() - 7 * 24 * 60 * 60 * 1000;
@@ -442,17 +535,6 @@ export default function SafePlusDashboard() {
             </div>
           </div>
 
-          {/* mascot ตำแหน่งเดิม */}
-          <Image
-            src={HERO_MASCOT}
-            alt="น้องวางใจ"
-            width={1122}
-            height={1402}
-            priority
-            quality={100}
-            sizes="(min-width: 1600px) 380px, (min-width: 1024px) 27vw, 0px"
-            className="home-hero-mascot pointer-events-none h-auto max-h-[95%] w-[clamp(240px,27vw,380px)] shrink-0 translate-y-[7%] self-end object-contain object-bottom filter-[drop-shadow(0_12px_14px_rgba(4,37,86,.18))]"
-          />
         </div>
 
         {/* mobile layout — activity images เป็น hero background slideshow */}
@@ -504,18 +586,6 @@ export default function SafePlusDashboard() {
               <Gift size={14} />แลกรางวัล
             </Link>
           </div>
-
-          {/* mascot — fixed overlay */}
-          <Image
-            src={MOBILE_HERO_MASCOT}
-            alt="น้องวางใจ"
-            width={1024}
-            height={1536}
-            priority
-            quality={100}
-            sizes="(max-width: 480px) 48vw, (max-width: 1023px) 32vw, 0px"
-            className="pointer-events-none absolute right-[-2%] bottom-0 z-[3] h-[clamp(230px,42vw,340px)] w-auto max-w-[48%] translate-y-[6%] object-contain object-bottom [filter:drop-shadow(0_10px_12px_rgba(0,20,55,.28))]"
-          />
 
           {/* dots — fixed overlay */}
           {heroBannerSlides.length > 1 && (
@@ -625,10 +695,12 @@ export default function SafePlusDashboard() {
                 { value: String(dashboardData.done), label: "ทำแล้ว", danger: false },
                 { value: String(dashboardData.missed), label: "ไม่ได้ทำ", danger: true },
               ] as const).map(({ value, label, danger }) => (
-                <div
+                <button
                   key={label}
+                  type="button"
+                  onClick={() => openAwarenessCalendar(danger ? "missed" : "done")}
                   className={cn(
-                    "flex min-h-[48px] flex-col items-center justify-center rounded-[14px] border px-2.5 text-center shadow-[inset_0_1px_0_rgba(255,255,255,.65)] sm:min-h-[50px] sm:rounded-[15px] sm:px-3",
+                    "flex min-h-[48px] flex-col items-center justify-center rounded-[14px] border px-2.5 text-center shadow-[inset_0_1px_0_rgba(255,255,255,.65)] transition-transform hover:-translate-y-[1px] sm:min-h-[50px] sm:rounded-[15px] sm:px-3",
                     danger
                       ? "border-[#ffc7c2] bg-[#fff3f1] text-[#da3127]"
                       : "border-[#c5dcf8] bg-[#f3f8ff] text-[#0b3572]",
@@ -636,7 +708,7 @@ export default function SafePlusDashboard() {
                 >
                   <strong className="text-[17px] font-black leading-none sm:text-[18px]">{value}</strong>
                   <span className={cn("mt-0.5 text-[8.5px] font-extrabold sm:text-[9px]", danger ? "text-[#da3127]/85" : "text-[#4a6fa5]")}>{label}</span>
-                </div>
+                </button>
               ))}
             </div>
           </div>
@@ -966,6 +1038,93 @@ export default function SafePlusDashboard() {
       </Card>
 
       </div>
+
+      <Dialog open={awarenessCalendarMode !== null} onOpenChange={(open) => !open && setAwarenessCalendarMode(null)}>
+        <AppDialogContent size="md" className="max-w-[560px]">
+          <AppDialogSectionHeader className="border-[#d7e6f6] bg-[linear-gradient(135deg,#ffffff_0%,#f4f9ff_56%,#eaf4ff_100%)]">
+            <AppDialogTitle className="text-[#0b3572]">
+              {awarenessCalendarMode === "done" ? "ปฏิทินวันที่ทำ Safety Awareness แล้ว" : "ปฏิทินวันที่ไม่ได้ทำ Safety Awareness"}
+            </AppDialogTitle>
+            <AppDialogDescription>
+              ดูย้อนหลังได้ตั้งแต่วันเริ่มใช้งาน {formatThaiDate(effectiveAwarenessStartDate)}
+            </AppDialogDescription>
+          </AppDialogSectionHeader>
+
+          <AppDialogBody className="gap-3">
+            <div className="flex items-center justify-between gap-2">
+              <button
+                type="button"
+                onClick={() => setAwarenessCalendarMonth((current) => shiftBangkokMonth(current, -1))}
+                disabled={awarenessCalendarMonth <= awarenessCalendarMinMonth}
+                className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[#cfe0f2] bg-white text-[#0b82f0] disabled:cursor-not-allowed disabled:opacity-40"
+                aria-label="เดือนก่อนหน้า"
+              >
+                <ChevronLeft className="h-4 w-4" strokeWidth={2.6} />
+              </button>
+              <div className="text-center">
+                <div className="text-[16px] font-black text-[#0b3572]">{formatThaiMonthYear(awarenessCalendarMonth)}</div>
+                <div className="text-[11px] font-bold text-[#6c7f99]">แสดงตั้งแต่เริ่มใช้งานจนถึงปัจจุบัน</div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setAwarenessCalendarMonth((current) => shiftBangkokMonth(current, 1))}
+                disabled={awarenessCalendarMonth >= awarenessCalendarMaxMonth}
+                className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[#cfe0f2] bg-white text-[#0b82f0] disabled:cursor-not-allowed disabled:opacity-40"
+                aria-label="เดือนถัดไป"
+              >
+                <ChevronRight className="h-4 w-4" strokeWidth={2.6} />
+              </button>
+            </div>
+
+            <div className="grid grid-cols-7 gap-1.5 text-center">
+              {THAI_WEEKDAYS.map((weekday) => (
+                <div key={weekday} className="py-1 text-[11px] font-black text-[#6c7f99]">
+                  {weekday}
+                </div>
+              ))}
+              {awarenessCalendarDays.map((day) => {
+                const emphasized = awarenessCalendarMode === "done" ? day.isDone : day.isMissed;
+                return (
+                  <div
+                    key={day.dateKey}
+                    className={cn(
+                      "flex aspect-square items-center justify-center rounded-[12px] border text-[12px] font-black transition-colors",
+                      !day.isCurrentMonth && "opacity-35",
+                      day.isToday
+                        ? "border-[#0b82f0] bg-[#e8f4ff] text-[#0b3572]"
+                        : emphasized
+                          ? awarenessCalendarMode === "done"
+                            ? "border-[#7fd7a4] bg-[#ebfbf1] text-[#13814a]"
+                            : "border-[#ffc8c2] bg-[#fff3f1] text-[#c9352b]"
+                          : day.required
+                            ? "border-[#dbe9fa] bg-[#f8fbff] text-[#6c7f99]"
+                            : "border-[#edf2f8] bg-[#fafcff] text-[#b0bccd]"
+                    )}
+                    title={`${formatThaiDate(day.dateKey)}${day.isDone ? " · ทำแล้ว" : day.isMissed ? " · ไม่ได้ทำ" : day.required ? " · ต้องทำ" : " · ไม่นับ"}`}
+                  >
+                    {day.day}
+                  </div>
+                );
+              })}
+            </div>
+
+            <div className="flex flex-wrap gap-2 text-[11px] font-bold text-[#5d7599]">
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-[#ebfbf1] px-2.5 py-1 text-[#13814a]">
+                <span className="h-2 w-2 rounded-full bg-[#2fbf69]" />ทำแล้ว
+              </span>
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-[#fff3f1] px-2.5 py-1 text-[#c9352b]">
+                <span className="h-2 w-2 rounded-full bg-[#f26a5d]" />ไม่ได้ทำ
+              </span>
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-[#f8fbff] px-2.5 py-1 text-[#6c7f99]">
+                <span className="h-2 w-2 rounded-full bg-[#b8cde5]" />ต้องทำแต่ยังไม่เลือก filter นี้
+              </span>
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-[#fafcff] px-2.5 py-1 text-[#94a3b8]">
+                <span className="h-2 w-2 rounded-full bg-[#d9e3ef]" />วันไม่นับ
+              </span>
+            </div>
+          </AppDialogBody>
+        </AppDialogContent>
+      </Dialog>
     </div>
   );
 }

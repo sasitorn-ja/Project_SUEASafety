@@ -37,10 +37,15 @@ import { FullscreenImageViewer } from "@/components/safety-culture/fullscreen-im
 import { useAppTheme } from "@/providers/theme-provider";
 import styles from "./safety-culture-community.module.css";
 
+const POINT_UNIT = "Coin";
+
 function getPostComments(post: { comments: number | CommentType[] }): CommentType[] {
   if (Array.isArray(post.comments)) return post.comments;
   return [];
 }
+
+const ACTIVITY_CAROUSEL_INTERVAL_MS = 3200;
+const ACTIVITY_CAROUSEL_TRANSITION_CLASS = "duration-[320ms]";
 
 function getCommentCount(post: { comments: number | CommentType[] }) {
   return Array.isArray(post.comments) ? post.comments.length : post.comments || 0;
@@ -145,7 +150,7 @@ function TeamStandingsCard({ className, style }: { className?: string; style?: C
 
             <div className="flex-shrink-0 text-right">
               <p className="text-[14px] leading-none font-black text-[var(--foreground)]">{team.points.toLocaleString()}</p>
-              <p className="mt-0.5 text-[9px] font-bold text-[var(--brand-muted-text)]">คะแนน</p>
+              <p className="mt-0.5 text-[9px] font-bold text-[var(--brand-muted-text)]">{POINT_UNIT}</p>
             </div>
           </article>
         ))}
@@ -218,7 +223,7 @@ function PersonalRankingsCard({ className, style }: { className?: string; style?
 
             <div className="flex-shrink-0 text-right">
               <p className="text-[20px] leading-none font-black text-[var(--foreground)]">{user.points}</p>
-              <p className="mt-1 text-[10px] font-bold uppercase tracking-[0.12em] text-[var(--brand-muted-text)]">แต้ม</p>
+              <p className="mt-1 text-[10px] font-bold uppercase tracking-[0.12em] text-[var(--brand-muted-text)]">{POINT_UNIT}</p>
             </div>
           </article>
         ))}
@@ -602,7 +607,7 @@ export default function Page() {
     const timer = window.setInterval(() => {
       setMobileActivityStartIndex((current) => (current >= maxMobileActivityStartIndex ? 0 : current + 1));
       setDesktopActivityStartIndex((current) => (current >= maxDesktopActivityStartIndex ? 0 : current + 1));
-    }, 4600);
+    }, ACTIVITY_CAROUSEL_INTERVAL_MS);
 
     return () => window.clearInterval(timer);
   }, [isActivityCarouselPaused, maxDesktopActivityStartIndex, maxMobileActivityStartIndex, visibleFeedEvents.length]);
@@ -690,7 +695,7 @@ export default function Page() {
 
               <div className="overflow-hidden rounded-[18px] bg-[#DFF1FF]">
                 <div
-                  className="flex transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] will-change-transform"
+                  className={cn("flex transition-transform ease-[cubic-bezier(0.22,1,0.36,1)] will-change-transform", ACTIVITY_CAROUSEL_TRANSITION_CLASS)}
                   style={{ transform: `translateX(-${mobileActivityStartIndex * 100}%)` }}
                 >
                   {visibleFeedEvents.map((activity) => {
@@ -722,7 +727,7 @@ export default function Page() {
                         <h3 className="line-clamp-2 text-[24px] font-black leading-tight text-white [text-shadow:0_2px_10px_rgba(0,0,0,.45)]">{activity.title}</h3>
                         <p className="mt-1.5 line-clamp-2 text-[12px] font-bold leading-relaxed text-white/88">{getActivityCardCopy(activity)}</p>
                         <div className="mt-3 flex flex-wrap items-center gap-2">
-                          <span className="rounded-full bg-[#18B989] px-3 py-1.5 text-[12px] font-black text-white">+{activity.points} คะแนน</span>
+                          <span className="rounded-full bg-[#18B989] px-3 py-1.5 text-[12px] font-black text-white">+{activity.points} {POINT_UNIT}</span>
                           <Button
                             type="button"
                             variant="secondary"
@@ -777,7 +782,7 @@ export default function Page() {
 
               <div className="overflow-hidden rounded-[18px] bg-[#DFF1FF]">
                 <div
-                  className="flex transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] will-change-transform"
+                  className={cn("flex transition-transform ease-[cubic-bezier(0.22,1,0.36,1)] will-change-transform", ACTIVITY_CAROUSEL_TRANSITION_CLASS)}
                   style={{ transform: `translateX(-${desktopActivityStartIndex * 100}%)` }}
                 >
                   {visibleFeedEvents.map((activity) => {
@@ -808,7 +813,7 @@ export default function Page() {
                         <h3 className="line-clamp-2 text-[34px] font-black leading-[1.05] text-white [text-shadow:0_2px_12px_rgba(0,0,0,.45)] xl:text-[42px]">{activity.title}</h3>
                         <p className="mt-3 line-clamp-2 text-[15px] font-bold leading-relaxed text-white/88">{getActivityCardCopy(activity)}</p>
                         <div className="mt-5 flex flex-wrap items-center gap-3">
-                          <span className="rounded-full bg-[#18B989] px-4 py-2 text-[15px] font-black text-white">+{activity.points} คะแนน</span>
+                          <span className="rounded-full bg-[#18B989] px-4 py-2 text-[15px] font-black text-white">+{activity.points} {POINT_UNIT}</span>
                           <Button
                             type="button"
                             variant="secondary"
@@ -1072,7 +1077,7 @@ export default function Page() {
                     </Link>
                   </div>
                     <span className="w-fit rounded-full bg-[#e9fff4] px-2 py-0.5 text-[12px] font-black tracking-normal text-[#3D9A6A]">
-                      + {post.points} pts
+                      + {post.points} {POINT_UNIT}
                     </span>
                   </div>
 
@@ -1291,7 +1296,7 @@ export default function Page() {
                     {expandedPost.category}
                   </span>
                   <span className="w-fit rounded-full bg-[#e9fff4] px-2 py-0.5 text-[12px] font-black tracking-normal text-[#3D9A6A]">
-                    + {expandedPost.points} pts
+                    + {expandedPost.points} {POINT_UNIT}
                   </span>
                 </div>
 

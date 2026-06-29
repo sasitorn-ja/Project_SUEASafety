@@ -8,6 +8,8 @@ import { cn } from "@/lib/utils";
 import { useAppState } from "@/providers/app-providers";
 import { useAppTheme } from "@/providers/theme-provider";
 
+const POINT_UNIT = "Coin";
+
 const TOP_RANK_STYLES = [
   {
     badgeClassName:
@@ -143,7 +145,7 @@ export default function LeaderboardPage() {
                   {/* points */}
                   <div className="flex-shrink-0 text-right">
                     <p className="text-[16px] leading-none font-black text-[var(--foreground)] md:text-[20px]">{team.points.toLocaleString()}</p>
-                    <p className="mt-0.5 text-[9px] font-bold uppercase tracking-[0.1em] text-[var(--brand-muted-text)]">คะแนน</p>
+                    <p className="mt-0.5 text-[9px] font-bold uppercase tracking-[0.1em] text-[var(--brand-muted-text)]">{POINT_UNIT}</p>
                   </div>
                 </article>
               ))}
@@ -207,7 +209,7 @@ export default function LeaderboardPage() {
 
                     <div className="flex-shrink-0 text-right">
                       <p className="text-[16px] leading-none font-black text-[var(--foreground)] md:text-[20px]">{user.points}</p>
-                      <p className="mt-0.5 text-[9px] font-bold uppercase tracking-[0.1em] text-[var(--brand-muted-text)]">คะแนน</p>
+                      <p className="mt-0.5 text-[9px] font-bold uppercase tracking-[0.1em] text-[var(--brand-muted-text)]">{POINT_UNIT}</p>
                     </div>
                   </article>
                 );

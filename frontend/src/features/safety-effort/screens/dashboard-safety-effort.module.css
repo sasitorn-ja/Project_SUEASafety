@@ -5,7 +5,7 @@
 @media (min-width: 1024px) {
   .dashboard:global(.db-container) {
     padding: 35px 24px 26px;
-    background: linear-gradient(180deg, #eef5ff 0, #f7fbff 245px, #f4f8fc 100%);
+    background: transparent;
   }
 
   .dashboard :global(.db-top-layout) {
