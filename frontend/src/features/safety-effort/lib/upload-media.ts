@@ -11,6 +11,12 @@ const TARGET_UPLOAD_BYTES = Math.floor(2.5 * 1024 * 1024);
 const MAX_IMAGE_DIMENSION = 1600;
 const DIRECT_UPLOAD_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "image/gif"]);
 
+function normalizeNumericOwnerId(value?: string | null) {
+  if (!value) return null;
+  const trimmed = String(value).trim();
+  return /^\d+$/.test(trimmed) ? trimmed : null;
+}
+
 function canUploadDirectly(file: File) {
   return DIRECT_UPLOAD_TYPES.has(file.type) && file.size <= TARGET_UPLOAD_BYTES;
 }
@@ -99,7 +105,8 @@ export async function uploadMedia(
   formData.set("module", options.module);
   formData.set("ownerType", options.ownerType);
   formData.set("linkType", options.linkType);
-  if (options.ownerId) formData.set("ownerId", options.ownerId);
+  const ownerId = normalizeNumericOwnerId(options.ownerId);
+  if (ownerId) formData.set("ownerId", ownerId);
 
   const response = await fetch("/api/uploads", {
     method: "POST",

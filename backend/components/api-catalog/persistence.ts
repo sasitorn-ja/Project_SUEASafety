@@ -406,6 +406,11 @@ async function updateCultureEvent(id: string, input: JsonInput) {
 }
 
 async function createMediaAsset(input: JsonInput, userId?: string | null) {
+  const normalizedOwnerId = typeof input.ownerId === "string" || typeof input.ownerId === "number"
+    ? /^\d+$/.test(String(input.ownerId).trim())
+      ? String(input.ownerId).trim()
+      : null
+    : null;
   const id = await withTransaction(async (connection) => {
     const [result] = await connection.execute<ResultSetHeader>(
       `INSERT INTO media_assets
@@ -421,7 +426,7 @@ async function createMediaAsset(input: JsonInput, userId?: string | null) {
         status: input.status || "READY",
         module: input.module || null,
         ownerType: input.ownerType || null,
-        ownerId: input.ownerId || null,
+        ownerId: normalizedOwnerId,
         linkType: input.linkType || null,
         uploadMode: input.uploadMode || "server",
         provider: input.provider || "local",
