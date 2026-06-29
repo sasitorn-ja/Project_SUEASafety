@@ -1,9 +1,10 @@
 // @ts-nocheck
 import { useEffect, useState } from "react";
-import { Eye, Trash2, Search, X, ClipboardList } from "lucide-react";
+import { Eye, Search, X, ClipboardList, Download } from "lucide-react";
 import { Combobox } from "@/components/ui/combobox";
 import { SafetyCultureHero } from "@/components/safety-culture/safety-culture-hero";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
+import * as XLSX from "xlsx";
 import { Button } from "@/components/ui/button";
 import { normalizeEvidenceMediaList } from "@/features/safety-effort/lib/evidence-media";
 
@@ -42,6 +43,42 @@ const inputStyle = {
   outline: "none",
 };
 
+const buttonPrimaryStyle = {
+  height: 44,
+  borderRadius: 14,
+  border: "none",
+  background: "linear-gradient(135deg, var(--brand-accent-strong) 0%, var(--brand-accent) 100%)",
+  color: "#fff",
+  padding: "0 18px",
+  fontWeight: 800,
+  fontFamily: "inherit",
+  cursor: "pointer",
+  boxShadow: "0 10px 24px var(--brand-shadow)",
+};
+
+const buttonGhostStyle = {
+  height: 44,
+  borderRadius: 14,
+  border: `1px solid ${T.lineStrong}`,
+  background: "#fff",
+  color: T.ink,
+  padding: "0 16px",
+  fontWeight: 800,
+  fontFamily: "inherit",
+  cursor: "pointer",
+};
+
+const buttonDangerStyle = {
+  height: 44,
+  borderRadius: 14,
+  border: "none",
+  background: "#fbe9e4",
+  color: T.danger,
+  padding: "0 16px",
+  fontWeight: 800,
+  fontFamily: "inherit",
+  cursor: "pointer",
+};
 
 const LOCATION_TYPE_LABELS = {
   factory: "โรงงาน",
@@ -56,11 +93,71 @@ function statusMeta(status) {
   return { label: "N/A", color: "var(--c-6f665e)", bg: "#fbfbfa", border: "rgba(31,26,23,0.10)" };
 }
 
+const MOCKUP_SUBMISSIONS = [
+  {
+    id: "mock-1",
+    timestamp: "2026-06-26T10:30:00.000Z",
+    activityId: "line-walk",
+    activityLabel: "Line Walk",
+    locType: "factory",
+    locationName: "โรงบดปูนซีเมนต์คาร์บอนต่ำ",
+    locationTag: "บดที่ 2",
+    date: "2026-06-26",
+    isSafetyContact: false,
+    safetyContactText: "",
+    answeredItems: [
+      { id: "q1", title: "การใส่แว่นตานิรภัยและหมวกเซฟตี้", status: "safe" },
+      { id: "q2", title: "ทางหนีไฟไม่มีสิ่งกีดขวาง", status: "safe" },
+      { id: "q3", title: "ปลั๊กไฟและสายไฟอยู่ในสภาพสมบูรณ์", status: "unsafe_condition", note: "พบปลั๊กพ่วงสายชำรุด 1 จุด" },
+      { id: "q4", title: "การติดป้ายเตือนอันตราย", status: "safe" }
+    ],
+    actorName: "นายมานพ ปลอดภัย",
+    actorEmail: "manop.p@cpac.co.th",
+    actorCode: "0012345",
+  },
+  {
+    id: "mock-2",
+    timestamp: "2026-06-25T14:15:00.000Z",
+    activityId: "safety-contact",
+    activityLabel: "Safety Contact",
+    locType: "office",
+    locationName: "อาคาร 1 สำนักงานใหญ่",
+    locationTag: "ชั้น 3 ฝ่ายพัฒนาซอฟต์แวร์",
+    date: "2026-06-25",
+    isSafetyContact: true,
+    safetyContactText: "พูดคุยรณรงค์กับทีมงานเกี่ยวกับความเป็นระเบียบเรียบร้อยและการจัดเก็บสายไฟใต้โต๊ะทำงานเพื่อป้องกันความร้อนสะสมและการสะดุดล้ม ได้รับความร่วมมือเป็นอย่างดี",
+    answeredItems: [],
+    actorName: "นางสาวศิริลักษณ์ วิริยะ",
+    actorEmail: "sirilak.w@cpac.co.th",
+    actorCode: "0025678",
+  },
+  {
+    id: "mock-3",
+    timestamp: "2026-06-24T09:00:00.000Z",
+    activityId: "line-walk",
+    activityLabel: "Line Walk",
+    locType: "site",
+    locationName: "โครงการก่อสร้างทางด่วนข้ามแยก",
+    locationTag: "ตอม่อที่ 12-14",
+    date: "2026-06-24",
+    isSafetyContact: false,
+    safetyContactText: "",
+    answeredItems: [
+      { id: "q1", title: "นั่งร้านมีความแข็งแรงและปลอดภัย", status: "safe" },
+      { id: "q2", title: "คนงานทุกคนผูกสายเข็มขัดนิรภัยขณะทำงานบนที่สูง", status: "safe" },
+      { id: "q3", title: "มีแนวกั้นกันตกและป้ายเตือนการทำงานด้านล่าง", status: "safe" }
+    ],
+    actorName: "นายวิศรุต การช่าง",
+    actorEmail: "witsarut.k@cpac.co.th",
+    actorCode: "0039876",
+  }
+];
+
 export default function SafetyAdminReportHistory() {
   const [width, setWidth] = useState(typeof window !== "undefined" ? window.innerWidth : 1024);
   const isMobile = width < 768;
 
-  const [submissions, setSubmissions] = useState([]);
+  const [submissions, setSubmissions] = useState(MOCKUP_SUBMISSIONS);
   const [searchQuery, setSearchQuery] = useState("");
   const [activityFilter, setActivityFilter] = useState("all");
   const [locTypeFilter, setLocTypeFilter] = useState("all");
@@ -118,7 +215,7 @@ export default function SafetyAdminReportHistory() {
           const items = payload?.data?.items;
           if (Array.isArray(items) && !cancelled) {
             // API returns name/email/pms; this screen renders actorName/actorEmail/actorCode.
-            setSubmissions(items.map((it) => ({
+            const apiItems = items.map((it) => ({
               ...it,
               answeredItems: Array.isArray(it.answeredItems)
                 ? it.answeredItems.map((item) => ({
@@ -133,25 +230,59 @@ export default function SafetyAdminReportHistory() {
               actorName: it.actorName || it.name || "",
               actorEmail: it.actorEmail || it.email || "",
               actorCode: it.actorCode || it.pms || "",
-            })));
+            }));
+            setSubmissions([...apiItems, ...MOCKUP_SUBMISSIONS]);
           }
         }
-      } catch { if (!cancelled) setSubmissions([]); }
+      } catch { if (!cancelled) setSubmissions(MOCKUP_SUBMISSIONS); }
     })();
     return () => { cancelled = true; };
   }, []);
 
-  const handleDeleteSubmission = async (id) => {
-    const response = await fetch(`/api/safety-effort/submissions/${id}`, {
-      method: "DELETE",
-      credentials: "include",
-    });
-    const payload = await response.json().catch(() => null);
-    if (!response.ok || !payload?.ok || !payload.data?.deleted) {
-      window.alert("ลบรายงานไม่สำเร็จ");
+  const handleExportExcel = () => {
+    if (filtered.length === 0) {
+      window.alert("ไม่มีข้อมูลที่จะส่งออก");
       return;
     }
-    setSubmissions((current) => current.filter((submission) => String(submission.id) !== String(id)));
+
+    const rows = filtered.map((item) => {
+      const dateObj = new Date(item.timestamp);
+      const displayDate = item.date;
+      const displayTime = dateObj.toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit" }) + " น.";
+      const isContact = item.isSafetyContact;
+
+      let summaryText = "";
+      if (isContact) {
+        summaryText = item.safetyContactText;
+      } else {
+        const counts = item.answeredItems.reduce((acc, current) => {
+          if (current.status === "safe") acc.safe += 1;
+          else if (current.status === "unsafe_condition") acc.unsafeCond += 1;
+          else if (current.status === "unsafe_action") acc.unsafeAct += 1;
+          return acc;
+        }, { safe: 0, unsafeCond: 0, unsafeAct: 0 });
+        
+        summaryText = `ปลอดภัย: ${counts.safe} | ไม่ปลอดภัย: ${counts.unsafeCond + counts.unsafeAct}`;
+      }
+
+      return {
+        "วันที่ทำรายการ": displayDate,
+        "เวลา": displayTime,
+        "กิจกรรม": item.activityLabel,
+        "หมวดหมู่สถานที่": LOCATION_TYPE_LABELS[item.locType] || item.locType,
+        "สถานที่ตรวจ": item.locationName,
+        "รหัสสถานที่/Zone": item.locationTag,
+        "รหัสผู้ตรวจ": item.actorCode || "",
+        "ผู้ทำกิจกรรม": item.actorName || "",
+        "อีเมล": item.actorEmail || "",
+        "ผลประเมิน/รายละเอียด": summaryText
+      };
+    });
+
+    const worksheet = XLSX.utils.json_to_sheet(rows);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Report History");
+    XLSX.writeFile(workbook, `safety-report-history-${new Date().toISOString().slice(0, 10)}.xlsx`);
   };
 
   const filtered = submissions.filter(item => {
@@ -272,22 +403,22 @@ export default function SafetyAdminReportHistory() {
             {submissions.length > 0 && (
               <Button
                 type="button"
-                variant="destructive"
-                size="lg"
-                onClick={async () => {
-                  if (window.confirm("คุณต้องการล้างประวัติการส่งรายงานทั้งหมดใช่หรือไม่?")) {
-                    const results = await Promise.all(submissions.map((submission) =>
-                      fetch(`/api/safety-effort/submissions/${submission.id}`, {
-                        method: "DELETE",
-                        credentials: "include",
-                      })
-                    ));
-                    if (results.every((result) => result.ok)) setSubmissions([]);
-                    else window.alert("ล้างข้อมูลได้ไม่ครบ กรุณารีเฟรชและลองใหม่");
-                  }
+                onClick={handleExportExcel}
+                style={{
+                  ...buttonPrimaryStyle,
+                  background: "linear-gradient(135deg, #10b981 0%, #059669 100%)",
+                  boxShadow: "0 4px 12px rgba(16, 185, 129, 0.2)",
+                  height: 38,
+                  borderRadius: 10,
+                  fontSize: 12.5,
+                  padding: "0 14px",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 6
                 }}
               >
-                ล้างข้อมูลทั้งหมด
+                <Download size={14} />
+                <span>Export Excel</span>
               </Button>
             )}
           </div>
@@ -392,19 +523,6 @@ export default function SafetyAdminReportHistory() {
                               >
                                 <Eye size={13} />
                               </Button>
-                              <Button
-                                type="button"
-                                variant="destructive"
-                                size="icon-xs"
-                                onClick={() => {
-                                  if (window.confirm("คุณต้องการลบรายงานฉบับนี้ใช่หรือไม่?")) {
-                                    handleDeleteSubmission(item.id);
-                                  }
-                                }}
-                                title="ลบ"
-                              >
-                                <Trash2 size={13} />
-                              </Button>
                             </div>
                           </td>
                         </tr>
@@ -482,19 +600,6 @@ export default function SafetyAdminReportHistory() {
                         >
                           <Eye size={12} />
                           <span>ดูรายละเอียด</span>
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="destructive"
-                          size="xs"
-                          onClick={() => {
-                            if (window.confirm("คุณต้องการลบรายงานฉบับนี้ใช่หรือไม่?")) {
-                              handleDeleteSubmission(item.id);
-                            }
-                          }}
-                        >
-                          <Trash2 size={12} />
-                          <span>ลบ</span>
                         </Button>
                       </div>
                     </div>

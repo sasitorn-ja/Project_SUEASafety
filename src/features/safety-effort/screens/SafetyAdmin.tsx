@@ -550,7 +550,7 @@ export default function SafetyAdmin() {
       setSelectedQuestionId(restored[selectedType][0]?.id || "");
       setLastSavedAt(new Date().toLocaleString("th-TH"));
     } catch {
-      window.alert("คืนค่าเริ่มต้นลง DB ไม่สำเร็จ กรุณาลองใหม่อีกครั้ง");
+      window.alert("Restore Default ลง DB ไม่สำเร็จ กรุณาลองใหม่อีกครั้ง");
     } finally {
       setSavingChecklists(false);
     }
@@ -694,7 +694,7 @@ export default function SafetyAdmin() {
                         cursor: !selectedQuestion ? "not-allowed" : "pointer",
                       }}
                     >
-                      คัดลอก
+                      Duplicate
                     </button>
                     <button type="button" onClick={handleAddQuestion} style={{ ...buttonPrimaryStyle, height: 32, padding: "0 12px", borderRadius: 8, fontSize: 12.5, boxShadow: "none" }}>
                       + เพิ่มข้อ
@@ -1217,7 +1217,7 @@ export default function SafetyAdmin() {
                         opacity: savingChecklists ? 0.6 : 1
                       }}
                     >
-                      คืนค่าเริ่มต้น
+                      Restore Default
                     </button>
                     <button
                       type="button"
@@ -1234,7 +1234,7 @@ export default function SafetyAdmin() {
                         opacity: savingChecklists ? 0.7 : 1
                       }}
                     >
-                      {savingChecklists ? "กำลังบันทึก..." : "บันทึก"}
+                      {savingChecklists ? "Saving..." : "Save"}
                     </button>
                   </div>
                 </div>
