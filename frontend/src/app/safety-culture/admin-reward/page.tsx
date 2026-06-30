@@ -1486,7 +1486,7 @@ export default function AdminRewardPage() {
             if (!open) setRedemptionSearch("");
           }}
         >
-          <AppDialogContent className="grid h-[min(88vh,860px)] w-[calc(100vw-16px)] grid-rows-[auto_minmax(0,1fr)] sm:w-[calc(100vw-32px)] sm:!max-w-[1040px]">
+          <AppDialogContent className="grid h-[min(84dvh,820px)] max-h-[calc(100dvh-24px)] w-[calc(100vw-16px)] grid-rows-[auto_minmax(0,1fr)] sm:w-[calc(100vw-32px)] sm:!max-w-[1040px]">
             <AppDialogSectionHeader className="px-5 pt-5 pb-4 sm:px-6">
               <AppDialogTitle className="flex items-center gap-3">
                 <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white text-[var(--brand-text)]">
@@ -1500,45 +1500,96 @@ export default function AdminRewardPage() {
             </AppDialogSectionHeader>
 
             <AppDialogBody className="min-h-0 overflow-y-auto px-4 py-4 sm:px-6 sm:py-5">
-              <div className="rounded-[18px] border border-[var(--border)] bg-[var(--brand-soft)] p-4">
-                <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between lg:gap-6">
-                  <div className="max-w-[520px] text-[13px] font-black leading-relaxed text-[var(--brand-text)]">
-                    ค้นหาชื่อผู้ใช้งานเพื่อดูว่าเคยแลก reward อะไร เวลาไหนบ้าง
+              <div className="rounded-[22px] border border-[#d5e8ff] bg-[linear-gradient(135deg,#f8fcff_0%,#edf6ff_45%,#e8f2ff_100%)] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.65)]">
+                <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
+                  <div className="min-w-0">
+                    <div className="inline-flex items-center gap-2 rounded-full border border-white/80 bg-white/70 px-3 py-1 text-[11px] font-black uppercase tracking-[0.08em] text-[#55739B]">
+                      <Sparkles className="h-3.5 w-3.5 text-[#0B82F0]" strokeWidth={2.4} />
+                      Reward Activity
+                    </div>
+                    <div className="mt-3 max-w-[620px] text-[13px] font-black leading-relaxed text-[var(--brand-text)] sm:text-[14px]">
+                      ตรวจสอบว่าใครแลกรางวัลอะไรไปบ้าง พร้อมดูจำนวน Coin ที่ใช้และช่วงเวลาที่มีการแลกในระบบ
+                    </div>
                   </div>
-                  <div className="relative w-full lg:max-w-[360px]">
-                    <Search className="pointer-events-none absolute top-1/2 left-4 h-4 w-4 -translate-y-1/2 text-[#8E8A81]" />
-                    <Input
-                      value={redemptionSearch}
-                      onChange={(event) => setRedemptionSearch(event.target.value)}
-                      placeholder="ค้นหาชื่อผู้แลกรางวัล"
-                      className="h-11 rounded-[14px] border-[var(--border)] bg-white pr-4 pl-10 text-[13px] font-bold"
-                    />
+
+                  <div className="grid w-full gap-3 sm:grid-cols-[minmax(0,1fr)_auto] xl:max-w-[560px]">
+                    <div className="relative">
+                      <Search className="pointer-events-none absolute top-1/2 left-4 h-4 w-4 -translate-y-1/2 text-[#8E8A81]" />
+                      <Input
+                        value={redemptionSearch}
+                        onChange={(event) => setRedemptionSearch(event.target.value)}
+                        placeholder="ค้นหาชื่อผู้แลกรางวัล"
+                        className="h-12 rounded-[16px] border-[#b8d8ff] bg-white/96 pr-4 pl-10 text-[13px] font-bold shadow-[0_10px_20px_rgba(53,168,255,0.08)]"
+                      />
+                    </div>
+                    <div className="flex items-center justify-between rounded-[16px] border border-white/80 bg-white/75 px-4 py-3 sm:min-w-[152px] sm:flex-col sm:items-start sm:justify-center">
+                      <div className="text-[11px] font-black uppercase tracking-[0.08em] text-[#7A97BC]">ผลลัพธ์</div>
+                      <div className="text-[22px] leading-none font-black text-[#0B2F6B]">{filteredRewardRedemptions.length}</div>
+                    </div>
                   </div>
                 </div>
               </div>
 
-              <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-3">
-                <div className="rounded-[18px] border border-[var(--border)] bg-white p-4">
-                  <div className="text-[12px] font-black text-[#8E8A81]">รายการที่แลกทั้งหมด</div>
-                  <div className="mt-2 text-[28px] font-black text-[#1A1A1A]">{rewardRedemptionSummary.totalRedeemed}</div>
-                </div>
-                <div className="rounded-[18px] border border-[var(--border)] bg-white p-4">
-                  <div className="text-[12px] font-black text-[#8E8A81]">ผู้แลกทั้งหมด</div>
-                  <div className="mt-2 text-[28px] font-black text-[#1A1A1A]">{rewardRedemptionSummary.uniqueRedeemers}</div>
-                </div>
-                <div className="rounded-[18px] border border-[var(--border)] bg-white p-4">
-                  <div className="text-[12px] font-black text-[#8E8A81]">Coin ที่ถูกใช้</div>
-                  <div className="mt-2 text-[28px] font-black text-[#1A1A1A]">{rewardRedemptionSummary.totalPointsSpent.toLocaleString()}</div>
-                </div>
+              <div className="mt-4 grid grid-cols-1 gap-3 lg:grid-cols-[repeat(3,minmax(0,1fr))]">
+                {[
+                  {
+                    label: "รายการที่แลกทั้งหมด",
+                    value: rewardRedemptionSummary.totalRedeemed,
+                    icon: <Gift className="h-4.5 w-4.5" strokeWidth={2.4} />,
+                    accent: "from-[#35A8FF]/16 via-[#EAF6FF] to-white",
+                  },
+                  {
+                    label: "ผู้แลกทั้งหมด",
+                    value: rewardRedemptionSummary.uniqueRedeemers,
+                    icon: <Users className="h-4.5 w-4.5" strokeWidth={2.4} />,
+                    accent: "from-[#8CE1AE]/20 via-[#F1FFF7] to-white",
+                  },
+                  {
+                    label: "Coin ที่ถูกใช้",
+                    value: rewardRedemptionSummary.totalPointsSpent.toLocaleString(),
+                    icon: <Ticket className="h-4.5 w-4.5" strokeWidth={2.4} />,
+                    accent: "from-[#FFE5A8]/30 via-[#FFF9EA] to-white",
+                  },
+                ].map((item) => (
+                  <div
+                    key={item.label}
+                    className={cn(
+                      "rounded-[20px] border border-[#dbe9f8] bg-[linear-gradient(135deg,var(--tw-gradient-stops))] p-4 shadow-[0_10px_22px_rgba(62,36,13,0.04)]",
+                      item.accent,
+                    )}
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <div className="text-[11px] font-black uppercase tracking-[0.08em] text-[#7A97BC]">{item.label}</div>
+                        <div className="mt-3 text-[30px] leading-none font-black text-[#123A75]">{item.value}</div>
+                      </div>
+                      <div className="flex h-10 w-10 items-center justify-center rounded-2xl border border-white/80 bg-white/88 text-[#0B82F0] shadow-[0_8px_18px_rgba(11,130,240,0.08)]">
+                        {item.icon}
+                      </div>
+                    </div>
+                  </div>
+                ))}
               </div>
 
               {rewardRedemptionSummary.topRewards.length > 0 ? (
-                <div className="mt-4 rounded-[18px] border border-[var(--border)] bg-[var(--brand-soft)] p-4">
-                  <div className="mb-3 text-[13px] font-black text-[var(--brand-text)]">รางวัลที่ถูกแลกบ่อย</div>
-                  <div className="flex flex-wrap gap-2">
-                    {rewardRedemptionSummary.topRewards.map((item) => (
-                      <div key={item.rewardId} className="rounded-full border border-[var(--border)] bg-white px-3 py-2 text-[12px] font-black text-[var(--brand-text)]">
-                        {item.rewardName} {item.count} ครั้ง
+                <div className="mt-4 rounded-[20px] border border-[#dbe9f8] bg-white p-4 shadow-[0_10px_22px_rgba(62,36,13,0.04)]">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                      <div className="text-[14px] font-black text-[#123A75]">รางวัลที่ถูกแลกบ่อย</div>
+                      <div className="mt-1 text-[12px] font-bold text-[#7A97BC]">ดูภาพรวมของของรางวัลที่ถูกหยิบบ่อยที่สุดในช่วงนี้</div>
+                    </div>
+                    <div className="rounded-full bg-[#F3F8FF] px-3 py-1 text-[11px] font-black text-[#55739B]">
+                      Top {rewardRedemptionSummary.topRewards.length}
+                    </div>
+                  </div>
+                  <div className="mt-4 flex flex-wrap gap-2.5">
+                    {rewardRedemptionSummary.topRewards.map((item, index) => (
+                      <div key={item.rewardId} className="inline-flex items-center gap-2 rounded-full border border-[#d7e6f6] bg-[linear-gradient(135deg,#ffffff_0%,#f5faff_100%)] px-3.5 py-2 text-[12px] font-black text-[var(--brand-text)] shadow-[0_8px_18px_rgba(11,130,240,0.05)]">
+                        <span className="flex h-6 min-w-6 items-center justify-center rounded-full bg-[#EAF4FF] px-1 text-[11px] text-[#0B82F0]">
+                          #{index + 1}
+                        </span>
+                        <span>{item.rewardName}</span>
+                        <span className="text-[#7A97BC]">{item.count} ครั้ง</span>
                       </div>
                     ))}
                   </div>
@@ -1546,44 +1597,65 @@ export default function AdminRewardPage() {
               ) : null}
 
               {rewardRedemptions.length === 0 ? (
-                <div className="mt-4 rounded-[18px] border border-dashed border-[var(--border)] bg-white px-5 py-10 text-center">
-                  <div className="text-[18px] font-black text-[#1A1A1A]">ยังไม่มีประวัติการแลกรางวัล</div>
+                <div className="mt-4 rounded-[22px] border border-dashed border-[#cfe0f2] bg-white px-5 py-12 text-center">
+                  <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-[#EEF7FF] text-[#0B82F0]">
+                    <Gift className="h-6 w-6" strokeWidth={2.2} />
+                  </div>
+                  <div className="mt-4 text-[20px] font-black text-[#1A1A1A]">ยังไม่มีประวัติการแลกรางวัล</div>
                   <div className="mt-2 text-[13px] font-bold text-[#8E8A81]">
                     เมื่อมีคนกดแลกรางวัลจากหน้ารางวัล รายการจะมาแสดงที่นี่ทันที
                   </div>
                 </div>
               ) : filteredRewardRedemptions.length === 0 ? (
-                <div className="mt-4 rounded-[18px] border border-dashed border-[var(--border)] bg-white px-5 py-10 text-center">
-                  <div className="text-[18px] font-black text-[#1A1A1A]">ไม่พบผู้ใช้งานที่ค้นหา</div>
+                <div className="mt-4 rounded-[22px] border border-dashed border-[#cfe0f2] bg-white px-5 py-12 text-center">
+                  <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-[#EEF7FF] text-[#0B82F0]">
+                    <Search className="h-6 w-6" strokeWidth={2.2} />
+                  </div>
+                  <div className="mt-4 text-[20px] font-black text-[#1A1A1A]">ไม่พบผู้ใช้งานที่ค้นหา</div>
                   <div className="mt-2 text-[13px] font-bold text-[#8E8A81]">
                     ลองค้นหาด้วยชื่อหรือชื่อย่อของผู้แลกรางวัลอีกครั้ง
                   </div>
                 </div>
               ) : (
                 <div className="mt-4 space-y-3">
-                  {filteredRewardRedemptions.map((record) => (
+                  {filteredRewardRedemptions.map((record, index) => (
                     <div
                       key={record.id}
-                      className="rounded-[18px] border border-[var(--border)] bg-white p-4 shadow-[0_8px_18px_rgba(62,36,13,0.04)]"
+                      className="rounded-[22px] border border-[#dbe9f8] bg-[linear-gradient(180deg,#ffffff_0%,#fbfdff_100%)] p-4 shadow-[0_12px_26px_rgba(62,36,13,0.04)]"
                     >
-                      <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-                        <div className="min-w-0">
-                          <div className="truncate text-[16px] font-black text-[#1A1A1A]">{record.rewardName}</div>
-                          <div className="mt-1 text-[13px] font-bold text-[#8E8A81]">{record.redeemedBy}</div>
-                        </div>
-                        <div className="flex flex-wrap gap-2 md:justify-end">
-                          <div className="rounded-full bg-[var(--brand-soft)] px-3 py-1 text-[12px] font-black text-[var(--brand-text)]">
-                            {record.pointsSpent.toLocaleString()} Coin
+                      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                        <div className="flex min-w-0 items-start gap-3.5">
+                          <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl bg-[linear-gradient(135deg,#35A8FF_0%,#0B82F0_100%)] text-white shadow-[0_10px_18px_rgba(11,130,240,0.18)]">
+                            <Gift className="h-5 w-5" strokeWidth={2.3} />
                           </div>
-                          <div className="rounded-full border border-[var(--border)] bg-white px-3 py-1 text-[12px] font-black text-[#8E8A81]">
-                            {record.rewardCategory}
+                          <div className="min-w-0">
+                            <div className="flex flex-wrap items-center gap-2">
+                              <div className="truncate text-[17px] font-black text-[#123A75]">{record.rewardName}</div>
+                              <span className="rounded-full bg-[#F3F8FF] px-2.5 py-1 text-[11px] font-black text-[#55739B]">
+                                รายการ #{index + 1}
+                              </span>
+                            </div>
+                            <div className="mt-1 text-[13px] font-bold text-[#5F7CA5]">{record.redeemedBy}</div>
+                            <div className="mt-2 flex flex-wrap items-center gap-2.5 text-[12px] font-bold text-[#8E8A81]">
+                              <span className="inline-flex items-center gap-1.5 rounded-full bg-[#FFF8E8] px-2.5 py-1 text-[#9A6A00]">
+                                <Ticket className="h-3.5 w-3.5" strokeWidth={2.3} />
+                                {record.pointsSpent.toLocaleString()} Coin
+                              </span>
+                              <span className="inline-flex items-center gap-1.5 rounded-full border border-[#d7e6f6] bg-white px-2.5 py-1 text-[#55739B]">
+                                <ShoppingBag className="h-3.5 w-3.5" strokeWidth={2.3} />
+                                {record.rewardCategory}
+                              </span>
+                            </div>
                           </div>
                         </div>
-                      </div>
 
-                      <div className="mt-3 flex items-center gap-2 text-[12px] font-bold text-[#8E8A81]">
-                        <Clock3 className="h-3.5 w-3.5 text-[var(--brand-text)]" strokeWidth={2.2} />
-                        {formatRedemptionDateTime(record.redeemedAt)}
+                        <div className="flex flex-col items-start gap-2 rounded-[18px] border border-[#e7f0fa] bg-[#f9fbff] px-4 py-3 lg:min-w-[210px] lg:items-end">
+                          <div className="text-[11px] font-black uppercase tracking-[0.08em] text-[#7A97BC]">เวลาแลกรางวัล</div>
+                          <div className="flex items-center gap-2 text-[12px] font-bold text-[#55739B] lg:justify-end">
+                            <Clock3 className="h-3.5 w-3.5 text-[var(--brand-text)]" strokeWidth={2.2} />
+                            {formatRedemptionDateTime(record.redeemedAt)}
+                          </div>
+                        </div>
                       </div>
                     </div>
                   ))}

@@ -1515,8 +1515,25 @@ async function handleCultureRewards(request: NextRequest, method: string, match:
   }
   if (method === "GET" && route === "/api/safety-culture/leaderboard") {
     if (!userId) return jsonError("unauthorized", 401);
-    const memberships = await queryRows<DbRow>(
-      `SELECT tm.team_id
+    const requestedTeamCode = String(request.nextUrl.searchParams.get("teamCode") || "").trim().toUpperCase();
+    let teamId = "";
+
+    if (requestedTeamCode) {
+      const [requestedTeam] = await queryRows<DbRow>(
+        `SELECT id
+         FROM teams
+         WHERE team_code = :teamCode
+           AND deleted_at IS NULL
+           AND status = 'ACTIVE'
+         LIMIT 1`,
+        { teamCode: requestedTeamCode },
+      );
+      teamId = String(requestedTeam?.id || "");
+    }
+
+    if (!teamId) {
+      const memberships = await queryRows<DbRow>(
+        `SELECT tm.team_id
        FROM team_members tm
        JOIN teams t ON t.id = tm.team_id
        WHERE tm.user_id = :userId
@@ -1524,13 +1541,20 @@ async function handleCultureRewards(request: NextRequest, method: string, match:
          AND t.deleted_at IS NULL
          AND t.status = 'ACTIVE'
        LIMIT 1`,
-      { userId },
-    );
-    const teamId = memberships[0]?.team_id;
+        { userId },
+      );
+      teamId = String(memberships[0]?.team_id || "");
+    }
+
     if (!teamId) return jsonData({ items: [] });
 
     const rows = await queryRows<DbRow>(
-      `SELECT u.id user_id, u.name_th, t.name team, COALESCE(pb.balance, 0) points
+      `SELECT u.id user_id,
+              u.name_th,
+              t.name team,
+              t.team_code,
+              COALESCE(u.profile_image_url, u.line_profile_image_url) AS profile_image_url,
+              COALESCE(pb.balance, 0) points
        FROM team_members tm
        JOIN teams t ON t.id = tm.team_id
        JOIN users u ON u.id = tm.user_id

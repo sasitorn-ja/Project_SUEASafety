@@ -438,24 +438,6 @@ export default function SafePlusDashboard() {
     todayCalendarRef.current?.scrollIntoView({ behavior: "instant" as ScrollBehavior, inline: "center", block: "nearest" });
   }, []);
 
-  const awarenessMetricDoneDateKeys = useMemo(
-    () => new Set(
-      dashboardData.days
-        .filter((day) => day.required && !day.isFuture && Boolean(day.completion))
-        .map((day) => day.dateKey)
-    ),
-    [dashboardData.days],
-  );
-
-  const awarenessMetricMissedDateKeys = useMemo(
-    () => new Set(
-      dashboardData.days
-        .filter((day) => day.required && !day.isFuture && day.dateKey !== todayKey && !day.completion)
-        .map((day) => day.dateKey)
-    ),
-    [dashboardData.days, todayKey],
-  );
-
   const latestQuestions = (dashboardData.latest?.questions ?? []).filter((q) => q.text?.trim());
   const latestHasWrongAnswer = latestQuestions.some((q) => !q.correct);
   const latestCorrectCount = latestQuestions.filter((q) => q.correct).length;
@@ -480,8 +462,6 @@ export default function SafePlusDashboard() {
       const isFuture = dateKey > awarenessCalendarTodayKey;
       const isDone = Boolean(completion);
       const isMissed = required && !completion;
-      const isInMetricDoneRange = awarenessMetricDoneDateKeys.has(dateKey);
-      const isInMetricMissedRange = awarenessMetricMissedDateKeys.has(dateKey);
       return {
         dateKey,
         day: date.getDate(),
@@ -490,25 +470,20 @@ export default function SafePlusDashboard() {
         required,
         isDone,
         isMissed,
-        isInMetricDoneRange,
-        isInMetricMissedRange,
         isToday: dateKey === awarenessCalendarTodayKey,
       };
     });
   }, [
-    awarenessCalendarMaxMonth,
     awarenessCalendarMonth,
     awarenessCalendarTodayKey,
     awarenessHistory,
     awarenessHolidays,
-    awarenessMetricDoneDateKeys,
-    awarenessMetricMissedDateKeys,
     effectiveAwarenessStartDate,
   ]);
 
   const openAwarenessCalendar = (mode: "done" | "missed") => {
     setAwarenessCalendarMode(mode);
-    setAwarenessCalendarMonth(awarenessCalendarMaxMonth);
+    setAwarenessCalendarMonth(awarenessCalendarMinMonth);
   };
 
   const weeklyPoints = useMemo(() => {
@@ -1148,7 +1123,7 @@ export default function SafePlusDashboard() {
               {awarenessCalendarMode === "done" ? "ปฏิทินวันที่ทำ Safety Awareness แล้ว" : "ปฏิทินวันที่ไม่ได้ทำ Safety Awareness"}
             </AppDialogTitle>
             <AppDialogDescription>
-              ตัวเลขด้านบนจะนับเฉพาะย้อนหลัง 5 วันถึงวันนี้ และปฏิทินนี้จะไฮไลต์เฉพาะวันที่อยู่ในช่วงเดียวกัน
+              ตัวเลขด้านบนจะนับเฉพาะย้อนหลัง 5 วันถึงวันนี้ ส่วนปฏิทินนี้จะแสดงสถานะทุกวันที่นับ KPI ตั้งแต่วันเริ่มต้น
             </AppDialogDescription>
           </AppDialogSectionHeader>
 
@@ -1185,7 +1160,7 @@ export default function SafePlusDashboard() {
                 </div>
               ))}
               {awarenessCalendarDays.map((day) => {
-                const emphasized = awarenessCalendarMode === "done" ? day.isInMetricDoneRange : day.isInMetricMissedRange;
+                const emphasized = awarenessCalendarMode === "done" ? day.isDone : day.isMissed;
                 return (
                   <div
                     key={day.dateKey}

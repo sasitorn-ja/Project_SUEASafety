@@ -181,6 +181,7 @@ export type LeaderboardPerson = {
   name: string;
   points: number;
   team: string;
+  profileImageUrl?: string | null;
   active?: boolean;
 };
 
@@ -571,6 +572,7 @@ function normalizePersonalRankings(rankings: LeaderboardPerson[]) {
       id: person.id || `person-${index + 1}`,
       team: person.team || "Safety Team",
       points: Math.max(0, Number(person.points) || 0),
+      profileImageUrl: person.profileImageUrl || null,
     }))
     .sort((left, right) => right.points - left.points)
     .map((person, index) => ({
@@ -1723,6 +1725,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
         name: String(item.name_th || item.nameTh || item.name || "Unknown user"),
         points: Number(item.points || 0),
         team: String(item.team || item.team_name || item.teamName || ""),
+        profileImageUrl: (item.profile_image_url || item.profileImageUrl || null) as string | null,
         active: Boolean(sessionUser?.id && String(item.user_id || item.userId || item.id) === String(sessionUser.id)),
       })));
     }
@@ -1917,6 +1920,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
           name: String(item.name_th || item.nameTh || item.name || "Unknown user"),
           points: Number(item.points || 0),
           team: String(item.team || item.team_name || item.teamName || ""),
+          profileImageUrl: (item.profile_image_url || item.profileImageUrl || null) as string | null,
           active: Boolean(sessionUser?.id && String(item.user_id || item.userId || item.id) === String(sessionUser.id)),
         })));
       }

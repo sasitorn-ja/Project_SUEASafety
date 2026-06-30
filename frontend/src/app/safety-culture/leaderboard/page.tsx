@@ -1,11 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ChevronDown, ChevronRight, Users } from "lucide-react";
 import { SafetyCultureHero } from "@/components/safety-culture/safety-culture-hero";
 import { Card } from "@/components/ui/card";
+import { apiFetch } from "@/lib/api-client";
 import { cn } from "@/lib/utils";
-import { useAppState } from "@/providers/app-providers";
+import { type LeaderboardPerson, useAppState } from "@/providers/app-providers";
 import { useAppTheme } from "@/providers/theme-provider";
 
 const POINT_UNIT = "Coin";
@@ -42,13 +43,94 @@ function getInitials(name: string) {
     .join("");
 }
 
+function RankingAvatar({
+  imageUrl,
+  name,
+  className,
+}: {
+  imageUrl?: string | null;
+  name: string;
+  className: string;
+}) {
+  const [hasError, setHasError] = useState(false);
+
+  useEffect(() => {
+    setHasError(false);
+  }, [imageUrl]);
+
+  if (imageUrl && !hasError) {
+    return (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img
+        src={imageUrl}
+        alt={name}
+        className={className}
+        onError={() => setHasError(true)}
+      />
+    );
+  }
+
+  return <span>{getInitials(name)}</span>;
+}
+
 export default function LeaderboardPage() {
   const [mounted] = useState(true);
   const [showAllTopScorers, setShowAllTopScorers] = useState(false);
+  const [selectedTeamCode, setSelectedTeamCode] = useState("");
+  const [selectedTeamName, setSelectedTeamName] = useState("");
+  const [teamMembers, setTeamMembers] = useState<LeaderboardPerson[]>([]);
+  const [isLoadingTeamMembers, setIsLoadingTeamMembers] = useState(false);
   const { teamStandings, personalRankings } = useAppState();
   const { themedColor } = useAppTheme();
-  const topScorers = [...personalRankings];
+  const topScorers = [...teamMembers];
   const visibleTopScorers = showAllTopScorers ? topScorers.slice(0, 10) : topScorers.slice(0, 5);
+
+  useEffect(() => {
+    if (personalRankings.length === 0) {
+      setTeamMembers([]);
+      setSelectedTeamName("");
+      return;
+    }
+    setTeamMembers(personalRankings);
+    if (!selectedTeamName) {
+      setSelectedTeamName(personalRankings[0]?.team || "");
+    }
+  }, [personalRankings, selectedTeamName]);
+
+  useEffect(() => {
+    if (selectedTeamCode || !selectedTeamName) return;
+    const currentTeam = teamStandings.find((team) => team.name === selectedTeamName);
+    if (currentTeam?.code) {
+      setSelectedTeamCode(currentTeam.code);
+    }
+  }, [selectedTeamCode, selectedTeamName, teamStandings]);
+
+  async function handleSelectTeam(teamCode: string, teamName: string) {
+    setSelectedTeamCode(teamCode);
+    setSelectedTeamName(teamName);
+    setShowAllTopScorers(false);
+    setIsLoadingTeamMembers(true);
+
+    const result = await apiFetch<{ items: Array<Record<string, unknown>> }>(
+      `/api/safety-culture/leaderboard?teamCode=${encodeURIComponent(teamCode)}`,
+    );
+
+    if (result.ok && Array.isArray(result.data?.items)) {
+      setTeamMembers(result.data.items.map((item, index) => ({
+        id: String(item.user_id || item.userId || item.id),
+        rank: `#${index + 1}`,
+        name: String(item.name_th || item.nameTh || item.name || "Unknown user"),
+        points: Number(item.points || 0),
+        team: String(item.team || item.team_name || item.teamName || teamName),
+        profileImageUrl: (item.profile_image_url || item.profileImageUrl || null) as string | null,
+        active: false,
+      })));
+    } else {
+      setTeamMembers([]);
+    }
+
+    setIsLoadingTeamMembers(false);
+  }
 
   const animStyle = (delay: number) => ({
     animationDelay: `${delay}s`,
@@ -93,9 +175,16 @@ export default function LeaderboardPage() {
                   <p className="mt-1 text-[12px] font-bold text-[var(--brand-muted-text)]">เมื่อมีข้อมูลทีม ระบบจะแสดงอันดับที่นี่</p>
                 </div>
               ) : teamStandings.map((team, idx) => (
-                <article
+                <button
                   key={team.id}
-                  className="flex items-center gap-3 rounded-[14px] border border-[var(--border)] bg-[var(--brand-surface)] px-3 py-2.5 transition-all duration-150 hover:-translate-y-px hover:border-[rgba(var(--brand-accent-rgb),0.4)] md:gap-3.5 md:px-4 md:py-3"
+                  type="button"
+                  onClick={() => void handleSelectTeam(team.code || "", team.name)}
+                  className={cn(
+                    "flex w-full items-center gap-3 rounded-[14px] border px-3 py-2.5 text-left transition-all duration-150 hover:-translate-y-px md:gap-3.5 md:px-4 md:py-3",
+                    selectedTeamCode === (team.code || "")
+                      ? "border-[rgba(var(--brand-accent-rgb),0.55)] bg-[linear-gradient(180deg,rgba(var(--brand-accent-rgb),0.10),rgba(var(--brand-accent-rgb),0.03))] shadow-[0_10px_18px_rgba(18,101,214,0.10)]"
+                      : "border-[var(--border)] bg-[var(--brand-surface)] hover:border-[rgba(var(--brand-accent-rgb),0.4)]",
+                  )}
                   style={animStyle(0.18 + idx * 0.03)}
                 >
                   {/* rank badge */}
@@ -143,7 +232,7 @@ export default function LeaderboardPage() {
                     <p className="text-[16px] leading-none font-black text-[var(--foreground)] md:text-[20px]">{team.points.toLocaleString()}</p>
                     <p className="mt-0.5 text-[9px] font-bold uppercase tracking-[0.1em] text-[var(--brand-muted-text)]">{POINT_UNIT}</p>
                   </div>
-                </article>
+                </button>
               ))}
             </div>
           </Card>
@@ -154,14 +243,28 @@ export default function LeaderboardPage() {
             style={animStyle(0.24)}
           >
             <div className="border-b border-[var(--border)] px-4 py-3 md:px-5">
-              <p className="app-card-title text-[var(--foreground)]">อันดับสมาชิกในทีม · เดือนนี้</p>
+              <div className="flex flex-wrap items-center gap-2">
+                <p className="app-card-title text-[var(--foreground)]">อันดับสมาชิกในทีม · เดือนนี้</p>
+                {selectedTeamName ? (
+                  <span className="rounded-full bg-[var(--brand-soft)] px-2.5 py-1 text-[11px] font-black text-[var(--brand-text)]">
+                    {selectedTeamName}
+                  </span>
+                ) : null}
+              </div>
             </div>
 
             <div className="space-y-1.5 p-3 md:space-y-2 md:p-4">
-              {visibleTopScorers.length === 0 ? (
+              {isLoadingTeamMembers ? (
+                <div className="rounded-[16px] border border-dashed border-[var(--border)] bg-[var(--brand-surface)] px-4 py-8 text-center">
+                  <p className="text-[14px] font-black text-[var(--foreground)]">กำลังโหลดสมาชิกทีม</p>
+                  <p className="mt-1 text-[12px] font-bold text-[var(--brand-muted-text)]">กำลังดึงอันดับของทีมที่เลือก</p>
+                </div>
+              ) : visibleTopScorers.length === 0 ? (
                 <div className="rounded-[16px] border border-dashed border-[var(--border)] bg-[var(--brand-surface)] px-4 py-8 text-center">
                   <p className="text-[14px] font-black text-[var(--foreground)]">ยังไม่มีอันดับสมาชิก</p>
-                  <p className="mt-1 text-[12px] font-bold text-[var(--brand-muted-text)]">ระบบจะแสดงอันดับเมื่อมีสมาชิกและ Coin</p>
+                  <p className="mt-1 text-[12px] font-bold text-[var(--brand-muted-text)]">
+                    {selectedTeamName ? `ทีม ${selectedTeamName} ยังไม่มีสมาชิกหรือยังไม่มี Coin` : "ระบบจะแสดงอันดับเมื่อมีสมาชิกและ Coin"}
+                  </p>
                 </div>
               ) : visibleTopScorers.map((user, index) => {
                 const rankStyle = TOP_RANK_STYLES[index] ?? {
@@ -194,7 +297,7 @@ export default function LeaderboardPage() {
                         rankStyle.avatarRingClassName
                       )}
                     >
-                      <span>{getInitials(user.name)}</span>
+                      <RankingAvatar imageUrl={user.profileImageUrl} name={user.name} className="h-full w-full object-cover" />
                       <div className="absolute inset-x-0 bottom-0 h-1/2 bg-[linear-gradient(180deg,transparent,rgba(0,0,0,0.18))]" />
                     </div>
 
