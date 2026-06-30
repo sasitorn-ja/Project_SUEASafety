@@ -21,8 +21,13 @@ const MATCH_RULES: Record<string, string> = {
 
 export default function AdminLeaderboardPage() {
   const { teamStandings } = useAppState();
-  const totalPoints = teamStandings.reduce((sum, team) => sum + (Number(team.points) || 0), 0);
-  const totalMembers = teamStandings.reduce((sum, team) => sum + (Number(team.members) || 0), 0);
+  const orderedTeams = [...teamStandings].sort((left, right) => {
+    const leftOrder = FIXED_SAFETY_CULTURE_TEAMS.find((team) => team.code === left.code)?.order ?? Number.MAX_SAFE_INTEGER;
+    const rightOrder = FIXED_SAFETY_CULTURE_TEAMS.find((team) => team.code === right.code)?.order ?? Number.MAX_SAFE_INTEGER;
+    return leftOrder - rightOrder;
+  });
+  const totalPoints = orderedTeams.reduce((sum, team) => sum + (Number(team.points) || 0), 0);
+  const totalMembers = orderedTeams.reduce((sum, team) => sum + (Number(team.members) || 0), 0);
 
   return (
     <div className="page-shell-wide bg-[var(--background)] pt-2.5 pb-8 font-sarabun">
@@ -79,7 +84,7 @@ export default function AdminLeaderboardPage() {
                 </tr>
               </thead>
               <tbody>
-                {teamStandings.map((team) => (
+                {orderedTeams.map((team) => (
                   <tr key={team.id} className="border-b border-[var(--border)] last:border-b-0 hover:bg-[#F8FCFF]">
                     <td className="px-4 py-4">
                       <div className="flex items-center gap-3">
@@ -113,7 +118,7 @@ export default function AdminLeaderboardPage() {
           </div>
         </div>
 
-        {teamStandings.length === 0 ? (
+        {orderedTeams.length === 0 ? (
           <div className="mt-3 flex items-center gap-2 rounded-[10px] border border-dashed border-[var(--border)] bg-[var(--brand-soft)] px-4 py-5 text-[13px] font-bold text-[#55739B]">
             <Building2 className="h-4 w-4" />
             ยังไม่มีข้อมูลทีม กรุณารัน migration ทีมถาวร

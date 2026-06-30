@@ -117,15 +117,10 @@ function TeamStandingsCard({ className, style }: { className?: string; style?: C
             </div>
 
             <div
-              className="relative flex h-8 w-8 flex-shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-white/80 shadow-[0_2px_8px_rgba(0,0,0,0.10)] text-[11px] font-black text-white"
+              className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-[10px] border-2 border-white/80 text-white shadow-[0_2px_8px_rgba(0,0,0,0.10)]"
               style={{ background: `linear-gradient(180deg, ${themedColor(team.color)}, color-mix(in srgb, ${themedColor(team.color)} 76%, white))` }}
             >
-              {team.leaderProfileImageUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={team.leaderProfileImageUrl} alt={team.leader} className="h-full w-full object-cover" />
-              ) : (
-                <span>{team.leader.charAt(0).toUpperCase()}</span>
-              )}
+              <UsersRound className="h-4 w-4" strokeWidth={2.3} />
             </div>
 
             <div className="min-w-0 flex-1">
