@@ -15,14 +15,8 @@ import {
 } from "lucide-react";
 import * as XLSX from "xlsx";
 import { Combobox } from "@/components/ui/combobox";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog } from "@/components/ui/dialog";
+import { AppDialogBody, AppDialogContent, AppDialogDescription, AppDialogSectionFooter, AppDialogSectionHeader, AppDialogTitle } from "@/components/ui/app-dialog";
 import { SafetyCultureHero } from "@/components/safety-culture/safety-culture-hero";
 import { Button } from "@/components/ui/button";
 
@@ -1338,36 +1332,27 @@ export default function SafetyAdminManageData() {
           }
         }}
       >
-        <DialogContent
-          className="gap-0 p-0"
+        <AppDialogContent
+          size="xl"
+          className="z-[1000] max-h-[90vh]"
           style={{
             width: selectedType === "factory" ? "min(100%, 920px)" : "min(100%, 680px)",
             maxWidth: "calc(100vw - 32px)",
-            maxHeight: "90vh",
           }}
         >
-          <DialogHeader className="mx-0 mt-0 flex-row items-center justify-between">
-            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-              {selectedType === "factory" ? (
-                <Building2 size={20} style={{ color: "var(--brand-text)" }} />
-              ) : selectedType === "office" ? (
-                <Building size={20} style={{ color: "var(--brand-text)" }} />
-              ) : (
-                <Layers size={20} style={{ color: "var(--brand-text)" }} />
-              )}
-              <div>
-                <DialogTitle style={{ fontSize: 18, color: T.ink }}>
-                  {selectedType === "factory"
-                    ? (addingPlant ? "Add Plant Record" : "Edit Plant Record")
-                    : selectedType === "office"
-                      ? (addingPlant ? "Add Office Record" : "Edit Office Record")
-                      : (addingPlant ? "Add Site Record" : "Edit Site Record")}
-                </DialogTitle>
-                <DialogDescription>แก้ไขข้อมูลสถานที่สำหรับ Check-in และ Safety Effort</DialogDescription>
-              </div>
-            </div>
-          </DialogHeader>
-          <div style={{ padding: 24, overflowY: "auto" }}>
+          <AppDialogSectionHeader className="border-[#d7e6f6] bg-[linear-gradient(135deg,#ffffff_0%,#f4f9ff_56%,#eaf4ff_100%)]">
+            <AppDialogTitle className="text-[#0b3572]">
+              {selectedType === "factory"
+                ? (addingPlant ? "เพิ่มข้อมูลโรงงาน" : "แก้ไขข้อมูลโรงงาน")
+                : selectedType === "office"
+                  ? (addingPlant ? "เพิ่มข้อมูลสำนักงาน" : "แก้ไขข้อมูลสำนักงาน")
+                  : (addingPlant ? "เพิ่มข้อมูลไซต์งาน" : "แก้ไขข้อมูลไซต์งาน")}
+            </AppDialogTitle>
+            <AppDialogDescription>
+              แก้ไขข้อมูลสถานที่สำหรับ Check-in และ Safety Effort
+            </AppDialogDescription>
+          </AppDialogSectionHeader>
+          <AppDialogBody className="max-h-[calc(90vh-136px)] overflow-y-auto gap-4">
           <div
             style={{
               display: "grid",
@@ -1749,45 +1734,10 @@ export default function SafetyAdminManageData() {
               )}
             </div>
           </div>
-          </div>
+          </AppDialogBody>
 
-          <DialogFooter className="mx-0 mb-0">
+          <AppDialogSectionFooter>
             <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, width: "100%" }}>
-              {selectedType === "factory" ? (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setAddingPlant(false);
-                    setEditingPlant(null);
-                  }}
-                  style={{
-                    background: "#ffffff",
-                    border: "1px solid #d1d5db",
-                    color: "#374151",
-                    height: 38,
-                    padding: "0 18px",
-                    borderRadius: 8,
-                    fontSize: 13.5,
-                    fontWeight: 600,
-                    cursor: "pointer",
-                    fontFamily: "inherit"
-                  }}
-                >
-                  Cancel
-                </button>
-              ) : (
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="lg"
-                  onClick={() => {
-                    setAddingPlant(false);
-                    setEditingPlant(null);
-                  }}
-                >
-                  ยกเลิก
-                </Button>
-              )}
               {selectedType === "factory" ? (
                 <button
                   type="button"
@@ -1821,29 +1771,21 @@ export default function SafetyAdminManageData() {
                 </Button>
               )}
             </div>
-          </DialogFooter>
-        </DialogContent>
+          </AppDialogSectionFooter>
+        </AppDialogContent>
       </Dialog>
 
       {/* Delete Plant Confirmation Modal */}
       <Dialog open={!!deletePlantId} onOpenChange={(open) => !open && setDeletePlantId(null)}>
-        <DialogContent className="gap-0 p-0 sm:max-w-[420px]">
-          <DialogHeader className="mx-0 mt-0">
-            <DialogTitle style={{ fontSize: 20, fontWeight: 950 }}>ยืนยันการลบสถานที่</DialogTitle>
-            <DialogDescription style={{ fontSize: 14, color: T.sub, lineHeight: 1.6 }}>
+        <AppDialogContent size="sm" className="z-[1000] max-w-[460px]">
+          <AppDialogSectionHeader className="border-[#d7e6f6] bg-[linear-gradient(135deg,#ffffff_0%,#f4f9ff_56%,#eaf4ff_100%)]">
+            <AppDialogTitle className="text-[#0b3572]">ยืนยันการลบสถานที่</AppDialogTitle>
+            <AppDialogDescription>
               คุณแน่ใจว่าต้องการลบสถานที่นี้ใช่หรือไม่? รายการจะหายจากหน้า Check-in และไม่สามารถย้อนกลับได้
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter className="mx-0 mb-0">
+            </AppDialogDescription>
+          </AppDialogSectionHeader>
+          <AppDialogSectionFooter>
             <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, width: "100%" }}>
-              <Button
-                type="button"
-                variant="outline"
-                size="lg"
-                onClick={() => setDeletePlantId(null)}
-              >
-                ยกเลิก
-              </Button>
               <Button
                 type="button"
                 variant="destructive"
@@ -1853,8 +1795,8 @@ export default function SafetyAdminManageData() {
                 ลบสถานที่
               </Button>
             </div>
-          </DialogFooter>
-        </DialogContent>
+          </AppDialogSectionFooter>
+        </AppDialogContent>
       </Dialog>
     </div>
   );

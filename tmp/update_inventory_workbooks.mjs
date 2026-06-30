@@ -94,6 +94,18 @@ function personalDataClassification(tableName, columnName, existing) {
 }
 
 function genericColumnDescription(tableName, columnName) {
+  if (tableName === "checkins" && columnName === "actual_location_id_snapshot") {
+    return "locations.id ของสถานที่จริงที่ใกล้ GPS จริงที่สุด ณ เวลาบันทึก";
+  }
+  if (tableName === "checkins" && columnName === "actual_location_name_snapshot") {
+    return "ชื่อสถานที่จริงที่ใกล้ GPS จริงที่สุด ณ เวลาบันทึก";
+  }
+  if (tableName === "checkins" && columnName === "actual_location_code_snapshot") {
+    return "รหัสสถานที่จริงที่ใกล้ GPS จริงที่สุด ณ เวลาบันทึก";
+  }
+  if (tableName === "checkins" && columnName === "actual_location_distance_m_snapshot") {
+    return "ระยะจาก GPS จริงถึงสถานที่จริงที่ใกล้ที่สุด หน่วยเมตร ณ เวลาบันทึก";
+  }
   const lower = columnName.toLowerCase();
   if (lower === "id") return "รหัสภายในของรายการ";
   if (lower.endsWith("_id")) return `รหัสอ้างอิงของ ${columnName.replace(/_id$/i, "")}`;
@@ -112,6 +124,10 @@ function genericColumnDescription(tableName, columnName) {
 
 function genericExampleValue(columnName) {
   const lower = columnName.toLowerCase();
+  if (lower === "actual_location_id_snapshot") return "1975";
+  if (lower === "actual_location_name_snapshot") return "พระราม 7";
+  if (lower === "actual_location_code_snapshot") return "1975";
+  if (lower === "actual_location_distance_m_snapshot") return "18.25";
   if (lower === "id" || lower.endsWith("_id")) return "1";
   if (lower.includes("email")) return "user@scg.com";
   if (lower.includes("username")) return "SASITOJA";
@@ -124,6 +140,8 @@ function genericExampleValue(columnName) {
 
 function genericValidationRule(columnName) {
   const lower = columnName.toLowerCase();
+  if (lower === "actual_location_distance_m_snapshot") return ">= 0";
+  if (lower.startsWith("actual_location_") && lower.endsWith("_snapshot")) return "snapshot จาก nearest locations ณ เวลาบันทึก";
   if (lower === "status") return "ค่าใน status enum";
   if (lower === "id" || lower.endsWith("_id")) return "> 0";
   if (lower.includes("email")) return "รูปแบบอีเมล";
@@ -263,7 +281,7 @@ function buildApiSheets() {
     ["Backend structure", `API catalog ${liveRoutes.length} routes ต่อ backend/components และฐานจริง`, "คง HTTP layer บางและแยก repository/persistence ตาม feature", "P0", "ต้องทดสอบสิทธิ์ด้วย session จริง"],
     ["Auth", "SSO/session/users ต่อฐานจริงแล้ว และ /api-docs ใช้ DB allowlist + admin", "ใช้ session guard เดียวกันทุก API", "P0", "ต้อง monitor callback และ schema drift"],
     ["Locations", "Locations/Plant mirror/Admin CRUD ต่อฐานจริงแล้ว และมี source-detail API", "rmr_sso.Plant read-only → CPAC mirror; Admin Plant source=ADMIN", "P0", "RMR source ห้ามแก้/ลบ"],
-    ["Check-in", "หน้า Check-in โหลด locations และ POST checkins จริง", "ใช้ CPAC local location id และ GPS จริง", "P0", "ต้องได้รับสิทธิ์ geolocation"],
+    ["Check-in", "หน้า Check-in โหลด locations และ POST checkins จริง พร้อม snapshot สถานที่จริงจาก GPS", "ใช้ CPAC local location id, GPS จริง และ actual_location_*_snapshot", "P0", "ต้องได้รับสิทธิ์ geolocation"],
     ["Safety Effort", "submissions/legacy/assessment/findings/reports ใช้ API และฐานจริง", "activities, submissions, runs, answers, findings/actions/comments", "P0", "ตรวจ workflow/permission รายบทบาท"],
     ["Safety Culture", "posts/events/rewards/teams/awareness ใช้ API และฐานจริง", "ไม่มี mock/localStorage ใน production flow; leaderboard/redeem ใช้ DB transaction", "P0", "redeem ต้องอยู่ใน DB transaction; team leader อาจเป็น NULL ได้"],
     ["Media/images", "uploads เก็บไฟล์จริงและ metadata ใน media_assets", "owner_type/owner_id/link_type ผูกกับข้อมูลธุรกิจ", "P0", "กำหนด storage retention และ access"],
@@ -285,13 +303,25 @@ function buildApiSheets() {
     ["Reports", "GET /api/safety-effort/reports/*", "summary/by-location/by-user/findings", "locations, users, safety_activities, assessment_runs, safety_findings, corrective_actions", "URL references", "ใช้กับ dashboard/admin report"],
   ];
 
+  const checkinLocationRows = [
+    ["Use case", "Method", "Path", "Type scope", "Required query/body", "Default limit", "Hard limit", "Index/DB rule", "Frontend behavior", "Why separate"],
+    ["โรงงาน list", "GET", "/api/locations/plants", "PLANT", "page,pageSize,search?", 50, 200, "CPAC locations mirror; source + external_key unique", "แสดง badge RMR/Admin และปิดแก้ไขเมื่อ readOnly=true", "ไม่ query rmr_sso.Plant ทุก request; ใช้ local ID สำหรับ Check-in"],
+    ["สำนักงาน list", "GET", "/api/locations/offices", "OFFICE", "page,pageSize,search?", 50, 200, "location_type + status + name/code", "โหลดเฉพาะ tab สำนักงาน", "ข้อมูลคนละ pattern กับโรงงาน"],
+    ["site งาน list", "GET", "/api/locations/sites", "SITE", "page,pageSize,search?", 50, 200, "location_type + status + name/code", "โหลดเฉพาะ tab site", "site อาจหลักแสนและเปลี่ยนบ่อย"],
+    ["map markers", "GET", "/api/locations/map", "PLANT/OFFICE/SITE/CUSTOM/all", "bbox,zoom,type?", 300, 1000, "spatial index on position", "เรียกทุกครั้งเมื่อ pan/zoom หลัง debounce", "แผนที่ต้องคืนเฉพาะ viewport"],
+    ["autocomplete", "GET", "/api/locations/search", "type optional", "q,type?,limit", 20, 50, "prefix/fulltext index", "เรียกหลังพิมพ์ 2-3 ตัวอักษร", "ไม่โหลด dropdown ทั้งหมด"],
+    ["detail", "GET", "/api/locations/:id", "single", "none", 1, 1, "PK", "โหลดเมื่อเลือก marker/card", "ลด payload list"],
+    ["check-in submit", "POST", "/api/checkins", "selected location + actual GPS", "locationId, actualLat, actualLng, actualAccuracyM?", 1, 1, "writes actual_position + actual_location_*_snapshot + distance/match status", "ส่งหลังยืนยันตำแหน่ง", "แยก write ออกจาก location master และเก็บ snapshot เพื่อประวัติย้อนหลังไม่เปลี่ยน"],
+    ["check-in history", "GET", "/api/checkins | /api/checkins/me", "user/location/date", "userId?,locationId?,from?,to?,page,pageSize", 50, 200, "idx_checkins_user_time_id, idx_checkins_location_time_id, idx_checkins_actual_location_time_id", "ใช้ตรวจสอบประวัติ/รายงาน", "อ่าน selected + actual GPS + actual location snapshot"],
+  ];
+
   const mappingRows = [
     ["API path/pattern", "Primary tables", "Secondary tables", "Read/Write", "Notes"],
     ["/api/locations/plants|offices|sites|custom", "locations", "plant_location_details, office_location_details, site_location_details, organizations", "Read", "Plant อ่าน CPAC mirror; source=RMR_SSO_PLANT read-only, source=ADMIN editable"],
     ["/api/locations/:id", "locations", "organizations, users", "Read/Write", "location detail ทั่วไป"],
     ["/api/locations/:id/source-detail", "plant_location_details|office_location_details|site_location_details", "locations", "Read", "คืน sourceDetail ของ location ที่เลือก"],
-    ["/api/checkins*", "checkins", "checkin_attachments, locations, users", "Write/Read", "selected vs actual GPS"],
-    ["/api/safety-effort/submissions*", "safety_effort_submissions", "safety_old, users", "Write/Read", "dashboard/category รวมข้อมูลใหม่และ legacy"],
+    ["/api/checkins*", "checkins", "checkin_attachments, locations, users", "Write/Read", "selected location, actual GPS, nearest actual location snapshot"],
+    ["/api/safety-effort/submissions*", "safety_effort_submissions", "safety_old, users, checkins", "Write/Read", "dashboard/category รวมข้อมูลใหม่และ legacy; report history อ่าน actual_location_*_snapshot จาก checkins ก่อน fallback nearest"],
     ["/api/safety-effort/activities*", "safety_activities", "checkins", "Write/Read", "activity per check-in"],
     ["/api/safety-effort/assessment-templates*", "assessment_templates", "assessment_questions", "Read/Write", "versioned templates"],
     ["/api/safety-effort/assessment-runs*", "assessment_runs", "assessment_answers, assessment_attachments, users", "Write/Read", "answers link to attachments"],
@@ -327,7 +357,7 @@ function buildApiSheets() {
     ["OUT OF SCOPE", "Were OK / Work Permit UI", "เมนูถูกปิดและโค้ดหลักลบออกแล้ว", "Product/Frontend", "จะเชื่อมใหม่ก็ต่อเมื่อเปิด scope ใหม่"],
   ];
 
-  return { summaryRows, routes, safetyEffortRows, mappingRows, countRows, backlogRows };
+  return { summaryRows, routes, checkinLocationRows, safetyEffortRows, mappingRows, countRows, backlogRows };
 }
 
 function styleRange(range, opts = {}) {
@@ -379,7 +409,7 @@ async function overwriteSheet(sheet, matrix, options = {}) {
 async function updateApiWorkbook() {
   const input = await FileBlob.load(apiWorkbookPath);
   const workbook = await SpreadsheetFile.importXlsx(input);
-  const { summaryRows, routes, safetyEffortRows, mappingRows, countRows, backlogRows } = buildApiSheets();
+  const { summaryRows, routes, checkinLocationRows, safetyEffortRows, mappingRows, countRows, backlogRows } = buildApiSheets();
 
   await overwriteSheet(workbook.worksheets.getItem("00_Summary"), summaryRows, { headerRow: 1 });
   await overwriteSheet(
@@ -387,6 +417,7 @@ async function updateApiWorkbook() {
     [["Module", "Method", "Path", "Purpose", "Caller/Page", "When called", "Auth", "Pagination", "Response size risk", "Status", "Notes"], ...routes],
     { headerRow: 1, freezeRows: 1 },
   );
+  await overwriteSheet(workbook.worksheets.getItem("02_Checkin_Locations"), checkinLocationRows, { headerRow: 1, freezeRows: 1 });
   await overwriteSheet(workbook.worksheets.getItem("03_Safety_Effort"), safetyEffortRows, { headerRow: 1, freezeRows: 1 });
   await overwriteSheet(workbook.worksheets.getItem("06_Table_Mapping"), mappingRows, { headerRow: 1, freezeRows: 1 });
   await overwriteSheet(workbook.worksheets.getItem("09_Backlog"), backlogRows, { headerRow: 1, freezeRows: 1 });

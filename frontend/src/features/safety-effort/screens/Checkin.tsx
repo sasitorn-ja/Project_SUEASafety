@@ -1,5 +1,5 @@
 // @ts-nocheck
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo, useDeferredValue } from "react";
 import { useLocation, useNavigate } from "@/lib/app-navigation";
 import { MapContainer, TileLayer, Marker, Popup, useMap, useMapEvents } from "react-leaflet";
 import L from "leaflet";
@@ -125,6 +125,9 @@ function apiLocationToCheckinLocation(location) {
     lng: location.lng === null || location.lng === undefined ? null : Number(location.lng),
     source: location.source,
     readOnly: Boolean(location.readOnly),
+    provinceName: location.provinceName || location.province_name || "",
+    districtName: location.districtName || location.district_name || "",
+    organizationName: location.organizationName || location.organization_name || "",
   };
 }
 
@@ -404,6 +407,7 @@ function LocCard({ loc, isSelected, onClick }) {
   else if (loc.type === "ก่อสร้าง") typeClass = "type-construction";
   else if (loc.type === "คลังสินค้า") typeClass = "type-warehouse";
   else if (loc.type === "สำนักงาน" || loc.type === "บริษัท") typeClass = "type-office";
+  const shouldShowTag = typeClass !== "type-office";
 
   return (
     <div
@@ -413,23 +417,25 @@ function LocCard({ loc, isSelected, onClick }) {
       <div className="ci-loc-icon">
         <TypeIcon type={loc.type} selected={isSelected} size={18} />
       </div>
-      <div style={{ flex: 1, minWidth: 0 }}>
+      <div className="ci-loc-main">
         <div className="ci-loc-name">{loc.name}</div>
-        <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 4 }}>
-          <span className={`ci-tag ${isSelected ? "ci-tag-sel" : "ci-tag-def"}`}>{loc.tag}</span>
+        <div className="ci-loc-meta">
+          {shouldShowTag && (
+            <span className={`ci-tag ${isSelected ? "ci-tag-sel" : "ci-tag-def"}`}>{loc.tag}</span>
+          )}
           <span className={`ci-type-badge ${typeClass}`}>{loc.type}</span>
+          {loc.dist != null && (
+            <span className="ci-dist">
+              <svg style={{ marginRight: 3 }} width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                <circle cx="12" cy="12" r="10"/>
+                <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+                <path d="M2 12h20"/>
+              </svg>
+              {loc.dist.toFixed(1)} km
+            </span>
+          )}
         </div>
       </div>
-      {loc.dist != null && (
-        <div className="ci-dist">
-          <svg style={{ marginRight: 3 }} width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-            <circle cx="12" cy="12" r="10"/>
-            <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
-            <path d="M2 12h20"/>
-          </svg>
-          {loc.dist.toFixed(1)} km
-        </div>
-      )}
       <div className="ci-check-wrapper">
         {isSelected ? (
           <div className="ci-check-circle"><IcoCheck /></div>
@@ -452,6 +458,7 @@ function FilteredLocCard({ loc, isSelected, onClick }) {
   const typeKind = normalizeLocationType(loc.type, loc.id);
   const typeClass = `type-${typeKind}`;
   const typeLabel = getLocationTypeLabel(loc.type, loc.id);
+  const shouldShowTag = typeKind !== "office";
 
   return (
     <div
@@ -461,23 +468,25 @@ function FilteredLocCard({ loc, isSelected, onClick }) {
       <div className="ci-loc-icon">
         <FilteredTypeIcon type={loc.type} id={loc.id} selected={isSelected} size={18} />
       </div>
-      <div style={{ flex: 1, minWidth: 0 }}>
+      <div className="ci-loc-main">
         <div className="ci-loc-name">{loc.name}</div>
-        <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 4 }}>
-          <span className={`ci-tag ${isSelected ? "ci-tag-sel" : "ci-tag-def"}`}>{loc.tag}</span>
+        <div className="ci-loc-meta">
+          {shouldShowTag && (
+            <span className={`ci-tag ${isSelected ? "ci-tag-sel" : "ci-tag-def"}`}>{loc.tag}</span>
+          )}
           <span className={`ci-type-badge ${typeClass}`}>{typeLabel}</span>
+          {loc.dist != null && (
+            <span className="ci-dist">
+              <svg style={{ marginRight: 3 }} width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                <circle cx="12" cy="12" r="10"/>
+                <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+                <path d="M2 12h20"/>
+              </svg>
+              {loc.dist.toFixed(1)} km
+            </span>
+          )}
         </div>
       </div>
-      {loc.dist != null && (
-        <div className="ci-dist">
-          <svg style={{ marginRight: 3 }} width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-            <circle cx="12" cy="12" r="10"/>
-            <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
-            <path d="M2 12h20"/>
-          </svg>
-          {loc.dist.toFixed(1)} km
-        </div>
-      )}
       <div className="ci-check-wrapper">
         {isSelected ? (
           <div className="ci-check-circle"><IcoCheck /></div>
@@ -964,13 +973,22 @@ const STYLES = `
   }
   .ci-search-box input {
     width: 100%;
-    border: 0;
+    min-height: 0;
+    border: 0 !important;
     outline: 0;
-    background: transparent;
+    background: transparent !important;
     color: ${T.foreground};
     font-family: inherit;
     font-size: 13.5px;
     font-weight: 600;
+    box-shadow: none !important;
+    padding: 0 !important;
+    border-radius: 0 !important;
+  }
+  .ci-search-box input:focus {
+    border: 0 !important;
+    box-shadow: none !important;
+    outline: 0;
   }
   .ci-search-box input::placeholder {
     color: #a3a199;
@@ -1042,7 +1060,7 @@ const STYLES = `
 
   /* ── Premium Location Card ── */
   .ci-loc-card {
-    display: flex; align-items: center; gap: 14px;
+    display: flex; align-items: center; gap: 12px;
     background: #ffffff;
     border: 1px solid rgba(14,15,18,0.06);
     border-radius: 16px;
@@ -1098,10 +1116,25 @@ const STYLES = `
     color: #0e0f12;
   }
 
+  .ci-loc-main {
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow: hidden;
+  }
+
   .ci-loc-name {
     font-size: 14px; font-weight: 800; color: ${T.foreground};
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     margin-bottom: 2px; font-family: 'Prompt', sans-serif;
+  }
+
+  .ci-loc-meta {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 4px;
+    min-width: 0;
+    overflow: hidden;
   }
 
   .ci-tag {
@@ -1109,6 +1142,7 @@ const STYLES = `
     border-radius: 5px; padding: 1.5px 6px;
     letter-spacing: 0.04em; font-family: 'Prompt', monospace;
     border: 1px solid transparent;
+    flex-shrink: 0;
   }
   .ci-tag-sel {
     background: rgba(var(--brand-accent-rgb),0.12);
@@ -1129,6 +1163,7 @@ const STYLES = `
     border-radius: 5px;
     padding: 1.5px 6px;
     letter-spacing: 0.01em;
+    flex-shrink: 0;
   }
   .ci-type-badge.type-factory { background: var(--c-fff2e6); color: var(--c-e65c00); border: 1px solid var(--c-ffe0cc); }
   .ci-type-badge.type-site { background: var(--c-fefcee); color: var(--c-a16207); border: 1px solid var(--c-fef08a); }
@@ -1140,7 +1175,7 @@ const STYLES = `
   .ci-dist {
     font-size: 11px; font-weight: 800; color: ${T.foreground3};
     font-family: 'Prompt', sans-serif; white-space: nowrap;
-    margin-left: auto; margin-right: 10px; flex-shrink: 0;
+    margin-left: 2px; flex-shrink: 0;
     background: var(--c-f7f6f2);
     padding: 3px 8px;
     border-radius: 6px;
@@ -1157,7 +1192,7 @@ const STYLES = `
 
   /* ── Bouncing Check Circle ── */
   .ci-check-wrapper {
-    margin-left: auto;
+    margin-left: 2px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1381,6 +1416,22 @@ const STYLES = `
   }
 
   @media (max-width: 767px) {
+    .ci-loc-card {
+      gap: 10px;
+      padding: 11px 12px;
+    }
+    .ci-loc-icon {
+      width: 38px;
+      height: 38px;
+      min-width: 38px;
+      min-height: 38px;
+    }
+    .ci-loc-name {
+      font-size: 13px;
+    }
+    .ci-check-wrapper {
+      width: 20px;
+    }
     .ci-workspace {
       display: block;
       padding: 0;
@@ -1447,6 +1498,9 @@ export default function Checkin() {
   // Instant Search and Quick Filter state
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedType, setSelectedType] = useState("ทั้งหมด");
+  const deferredSearchQuery = useDeferredValue(searchQuery);
+  const selectedTypeKey = LOCATION_FILTERS.some(filter => filter.key === selectedType) ? selectedType : "all";
+  const deferredSearchKeyword = deferredSearchQuery.trim();
 
   // How many location cards to render at once (avoid rendering the entire list).
   const LOCATIONS_PAGE_SIZE = 20;
@@ -1490,7 +1544,7 @@ export default function Checkin() {
       return payload.data?.items || payload.data?.locations || [];
     };
     Promise.all([
-      loadLocations("/api/locations/map?limit=1000"),
+      loadLocations("/api/locations/map?limit=300"),
       loadLocations("/api/locations/offices?limit=30"),
     ])
       .then(([mapItems, officeItems]) => {
@@ -1554,12 +1608,24 @@ export default function Checkin() {
   }, [selectedType, userPos]);
 
   useEffect(() => {
-    const keyword = searchQuery.trim();
-    if (keyword.length < 3 || !["ทั้งหมด", "all", "site"].includes(selectedType)) return;
+    const keyword = deferredSearchKeyword;
+    const minimumLength = selectedTypeKey === "site" ? 3 : 2;
+    if (keyword.length < minimumLength) return;
     const point = normalizePoint(userPos, DEFAULT_CENTER);
     const controller = new AbortController();
+    const params = new URLSearchParams({
+      q: keyword,
+      limit: "30",
+      lat: String(point.lat),
+      lng: String(point.lng),
+    });
+    if (selectedTypeKey === "factory") params.set("type", "PLANT");
+    if (selectedTypeKey === "office") params.set("type", "OFFICE");
+    if (selectedTypeKey === "site") params.set("type", "SITE");
+
     const timer = window.setTimeout(() => {
-      fetch(`/api/locations/search?type=SITE&q=${encodeURIComponent(keyword)}&limit=20&lat=${encodeURIComponent(point.lat)}&lng=${encodeURIComponent(point.lng)}`, {
+      setLoadingLocations(true);
+      fetch(`/api/locations/search?${params.toString()}`, {
         credentials: "include",
         signal: controller.signal,
       })
@@ -1569,7 +1635,10 @@ export default function Checkin() {
           return payload.data?.items || [];
         })
         .then(items => {
-          const remoteSites = items.map(apiLocationToCheckinLocation);
+          const remoteSites = items.map(item => ({
+            ...apiLocationToCheckinLocation(item),
+            remoteSearchKeyword: keyword,
+          }));
           setExtraLocs(current => {
             const merged = new Map(current.map(item => [item.id, item]));
             remoteSites.forEach(item => merged.set(item.id, item));
@@ -1577,45 +1646,55 @@ export default function Checkin() {
           });
         })
         .catch(error => {
-          if (error?.name !== "AbortError") setApiError(error?.message || "ไม่สามารถค้นหา Site ได้");
+          if (error?.name !== "AbortError") setApiError(error?.message || "ไม่สามารถค้นหาสถานที่ได้");
+        })
+        .finally(() => {
+          if (!controller.signal.aborted) setLoadingLocations(false);
         });
-    }, 400);
+    }, 250);
     return () => {
       window.clearTimeout(timer);
       controller.abort();
     };
-  }, [searchQuery, selectedType, userPos]);
+  }, [deferredSearchKeyword, selectedTypeKey, userPos]);
 
-  const allLocations = extraLocs
-    .map(l => ({
-      ...l,
-      dist: isValidPoint(l)
-        ? haversine(center.lat, center.lng, l.lat, l.lng)
-        : null,
-    }))
-    .sort((a, b) => (a.dist ?? 9999) - (b.dist ?? 9999));
+  const allLocations = useMemo(() => (
+    extraLocs
+      .map(l => ({
+        ...l,
+        dist: isValidPoint(l)
+          ? haversine(center.lat, center.lng, l.lat, l.lng)
+          : null,
+      }))
+      .sort((a, b) => (a.dist ?? 9999) - (b.dist ?? 9999))
+  ), [extraLocs, center.lat, center.lng]);
 
-  const selectedTypeKey = LOCATION_FILTERS.some(filter => filter.key === selectedType) ? selectedType : "all";
-  const visibleLocations = allLocations.filter(loc => {
+  const visibleLocations = useMemo(() => allLocations.filter(loc => {
     const typeKind = normalizeLocationType(loc.type, loc.id);
 
     if (selectedTypeKey !== "all" && typeKind !== selectedTypeKey) {
       return false;
     }
 
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase().trim();
+    if (deferredSearchKeyword) {
+      const q = deferredSearchKeyword.toLowerCase();
       const normalizedType = getLocationTypeLabel(loc.type, loc.id).toLowerCase();
+      const remoteSearchMatched = loc.remoteSearchKeyword?.toLowerCase() === q;
       return (
+        remoteSearchMatched ||
         loc.name.toLowerCase().includes(q) ||
         loc.tag.toLowerCase().includes(q) ||
+        String(loc.provinceName || "").toLowerCase().includes(q) ||
+        String(loc.districtName || "").toLowerCase().includes(q) ||
+        String(loc.organizationName || "").toLowerCase().includes(q) ||
         normalizedType.includes(q)
       );
     }
 
     return true;
-  });
-  const searchKeyword = searchQuery.trim();
+  }), [allLocations, deferredSearchKeyword, selectedTypeKey]);
+
+  const searchKeyword = deferredSearchKeyword;
   const locationDataHint = selectedTypeKey === "site"
     ? searchKeyword.length < 3
       ? "กำลังแสดง Site งานใกล้คุณ 20 รายการจาก rmc_sso.sites และค้นหาเพิ่มเติมได้เมื่อพิมพ์อย่างน้อย 3 ตัว"
@@ -1628,7 +1707,7 @@ export default function Checkin() {
     : "ไม่พบสถานที่ที่ค้นหา";
 
   // Only render the first `visibleCount` results; "show more" reveals the rest.
-  const pagedLocations = visibleLocations.slice(0, visibleCount);
+  const pagedLocations = useMemo(() => visibleLocations.slice(0, visibleCount), [visibleLocations, visibleCount]);
   const hasMoreLocations = visibleLocations.length > visibleCount;
   const remainingLocations = visibleLocations.length - visibleCount;
 
@@ -1756,7 +1835,7 @@ export default function Checkin() {
   }
 
   const mapCenter = normalizePoint(center, DEFAULT_CENTER);
-  const fitPoints = allLocations.filter(isValidPoint).map(l => [Number(l.lat), Number(l.lng)]);
+  const fitPoints = useMemo(() => allLocations.filter(isValidPoint).map(l => [Number(l.lat), Number(l.lng)]), [allLocations]);
   const mapInstanceKey = isMobile ? "mobile" : "desktop";
   const selectedForAction = selected
     ? allLocations.find(l => l.id === selected.id)
@@ -2015,7 +2094,7 @@ export default function Checkin() {
           <div
             id="ci-mobile-scroll-area"
             className="ci-list"
-            style={{ flex: 1, overflowY: "auto", display: "flex", flexDirection: "column", background: "var(--c-faf9f6)", padding: "12px 12px calc(112px + env(safe-area-inset-bottom))", gap: 12 }}
+            style={{ flex: 1, overflowY: "auto", display: "flex", flexDirection: "column", background: "var(--c-faf9f6)", padding: "12px 12px calc(170px + var(--mobile-bottomnav-h) + env(safe-area-inset-bottom))", gap: 12 }}
           >
             <StepHeader />
 
@@ -2158,11 +2237,13 @@ export default function Checkin() {
 
           <div
             style={{
-              position: "sticky",
-              bottom: 0,
-              zIndex: 12,
+              position: "fixed",
+              left: 0,
+              right: 0,
+              bottom: "calc(var(--mobile-bottomnav-h) + env(safe-area-inset-bottom))",
+              zIndex: 40,
               background: "linear-gradient(180deg, rgba(250,249,246,0) 0%, rgba(250,249,246,0.88) 18%, rgba(250,249,246,1) 100%)",
-              paddingBottom: "env(safe-area-inset-bottom)",
+              padding: "10px 12px 0",
             }}
           >
             <FooterPanel />

@@ -2,10 +2,14 @@
 import React, { useEffect, useMemo } from "react";
 import { useNavigate } from "@/lib/app-navigation";
 import { Lock, Info } from "lucide-react";
-import { isLocalDemoLoginHost } from "@/lib/session-user";
+import { DEMO_LOGIN_PERSISTED_KEY, DEMO_LOGIN_SESSION_KEY, isLocalDemoLoginHost } from "@/lib/session-user";
 
-const LOGIN_SESSION_KEY = "cpac-safety-login-session";
-const LOGIN_PERSISTED_KEY = "cpac-safety-login-persisted";
+function getSafeReturnTo() {
+  if (typeof window === "undefined") return "/";
+  const returnTo = new URLSearchParams(window.location.search).get("returnTo") || "/";
+  if (!returnTo.startsWith("/") || returnTo.startsWith("//")) return "/";
+  return returnTo;
+}
 
 export default function Login() {
   const navigate = useNavigate();
@@ -25,18 +29,18 @@ export default function Login() {
 
   const handleDemoLogin = () => {
     try {
-      window.sessionStorage.setItem(LOGIN_SESSION_KEY, "true");
-      window.localStorage.setItem(LOGIN_PERSISTED_KEY, "true");
+      window.sessionStorage.setItem(DEMO_LOGIN_SESSION_KEY, "true");
+      window.localStorage.setItem(DEMO_LOGIN_PERSISTED_KEY, "true");
     } catch {
       // The demo login still navigates home even without storage.
     }
-    navigate("/");
+    navigate(getSafeReturnTo());
   };
 
   useEffect(() => {
     try {
-      window.sessionStorage.removeItem(LOGIN_SESSION_KEY);
-      window.localStorage.removeItem(LOGIN_PERSISTED_KEY);
+      window.sessionStorage.removeItem(DEMO_LOGIN_SESSION_KEY);
+      window.localStorage.removeItem(DEMO_LOGIN_PERSISTED_KEY);
     } catch {
       // Keep the login screen usable if browser storage is unavailable.
     }

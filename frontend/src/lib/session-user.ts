@@ -5,6 +5,7 @@ import { hasAdminAccess } from "@/lib/access-control";
 import { PROFILE_IMAGE_UPDATED_EVENT } from "@/lib/profile";
 
 export const DEMO_LOGIN_SESSION_KEY = "cpac-safety-login-session";
+export const DEMO_LOGIN_PERSISTED_KEY = "cpac-safety-login-persisted";
 
 export type SessionUser = {
   id?: string;
@@ -40,6 +41,19 @@ export const DEMO_ADMIN_USER: SessionUser = {
 
 export function isLocalDemoLoginHost(hostname?: string) {
   return hostname === "localhost" || hostname === "127.0.0.1" || hostname === "::1" || hostname === "[::1]";
+}
+
+export function isDemoLoginActive() {
+  if (typeof window === "undefined" || process.env.NODE_ENV === "production") return false;
+  try {
+    return (
+      isLocalDemoLoginHost(window.location.hostname) &&
+      (window.sessionStorage.getItem(DEMO_LOGIN_SESSION_KEY) === "true" ||
+        window.localStorage.getItem(DEMO_LOGIN_PERSISTED_KEY) === "true")
+    );
+  } catch {
+    return false;
+  }
 }
 
 export function getSessionDisplayName(user?: SessionUser | null) {
@@ -80,10 +94,7 @@ export function useSessionUser() {
     let demoLoginAllowed = false;
 
     try {
-      demoLoginAllowed =
-        process.env.NODE_ENV !== "production" &&
-        isLocalDemoLoginHost(window.location.hostname) &&
-        window.sessionStorage.getItem(DEMO_LOGIN_SESSION_KEY) === "true";
+      demoLoginAllowed = isDemoLoginActive();
     } catch {
       demoLoginAllowed = false;
     }

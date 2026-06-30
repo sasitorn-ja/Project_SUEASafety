@@ -267,7 +267,7 @@ export async function listSafetyEffortLocations(options: {
   }
 
   if (options.search?.trim()) {
-    where.push("(l.name_th LIKE :search OR l.name_en LIKE :search OR l.code LIKE :search OR l.external_key LIKE :search)");
+    where.push("(l.name_th LIKE :search OR l.name_en LIKE :search OR l.code LIKE :search OR l.external_key LIKE :search OR l.province_name LIKE :search OR l.district_name LIKE :search)");
     params.search = `%${options.search.trim()}%`;
   }
 
@@ -345,6 +345,61 @@ export async function findSafetyEffortLocationForCheckin(input: {
     params,
   );
   return rows[0] ? mapLocation(rows[0]) : null;
+}
+
+type NearestLocationRow = LocationRow & {
+  distance_m: number | string | null;
+};
+
+export async function findNearestSafetyEffortLocation(input: {
+  lat: number;
+  lng: number;
+}) {
+  const rows = await queryRows<NearestLocationRow>(
+    `
+      SELECT
+        l.id,
+        l.created_by,
+        COALESCE(NULLIF(creator.name_th, ''), NULLIF(creator.name_en, ''), creator.email) AS creator_name,
+        creator.email AS creator_email,
+        l.organization_id,
+        o.external_code AS organization_code,
+        o.name_th AS organization_name,
+        l.location_type,
+        l.source,
+        l.external_key,
+        l.code,
+        l.name_th,
+        l.name_en,
+        l.province_name,
+        l.district_name,
+        l.plant_type,
+        l.production_type,
+        l.sap_code,
+        l.site_material_code,
+        l.status,
+        l.map_visible,
+        l.checkin_enabled,
+        ST_Latitude(l.position) AS lat,
+        ST_Longitude(l.position) AS lng,
+        l.created_at,
+        l.updated_at,
+        ST_Distance_Sphere(l.position, ST_GeomFromText(:pointWkt, 4326, 'axis-order=long-lat')) AS distance_m
+      FROM locations l
+      LEFT JOIN organizations o ON o.id = l.organization_id
+      LEFT JOIN users creator ON creator.id = l.created_by AND creator.deleted_at IS NULL
+      WHERE l.deleted_at IS NULL
+        AND l.position IS NOT NULL
+      ORDER BY distance_m ASC
+      LIMIT 1
+    `,
+    { pointWkt: `POINT(${input.lng} ${input.lat})` },
+  );
+  if (!rows[0]) return null;
+  return {
+    ...mapLocation(rows[0]),
+    distanceM: rows[0].distance_m === null ? null : Number(rows[0].distance_m),
+  };
 }
 
 export async function createSafetyEffortLocation(input: SafetyEffortLocationInput) {

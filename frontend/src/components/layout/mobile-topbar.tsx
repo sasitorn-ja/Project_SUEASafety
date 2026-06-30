@@ -76,6 +76,8 @@ const ENABLED_HREFS = new Set([
   "/profile/activity-history",
   "/login",
 ]);
+const LOGIN_SESSION_KEY = "cpac-safety-login-session";
+const LOGIN_PERSISTED_KEY = "cpac-safety-login-persisted";
 
 function MobileConfiguredNode({
   node,
@@ -226,6 +228,15 @@ export function MobileTopbar({ hidden = false }: { hidden?: boolean }) {
   };
 
   const closeDrawer = () => setOpen(false);
+  const handleLogoutClick = () => {
+    closeDrawer();
+    try {
+      window.sessionStorage.removeItem(LOGIN_SESSION_KEY);
+      window.localStorage.removeItem(LOGIN_PERSISTED_KEY);
+    } catch {
+      // Server-side session cleanup remains authoritative.
+    }
+  };
   const menuLabel = open ? "ปิดเมนู" : "เปิดเมนู";
 
   return (
@@ -426,6 +437,7 @@ export function MobileTopbar({ hidden = false }: { hidden?: boolean }) {
 
                 <NavTo
                   href="/api/auth/logout"
+                  onClick={handleLogoutClick}
                   className="mt-1 flex min-h-11 w-full items-center gap-3 rounded-xl bg-[#FFF5F5] px-3 text-[13px] font-bold text-[#D92D20] transition-colors hover:bg-[#FFE8E8]"
                 >
                   <LogOut className="h-4 w-4 flex-shrink-0" strokeWidth={2.35} />

@@ -135,7 +135,7 @@ export async function getSsoConfig(request?: NextRequest) {
     clientSecret: envValue("SSO_CLIENT_SECRET", "RMC_SSO_CLIENT_SECRET"),
     redirectUri:
       envValue("SSO_REDIRECT_URI", "RMC_SSO_REDIRECT_URI") ||
-      `${origin}/api/components/auth/callback/${providerSlug}`,
+      `${origin}/api/auth/callback/${providerSlug}`,
     postLogoutRedirectUri:
       envValue("SSO_POST_LOGOUT_REDIRECT_URI", "RMC_SSO_POST_LOGOUT_REDIRECT_URI") ||
       `${origin}/login`,

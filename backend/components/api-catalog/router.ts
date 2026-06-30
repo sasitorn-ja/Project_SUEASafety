@@ -371,9 +371,27 @@ async function tryHandleConcreteRoute(
     }
 
     if (method === "GET" && path === "/api/locations/search") {
+      const searchType = normalizeLocationType(query.get("type"));
+      const search = query.get("q") || query.get("search") || "";
+      const limit = Number(query.get("limit") || 30);
+
+      if (!searchType && isRmrSsoDatabaseConfigured()) {
+        const [storedLocations, siteLocations] = await Promise.all([
+          listLocationsWithPlantBootstrap({
+            search,
+            limit,
+          }, userId),
+          search.trim().length >= 3 ? searchRmcSites(search, limit, nearPoint) : Promise.resolve([]),
+        ]);
+        const merged = new Map<string, (typeof storedLocations)[number]>();
+        [...storedLocations, ...siteLocations].forEach((location) => merged.set(location.id, location));
+        const locations = Array.from(merged.values());
+        return jsonData({ items: locations, locations, minimumSearchLength: 3 });
+      }
+
       const locations = await listLocationsWithPlantBootstrap({
-        type: normalizeLocationType(query.get("type")),
-        search: query.get("q") || query.get("search"),
+        type: searchType,
+        search,
         limit: Number(query.get("limit") || 20),
       }, userId);
       return jsonData({ items: locations, locations });

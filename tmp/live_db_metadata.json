@@ -50,7 +50,7 @@
     },
     {
       "TABLE_NAME": "checkins",
-      "column_count": "14"
+      "column_count": 18
     },
     {
       "TABLE_NAME": "comment_reactions",
@@ -1250,6 +1250,46 @@
       "TABLE_NAME": "checkins",
       "COLUMN_NAME": "actual_accuracy_m",
       "COLUMN_TYPE": "decimal(10,2)",
+      "CHARACTER_MAXIMUM_LENGTH": null,
+      "IS_NULLABLE": "YES",
+      "COLUMN_DEFAULT": null,
+      "COLUMN_KEY": "",
+      "EXTRA": ""
+    },
+    {
+      "TABLE_NAME": "checkins",
+      "COLUMN_NAME": "actual_location_id_snapshot",
+      "COLUMN_TYPE": "bigint unsigned",
+      "CHARACTER_MAXIMUM_LENGTH": null,
+      "IS_NULLABLE": "YES",
+      "COLUMN_DEFAULT": null,
+      "COLUMN_KEY": "MUL",
+      "EXTRA": ""
+    },
+    {
+      "TABLE_NAME": "checkins",
+      "COLUMN_NAME": "actual_location_name_snapshot",
+      "COLUMN_TYPE": "varchar(255)",
+      "CHARACTER_MAXIMUM_LENGTH": 255,
+      "IS_NULLABLE": "YES",
+      "COLUMN_DEFAULT": null,
+      "COLUMN_KEY": "",
+      "EXTRA": ""
+    },
+    {
+      "TABLE_NAME": "checkins",
+      "COLUMN_NAME": "actual_location_code_snapshot",
+      "COLUMN_TYPE": "varchar(80)",
+      "CHARACTER_MAXIMUM_LENGTH": 80,
+      "IS_NULLABLE": "YES",
+      "COLUMN_DEFAULT": null,
+      "COLUMN_KEY": "",
+      "EXTRA": ""
+    },
+    {
+      "TABLE_NAME": "checkins",
+      "COLUMN_NAME": "actual_location_distance_m_snapshot",
+      "COLUMN_TYPE": "decimal(12,2)",
       "CHARACTER_MAXIMUM_LENGTH": null,
       "IS_NULLABLE": "YES",
       "COLUMN_DEFAULT": null,
@@ -6708,6 +6748,13 @@
       "NON_UNIQUE": 0,
       "INDEX_TYPE": "BTREE",
       "columns_or_expression": "id"
+    },
+    {
+      "TABLE_NAME": "checkins",
+      "INDEX_NAME": "idx_checkins_actual_location_time_id",
+      "NON_UNIQUE": 1,
+      "INDEX_TYPE": "BTREE",
+      "columns_or_expression": "actual_location_id_snapshot, checked_in_at, id"
     },
     {
       "TABLE_NAME": "checkins",

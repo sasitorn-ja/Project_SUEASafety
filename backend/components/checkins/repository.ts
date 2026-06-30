@@ -3,7 +3,7 @@ import "server-only";
 import type { ResultSetHeader, RowDataPacket } from "mysql2/promise";
 
 import { queryRows, withTransaction } from "@backend/components/core/db";
-import { findSafetyEffortLocationForCheckin, getSafetyEffortLocation } from "@backend/components/safety-effort/locations/repository";
+import { findNearestSafetyEffortLocation, findSafetyEffortLocationForCheckin, getSafetyEffortLocation } from "@backend/components/safety-effort/locations/repository";
 
 type CheckinRow = RowDataPacket & {
   id: string;
@@ -15,6 +15,10 @@ type CheckinRow = RowDataPacket & {
   actual_lat: number | string | null;
   actual_lng: number | string | null;
   actual_accuracy_m: number | string | null;
+  actual_location_id_snapshot: string | null;
+  actual_location_name_snapshot: string | null;
+  actual_location_code_snapshot: string | null;
+  actual_location_distance_m_snapshot: number | string | null;
   distance_from_selected_m: number | string;
   location_match_status: string;
   location_source: string;
@@ -50,6 +54,10 @@ function mapCheckin(row: CheckinRow) {
     actualLat: row.actual_lat === null ? null : Number(row.actual_lat),
     actualLng: row.actual_lng === null ? null : Number(row.actual_lng),
     actualAccuracyM: row.actual_accuracy_m === null ? null : Number(row.actual_accuracy_m),
+    actualLocationId: row.actual_location_id_snapshot === null ? null : String(row.actual_location_id_snapshot),
+    actualLocationName: row.actual_location_name_snapshot || "",
+    actualLocationCode: row.actual_location_code_snapshot || "",
+    actualLocationDistanceM: row.actual_location_distance_m_snapshot === null ? null : Number(row.actual_location_distance_m_snapshot),
     distanceFromSelectedM: Number(row.distance_from_selected_m),
     locationMatchStatus: row.location_match_status,
     locationSource: row.location_source,
@@ -70,6 +78,10 @@ const SELECT_CHECKINS_SQL = `
     ST_Latitude(c.actual_position) AS actual_lat,
     ST_Longitude(c.actual_position) AS actual_lng,
     c.actual_accuracy_m,
+    c.actual_location_id_snapshot,
+    c.actual_location_name_snapshot,
+    c.actual_location_code_snapshot,
+    c.actual_location_distance_m_snapshot,
     c.distance_from_selected_m,
     c.location_match_status,
     c.location_source,
@@ -106,6 +118,10 @@ export async function createCheckin(input: {
     { lat: input.actualLat, lng: input.actualLng },
   );
   const matchStatus = distance <= 250 ? "MATCHED" : "OUT_OF_RANGE";
+  const actualLocation = await findNearestSafetyEffortLocation({
+    lat: input.actualLat,
+    lng: input.actualLng,
+  });
 
   const id = await withTransaction(async (connection) => {
     const [result] = await connection.execute<ResultSetHeader>(
@@ -117,6 +133,10 @@ export async function createCheckin(input: {
           selected_location_position_snapshot,
           actual_position,
           actual_accuracy_m,
+          actual_location_id_snapshot,
+          actual_location_name_snapshot,
+          actual_location_code_snapshot,
+          actual_location_distance_m_snapshot,
           distance_from_selected_m,
           location_match_status,
           location_source,
@@ -128,6 +148,10 @@ export async function createCheckin(input: {
           ST_GeomFromText(:selectedPointWkt, 4326, 'axis-order=long-lat'),
           ST_GeomFromText(:actualPointWkt, 4326, 'axis-order=long-lat'),
           :actualAccuracyM,
+          :actualLocationId,
+          :actualLocationName,
+          :actualLocationCode,
+          :actualLocationDistanceM,
           :distance,
           :matchStatus,
           :locationSource,
@@ -141,6 +165,10 @@ export async function createCheckin(input: {
         selectedPointWkt: `POINT(${selectedLocation.lng} ${selectedLocation.lat})`,
         actualPointWkt: `POINT(${input.actualLng} ${input.actualLat})`,
         actualAccuracyM: input.actualAccuracyM ?? null,
+        actualLocationId: actualLocation?.id ?? null,
+        actualLocationName: actualLocation?.nameTh ?? null,
+        actualLocationCode: actualLocation?.code ?? null,
+        actualLocationDistanceM: actualLocation?.distanceM ?? null,
         distance,
         matchStatus,
         locationSource: input.locationSource || "GPS",

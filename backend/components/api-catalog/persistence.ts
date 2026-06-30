@@ -816,6 +816,9 @@ function safetyEffortSubmissionDto(row: Record<string, unknown> | null | undefin
     metadata: normalizeSafetyEffortMetadata(metadataRaw),
     actualLat: row.actual_lat == null ? null : Number(row.actual_lat),
     actualLng: row.actual_lng == null ? null : Number(row.actual_lng),
+    actualLocationName: row.actual_location_name ? String(row.actual_location_name) : "",
+    actualLocationCode: row.actual_location_code ? String(row.actual_location_code) : "",
+    actualLocationDistanceM: row.actual_location_distance_m == null ? null : Number(row.actual_location_distance_m),
   };
 }
 
@@ -1141,7 +1144,8 @@ async function handleActivitiesAssessments(request: NextRequest, method: string,
     if (to) { where.push("s.submission_date <= :to"); params.to = to; }
     if (activityType) { where.push("s.activity_type = :activityType"); params.activityType = activityType; }
     // Join users so the submitter name/email/code falls back to their profile
-    // for older rows that were saved without a name snapshot. Also join checkins to get actual coordinates.
+    // for older rows that were saved without a name snapshot. Also join checkins
+    // to get actual coordinates and the nearest known location name.
     const result = await listRows(
       "safety_effort_submissions s " +
       "LEFT JOIN users u ON u.id = s.user_id " +
@@ -1156,7 +1160,16 @@ async function handleActivitiesAssessments(request: NextRequest, method: string,
           "COALESCE(NULLIF(s.email, ''), u.email) AS email, " +
           "COALESCE(NULLIF(s.pms, ''), u.employee_no) AS pms, " +
           "ST_Latitude(c.actual_position) AS actual_lat, " +
-          "ST_Longitude(c.actual_position) AS actual_lng",
+          "ST_Longitude(c.actual_position) AS actual_lng, " +
+          "COALESCE(NULLIF(c.actual_location_name_snapshot, ''), (SELECT nl.name_th FROM locations nl " +
+          "WHERE nl.deleted_at IS NULL AND nl.position IS NOT NULL AND c.actual_position IS NOT NULL " +
+          "ORDER BY ST_Distance_Sphere(c.actual_position, nl.position) ASC LIMIT 1)) AS actual_location_name, " +
+          "COALESCE(NULLIF(c.actual_location_code_snapshot, ''), (SELECT nl.code FROM locations nl " +
+          "WHERE nl.deleted_at IS NULL AND nl.position IS NOT NULL AND c.actual_position IS NOT NULL " +
+          "ORDER BY ST_Distance_Sphere(c.actual_position, nl.position) ASC LIMIT 1)) AS actual_location_code, " +
+          "COALESCE(c.actual_location_distance_m_snapshot, (SELECT ST_Distance_Sphere(c.actual_position, nl.position) FROM locations nl " +
+          "WHERE nl.deleted_at IS NULL AND nl.position IS NOT NULL AND c.actual_position IS NOT NULL " +
+          "ORDER BY ST_Distance_Sphere(c.actual_position, nl.position) ASC LIMIT 1)) AS actual_location_distance_m",
         maxPageSize: 500,
       }
     );

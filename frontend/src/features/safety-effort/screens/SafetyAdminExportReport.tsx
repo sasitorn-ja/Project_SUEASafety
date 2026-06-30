@@ -9,16 +9,11 @@ import {
 } from "lucide-react";
 import * as XLSX from "xlsx";
 import { Combobox } from "@/components/ui/combobox";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog } from "@/components/ui/dialog";
+import { AppDialogBody, AppDialogContent, AppDialogDescription, AppDialogSectionFooter, AppDialogSectionHeader, AppDialogTitle } from "@/components/ui/app-dialog";
 import { SafetyCultureHero } from "@/components/safety-culture/safety-culture-hero";
 import { Button } from "@/components/ui/button";
+import { isDemoLoginActive } from "@/lib/session-user";
 
 const T = {
   page: "var(--background)",
@@ -90,6 +85,77 @@ const REPORT_ACTIVITY_OPTIONS = [
 ];
 
 const REPORT_EXPORT_HEADERS = ["Status", "Linewalk ID", "Ref ID", "Create Date", "Username", "Full Name", "Email"];
+
+const DEMO_REPORT_RECORDS = [
+  {
+    id: "demo-report-1",
+    status: "LineWalk",
+    linewalkId: "SATIENPY",
+    pms: "SATIENPY",
+    refId: "CPAC-01",
+    createDate: "30/06/2026",
+    username: "satienpy",
+    fullName: "เสถียรพงษ์ เยี่ยงวาณิชสุขุล",
+    name: "เสถียรพงษ์ เยี่ยงวาณิชสุขุล",
+    email: "satienpy@scg.com",
+    year: 2026,
+    month: 6,
+    activityType: "Safety_Observation/Line_Walk",
+    source: "demo",
+  },
+  {
+    id: "demo-report-2",
+    status: "LineWalk",
+    linewalkId: "SASITOJA",
+    pms: "SASITOJA",
+    refId: "1975",
+    createDate: "27/06/2026",
+    username: "sasitoja",
+    fullName: "ศศิธร จรุงจรรยาพงศ์",
+    name: "ศศิธร จรุงจรรยาพงศ์",
+    email: "sasitoja@scg.com",
+    year: 2026,
+    month: 6,
+    activityType: "Safety_Observation/Line_Walk",
+    source: "demo",
+  },
+  {
+    id: "demo-report-3",
+    status: "SafetyContact",
+    linewalkId: "SATIENPY",
+    pms: "SATIENPY",
+    refId: "",
+    createDate: "27/06/2026",
+    username: "satienpy",
+    fullName: "เสถียรพงษ์ เยี่ยงวาณิชสุขุล",
+    name: "เสถียรพงษ์ เยี่ยงวาณิชสุขุล",
+    email: "satienpy@scg.com",
+    year: 2026,
+    month: 6,
+    activityType: "Safety_Contact",
+    source: "demo",
+  },
+  {
+    id: "demo-report-4",
+    status: "LineWalk",
+    linewalkId: "SASITOJA",
+    pms: "SASITOJA",
+    refId: "31EM",
+    createDate: "24/06/2026",
+    username: "sasitoja",
+    fullName: "ศศิธร จรุงจรรยาพงศ์",
+    name: "ศศิธร จรุงจรรยาพงศ์",
+    email: "sasitoja@scg.com",
+    year: 2026,
+    month: 6,
+    activityType: "Safety_Observation/Line_Walk",
+    source: "demo",
+  },
+];
+
+function isDemoReportMode() {
+  return isDemoLoginActive();
+}
 
 function toNumberOrFallback(value, fallback) {
   const parsed = Number(value);
@@ -233,18 +299,36 @@ export default function SafetyAdminExportReport() {
     (async () => {
       try {
         const res = await fetch("/api/safety-effort/submissions?pageSize=500", { credentials: "include", cache: "no-store" });
-        if (!res.ok) return;
+        if (!res.ok) {
+          if (!cancelled && isDemoReportMode()) {
+            setUploadedReportRecords(DEMO_REPORT_RECORDS);
+          }
+          return;
+        }
         const payload = await res.json().catch(() => null);
         const items = payload?.data?.items;
-        if (Array.isArray(items) && !cancelled) setSubmissions(items);
-      } catch { if (!cancelled) setSubmissions([]); }
+        if (Array.isArray(items) && !cancelled) {
+          setSubmissions(items);
+          if (items.length === 0 && isDemoReportMode()) {
+            setUploadedReportRecords(DEMO_REPORT_RECORDS);
+          }
+        }
+      } catch {
+        if (!cancelled) {
+          setSubmissions([]);
+          if (isDemoReportMode()) {
+            setUploadedReportRecords(DEMO_REPORT_RECORDS);
+          }
+        }
+      }
     })();
     return () => { cancelled = true; };
   }, []);
 
   const [uploadedReportRecords, setUploadedReportRecords] = useState([]);
-  
+
   const [editingReport, setEditingReport] = useState(null);
+  const [deleteReportTarget, setDeleteReportTarget] = useState(null);
 
   const submissionReportRecords = useMemo(
     () => submissions.map((submission, index) => submissionToReportRecord(submission, index)).filter(Boolean),
@@ -362,7 +446,7 @@ export default function SafetyAdminExportReport() {
           : submission
       );
       setSubmissions(next);
-    } else if (editingReport.source === "upload") {
+    } else if (editingReport.source === "upload" || editingReport.source === "demo") {
       setUploadedReportRecords((prev) =>
         prev.map((record) =>
           record.id === editingReport.id ? { ...record, ...normalizedRecord } : record
@@ -386,16 +470,19 @@ export default function SafetyAdminExportReport() {
     setSubmissions((current) => current.filter((submission) => String(submission.id) !== String(submissionId)));
   };
 
-  const handleDeleteReportRecord = async (item) => {
-    if (typeof window !== "undefined" && !window.confirm("ต้องการลบรายการนี้ใช่หรือไม่?")) {
-      return;
-    }
+  const handleDeleteReportRecord = (item) => {
+    setDeleteReportTarget(item);
+  };
 
-    if (item.source === "submission" && item.submissionId) {
-      await handleDeleteSubmission(item.submissionId);
-    } else if (item.source === "upload") {
-      setUploadedReportRecords((prev) => prev.filter((record) => record.id !== item.id));
+  const confirmDeleteReportRecord = async () => {
+    if (!deleteReportTarget) return;
+
+    if (deleteReportTarget.source === "submission" && deleteReportTarget.submissionId) {
+      await handleDeleteSubmission(deleteReportTarget.submissionId);
+    } else if (deleteReportTarget.source === "upload" || deleteReportTarget.source === "demo") {
+      setUploadedReportRecords((prev) => prev.filter((record) => record.id !== deleteReportTarget.id));
     }
+    setDeleteReportTarget(null);
   };
 
   return (
@@ -806,35 +893,19 @@ export default function SafetyAdminExportReport() {
 
       {/* Editing Modal */}
       <Dialog open={!!editingReport} onOpenChange={(open) => !open && setEditingReport(null)}>
-        <DialogContent className="z-[1000] max-w-[560px] overflow-hidden p-0 sm:max-w-[560px]">
+        <AppDialogContent size="md" className="z-[1000] max-w-[560px]">
           {editingReport ? (
           <>
-            <DialogHeader>
-              <div>
-                <div
-                  style={{
-                    fontSize: 11,
-                    fontWeight: 800,
-                    color: T.accentDeep,
-                    textTransform: "uppercase",
-                  }}
-                >
-                  REPORT EDITOR
-                </div>
-                <DialogTitle style={{ fontSize: 20, fontWeight: 950, color: T.ink }}>
-                  แก้ไขข้อมูลรายงานแบบประเมิน
-                </DialogTitle>
-                <DialogDescription>ปรับข้อมูลรายงาน แล้วบันทึกกลับเข้า dashboard</DialogDescription>
-              </div>
-            </DialogHeader>
+            <AppDialogSectionHeader className="border-[#d7e6f6] bg-[linear-gradient(135deg,#ffffff_0%,#f4f9ff_56%,#eaf4ff_100%)]">
+              <AppDialogTitle className="text-[#0b3572]">
+                แก้ไขข้อมูลรายงานแบบประเมิน
+              </AppDialogTitle>
+              <AppDialogDescription>
+                ปรับข้อมูลรายงาน แล้วบันทึกกลับเข้า dashboard
+              </AppDialogDescription>
+            </AppDialogSectionHeader>
 
-            <div
-              className="px-5 py-5 md:px-6"
-              style={{
-                display: "grid",
-                gap: 16,
-              }}
-            >
+            <AppDialogBody className="gap-4">
               <div
                 style={{
                   display: "grid",
@@ -931,17 +1002,9 @@ export default function SafetyAdminExportReport() {
                   ? "ไฟล์ Excel ที่อัปโหลด"
                   : "ข้อมูลภายนอก"}
               </div>
-            </div>
+            </AppDialogBody>
 
-            <DialogFooter>
-              <Button
-                type="button"
-                variant="outline"
-                size="lg"
-                onClick={() => setEditingReport(null)}
-              >
-                ยกเลิก
-              </Button>
+            <AppDialogSectionFooter>
               <Button
                 type="button"
                 variant="brand"
@@ -951,10 +1014,44 @@ export default function SafetyAdminExportReport() {
               >
                 บันทึกการแก้ไข
               </Button>
-            </DialogFooter>
+            </AppDialogSectionFooter>
           </>
           ) : null}
-        </DialogContent>
+        </AppDialogContent>
+      </Dialog>
+
+      <Dialog open={!!deleteReportTarget} onOpenChange={(open) => !open && setDeleteReportTarget(null)}>
+        <AppDialogContent size="sm" className="z-[1000] max-w-[460px]">
+          <AppDialogSectionHeader className="border-[#d7e6f6] bg-[linear-gradient(135deg,#ffffff_0%,#f4f9ff_56%,#eaf4ff_100%)]">
+            <AppDialogTitle className="text-[#0b3572]">
+              ยืนยันการลบรายงาน
+            </AppDialogTitle>
+            <AppDialogDescription>
+              ต้องการลบรายการนี้ใช่หรือไม่? รายการที่ลบแล้วจะไม่แสดงในหน้า dashboard และประวัติส่งออกรายงาน
+            </AppDialogDescription>
+          </AppDialogSectionHeader>
+          <AppDialogBody className="gap-3">
+            <div style={{ display: "grid", gap: 6, borderRadius: 14, border: "1px solid #d7e6f6", background: "#f8fbff", padding: 14 }}>
+              <div style={{ fontSize: 12, fontWeight: 800, color: T.sub }}>รายการที่จะลบ</div>
+              <div style={{ fontSize: 14, fontWeight: 900, color: T.ink }}>
+                {deleteReportTarget?.linewalkId || deleteReportTarget?.refId || "-"}
+              </div>
+              <div style={{ fontSize: 12.5, color: T.sub }}>
+                {[deleteReportTarget?.fullName, deleteReportTarget?.email].filter(Boolean).join(" · ") || "-"}
+              </div>
+            </div>
+          </AppDialogBody>
+          <AppDialogSectionFooter>
+            <Button
+              type="button"
+              variant="destructive"
+              size="lg"
+              onClick={confirmDeleteReportRecord}
+            >
+              ลบรายการ
+            </Button>
+          </AppDialogSectionFooter>
+        </AppDialogContent>
       </Dialog>
     </div>
   );

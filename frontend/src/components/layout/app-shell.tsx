@@ -10,10 +10,14 @@ import { isAdminRoute, SAFETY_EFFORT_ROUTES } from "@/lib/navigation";
 import { cn } from "@/lib/utils";
 import { SafetyAwarenessGate } from "@/components/safety-awareness/safety-awareness-gate";
 import { FloatingSafetyAssistant } from "./floating-safety-assistant";
-import { DEMO_ADMIN_USER, hasAdminAccess, isLocalDemoLoginHost, type SessionUser } from "@/lib/session-user";
-
-const LOGIN_SESSION_KEY = "cpac-safety-login-session";
-const LOGIN_PERSISTED_KEY = "cpac-safety-login-persisted";
+import {
+  DEMO_ADMIN_USER,
+  DEMO_LOGIN_PERSISTED_KEY,
+  DEMO_LOGIN_SESSION_KEY,
+  hasAdminAccess,
+  isDemoLoginActive,
+  type SessionUser,
+} from "@/lib/session-user";
 
 function getSafeReturnTo(pathname: string) {
   if (typeof window === "undefined" || pathname === "/login") return "/";
@@ -51,14 +55,13 @@ export function AppShell({ children }: { children: ReactNode }) {
     let loggedIn = false;
     try {
       loggedIn =
-        window.sessionStorage.getItem(LOGIN_SESSION_KEY) === "true" ||
-        window.localStorage.getItem(LOGIN_PERSISTED_KEY) === "true";
+        window.sessionStorage.getItem(DEMO_LOGIN_SESSION_KEY) === "true" ||
+        window.localStorage.getItem(DEMO_LOGIN_PERSISTED_KEY) === "true";
     } catch {
       loggedIn = false;
     }
 
-    const demoLoginAllowed =
-      process.env.NODE_ENV !== "production" && loggedIn && isLocalDemoLoginHost(window.location.hostname);
+    const demoLoginAllowed = isDemoLoginActive();
 
     setLoginChecked(loggedIn);
     setSessionChecked(loggedIn);
@@ -73,8 +76,8 @@ export function AppShell({ children }: { children: ReactNode }) {
         if (session.authenticated) {
           setSessionUser(session.user || null);
           try {
-            window.sessionStorage.setItem(LOGIN_SESSION_KEY, "true");
-            window.localStorage.setItem(LOGIN_PERSISTED_KEY, "true");
+            window.sessionStorage.setItem(DEMO_LOGIN_SESSION_KEY, "true");
+            window.localStorage.setItem(DEMO_LOGIN_PERSISTED_KEY, "true");
           } catch {
             // The cookie-backed session remains authoritative.
           }
@@ -84,17 +87,17 @@ export function AppShell({ children }: { children: ReactNode }) {
           return;
         }
         setSessionUser(null);
-        try {
-          window.sessionStorage.removeItem(LOGIN_SESSION_KEY);
-          window.localStorage.removeItem(LOGIN_PERSISTED_KEY);
-        } catch {
-          // Storage is only an optimistic hint; the server session remains authoritative.
-        }
         setSessionChecked(true);
         setSessionCheckPending(false);
         if (demoLoginAllowed) {
           setSessionUser(DEMO_ADMIN_USER);
           return;
+        }
+        try {
+          window.sessionStorage.removeItem(DEMO_LOGIN_SESSION_KEY);
+          window.localStorage.removeItem(DEMO_LOGIN_PERSISTED_KEY);
+        } catch {
+          // Storage is only an optimistic hint; the server session remains authoritative.
         }
         router.replace(`/login?returnTo=${encodeURIComponent(getSafeReturnTo(window.location.pathname || "/"))}`);
       })

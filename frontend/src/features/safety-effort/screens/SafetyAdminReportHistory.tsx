@@ -1,9 +1,10 @@
 // @ts-nocheck
 import { useEffect, useState } from "react";
-import { Eye, Search, X, ClipboardList, Download } from "lucide-react";
+import { Eye, Search, ClipboardList, Download } from "lucide-react";
 import { Combobox } from "@/components/ui/combobox";
 import { SafetyCultureHero } from "@/components/safety-culture/safety-culture-hero";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog } from "@/components/ui/dialog";
+import { AppDialogBody, AppDialogContent, AppDialogDescription, AppDialogSectionHeader, AppDialogTitle } from "@/components/ui/app-dialog";
 import * as XLSX from "xlsx";
 import { Button } from "@/components/ui/button";
 import { normalizeEvidenceMediaList } from "@/features/safety-effort/lib/evidence-media";
@@ -159,6 +160,29 @@ const MOCKUP_SUBMISSIONS = [
   }
 ];
 
+function hasActualPosition(item) {
+  return item.actualLat != null && item.actualLng != null && Number.isFinite(Number(item.actualLat)) && Number.isFinite(Number(item.actualLng));
+}
+
+function actualCoordsText(item) {
+  if (!hasActualPosition(item)) return "-";
+  return `${Number(item.actualLat).toFixed(5)}, ${Number(item.actualLng).toFixed(5)}`;
+}
+
+function actualLocationText(item) {
+  const name = String(item.actualLocationName || "").trim();
+  const code = String(item.actualLocationCode || "").trim();
+  if (!name) return hasActualPosition(item) ? "ไม่พบชื่อสถานที่ใกล้เคียง" : "-";
+  return code ? `${name} (${code})` : name;
+}
+
+function actualLocationExportText(item) {
+  if (!hasActualPosition(item)) return actualLocationText(item);
+  const location = actualLocationText(item);
+  const coords = `${Number(item.actualLat)}, ${Number(item.actualLng)}`;
+  return location && location !== coords && location !== "-" ? `${location} / ${coords}` : coords;
+}
+
 export default function SafetyAdminReportHistory() {
   const [width, setWidth] = useState(typeof window !== "undefined" ? window.innerWidth : 1024);
   const isMobile = width < 768;
@@ -277,7 +301,8 @@ export default function SafetyAdminReportHistory() {
         "กิจกรรม": item.activityLabel,
         "หมวดหมู่สถานที่": LOCATION_TYPE_LABELS[item.locType] || item.locType,
         "สถานที่ตรวจ": item.locationName,
-        "สถานที่จริง": item.actualLat && item.actualLng ? `${item.actualLat}, ${item.actualLng}` : "-",
+        "สถานที่จริง": actualLocationExportText(item),
+        "พิกัดจริง (GPS)": hasActualPosition(item) ? `${item.actualLat}, ${item.actualLng}` : "-",
         "รหัสสถานที่/Zone": item.locationTag,
         "รหัสผู้ตรวจ": item.actorCode || "",
         "ผู้ทำกิจกรรม": item.actorName || "",
@@ -444,7 +469,7 @@ export default function SafetyAdminReportHistory() {
                       <th style={{ padding: "10px 16px", fontWeight: 800, color: T.sub, width: 140 }}>วันที่ทำรายการ</th>
                       <th style={{ padding: "10px 16px", fontWeight: 800, color: T.sub, width: 130 }}>กิจกรรม</th>
                       <th style={{ padding: "10px 16px", fontWeight: 800, color: T.sub, width: 220 }}>สถานที่ตรวจ</th>
-                      <th style={{ padding: "10px 16px", fontWeight: 800, color: T.sub, width: 180 }}>สถานที่จริง</th>
+                      <th style={{ padding: "10px 16px", fontWeight: 800, color: T.sub, width: 220 }}>สถานที่จริง / พิกัด GPS</th>
                       <th style={{ padding: "10px 16px", fontWeight: 800, color: T.sub, width: 220 }}>ผู้ทำกิจกรรม</th>
                       <th style={{ padding: "10px 16px", fontWeight: 800, color: T.sub, width: 120 }}>ประเภทสถานที่</th>
                       <th style={{ padding: "10px 16px", fontWeight: 800, color: T.sub }}>ผลประเมิน / รายละเอียด</th>
@@ -504,16 +529,19 @@ export default function SafetyAdminReportHistory() {
                             <div style={{ fontSize: 11, color: T.sub }}>{item.locationTag}</div>
                           </td>
                           <td style={{ padding: "8px 16px" }}>
-                            {item.actualLat && item.actualLng ? (
-                              <a
-                                href={`https://www.google.com/maps?q=${item.actualLat},${item.actualLng}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                style={{ color: "#0B82F0", fontWeight: 700, textDecoration: "underline" }}
-                                title="ดูแผนที่ Google Maps"
-                              >
-                                {item.actualLat.toFixed(5)}, {item.actualLng.toFixed(5)}
-                              </a>
+                            {hasActualPosition(item) ? (
+                              <div>
+                                <div style={{ fontWeight: 800 }}>{actualLocationText(item)}</div>
+                                <a
+                                  href={`https://www.google.com/maps?q=${item.actualLat},${item.actualLng}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  style={{ color: "#0B82F0", fontSize: 12, fontWeight: 700, textDecoration: "underline" }}
+                                  title="ดูแผนที่ Google Maps"
+                                >
+                                  {actualCoordsText(item)}
+                                </a>
+                              </div>
                             ) : (
                               <span style={{ color: T.sub }}>-</span>
                             )}
@@ -636,39 +664,20 @@ export default function SafetyAdminReportHistory() {
 
       {/* Selected Submission Detail Modal */}
       <Dialog open={!!selectedSub} onOpenChange={(open) => !open && setSelectedSub(null)}>
-        <DialogContent showCloseButton={false} className="safety-admin-form-popup z-[1000] p-0 sm:max-w-[640px]">
+        <AppDialogContent size="lg" className="z-[1000] max-h-[90vh] max-w-[640px]">
           {selectedSub ? (
-          <div
-            style={{
-              width: "min(100%, 640px)",
-              background: "var(--brand-surface)",
-              borderRadius: 24,
-              border: `1px solid ${T.line}`,
-              boxShadow: "0 24px 60px rgba(31,26,23,0.22)",
-              padding: 24,
-              display: "grid",
-              gap: 16,
-              maxHeight: "90vh",
-              overflowY: "auto"
-            }}
-          >
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: `1px solid ${T.line}`, paddingBottom: 10 }}>
-              <div>
-                <div style={{ fontSize: 11, fontWeight: 800, color: T.accentDeep, textTransform: "uppercase" }}>SUBMISSION DETAIL</div>
-                <div style={{ fontSize: 20, fontWeight: 950, color: T.ink }}>รายละเอียดรายงานความปลอดภัย</div>
-              </div>
-              <Button
-                type="button"
-                variant="outline"
-                size="icon-xs"
-                onClick={() => setSelectedSub(null)}
-              >
-                <X size={16} />
-              </Button>
-            </div>
+          <>
+            <AppDialogSectionHeader className="border-[#d7e6f6] bg-[linear-gradient(135deg,#ffffff_0%,#f4f9ff_56%,#eaf4ff_100%)]">
+              <AppDialogTitle className="text-[#0b3572]">
+                รายละเอียดรายงานความปลอดภัย
+              </AppDialogTitle>
+              <AppDialogDescription>
+                ตรวจสอบรายละเอียดการส่งรายงาน Linewalk / Safety Contact และข้อมูลสถานที่จริงจาก GPS
+              </AppDialogDescription>
+            </AppDialogSectionHeader>
 
-            {/* Metadata Card */}
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, background: "var(--brand-soft)", padding: 14, borderRadius: 14 }}>
+            <AppDialogBody className="max-h-[calc(90vh-112px)] overflow-y-auto gap-4">
+            <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 12, background: "var(--brand-soft)", padding: 14, borderRadius: 14 }}>
               <div>
                 <div style={{ fontSize: 11, color: T.sub, fontWeight: 800 }}>กิจกรรม</div>
                 <div style={{ fontSize: 14, fontWeight: 800 }}>{selectedSub.activityLabel}</div>
@@ -682,17 +691,20 @@ export default function SafetyAdminReportHistory() {
                 <div style={{ fontSize: 14, fontWeight: 800 }}>{selectedSub.locationName} ({selectedSub.locationTag})</div>
               </div>
               <div>
-                <div style={{ fontSize: 11, color: T.sub, fontWeight: 800 }}>สถานที่จริง (GPS)</div>
+                <div style={{ fontSize: 11, color: T.sub, fontWeight: 800 }}>สถานที่จริง / พิกัด GPS</div>
                 <div style={{ fontSize: 14, fontWeight: 800 }}>
-                  {selectedSub.actualLat && selectedSub.actualLng ? (
-                    <a
-                      href={`https://www.google.com/maps?q=${selectedSub.actualLat},${selectedSub.actualLng}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      style={{ color: "#0B82F0", textDecoration: "underline", fontWeight: 700 }}
-                    >
-                      {selectedSub.actualLat.toFixed(5)}, {selectedSub.actualLng.toFixed(5)}
-                    </a>
+                  {hasActualPosition(selectedSub) ? (
+                    <div>
+                      <div>{actualLocationText(selectedSub)}</div>
+                      <a
+                        href={`https://www.google.com/maps?q=${selectedSub.actualLat},${selectedSub.actualLng}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{ color: "#0B82F0", fontSize: 12, textDecoration: "underline", fontWeight: 700 }}
+                      >
+                        {actualCoordsText(selectedSub)}
+                      </a>
+                    </div>
                   ) : (
                     "-"
                   )}
@@ -799,9 +811,10 @@ export default function SafetyAdminReportHistory() {
                 </div>
               )}
             </div>
-          </div>
+            </AppDialogBody>
+          </>
           ) : null}
-        </DialogContent>
+        </AppDialogContent>
       </Dialog>
     </div>
   );

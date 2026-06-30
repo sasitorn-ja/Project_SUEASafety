@@ -160,7 +160,7 @@ export default function ProfilePage() {
             <div className="min-w-0 text-center sm:text-left md:pr-[150px] xl:pr-[178px]">
               <div className="mb-2 inline-flex items-center gap-1.5 rounded-[7px] border border-[#0B82F0] bg-white/85 px-2.5 py-[3px] text-[10px] font-extrabold uppercase tracking-[0.12em] text-[#0B82F0]">
                 <ShieldCheck className="h-3.5 w-3.5" strokeWidth={2.5} />
-                SSO Profile Preview
+                SSO Profile
               </div>
               <h1 className="mx-auto line-clamp-2 max-w-[min(100%,760px)] break-words text-[22px] font-black leading-[1.08] text-[#0B2F6B] sm:mx-0 sm:text-[26px] md:text-[30px] xl:text-[34px]">
                 {displayName}
@@ -214,7 +214,7 @@ export default function ProfilePage() {
               <p className="text-[11px] font-extrabold uppercase tracking-[0.14em] text-[var(--brand-text)]">Personal information</p>
               <h2 className="mt-1 text-[20px] font-black text-foreground">ข้อมูลจากระบบ SSO</h2>
               <p className="mt-1 text-[11.5px] font-bold text-[var(--muted-foreground)]">
-                ตัวอย่างข้อมูลสำหรับเตรียมเชื่อมต่อ ข้อมูลส่วนนี้จะแก้ไขจากระบบต้นทาง
+                ข้อมูลอ่านจาก session และระบบต้นทาง โดยแก้ไขรายละเอียดหลักจากระบบ SSO
               </p>
             </div>
             <span className="inline-flex items-center gap-1.5 rounded-full bg-[var(--brand-soft)] px-3 py-1.5 text-[10.5px] font-black text-[var(--brand-text)]">

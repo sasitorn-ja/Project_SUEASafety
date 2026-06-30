@@ -72,6 +72,8 @@ const PROFILE_ITEMS = [
 ] as const;
 
 const ENABLED_HREFS = new Set(["/", "/dashboard", "/category", "/safety-culture", "/safety-admin", "/notifications", "/login"]);
+const LOGIN_SESSION_KEY = "cpac-safety-login-session";
+const LOGIN_PERSISTED_KEY = "cpac-safety-login-persisted";
 
 function ConfiguredMenuLink({
   node,
@@ -255,6 +257,17 @@ export function DesktopTopbar() {
   const visibleAdminSubmenuId = adminSubmenuId === null ? activeAdminSectionId : adminSubmenuId;
   const displayName = sessionUser ? getSessionDisplayName(sessionUser) : "ผู้ใช้งาน";
   const displayImage = getSessionProfileImage(sessionUser);
+  const handleProfileItemClick = (href: string) => {
+    setDesktopMenu(null);
+    if (href === "/api/auth/logout") {
+      try {
+        window.sessionStorage.removeItem(LOGIN_SESSION_KEY);
+        window.localStorage.removeItem(LOGIN_PERSISTED_KEY);
+      } catch {
+        // Server-side session cleanup remains authoritative.
+      }
+    }
+  };
   const handleMenuButtonKeyDown = (
     event: React.KeyboardEvent<HTMLButtonElement>,
     menuId: "safety-culture" | "admin" | "profile",
@@ -496,6 +509,7 @@ export function DesktopTopbar() {
                     <NavTo
                       key={item.href}
                       href={item.href}
+                      onClick={() => handleProfileItemClick(item.href)}
                       className={cn(
                         "flex items-center gap-2 rounded-lg p-2 text-[#0B2F6B] transition-colors hover:bg-[#F5FAFF] focus:bg-[#F5FAFF] focus:outline-none",
                         isExactNavActive(pathname, item.href) && "bg-[#EEF7FF]"

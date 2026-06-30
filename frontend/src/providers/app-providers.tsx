@@ -16,10 +16,9 @@ import { getSafetyPoint } from "@/lib/point-rules";
 import { apiFetch, apiJson } from "@/lib/api-client";
 import {
   DEMO_ADMIN_USER,
-  DEMO_LOGIN_SESSION_KEY,
   getSessionDisplayName,
   getSessionInitials,
-  isLocalDemoLoginHost,
+  isDemoLoginActive,
   type SessionUser,
 } from "@/lib/session-user";
 
@@ -1766,10 +1765,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
     async function loadBackendState() {
       let demoLoginAllowed = false;
       try {
-        demoLoginAllowed =
-          process.env.NODE_ENV !== "production"
-          && isLocalDemoLoginHost(window.location.hostname)
-          && window.sessionStorage.getItem(DEMO_LOGIN_SESSION_KEY) === "true";
+        demoLoginAllowed = isDemoLoginActive();
       } catch {
         demoLoginAllowed = false;
       }
