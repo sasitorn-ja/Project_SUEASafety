@@ -6,9 +6,11 @@ export type UploadedMedia = {
   provider?: string | null;
 };
 
-const MAX_SERVER_UPLOAD_BYTES = 8 * 1024 * 1024;
-const TARGET_UPLOAD_BYTES = Math.floor(2.5 * 1024 * 1024);
-const MAX_IMAGE_DIMENSION = 1600;
+type UploadStatus = "DRAFT" | "READY" | "LINKED";
+
+const MAX_SERVER_UPLOAD_BYTES = 5 * 1024 * 1024;
+const TARGET_UPLOAD_BYTES = 1 * 1024 * 1024;
+const MAX_IMAGE_DIMENSION = 1280;
 const DIRECT_UPLOAD_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "image/gif"]);
 
 function normalizeNumericOwnerId(value?: string | null) {
@@ -97,6 +99,7 @@ export async function uploadMedia(
     ownerType: string;
     ownerId?: string | null;
     linkType: string;
+    status?: UploadStatus;
   },
 ): Promise<UploadedMedia> {
   const normalizedFile = await normalizeImageForUpload(file);
@@ -105,6 +108,7 @@ export async function uploadMedia(
   formData.set("module", options.module);
   formData.set("ownerType", options.ownerType);
   formData.set("linkType", options.linkType);
+  if (options.status) formData.set("status", options.status);
   const ownerId = normalizeNumericOwnerId(options.ownerId);
   if (ownerId) formData.set("ownerId", ownerId);
 
@@ -123,12 +127,48 @@ export async function uploadMedia(
   return media;
 }
 
+export async function deleteUploadedMedia(id: string) {
+  if (!id) return;
+  const response = await fetch(`/api/uploads/${encodeURIComponent(id)}`, {
+    method: "DELETE",
+    credentials: "include",
+  });
+  if (!response.ok) {
+    const payload = await response.json().catch(() => null);
+    throw new Error(payload?.error || "delete_upload_failed");
+  }
+}
+
+export async function linkUploadedMedia(
+  id: string,
+  options: {
+    module: string;
+    ownerType: string;
+    ownerId: string;
+    linkType: string;
+  },
+): Promise<UploadedMedia> {
+  const response = await fetch(`/api/uploads/${encodeURIComponent(id)}/link`, {
+    method: "POST",
+    credentials: "include",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(options),
+  });
+  const payload = await response.json().catch(() => null);
+  const media = payload?.data?.media;
+  if (!response.ok || !payload?.ok || !media?.id) {
+    throw new Error(payload?.error || "link_upload_failed");
+  }
+  return media;
+}
+
 export async function uploadSafetyEffortMedia(
   file: File,
   options: {
     ownerType: string;
     ownerId?: string | null;
     linkType: string;
+    status?: UploadStatus;
   },
 ): Promise<UploadedMedia> {
   return uploadMedia(file, { ...options, module: "safety-effort" });

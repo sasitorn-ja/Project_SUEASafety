@@ -1977,17 +1977,23 @@ function uploadRoot() {
   return process.env.UPLOAD_DIR || path.join(process.cwd(), ".data", "uploads");
 }
 
-const MAX_UPLOAD_BYTES = Number(process.env.MAX_UPLOAD_BYTES || 8 * 1024 * 1024);
+const MAX_UPLOAD_BYTES = Number(process.env.MAX_UPLOAD_BYTES || 5 * 1024 * 1024);
 const ALLOWED_UPLOAD_TYPES = new Set([
   "image/jpeg",
   "image/png",
   "image/webp",
   "image/gif",
 ]);
+const ALLOWED_UPLOAD_STATUSES = new Set(["DRAFT", "READY"]);
 
 function assertUploadAllowed(file: NonNullable<ParsedBody["files"]>[number]) {
   if (file.size > MAX_UPLOAD_BYTES) throw new Error("file_too_large");
   if (!ALLOWED_UPLOAD_TYPES.has(file.type)) throw new Error("unsupported_file_type");
+}
+
+function normalizeUploadStatus(value: unknown) {
+  const status = String(value || "READY").toUpperCase();
+  return ALLOWED_UPLOAD_STATUSES.has(status) ? status : "READY";
 }
 
 function cloudinaryConfigured() {
@@ -2073,7 +2079,7 @@ async function handleUploadsMedia(request: NextRequest, method: string, match: R
       originalName: file.name,
       mimeType: file.type,
       size: file.size,
-      status: "READY",
+      status: normalizeUploadStatus(input.status),
       module: input.module || "general",
       ownerType: input.ownerType || null,
       ownerId: input.ownerId || null,
@@ -2114,9 +2120,18 @@ async function handleUploadsMedia(request: NextRequest, method: string, match: R
     });
   }
   if (method === "POST" && route === "/api/uploads/cleanup-drafts") {
-    const records = await listRows("media_assets", request, { where: ["status = 'DRAFT'", "deleted_at IS NULL"] });
+    const olderThanHours = Math.min(Math.max(Number(input.olderThanHours || 24), 1), 168);
+    const records = await queryRows<DbRow>(
+      `SELECT * FROM media_assets
+       WHERE status = 'DRAFT'
+         AND deleted_at IS NULL
+         AND created_at < DATE_SUB(UTC_TIMESTAMP(3), INTERVAL :olderThanHours HOUR)
+       ORDER BY id ASC
+       LIMIT 500`,
+      { olderThanHours },
+    );
     let cleaned = 0;
-    for (const media of records.items) {
+    for (const media of records) {
       if (media.file_name) await fs.unlink(String(media.storage_path || path.join(uploadRoot(), String(media.file_name)))).catch(() => undefined);
       await updateMediaAsset(String(media.id), { status: "DELETED" });
       cleaned += 1;

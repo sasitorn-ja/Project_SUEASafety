@@ -188,6 +188,11 @@ export async function getUserAccess(userId: string): Promise<UserAccess> {
 }
 
 export function dbUserToSessionUser(user: DbUser, access: UserAccess = { roles: [], permissions: [] }): SessionDbUser {
+  const customProfileImageUrl =
+    user.profileImageUrl && user.profileImageUrl !== user.lineProfileImageUrl
+      ? user.profileImageUrl
+      : undefined;
+
   return {
     id: user.id,
     sub: user.ssoExternalId,
@@ -200,7 +205,7 @@ export function dbUserToSessionUser(user: DbUser, access: UserAccess = { roles: 
     lastNameEn: user.lastNameEn || undefined,
     lastNameTh: user.lastNameTh || undefined,
     lineProfileImageUrl: user.lineProfileImageUrl || undefined,
-    profileImageUrl: user.profileImageUrl || undefined,
+    profileImageUrl: customProfileImageUrl,
     positionEn: user.positionEn || undefined,
     positionTh: user.positionTh || user.positionName || undefined,
     reportToEmail: user.reportToEmail || undefined,
@@ -234,7 +239,6 @@ export async function upsertSsoUser(user: SsoUser, rawClaims: Record<string, unk
     positionTh: user.positionTh || null,
     positionEn: user.positionEn || null,
     reportToEmail: user.reportToEmail || null,
-    profileImageUrl: lineProfileImageUrl,
     lineProfileImageUrl,
     ssoProvider: providerSlug,
     ssoSubject: user.sub,
@@ -259,7 +263,6 @@ export async function upsertSsoUser(user: SsoUser, rawClaims: Record<string, unk
           position_th,
           position_en,
           report_to_email,
-          profile_image_url,
           line_profile_image_url,
           sso_provider,
           sso_subject,
@@ -281,7 +284,6 @@ export async function upsertSsoUser(user: SsoUser, rawClaims: Record<string, unk
           :positionTh,
           :positionEn,
           :reportToEmail,
-          :profileImageUrl,
           :lineProfileImageUrl,
           :ssoProvider,
           :ssoSubject,
@@ -304,7 +306,6 @@ export async function upsertSsoUser(user: SsoUser, rawClaims: Record<string, unk
           position_th = VALUES(position_th),
           position_en = VALUES(position_en),
           report_to_email = VALUES(report_to_email),
-          profile_image_url = VALUES(profile_image_url),
           line_profile_image_url = VALUES(line_profile_image_url),
           sso_provider = VALUES(sso_provider),
           sso_subject = VALUES(sso_subject),

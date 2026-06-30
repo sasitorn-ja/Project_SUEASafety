@@ -197,7 +197,7 @@ export function DesktopTopbar() {
   const [notificationOpen, setNotificationOpen] = useState(false);
   const [profileImageFailed, setProfileImageFailed] = useState(false);
   const notificationRef = useRef<HTMLDivElement>(null);
-  const desktopNavRef = useRef<HTMLElement>(null);
+  const desktopMenuRef = useRef<HTMLDivElement>(null);
   const unreadNotificationCount = inboxNotifications.filter((item) => !item.read).length;
 
   const isActive = (href: string) => isMainNavActive(pathname, href);
@@ -213,7 +213,7 @@ export function DesktopTopbar() {
       if (!notificationRef.current?.contains(event.target as Node)) {
         setNotificationOpen(false);
       }
-      if (!desktopNavRef.current?.contains(event.target as Node)) {
+      if (!desktopMenuRef.current?.contains(event.target as Node)) {
         setDesktopMenu(null);
       }
     };
@@ -285,19 +285,19 @@ export function DesktopTopbar() {
   return (
     <header
       className={cn(
-        "fixed top-0 left-0 right-0 z-50 hidden items-center lg:flex",
+        "fixed top-0 left-0 right-0 z-[90] hidden items-center lg:flex",
         "border-b border-[#D7EAFE] bg-white/95 shadow-[0_6px_20px_rgba(185,223,255,0.45)] backdrop-blur-xl",
         "[transition:margin-left_200ms_ease-out]",
         "ml-0"
       )}
       style={{ fontFamily: "var(--font-sans)", height: "var(--topbar-h)" }}
     >
-      <div className="desktop-topbar-inner flex h-full w-full items-center justify-between gap-2 px-6">
+      <div ref={desktopMenuRef} className="desktop-topbar-inner flex h-full w-full items-center justify-between gap-2 px-6">
         <NavTo href="/" className="flex min-w-[234px] items-center gap-3.5">
           <Image src="/images/brand/LOGO1_trim.png" alt="Safety Caring" width={300} height={52} priority className="h-[40px] w-auto object-contain" />
         </NavTo>
 
-        <nav ref={desktopNavRef} className="desktop-nav-visible flex min-w-0 flex-1 items-center justify-center gap-1" aria-label="Main navigation">
+        <nav className="desktop-nav-visible flex min-w-0 flex-1 items-center justify-center gap-1" aria-label="Main navigation">
           {navItems.map((item) => {
             const Icon = item.icon;
             const active = isActive(item.href);
@@ -432,7 +432,10 @@ export function DesktopTopbar() {
           <div ref={notificationRef} className="relative">
             <button
               type="button"
-              onClick={() => setNotificationOpen((current) => !current)}
+              onClick={() => {
+                setDesktopMenu(null);
+                setNotificationOpen((current) => !current);
+              }}
               className={cn(
                 "relative flex h-11 w-11 flex-shrink-0 cursor-pointer items-center justify-center rounded-full",
                 "bg-transparent text-[#0B82F0] transition-opacity hover:opacity-70",

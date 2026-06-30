@@ -7,8 +7,11 @@ import {
   getChecklistForType,
   hydrateChecklistDraft,
 } from "@/features/safety-effort/config/checklists";
-import { normalizeItemStatesEvidence } from "@/features/safety-effort/lib/evidence-media";
-import { uploadSafetyEffortMedia } from "@/features/safety-effort/lib/upload-media";
+import {
+  createLocalEvidenceMedia,
+  normalizeItemStatesEvidence,
+  revokeLocalEvidenceMedia,
+} from "@/features/safety-effort/lib/evidence-media";
 import SafetyEffortProgressStepper from "@/features/safety-effort/components/SafetyEffortProgressStepper";
 import { useSessionUser, getSessionDisplayName } from "@/lib/session-user";
 
@@ -663,11 +666,7 @@ export default function Linewalk() {
   async function handlePhotoUpload(id, e) {
     const file = e.target.files[0]; if (!file) return;
     try {
-      const media = await uploadSafetyEffortMedia(file, {
-        ownerType: "assessment_answer",
-        ownerId: id,
-        linkType: "evidence",
-      });
+      const media = createLocalEvidenceMedia(file);
       setItemStates((p) => {
         const currentState = p[id] ?? { status: null, note: "", photos: [] };
         return {
@@ -686,7 +685,9 @@ export default function Linewalk() {
     }
   }
   function handleDeletePhoto(id, idx) {
+    const media = itemStates?.[id]?.photos?.[idx];
     setItemStates(p => ({ ...p, [id]: { ...p[id], photos: p[id].photos.filter((_,i)=>i!==idx) } }));
+    revokeLocalEvidenceMedia(media);
   }
 
   function handleStartLinewalk() {

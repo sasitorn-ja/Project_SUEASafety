@@ -6,8 +6,8 @@ import { getChecklistForType } from "@/features/safety-effort/config/checklists"
 import {
   evidenceMediaUrls,
   normalizeEvidenceMediaList,
-  serializeEvidenceMediaList,
 } from "@/features/safety-effort/lib/evidence-media";
+import { linkUploadedMedia, uploadSafetyEffortMedia } from "@/features/safety-effort/lib/upload-media";
 import { useAppActions } from "@/providers/app-providers";
 import { getSessionDisplayName, useSessionUser } from "@/lib/session-user";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
@@ -74,6 +74,31 @@ function normalizeNumericId(value) {
   if (value == null) return null;
   const normalized = String(value).trim();
   return /^\d+$/.test(normalized) ? normalized : null;
+}
+
+function collectEvidenceMediaIds(submission) {
+  const ids = new Set<string>();
+  const collect = (items) => {
+    if (!Array.isArray(items)) return;
+    for (const item of items) {
+      if (item?.id) ids.add(String(item.id));
+    }
+  };
+  collect(submission?.metadata?.attachments);
+  for (const answer of submission?.answeredItems || []) {
+    collect(answer?.attachments);
+  }
+  return Array.from(ids);
+}
+
+function serializableEvidenceMedia(item) {
+  return {
+    id: item?.id ?? null,
+    url: item?.url,
+    originalName: item?.originalName ?? null,
+    mimeType: item?.mimeType ?? null,
+    provider: item?.provider ?? null,
+  };
 }
 
 export default function AssessmentSummary() {
@@ -206,35 +231,76 @@ export default function AssessmentSummary() {
     } catch { /* structured submission remains the canonical record */ }
   };
 
+  const linkSubmissionEvidence = async (submissionId, submission) => {
+    const mediaIds = collectEvidenceMediaIds(submission);
+    if (!mediaIds.length) return;
+    const results = await Promise.allSettled(
+      mediaIds.map((id) =>
+        linkUploadedMedia(id, {
+          module: "safety-effort",
+          ownerType: "safety_effort_submission",
+          ownerId: submissionId,
+          linkType: "evidence",
+        }),
+      ),
+    );
+    const failed = results.filter((result) => result.status === "rejected");
+    if (failed.length) {
+      console.warn("Some evidence media could not be linked", failed);
+    }
+  };
+
+  const uploadPendingEvidenceList = async (items) => {
+    const normalized = normalizeEvidenceMediaList(items);
+    return Promise.all(
+      normalized.map(async (item) => {
+        if (item.file instanceof File) {
+          const uploaded = await uploadSafetyEffortMedia(item.file, {
+            ownerType: "safety_effort_submission",
+            ownerId: null,
+            linkType: "evidence",
+            status: "DRAFT",
+          });
+          return serializableEvidenceMedia(uploaded);
+        }
+        return serializableEvidenceMedia(item);
+      }),
+    );
+  };
+
   const handleConfirmSave = async () => {
     const submissionDate = linewalkData?.date || new Date().toISOString().split("T")[0];
     const normalizedCheckinId = normalizeNumericId(checkin?.checkinId);
-    const newSubmission = {
-      timestamp: new Date().toISOString(),
-      activityLabel: activity?.label || (linewalkData?.isSafetyContact ? "Safety Contact" : "Line Walk"),
-      locType: linewalkData?.locType || "factory",
-      locationName: checkin?.name || "-",
-      locationTag: checkin?.tag || "-",
-      date: submissionDate,
-      isSafetyContact: !!linewalkData?.isSafetyContact,
-      safetyContactText: linewalkData?.safetyContactText || "",
-      answeredItems: answeredItems.map(item => ({
-        id: item.id,
-        title: item.title,
-        status: item.status,
-        note: item.note,
-        attachments: serializeEvidenceMediaList(item.photos),
-      })),
-      pms: sessionUser?.username || sessionUser?.id || "",
-      name: getSessionDisplayName(sessionUser),
-      email: sessionUser?.email || "",
-      activityType: linewalkData?.isSafetyContact ? "SAFETY_CONTACT" : "LINE_WALK",
-      checkinId: normalizedCheckinId,
-      metadata: {
-        attachments: serializeEvidenceMediaList(topLevelAttachments),
-      },
-    };
     try {
+      const uploadedTopLevelAttachments = await uploadPendingEvidenceList(topLevelAttachments);
+      const uploadedAnsweredItems = await Promise.all(
+        answeredItems.map(async (item) => ({
+          id: item.id,
+          title: item.title,
+          status: item.status,
+          note: item.note,
+          attachments: await uploadPendingEvidenceList(item.photos),
+        })),
+      );
+      const newSubmission = {
+        timestamp: new Date().toISOString(),
+        activityLabel: activity?.label || (linewalkData?.isSafetyContact ? "Safety Contact" : "Line Walk"),
+        locType: linewalkData?.locType || "factory",
+        locationName: checkin?.name || "-",
+        locationTag: checkin?.tag || "-",
+        date: submissionDate,
+        isSafetyContact: !!linewalkData?.isSafetyContact,
+        safetyContactText: linewalkData?.safetyContactText || "",
+        answeredItems: uploadedAnsweredItems,
+        pms: sessionUser?.username || sessionUser?.id || "",
+        name: getSessionDisplayName(sessionUser),
+        email: sessionUser?.email || "",
+        activityType: linewalkData?.isSafetyContact ? "SAFETY_CONTACT" : "LINE_WALK",
+        checkinId: normalizedCheckinId,
+        metadata: {
+          attachments: uploadedTopLevelAttachments,
+        },
+      };
       const response = await fetch("/api/safety-effort/submissions", {
         method: "POST",
         credentials: "include",
@@ -246,6 +312,7 @@ export default function AssessmentSummary() {
         throw new Error(payload?.error || "submission_save_failed");
       }
       const savedId = String(payload.data.submission.id);
+      await linkSubmissionEvidence(savedId, newSubmission);
       actions.awardSafetyEffortCompletion(savedId, `${newSubmission.activityLabel} สำเร็จ`);
       void persistActivityToDb(newSubmission);
       
@@ -257,7 +324,7 @@ export default function AssessmentSummary() {
     } catch (error) {
       console.error("Error saving submission", error);
       window.alert("บันทึกข้อมูลไม่สำเร็จ กรุณาตรวจสอบการเชื่อมต่อแล้วลองใหม่");
-      if (newSubmission.isSafetyContact) {
+      if (linewalkData?.isSafetyContact) {
         navigate("/category", { replace: true });
       }
     }

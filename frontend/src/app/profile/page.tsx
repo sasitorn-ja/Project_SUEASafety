@@ -40,7 +40,9 @@ export default function ProfilePage() {
   const displayDivision = sessionUser?.division || "-";
   const displayEmail = sessionUser?.email || "-";
   const displayUsername = sessionUser?.username || "-";
-  const displayImage = profileImage || getSessionProfileImage(sessionUser);
+  const ssoProfileImage = sessionUser?.lineProfileImageUrl || "";
+  const displayImage = profileImage || ssoProfileImage;
+  const isUsingCustomProfileImage = Boolean(profileImage);
   const connections = getConnections(sessionUser);
   const profileFields = [
     { label: "ชื่อภาษาไทย", value: displayName, icon: UserRound },
@@ -52,7 +54,7 @@ export default function ProfilePage() {
   ];
 
   useEffect(() => {
-    setProfileImage(getSessionProfileImage(sessionUser));
+    setProfileImage(sessionUser?.profileImageUrl || "");
   }, [sessionUser]);
 
   const handleImageChange = async (event: ChangeEvent<HTMLInputElement>) => {
@@ -115,13 +117,16 @@ export default function ProfilePage() {
     <div className="min-h-[calc(100vh-var(--topbar-h))] bg-[linear-gradient(180deg,var(--secondary)_0%,var(--background)_360px)] pb-10 pt-2 font-sans md:pt-4">
       <div className="page-shell-wide grid gap-4 md:gap-5">
         <section
-          className="relative left-1/2 w-[calc(100vw-20px)] max-w-none -translate-x-1/2 overflow-hidden rounded-[16px] border border-[#D7EAFE] bg-[linear-gradient(135deg,#EAF6FF_0%,#F7FBFF_46%,#E1F1FF_100%)] p-4 shadow-[0_8px_22px_rgba(185,223,255,0.45),inset_0_1px_0_rgba(255,255,255,0.75)] sm:rounded-[20px] sm:p-5 lg:w-[calc(100vw-48px)] md:p-6"
+          className="relative left-1/2 w-[calc(100vw-20px)] max-w-none -translate-x-1/2 overflow-hidden rounded-[18px] border border-[#B9E0FF] bg-[#EAF6FF] shadow-[0_18px_46px_rgba(53,168,255,0.24),inset_0_1px_0_rgba(255,255,255,0.8)] sm:rounded-[22px] lg:w-[calc(100vw-48px)]"
           style={{ backgroundImage: "url('/images/heroes/Home01.png')", backgroundSize: "cover", backgroundPosition: "center" }}
         >
-          <div className="relative grid gap-5 sm:grid-cols-[auto_minmax(0,1fr)] md:grid-cols-[auto_minmax(0,1fr)_auto] md:items-center">
+          <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(232,246,255,0.96)_0%,rgba(247,251,255,0.88)_52%,rgba(225,241,255,0.48)_100%)]" />
+          <div className="absolute inset-x-0 bottom-0 h-16 bg-[linear-gradient(180deg,rgba(255,255,255,0),rgba(255,255,255,0.72))]" />
+
+          <div className="relative grid gap-4 p-3.5 sm:grid-cols-[170px_minmax(0,1fr)] sm:gap-5 sm:p-5 md:grid-cols-[190px_minmax(0,1fr)_auto] md:items-center md:p-6">
             {/* profile photo */}
-            <div className="relative mx-auto sm:mx-0">
-              <div className="group relative h-28 w-28 overflow-hidden rounded-full border-[4px] border-white shadow-[0_12px_28px_rgba(11,130,240,0.18)] sm:h-32 sm:w-32 md:h-36 md:w-36">
+            <div className="relative mx-auto w-full max-w-[190px] rounded-[22px] border border-white/80 bg-white/90 p-3 shadow-[0_18px_34px_rgba(11,130,240,0.18)] backdrop-blur-md sm:mx-0">
+              <div className="group relative mx-auto h-28 w-28 overflow-hidden rounded-full border-[5px] border-white shadow-[0_14px_30px_rgba(11,130,240,0.20)] sm:h-32 sm:w-32 md:h-[136px] md:w-[136px]">
                 {displayImage ? (
                   <img src={displayImage} alt="รูปโปรไฟล์" className="h-full w-full object-cover" />
                 ) : (
@@ -129,35 +134,38 @@ export default function ProfilePage() {
                     <UserRound className="h-14 w-14 text-[#0B82F0]/60 md:h-16 md:w-16" strokeWidth={1.7} />
                   </div>
                 )}
+                <span className="absolute bottom-1 right-1 flex h-7 w-7 items-center justify-center rounded-full border-[3px] border-white bg-emerald-500 shadow-[0_7px_16px_rgba(16,185,129,0.32)]">
+                  <CheckCircle2 className="h-4 w-4 text-white" strokeWidth={3} />
+                </span>
               </div>
-              <span className="absolute bottom-1.5 right-0.5 flex h-6 w-6 items-center justify-center rounded-full border-[2.5px] border-white bg-emerald-500">
-                <CheckCircle2 className="h-3.5 w-3.5 text-white" strokeWidth={3} />
-              </span>
-              <div className="mt-3 flex flex-wrap justify-center gap-2 sm:justify-start">
+              <div className="mt-3 grid grid-cols-1 gap-2">
                 <button
                   type="button"
                   onClick={() => inputRef.current?.click()}
-                  className="inline-flex items-center gap-1.5 rounded-full border border-[#B9E0FF] bg-white px-3 py-1.5 text-[11px] font-extrabold text-[#0B82F0] shadow-[0_8px_18px_rgba(11,130,240,.12)] hover:bg-[#F5FAFF]"
+                  className="inline-flex min-h-9 items-center justify-center gap-1.5 rounded-xl border border-[#B9E0FF] bg-[#F5FAFF] px-3 py-2 text-[11.5px] font-extrabold text-[#0B82F0] shadow-[0_8px_18px_rgba(11,130,240,.10)] transition hover:bg-white"
                   aria-label="เลือกรูปโปรไฟล์"
                 >
                   <Camera className="h-3.5 w-3.5 shrink-0" />
                   <span>เปลี่ยนรูป</span>
                 </button>
-                {profileImage && (
+                {isUsingCustomProfileImage && (
                   <button
                     type="button"
                     onClick={removeImage}
-                    className="inline-flex items-center gap-1.5 rounded-full border border-[#F4C7C3] bg-[#FFF5F4] px-3 py-1.5 text-[11px] font-black text-[#C9362A] shadow-[0_8px_18px_rgba(201,54,42,.08)] hover:bg-[#FFEAE7]"
+                    className="inline-flex min-h-9 items-center justify-center gap-1.5 rounded-xl border border-[#F4C7C3] bg-[#FFF5F4] px-3 py-2 text-[11.5px] font-black text-[#C9362A] shadow-[0_8px_18px_rgba(201,54,42,.08)] transition hover:bg-[#FFEAE7]"
                   >
                     <Trash2 className="h-3.5 w-3.5" strokeWidth={2.5} />
-                    <span>ลบรูป</span>
+                    <span>ลบรูปภาพ</span>
                   </button>
                 )}
               </div>
+              <p className="mt-2 text-center text-[10.5px] font-extrabold leading-snug text-[#55739B]">
+                {isUsingCustomProfileImage ? "ใช้รูปที่ตั้งเอง" : ssoProfileImage ? "ใช้รูปจาก SSO" : "ยังไม่มีรูปโปรไฟล์"}
+              </p>
             </div>
 
             {/* name info */}
-            <div className="min-w-0 text-center sm:text-left md:pr-[150px] xl:pr-[178px]">
+            <div className="min-w-0 rounded-[22px] border border-white/70 bg-white/72 p-4 text-center shadow-[0_14px_30px_rgba(11,130,240,0.12)] backdrop-blur-md sm:text-left md:mr-[150px] md:p-5 xl:mr-[178px]">
               <div className="mb-2 inline-flex items-center gap-1.5 rounded-[7px] border border-[#0B82F0] bg-white/85 px-2.5 py-[3px] text-[10px] font-extrabold uppercase tracking-[0.12em] text-[#0B82F0]">
                 <ShieldCheck className="h-3.5 w-3.5" strokeWidth={2.5} />
                 SSO Profile

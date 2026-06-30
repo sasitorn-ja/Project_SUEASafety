@@ -166,6 +166,7 @@ body {
 
 .home-hero-mascot,
 .suea-hero-mascot {
+  pointer-events: none;
   z-index: 20;
   animation: heroMascotHomeFloat 4.8s ease-in-out 420ms infinite;
   transform-origin: 52% 84%;
@@ -1014,6 +1015,7 @@ body {
 }
 
 .safety-culture-hero-mascot-image {
+  pointer-events: none;
   opacity: 1;
   scale: 1;
   rotate: 0deg;

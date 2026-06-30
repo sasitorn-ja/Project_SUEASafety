@@ -63,8 +63,13 @@ export function AppShell({ children }: { children: ReactNode }) {
 
     const demoLoginAllowed = isDemoLoginActive();
 
-    setLoginChecked(loggedIn);
-    setSessionChecked(loggedIn);
+    if (loggedIn || demoLoginAllowed) {
+      setLoginChecked(true);
+      setSessionChecked(true);
+    } else {
+      setLoginChecked(false);
+      setSessionChecked(false);
+    }
     setSessionCheckPending(true);
     fetch("/api/auth/session", {
       credentials: "include",
@@ -91,6 +96,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         setSessionCheckPending(false);
         if (demoLoginAllowed) {
           setSessionUser(DEMO_ADMIN_USER);
+          setLoginChecked(true);
           return;
         }
         try {
@@ -107,6 +113,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           setSessionCheckPending(false);
           if (demoLoginAllowed) {
             setSessionUser(DEMO_ADMIN_USER);
+            setLoginChecked(true);
             return;
           }
           router.replace(`/login?returnTo=${encodeURIComponent(getSafeReturnTo(window.location.pathname || "/"))}`);
@@ -116,10 +123,7 @@ export function AppShell({ children }: { children: ReactNode }) {
     return () => {
       cancelled = true;
     };
-  // Intentionally run only once on app bootstrap. Re-checking auth on every pathname
-  // change causes the whole shell to fall back to its loading state and feels like a full reload.
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [router]);
+  }, [pathname, router]);
 
   useEffect(() => {
     if (!loginChecked || !sessionChecked || sessionCheckPending || pathname === "/login") return;

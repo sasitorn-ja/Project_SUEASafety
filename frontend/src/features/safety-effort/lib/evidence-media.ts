@@ -4,6 +4,8 @@ export type EvidenceMedia = {
   originalName?: string | null;
   mimeType?: string | null;
   provider?: string | null;
+  file?: File | null;
+  isLocal?: boolean;
 };
 
 function normalizeEvidenceMedia(item: any): EvidenceMedia | null {
@@ -15,6 +17,7 @@ function normalizeEvidenceMedia(item: any): EvidenceMedia | null {
 
   const urlValue = item.url || item.href || item.src;
   if (typeof urlValue !== "string" || !urlValue.trim()) return null;
+  const file = typeof File !== "undefined" && item.file instanceof File ? item.file : null;
 
   return {
     id: item.id == null ? null : String(item.id),
@@ -22,7 +25,27 @@ function normalizeEvidenceMedia(item: any): EvidenceMedia | null {
     originalName: item.originalName == null ? null : String(item.originalName),
     mimeType: item.mimeType == null ? null : String(item.mimeType),
     provider: item.provider == null ? null : String(item.provider),
+    file,
+    isLocal: Boolean(item.isLocal || file || urlValue.startsWith("blob:")),
   };
+}
+
+export function createLocalEvidenceMedia(file: File): EvidenceMedia {
+  return {
+    id: null,
+    url: URL.createObjectURL(file),
+    originalName: file.name,
+    mimeType: file.type || null,
+    provider: "local-preview",
+    file,
+    isLocal: true,
+  };
+}
+
+export function revokeLocalEvidenceMedia(item: any) {
+  if (item?.isLocal && typeof item.url === "string" && item.url.startsWith("blob:")) {
+    URL.revokeObjectURL(item.url);
+  }
 }
 
 export function normalizeEvidenceMediaList(input: any): EvidenceMedia[] {
@@ -39,6 +62,8 @@ export function serializeEvidenceMediaList(input: any): EvidenceMedia[] {
     originalName: item.originalName ?? null,
     mimeType: item.mimeType ?? null,
     provider: item.provider ?? null,
+    file: item.file ?? null,
+    isLocal: item.isLocal ?? false,
   }));
 }
 
@@ -59,4 +84,3 @@ export function normalizeItemStatesEvidence(itemStates: any) {
     ]),
   );
 }
-

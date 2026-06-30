@@ -3,8 +3,12 @@ import { useState, useEffect, useRef } from "react";
 import { useLocation, useNavigate } from "@/lib/app-navigation";
 import RestrictedDatePicker from "@/components/RestrictedDatePicker";
 import SafetyEffortProgressStepper from "@/features/safety-effort/components/SafetyEffortProgressStepper";
-import { normalizeEvidenceMediaList, serializeEvidenceMediaList } from "@/features/safety-effort/lib/evidence-media";
-import { uploadSafetyEffortMedia } from "@/features/safety-effort/lib/upload-media";
+import {
+  createLocalEvidenceMedia,
+  normalizeEvidenceMediaList,
+  revokeLocalEvidenceMedia,
+  serializeEvidenceMediaList,
+} from "@/features/safety-effort/lib/evidence-media";
 import { useSessionUser, getSessionDisplayName } from "@/lib/session-user";
 
 const T = {
@@ -122,11 +126,7 @@ export default function SafetyContact() {
     const file = e.target.files[0];
     if (!file) return;
     try {
-      const media = await uploadSafetyEffortMedia(file, {
-        ownerType: "safety_contact",
-        ownerId: checkin?.id ? String(checkin.id) : activity?.id ? String(activity.id) : null,
-        linkType: "evidence",
-      });
+      const media = createLocalEvidenceMedia(file);
       setPhotos((prev) => [...prev, media]);
     } catch (error) {
       console.error("Failed to upload safety contact photo", error);
@@ -137,7 +137,9 @@ export default function SafetyContact() {
   }
 
   function handleDeletePhoto(idx: number) {
+    const media = photos[idx];
     setPhotos((prev) => prev.filter((_, i) => i !== idx));
+    revokeLocalEvidenceMedia(media);
   }
 
   useEffect(() => {
