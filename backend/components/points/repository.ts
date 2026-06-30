@@ -286,3 +286,42 @@ export async function awardPoints(input: {
 
   return getPointBalance(input.userId);
 }
+
+export async function retractPoints(input: {
+  userId: string;
+  idempotencyKey: string;
+}) {
+  await withTransaction(async (connection) => {
+    // 1. Check if the point transaction exists
+    const [rows] = await connection.execute<RowDataPacket[]>(
+      "SELECT amount FROM point_transactions WHERE user_id = :userId AND idempotency_key = :idempotencyKey LIMIT 1",
+      { userId: input.userId, idempotencyKey: input.idempotencyKey },
+    );
+    const txn = rows[0] as (RowDataPacket & { amount: number | string }) | undefined;
+    if (!txn) return; // No transaction or already deleted
+
+    const amount = Number(txn.amount);
+
+    // 2. Delete the transaction from point_transactions
+    await connection.execute(
+      "DELETE FROM point_transactions WHERE user_id = :userId AND idempotency_key = :idempotencyKey",
+      { userId: input.userId, idempotencyKey: input.idempotencyKey },
+    );
+
+    // 3. Deduct the amount from the user's point balance
+    const negAmount = -amount;
+    await connection.execute<ResultSetHeader>(
+      `
+        INSERT INTO point_balances (user_id, balance)
+        VALUES (:userId, :negAmount)
+        ON DUPLICATE KEY UPDATE
+          balance = balance + :negAmount,
+          updated_at = UTC_TIMESTAMP(3)
+      `,
+      { userId: input.userId, negAmount },
+    );
+  });
+
+  return getPointBalance(input.userId);
+}
+

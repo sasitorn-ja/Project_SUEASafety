@@ -3,7 +3,7 @@ import "server-only";
 import type { ResultSetHeader, RowDataPacket } from "mysql2/promise";
 
 import { queryRows, withTransaction } from "@backend/components/core/db";
-import { awardPoints } from "@backend/components/points/repository";
+import { awardPoints, retractPoints } from "@backend/components/points/repository";
 
 type PostRow = RowDataPacket & {
   id: string;
@@ -155,8 +155,8 @@ async function resolvePostPoints(eventId?: string | number | null) {
   if (!event || event.status !== "ACTIVE") throw new Error("event_not_available");
   const metadata = parseMetadata(event.metadata);
   const now = Date.now();
-  const start = metadata.startDate ? new Date(`${metadata.startDate}T00:00:00`).getTime() : event.event_start_at ? new Date(event.event_start_at).getTime() : NaN;
-  const end = metadata.endDate ? new Date(`${metadata.endDate}T23:59:59.999`).getTime() : event.event_end_at ? new Date(event.event_end_at).getTime() : NaN;
+  const start = metadata.startDate ? new Date(`${metadata.startDate}T00:00:00+07:00`).getTime() : event.event_start_at ? new Date(event.event_start_at).getTime() : NaN;
+  const end = metadata.endDate ? new Date(`${metadata.endDate}T23:59:59.999+07:00`).getTime() : event.event_end_at ? new Date(event.event_end_at).getTime() : NaN;
   if ((!Number.isNaN(start) && now < start) || (!Number.isNaN(end) && now > end)) throw new Error("event_not_live");
   const actions = Array.isArray(metadata.enabledActions) ? metadata.enabledActions.map(String) : [];
   const basePoints = Number(ruleRows[0]?.points || fallback);
@@ -767,6 +767,12 @@ export async function deleteReaction(postId: string, userId: string) {
     );
     await deleteLikeNotification(connection, { postId, actorId: userId });
   });
+
+  await retractPoints({
+    userId,
+    idempotencyKey: `reaction:${postId}:${userId}`,
+  }).catch(() => null);
+
   return { deleted: true };
 }
 

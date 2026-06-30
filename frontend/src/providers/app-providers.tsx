@@ -490,7 +490,7 @@ function isSafetyCultureEventLive(event: SafetyCultureEventConfig, now = Date.no
 
 function getFeedEventTimestamp(date?: string, endOfDay = false) {
   if (!date) return null;
-  const parsed = new Date(`${date}T${endOfDay ? "23:59" : "00:00"}`);
+  const parsed = new Date(`${date}T${endOfDay ? "23:59:59.999" : "00:00:00"}+07:00`);
   const timestamp = parsed.getTime();
   return Number.isNaN(timestamp) ? null : timestamp;
 }
@@ -499,8 +499,9 @@ function isFeedEventLive(event: SafetyCultureFeedEvent, now = Date.now()) {
   if (!event.published || event.status !== "open") return false;
   const start = getFeedEventTimestamp(event.startDate, false);
   const end = getFeedEventTimestamp(event.endDate, true);
-  if (start === null || end === null) return false;
-  return now >= start && now <= end;
+  if (start !== null && now < start) return false;
+  if (end !== null && now > end) return false;
+  return true;
 }
 
 function serializePostsForStorage(posts: Post[]) {
