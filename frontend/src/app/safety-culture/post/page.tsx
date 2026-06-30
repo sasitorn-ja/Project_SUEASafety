@@ -334,7 +334,7 @@ export default function PostSocialPage() {
                 <div>
                   <div className="text-[13px] font-[850] uppercase tracking-wide text-foreground">Card Event</div>
                   <div className="hidden">
-                    เลือกกิจกรรมที่ต้องการนับคะแนนร่วมกับโพสต์นี้ได้ ถ้าไม่เลือกจะเป็นโพสต์ทั่วไป
+                    เลือกกิจกรรมที่ต้องการนับ Coin ร่วมกับโพสต์นี้ได้ ถ้าไม่เลือกจะเป็นโพสต์ทั่วไป
                   </div>
                 </div>
                 {selectedFeedEvent ? (

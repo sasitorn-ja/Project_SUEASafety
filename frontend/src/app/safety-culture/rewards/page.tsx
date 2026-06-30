@@ -147,7 +147,7 @@ export default function RewardsPage() {
     if (currentUserPoints < item.points) {
       setResult({
         type: "error",
-        title: "คะแนนยังไม่พอ",
+        title: "Coin ยังไม่พอ",
         desc: `ต้องใช้ ${item.points.toLocaleString()} ${POINT_UNIT} แต่คุณมี ${currentUserPoints.toLocaleString()} ${POINT_UNIT}`,
       });
       return;
@@ -173,7 +173,7 @@ export default function RewardsPage() {
                 ? "หมดเวลาแลกแล้ว"
                 : redeemResult.reason === "api-error"
                   ? "ไม่สามารถแลกรางวัลได้"
-                  : "คะแนนยังไม่พอ",
+                  : "Coin ยังไม่พอ",
         desc:
           redeemResult.reason === "out-of-stock"
             ? `รางวัล "${redeeming.name}" หมดสต็อกแล้ว`
@@ -181,7 +181,7 @@ export default function RewardsPage() {
               ? getRewardScheduleText(redeeming)
               : redeemResult.reason === "api-error"
                 ? "ระบบไม่สามารถบันทึกการแลกรางวัลได้ กรุณาลองใหม่"
-                : "คะแนนอาจถูกใช้ไปแล้ว กรุณาลองใหม่",
+                : "Coin อาจถูกใช้ไปแล้ว กรุณาลองใหม่",
       });
       return;
     }
@@ -221,7 +221,7 @@ export default function RewardsPage() {
                 ทำดี แลกของ <span className="text-[var(--brand-accent)]">ให้ทีมภูมิใจ</span>
               </>
             }
-            description="คะแนน Safety ของคุณเปลี่ยนเป็นรางวัลสุดแสนพิเศษได้"
+            description="Coin Safety ของคุณเปลี่ยนเป็นรางวัลสุดแสนพิเศษได้"
             variant="community"
             backgroundImage="/images/heroes/Home01.png"
             backgroundOverlay="linear-gradient(90deg, rgba(210,235,255,.82) 0%, rgba(210,235,255,.60) 32%, rgba(210,235,255,.10) 56%, rgba(210,235,255,0) 74%)"
@@ -365,7 +365,7 @@ export default function RewardsPage() {
         <AppDialogContent size="sm">
           <AppDialogSectionHeader className="border-[#d7e6f6] bg-[linear-gradient(135deg,#ffffff_0%,#f4f9ff_56%,#eaf4ff_100%)] text-center">
             <AppDialogTitle className="text-center text-[17px] sm:text-[19px]">ยืนยันการแลกรางวัล</AppDialogTitle>
-            <AppDialogDescription className="text-center">ตรวจสอบข้อมูลก่อนใช้คะแนนแลกรางวัล</AppDialogDescription>
+            <AppDialogDescription className="text-center">ตรวจสอบข้อมูลก่อนใช้ Coin แลกรางวัล</AppDialogDescription>
           </AppDialogSectionHeader>
 
           <AppDialogBody className="flex flex-col items-center gap-4 text-center">
@@ -379,7 +379,7 @@ export default function RewardsPage() {
               />
             </div>
             <p className="text-sm font-semibold leading-relaxed text-[#555149]">
-              คุณต้องการใช้คะแนนจำนวน <strong className="text-(--brand-accent-strong)">{redeeming?.points} {POINT_UNIT}</strong> เพื่อแลก
+              คุณต้องการใช้ Coin จำนวน <strong className="text-(--brand-accent-strong)">{redeeming?.points} {POINT_UNIT}</strong> เพื่อแลก
               <br />
               <strong>&quot;{redeeming?.name}&quot;</strong> ใช่หรือไม่?
             </p>

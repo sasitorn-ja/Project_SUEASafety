@@ -1516,11 +1516,50 @@ export default function Checkin() {
   }, []);
 
   useEffect(() => {
+    if (selectedType !== "site") return;
+    const point = normalizePoint(userPos, DEFAULT_CENTER);
+    const controller = new AbortController();
+    setLoadingLocations(true);
+    setApiError("");
+
+    fetch(`/api/locations/sites?limit=20&lat=${encodeURIComponent(point.lat)}&lng=${encodeURIComponent(point.lng)}`, {
+      credentials: "include",
+      signal: controller.signal,
+    })
+      .then(async response => {
+        const payload = await response.json().catch(() => null);
+        if (!response.ok || !payload?.ok) throw new Error(payload?.error || "sites_load_failed");
+        return payload.data?.items || payload.data?.locations || [];
+      })
+      .then(items => {
+        const nearbySites = items.map(apiLocationToCheckinLocation);
+        setExtraLocs(current => {
+          const merged = new Map(
+            current
+              .filter(item => item.source !== "RMC_SSO_SITE")
+              .map(item => [item.id, item]),
+          );
+          nearbySites.forEach(item => merged.set(item.id, item));
+          return Array.from(merged.values());
+        });
+      })
+      .catch(error => {
+        if (error?.name !== "AbortError") setApiError(error?.message || "ไม่สามารถโหลด Site งานใกล้คุณได้");
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setLoadingLocations(false);
+      });
+
+    return () => controller.abort();
+  }, [selectedType, userPos]);
+
+  useEffect(() => {
     const keyword = searchQuery.trim();
     if (keyword.length < 3 || !["ทั้งหมด", "all", "site"].includes(selectedType)) return;
+    const point = normalizePoint(userPos, DEFAULT_CENTER);
     const controller = new AbortController();
     const timer = window.setTimeout(() => {
-      fetch(`/api/locations/search?type=SITE&q=${encodeURIComponent(keyword)}&limit=30`, {
+      fetch(`/api/locations/search?type=SITE&q=${encodeURIComponent(keyword)}&limit=20&lat=${encodeURIComponent(point.lat)}&lng=${encodeURIComponent(point.lng)}`, {
         credentials: "include",
         signal: controller.signal,
       })
@@ -1545,7 +1584,7 @@ export default function Checkin() {
       window.clearTimeout(timer);
       controller.abort();
     };
-  }, [searchQuery, selectedType]);
+  }, [searchQuery, selectedType, userPos]);
 
   const allLocations = extraLocs
     .map(l => ({
@@ -1579,13 +1618,13 @@ export default function Checkin() {
   const searchKeyword = searchQuery.trim();
   const locationDataHint = selectedTypeKey === "site"
     ? searchKeyword.length < 3
-      ? "Site งานดึงจาก rmc_sso.sites แบบค้นหาเท่านั้น กรุณาพิมพ์ชื่อ/รหัสอย่างน้อย 3 ตัว"
-      : "กำลังแสดง Site งานจาก rmc_sso.sites ตามคำค้นหา"
+      ? "กำลังแสดง Site งานใกล้คุณ 20 รายการจาก rmc_sso.sites และค้นหาเพิ่มเติมได้เมื่อพิมพ์อย่างน้อย 3 ตัว"
+      : "กำลังแสดง Site งานใกล้คุณจาก rmc_sso.sites ตามคำค้นหา"
     : selectedTypeKey === "office"
       ? "สำนักงานดึงจาก rmc_sso.offices โดยตรง"
-      : "โรงงาน/สำนักงานแสดงจากระบบ ส่วน Site งานให้ค้นหาอย่างน้อย 3 ตัว";
+      : "โรงงาน/สำนักงาน/Site งานแสดงจากระบบ และค้นหา Site เพิ่มเติมได้เมื่อพิมพ์อย่างน้อย 3 ตัว";
   const emptyLocationMessage = selectedTypeKey === "site" && searchKeyword.length < 3
-    ? "พิมพ์ชื่อหรือรหัส Site อย่างน้อย 3 ตัว เพื่อดึงข้อมูลจาก rmc_sso.sites"
+    ? "ยังไม่พบ Site งานจาก rmc_sso.sites"
     : "ไม่พบสถานที่ที่ค้นหา";
 
   // Only render the first `visibleCount` results; "show more" reveals the rest.

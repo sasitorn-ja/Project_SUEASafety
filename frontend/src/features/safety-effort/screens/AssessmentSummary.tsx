@@ -732,7 +732,7 @@ export default function AssessmentSummary() {
                 marginTop: -4,
                 boxShadow: "0 4px 12px rgba(14,62,125,0.12)"
               }}>
-                <IcoTrophy size={16} color={T.goldDeep} /> +10 คะแนน
+                <IcoTrophy size={16} color={T.goldDeep} /> +10 Coin
               </div>
 
               <button

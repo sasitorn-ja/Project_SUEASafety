@@ -19,9 +19,7 @@ export default function NotificationsPage() {
   const touchStartX = useRef<number | null>(null);
   const isWangjai = theme === "wangjai";
   const sharedMobileHeight = "calc(100vh - var(--mobile-topbar-h) - var(--mobile-bottomnav-h))";
-  const mobileBackgroundClass = isWangjai
-    ? "bg-[linear-gradient(180deg,#eef4fb_0%,#f7fbff_220px,#f8fbff_100%)]"
-    : "bg-[linear-gradient(180deg,#f6efe3_0%,#fdf8f0_220px,#fffdf8_100%)]";
+  const mobileBackgroundClass = isWangjai ? "bg-[var(--background)]" : "bg-[var(--background)]";
 
   const selectedPostId = useMemo(() => {
     const postIdParam = searchParams?.get("postId");
@@ -76,7 +74,7 @@ export default function NotificationsPage() {
   );
 
   return (
-    <div className="page-shell-wide">
+    <div className="page-shell-wide bg-[var(--background)]">
       <section className="hidden md:block">
         <NotificationCenter />
       </section>

@@ -128,6 +128,7 @@ export default function DashboardSafetyEffort() {
   // Live data from the real reports API (admin). Falls back to baseline below if unavailable.
   const [liveSummary, setLiveSummary] = useState(null);     // { activities, submitted_assessments, open_findings, open_actions }
   const [liveLocations, setLiveLocations] = useState(null); // [{ id, name_th, location_type, checkins, activities }]
+  const [liveLinewalkOverview, setLiveLinewalkOverview] = useState(null); // { summary, byLocationType, byBusinessUnit }
 
   useEffect(() => {
     const handleResize = () => setWidth(window.innerWidth);
@@ -143,9 +144,10 @@ export default function DashboardSafetyEffort() {
         const qs = new URLSearchParams();
         if (startDate) qs.set("from", startDate);
         if (endDate) qs.set("to", endDate);
-        const [sumRes, locRes] = await Promise.all([
+        const [sumRes, locRes, linewalkRes] = await Promise.all([
           fetch(`/api/safety-effort/reports/summary?${qs.toString()}`, { credentials: "include", cache: "no-store" }),
           fetch(`/api/safety-effort/reports/by-location?${qs.toString()}&pageSize=200`, { credentials: "include", cache: "no-store" }),
+          fetch(`/api/safety-effort/reports/linewalk-overview?${qs.toString()}`, { credentials: "include", cache: "no-store" }),
         ]);
         if (sumRes.ok) {
           const p = await sumRes.json().catch(() => null);
@@ -154,6 +156,10 @@ export default function DashboardSafetyEffort() {
         if (locRes.ok) {
           const p = await locRes.json().catch(() => null);
           if (!cancelled && Array.isArray(p?.data?.items)) setLiveLocations(p.data.items);
+        }
+        if (linewalkRes.ok) {
+          const p = await linewalkRes.json().catch(() => null);
+          if (!cancelled && p?.data) setLiveLinewalkOverview(p.data);
         }
       } catch {
         /* keep baseline data */
@@ -175,6 +181,7 @@ export default function DashboardSafetyEffort() {
         "สแกนที่ปลอดภัย (Safe)": item.safe,
         "ความไม่ปลอดภัย (Unsafe)": item.unsafe,
         "แก้ไขแล้ว (Solved)": item.solved,
+        "Line walk จากระบบเก่า": item.legacyLinewalk || 0,
         "อัตราความปลอดภัย (%)": parseFloat(Number(safePercent).toFixed(1))
       };
     });
@@ -199,9 +206,29 @@ export default function DashboardSafetyEffort() {
   
   const scaleFactor = getScaleFactor();
 
-  // Chart 1 (distribution by location type) — built from REAL /reports/by-location
-  // when available; otherwise falls back to the scaled baseline.
+  // Chart 1 (distribution by location type) — built from REAL Line walk submissions
+  // when available; otherwise falls back to the legacy report/baseline.
   const chart1Data = (() => {
+    if (liveLinewalkOverview) {
+      const rows = Array.isArray(liveLinewalkOverview.byLocationType)
+        ? liveLinewalkOverview.byLocationType
+        : [];
+      const total = rows.reduce((sum, row) => sum + Number(row.submissions || row.total || 0), 0);
+      const colors = { Office: "#2F80D0", Plant: "#79BE4B", Site: "#F5BE00", "ข้อมูลเก่า": "#9CA3AF" };
+      const order = { Office: 0, Plant: 1, Site: 2, "ข้อมูลเก่า": 3 };
+      return rows
+        .map((row) => {
+          const name = String(row.name || "Other");
+        const count = Number(row?.submissions || row?.total || 0);
+        return {
+          name,
+          count,
+          value: total > 0 ? Number(((count / total) * 100).toFixed(1)) : 0,
+            color: colors[name] || "#94A3B8",
+        };
+        })
+        .sort((a, b) => (order[a.name] ?? 99) - (order[b.name] ?? 99));
+    }
     if (Array.isArray(liveLocations) && liveLocations.length) {
       const buckets = { Plant: 0, Office: 0, Site: 0 };
       for (const row of liveLocations) {
@@ -229,34 +256,82 @@ export default function DashboardSafetyEffort() {
     return BASELINE_CHART1_DATA.map(item => ({ ...item, count: Math.round(item.count * scaleFactor) }));
   })();
 
-  // TODO(DB): chart2 (safe / unsafe-act / unsafe-cond by location type), chart3
-  //   (correction status %) and chart4 (per-Business-Unit safeRate) have no backing
-  //   aggregate endpoint yet. They need a richer reports endpoint that classifies
-  //   each assessment answer as safe/unsafe and joins activities -> organizations (BU).
-  //   Until then these remain scaled-baseline samples.
-  const chart2Data = BASELINE_CHART2_DATA.map(item => ({
-    ...item,
-    safe: Math.round(item.safe * scaleFactor),
-    unsafeAct: Math.round(item.unsafeAct * scaleFactor),
-    unsafeCond: Math.round(item.unsafeCond * scaleFactor),
-    total: Math.round(item.total * scaleFactor),
-  }));
+  const chart2Data = (() => {
+    if (liveLinewalkOverview) {
+      const rows = Array.isArray(liveLinewalkOverview.byLocationType)
+        ? liveLinewalkOverview.byLocationType
+        : [];
+      const byName = new Map(rows.map((row) => [String(row.name || ""), row]));
+      return ["Plant", "Office", "Site"].map((category) => {
+        const row = byName.get(category);
+        const safe = Number(row?.safe || 0);
+        const unsafeAct = Number(row?.unsafeAct || 0);
+        const unsafeCond = Number(row?.unsafeCond || 0);
+        return {
+          category,
+          safe,
+          unsafeAct,
+          unsafeCond,
+          total: Number(row?.total || safe + unsafeAct + unsafeCond),
+        };
+      });
+    }
+    return BASELINE_CHART2_DATA.map(item => ({
+      ...item,
+      safe: Math.round(item.safe * scaleFactor),
+      unsafeAct: Math.round(item.unsafeAct * scaleFactor),
+      unsafeCond: Math.round(item.unsafeCond * scaleFactor),
+      total: Math.round(item.total * scaleFactor),
+    }));
+  })();
 
   const chart3Data = BASELINE_CHART3_DATA.map(item => ({
     ...item,
     count: Math.round(item.count * scaleFactor)
   }));
 
-  const chart4Data = BASELINE_CHART4_DATA.map(item => ({
-    ...item,
-    safe: Math.round(item.safe * scaleFactor),
-    unsafe: Math.round(item.unsafe * scaleFactor),
-    solved: Math.round(item.solved * scaleFactor),
-  }));
+  const chart4Data = (() => {
+    if (liveLinewalkOverview) {
+      const rows = Array.isArray(liveLinewalkOverview.byBusinessUnit)
+        ? liveLinewalkOverview.byBusinessUnit
+        : [];
+      return rows.map((row) => {
+        const safe = Number(row.safe || 0);
+        const unsafe = Number(row.unsafe || 0);
+        return {
+          name: String(row.name || "ไม่ระบุหน่วยงาน"),
+          safe,
+          unsafe,
+          solved: 0,
+          legacyLinewalk: Number(row.legacyLinewalk || 0),
+          totalLinewalk: Number(row.totalLinewalk || row.submissions || 0),
+          safeRate: Number(row.safeRate || (safe + unsafe > 0 ? (safe / (safe + unsafe)) * 100 : 0)),
+        };
+      });
+    }
+    return BASELINE_CHART4_DATA.map(item => ({
+      ...item,
+      safe: Math.round(item.safe * scaleFactor),
+      unsafe: Math.round(item.unsafe * scaleFactor),
+      solved: Math.round(item.solved * scaleFactor),
+    }));
+  })();
 
   // Derived filtered metrics
   const getFilteredMetrics = () => {
     if (selectedBU === "All Business Units") {
+      if (liveLinewalkOverview?.summary) {
+        const totalChecks = Number(liveLinewalkOverview.summary.totalLinewalk || liveLinewalkOverview.summary.submissions || 0);
+        const unsafeCases = Number(liveLinewalkOverview.summary.unsafe || 0);
+        return {
+          totalChecks,
+          safeRate: Number(liveLinewalkOverview.summary.safeRate || 0),
+          unsafeCases,
+          solvedCases: 0,
+          pendingCases: unsafeCases,
+          unresolvedCases: unsafeCases,
+        };
+      }
       // Prefer REAL summary aggregates when available.
       if (liveSummary) {
         const totalChecks = Number(liveSummary.activities || 0);
@@ -290,7 +365,7 @@ export default function DashboardSafetyEffort() {
     const total = bu.safe + bu.unsafe;
     const rate = bu.safeRate ?? (total > 0 ? Number(((bu.safe / total) * 100).toFixed(1)) : 0);
     return {
-      totalChecks: total,
+      totalChecks: bu.totalLinewalk ?? total,
       safeRate: rate,
       unsafeCases: bu.unsafe,
       solvedCases: bu.solved,
@@ -308,11 +383,11 @@ export default function DashboardSafetyEffort() {
   })();
   const correctionRate = ((metrics.solvedCases / (metrics.solvedCases + metrics.pendingCases || 1)) * 100).toFixed(1);
   const focusedBusinessUnitCount = selectedBU === "All Business Units" ? chart4Data.length : 1;
-  const topBusinessUnit = [...chart4Data].sort((a, b) => (b.safe + b.unsafe) - (a.safe + a.unsafe))[0];
+  const topBusinessUnit = [...chart4Data].sort((a, b) => (b.totalLinewalk ?? (b.safe + b.unsafe)) - (a.totalLinewalk ?? (a.safe + a.unsafe)))[0];
 
   // Helper to scale values for column heights
   const getScaledHeight = (val, max) => {
-    if (val === 0) return 0;
+    if (val === 0 || !Number.isFinite(max) || max <= 0) return 0;
     // Bar container height differs per breakpoint (desktop bars-flex = 90px,
     // tablet/mobile = 165px). Keep bars inside the container with a little headroom.
     const maxHeight = isDesktop ? 82 : 150;

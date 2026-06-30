@@ -228,7 +228,7 @@ export default function AdminLeaderboardPage() {
 
   const divisionOptions = useMemo<ComboboxOption[]>(() => {
     const options: ComboboxOption[] = divisions.map((name) => ({ value: name, label: name }));
-    // กลุ่มรองรับคนที่หน่วยงานเป็น null/ว่าง ให้คะแนนยังถูกนับได้
+    // กลุ่มรองรับคนที่หน่วยงานเป็น null/ว่าง ให้ Coin ยังถูกนับได้
     options.push({ value: UNASSIGNED_DIVISION, label: UNASSIGNED_DIVISION, keywords: ["null", "ไม่มี", "ว่าง", "unassigned"] });
     // ให้แถวเดิมที่ชื่อหน่วยงานไม่อยู่ในรายการ ยังแสดงค่าปัจจุบันได้
     if (editingTeam?.name && !options.some((option) => option.value === editingTeam.name)) {
@@ -330,7 +330,7 @@ export default function AdminLeaderboardPage() {
               ทีมและ <span className="text-[var(--brand-accent)]">อันดับ</span>
             </>
           }
-          description="จัดการหน่วยงาน คะแนน และอันดับ โดยอ้างอิงข้อมูลจริงในระบบ"
+          description="จัดการหน่วยงาน Coin และอันดับ โดยอ้างอิงข้อมูลจริงในระบบ"
           variant="community"
           backgroundImage="/images/heroes/Home01.png"
           backgroundOverlay="linear-gradient(90deg, rgba(210,235,255,.82) 0%, rgba(210,235,255,.60) 32%, rgba(210,235,255,.10) 56%, rgba(210,235,255,0) 74%)"
@@ -347,7 +347,7 @@ export default function AdminLeaderboardPage() {
                 {totalMembers.toLocaleString()} สมาชิก
               </Badge>
               <Badge className="rounded-xl border border-[var(--border)] bg-white px-3 py-2 text-[11px] font-black text-[var(--brand-text)]">
-                {totalPoints.toLocaleString()} คะแนนรวม
+                {totalPoints.toLocaleString()} Coin รวม
               </Badge>
             </div>
 
@@ -382,7 +382,7 @@ export default function AdminLeaderboardPage() {
                       <th className="px-4 py-4 text-[12px] font-black text-[var(--brand-text)]">หน่วยงาน</th>
                       <th className="px-4 py-4 text-[12px] font-black text-[var(--brand-text)]">หัวหน้า</th>
                       <th className="px-4 py-4 text-[12px] font-black text-[var(--brand-text)]">สมาชิก</th>
-                      <th className="px-4 py-4 text-[12px] font-black text-[var(--brand-text)]">คะแนนรวม</th>
+                      <th className="px-4 py-4 text-[12px] font-black text-[var(--brand-text)]">Coin รวม</th>
                       <th className="px-4 py-4 text-[12px] font-black text-[var(--brand-text)]">จัดการ</th>
                     </tr>
                   </thead>

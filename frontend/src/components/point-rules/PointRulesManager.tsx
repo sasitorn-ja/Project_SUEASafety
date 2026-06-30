@@ -26,7 +26,7 @@ export function PointRulesManager() {
 
     const result = await getPointRules();
     if (!result.ok || !Array.isArray(result.data?.rules)) {
-      setError("โหลดข้อมูลคะแนนไม่สำเร็จ");
+      setError("โหลดข้อมูล Coin ไม่สำเร็จ");
       setLoading(false);
       return;
     }
@@ -97,7 +97,7 @@ export function PointRulesManager() {
       for (const rule of rules) {
         const nextPoints = Number(draft[rule.code]);
         if (!Number.isFinite(nextPoints) || nextPoints < 0) {
-          throw new Error(`คะแนนของ "${rule.label}" ไม่ถูกต้อง`);
+          throw new Error(`Coin ของ "${rule.label}" ไม่ถูกต้อง`);
         }
 
         if (nextPoints === rule.points) continue;
@@ -114,7 +114,7 @@ export function PointRulesManager() {
         }
       }
 
-      setMessage("บันทึกการตั้งค่าคะแนนเรียบร้อยแล้ว");
+      setMessage("บันทึกการตั้งค่า Coin เรียบร้อยแล้ว");
       await loadRules();
     } catch (saveError) {
       setError(saveError instanceof Error ? saveError.message : "บันทึกข้อมูลไม่สำเร็จ");
@@ -127,8 +127,8 @@ export function PointRulesManager() {
     <div className="page-shell-wide bg-background pt-2.5 pb-8 font-sarabun">
       <SafetyCultureHero
         eyebrow="POINT SETTINGS"
-        title={<>ตั้งค่าคะแนนในระบบ</>}
-        description="กำหนดคะแนนของกิจกรรมหลักใน Safety Awareness, Safety Culture และ Safety Effort ได้จากหน้าเดียว"
+        title={<>ตั้งค่า Coin ในระบบ</>}
+        description="กำหนด Coin ของกิจกรรมหลักใน Safety Awareness, Safety Culture และ Safety Effort ได้จากหน้าเดียว"
         variant="community"
         backgroundImage="/images/heroes/Home01.png"
         backgroundOverlay="linear-gradient(90deg, rgba(210,235,255,.82) 0%, rgba(210,235,255,.60) 32%, rgba(210,235,255,.10) 56%, rgba(210,235,255,0) 74%)"
@@ -139,12 +139,12 @@ export function PointRulesManager() {
       <Card className="mt-4 rounded-[18px] border border-border bg-(--brand-surface) p-4 shadow-[0_10px_26px_var(--brand-shadow)]">
         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <div>
-            <h2 className="text-[18px] font-black text-[#0B2F6B]">คะแนนกิจกรรมหลัก</h2>
-            <p className="mt-1 text-[12px] font-bold text-[#55739B]">แอดมินสามารถเพิ่มหรือลดแต้มได้เอง แล้วระบบจะใช้ค่าชุดนี้ต่อจากนี้</p>
+            <h2 className="text-[18px] font-black text-[#0B2F6B]">Coin กิจกรรมหลัก</h2>
+            <p className="mt-1 text-[12px] font-bold text-[#55739B]">แอดมินสามารถเพิ่มหรือลด Coin ได้เอง แล้วระบบจะใช้ค่าชุดนี้ต่อจากนี้</p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <div className="rounded-[14px] border border-[#D7EAFE] bg-[#F5FAFF] px-4 py-2 text-center">
-              <div className="text-[10px] font-bold text-[#55739B]">รวมคะแนนตั้งต้น</div>
+              <div className="text-[10px] font-bold text-[#55739B]">รวม Coin ตั้งต้น</div>
               <div className="mt-0.5 text-[20px] font-black text-[#0B82F0]">{totalPoints}</div>
             </div>
             <Button type="button" variant="outline" onClick={() => void loadRules()} disabled={loading || saving} className="h-10 rounded-xl border-[#D7EAFE]">
@@ -153,7 +153,7 @@ export function PointRulesManager() {
             </Button>
             <Button type="button" onClick={() => void onSaveRules()} disabled={loading || saving || !hasChanges} className="h-10 rounded-full bg-[#0B82F0] hover:bg-[#0973d6] text-white transition-colors">
               <Save className="mr-2 h-4 w-4" />
-              {saving ? "กำลังบันทึก..." : "บันทึกคะแนน"}
+              {saving ? "กำลังบันทึก..." : "บันทึก Coin"}
             </Button>
           </div>
         </div>
@@ -189,7 +189,7 @@ export function PointRulesManager() {
                     </div>
 
                     <div className="mt-4">
-                      <label className="mb-1.5 block text-[11px] font-black text-[#55739B]">คะแนน</label>
+                      <label className="mb-1.5 block text-[11px] font-black text-[#55739B]">Coin</label>
                       <Input
                         type="number"
                         min="0"
@@ -215,7 +215,7 @@ export function PointRulesManager() {
 
         {!loading && rules.length === 0 && (
           <div className="mt-4 rounded-xl border border-dashed border-[#D7EAFE] bg-[#F9FBFF] px-4 py-6 text-center text-[13px] font-bold text-[#55739B]">
-            ยังไม่พบกติกาคะแนนในระบบ
+            ยังไม่พบกติกา Coin ในระบบ
           </div>
         )}
       </Card>

@@ -864,6 +864,81 @@ function normalizeSafetyEffortMetadata(input: unknown) {
   };
 }
 
+function linewalkSubmissionDateFilters(request: NextRequest, params: Record<string, unknown>) {
+  const where: string[] = [];
+  const from = request.nextUrl.searchParams.get("from");
+  const to = request.nextUrl.searchParams.get("to");
+  if (from) {
+    where.push("COALESCE(s.submission_date, DATE(s.created_at)) >= :from");
+    params.from = from;
+  }
+  if (to) {
+    where.push("COALESCE(s.submission_date, DATE(s.created_at)) <= :to");
+    params.to = to;
+  }
+  return where;
+}
+
+function legacySafetyOldMonthFilters(request: NextRequest, params: Record<string, unknown>) {
+  const where: string[] = [];
+  const fromMonth = toLegacyMonth(request.nextUrl.searchParams.get("from"));
+  const toMonth = toLegacyMonth(request.nextUrl.searchParams.get("to"));
+  if (fromMonth) {
+    where.push("so.Month >= :legacyFromMonth");
+    params.legacyFromMonth = fromMonth;
+  }
+  if (toMonth) {
+    where.push("so.Month <= :legacyToMonth");
+    params.legacyToMonth = toMonth;
+  }
+  return where;
+}
+
+function normalizeReportLocationTypeExpression(alias = "s") {
+  return `
+    CASE
+      WHEN UPPER(COALESCE(l.location_type, ${alias}.loc_type, '')) IN ('PLANT','FACTORY') THEN 'PLANT'
+      WHEN UPPER(COALESCE(l.location_type, ${alias}.loc_type, '')) = 'OFFICE' THEN 'OFFICE'
+      WHEN UPPER(COALESCE(l.location_type, ${alias}.loc_type, '')) = 'SITE' THEN 'SITE'
+      ELSE 'CUSTOM'
+    END
+  `;
+}
+
+function mapLinewalkLocationTypeLabel(type: unknown) {
+  const normalized = String(type || "").toUpperCase();
+  if (normalized === "PLANT" || normalized === "FACTORY") return "Plant";
+  if (normalized === "OFFICE") return "Office";
+  if (normalized === "SITE") return "Site";
+  return "Other";
+}
+
+function serializeLinewalkOverviewRows(rows: DbRow[]): Array<Record<string, unknown> & {
+  safe: number;
+  unsafeAct: number;
+  unsafeCond: number;
+  unsafe: number;
+  total: number;
+  safeRate: number;
+}> {
+  return rows.map((row) => {
+    const safe = Number(row.safe || 0);
+    const unsafeAct = Number(row.unsafe_act || 0);
+    const unsafeCond = Number(row.unsafe_condition || 0);
+    const unsafe = unsafeAct + unsafeCond;
+    const total = Number(row.total_answers || safe + unsafe || row.submissions || 0);
+    return {
+      ...serializeRow(row),
+      safe,
+      unsafeAct,
+      unsafeCond,
+      unsafe,
+      total,
+      safeRate: total > 0 ? Number(((safe / total) * 100).toFixed(1)) : 0,
+    };
+  });
+}
+
 function normalizeOptionalNumericId(value: unknown) {
   if (value == null) return null;
   const normalized = String(value).trim();
@@ -2179,6 +2254,198 @@ async function handleImportsReportsAudit(request: NextRequest, method: string, m
         params,
       );
       return jsonData({ items: rows.map(serializeRow), page, pageSize, nextPage: rows.length === pageSize ? page + 1 : null });
+    }
+    if (route === "/api/safety-effort/reports/linewalk-overview") {
+      const baseParams: Record<string, unknown> = {};
+      const baseWhere = [
+        "s.deleted_at IS NULL",
+        "s.activity_type = 'LINE_WALK'",
+        ...linewalkSubmissionDateFilters(request, baseParams),
+      ];
+      const locationTypeExpression = normalizeReportLocationTypeExpression("s");
+      const answeredJoin = `
+        LEFT JOIN JSON_TABLE(
+          CASE WHEN JSON_VALID(s.answers_json) THEN s.answers_json ELSE JSON_ARRAY() END,
+          '$[*]' COLUMNS (
+            status VARCHAR(40) PATH '$.status' NULL ON EMPTY NULL ON ERROR
+          )
+        ) ans ON TRUE
+      `;
+
+      const locationTypeRows = await queryRows<DbRow>(
+        `
+          SELECT
+            location_type,
+            COUNT(*) AS submissions,
+            SUM(answer_count) AS total_answers,
+            SUM(safe) AS safe,
+            SUM(unsafe_act) AS unsafe_act,
+            SUM(unsafe_condition) AS unsafe_condition
+          FROM (
+            SELECT
+              s.id,
+              ${locationTypeExpression} AS location_type,
+              SUM(CASE WHEN ans.status IN ('safe', 'unsafe_action', 'unsafe_condition') THEN 1 ELSE 0 END) AS answer_count,
+              SUM(CASE WHEN ans.status = 'safe' THEN 1 ELSE 0 END) AS safe,
+              SUM(CASE WHEN ans.status = 'unsafe_action' THEN 1 ELSE 0 END) AS unsafe_act,
+              SUM(CASE WHEN ans.status = 'unsafe_condition' THEN 1 ELSE 0 END) AS unsafe_condition
+            FROM safety_effort_submissions s
+            LEFT JOIN checkins c ON c.id = s.checkin_id
+            LEFT JOIN locations l ON l.id = c.selected_location_id
+            ${answeredJoin}
+            WHERE ${baseWhere.join(" AND ")}
+            GROUP BY s.id, location_type
+          ) x
+          GROUP BY location_type
+          ORDER BY FIELD(location_type, 'OFFICE', 'PLANT', 'SITE', 'CUSTOM')
+        `,
+        baseParams,
+      );
+
+      const buRows = await queryRows<DbRow>(
+        `
+          SELECT
+            business_unit,
+            COUNT(*) AS submissions,
+            SUM(answer_count) AS total_answers,
+            SUM(safe) AS safe,
+            SUM(unsafe_act) AS unsafe_act,
+            SUM(unsafe_condition) AS unsafe_condition
+          FROM (
+            SELECT
+              s.id,
+              COALESCE(
+                NULLIF(pld.division_name, ''),
+                NULLIF(od.division_name, ''),
+                NULLIF(o.name_th, ''),
+                NULLIF(l.name_th, ''),
+                NULLIF(s.location_name, ''),
+                'ไม่ระบุหน่วยงาน'
+              ) AS business_unit,
+              SUM(CASE WHEN ans.status IN ('safe', 'unsafe_action', 'unsafe_condition') THEN 1 ELSE 0 END) AS answer_count,
+              SUM(CASE WHEN ans.status = 'safe' THEN 1 ELSE 0 END) AS safe,
+              SUM(CASE WHEN ans.status = 'unsafe_action' THEN 1 ELSE 0 END) AS unsafe_act,
+              SUM(CASE WHEN ans.status = 'unsafe_condition' THEN 1 ELSE 0 END) AS unsafe_condition
+            FROM safety_effort_submissions s
+            LEFT JOIN checkins c ON c.id = s.checkin_id
+            LEFT JOIN locations l ON l.id = c.selected_location_id
+            LEFT JOIN organizations o ON o.id = l.organization_id
+            LEFT JOIN plant_location_details pld ON pld.location_id = l.id
+            LEFT JOIN office_location_details od ON od.location_id = l.id
+            ${answeredJoin}
+            WHERE ${baseWhere.join(" AND ")}
+            GROUP BY s.id, business_unit
+          ) x
+          GROUP BY business_unit
+          ORDER BY total_answers DESC, submissions DESC, business_unit
+          LIMIT 50
+        `,
+        baseParams,
+      );
+      const legacyParams: Record<string, unknown> = {};
+      const legacyWhere = [
+        "COALESCE(so.LineWalk_Count, 0) > 0",
+        ...legacySafetyOldMonthFilters(request, legacyParams),
+      ];
+      const legacyRows = await queryRows<DbRow>(
+        `
+          SELECT
+            COALESCE(NULLIF(o.name_th, ''), 'ข้อมูลเก่าไม่ระบุหน่วยงาน') AS business_unit,
+            SUM(COALESCE(so.LineWalk_Count, 0)) AS legacy_linewalk
+          FROM safety_old so
+          LEFT JOIN users u ON LOWER(u.username) = LOWER(so.CreatedBy) AND u.deleted_at IS NULL
+          LEFT JOIN organizations o ON o.id = u.organization_id AND o.deleted_at IS NULL
+          WHERE ${legacyWhere.join(" AND ")}
+          GROUP BY business_unit
+          ORDER BY legacy_linewalk DESC, business_unit
+          LIMIT 50
+        `,
+        legacyParams,
+      );
+
+      const byLocationType = serializeLinewalkOverviewRows(locationTypeRows).map((row) => ({
+        locationType: String(row.location_type || "CUSTOM"),
+        name: mapLinewalkLocationTypeLabel(row.location_type),
+        submissions: Number(row.submissions || 0),
+        total: row.total,
+        safe: row.safe,
+        unsafeAct: row.unsafeAct,
+        unsafeCond: row.unsafeCond,
+        unsafe: row.unsafe,
+        safeRate: row.safeRate,
+      }));
+      const legacyByBusinessUnit = legacyRows.map((row) => ({
+        name: String(row.business_unit || "ข้อมูลเก่าไม่ระบุหน่วยงาน"),
+        legacyLinewalk: Number(row.legacy_linewalk || 0),
+      }));
+      const legacyLinewalk = legacyByBusinessUnit.reduce((sum, row) => sum + row.legacyLinewalk, 0);
+      const legacyByName = new Map(legacyByBusinessUnit.map((row) => [row.name, row.legacyLinewalk]));
+      const byBusinessUnit = serializeLinewalkOverviewRows(buRows).map((row) => {
+        const name = String(row.business_unit || "ไม่ระบุหน่วยงาน");
+        const legacyForUnit = legacyByName.get(name) || 0;
+        legacyByName.delete(name);
+        return {
+          name,
+          submissions: Number(row.submissions || 0),
+          legacyLinewalk: legacyForUnit,
+          totalLinewalk: Number(row.submissions || 0) + legacyForUnit,
+          total: row.total,
+          safe: row.safe,
+          unsafeAct: row.unsafeAct,
+          unsafeCond: row.unsafeCond,
+          unsafe: row.unsafe,
+          safeRate: row.safeRate,
+        };
+      });
+      for (const [name, legacyForUnit] of legacyByName) {
+        byBusinessUnit.push({
+          name,
+          submissions: 0,
+          legacyLinewalk: legacyForUnit,
+          totalLinewalk: legacyForUnit,
+          total: 0,
+          safe: 0,
+          unsafeAct: 0,
+          unsafeCond: 0,
+          unsafe: 0,
+          safeRate: 0,
+        });
+      }
+      byBusinessUnit.sort((a, b) => b.totalLinewalk - a.totalLinewalk || a.name.localeCompare(b.name));
+      const limitedByBusinessUnit = byBusinessUnit.slice(0, 50);
+      const legacyLocationBucket = legacyLinewalk > 0 ? [{
+        locationType: "LEGACY",
+        name: "ข้อมูลเก่า",
+        submissions: legacyLinewalk,
+        total: 0,
+        safe: 0,
+        unsafeAct: 0,
+        unsafeCond: 0,
+        unsafe: 0,
+        safeRate: 0,
+      }] : [];
+      const summary = byLocationType.reduce(
+        (acc, item) => ({
+          submissions: acc.submissions + item.submissions,
+          total: acc.total + item.total,
+          safe: acc.safe + item.safe,
+          unsafeAct: acc.unsafeAct + item.unsafeAct,
+          unsafeCond: acc.unsafeCond + item.unsafeCond,
+          unsafe: acc.unsafe + item.unsafe,
+        }),
+        { submissions: 0, total: 0, safe: 0, unsafeAct: 0, unsafeCond: 0, unsafe: 0 },
+      );
+
+      return jsonData({
+        summary: {
+          ...summary,
+          legacyLinewalk,
+          totalLinewalk: summary.submissions + legacyLinewalk,
+          safeRate: summary.total > 0 ? Number(((summary.safe / summary.total) * 100).toFixed(1)) : 0,
+        },
+        byLocationType: [...byLocationType, ...legacyLocationBucket],
+        byBusinessUnit: limitedByBusinessUnit,
+      });
     }
     if (route === "/api/safety-effort/reports/by-user") {
       const { page, pageSize, offset } = pageParams(request);

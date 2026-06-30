@@ -71,6 +71,8 @@ const EMPTY_EDITOR: EditorState = {
 
 const HOURS = Array.from({ length: 24 }, (_, i) => String(i).padStart(2, "0"));
 const MINUTES = Array.from({ length: 60 }, (_, i) => String(i).padStart(2, "0"));
+const HOUR_OPTIONS = HOURS.map((value) => ({ value, label: value }));
+const MINUTE_OPTIONS = MINUTES.map((value) => ({ value, label: value }));
 
 function SectionCard({
   title,
@@ -230,10 +232,10 @@ export default function AdminAwarenessPage() {
     setPendingDeleteQuestion(null);
   };
 
-  const toggleCategoryCollapsed = (category: string) => {
+  const toggleCategoryCollapsed = (category: string, defaultCollapsed: boolean) => {
     setCollapsedCategories((current) => ({
       ...current,
-      [category]: !current[category],
+      [category]: !(current[category] ?? defaultCollapsed),
     }));
   };
 
@@ -436,34 +438,32 @@ export default function AdminAwarenessPage() {
               <div className="flex flex-col gap-1">
                 <span className="text-[12px] font-bold text-[#55739B]">เวลาเริ่มต้น</span>
                 <div className="flex items-center gap-2">
-                  <div className="relative flex items-center h-10 rounded-xl border border-[#CFE3F4] bg-white px-2.5 min-w-[90px] focus-within:border-[#0B82F0] focus-within:ring-1 focus-within:ring-[#0B82F0]">
-                    <Clock className="h-4 w-4 text-[#0B82F0] mr-2" />
-                    <div className="h-5 w-px bg-[#CFE3F4] mr-2" />
-                    <select
+                  <div className="relative">
+                    <Clock className="pointer-events-none absolute left-3 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-[#0B82F0]" />
+                    <div className="pointer-events-none absolute left-9 top-1/2 z-10 h-5 w-px -translate-y-1/2 bg-[#CFE3F4]" />
+                    <Combobox
                       disabled={!awarenessEnabled}
                       value={tempStartHour}
-                      onChange={(e) => setTempStartHour(e.target.value)}
-                      className="w-full bg-transparent border-none outline-none text-[14px] font-black text-[#0B2F6B] appearance-none pr-4 cursor-pointer"
-                    >
-                      {HOURS.map((h) => (
-                        <option key={h} value={h}>{h}</option>
-                      ))}
-                    </select>
-                    <ChevronDown className="absolute right-2.5 h-3.5 w-3.5 text-[#55739B] pointer-events-none" />
+                      onValueChange={setTempStartHour}
+                      options={HOUR_OPTIONS}
+                      searchable={false}
+                      aria-label="เลือกชั่วโมงเริ่มต้น"
+                      className="h-10 w-[96px] rounded-xl border-[#CFE3F4] pl-12 pr-2 text-[14px] font-black text-[#0B2F6B] hover:border-[#0B82F0] [&>svg]:h-3.5 [&>svg]:w-3.5"
+                      contentClassName="min-w-[96px]"
+                    />
                   </div>
 
-                  <div className="relative flex items-center h-10 rounded-xl border border-[#CFE3F4] bg-white px-2.5 min-w-[70px] focus-within:border-[#0B82F0] focus-within:ring-1 focus-within:ring-[#0B82F0]">
-                    <select
+                  <div className="relative">
+                    <Combobox
                       disabled={!awarenessEnabled}
                       value={tempStartMinute}
-                      onChange={(e) => setTempStartMinute(e.target.value)}
-                      className="w-full bg-transparent border-none outline-none text-[14px] font-black text-[#0B2F6B] appearance-none pr-4 cursor-pointer"
-                    >
-                      {MINUTES.map((m) => (
-                        <option key={m} value={m}>{m}</option>
-                      ))}
-                    </select>
-                    <ChevronDown className="absolute right-2.5 h-3.5 w-3.5 text-[#55739B] pointer-events-none" />
+                      onValueChange={setTempStartMinute}
+                      options={MINUTE_OPTIONS}
+                      searchable={false}
+                      aria-label="เลือกนาทีเริ่มต้น"
+                      className="h-10 w-[76px] rounded-xl border-[#CFE3F4] text-[14px] font-black text-[#0B2F6B] hover:border-[#0B82F0] [&>svg]:h-3.5 [&>svg]:w-3.5"
+                      contentClassName="min-w-[76px]"
+                    />
                   </div>
                   <span className="text-[13px] font-black text-[#0B2F6B]">น.</span>
                 </div>
@@ -475,34 +475,32 @@ export default function AdminAwarenessPage() {
               <div className="flex flex-col gap-1">
                 <span className="text-[12px] font-bold text-[#55739B]">เวลาสิ้นสุด</span>
                 <div className="flex items-center gap-2">
-                  <div className="relative flex items-center h-10 rounded-xl border border-[#CFE3F4] bg-white px-2.5 min-w-[90px] focus-within:border-[#0B82F0] focus-within:ring-1 focus-within:ring-[#0B82F0]">
-                    <Clock className="h-4 w-4 text-[#0B82F0] mr-2" />
-                    <div className="h-5 w-px bg-[#CFE3F4] mr-2" />
-                    <select
+                  <div className="relative">
+                    <Clock className="pointer-events-none absolute left-3 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-[#0B82F0]" />
+                    <div className="pointer-events-none absolute left-9 top-1/2 z-10 h-5 w-px -translate-y-1/2 bg-[#CFE3F4]" />
+                    <Combobox
                       disabled={!awarenessEnabled}
                       value={tempEndHour}
-                      onChange={(e) => setTempEndHour(e.target.value)}
-                      className="w-full bg-transparent border-none outline-none text-[14px] font-black text-[#0B2F6B] appearance-none pr-4 cursor-pointer"
-                    >
-                      {HOURS.map((h) => (
-                        <option key={h} value={h}>{h}</option>
-                      ))}
-                    </select>
-                    <ChevronDown className="absolute right-2.5 h-3.5 w-3.5 text-[#55739B] pointer-events-none" />
+                      onValueChange={setTempEndHour}
+                      options={HOUR_OPTIONS}
+                      searchable={false}
+                      aria-label="เลือกชั่วโมงสิ้นสุด"
+                      className="h-10 w-[96px] rounded-xl border-[#CFE3F4] pl-12 pr-2 text-[14px] font-black text-[#0B2F6B] hover:border-[#0B82F0] [&>svg]:h-3.5 [&>svg]:w-3.5"
+                      contentClassName="min-w-[96px]"
+                    />
                   </div>
 
-                  <div className="relative flex items-center h-10 rounded-xl border border-[#CFE3F4] bg-white px-2.5 min-w-[70px] focus-within:border-[#0B82F0] focus-within:ring-1 focus-within:ring-[#0B82F0]">
-                    <select
+                  <div className="relative">
+                    <Combobox
                       disabled={!awarenessEnabled}
                       value={tempEndMinute}
-                      onChange={(e) => setTempEndMinute(e.target.value)}
-                      className="w-full bg-transparent border-none outline-none text-[14px] font-black text-[#0B2F6B] appearance-none pr-4 cursor-pointer"
-                    >
-                      {MINUTES.map((m) => (
-                        <option key={m} value={m}>{m}</option>
-                      ))}
-                    </select>
-                    <ChevronDown className="absolute right-2.5 h-3.5 w-3.5 text-[#55739B] pointer-events-none" />
+                      onValueChange={setTempEndMinute}
+                      options={MINUTE_OPTIONS}
+                      searchable={false}
+                      aria-label="เลือกนาทีสิ้นสุด"
+                      className="h-10 w-[76px] rounded-xl border-[#CFE3F4] text-[14px] font-black text-[#0B2F6B] hover:border-[#0B82F0] [&>svg]:h-3.5 [&>svg]:w-3.5"
+                      contentClassName="min-w-[76px]"
+                    />
                   </div>
                   <span className="text-[13px] font-black text-[#0B2F6B]">น.</span>
                 </div>
@@ -523,8 +521,8 @@ export default function AdminAwarenessPage() {
 
       <div className="mt-4">
         <SectionCard
-          title="วันที่ไม่นับคะแนน Safety Awareness KPI"
-          description="วันเสาร์และวันอาทิตย์ไม่นับอัตโนมัติ เพิ่มวันหยุดบริษัทหรือวันหยุดพิเศษที่ตรงกับวันทำงานได้ที่นี่ ระบบจะหักคะแนน Awareness ของวันที่ถูกเพิ่มย้อนหลังถ้ามีคนทำไว้แล้ว"
+          title="วันที่ไม่นับ Coin Safety Awareness KPI"
+          description="วันเสาร์และวันอาทิตย์ไม่นับอัตโนมัติ เพิ่มวันหยุดบริษัทหรือวันหยุดพิเศษที่ตรงกับวันทำงานได้ที่นี่ ระบบจะหัก Coin Awareness ของวันที่ถูกเพิ่มย้อนหลังถ้ามีคนทำไว้แล้ว"
           icon={<CalendarOff className="h-6 w-6" strokeWidth={2.2} />}
         >
           <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_220px]">
@@ -568,14 +566,14 @@ export default function AdminAwarenessPage() {
               disabled={!holidayDate || !holidayName.trim()}
               className="h-10 rounded-full bg-[#0B82F0] px-4 text-[12.5px] font-black text-white hover:bg-[#0973d6] disabled:opacity-50 transition-colors"
             >
-              <Plus className="h-4 w-4" /> เพิ่มวันไม่นับคะแนน
+              <Plus className="h-4 w-4" /> เพิ่มวันไม่นับ Coin
             </Button>
           </div>
 
           <div className="mt-3 rounded-2xl border border-[#D7EAFE] bg-[#F8FCFF] p-3">
             <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
               <div className="flex items-center gap-2">
-                <div className="text-[14px] font-black text-[#0B2F6B]">รายการวันที่ไม่นับคะแนนเพิ่มเติม</div>
+                <div className="text-[14px] font-black text-[#0B2F6B]">รายการวันที่ไม่นับ Coin เพิ่มเติม</div>
                 <div className="rounded-full bg-[#E5F2FF] px-2 py-0.5 text-[11px] font-bold text-[#0B82F0]">
                   {visibleHolidays.length} รายการ
                 </div>
@@ -827,19 +825,22 @@ export default function AdminAwarenessPage() {
             </p>
           ) : (
             <div className="overflow-hidden rounded-2xl border border-[#D7EAFE] bg-[#F8FCFF]">
-              {grouped.map(([category, items]) => (
+              {grouped.map(([category, items], categoryIndex) => {
+                const isCollapsed = collapsedCategories[category] ?? categoryIndex > 0;
+
+                return (
                 <div key={category} className="border-b border-[#D7EAFE] last:border-b-0">
                   <div className="flex items-center gap-2 bg-white px-3 py-2.5 md:px-4">
                     <button
                       type="button"
-                      onClick={() => toggleCategoryCollapsed(category)}
+                      onClick={() => toggleCategoryCollapsed(category, categoryIndex > 0)}
                       className="flex h-8 w-8 items-center justify-center rounded-full border border-[#B9E0FF] bg-[#F5FAFF] text-[#0B82F0] hover:bg-[#EAF6FF]"
                       aria-label={`สลับการแสดงหมวด ${category}`}
                     >
                       <ChevronDown
                         className={cn(
                           "h-4 w-4 transition-transform",
-                          collapsedCategories[category] ? "-rotate-90" : "rotate-0"
+                          isCollapsed ? "-rotate-90" : "rotate-0"
                         )}
                         strokeWidth={2.4}
                       />
@@ -854,7 +855,7 @@ export default function AdminAwarenessPage() {
                       {items.length} ข้อ
                     </Badge>
                   </div>
-                  {!collapsedCategories[category] ? <div className="divide-y divide-[#D7EAFE]">
+                  {!isCollapsed ? <div className="divide-y divide-[#D7EAFE]">
                     {items.map((q, index) => (
                       <div
                         key={q.id}
@@ -939,7 +940,8 @@ export default function AdminAwarenessPage() {
                     ))}
                   </div> : null}
                 </div>
-              ))}
+                );
+              })}
             </div>
           )}
 

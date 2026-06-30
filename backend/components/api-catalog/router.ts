@@ -340,6 +340,10 @@ async function tryHandleConcreteRoute(
   const path = request.nextUrl.pathname;
   const query = request.nextUrl.searchParams;
   const userId = session?.user?.id;
+  const nearPoint = {
+    lat: query.has("lat") ? Number(query.get("lat")) : null,
+    lng: query.has("lng") ? Number(query.get("lng")) : null,
+  };
 
   try {
     if (method === "GET" && path === "/api/locations/offices" && isRmrSsoDatabaseConfigured()) {
@@ -348,12 +352,12 @@ async function tryHandleConcreteRoute(
     }
     if (method === "GET" && path === "/api/locations/sites" && isRmrSsoDatabaseConfigured()) {
       const search = query.get("search") || query.get("q") || "";
-      const locations = await searchRmcSites(search, Number(query.get("limit") || query.get("pageSize") || 30));
+      const locations = await searchRmcSites(search, Number(query.get("limit") || query.get("pageSize") || 30), nearPoint);
       return jsonData({ items: locations, locations, minimumSearchLength: 3 });
     }
     if (method === "GET" && path === "/api/locations/search"
       && normalizeLocationType(query.get("type")) === "SITE" && isRmrSsoDatabaseConfigured()) {
-      const locations = await searchRmcSites(query.get("q") || query.get("search") || "", Number(query.get("limit") || 30));
+      const locations = await searchRmcSites(query.get("q") || query.get("search") || "", Number(query.get("limit") || 30), nearPoint);
       return jsonData({ items: locations, locations, minimumSearchLength: 3 });
     }
     const typeFromPath = locationTypeForPath(path);

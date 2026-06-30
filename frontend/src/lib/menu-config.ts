@@ -131,7 +131,7 @@ export function getDefaultMenu(): MenuNode[] {
           label: "Rewards",
           href: "/safety-culture/rewards",
           icon: "Gift",
-          description: "ดูคะแนนและรางวัลที่แลกได้",
+          description: "ดู Coin และรางวัลที่แลกได้",
         }),
       ],
     }),
@@ -192,21 +192,21 @@ export function getDefaultMenu(): MenuNode[] {
               label: "ทีมและอันดับ",
               href: "/safety-culture/admin-leaderboard",
               icon: "Trophy",
-              description: "จัดการทีม คะแนน และอันดับ",
+              description: "จัดการทีม Coin และอันดับ",
             }),
             n({
-              label: "รางวัลและแต้มแลก",
+              label: "รางวัลและ Coin แลก",
               href: "/safety-culture/admin-reward",
               icon: "Gift",
-              description: "จัดการรางวัลและคะแนนแลก",
+              description: "จัดการรางวัลและ Coin แลก",
             }),
           ],
         }),
         n({
-          label: "ตั้งค่าคะแนน",
+          label: "ตั้งค่า Coin",
           href: "/safety-culture/admin-points",
           icon: "Star",
-          description: "กำหนดคะแนนที่ใช้ในระบบ Safety Culture และ Safety Effort",
+          description: "กำหนด Coin ที่ใช้ในระบบ Safety Culture และ Safety Effort",
         }),
         n({
           label: "จัดการผู้ใช้และสิทธิ์ Admin",
@@ -278,9 +278,9 @@ function applyAdminMenuLabels(adminNode: MenuNode) {
   rename("/safety-admin/manage-data", "โรงงาน/สำนักงาน/ไซต์งาน", "จัดการ master data สถานที่สำหรับ Check-in", "MapPin");
   rename("/safety-culture", "Safety Culture", undefined, "Heart");
   rename("/safety-culture/admin-event", "กิจกรรมบนฟีด", "จัดการกิจกรรมและช่วงเวลาพิเศษ", "Settings2");
-  rename("/safety-culture/admin-points", "ตั้งค่าคะแนน", "กำหนดคะแนนที่ใช้ในระบบ Safety Culture และ Safety Effort", "Star");
-  rename("/safety-culture/admin-leaderboard", "ทีมและอันดับ", "จัดการทีม คะแนน และอันดับ", "Trophy");
-  rename("/safety-culture/admin-reward", "รางวัลและแต้มแลก", "จัดการรางวัลและคะแนนแลก", "Gift");
+  rename("/safety-culture/admin-points", "ตั้งค่า Coin", "กำหนด Coin ที่ใช้ในระบบ Safety Culture และ Safety Effort", "Star");
+  rename("/safety-culture/admin-leaderboard", "ทีมและอันดับ", "จัดการทีม Coin และอันดับ", "Trophy");
+  rename("/safety-culture/admin-reward", "รางวัลและ Coin แลก", "จัดการรางวัลและ Coin แลก", "Gift");
   rename("/safety-culture/admin-users", "จัดการผู้ใช้และสิทธิ์ Admin", "จัดการผู้ใช้ Role และสิทธิ์ Admin", "UserCog");
 
   return updated;
@@ -380,17 +380,17 @@ export function loadMenu(): MenuNode[] {
           }
 
           const hasTopLevelPointSettings = adminNode.children.some(
-            (child) => child.href === "/safety-culture/admin-points" || child.label.includes("ตั้งค่าคะแนน")
+            (child) => child.href === "/safety-culture/admin-points" || child.label.includes("ตั้งค่า Coin")
           );
           if (!hasTopLevelPointSettings) {
             adminNode.children.splice(
               1,
               0,
               n({
-                label: "ตั้งค่าคะแนน",
+                label: "ตั้งค่า Coin",
                 href: "/safety-culture/admin-points",
                 icon: "Star",
-                description: "กำหนดคะแนนที่ใช้ในระบบ Safety Culture และ Safety Effort",
+                description: "กำหนด Coin ที่ใช้ในระบบ Safety Culture และ Safety Effort",
               })
             );
             updated = true;
@@ -402,7 +402,7 @@ export function loadMenu(): MenuNode[] {
           if (safetyCultureNode) {
             const beforePointRemoval = safetyCultureNode.children.length;
             safetyCultureNode.children = safetyCultureNode.children.filter(
-              (child) => child.href !== "/safety-culture/admin-points" && !child.label.includes("ตั้งค่าคะแนน")
+              (child) => child.href !== "/safety-culture/admin-points" && !child.label.includes("ตั้งค่า Coin")
             );
             if (safetyCultureNode.children.length !== beforePointRemoval) {
               updated = true;
@@ -410,7 +410,7 @@ export function loadMenu(): MenuNode[] {
           }
 
           // Migration: enforce canonical admin-children order:
-          // Safety Awareness → Safety Effort → Safety Culture → ตั้งค่าคะแนน → จัดการผู้ใช้ฯ
+          // Safety Awareness → Safety Effort → Safety Culture → ตั้งค่า Coin → จัดการผู้ใช้ฯ
           const DESIRED_ADMIN_ORDER = [
             "/safety-culture/admin-awareness",
             "/category",

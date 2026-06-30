@@ -235,7 +235,7 @@ export function SafetyAwarenessGate() {
           ) : (
             <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between">
               <p className="text-[13px] font-black text-[var(--brand-text)]">
-                คะแนนของคุณ:{" "}
+                Coin ของคุณ:{" "}
                 <span className="text-[var(--brand-accent-strong)]">
                   {correctCount}/{quiz.length}
                 </span>{" "}

@@ -191,7 +191,7 @@ export default function ProfileActivityHistoryPage() {
                 <h2 className="mt-1 text-[18px] font-black text-foreground">เลือกช่วงเวลาที่ต้องการดู</h2>
               </div>
               <div className="rounded-full bg-[var(--brand-soft)] px-3 py-1.5 text-[12px] font-black text-[var(--brand-text)]">
-                +{summary.points} แต้ม
+                +{summary.points} Coin
               </div>
             </div>
 
@@ -270,7 +270,7 @@ export default function ProfileActivityHistoryPage() {
                       </div>
                       <div className="text-right">
                         <div className="text-[11px] font-bold text-[var(--muted-foreground)]">
-                          {activity.type === "redeem" ? "แต้มที่ใช้ไป" : "แต้มที่ได้รับ"}
+                          {activity.type === "redeem" ? "Coin ที่ใช้ไป" : "Coin ที่ได้รับ"}
                         </div>
                         <div className={cn("text-[24px] font-black", activity.type === "redeem" ? "text-[#b45309]" : "text-[#16845a]")}>
                           {activity.type === "redeem" ? `-${Math.max(0, Math.abs(activity.pointsDelta))}` : `+${Math.max(0, activity.pointsDelta)}`}

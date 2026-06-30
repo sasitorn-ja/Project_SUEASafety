@@ -5,6 +5,7 @@ import { Lock, Info } from "lucide-react";
 import { isLocalDemoLoginHost } from "@/lib/session-user";
 
 const LOGIN_SESSION_KEY = "cpac-safety-login-session";
+const LOGIN_PERSISTED_KEY = "cpac-safety-login-persisted";
 
 export default function Login() {
   const navigate = useNavigate();
@@ -25,6 +26,7 @@ export default function Login() {
   const handleDemoLogin = () => {
     try {
       window.sessionStorage.setItem(LOGIN_SESSION_KEY, "true");
+      window.localStorage.setItem(LOGIN_PERSISTED_KEY, "true");
     } catch {
       // The demo login still navigates home even without storage.
     }
@@ -34,6 +36,7 @@ export default function Login() {
   useEffect(() => {
     try {
       window.sessionStorage.removeItem(LOGIN_SESSION_KEY);
+      window.localStorage.removeItem(LOGIN_PERSISTED_KEY);
     } catch {
       // Keep the login screen usable if browser storage is unavailable.
     }

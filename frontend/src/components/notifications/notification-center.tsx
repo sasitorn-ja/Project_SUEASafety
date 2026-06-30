@@ -168,7 +168,7 @@ export function NotificationCenter({ compact = false, onItemClick, onNotificatio
         "flex flex-col",
         compact
           ? "max-h-[min(560px,calc(100vh-112px))] gap-3 overflow-y-auto pr-0.5 [&::-webkit-scrollbar]:hidden"
-          : "min-h-[calc(100vh-var(--mobile-topbar-h))] gap-4 px-0 pb-20 pt-0 md:min-h-0 md:pb-8"
+          : "min-h-[calc(100vh-var(--mobile-topbar-h))] gap-4 px-2.5 pb-20 pt-2.5 md:min-h-0 md:px-0 md:pb-8 md:pt-0"
       )}
       style={compact ? HIDE_SCROLLBAR_STYLE : undefined}
     >
@@ -179,8 +179,8 @@ export function NotificationCenter({ compact = false, onItemClick, onNotificatio
             : cn(
                 "overflow-hidden rounded-[24px] px-4 pb-3.5 pt-4 text-white md:px-6 md:py-5",
                 isWangjai
-                  ? "bg-[linear-gradient(135deg,rgba(var(--brand-nav-rgb),0.98)_0%,rgba(41,120,188,0.96)_100%)]"
-                  : "bg-[linear-gradient(135deg,#51301a_0%,#70411d_48%,#9f641f_100%)]"
+                  ? "bg-[#0d3568]"
+                  : "bg-[#51301a]"
               )
         )}
         style={
@@ -188,7 +188,7 @@ export function NotificationCenter({ compact = false, onItemClick, onNotificatio
             ? undefined
             : {
                 backgroundImage:
-                  "linear-gradient(90deg, rgba(2,26,66,.82) 0%, rgba(3,33,78,.54) 46%, rgba(3,33,78,.2) 100%), url('/images/heroes/Home01.png')",
+                  "linear-gradient(90deg, rgba(2,26,66,.74) 0%, rgba(3,33,78,.52) 46%, rgba(3,33,78,.18) 100%), url('/images/heroes/Home01.png')",
                 backgroundPosition: "center",
                 backgroundSize: "cover",
               }

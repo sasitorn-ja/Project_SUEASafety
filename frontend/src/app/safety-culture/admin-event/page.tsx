@@ -55,8 +55,8 @@ const EVENT_STATUS_OPTIONS = [
 ] as const;
 
 const BONUS_MODE_OPTIONS = [
-  { id: "multiplier", label: "Multiplier", hint: "คูณคะแนน เช่น x2" },
-  { id: "fixed", label: "Fixed points", hint: "เพิ่มแต้มคงที่ เช่น +5" },
+  { id: "multiplier", label: "Multiplier", hint: "คูณ Coin เช่น x2" },
+  { id: "fixed", label: "Fixed points", hint: "เพิ่ม Coin คงที่ เช่น +5" },
 ] as const;
 
 const ACTION_OPTIONS = [
@@ -123,7 +123,7 @@ const ADMIN_EDITOR_MODES = [
 ] as const;
 
 function formatBonusLabel(mode: SafetyCultureBonusMode, multiplier: number, fixedPoints: number) {
-  return mode === "multiplier" ? `x${multiplier}` : `+${fixedPoints} แต้ม`;
+  return mode === "multiplier" ? `x${multiplier}` : `+${fixedPoints} Coin`;
 }
 
 function buildAutoHeadline(eventName: string, mode: SafetyCultureBonusMode, multiplier: number, fixedPoints: number) {
@@ -132,8 +132,8 @@ function buildAutoHeadline(eventName: string, mode: SafetyCultureBonusMode, mult
 
 function buildAutoSupportingText(mode: SafetyCultureBonusMode, startTime: string, endTime: string) {
   return mode === "multiplier"
-    ? `แชร์เรื่องความปลอดภัยช่วง ${startTime} - ${endTime} แล้วรับคะแนนคูณเพิ่มทันที`
-    : `แชร์เรื่องความปลอดภัยช่วง ${startTime} - ${endTime} แล้วรับคะแนนโบนัสเพิ่มทันที`;
+    ? `แชร์เรื่องความปลอดภัยช่วง ${startTime} - ${endTime} แล้วรับ Coin คูณเพิ่มทันที`
+    : `แชร์เรื่องความปลอดภัยช่วง ${startTime} - ${endTime} แล้วรับ Coin โบนัสเพิ่มทันที`;
 }
 
 function formatWindowLabel(startDate: string, startTime: string, endDate: string, endTime: string) {
@@ -403,7 +403,7 @@ export default function AdminEventPage() {
   const feedModalSelectedActions = ACTION_OPTIONS.filter((action) => feedModalDraft?.enabledActions.includes(action.id));
   const feedModalBonusPreview = feedModalDraft
     ? formatBonusLabel(feedModalDraft.bonusMode, feedModalDraft.multiplier, feedModalDraft.fixedPoints)
-    : "+0 แต้ม";
+    : "+0 Coin";
   const isFeedModalBonusEnabled = Boolean(feedModalDraft?.enabledActions.length);
   const feedEventParticipantCounts = useMemo(() => {
     const counts = new Map<string, number>();
@@ -1054,7 +1054,7 @@ export default function AdminEventPage() {
 
             <SectionCard
               title="ช่วงเวลาและโบนัส"
-              description="รวมการตั้งค่าเวลาและคะแนนไว้ในบล็อกเดียว"
+              description="รวมการตั้งค่าเวลาและ Coin ไว้ในบล็อกเดียว"
               icon={<CalendarClock className="h-5 w-5" strokeWidth={2.3} />}
             >
               <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(320px,0.84fr)]">
@@ -1311,7 +1311,7 @@ export default function AdminEventPage() {
                     </div>
                     <div className="flex flex-col gap-2">
                       <Label htmlFor="fixed-points" className="text-[13px] font-black text-[var(--c-5c3214)]">
-                        แต้มโบนัสคงที่
+                        Coin โบนัสคงที่
                       </Label>
                       <Input
                         id="fixed-points"
@@ -1470,7 +1470,7 @@ export default function AdminEventPage() {
                   <div className="hidden md:block">
                     <div className="grid grid-cols-[minmax(260px,1.6fr)_110px_180px_120px_120px_108px_96px] gap-3 border-b border-[var(--c-eee2cb)] bg-[var(--c-fffaf0)] px-5 py-3 text-[12px] font-black text-[var(--c-6e6254)]">
                       <div>ชื่อกิจกรรม</div>
-                      <div>คะแนน</div>
+                      <div>Coin</div>
                       <div>ระยะเวลา</div>
                       <div>สถานะ</div>
                       <div>ผู้เข้าร่วม</div>
@@ -1853,7 +1853,7 @@ export default function AdminEventPage() {
                     <div className="grid grid-cols-1 gap-4">
                       <div className="rounded-[18px] border border-[#D7EAFE] bg-white p-3.5 shadow-[0_8px_18px_rgba(185,220,255,0.14)]">
                         <div className="flex flex-col gap-2">
-                          <Label className="text-[13px] font-black text-[#075FCC]">คะแนนกิจกรรม</Label>
+                          <Label className="text-[13px] font-black text-[#075FCC]">Coin กิจกรรม</Label>
                           <Input
                             type="number"
                             min={0}
@@ -1867,7 +1867,7 @@ export default function AdminEventPage() {
                             }
                             className="h-11 rounded-[14px] border-[#B9DCFF] bg-white text-[14px] font-bold text-[#0B2F6B] focus-visible:border-[#0B82F0] focus-visible:ring-2 focus-visible:ring-[#0B82F0]/20"
                           />
-                          <div className="text-[12px] font-bold leading-relaxed text-[#55739B]">คะแนนหลักของกิจกรรม</div>
+                          <div className="text-[12px] font-bold leading-relaxed text-[#55739B]">Coin หลักของกิจกรรม</div>
                         </div>
                       </div>
 

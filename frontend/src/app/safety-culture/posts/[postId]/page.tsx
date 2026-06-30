@@ -10,7 +10,7 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { FullscreenImageViewer } from "@/components/safety-culture/fullscreen-image-viewer";
 import { apiFetch } from "@/lib/api-client";
-import { formatPostSubtext, formatThaiDateTime } from "@/lib/safety-culture";
+import { COMMENT_REACTION_CHOICES, formatPostSubtext, formatThaiDateTime } from "@/lib/safety-culture";
 import { cn } from "@/lib/utils";
 import { useAppActions, type Comment as CommentType, type Post } from "@/providers/app-providers";
 import { getSessionInitials, getSessionProfileImage, useSessionUser } from "@/lib/session-user";
@@ -158,6 +158,8 @@ export default function SafetyCulturePostDetailPage() {
   const [fullscreenPhotoIndex, setFullscreenPhotoIndex] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [commentReactionState, setCommentReactionState] = useState<Record<string, { selected: string | null; counts: Record<string, number> }>>({});
+  const [openCommentReactionPicker, setOpenCommentReactionPicker] = useState<string | null>(null);
   const viewerId = sessionUser?.id ?? sessionUser?.sub ?? null;
 
   const loadPost = useCallback(async () => {
@@ -241,6 +243,65 @@ export default function SafetyCulturePostDetailPage() {
     setComments((current) => current.filter((comment) => comment.id !== commentId));
   };
 
+  const getCommentReactionKey = (commentId: string) => `${postId}:${commentId}`;
+
+  const getDefaultCommentReactions = () =>
+    COMMENT_REACTION_CHOICES.reduce((counts, reaction) => {
+      counts[reaction.id] = 0;
+      return counts;
+    }, {} as Record<string, number>);
+
+  const getCommentReactionData = (comment: CommentType) => {
+    const key = getCommentReactionKey(comment.id);
+    return commentReactionState[key] || {
+      selected: comment.viewerReaction || null,
+      counts: { ...getDefaultCommentReactions(), ...(comment.reactions || {}) },
+    };
+  };
+
+  const handleCommentReaction = async (comment: CommentType, reactionId: string) => {
+    const key = getCommentReactionKey(comment.id);
+    const current = getCommentReactionData(comment);
+    let nextSelected: string | null = reactionId;
+    const nextCounts = { ...current.counts };
+    if (current.selected === reactionId) {
+      nextCounts[reactionId] = Math.max(0, (nextCounts[reactionId] || 0) - 1);
+      nextSelected = null;
+    } else {
+      if (current.selected) nextCounts[current.selected] = Math.max(0, (nextCounts[current.selected] || 0) - 1);
+      nextCounts[reactionId] = (nextCounts[reactionId] || 0) + 1;
+    }
+
+    setCommentReactionState((prev) => ({ ...prev, [key]: { selected: nextSelected, counts: nextCounts } }));
+    setComments((currentComments) =>
+      currentComments.map((item) =>
+        item.id === comment.id
+          ? { ...item, viewerReaction: nextSelected, reactions: nextCounts }
+          : item
+      )
+    );
+    setOpenCommentReactionPicker(null);
+
+    const response = await fetch(`/api/safety-culture/comments/${comment.id}/reactions`, {
+      method: nextSelected ? "POST" : "DELETE",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: nextSelected ? JSON.stringify({ reactionType: nextSelected }) : undefined,
+    });
+    const payload = await response.json().catch(() => null);
+    if (!response.ok || !payload?.ok) {
+      setCommentReactionState((prev) => ({ ...prev, [key]: current }));
+      setComments((currentComments) =>
+        currentComments.map((item) =>
+          item.id === comment.id
+            ? { ...item, viewerReaction: current.selected, reactions: current.counts }
+            : item
+        )
+      );
+      window.alert("ไม่สามารถบันทึกความรู้สึกได้ กรุณาลองใหม่อีกครั้ง");
+    }
+  };
+
   return (
     <div className="page-shell-wide min-h-[calc(100dvh-var(--topbar-h))] pt-2.5 pb-8 font-sarabun">
       <div className="mx-auto flex w-full max-w-[860px] flex-col gap-3">
@@ -262,8 +323,8 @@ export default function SafetyCulturePostDetailPage() {
             </Link>
           </Card>
         ) : (
-          <Card className="overflow-hidden rounded-[18px] border-[#d8e5f3] bg-white shadow-[0_10px_24px_rgba(23,73,131,.09)]">
-            <div className="flex items-start justify-between gap-3 border-b border-[#d7e6f6] bg-[linear-gradient(135deg,#ffffff_0%,#f4f9ff_56%,#eaf4ff_100%)] px-4 py-3.5 md:px-5">
+          <Card className="overflow-hidden rounded-[18px] border-[#d8e5f3] bg-white">
+            <div className="flex items-start justify-between gap-3 border-b border-[#d7e6f6] bg-[#f5faff] px-4 py-3.5 md:px-5">
               <div className="flex min-w-0 items-center gap-3">
                 <ProfileAvatar imageUrl={post.avatarImageUrl || (post.isYou ? getSessionProfileImage(sessionUser) : null)} text={post.avatarText || getSessionInitials(sessionUser)} />
                 <div className="min-w-0">
@@ -355,11 +416,13 @@ export default function SafetyCulturePostDetailPage() {
                     <span>{commentCount}</span>
                   </div>
                 </div>
-                <span className="rounded-full bg-[#e9fff4] px-2.5 py-1 text-[12px] font-black text-[#3D9A6A]">+ {post.points} {POINT_UNIT}</span>
+                {post.isYou ? (
+                  <span className="rounded-full bg-[#e9fff4] px-2.5 py-1 text-[12px] font-black text-[#3D9A6A]">+ {post.points} {POINT_UNIT}</span>
+                ) : null}
               </div>
             </div>
 
-            <div className="border-t border-[#eee2cb] bg-[#fffdfa] px-4 py-3 md:px-5">
+            <div className="border-t border-[#d7e6f6] bg-white px-4 py-3 md:px-5">
               <div className="flex items-center gap-2">
                 <ProfileAvatar imageUrl={getSessionProfileImage(sessionUser)} text={getSessionInitials(sessionUser)} className="h-8 w-8 text-[12px]" />
                 <Input
@@ -377,11 +440,16 @@ export default function SafetyCulturePostDetailPage() {
               </div>
 
               <div className="mt-4 flex flex-col gap-3">
-                {comments.length > 0 ? comments.map((comment) => (
+                {comments.length > 0 ? comments.map((comment) => {
+                  const reactionData = getCommentReactionData(comment);
+                  const selectedReaction = COMMENT_REACTION_CHOICES.find((reaction) => reaction.id === reactionData.selected);
+                  const pickerKey = getCommentReactionKey(comment.id);
+
+                  return (
                   <div key={comment.id} className="flex items-start gap-2.5">
                     <ProfileAvatar imageUrl={comment.avatarImageUrl} text={comment.avatarText || avatarText(comment.author)} className="h-8 w-8 text-[12px]" />
                     <div className="min-w-0 flex-1">
-                      <div className="inline-block max-w-full rounded-[14px] border border-[#ddd9cd] bg-white px-3 py-2 text-[13px] font-bold leading-relaxed text-[#173b6b]">
+                      <div className="inline-block max-w-full rounded-[14px] border border-[#d7e6f6] bg-white px-3 py-2 text-[13px] font-bold leading-relaxed text-[#173b6b]">
                         <div className="mb-0.5 flex flex-wrap items-baseline gap-x-1.5">
                           <span className="text-[12px] font-black">{comment.author}</span>
                           {formatThaiDateTime(comment.createdAt) ? (
@@ -390,19 +458,54 @@ export default function SafetyCulturePostDetailPage() {
                         </div>
                         {comment.text}
                       </div>
-                      {comment.isYou ? (
+                      <div className="relative mt-1 flex items-center gap-1">
+                        {comment.isYou ? (
+                          <button
+                            type="button"
+                            onClick={() => void handleDeleteComment(comment.id)}
+                            className="inline-flex items-center gap-1 px-1 text-[11.5px] font-black text-[#b3271a] hover:text-[#7f1d1d]"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                            ลบ
+                          </button>
+                        ) : null}
                         <button
                           type="button"
-                          onClick={() => void handleDeleteComment(comment.id)}
-                          className="mt-1 inline-flex items-center gap-1 px-1 text-[11.5px] font-black text-[#b3271a] hover:text-[#7f1d1d]"
+                          className={cn(
+                            "inline-flex items-center gap-1 rounded-full bg-transparent px-1.5 py-[3px] text-[11.5px] font-black leading-none text-[#5f7591] transition-colors hover:bg-[#f5faff] hover:text-[#173b6b]",
+                            selectedReaction && "bg-[#eaf6ff] text-[#173b6b] shadow-[inset_0_0_0_1px_#8fc8ff]"
+                          )}
+                          onClick={() => setOpenCommentReactionPicker((prev) => (prev === pickerKey ? null : pickerKey))}
                         >
-                          <Trash2 className="h-3.5 w-3.5" />
-                          ลบ
+                          {selectedReaction ? (
+                            <>
+                              <span>{selectedReaction.icon}</span>
+                              <span>{selectedReaction.label}</span>
+                            </>
+                          ) : (
+                            <span>แสดงความรู้สึก</span>
+                          )}
                         </button>
-                      ) : null}
+                        {openCommentReactionPicker === pickerKey ? (
+                          <div className="absolute bottom-[calc(100%+6px)] left-0 z-20 flex gap-[3px] rounded-full border border-[#d7e6f6] bg-white p-[5px] shadow-[0_8px_22px_rgba(0,0,0,0.12)]">
+                            {COMMENT_REACTION_CHOICES.map((reaction) => (
+                              <button
+                                key={reaction.id}
+                                type="button"
+                                className="flex h-[28px] w-[28px] items-center justify-center rounded-full bg-transparent text-md transition-all hover:-translate-y-0.5 hover:scale-110 hover:bg-[#eaf6ff]"
+                                onClick={() => void handleCommentReaction(comment, reaction.id)}
+                                title={reaction.label}
+                              >
+                                {reaction.icon}
+                              </button>
+                            ))}
+                          </div>
+                        ) : null}
+                      </div>
                     </div>
                   </div>
-                )) : (
+                );
+                }) : (
                   <div className="rounded-[14px] border border-dashed border-[#d8e5f3] bg-white px-4 py-5 text-center text-[13px] font-bold text-[#5f7591]">
                     ยังไม่มีความคิดเห็น
                   </div>

@@ -13,6 +13,7 @@ import { FloatingSafetyAssistant } from "./floating-safety-assistant";
 import { DEMO_ADMIN_USER, hasAdminAccess, isLocalDemoLoginHost, type SessionUser } from "@/lib/session-user";
 
 const LOGIN_SESSION_KEY = "cpac-safety-login-session";
+const LOGIN_PERSISTED_KEY = "cpac-safety-login-persisted";
 
 function getSafeReturnTo(pathname: string) {
   if (typeof window === "undefined" || pathname === "/login") return "/";
@@ -32,6 +33,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   const isSafetyCulturePost = pathname === "/safety-culture/post";
   const [sessionUser, setSessionUser] = useState<SessionUser | null>(null);
   const [sessionChecked, setSessionChecked] = useState(false);
+  const [sessionCheckPending, setSessionCheckPending] = useState(false);
 
   const [topHidden, setTopHidden] = useState(false);
   const [btmHidden, setBtmHidden] = useState(false);
@@ -41,13 +43,16 @@ export function AppShell({ children }: { children: ReactNode }) {
     if (pathname === "/login") {
       setLoginChecked(true);
       setSessionChecked(true);
+      setSessionCheckPending(false);
       return;
     }
 
     let cancelled = false;
     let loggedIn = false;
     try {
-      loggedIn = window.sessionStorage.getItem(LOGIN_SESSION_KEY) === "true";
+      loggedIn =
+        window.sessionStorage.getItem(LOGIN_SESSION_KEY) === "true" ||
+        window.localStorage.getItem(LOGIN_PERSISTED_KEY) === "true";
     } catch {
       loggedIn = false;
     }
@@ -56,7 +61,8 @@ export function AppShell({ children }: { children: ReactNode }) {
       process.env.NODE_ENV !== "production" && loggedIn && isLocalDemoLoginHost(window.location.hostname);
 
     setLoginChecked(loggedIn);
-    setSessionChecked(false);
+    setSessionChecked(loggedIn);
+    setSessionCheckPending(true);
     fetch("/api/auth/session", {
       credentials: "include",
       cache: "no-store",
@@ -68,15 +74,24 @@ export function AppShell({ children }: { children: ReactNode }) {
           setSessionUser(session.user || null);
           try {
             window.sessionStorage.setItem(LOGIN_SESSION_KEY, "true");
+            window.localStorage.setItem(LOGIN_PERSISTED_KEY, "true");
           } catch {
             // The cookie-backed session remains authoritative.
           }
           setLoginChecked(true);
           setSessionChecked(true);
+          setSessionCheckPending(false);
           return;
         }
         setSessionUser(null);
+        try {
+          window.sessionStorage.removeItem(LOGIN_SESSION_KEY);
+          window.localStorage.removeItem(LOGIN_PERSISTED_KEY);
+        } catch {
+          // Storage is only an optimistic hint; the server session remains authoritative.
+        }
         setSessionChecked(true);
+        setSessionCheckPending(false);
         if (demoLoginAllowed) {
           setSessionUser(DEMO_ADMIN_USER);
           return;
@@ -86,6 +101,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       .catch(() => {
         if (!cancelled) {
           setSessionChecked(true);
+          setSessionCheckPending(false);
           if (demoLoginAllowed) {
             setSessionUser(DEMO_ADMIN_USER);
             return;
@@ -103,11 +119,11 @@ export function AppShell({ children }: { children: ReactNode }) {
   }, [router]);
 
   useEffect(() => {
-    if (!loginChecked || !sessionChecked || pathname === "/login") return;
+    if (!loginChecked || !sessionChecked || sessionCheckPending || pathname === "/login") return;
     if (isAdminRoute(pathname) && !hasAdminAccess(sessionUser)) {
       router.replace("/");
     }
-  }, [loginChecked, pathname, router, sessionChecked, sessionUser]);
+  }, [loginChecked, pathname, router, sessionChecked, sessionCheckPending, sessionUser]);
 
   useEffect(() => {
     const THRESHOLD = 10;

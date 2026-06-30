@@ -78,10 +78,29 @@ export async function listRmcOffices() {
   return mirrorRows("OFFICE", "RMC_SSO_OFFICE", rows);
 }
 
-export async function searchRmcSites(query: string, limit = 30) {
+export async function searchRmcSites(query: string, limit = 30, near?: { lat: number | null; lng: number | null }) {
   const keyword = query.trim();
-  if (keyword.length < 3) return [];
   const safeLimit = Math.min(Math.max(Number(limit) || 30, 1), 30);
+  const nearLat = near?.lat ?? null;
+  const nearLng = near?.lng ?? null;
+  const hasNear = validCoordinates(nearLat, nearLng);
+  const distanceOrder = hasNear
+    ? `POW(CAST(LATITUDE AS DECIMAL(12,8)) - :nearLat, 2) + POW(CAST(LONGITUDE AS DECIMAL(12,8)) - :nearLng, 2),`
+    : "";
+
+  if (keyword.length < 3) {
+    const rows = await queryRmrSsoRows<SourceRow>(
+      `SELECT SITE_NO, SITE_NAME, DISTRICT_NAME, PROVINCE_NAME, LATITUDE, LONGITUDE, STATUS
+       FROM sites
+       WHERE STATUS = 'A'
+         AND LATITUDE IS NOT NULL AND LONGITUDE IS NOT NULL
+       ORDER BY ${distanceOrder} UPDATE_DATE DESC, SITE_NAME
+       LIMIT ${safeLimit}`,
+      hasNear ? { nearLat, nearLng } : undefined,
+    );
+    return mirrorRows("SITE", "RMC_SSO_SITE", rows);
+  }
+
   const rows = await queryRmrSsoRows<SourceRow>(
     `SELECT SITE_NO, SITE_NAME, DISTRICT_NAME, PROVINCE_NAME, LATITUDE, LONGITUDE, STATUS
      FROM sites
@@ -90,9 +109,10 @@ export async function searchRmcSites(query: string, limit = 30) {
        AND (SITE_NO LIKE :prefix OR SITE_NAME LIKE :contains
          OR PROVINCE_NAME LIKE :contains OR CUSTOMER_NAME LIKE :contains)
      ORDER BY CASE WHEN SITE_NO = :keyword THEN 0 WHEN SITE_NO LIKE :prefix THEN 1 ELSE 2 END,
+       ${distanceOrder}
        UPDATE_DATE DESC, SITE_NAME
      LIMIT ${safeLimit}`,
-    { keyword, prefix: `${keyword}%`, contains: `%${keyword}%` },
+    { keyword, prefix: `${keyword}%`, contains: `%${keyword}%`, ...(hasNear ? { nearLat, nearLng } : {}) },
   );
   return mirrorRows("SITE", "RMC_SSO_SITE", rows);
 }

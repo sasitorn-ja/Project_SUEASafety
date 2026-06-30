@@ -1657,6 +1657,20 @@ export const API_CATALOG_ROUTES = [
   {
     "module": "Reports",
     "method": "GET",
+    "path": "/api/safety-effort/reports/linewalk-overview",
+    "documentedPath": "/api/safety-effort/reports/linewalk-overview?from=&to=",
+    "purpose": "ภาพรวม Line walk จาก submission จริง แยกพื้นที่ สถานะ และ BU",
+    "caller": "Safety Admin",
+    "whenCalled": "เปิด dashboard ภาพรวมการประเมินความปลอดภัย",
+    "auth": "Admin",
+    "pagination": "Aggregate",
+    "responseSizeRisk": "Medium",
+    "status": "Existing",
+    "notes": "อ่าน safety_effort_submissions.answers_json และ join checkins/locations/plant_location_details"
+  },
+  {
+    "module": "Reports",
+    "method": "GET",
     "path": "/api/safety-effort/reports/findings",
     "documentedPath": "/api/safety-effort/reports/findings?from=&to=&status=&page=&pageSize=",
     "purpose": "รายงาน finding",

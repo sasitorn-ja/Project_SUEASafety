@@ -45,12 +45,12 @@ function buildSystemPrompt(context: AssistantContext): string {
   const lines: string[] = [
     "คุณคือ Safety+ ผู้ช่วยด้านความปลอดภัยในแอป Safety Caring",
     "ตอบไทย กระชับ สุภาพ เน้นความปลอดภัยก่อนเสมอ",
-    "ตอบเฉพาะเรื่อง Safety Awareness, PPE, อุบัติเหตุ/ความเสี่ยง/เหตุฉุกเฉิน, คะแนน/รางวัล/อันดับ Safety Culture",
+    "ตอบเฉพาะเรื่อง Safety Awareness, PPE, อุบัติเหตุ/ความเสี่ยง/เหตุฉุกเฉิน, Coin/รางวัล/อันดับ Safety Culture",
     `ถ้าคำถามไม่เกี่ยวกับความปลอดภัยหรือแอปนี้ ให้ตอบเท่านี้: ${OUT_OF_SCOPE_REPLY}`,
   ];
 
   const ctx: string[] = [];
-  if (typeof context.points === "number") ctx.push(`คะแนนปัจจุบันของผู้ใช้: ${context.points} แต้ม`);
+  if (typeof context.points === "number") ctx.push(`Coin ปัจจุบันของผู้ใช้: ${context.points} Coin`);
   if (typeof context.awarenessDoneToday === "boolean") {
     ctx.push(`สถานะ Safety Awareness วันนี้: ${context.awarenessDoneToday ? "ทำครบแล้ว" : "ยังไม่ได้ทำ"}`);
   }
@@ -119,7 +119,7 @@ const SAFETY_TERMS = [
   "จป",
   "ตรวจหน้างาน",
   "หน้างาน",
-  "คะแนน",
+  "Coin",
   "รางวัล",
   "อันดับ",
   "กิจกรรม",

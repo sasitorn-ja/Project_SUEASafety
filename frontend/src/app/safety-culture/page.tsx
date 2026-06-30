@@ -189,7 +189,7 @@ function PersonalRankingsCard({ className, style }: { className?: string; style?
         {personalRankings.length === 0 ? (
           <div className="rounded-[18px] border border-dashed border-[var(--border)] bg-[var(--brand-surface)] px-4 py-7 text-center">
             <p className="text-[13.5px] font-black text-[var(--foreground)]">ยังไม่มีอันดับในทีม</p>
-            <p className="mt-1 text-[11.5px] font-bold text-[var(--brand-muted-text)]">ยังไม่มีคะแนนในขณะนี้</p>
+            <p className="mt-1 text-[11.5px] font-bold text-[var(--brand-muted-text)]">ยังไม่มี Coin ในขณะนี้</p>
           </div>
         ) : personalRankings.slice(0, 4).map((user) => (
           <article
@@ -1080,9 +1080,11 @@ export default function Page() {
                       ดูโพสต์เต็ม
                     </Link>
                   </div>
-                    <span className="w-fit rounded-full bg-[#e9fff4] px-2 py-0.5 text-[12px] font-black tracking-normal text-[#3D9A6A]">
-                      + {post.points} {POINT_UNIT}
-                    </span>
+                    {post.isYou ? (
+                      <span className="w-fit rounded-full bg-[#e9fff4] px-2 py-0.5 text-[12px] font-black tracking-normal text-[#3D9A6A]">
+                        + {post.points} {POINT_UNIT}
+                      </span>
+                    ) : <span aria-hidden="true" />}
                   </div>
 
                   {expandedComments[post.id] && (
@@ -1299,9 +1301,11 @@ export default function Page() {
                   <span className="w-fit rounded-full border border-[var(--c-e8cda4)] bg-[var(--c-fff7e8)] px-2 py-0.5 text-[10.5px] font-black tracking-wide text-[var(--c-7b5625)]">
                     {expandedPost.category}
                   </span>
-                  <span className="w-fit rounded-full bg-[#e9fff4] px-2 py-0.5 text-[12px] font-black tracking-normal text-[#3D9A6A]">
-                    + {expandedPost.points} {POINT_UNIT}
-                  </span>
+                  {expandedPost.isYou ? (
+                    <span className="w-fit rounded-full bg-[#e9fff4] px-2 py-0.5 text-[12px] font-black tracking-normal text-[#3D9A6A]">
+                      + {expandedPost.points} {POINT_UNIT}
+                    </span>
+                  ) : null}
                 </div>
 
                 <p className="text-[14px] md:text-[14px] font-bold leading-relaxed text-[var(--c-33271a)]">{expandedPost.body}</p>

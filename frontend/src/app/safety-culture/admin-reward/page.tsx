@@ -667,9 +667,9 @@ export default function AdminRewardPage() {
 
   const rewardSortLabel =
     rewardSortOrder === "points-desc"
-      ? "คะแนนมากสุด"
+      ? "Coin มากสุด"
       : rewardSortOrder === "points-asc"
-        ? "คะแนนน้อยสุด"
+        ? "Coin น้อยสุด"
         : rewardSortOrder === "stock-desc"
           ? "คงเหลือมากสุด"
           : "ล่าสุด";
@@ -720,7 +720,7 @@ export default function AdminRewardPage() {
     const saved = await updateRewardsCatalog(rewards);
     if (!saved) {
       setRewardSaveState("idle");
-      window.alert("บันทึกรางวัลไม่สำเร็จ กรุณาตรวจสอบชื่อและคะแนนแล้วลองใหม่อีกครั้ง");
+      window.alert("บันทึกรางวัลไม่สำเร็จ กรุณาตรวจสอบชื่อและ Coin แล้วลองใหม่อีกครั้ง");
       return false;
     }
     setRewardSaveState("saved");
@@ -763,7 +763,7 @@ export default function AdminRewardPage() {
       return;
     }
     if (!Number.isFinite(Number(editingReward.points)) || Number(editingReward.points) <= 0) {
-      window.alert("คะแนนที่ใช้แลกต้องมากกว่า 0");
+      window.alert("Coin ที่ใช้แลกต้องมากกว่า 0");
       return;
     }
 
@@ -991,10 +991,10 @@ export default function AdminRewardPage() {
           eyebrow="SAFETY CULTURE ADMIN"
           title={
             <>
-              รางวัลและ <span className="text-[var(--brand-accent)]">แต้มแลก</span>
+              รางวัลและ <span className="text-[var(--brand-accent)]">Coin แลก</span>
             </>
           }
-          description="จัดการแคตตาล็อกรางวัล รูปภาพ รายละเอียด คะแนนแลก และสถานะเด่นจากที่เดียว"
+          description="จัดการแคตตาล็อกรางวัล รูปภาพ รายละเอียด Coin แลก และสถานะเด่นจากที่เดียว"
           variant="community"
           backgroundImage="/images/heroes/Home01.png"
           backgroundOverlay="linear-gradient(90deg, rgba(210,235,255,.82) 0%, rgba(210,235,255,.60) 32%, rgba(210,235,255,.10) 56%, rgba(210,235,255,0) 74%)"
@@ -1288,8 +1288,8 @@ export default function AdminRewardPage() {
                       <div className="absolute top-[calc(100%+10px)] right-0 z-50 min-w-full rounded-[16px] border border-[var(--border)] bg-white p-2 shadow-[0_18px_36px_rgba(62,36,13,0.14)]">
                         {[
                           { value: "latest", label: "ล่าสุด" },
-                          { value: "points-desc", label: "คะแนนมากสุด" },
-                          { value: "points-asc", label: "คะแนนน้อยสุด" },
+                          { value: "points-desc", label: "Coin มากสุด" },
+                          { value: "points-asc", label: "Coin น้อยสุด" },
                           { value: "stock-desc", label: "คงเหลือมากสุด" },
                         ].map((option) => (
                           <button
@@ -1495,7 +1495,7 @@ export default function AdminRewardPage() {
                 ประวัติการแลกรางวัล
               </AppDialogTitle>
               <AppDialogDescription className="sm:text-[14px]">
-                ดูได้ว่าใครแลกรางวัลอะไรไปบ้าง เมื่อไร และใช้คะแนนไปเท่าไร
+                ดูได้ว่าใครแลกรางวัลอะไรไปบ้าง เมื่อไร และใช้ Coin ไปเท่าไร
               </AppDialogDescription>
             </AppDialogSectionHeader>
 
@@ -1527,7 +1527,7 @@ export default function AdminRewardPage() {
                   <div className="mt-2 text-[28px] font-black text-[#1A1A1A]">{rewardRedemptionSummary.uniqueRedeemers}</div>
                 </div>
                 <div className="rounded-[18px] border border-[var(--border)] bg-white p-4">
-                  <div className="text-[12px] font-black text-[#8E8A81]">คะแนนที่ถูกใช้</div>
+                  <div className="text-[12px] font-black text-[#8E8A81]">Coin ที่ถูกใช้</div>
                   <div className="mt-2 text-[28px] font-black text-[#1A1A1A]">{rewardRedemptionSummary.totalPointsSpent.toLocaleString()}</div>
                 </div>
               </div>
@@ -1608,7 +1608,7 @@ export default function AdminRewardPage() {
               </AppDialogTitle>
               <AppDialogDescription className="max-w-[840px] sm:text-[14px]">
                 {editingReward?.mode === "create"
-                  ? "ใช้มุมมองนี้เพื่อสร้างรางวัลให้ใกล้กับหน้าผู้ใช้มากขึ้น เห็นรูป คะแนนแลก รายละเอียด และสถานะเด่นได้ตั้งแต่ก่อนยืนยัน"
+                  ? "ใช้มุมมองนี้เพื่อสร้างรางวัลให้ใกล้กับหน้าผู้ใช้มากขึ้น เห็นรูป Coin แลก รายละเอียด และสถานะเด่นได้ตั้งแต่ก่อนยืนยัน"
                   : "ปรับรายละเอียดรางวัลและเช็กตัวอย่างไปพร้อมกัน เพื่อให้แก้ไขได้แม่นขึ้นทั้งบนเดสก์ท็อปและมือถือ"}
               </AppDialogDescription>
             </AppDialogSectionHeader>

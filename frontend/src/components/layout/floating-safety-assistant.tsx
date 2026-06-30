@@ -48,10 +48,10 @@ type AssistantContext = {
 
 function getAssistantContext(pathname: string, awarenessDoneToday: boolean): AssistantContext {
   if (pathname.startsWith("/safety-culture/rewards")) {
-    return { action: "happy", greeting: "เลือกรางวัลกันไหม?", message: "ฉันช่วยดูว่าคะแนนตอนนี้แลกอะไรได้บ้าง", urgent: false };
+    return { action: "happy", greeting: "เลือกรางวัลกันไหม?", message: "ฉันช่วยดูว่า Coin ตอนนี้แลกอะไรได้บ้าง", urgent: false };
   }
   if (pathname.startsWith("/safety-culture/leaderboard")) {
-    return { action: "salute", greeting: "มาดูอันดับกัน", message: "ฉันสรุปอันดับและแต้มที่ควรไล่ต่อให้ได้", urgent: false };
+    return { action: "salute", greeting: "มาดูอันดับกัน", message: "ฉันสรุปอันดับและ Coin ที่ควรไล่ต่อให้ได้", urgent: false };
   }
   if (pathname.startsWith("/safety-culture/post")) {
     return { action: "clipboard", greeting: "มีเรื่องดี ๆ มาแชร์ไหม?", message: "ฉันช่วยชวนคิดหัวข้อโพสต์ Safety Culture ได้", urgent: false };
@@ -60,12 +60,12 @@ function getAssistantContext(pathname: string, awarenessDoneToday: boolean): Ass
     return { action: "radio", greeting: "พร้อมช่วยจัดการ", message: "ตรวจข้อมูลให้เรียบร้อยก่อนบันทึกนะ", urgent: false };
   }
   if (pathname.startsWith("/safety-culture")) {
-    return { action: "announce", greeting: "สวัสดีจาก Safety Culture", message: "ฉันช่วยแนะนำกิจกรรมและคะแนนที่น่าสนใจได้", urgent: false };
+    return { action: "announce", greeting: "สวัสดีจาก Safety Culture", message: "ฉันช่วยแนะนำกิจกรรมและ Coin ที่น่าสนใจได้", urgent: false };
   }
   if (!awarenessDoneToday) {
     return { action: "flashlight", greeting: "อย่าลืม Safety Awareness", message: "วันนี้ยังมีงาน Safety ที่ควรทำให้ครบก่อนเริ่มงาน", urgent: true };
   }
-  return { action: "happy", greeting: "วันนี้ทำได้ดีมาก", message: "ฉันช่วยแนะนำงานถัดไปเพื่อสะสมคะแนนต่อได้", urgent: false };
+  return { action: "happy", greeting: "วันนี้ทำได้ดีมาก", message: "ฉันช่วยแนะนำงานถัดไปเพื่อสะสม Coin ต่อได้", urgent: false };
 }
 
 function clampPosition(
@@ -520,7 +520,7 @@ export function FloatingSafetyAssistant() {
               <div className="flex items-center justify-between gap-3">
                 <span className="flex items-center gap-2 text-[12px] font-black text-white/86">
                   <Trophy className="h-4.5 w-4.5 text-[var(--brand-accent)]" strokeWidth={2.5} />
-                  คะแนนของฉัน
+                  Coin ของฉัน
                 </span>
                 <span className="text-[17px] font-black leading-none text-[var(--brand-accent)]">
                   {currentUserPoints.toLocaleString()}
@@ -543,7 +543,7 @@ export function FloatingSafetyAssistant() {
               </p>
               <p className="flex items-center gap-1 text-[10px] font-bold leading-tight text-white/55">
                 <Trophy className="h-3 w-3 text-[var(--brand-accent)]" strokeWidth={2.5} />
-                {currentUserPoints.toLocaleString()} คะแนน
+                {currentUserPoints.toLocaleString()} Coin
               </p>
             </div>
             <button

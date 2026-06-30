@@ -43,13 +43,13 @@ const SAFETY_CULTURE_ITEMS = [
     label: "Leaderboard",
     href: "/safety-culture/leaderboard",
     icon: Trophy,
-    description: "ติดตามอันดับทีมและคะแนนส่วนตัว",
+    description: "ติดตามอันดับทีมและ Coin ส่วนตัว",
   },
   {
     label: "ของรางวัล",
     href: "/safety-culture/rewards",
     icon: Gift,
-    description: "ดูคะแนนและของรางวัลที่สามารถแลกได้",
+    description: "ดู Coin และของรางวัลที่สามารถแลกได้",
   },
 ] as const;
 
@@ -255,6 +255,15 @@ export function DesktopTopbar() {
   const visibleAdminSubmenuId = adminSubmenuId === null ? activeAdminSectionId : adminSubmenuId;
   const displayName = sessionUser ? getSessionDisplayName(sessionUser) : "ผู้ใช้งาน";
   const displayImage = getSessionProfileImage(sessionUser);
+  const handleMenuButtonKeyDown = (
+    event: React.KeyboardEvent<HTMLButtonElement>,
+    menuId: "safety-culture" | "admin" | "profile",
+  ) => {
+    if (event.key === "Enter" || event.key === " " || event.key === "ArrowDown") {
+      event.preventDefault();
+      setDesktopMenu(menuId);
+    }
+  };
 
   useEffect(() => {
     setProfileImageFailed(false);
@@ -286,18 +295,23 @@ export function DesktopTopbar() {
                 <div
                   key={item.id}
                   className="relative"
-                  onMouseEnter={() => setDesktopMenu("admin")}
                   onMouseLeave={() => {
                     setDesktopMenu((current) => (current === "admin" ? null : current));
                     setAdminSubmenuId(null);
                   }}
                 >
-                  <button type="button" onFocus={() => setDesktopMenu("admin")} onClick={() => setDesktopMenu((current) => current === "admin" ? null : "admin")} aria-expanded={desktopMenu === "admin"} aria-haspopup="menu" className={cn("desktop-nav-item inline-flex h-11 min-w-[100px] items-center justify-center gap-2 rounded-[13px] border border-transparent px-[15px] text-[14.5px] font-bold whitespace-nowrap transition-all", active ? "bg-[linear-gradient(135deg,#35A8FF_0%,#0B82F0_55%,#006AD6_100%)] text-white" : "bg-transparent text-[#0B2F6B] hover:border-[#D7EAFE] hover:bg-[#F5FAFF] hover:text-[#0B82F0]")}>
+                  <button type="button" onMouseEnter={() => setDesktopMenu("admin")} onClick={() => setDesktopMenu((current) => current === "admin" ? null : "admin")} onKeyDown={(event) => handleMenuButtonKeyDown(event, "admin")} aria-expanded={desktopMenu === "admin"} aria-haspopup="menu" className={cn("desktop-nav-item inline-flex h-11 min-w-[100px] items-center justify-center gap-2 rounded-[13px] border border-transparent px-[15px] text-[14.5px] font-bold whitespace-nowrap transition-all", active ? "bg-[linear-gradient(135deg,#35A8FF_0%,#0B82F0_55%,#006AD6_100%)] text-white" : "bg-transparent text-[#0B2F6B] hover:border-[#D7EAFE] hover:bg-[#F5FAFF] hover:text-[#0B82F0]")}>
                     <Icon className="h-[17px] w-[17px]" strokeWidth={2.35} />
                     <span className="desktop-nav-label">{item.label}</span>
                     <ChevronDown className={cn("h-3.5 w-3.5 transition-transform", desktopMenu === "admin" && "rotate-180")} />
                   </button>
-                  <div className={cn("absolute right-[clamp(0px,calc(1400px-100vw),170px)] top-full z-50 w-[320px] pt-2 transition-all duration-150", desktopMenu === "admin" ? "visible translate-y-0 opacity-100" : "invisible -translate-y-1 opacity-0")}>
+                  <div
+                    onMouseEnter={() => setDesktopMenu("admin")}
+                    className={cn(
+                      "absolute right-[clamp(0px,calc(1400px-100vw),170px)] top-full z-50 w-[320px] pt-2 transition-all duration-150",
+                      desktopMenu === "admin" ? "visible pointer-events-auto translate-y-0 opacity-100" : "invisible pointer-events-none -translate-y-1 opacity-0"
+                    )}
+                  >
                     <div className="overflow-visible rounded-xl border border-[#D7EAFE] bg-white p-1.5 text-[#0B2F6B] shadow-[0_18px_44px_rgba(185,223,255,0.55)] backdrop-blur-xl">
                       {adminSections.map((section) => (
                         <AdminFlyoutSection
@@ -326,13 +340,13 @@ export function DesktopTopbar() {
                 <div
                   key={item.id}
                   className="relative"
-                  onMouseEnter={() => setDesktopMenu(menuId)}
                   onMouseLeave={() => setDesktopMenu((current) => (current === menuId ? null : current))}
                 >
                   <button
                     type="button"
-                    onFocus={() => setDesktopMenu(menuId)}
+                    onMouseEnter={() => setDesktopMenu(menuId)}
                     onClick={() => setDesktopMenu((current) => current === menuId ? null : menuId)}
+                    onKeyDown={(event) => handleMenuButtonKeyDown(event, menuId)}
                     aria-expanded={desktopMenu === menuId}
                     aria-haspopup="menu"
                     className={cn(
@@ -346,9 +360,10 @@ export function DesktopTopbar() {
                   </button>
 
                   <div
+                    onMouseEnter={() => setDesktopMenu(menuId)}
                     className={cn(
                       "absolute left-1/2 top-full z-50 w-[320px] -translate-x-1/2 pt-2 transition-all duration-150",
-                      desktopMenu === menuId ? "visible translate-y-0 opacity-100" : "invisible -translate-y-1 opacity-0"
+                      desktopMenu === menuId ? "visible pointer-events-auto translate-y-0 opacity-100" : "invisible pointer-events-none -translate-y-1 opacity-0"
                     )}
                   >
                     <div className="max-h-[calc(100vh-var(--topbar-h)-24px)] overflow-y-auto rounded-xl border border-[#D7EAFE] bg-white p-1.5 text-[#0B2F6B] shadow-[0_18px_44px_rgba(185,223,255,0.55)] backdrop-blur-xl">
@@ -439,13 +454,13 @@ export function DesktopTopbar() {
 
           <div
             className="relative"
-            onMouseEnter={() => setDesktopMenu("profile")}
             onMouseLeave={() => setDesktopMenu((current) => (current === "profile" ? null : current))}
-            onFocus={() => setDesktopMenu("profile")}
           >
             <button
               type="button"
+              onMouseEnter={() => setDesktopMenu("profile")}
               onClick={() => setDesktopMenu((current) => (current === "profile" ? null : "profile"))}
+              onKeyDown={(event) => handleMenuButtonKeyDown(event, "profile")}
               aria-label="โปรไฟล์ของฉัน"
               aria-haspopup="menu"
               aria-expanded={desktopMenu === "profile"}
@@ -467,9 +482,10 @@ export function DesktopTopbar() {
             </button>
 
             <div
+              onMouseEnter={() => setDesktopMenu("profile")}
               className={cn(
                 "absolute right-0 top-full z-50 min-w-full pt-2 transition-all duration-150",
-                desktopMenu === "profile" ? "visible translate-y-0 opacity-100" : "invisible -translate-y-1 opacity-0"
+                desktopMenu === "profile" ? "visible pointer-events-auto translate-y-0 opacity-100" : "invisible pointer-events-none -translate-y-1 opacity-0"
               )}
             >
               <div className="rounded-xl border border-[#D7EAFE] bg-white p-1.5 text-[#0B2F6B] shadow-[0_18px_44px_rgba(185,223,255,0.55)] backdrop-blur-xl">

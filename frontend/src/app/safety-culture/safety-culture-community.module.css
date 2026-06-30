@@ -13,7 +13,7 @@
 .rankingCard {
   border: 1px solid #d7e5f5;
   background: rgba(255, 255, 255, .94);
-  box-shadow: 0 7px 18px rgba(23, 73, 131, .07);
+  box-shadow: none;
 }
 
 .composerAvatar {
@@ -60,12 +60,12 @@
 .postCard {
   border-color: #d8e5f3 !important;
   color: #102b50;
-  box-shadow: 0 7px 18px rgba(23, 73, 131, .07);
+  box-shadow: none;
 }
 
 .postCard:hover {
   border-color: #80bff2 !important;
-  box-shadow: 0 10px 24px rgba(23, 73, 131, .11);
+  box-shadow: none;
 }
 
 .rankingCard {

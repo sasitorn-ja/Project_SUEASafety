@@ -289,7 +289,7 @@ body {
 .page-content {
   flex: 1 0 auto;
   min-height: 100dvh;
-  background: #ffffff;
+  background: var(--background);
   padding-top: var(--mobile-topbar-h);
   padding-right: 0;
   padding-bottom: calc(var(--mobile-bottomnav-h) + env(safe-area-inset-bottom));
@@ -433,7 +433,7 @@ body {
   border-radius: var(--app-card-radius);
   background: var(--card);
   padding: clamp(12px, 1.5vw, 18px);
-  box-shadow: var(--app-card-shadow);
+  box-shadow: none;
 }
 
 .app-card-title {

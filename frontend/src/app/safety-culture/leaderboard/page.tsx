@@ -65,7 +65,7 @@ export default function LeaderboardPage() {
                 ทีมไหน <span className="text-[var(--brand-accent)]">ปลอดภัยสุด</span>
               </>
             }
-            description="สรุปคะแนน Safety ให้เห็นภาพรวม ทั้งอันดับทีมและอันดับสมาชิกในทีมของคุณ"
+            description="สรุป Coin Safety ให้เห็นภาพรวม ทั้งอันดับทีมและอันดับสมาชิกในทีมของคุณ"
             variant="community"
             backgroundImage="/images/heroes/safety-culture-leaderboard-hero-construction.png"
             backgroundOverlay="linear-gradient(90deg, rgba(210,235,255,.82) 0%, rgba(210,235,255,.56) 42%, rgba(210,235,255,0) 100%)"
@@ -166,7 +166,7 @@ export default function LeaderboardPage() {
               {visibleTopScorers.length === 0 ? (
                 <div className="rounded-[16px] border border-dashed border-[var(--border)] bg-[var(--brand-surface)] px-4 py-8 text-center">
                   <p className="text-[14px] font-black text-[var(--foreground)]">ยังไม่มีอันดับสมาชิก</p>
-                  <p className="mt-1 text-[12px] font-bold text-[var(--brand-muted-text)]">ระบบจะแสดงอันดับเมื่อมีสมาชิกและคะแนน</p>
+                  <p className="mt-1 text-[12px] font-bold text-[var(--brand-muted-text)]">ระบบจะแสดงอันดับเมื่อมีสมาชิกและ Coin</p>
                 </div>
               ) : visibleTopScorers.map((user, index) => {
                 const rankStyle = TOP_RANK_STYLES[index] ?? {

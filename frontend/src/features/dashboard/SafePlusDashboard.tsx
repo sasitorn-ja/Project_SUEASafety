@@ -52,7 +52,7 @@ const DEMO_ACTIVITY_EVENTS: SafetyCultureFeedEvent[] = [
     id: "demo-feed-event-1",
     title: "Safety Hero Challenge",
     subtitle: "แชร์เรื่องความปลอดภัยประจำสัปดาห์",
-    summary: "โพสต์ภาพหรือเรื่องเล่าความปลอดภัยในทีม เพื่อสะสมคะแนนพิเศษ",
+    summary: "โพสต์ภาพหรือเรื่องเล่าความปลอดภัยในทีม เพื่อสะสม Coin พิเศษ",
     details: "ตัวอย่างกิจกรรมสำหรับ Demo Login",
     imageSrc: "/images/heroes/safety-culture-post-hero.png",
     imageText: "Safety Hero Challenge",
@@ -178,8 +178,8 @@ function formatThaiMonthYear(dateKey: string) {
 
 function activityBonusLabel(event: { points: number; bonusMode: string; multiplier: number; fixedPoints: number }) {
   if (event.bonusMode === "multiplier") return `x${event.multiplier}`;
-  if (event.fixedPoints > 0) return `+${event.fixedPoints} คะแนน`;
-  if (event.points > 0) return `+${event.points} คะแนน`;
+  if (event.fixedPoints > 0) return `+${event.fixedPoints} Coin`;
+  if (event.points > 0) return `+${event.points} Coin`;
   return "กำลังจัด";
 }
 
@@ -488,12 +488,12 @@ export default function SafePlusDashboard() {
   }, [pointTransactions]);
 
   return (
-    <div className="min-h-screen bg-white pb-24 font-sarabun sm:pb-8 lg:pb-5">
+    <div className="min-h-screen bg-[var(--background)] pb-24 font-sarabun sm:pb-8 lg:pb-5">
 
       {/* ===== HERO ===== */}
       <section
-        aria-label="คะแนน Safety ของฉัน"
-        className="relative mx-2.5 mt-2 min-h-[212px] overflow-hidden rounded-[18px] border border-[rgba(215,234,254,.72)] text-[#0B2F6B] shadow-[0_10px_22px_rgba(185,223,255,.28)] lg:mx-6 lg:mt-3 lg:min-h-[280px] xl:min-h-[300px] 2xl:min-h-[330px]"
+        aria-label="Coin Safety ของฉัน"
+        className="relative mx-2.5 mt-2 min-h-[212px] overflow-hidden rounded-[18px] border border-[rgba(215,234,254,.72)] text-[#0B2F6B] lg:mx-6 lg:mt-3 lg:min-h-[280px] xl:min-h-[300px] 2xl:min-h-[330px]"
         style={{
           background: `linear-gradient(rgba(226,241,255,.26),rgba(226,241,255,.26)), url("${HERO_BG}") center 64%/cover no-repeat`,
         }}
@@ -541,17 +541,17 @@ export default function SafePlusDashboard() {
             <div className="rounded-[18px] border border-white/75 bg-white/58 px-4 py-3.5 shadow-[0_12px_28px_rgba(11,130,240,.16)] backdrop-blur-[4px]">
               <div className="flex items-center gap-2 text-[11px] font-black text-[#083B84] [text-shadow:0_1px_0_rgba(255,255,255,.78)]">
                 <ShieldCheck className="h-[20px] w-[20px] text-[#0077F0]" strokeWidth={2.7} />
-                <span>คะแนน SAFETY ของฉัน</span>
+                <span>Coin SAFETY ของฉัน</span>
               </div>
               <div className="mt-1 flex items-end gap-2">
                 <strong className="text-[54px] font-black leading-none text-[#006CE0] [text-shadow:0_8px_16px_rgba(11,130,240,.22)]">
                   {currentUserPoints.toLocaleString()}
                 </strong>
-                <span className="mb-1.5 text-[13px] font-black text-[#083B84] [text-shadow:0_1px_0_rgba(255,255,255,.78)]">แต้ม</span>
+                <span className="mb-1.5 text-[13px] font-black text-[#083B84] [text-shadow:0_1px_0_rgba(255,255,255,.78)]">Coin</span>
               </div>
               {weeklyPoints > 0 && (
                 <span className="mt-1.5 inline-flex w-fit items-center gap-1 rounded-full bg-[#e6f9ef] px-2.5 py-1 text-[10.5px] font-black text-[#1a8c52] shadow-[inset_0_0_0_1px_rgba(26,140,82,.18)]">
-                  <Zap className="h-3 w-3" />+{weeklyPoints} แต้ม จากสัปดาห์ที่แล้ว
+                  <Zap className="h-3 w-3" />+{weeklyPoints} Coin จากสัปดาห์ที่แล้ว
                 </span>
               )}
             </div>
@@ -566,10 +566,10 @@ export default function SafePlusDashboard() {
                 </div>
                 <div className="flex min-w-0 flex-col gap-1">
                   <strong className="text-[15px] font-black leading-tight text-[#0B2F6B]">
-                    {rewardsCatalog.length > 0 ? "คะแนนของคุณสามารถนำมาแลกของรางวัลได้" : "ยังไม่มีรางวัลในระบบ"}
+                    {rewardsCatalog.length > 0 ? "Coin ของคุณสามารถนำมาแลกของรางวัลได้" : "ยังไม่มีรางวัลในระบบ"}
                   </strong>
                   <span className="text-[10.5px] font-bold leading-snug text-[#55739B]">
-                    {rewardsCatalog.length > 0 ? "ใช้คะแนน Safety เพื่อรับสิทธิ์แลกรางวัล" : "เมื่อมีรางวัลในระบบ รายการจะแสดงที่นี่"}
+                    {rewardsCatalog.length > 0 ? "ใช้ Coin Safety เพื่อรับสิทธิ์แลกรางวัล" : "เมื่อมีรางวัลในระบบ รายการจะแสดงที่นี่"}
                   </span>
                 </div>
               </div>
@@ -630,13 +630,13 @@ export default function SafePlusDashboard() {
             <div className="rounded-[18px] border border-white/70 bg-white/62 px-3.5 py-3 shadow-[0_12px_28px_rgba(0,92,180,.16)] backdrop-blur-[5px]">
               <div className="flex items-center gap-1.5 text-[11.5px] font-black leading-tight text-[#0B2F6B]">
                 <ShieldCheck className="h-[18px] w-[18px] flex-shrink-0 text-[#0B82F0]" strokeWidth={2.4} />
-                <span>คะแนน SAFETY ของฉัน</span>
+                <span>Coin SAFETY ของฉัน</span>
               </div>
               <div className="mt-2 flex items-baseline gap-2">
                 <strong className="min-w-0 text-[42px] font-black leading-none text-[#087dff] [text-shadow:0_8px_18px_rgba(0,150,245,.18)]">
                   {currentUserPoints.toLocaleString()}
                 </strong>
-                <span className="rounded-full bg-[#e4f3ff] px-2.5 py-1 text-[12px] font-black leading-none text-[#0B2F6B] shadow-[inset_0_0_0_1px_rgba(11,130,240,.12)]">แต้ม</span>
+                <span className="rounded-full bg-[#e4f3ff] px-2.5 py-1 text-[12px] font-black leading-none text-[#0B2F6B] shadow-[inset_0_0_0_1px_rgba(11,130,240,.12)]">Coin</span>
               </div>
             </div>
             <Link
