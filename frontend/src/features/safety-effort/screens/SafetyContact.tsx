@@ -2,7 +2,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useLocation, useNavigate } from "@/lib/app-navigation";
 import RestrictedDatePicker from "@/components/RestrictedDatePicker";
-import SafetyEffortProgressStepper from "@/features/safety-effort/components/SafetyEffortProgressStepper";
+import { ProgressHeader } from "@/components/safety-effort/progress-mascot";
 import {
   createLocalEvidenceMedia,
   normalizeEvidenceMediaList,
@@ -204,67 +204,12 @@ export default function SafetyContact() {
       >
         <div style={{ width: "100%", maxWidth: isMobileViewport ? "100%" : 1500, margin: "0 auto", display: "flex", flexDirection: "column", gap: isMobileInputScreen ? 8 : (isMobileViewport ? 10 : 16) }}>
           {!isMobileInputScreen && (
-            <div className="relative flex min-h-[100px] items-center overflow-hidden rounded-[20px] border border-[#B9DDFF]/60 bg-[#EEF7FF] px-3 py-2 shadow-[0_12px_30px_rgba(185,223,255,0.4)] sm:min-h-[116px] sm:px-[18px] sm:py-2.5 xl:min-h-[148px] xl:px-[28px] xl:py-3" style={{ marginBottom: isMobileViewport ? 2 : (started ? 2 : 6) }}>
-              <div
-                className="absolute inset-0 bg-[url('/images/heroes/safety-effort-category-hero.png')] bg-no-repeat"
-                style={{
-                  backgroundSize: "auto 108%",
-                  backgroundPosition: "right -20px bottom -5px",
-                }}
-              />
-              <div className="absolute inset-0 bg-gradient-to-r from-[#EEF7FF] via-[#EEF7FF]/90 sm:via-[#EEF7FF]/40 to-transparent pointer-events-none" />
-
-              {/* Main content container directly on the background (no glassmorphic inner container) */}
-              <div className="relative z-10 w-full flex items-center justify-between font-sarabun">
-                {/* Left column: Back button, Title, and Stepper info */}
-                <div className="flex flex-col items-start gap-2">
-                  {started && (
-                    <div style={{ display:"flex", gap:6, marginBottom: 2, flexWrap:"wrap", alignItems: "center" }}>
-                      {fromActivity && (
-                        <span 
-                          style={{
-                            display:"inline-flex", alignItems:"center", padding:"2px 8px", borderRadius:99, border:"1px solid #D7EAFE", background:"#fff", color:"#55739B", fontSize:"9.5px", fontWeight:800, textTransform:"uppercase"
-                          }}
-                        >
-                          Step 4
-                        </span>
-                      )}
-                      <span 
-                        style={{
-                          display:"inline-flex", alignItems:"center", padding:"2px 8px", borderRadius:99, background:"#E6F2FF", border:"1px solid #B9DDFF", color:"#0B82F0", fontSize:"9.5px", fontWeight:800, textTransform:"uppercase"
-                        }}
-                      >
-                        Safety Contact
-                      </span>
-                    </div>
-                  )}
-
-                  <div className="flex items-center gap-3">
-                    <button
-                      className="flex h-8 w-8 items-center justify-center rounded-[8px] bg-white border border-[#D7EAFE] text-[#0B82F0] hover:bg-[#0B82F0] hover:text-white transition-all duration-300 active:scale-95"
-                      onClick={handleBack}
-                      aria-label="ย้อนกลับ"
-                    >
-                      <IcoBack />
-                    </button>
-                    <h1 className="text-[20px] sm:text-[24px] xl:text-[26px] font-black leading-tight tracking-tight text-[#0B2F6B]">
-                      {started ? "ทำแบบบันทึก Safety Contact" : "ทำรายการตรวจความปลอดภัย"}
-                    </h1>
-                  </div>
-
-                  <div className="flex flex-col items-start gap-1 mt-1 sm:mt-1.5">
-                    {fromActivity && (
-                      <>
-                        <span className="text-[10px] sm:text-[11px] font-extrabold tracking-wider text-[#55739B] uppercase">
-                          ความคืบหน้า
-                        </span>
-                        <SafetyEffortProgressStepper current={started ? 4 : 3} total={4} compact />
-                      </>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
+            <ProgressHeader
+              title={started ? "ทำแบบบันทึก Safety Contact" : "ทำรายการตรวจความปลอดภัย"}
+              current={started ? 4 : 3}
+              mascotAction="clipboardPost"
+              onBack={handleBack}
+            />
           )}
 
           {!started && (
@@ -277,7 +222,7 @@ export default function SafetyContact() {
                 <div className="lw-card" style={{ display: "flex", flexDirection: "column", gap: 16, minHeight: isMobileViewport ? undefined : 380, padding: "20px 22px" }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 10, borderBottom: "1.5px solid #F0F7FF", paddingBottom: 10, marginBottom: 4 }}>
                     <div style={{ width: 4, height: 16, backgroundColor: "#0B82F0", borderRadius: 4 }}></div>
-                    <span style={{ fontSize: 13.5, fontWeight: 700, color: "#0B2F6B", fontFamily: "'Prompt', sans-serif" }}>
+                    <span style={{ fontSize: 17, fontWeight: 700, color: "#0B2F6B", fontFamily: "'Prompt', sans-serif" }}>
                       {checkin ? "รายละเอียดการตรวจเช็คอิน" : "ข้อมูลกิจกรรมและวันทำรายการ"}
                     </span>
                   </div>
@@ -298,8 +243,8 @@ export default function SafetyContact() {
                         <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
                       </div>
                       <div style={{ display: "flex", flexDirection: "column", minWidth: 0 }}>
-                        <span style={{ fontSize: 10.5, fontWeight: 600, color: "#64748B", fontFamily: "'Prompt', sans-serif" }}>กิจกรรม</span>
-                        <span style={{ fontSize: 13, fontWeight: 800, color: "#0B2F6B", fontFamily: "'Prompt', sans-serif", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                        <span style={{ fontSize: 12.5, fontWeight: 600, color: "#64748B", fontFamily: "'Prompt', sans-serif" }}>กิจกรรม</span>
+                        <span style={{ fontSize: 15, fontWeight: 800, color: "#0B2F6B", fontFamily: "'Prompt', sans-serif", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                           Safety Contact
                         </span>
                       </div>
@@ -320,8 +265,8 @@ export default function SafetyContact() {
                         <IcoCalendarLocal />
                       </div>
                       <div style={{ display: "flex", flexDirection: "column", minWidth: 0 }}>
-                        <span style={{ fontSize: 10.5, fontWeight: 600, color: "#64748B", fontFamily: "'Prompt', sans-serif" }}>วันที่ทำ</span>
-                        <span style={{ fontSize: 13, fontWeight: 800, color: "#0B2F6B", fontFamily: "'Prompt', sans-serif", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                        <span style={{ fontSize: 12.5, fontWeight: 600, color: "#64748B", fontFamily: "'Prompt', sans-serif" }}>วันที่ทำ</span>
+                        <span style={{ fontSize: 15, fontWeight: 800, color: "#0B2F6B", fontFamily: "'Prompt', sans-serif", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                           {date || "-"}
                         </span>
                       </div>
@@ -342,8 +287,8 @@ export default function SafetyContact() {
                         <IcoMapPinLocal />
                       </div>
                       <div style={{ display: "flex", flexDirection: "column", minWidth: 0 }}>
-                        <span style={{ fontSize: 10.5, fontWeight: 600, color: "#64748B", fontFamily: "'Prompt', sans-serif" }}>สถานที่</span>
-                        <span style={{ fontSize: 13, fontWeight: 800, color: "#0B2F6B", fontFamily: "'Prompt', sans-serif", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                        <span style={{ fontSize: 12.5, fontWeight: 600, color: "#64748B", fontFamily: "'Prompt', sans-serif" }}>สถานที่</span>
+                        <span style={{ fontSize: 15, fontWeight: 800, color: "#0B2F6B", fontFamily: "'Prompt', sans-serif", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                           {checkin?.name || "-"}
                         </span>
                       </div>
@@ -364,8 +309,8 @@ export default function SafetyContact() {
                         <IcoTagLocal />
                       </div>
                       <div style={{ display: "flex", flexDirection: "column", minWidth: 0 }}>
-                        <span style={{ fontSize: 10.5, fontWeight: 600, color: "#64748B", fontFamily: "'Prompt', sans-serif" }}>รหัสสถานที่</span>
-                        <span style={{ fontSize: 13, fontWeight: 800, color: "#0B2F6B", fontFamily: "'Prompt', sans-serif", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                        <span style={{ fontSize: 12.5, fontWeight: 600, color: "#64748B", fontFamily: "'Prompt', sans-serif" }}>รหัสสถานที่</span>
+                        <span style={{ fontSize: 15, fontWeight: 800, color: "#0B2F6B", fontFamily: "'Prompt', sans-serif", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                           {checkin?.tag || "-"}
                         </span>
                       </div>

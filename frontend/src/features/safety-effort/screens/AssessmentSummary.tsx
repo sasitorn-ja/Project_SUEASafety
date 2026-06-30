@@ -2,6 +2,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "@/lib/app-navigation";
 import TigerMascot from "@/components/TigerMascot";
+import { ProgressHeader } from "@/components/safety-effort/progress-mascot";
 import { getChecklistForType } from "@/features/safety-effort/config/checklists";
 import {
   evidenceMediaUrls,
@@ -383,61 +384,15 @@ export default function AssessmentSummary() {
         }
       `}</style>
       <div style={{ width: "100%", maxWidth: isMobile ? "100%" : 1500, margin: "0 auto", display: "grid", gap: 16 }}>
-        <section
-          className="relative min-h-[100px] overflow-hidden border border-[#B9DDFF]/60 bg-[#EEF7FF] shadow-[0_12px_30px_rgba(185,223,255,0.4)] sm:min-h-[116px] xl:min-h-[148px]"
-          style={{
-            borderRadius: isMobile ? 14 : 18,
-          }}
-        >
-          {/* Background image container */}
-          <div
-            className="absolute inset-0 bg-[url('/images/heroes/safety-effort-category-hero.png')] bg-no-repeat"
-            style={{
-              backgroundSize: "auto 108%",
-              backgroundPosition: "right -20px bottom -5px",
-            }}
-          />
-          {/* Gradient overlay to blend the image and ensure readability */}
-          <div className="absolute inset-0 bg-gradient-to-r from-[#EEF7FF] via-[#EEF7FF]/90 sm:via-[#EEF7FF]/40 to-transparent pointer-events-none" />
-
-          <div className="relative z-10 flex min-h-[100px] items-center justify-between gap-[10px] px-3 py-2 font-sarabun sm:min-h-[116px] sm:gap-4 sm:px-[18px] sm:py-2.5 xl:min-h-[148px] xl:px-[28px] xl:py-3">
-            <div style={{ display: "flex", alignItems: "center", gap: isMobile ? 10 : 16, minWidth: 0, flex: 1 }}>
-              <button 
-                type="button" 
-                className="flex h-8 w-8 items-center justify-center rounded-[8px] bg-white border border-[#D7EAFE] text-[#0B82F0] hover:bg-[#0B82F0] hover:text-white transition-all duration-300 active:scale-95" 
-                onClick={handleBack} 
-                aria-label="ย้อนกลับ"
-              >
-                <IcoBack />
-              </button>
-              <div style={{ width: 1, height: isMobile ? 32 : 52, background: "#D7EAFE", flexShrink: 0 }} />
-              <div style={{ minWidth: 0 }}>
-                <div 
-                  style={{ 
-                    display: "inline-flex", 
-                    alignItems: "center", 
-                    padding: isMobile ? "2px 8px" : "4px 10px", 
-                    borderRadius: 999, 
-                    background: "#E6F2FF", 
-                    border: "1px solid #B9DDFF", 
-                    color: "#0B82F0", 
-                    fontSize: isMobile ? 9 : 11, 
-                    fontWeight: 800, 
-                    textTransform: "uppercase" 
-                  }}
-                >
-                  {linewalkData?.isSafetyContact ? "Safety Contact Complete" : "Assessment Complete"}
-                </div>
-                <h1 style={{ margin: isMobile ? "6px 0 4px" : "12px 0 6px", fontSize: isMobile ? 18 : 28, lineHeight: 1.2, fontWeight: 900, fontFamily: "'Prompt', sans-serif", color: "#0B2F6B" }}>
-                  {linewalkData?.isSafetyContact ? "สรุปผลการทำ Safety Contact" : "สรุปผลการทำแบบประเมิน"}
-                </h1>
-                <p style={{ margin: 0, color: "#55739B", fontSize: isMobile ? 11.5 : 14, fontWeight: 600 }}>
-                  {linewalkData?.isSafetyContact ? "ตรวจสอบข้อมูลที่บันทึกไว้ก่อนทำการส่งข้อมูล" : "ตรวจสอบข้อมูลที่ทำไว้ก่อนทำการบันทึกข้อมูล"}
-                </p>
-              </div>
-            </div>
-          </div>
-        </section>
+        <ProgressHeader
+          title={linewalkData?.isSafetyContact ? "สรุปผลการทำ Safety Contact" : "สรุปผลการทำแบบประเมิน"}
+          subtitle={linewalkData?.isSafetyContact
+            ? "ตรวจสอบข้อมูลที่บันทึกไว้ก่อนทำการส่งข้อมูล"
+            : "ตรวจสอบข้อมูลที่ทำไว้ก่อนทำการบันทึกข้อมูล"}
+          current={4}
+          mascotAction="assessHappy"
+          onBack={handleBack}
+        />
 
         <section
           style={{
@@ -460,8 +415,8 @@ export default function AssessmentSummary() {
               ] : [])
             ].map((item) => (
               <div key={item.label} style={{ background: T.brownSoft, borderRadius: 14, padding: "12px 12px 10px" }}>
-                <div style={{ fontSize: 11, fontWeight: 800, color: T.foreground3, textTransform: "uppercase" }}>{item.label}</div>
-                <div style={{ marginTop: 4, fontSize: 15, fontWeight: 800, color: T.brown }}>{item.value}</div>
+                <div style={{ fontSize: 13, fontWeight: 800, color: T.foreground3, textTransform: "uppercase" }}>{item.label}</div>
+                <div style={{ marginTop: 4, fontSize: 17, fontWeight: 800, color: T.brown }}>{item.value}</div>
               </div>
             ))}
           </div>
@@ -471,11 +426,11 @@ export default function AssessmentSummary() {
               {/* Row 1: Summary of Done / Not Done */}
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
                 <div style={{ background: "color-mix(in srgb, var(--brand-accent) 8%, white)", border: "1px solid rgba(14,15,18,0.06)", borderRadius: 14, padding: "12px 12px 10px" }}>
-                  <div style={{ fontSize: 11.5, fontWeight: 800, color: T.brown }}>ประเมินแล้ว (Done)</div>
+                  <div style={{ fontSize: 13.5, fontWeight: 800, color: T.brown }}>ประเมินแล้ว (Done)</div>
                   <div style={{ marginTop: 4, fontSize: 22, fontWeight: 900, color: T.brown }}>{counts.safe + counts.condition + counts.action} ข้อ</div>
                 </div>
                 <div style={{ background: "var(--c-f8f6f1)", border: "1px solid rgba(14,15,18,0.06)", borderRadius: 14, padding: "12px 12px 10px" }}>
-                  <div style={{ fontSize: 11.5, fontWeight: 800, color: T.foreground3 }}>ยังไม่ประเมิน (Not Done)</div>
+                  <div style={{ fontSize: 13.5, fontWeight: 800, color: T.foreground3 }}>ยังไม่ประเมิน (Not Done)</div>
                   <div style={{ marginTop: 4, fontSize: 22, fontWeight: 900, color: T.foreground2 }}>{counts.empty} ข้อ</div>
                 </div>
               </div>
@@ -488,7 +443,7 @@ export default function AssessmentSummary() {
                   { label: "พฤติกรรมไม่ปลอดภัย (Unsafe Act)", value: counts.action, color: T.action, bg: "#fff7ed" },
                 ].map((item) => (
                   <div key={item.label} style={{ background: item.bg, borderRadius: 14, padding: "12px 12px 10px" }}>
-                    <div style={{ fontSize: 11, fontWeight: 800, color: item.color }}>{item.label}</div>
+                    <div style={{ fontSize: 13, fontWeight: 800, color: item.color }}>{item.label}</div>
                     <div style={{ marginTop: 4, fontSize: 24, lineHeight: 1, fontWeight: 900, color: item.color }}>{item.value}</div>
                   </div>
                 ))}

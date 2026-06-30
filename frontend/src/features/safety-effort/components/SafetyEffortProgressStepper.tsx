@@ -71,7 +71,7 @@ export default function SafetyEffortProgressStepper({
           overflow: hidden;
           text-overflow: ellipsis;
           white-space: nowrap;
-          font-size: 9px;
+          font-size: 12px;
           color: rgba(255, 248, 230, 0.62);
           font-weight: 800;
           letter-spacing: 0.05em;
@@ -100,13 +100,13 @@ export default function SafetyEffortProgressStepper({
           border-radius: 99px;
         }
         .se-stepper-node {
-          width: 18px;
-          height: 18px;
+          width: 22px;
+          height: 22px;
           border-radius: 999px;
           display: flex;
           align-items: center;
           justify-content: center;
-          font-size: 9.5px;
+          font-size: 11.5px;
           font-weight: 900;
           transition: all 0.3s;
           flex: 0 0 auto;
@@ -121,12 +121,13 @@ export default function SafetyEffortProgressStepper({
           display: none;
         }
         .se-stepper-compact .se-stepper-node {
-          width: 16px;
-          height: 16px;
-          font-size: 8.5px;
+          width: 22px;
+          height: 22px;
+          font-size: 11.5px;
         }
         .se-stepper-compact .se-stepper-line {
-          width: 10px;
+          width: 14px;
+          height: 3px;
         }
         @media (max-width: 767px) {
           .se-stepper {
@@ -134,7 +135,7 @@ export default function SafetyEffortProgressStepper({
             gap: 2px;
           }
           .se-stepper-title {
-            font-size: 8.5px;
+            font-size: 11.5px;
             letter-spacing: 0.04em;
           }
           .se-stepper-row {
@@ -144,12 +145,13 @@ export default function SafetyEffortProgressStepper({
             gap: 4px;
           }
           .se-stepper-node {
-            width: 17px;
-            height: 17px;
-            font-size: 9px;
+            width: 22px;
+            height: 22px;
+            font-size: 11.5px;
           }
           .se-stepper-line {
-            width: 10px;
+            width: 14px;
+            height: 3px;
           }
           .se-stepper-count {
             font-size: 10.5px;

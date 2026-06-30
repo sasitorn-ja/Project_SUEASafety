@@ -4,6 +4,7 @@ import type { ResultSetHeader, RowDataPacket } from "mysql2/promise";
 
 import { queryRows, withTransaction } from "@backend/components/core/db";
 import type { SsoUser } from "@backend/components/auth/sso";
+import { syncUserFixedTeamMembership } from "@backend/components/safety-culture/fixed-teams";
 import { hasAdminAccess } from "@/lib/access-control";
 
 export type DbUser = {
@@ -323,6 +324,7 @@ export async function upsertSsoUser(user: SsoUser, rawClaims: Record<string, unk
     );
 
     if (!rows[0]) throw new Error("Unable to load SSO user after upsert.");
+    await syncUserFixedTeamMembership(connection, String(rows[0].id), payload.division);
     return String(rows[0].id);
   });
 

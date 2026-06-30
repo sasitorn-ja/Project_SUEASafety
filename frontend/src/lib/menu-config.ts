@@ -158,16 +158,10 @@ export function getDefaultMenu(): MenuNode[] {
               description: "เพิ่ม แก้ไข และจัดลำดับหัวข้อ Linewalk / Safety Contact",
             }),
             n({
-              label: "ประวัติการส่ง",
+              label: "รายงานและส่งออก",
               href: "/safety-admin/report-history",
               icon: "ClipboardCheck",
-              description: "ดูรายงานที่ผู้ใช้ส่งเข้าระบบ",
-            }),
-            n({
-              label: "ส่งออก Excel",
-              href: "/safety-admin/export-report",
-              icon: "Download",
-              description: "ดาวน์โหลดรายงานและแก้ไขข้อมูลก่อนส่งออก",
+              description: "ดูรายละเอียดรายงานและส่งออก Excel",
             }),
             n({
               label: "โรงงาน/สำนักงาน/ไซต์งาน",
@@ -273,8 +267,7 @@ function applyAdminMenuLabels(adminNode: MenuNode) {
   rename("/safety-culture/admin-awareness", "Safety Awareness", "จัดการวัน KPI และคลังคำถาม Safety Awareness", "ShieldCheck");
   rename("/category", "Safety Effort", undefined, "ShieldCheck");
   rename("/safety-admin", "แบบประเมิน", "เพิ่ม แก้ไข และจัดลำดับหัวข้อ Linewalk / Safety Contact", "Settings2");
-  rename("/safety-admin/report-history", "ประวัติการส่ง", "ดูรายงานที่ผู้ใช้ส่งเข้าระบบ", "ClipboardCheck");
-  rename("/safety-admin/export-report", "ส่งออก Excel", "ดาวน์โหลดรายงานและแก้ไขข้อมูลก่อนส่งออก", "Download");
+  rename("/safety-admin/report-history", "รายงานและส่งออก", "ดูรายละเอียดรายงานและส่งออก Excel", "ClipboardCheck");
   rename("/safety-admin/manage-data", "โรงงาน/สำนักงาน/ไซต์งาน", "จัดการ master data สถานที่สำหรับ Check-in", "MapPin");
   rename("/safety-culture", "Safety Culture", undefined, "Heart");
   rename("/safety-culture/admin-event", "กิจกรรมบนฟีด", "จัดการกิจกรรมและช่วงเวลาพิเศษ", "Settings2");
@@ -322,9 +315,21 @@ export function loadMenu(): MenuNode[] {
             (child) => child.href === "/category" || child.label.trim().toLowerCase() === "safety effort"
           );
           if (safetyEffortNode) {
+            const beforeReportMerge = safetyEffortNode.children.length;
+            safetyEffortNode.children = safetyEffortNode.children.filter(
+              (child) =>
+                child.href !== "/safety-admin/export-report" &&
+                !child.label.includes("ส่งออกรายงาน") &&
+                child.label.trim() !== "ส่งออก Excel"
+            );
+            if (safetyEffortNode.children.length !== beforeReportMerge) {
+              updated = true;
+            }
+
             const hasReportHistory = safetyEffortNode.children.some(
               (child) =>
                 child.href === "/safety-admin/report-history" ||
+                child.label.includes("รายงานและส่งออก") ||
                 child.label.includes("ประวัติส่งรายงาน") ||
                 child.label.includes("ประวัติรายงาน") ||
                 child.label.includes("ประวัติการส่ง")
@@ -332,28 +337,10 @@ export function loadMenu(): MenuNode[] {
             if (!hasReportHistory) {
               safetyEffortNode.children.push(
                 n({
-                  label: "ประวัติการส่ง",
+                  label: "รายงานและส่งออก",
                   href: "/safety-admin/report-history",
                   icon: "ClipboardCheck",
-                  description: "ดูรายงานที่ผู้ใช้ส่งเข้าระบบ",
-                })
-              );
-              updated = true;
-            }
-
-            const hasExportReport = safetyEffortNode.children.some(
-              (child) =>
-                child.href === "/safety-admin/export-report" ||
-                child.label.includes("ส่งออกรายงาน") ||
-                child.label.includes("ส่งออก Excel")
-            );
-            if (!hasExportReport) {
-              safetyEffortNode.children.push(
-                n({
-                  label: "ส่งออก Excel",
-                  href: "/safety-admin/export-report",
-                  icon: "Download",
-                  description: "ดาวน์โหลดรายงานและแก้ไขข้อมูลก่อนส่งออก",
+                  description: "ดูรายละเอียดรายงานและส่งออก Excel",
                 })
               );
               updated = true;

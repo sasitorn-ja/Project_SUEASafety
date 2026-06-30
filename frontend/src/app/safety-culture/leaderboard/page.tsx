@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ChevronDown, ChevronRight } from "lucide-react";
+import { ChevronDown, ChevronRight, Users } from "lucide-react";
 import { SafetyCultureHero } from "@/components/safety-culture/safety-culture-hero";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
@@ -106,17 +106,12 @@ export default function LeaderboardPage() {
                     {team.rank}
                   </div>
 
-                  {/* leader avatar */}
+                  {/* fixed team marker; leaders will be added in a later phase */}
                   <div
-                    className="relative flex h-10 w-10 flex-shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-white/80 text-[13px] font-black text-white shadow-[0_2px_8px_rgba(0,0,0,0.12)] md:h-11 md:w-11"
-                    style={{ background: `linear-gradient(180deg, ${themedColor(team.color)}, color-mix(in srgb, ${themedColor(team.color)} 74%, white))` }}
+                    className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-[11px] border-2 border-white/80 text-white shadow-[0_2px_8px_rgba(0,0,0,0.12)] md:h-11 md:w-11"
+                    style={{ backgroundColor: themedColor(team.color) }}
                   >
-                    {team.leaderProfileImageUrl ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={team.leaderProfileImageUrl} alt={team.leader} className="h-full w-full object-cover" />
-                    ) : (
-                      <span className="md:text-[14px]">{team.leader.charAt(0).toUpperCase()}</span>
-                    )}
+                    <Users className="h-5 w-5" strokeWidth={2.4} />
                   </div>
 
                   {/* info */}
@@ -130,7 +125,7 @@ export default function LeaderboardPage() {
                       ) : null}
                     </div>
                     <p className="mt-0.5 truncate text-[11px] font-bold text-[var(--brand-muted-text)] md:text-[12px]">
-                      {team.leader} · {team.members} สมาชิก
+                      {team.members} สมาชิก
                     </p>
                     <div className="mt-1.5 flex items-center gap-1.5">
                       <div className="h-[5px] min-w-0 flex-1 overflow-hidden rounded-full bg-[var(--secondary)]">

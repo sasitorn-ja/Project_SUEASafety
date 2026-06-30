@@ -1,9 +1,5 @@
-"use client";
-
-import dynamic from "next/dynamic";
-
-const Screen = dynamic(() => import("@/features/safety-effort/screens/SafetyAdminExportReport"), { ssr: false });
+import { redirect } from "next/navigation";
 
 export default function Page() {
-  return <Screen />;
+  redirect("/safety-admin/report-history");
 }

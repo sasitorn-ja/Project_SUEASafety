@@ -1,8 +1,7 @@
 // @ts-nocheck
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "@/lib/app-navigation";
-import { useAppTheme } from "@/providers/theme-provider";
-import SafetyEffortProgressStepper from "@/features/safety-effort/components/SafetyEffortProgressStepper";
+import { ProgressHeader } from "@/components/safety-effort/progress-mascot";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 
 // ฤฤฤ Design tokens ฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤ
@@ -402,7 +401,7 @@ const STYLES = `
 
   /* ฤฤ Panel label ฤฤ */
   .ac-panel-label {
-    font-size: 10px; font-weight: 800; color: ${T.foreground3};
+    font-size: 13px; font-weight: 800; color: ${T.foreground3};
     text-transform: uppercase; letter-spacing: 0.12em;
     font-family: 'Prompt', sans-serif;
   }
@@ -566,13 +565,13 @@ const STYLES = `
 
   /* ฤฤ Card text ฤฤ */
   .ac-card-label {
-    font-size: 14px; font-weight: 800; color: ${T.foreground};
+    font-size: 17px; font-weight: 800; color: ${T.foreground};
     line-height: 1.3; margin: 0;
     font-family: 'Prompt', sans-serif;
   }
   .ac-card.sel .ac-card-label { color: ${T.primaryDark}; }
   .ac-card-desc {
-    font-size: 11.5px; color: ${T.foreground3};
+    font-size: 14px; color: ${T.foreground3};
     line-height: 1.45; margin: 4px 0 0;
     font-weight: 500;
   }
@@ -960,7 +959,6 @@ function CustomModal({ onConfirm, onClose }) {
 
 // ฤฤฤ Main component ฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤ
 export default function Activity() {
-  const { mascot, theme } = useAppTheme();
   const navigate = useNavigate();
   const location = useLocation();
   const checkin  = location.state?.checkin ?? null;
@@ -984,6 +982,11 @@ export default function Activity() {
   }, [location.state?.activity]);
 
   const isMobile = width < 768;
+  const headerMascotAction = selected?.id === "line-walk"
+    ? "linewalkClip"
+    : selected?.id === "safety-contact"
+      ? "clipboardPost"
+      : "announce2";
 
   function handleBack() {
     if (fromCategoryAudit) {
@@ -1048,44 +1051,12 @@ export default function Activity() {
   // ฤฤ Step header (compact dashboard style matching Checkin) ฤฤ
   // ฤฤ Step header (compact dashboard style matching Category) ฤฤ
   const StepHeader = () => (
-    <div className="relative flex min-h-[100px] items-center overflow-hidden rounded-[20px] border border-[#B9DDFF]/60 bg-[#EEF7FF] px-3 py-2 shadow-[0_12px_30px_rgba(185,223,255,0.4)] sm:min-h-[116px] sm:px-[18px] sm:py-2.5 xl:min-h-[148px] xl:px-[28px] xl:py-3">
-      {/* Background image container */}
-      <div 
-        className="absolute inset-0 bg-[url('/images/heroes/safety-effort-category-hero.png')] bg-no-repeat"
-        style={{
-          backgroundSize: 'auto 108%',
-          backgroundPosition: 'right -20px bottom -5px',
-        }}
-      />
-      {/* Gradient overlay to blend the image and ensure readability */}
-      <div className="absolute inset-0 bg-gradient-to-r from-[#EEF7FF] via-[#EEF7FF]/90 sm:via-[#EEF7FF]/40 to-transparent pointer-events-none" />
-
-      {/* Main content container directly on the background (no glassmorphic inner container) */}
-      <div className="relative z-10 w-full flex items-center justify-between font-sarabun">
-        {/* Left column: Back button, Title, and Stepper info */}
-        <div className="flex flex-col items-start gap-2">
-          <div className="flex items-center gap-3">
-            <button 
-              className="flex h-8 w-8 items-center justify-center rounded-[8px] bg-white border border-[#D7EAFE] text-[#0B82F0] hover:bg-[#0B82F0] hover:text-white transition-all duration-300 active:scale-95"
-              onClick={handleBack} 
-              aria-label="ย้อนกลับ"
-            >
-              <IcoBack />
-            </button>
-            <h1 className="text-[20px] sm:text-[24px] xl:text-[26px] font-black leading-tight tracking-tight text-[#0B2F6B]">
-              เลือกหมวดกิจกรรม
-            </h1>
-          </div>
-          
-          <div className="flex flex-col items-start gap-1 mt-1 sm:mt-1.5">
-            <span className="text-[10px] sm:text-[11px] font-extrabold tracking-wider text-[#55739B] uppercase">
-              ความคืบหน้า
-            </span>
-            <SafetyEffortProgressStepper current={1} total={4} compact />
-          </div>
-        </div>
-      </div>
-    </div>
+    <ProgressHeader
+      title="เลือกหมวดกิจกรรม"
+      current={1}
+      mascotAction={headerMascotAction}
+      onBack={handleBack}
+    />
   );
 
   // ฤฤ Checkin badge (styled premium)
@@ -1154,11 +1125,11 @@ export default function Activity() {
           <div className="ac-section-heading" style={{ padding: isMobile ? "0 4px" : undefined }}>
             <div>
               <span className="ac-panel-label">เลือก 1 กิจกรรม</span>
-              <div style={{ marginTop: 1, fontSize: 13.5, fontWeight: 800, color: T.foreground, fontFamily: "'Prompt',sans-serif" }}>
+              <div style={{ marginTop: 2, fontSize: 18, fontWeight: 800, color: T.foreground, fontFamily: "'Prompt',sans-serif" }}>
                 รายการกิจกรรม
               </div>
             </div>
-            <span style={{ fontSize: 10, color: T.foreground3, fontFamily: "'Prompt',sans-serif", fontWeight: 700, background: "var(--secondary)", padding: "2px 6px", borderRadius: "6px" }}>
+            <span style={{ fontSize: 12.5, color: T.foreground3, fontFamily: "'Prompt',sans-serif", fontWeight: 700, background: "var(--secondary)", padding: "4px 8px", borderRadius: "6px" }}>
               {displayedActivities.length} รายการ
             </span>
           </div>

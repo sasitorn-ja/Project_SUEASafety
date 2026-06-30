@@ -2289,28 +2289,28 @@ export const API_CATALOG_ROUTES = [
     "method": "GET",
     "path": "/api/safety-culture/teams",
     "documentedPath": "/api/safety-culture/teams",
-    "purpose": "อ่านทีมสำหรับหน้า admin leaderboard",
+    "purpose": "อ่าน 8 ทีมถาวร จำนวนสมาชิก Coin สี และ Division ต้นทาง",
     "caller": "Admin Leaderboard",
     "whenCalled": "เปิดหน้าจัดการทีม",
     "auth": "User",
     "pagination": "No",
     "responseSizeRisk": "Small",
     "status": "Existing",
-    "notes": "อ่านจาก teams และ team_members"
+    "notes": "ทีมถูกจัดอัตโนมัติจาก users.division"
   },
   {
     "module": "Safety Culture",
     "method": "PUT",
     "path": "/api/safety-culture/teams",
     "documentedPath": "/api/safety-culture/teams",
-    "purpose": "บันทึกรายการทีมสำหรับ leaderboard",
-    "caller": "Admin Leaderboard",
-    "whenCalled": "เมื่อ admin บันทึกทีม",
+    "purpose": "ปฏิเสธการแก้ทีมถาวรด้วยมือ",
+    "caller": "Legacy clients",
+    "whenCalled": "เมื่อ client เก่าเรียกแก้ทีม",
     "auth": "Admin",
     "pagination": "No",
     "responseSizeRisk": "Small",
     "status": "Existing",
-    "notes": "upsert/soft-delete teams"
+    "notes": "ตอบ 409 fixed_teams_managed_automatically"
   },
   {
     "module": "Settings",

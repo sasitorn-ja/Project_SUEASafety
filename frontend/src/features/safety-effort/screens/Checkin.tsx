@@ -4,8 +4,7 @@ import { useLocation, useNavigate } from "@/lib/app-navigation";
 import { MapContainer, TileLayer, Marker, Popup, useMap, useMapEvents } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
-import { useAppTheme } from "@/providers/theme-provider";
-import SafetyEffortProgressStepper from "@/features/safety-effort/components/SafetyEffortProgressStepper";
+import { ProgressHeader } from "@/components/safety-effort/progress-mascot";
 import { Combobox } from "@/components/ui/combobox";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 
@@ -943,7 +942,7 @@ const STYLES = `
   }
 
   .ci-panel-label {
-    font-size: 10px; font-weight: 800; color: ${T.foreground3};
+    font-size: 13px; font-weight: 800; color: ${T.foreground3};
     text-transform: uppercase; letter-spacing: 0.12em;
     font-family: 'Prompt', sans-serif;
   }
@@ -979,7 +978,7 @@ const STYLES = `
     background: transparent !important;
     color: ${T.foreground};
     font-family: inherit;
-    font-size: 13.5px;
+    font-size: 15px;
     font-weight: 600;
     box-shadow: none !important;
     padding: 0 !important;
@@ -1026,7 +1025,7 @@ const STYLES = `
     border-radius: 8px;
     padding: 5px 12px;
     font-family: 'Prompt', 'Sarabun', sans-serif;
-    font-size: 11.5px;
+    font-size: 13px;
     font-weight: 700;
     white-space: nowrap;
     cursor: pointer;
@@ -1123,7 +1122,7 @@ const STYLES = `
   }
 
   .ci-loc-name {
-    font-size: 14px; font-weight: 800; color: ${T.foreground};
+    font-size: 16px; font-weight: 800; color: ${T.foreground};
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     margin-bottom: 2px; font-family: 'Prompt', sans-serif;
   }
@@ -1479,7 +1478,6 @@ const STYLES = `
 
 // ─── Main component ───────────────────────────────────────────────────────────
 export default function Checkin() {
-  const { mascot, theme } = useAppTheme();
   const navigate = useNavigate();
   const location = useLocation();
   const activity = location.state?.activity ?? null;
@@ -1853,7 +1851,7 @@ export default function Checkin() {
   // ── Locate Button helper component
   const LocateButton = () => (
     <button 
-      className={`flex items-center gap-1.5 h-8 rounded-[8px] px-3 font-extrabold text-[11px] font-sarabun transition-all duration-200 active:scale-95 border cursor-pointer ${
+      className={`flex h-9 items-center gap-1.5 rounded-[8px] px-3 font-sarabun text-[13px] font-extrabold transition-all duration-200 active:scale-95 border cursor-pointer ${
         locating
           ? "bg-[#0B82F0] text-white border-transparent shadow-[0_4px_10px_rgba(11,130,240,0.15)]"
           : "bg-white text-[#0B82F0] border-[#D7EAFE] shadow-[0_2px_6px_rgba(11,130,240,0.04)] hover:bg-[#0B82F0] hover:text-white"
@@ -1867,43 +1865,12 @@ export default function Checkin() {
 
   // ── Compact Sub-header (User Feedback Optimization)
   const StepHeader = () => (
-    <div className="relative flex min-h-[100px] items-center overflow-hidden rounded-[20px] border border-[#B9DDFF]/60 bg-[#EEF7FF] px-3 py-2 shadow-[0_12px_30px_rgba(185,223,255,0.4)] sm:min-h-[116px] sm:px-[18px] sm:py-2.5 xl:min-h-[148px] xl:px-[28px] xl:py-3">
-      {/* Background image container */}
-      <div 
-        className="absolute inset-0 bg-[url('/images/heroes/safety-effort-category-hero.png')] bg-no-repeat"
-        style={{
-          backgroundSize: 'auto 108%',
-          backgroundPosition: 'right -20px bottom -5px',
-        }}
-      />
-      {/* Gradient overlay to blend the image and ensure readability */}
-      <div className="absolute inset-0 bg-gradient-to-r from-[#EEF7FF] via-[#EEF7FF]/90 sm:via-[#EEF7FF]/40 to-transparent pointer-events-none" />
-
-      {/* Main content container directly on the background (no glassmorphic inner container) */}
-      <div className="relative z-10 w-full flex items-center justify-between font-sarabun">
-        {/* Left column: Back button, Title, and Stepper info */}
-        <div className="flex flex-col items-start gap-2">
-          <div className="flex items-center gap-3">
-            <button 
-              className="flex h-8 w-8 items-center justify-center rounded-[8px] bg-white border border-[#D7EAFE] text-[#0B82F0] hover:bg-[#0B82F0] hover:text-white transition-all duration-300 active:scale-95"
-              onClick={handleBack} 
-              aria-label="ย้อนกลับ"
-            >
-              <IcoBack />
-            </button>
-            <h1 className="text-[20px] sm:text-[24px] xl:text-[26px] font-black leading-tight tracking-tight text-[#0B2F6B]">
-              เช็คอินสถานที่ตรวจ
-            </h1>
-          </div>
-          <div className="flex flex-col items-start gap-1 mt-1 sm:mt-1.5">
-            <span className="text-[10px] sm:text-[11px] font-extrabold tracking-wider text-[#55739B] uppercase">
-              ความคืบหน้า
-            </span>
-            <SafetyEffortProgressStepper current={2} total={4} compact />
-          </div>
-        </div>
-      </div>
-    </div>
+    <ProgressHeader
+      title="เช็คอินสถานที่ตรวจ"
+      current={2}
+      mascotAction="radio"
+      onBack={handleBack}
+    />
   );
 
   // ── Footer Panel (revamped action drawer)
@@ -1971,13 +1938,13 @@ export default function Checkin() {
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
                   <div>
                     <span className="ci-panel-label">ใกล้คุณที่สุด</span>
-                    <div style={{ marginTop: 2, fontSize: 15, fontWeight: 800, color: T.foreground, fontFamily: "'Prompt',sans-serif" }}>
+                    <div style={{ marginTop: 3, fontSize: 18, fontWeight: 800, color: T.foreground, fontFamily: "'Prompt',sans-serif" }}>
                       เลือกสถานที่ตรวจ
                     </div>
                   </div>
                   <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                     <LocateButton />
-                    <span style={{ fontSize: 11, color: T.foreground3, fontFamily: "'Prompt',sans-serif", fontWeight: 700, background: "var(--secondary)", padding: "3px 8px", borderRadius: "6px" }}>
+                    <span style={{ fontSize: 12.5, color: T.foreground3, fontFamily: "'Prompt',sans-serif", fontWeight: 700, background: "var(--secondary)", padding: "4px 8px", borderRadius: "6px" }}>
                       {visibleLocations.length} สถานที่
                     </span>
                   </div>
@@ -2118,14 +2085,14 @@ export default function Checkin() {
                   <div style={{ marginTop: 3, fontSize: 18, fontWeight: 800, color: T.foreground, fontFamily: "'Prompt',sans-serif", lineHeight: 1.15 }}>
                     เลือกสถานที่ตรวจ
                   </div>
-                  <div style={{ marginTop: 5, fontSize: 11.5, fontWeight: 700, color: T.foreground3 }}>
+                  <div style={{ marginTop: 5, fontSize: 13.5, fontWeight: 700, color: T.foreground3 }}>
                     เลือกจากรายการใกล้คุณ หรือค้นหาสถานที่ที่ต้องการ
                   </div>
                 </div>
                 <span
                   style={{
                     flexShrink: 0,
-                    fontSize: 11,
+                    fontSize: 12.5,
                     color: "#4B6B96",
                     fontFamily: "'Prompt',sans-serif",
                     fontWeight: 800,

@@ -346,8 +346,8 @@ export default function SafetyAdminReportHistory() {
         <div style={{ flexShrink: 0 }}>
           <SafetyCultureHero
             eyebrow="SAFETY EFFORT ADMIN"
-            title={<>ประวัติการส่งรายงาน</>}
-            description="ตรวจสอบรายละเอียดการบันทึกรายงาน Linewalk / Safety Contact ค้นหา และลบข้อมูลการทำรายการในระบบ"
+            title={<>รายงานและส่งออก</>}
+            description="ตรวจสอบรายละเอียดรายงาน Line Walk / Safety Contact ค้นหาข้อมูล และส่งออก Excel จากรายการชุดเดียวกัน"
             variant="community"
             backgroundImage="/images/heroes/safety-report-history-hero.png"
             backgroundOverlay="linear-gradient(90deg, rgba(210,235,255,.82) 0%, rgba(210,235,255,.60) 32%, rgba(210,235,255,.10) 56%, rgba(210,235,255,0) 74%)"
@@ -450,7 +450,7 @@ export default function SafetyAdminReportHistory() {
                 }}
               >
                 <Download size={14} />
-                <span>Export Excel</span>
+                <span>ส่งออก Excel</span>
               </Button>
             )}
           </div>
@@ -459,7 +459,7 @@ export default function SafetyAdminReportHistory() {
           <div style={{ flex: 1, overflow: "auto", minHeight: 0 }}>
             {filtered.length === 0 ? (
               <div style={{ border: `1px dashed ${T.lineStrong}`, borderRadius: 18, padding: 32, textAlign: "center", color: T.sub, fontSize: 14 }}>
-                ไม่พบประวัติการส่งรายงานตามเงื่อนไขที่เลือก
+                ไม่พบรายงานตามเงื่อนไขที่เลือก
               </div>
             ) : !isMobile ? (
               <div style={{ overflowX: "auto", border: `1px solid ${T.line}`, borderRadius: 12 }}>

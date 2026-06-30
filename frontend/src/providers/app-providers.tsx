@@ -159,6 +159,7 @@ export type SafetyCultureFeedEvent = {
 
 export type LeaderboardTeam = {
   id: string;
+  code?: string;
   rank: number;
   name: string;
   leaderUserId?: string;
@@ -171,6 +172,7 @@ export type LeaderboardTeam = {
   percent: number;
   streak: number;
   awards: number;
+  sourceDivisions?: string[];
 };
 
 export type LeaderboardPerson = {
@@ -543,7 +545,7 @@ function normalizeTeamStandings(teams: LeaderboardTeam[]) {
   const sanitized = teams.map((team, index) => ({
     ...team,
     id: team.id || `team-${index + 1}`,
-    leader: team.leader || "Team Leader",
+    leader: team.leader || "",
     leaderUserId: team.leaderUserId ? String(team.leaderUserId) : "",
     leaderEmail: team.leaderEmail || "",
     members: Math.max(0, Number(team.members) || 0),
@@ -1729,6 +1731,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
       const maxPoints = Math.max(1, ...teamsResult.data.items.map((item) => Number(item.points || 0)));
       setTeamStandings(teamsResult.data.items.map((item, index) => ({
         id: String(item.id),
+        code: String(item.code || item.team_code || item.teamCode || ""),
         rank: index + 1,
         name: String(item.name || item.team_name || item.teamName || ""),
         leaderUserId: String(item.leader_user_id || item.leaderUserId || ""),
@@ -1741,6 +1744,9 @@ export function AppProviders({ children }: { children: ReactNode }) {
         percent: (Number(item.points || 0) / maxPoints) * 100,
         streak: Number(item.streak || 0),
         awards: Number(item.awards || 0),
+        sourceDivisions: Array.isArray(item.source_divisions || item.sourceDivisions)
+          ? (item.source_divisions || item.sourceDivisions) as string[]
+          : [],
       })));
     }
 
@@ -1919,6 +1925,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
         const maxPoints = Math.max(1, ...teamsResult.data.items.map((item) => Number(item.points || 0)));
         setTeamStandings(teamsResult.data.items.map((item, index) => ({
           id: String(item.id),
+          code: String(item.code || item.team_code || item.teamCode || ""),
           rank: index + 1,
           name: String(item.name || item.team_name || item.teamName || ""),
           leaderUserId: String(item.leader_user_id || item.leaderUserId || ""),
@@ -1931,6 +1938,9 @@ export function AppProviders({ children }: { children: ReactNode }) {
           percent: (Number(item.points || 0) / maxPoints) * 100,
           streak: Number(item.streak || 0),
           awards: Number(item.awards || 0),
+          sourceDivisions: Array.isArray(item.source_divisions || item.sourceDivisions)
+            ? (item.source_divisions || item.sourceDivisions) as string[]
+            : [],
         })));
       }
 

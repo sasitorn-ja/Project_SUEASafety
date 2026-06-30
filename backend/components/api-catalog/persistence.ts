@@ -18,6 +18,7 @@ import {
 } from "@backend/components/safety-effort/locations/repository";
 import { syncRmrPlants } from "@backend/components/safety-effort/locations/rmr-plant-sync";
 import { awardPoints } from "@backend/components/points/repository";
+import { fixedTeamByCode } from "@/lib/safety-culture-fixed-teams";
 
 type CatalogSession = {
   user?: {
@@ -1414,67 +1415,49 @@ async function handleCultureRewards(request: NextRequest, method: string, match:
   if (route === "/api/safety-culture/teams") {
     if (method === "GET") {
       const rows = await queryRows<DbRow>(
-        `SELECT t.id, t.organization_id, t.leader_user_id, t.name, t.status,
-                leader.name_th leader_name_th, leader.name_en leader_name_en,
-                leader.email leader_email, leader.employee_no leader_employee_no,
-                COUNT(tm.user_id) members,
-                COALESCE(SUM(pb.balance), 0) points
+        `SELECT t.id, t.team_code, t.organization_id, t.leader_user_id, t.name, t.status,
+                COUNT(DISTINCT member.id) members,
+                COALESCE(SUM(CASE WHEN member.id IS NOT NULL THEN pb.balance ELSE 0 END), 0) points
          FROM teams t
-         LEFT JOIN users leader ON leader.id = t.leader_user_id AND leader.deleted_at IS NULL
          LEFT JOIN team_members tm ON tm.team_id = t.id AND tm.left_at IS NULL
+         LEFT JOIN users member ON member.id = tm.user_id AND member.deleted_at IS NULL AND member.status = 'ACTIVE'
          LEFT JOIN point_balances pb ON pb.user_id = tm.user_id
-         WHERE t.deleted_at IS NULL
-         GROUP BY t.id, t.organization_id, t.leader_user_id, t.name, t.status,
-                  leader.name_th, leader.name_en, leader.email, leader.employee_no
+         WHERE t.deleted_at IS NULL AND t.status = 'ACTIVE' AND t.team_code IS NOT NULL
+         GROUP BY t.id, t.team_code, t.organization_id, t.leader_user_id, t.name, t.status
          ORDER BY points DESC, t.name`,
       );
-      return jsonData({ items: rows.map(serializeRow) });
+      const sourceRows = await queryRows<DbRow>(
+        `SELECT t.team_code, u.division, COUNT(*) members
+         FROM team_members tm
+         JOIN teams t ON t.id = tm.team_id AND t.deleted_at IS NULL AND t.status = 'ACTIVE'
+         JOIN users u ON u.id = tm.user_id AND u.deleted_at IS NULL AND u.status = 'ACTIVE'
+         WHERE tm.left_at IS NULL AND t.team_code IS NOT NULL
+         GROUP BY t.team_code, u.division
+         ORDER BY t.team_code, members DESC, u.division`,
+      );
+      const sourceDivisions = new Map<string, string[]>();
+      for (const row of sourceRows) {
+        const code = String(row.team_code || "");
+        const division = String(row.division || "").trim() || "(empty)";
+        sourceDivisions.set(code, [...(sourceDivisions.get(code) || []), division]);
+      }
+      return jsonData({
+        items: rows.map((row) => {
+          const serialized = serializeRow(row);
+          const team = fixedTeamByCode(row.team_code);
+          return {
+            ...serialized,
+            code: team.code,
+            name: team.name,
+            color: team.color,
+            display_order: team.order,
+            source_divisions: sourceDivisions.get(team.code) || [],
+          };
+        }),
+      });
     }
     if (method === "PUT") {
-      const teams = Array.isArray(input.teams) ? input.teams as JsonInput[] : [];
-      await withTransaction(async (connection) => {
-        const keepIds: string[] = [];
-        for (const team of teams) {
-          const id = Number(team.id);
-          if (Number.isFinite(id) && id > 0) {
-            await connection.execute(
-              `UPDATE teams SET name = :name, organization_id = :organizationId,
-               leader_user_id = :leaderUserId, status = :status,
-               deleted_at = NULL WHERE id = :id`,
-              {
-                id,
-                name: team.name || `Team ${id}`,
-                organizationId: team.organizationId || null,
-                leaderUserId: team.leaderUserId || null,
-                status: team.status || "ACTIVE",
-              },
-            );
-            keepIds.push(String(id));
-          } else {
-            const [result] = await connection.execute<ResultSetHeader>(
-              `INSERT INTO teams (organization_id, leader_user_id, name, status)
-               VALUES (:organizationId, :leaderUserId, :name, :status)`,
-              {
-                organizationId: team.organizationId || null,
-                leaderUserId: team.leaderUserId || null,
-                name: team.name || "New Team",
-                status: team.status || "ACTIVE",
-              },
-            );
-            keepIds.push(String(result.insertId));
-          }
-        }
-        if (keepIds.length) {
-          await connection.query(
-            "UPDATE teams SET deleted_at = UTC_TIMESTAMP(3), status = 'INACTIVE' WHERE deleted_at IS NULL AND id NOT IN (?)",
-            [keepIds],
-          );
-        } else {
-          await connection.execute("UPDATE teams SET deleted_at = UTC_TIMESTAMP(3), status = 'INACTIVE' WHERE deleted_at IS NULL");
-        }
-      });
-      const rows = await queryRows<DbRow>("SELECT * FROM teams WHERE deleted_at IS NULL ORDER BY name");
-      return jsonData({ items: rows.map(serializeRow) });
+      return jsonError("fixed_teams_managed_automatically", 409);
     }
   }
   if (route.startsWith("/api/safety-culture/events")) {
