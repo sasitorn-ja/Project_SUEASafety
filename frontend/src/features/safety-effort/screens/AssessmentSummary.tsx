@@ -368,11 +368,7 @@ export default function AssessmentSummary() {
       actions.awardSafetyEffortCompletion(savedId, `${activityLabel} สำเร็จ`);
       void persistActivityToDb(newSubmission);
       
-      if (newSubmission.isSafetyContact) {
-        navigate("/category", { replace: true });
-      } else {
-        setShowSuccessPopup(true);
-      }
+      setShowSuccessPopup(true);
     } catch (error) {
       console.error("Error saving submission", error);
 
@@ -827,10 +823,10 @@ export default function AssessmentSummary() {
 
               <div>
                 <h3 style={{ margin: 0, fontFamily: "'Prompt',sans-serif", fontSize: 20, fontWeight: 900, color: "#0e3e7d" }}>
-                  {linewalkData?.isSafetyContact ? "ส่งข้อมูลสำเร็จ" : "บันทึกเสร็จสิ้น"}
+                  บันทึกเสร็จสิ้น
                 </h3>
                 <p style={{ margin: "6px 0 0", fontFamily: "'Prompt',sans-serif", fontSize: 13.5, fontWeight: 700, color: "#5f7591", lineHeight: 1.4 }}>
-                  {linewalkData?.isSafetyContact ? "ส่งข้อมูล Safety Contact เรียบร้อยแล้ว" : "ทำบันทึกเสร็จเรียบร้อยแล้ว"}
+                  ทำบันทึกเสร็จเรียบร้อยแล้ว
                 </p>
               </div>
 

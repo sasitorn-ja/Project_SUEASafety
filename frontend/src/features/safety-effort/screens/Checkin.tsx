@@ -1989,6 +1989,7 @@ export default function Checkin() {
     : activity
       ? "/linewalk"
       : "/activity";
+  const desktopPanelHeight = "clamp(420px, calc(100dvh - 360px), 650px)";
 
   // ── Locate Button helper component
   const LocateButton = () => (
@@ -2067,8 +2068,8 @@ export default function Checkin() {
             margin: "0 auto",
             display: "flex",
             flexDirection: "column",
-            gap: 16,
-            padding: "10px 24px 40px",
+            gap: 12,
+            padding: "8px 24px 16px",
           }}>
             <div style={{
               display: "grid",
@@ -2076,7 +2077,7 @@ export default function Checkin() {
               gap: 18,
               alignItems: "stretch",
             }}>
-              <CheckinMapView height="clamp(460px, calc(100vh - 210px), 720px)" mapMounted={mapMounted} mapInstanceKey={mapInstanceKey} mapCenter={mapCenter} userPos={userPos} allLocations={allLocations} selected={selected} setSelected={setSelected} fitPoints={fitPoints} windowWidth={width} />
+              <CheckinMapView height={desktopPanelHeight} mapMounted={mapMounted} mapInstanceKey={mapInstanceKey} mapCenter={mapCenter} userPos={userPos} allLocations={allLocations} selected={selected} setSelected={setSelected} fitPoints={fitPoints} windowWidth={width} />
 
               {/* Right panel — this is the scrollable area on desktop */}
               <div style={{
@@ -2085,7 +2086,7 @@ export default function Checkin() {
                 borderRadius: "20px",
                 background: "var(--c-faf9f6)",
                 boxShadow: "0 12px 30px rgba(34,25,11,0.06)",
-                height: "clamp(460px, calc(100vh - 210px), 720px)",
+                height: desktopPanelHeight,
                 overflow: "hidden",
               }}>
                 <div className="ci-sidebar-section">
