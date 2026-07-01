@@ -78,7 +78,15 @@ function sanitizeQuestion(raw: any, fallbackIndex: number): ChecklistQuestion {
     title: String(raw?.title || `หัวข้อ ${fallbackIndex + 1}`),
     guideTitle: raw?.guideTitle === false ? false : raw?.guideTitle ? String(raw.guideTitle) : undefined,
     guidelines: Array.isArray(raw?.guidelines)
-      ? raw.guidelines.map((item: any) => String(item || "")).filter(Boolean)
+      ? raw.guidelines
+          .map((item: any) => {
+            if (!item) return "";
+            if (typeof item === "object") {
+              return String(item.text || item.guideline || item.value || JSON.stringify(item));
+            }
+            return String(item);
+          })
+          .filter(Boolean)
       : [],
     format: raw?.format === "text_box" ? "text_box" : "original",
     image: raw?.image ? String(raw.image) : undefined,

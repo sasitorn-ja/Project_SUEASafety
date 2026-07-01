@@ -337,6 +337,7 @@ export default function AdminAwarenessPage() {
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [editor, setEditor] = useState<EditorState | null>(null);
   const [pendingDeleteQuestion, setPendingDeleteQuestion] = useState<SafetyAwarenessQuestion | null>(null);
+  const [pendingDeleteHoliday, setPendingDeleteHoliday] = useState<AwarenessHoliday | null>(null);
   const [collapsedCategories, setCollapsedCategories] = useState<Record<string, boolean>>({});
   const [importOpen, setImportOpen] = useState(false);
   const [importReplace, setImportReplace] = useState(false);
@@ -422,6 +423,14 @@ export default function AdminAwarenessPage() {
     if (!pendingDeleteQuestion) return;
     deleteQuestion(pendingDeleteQuestion.id);
     setPendingDeleteQuestion(null);
+  };
+
+  const confirmDeleteHoliday = () => {
+    if (!pendingDeleteHoliday) return;
+    updateAwarenessHolidays(
+      awarenessHolidays.filter((item) => item.date !== pendingDeleteHoliday.date),
+    );
+    setPendingDeleteHoliday(null);
   };
 
   const toggleCategoryCollapsed = (category: string, defaultCollapsed: boolean) => {
@@ -908,34 +917,13 @@ export default function AdminAwarenessPage() {
                                 <td className="px-4 py-2.5">
                                   <div className="flex items-center justify-center gap-2">
                                     <button
-                                      type="button"
-                                      title="แก้ไขวันไม่นับ"
-                                      onClick={() => {
-                                        const newName = prompt("แก้ไขชื่อวันหยุด", holiday.name);
-                                        if (newName && newName.trim() && newName.trim() !== holiday.name) {
-                                          updateAwarenessHolidays(
-                                            awarenessHolidays.map((item) =>
-                                              item.date === holiday.date ? { ...item, name: newName.trim() } : item
-                                            )
-                                          );
-                                        }
-                                      }}
-                                      className="inline-flex h-8 w-8 items-center justify-center rounded-xl border border-[#CFE3F4] bg-white text-[#0B82F0] hover:bg-[#F0F7FF] transition-colors cursor-pointer"
-                                    >
-                                      <Pencil className="h-4 w-4" />
-                                    </button>
-                                    <button
-                                      type="button"
-                                      title="ลบวันไม่นับ"
-                                      onClick={() =>
-                                        updateAwarenessHolidays(
-                                          awarenessHolidays.filter((item) => item.date !== holiday.date),
-                                        )
-                                      }
-                                      className="inline-flex h-8 w-8 items-center justify-center rounded-xl border border-[#ECCDC6] bg-white text-[#B3271A] hover:bg-[#FBE3DF] transition-colors cursor-pointer"
-                                    >
-                                      <Trash2 className="h-4 w-4" />
-                                    </button>
+                                        type="button"
+                                        title="ลบวันไม่นับ"
+                                        onClick={() => setPendingDeleteHoliday(holiday)}
+                                        className="inline-flex h-8 w-8 items-center justify-center rounded-xl border border-[#ECCDC6] bg-white text-[#B3271A] hover:bg-[#FBE3DF] transition-colors cursor-pointer"
+                                      >
+                                        <Trash2 className="h-4 w-4" />
+                                      </button>
                                   </div>
                                 </td>
                               </tr>
@@ -1057,29 +1045,29 @@ export default function AdminAwarenessPage() {
                     const isCollapsed = collapsedCategories[category] ?? categoryIndex > 0;
 
                     return (
-                      <div key={category} className="border-b border-[#D7EAFE] last:border-b-0">
-                        <div className="flex items-center gap-2 bg-white px-3 py-2.5 md:px-4">
-                          <button
-                            type="button"
-                            onClick={() => toggleCategoryCollapsed(category, categoryIndex > 0)}
-                            className="flex h-8 w-8 items-center justify-center rounded-full border border-[#B9E0FF] bg-[#F5FAFF] text-[#0B82F0] hover:bg-[#EAF6FF]"
-                            aria-label={`สลับการแสดงหมวด ${category}`}
+                      <div key={category} className="border-b border-[#E2E8F0] last:border-b-0">
+                        <div
+                          onClick={() => toggleCategoryCollapsed(category, categoryIndex > 0)}
+                          className="flex cursor-pointer items-center gap-2 bg-[#F1F5F9] px-3 py-2.5 md:px-4 hover:bg-[#E2E8F0] transition-colors select-none"
+                        >
+                          <div
+                            className="flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 shadow-sm"
                           >
                             <ChevronDown
                               className={cn(
-                                "h-4 w-4 transition-transform",
+                                "h-4 w-4 transition-transform text-slate-600",
                                 isCollapsed ? "-rotate-90" : "rotate-0"
                               )}
                               strokeWidth={2.4}
                             />
-                          </button>
+                          </div>
                           <div className="min-w-0 flex-1">
-                            <h3 className="truncate text-[13.5px] font-black text-[#0B2F6B]">{category}</h3>
+                            <h3 className="truncate text-[13.5px] font-black text-black">{category}</h3>
                             <p className="text-[11px] font-bold text-[#55739B]">
                               เปิดใช้งาน {items.filter((item) => item.enabled).length} / {items.length} ข้อ
                             </p>
                           </div>
-                          <Badge className="rounded-full border border-[#B9E0FF] bg-[#EAF6FF] px-2.5 py-1 text-[10.5px] font-black text-[#0B82F0]">
+                          <Badge className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-[10.5px] font-black text-slate-700 shadow-sm hover:bg-slate-50">
                             {items.length} ข้อ
                           </Badge>
                         </div>
@@ -1325,6 +1313,42 @@ export default function AdminAwarenessPage() {
               className="h-9 rounded-xl bg-[#b3271a] px-4 text-[12.5px] font-black text-white hover:bg-[#962113]"
             >
               ลบคำถาม
+            </Button>
+          </AppDialogSectionFooter>
+        </AppDialogContent>
+      </Dialog>
+
+      <Dialog open={!!pendingDeleteHoliday} onOpenChange={(open) => !open && setPendingDeleteHoliday(null)}>
+        <AppDialogContent size="sm">
+          <AppDialogSectionHeader>
+            <AppDialogTitle className="text-[#b3271a]">ยืนยันการลบวันไม่นับ</AppDialogTitle>
+            <AppDialogDescription>
+              หากยืนยัน วันที่หยุดนี้จะไม่แสดงในรายการและจะไม่ถูกเว้นจากการนับ Coin อีกต่อไป
+            </AppDialogDescription>
+          </AppDialogSectionHeader>
+
+          {pendingDeleteHoliday ? (
+            <AppDialogBody>
+              <div className="rounded-xl border border-[#eccdc6] bg-[#fff8f6] px-4 py-3">
+                <div className="text-[14px] font-black text-[#0B2F6B]">
+                  {formatFullThaiDate(pendingDeleteHoliday.date)}
+                </div>
+                {pendingDeleteHoliday.name && (
+                  <div className="mt-1 text-[13px] font-bold text-[#55739B]">
+                    วันหยุด: {pendingDeleteHoliday.name}
+                  </div>
+                )}
+              </div>
+            </AppDialogBody>
+          ) : null}
+
+          <AppDialogSectionFooter>
+            <Button
+              type="button"
+              onClick={confirmDeleteHoliday}
+              className="h-9 rounded-xl bg-[#b3271a] px-4 text-[12.5px] font-black text-white hover:bg-[#962113]"
+            >
+              ยืนยัน
             </Button>
           </AppDialogSectionFooter>
         </AppDialogContent>
