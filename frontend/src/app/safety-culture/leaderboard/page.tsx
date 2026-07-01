@@ -220,15 +220,6 @@ export default function LeaderboardPage() {
                     <p className="mt-0.5 truncate text-[11px] font-bold text-[var(--brand-muted-text)] md:text-[12px]">
                       {team.members} สมาชิก
                     </p>
-                    <div className="mt-1.5 flex items-center gap-1.5">
-                      <div className="h-[5px] min-w-0 flex-1 overflow-hidden rounded-full bg-[var(--secondary)]">
-                        <div
-                          className="h-full rounded-full transition-[width] duration-1000 ease-out"
-                          style={{ width: mounted ? `${team.percent}%` : "0%", backgroundColor: themedColor(team.color) }}
-                        />
-                      </div>
-                      <span className="flex-shrink-0 text-[10px] font-black" style={{ color: themedColor(team.color) }}>{Math.round(team.percent)}%</span>
-                    </div>
                   </div>
 
                   {/* points */}
