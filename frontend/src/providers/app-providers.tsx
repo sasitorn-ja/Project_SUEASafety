@@ -1675,7 +1675,8 @@ export function AppProviders({ children }: { children: ReactNode }) {
   const postsRef = useRef<Post[]>([]);
   const demoModeRef = useRef(false);
   const lastLiveRefreshAtRef = useRef(0);
-  const likeRequestStateRef = useRef<Record<string, { inFlight: boolean; desiredLiked: boolean | null }>>({});
+  const likeRequestStateRef = useRef<Record<string, { inFlight: boolean }>>({});
+  const likeCooldownUntilRef = useRef<Record<string, number>>({});
   const resolvePostApiId = useCallback((postId: number | string) => {
     const key = String(postId);
     const post = postsRef.current.find((item) => String(item.id) === key || item.apiId === key);
@@ -2323,14 +2324,14 @@ export function AppProviders({ children }: { children: ReactNode }) {
     const requestKey = String(postId);
     const targetPost = postsRef.current.find((post) => post.id === localPostId || post.apiId === requestKey);
     if (!targetPost) return;
+    const requestState = likeRequestStateRef.current[requestKey] || { inFlight: false };
+    const now = Date.now();
+    if (requestState.inFlight || (likeCooldownUntilRef.current[requestKey] || 0) > now) return;
+    requestState.inFlight = true;
+    likeRequestStateRef.current[requestKey] = requestState;
+    likeCooldownUntilRef.current[requestKey] = now + 800;
 
-    const occurredAt = Date.now();
     const isAdding = !targetPost.hasLiked;
-    const linkedFeedEvent = getLinkedFeedEvent(targetPost.feedEventId);
-    const awarded = linkedFeedEvent
-      ? calculateFeedEventAwardedPoints(getSafetyPoint("reactionCreated"), "reaction", linkedFeedEvent)
-      : calculateAwardedPoints(getSafetyPoint("reactionCreated"), "reaction", safetyCultureEvent);
-    const currentDelta = isAdding ? awarded : -awarded;
 
     const nextPosts = postsRef.current.map((post) =>
       post.id === localPostId || post.apiId === requestKey
@@ -2338,105 +2339,66 @@ export function AppProviders({ children }: { children: ReactNode }) {
             ...post,
             hasLiked: isAdding,
             likes: isAdding ? post.likes + 1 : Math.max(0, post.likes - 1),
-            points: Math.max(0, (post.points || 0) + currentDelta),
           }
         : post
     );
     postsRef.current = nextPosts;
     setPosts(nextPosts);
-
-    if (isAdding) {
-      setUserActivityHistory((current) =>
-        normalizeUserActivityHistory([
-          {
-            id: `activity-reaction-${postId}-${occurredAt}`,
-            type: "reaction",
-            occurredAt,
-            postId: targetPost.id,
-            postAuthor: targetPost.author,
-            postCategory: targetPost.category,
-            postPreview: targetPost.body,
-            pointsDelta: Math.max(0, currentDelta),
-          },
-          ...current,
-        ])
-      );
-    }
-
-    if (currentDelta !== 0) {
-      setCurrentUserPoints((prev) => Math.max(0, prev + currentDelta));
-    }
     if (isAuthenticatedRef.current) {
-      const nextDesiredLiked = isAdding;
-      const requestState = likeRequestStateRef.current[requestKey] || { inFlight: false, desiredLiked: null };
-      requestState.desiredLiked = nextDesiredLiked;
-      likeRequestStateRef.current[requestKey] = requestState;
-
-      if (requestState.inFlight) return;
-
-      requestState.inFlight = true;
       void (async () => {
         try {
-          while (true) {
-            const activeState = likeRequestStateRef.current[requestKey];
-            const desiredLiked = activeState?.desiredLiked;
-            if (!activeState || typeof desiredLiked !== "boolean") break;
+          const apiPostId = resolvePostApiId(postId);
+          const result = await apiFetch(
+            `/api/safety-culture/posts/${apiPostId}/reactions`,
+            apiJson(isAdding ? "POST" : "DELETE", { reactionType: "LIKE" })
+          );
 
-            activeState.desiredLiked = null;
-            const apiPostId = resolvePostApiId(postId);
-            const result = await apiFetch(
-              `/api/safety-culture/posts/${apiPostId}/reactions`,
-              apiJson(desiredLiked ? "POST" : "DELETE", { reactionType: "LIKE" })
+          const syncedPostResult = await apiFetch<{ post: ApiPost }>(`/api/safety-culture/posts/${apiPostId}`);
+          const syncedPostBase = syncedPostResult.ok && syncedPostResult.data?.post
+            ? postFromApi(syncedPostResult.data.post)
+            : null;
+
+          if (syncedPostBase) {
+            setPosts((current) => {
+              const syncedPosts = current.map((post) =>
+                post.id === localPostId
+                || post.apiId === requestKey
+                  ? {
+                      ...post,
+                      likes: syncedPostBase.likes,
+                      hasLiked: syncedPostBase.hasLiked,
+                      likedBy: syncedPostBase.likedBy,
+                      points: syncedPostBase.points,
+                    }
+                  : post
+              );
+              postsRef.current = syncedPosts;
+              return syncedPosts;
+            });
+          } else if (!result.ok) {
+            const revertedPosts = postsRef.current.map((post) =>
+              post.id === localPostId || post.apiId === requestKey
+                ? {
+                    ...post,
+                    hasLiked: targetPost.hasLiked,
+                    likes: targetPost.likes,
+                    points: targetPost.points,
+                    likedBy: targetPost.likedBy,
+                  }
+                : post
             );
-
-            const syncedPostResult = await apiFetch<{ post: ApiPost }>(`/api/safety-culture/posts/${apiPostId}`);
-            const syncedPostBase = syncedPostResult.ok && syncedPostResult.data?.post
-              ? postFromApi(syncedPostResult.data.post)
-              : null;
-
-            if (
-              syncedPostBase
-              && (activeState.desiredLiked === null || activeState.desiredLiked === syncedPostBase.hasLiked)
-            ) {
-              // Keep only the server-owned reaction fields in sync so the card
-              // doesn't jump around when users tap the heart repeatedly.
-              setPosts((current) => {
-                const syncedPosts = current.map((post) =>
-                  post.id === localPostId
-                  || post.apiId === requestKey
-                    ? {
-                        ...post,
-                        likes: syncedPostBase.likes,
-                        hasLiked: syncedPostBase.hasLiked,
-                        likedBy: syncedPostBase.likedBy,
-                        points: syncedPostBase.points,
-                      }
-                    : post
-                );
-                postsRef.current = syncedPosts;
-                return syncedPosts;
-              });
-            }
-
-            await Promise.all([refreshInboxNotifications(), refreshPointBalance()]);
-            if (!result.ok || !syncedPostBase) break;
-            if (activeState.desiredLiked === null || activeState.desiredLiked === syncedPostBase.hasLiked) {
-              activeState.desiredLiked = null;
-              break;
-            }
+            postsRef.current = revertedPosts;
+            setPosts(revertedPosts);
           }
+
+          await Promise.all([refreshInboxNotifications(), refreshPointBalance()]);
         } finally {
           const activeState = likeRequestStateRef.current[requestKey];
-          if (activeState) {
-            activeState.inFlight = false;
-            if (activeState.desiredLiked === null) {
-              delete likeRequestStateRef.current[requestKey];
-            }
-          }
+          if (activeState) activeState.inFlight = false;
         }
       })();
     }
-  }, [getLinkedFeedEvent, refreshInboxNotifications, refreshPointBalance, resolvePostApiId, safetyCultureEvent]);
+  }, [refreshInboxNotifications, refreshPointBalance, resolvePostApiId]);
 
   const fetchComments = useCallback(async (postId: number | string) => {
     const localPostId = Number(postId);

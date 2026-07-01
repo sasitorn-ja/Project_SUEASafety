@@ -750,14 +750,16 @@ export async function setReaction(postId: string, userId: string, reactionType =
     }
   });
 
-  await awardPoints({
-    userId,
-    action: "reactionCreated",
-    sourceType: "REACTION",
-    sourceId: postId,
-    idempotencyKey: `reaction:${postId}:${userId}`,
-    description: "Reaction",
-  }).catch(() => null);
+  if (!ownerId || ownerId !== String(userId)) {
+    await awardPoints({
+      userId,
+      action: "reactionCreated",
+      sourceType: "REACTION",
+      sourceId: postId,
+      idempotencyKey: `reaction:${postId}:${userId}`,
+      description: "Reaction",
+    }).catch(() => null);
+  }
 
   if (createdNewReaction) {
     const reactionRule = await getPointRule("reactionCreated").catch(() => null);

@@ -160,6 +160,7 @@ export default function SafetyCulturePostDetailPage() {
   const [fullscreenPhotoIndex, setFullscreenPhotoIndex] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [likePending, setLikePending] = useState(false);
   const [commentReactionState, setCommentReactionState] = useState<Record<string, { selected: string | null; counts: Record<string, number> }>>({});
   const [openCommentReactionPicker, setOpenCommentReactionPicker] = useState<string | null>(null);
   const viewerId = sessionUser?.id ?? sessionUser?.sub ?? null;
@@ -198,6 +199,14 @@ export default function SafetyCulturePostDetailPage() {
     void loadPost();
   }, [loadPost]);
 
+  useEffect(() => {
+    const syncedPost = localPosts.find((item) => Number(item.id) === postId);
+    if (syncedPost) {
+      setPost(syncedPost);
+      if (Array.isArray(syncedPost.comments)) setComments(syncedPost.comments);
+    }
+  }, [localPosts, postId]);
+
   const photos = useMemo(() => post?.photos.filter((photo) => photo.dataUrl) ?? [], [post]);
   const selectedPhoto = photos[selectedPhotoIndex] || photos[0] || null;
   const commentCount = comments.length || (post && !Array.isArray(post.comments) ? post.comments : 0) || 0;
@@ -218,14 +227,16 @@ export default function SafetyCulturePostDetailPage() {
   }, [photos.length, selectedPhotoIndex]);
 
   const handleLike = () => {
-    if (!post) return;
+    if (!post || likePending) return;
     const nextLiked = !post.hasLiked;
+    setLikePending(true);
     setPost({
       ...post,
       hasLiked: nextLiked,
       likes: nextLiked ? post.likes + 1 : Math.max(0, post.likes - 1),
     });
     toggleLike(post.apiId || post.id);
+    window.setTimeout(() => setLikePending(false), 900);
   };
 
   const handleCommentSubmit = async () => {
@@ -417,12 +428,12 @@ export default function SafetyCulturePostDetailPage() {
 
               <div className="flex items-center justify-between border-t border-[rgba(228,212,184,0.82)] pt-3">
                 <div className="flex items-center gap-3">
-                  <Button variant="ghost" size="sm" onClick={handleLike} className="h-auto gap-1.5 px-0 py-0 text-[14px] font-black text-[#65676b] hover:bg-transparent">
-                    <ThumbsUp className={cn("h-[19px] w-[19px]", post.hasLiked && "fill-[#65676b]")} strokeWidth={2.2} />
+                  <Button variant="ghost" size="sm" onClick={handleLike} disabled={likePending} className="h-auto gap-1.5 px-0 py-0 text-[14px] font-black text-[#65676b] hover:bg-transparent disabled:opacity-60">
+                    <ThumbsUp className={cn("h-[22px] w-[22px]", post.hasLiked && "fill-[#65676b]")} strokeWidth={2.2} />
                     <span>{post.likes}</span>
                   </Button>
                   <div className="inline-flex items-center gap-1.5 text-[14px] font-black text-[#5f7591]">
-                    <MessageCircle className="h-[19px] w-[19px]" strokeWidth={2.2} />
+                    <MessageCircle className="h-[22px] w-[22px]" strokeWidth={2.2} />
                     <span>{commentCount}</span>
                   </div>
                 </div>

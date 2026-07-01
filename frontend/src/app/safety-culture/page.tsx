@@ -1136,7 +1136,7 @@ export default function Page() {
                         onClick={() => toggleLike(post.id)}
                         className="h-auto gap-1.5 rounded-lg px-0 py-0 text-[13.5px] font-black text-[#65676b] hover:bg-transparent hover:text-[#65676b] active:translate-y-0!"
                       >
-                        <ThumbsUp className={cn("h-[18px] w-[18px] text-[#65676b]", post.hasLiked && "fill-[#65676b]")} strokeWidth={2.2} />
+                        <ThumbsUp className={cn("h-[22px] w-[22px] text-[#65676b]", post.hasLiked && "fill-[#65676b]")} strokeWidth={2.2} />
                       </Button>
                       <button
                         type="button"
@@ -1152,7 +1152,7 @@ export default function Page() {
                         onClick={() => handleToggleComments(post)}
                         className="h-auto gap-1.5 rounded-lg px-0 py-0 text-[13.5px] font-black text-[#5f7591] hover:bg-transparent hover:text-foreground"
                       >
-                        <MessageCircle className="h-[18px] w-[18px] text-[#5f7591]" strokeWidth={2.2} />
+                        <MessageCircle className="h-[22px] w-[22px] text-[#5f7591]" strokeWidth={2.2} />
                         <span style={{ color: "#5f7591" }}>{commentCount}</span>
                       </Button>
                       <Link
