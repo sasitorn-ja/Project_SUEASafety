@@ -725,6 +725,28 @@ const STYLES = `
     -webkit-font-smoothing: antialiased;
   }
 
+  @media (min-width: 768px) {
+    .page-content:has(.ci) {
+      height: calc(100dvh - var(--topbar-h));
+      min-height: 0;
+      overflow: hidden;
+      padding-bottom: 0 !important;
+    }
+  }
+
+  @media (max-width: 767px) {
+    .app-shell-root:has(.ci) .mobile-bottom-nav {
+      display: none !important;
+    }
+
+    .page-content:has(.ci) {
+      height: 100dvh;
+      min-height: 0;
+      overflow: hidden;
+      padding-bottom: 0 !important;
+    }
+  }
+
   .ci-workspace {
     flex: 1;
     min-height: 0;
@@ -1498,6 +1520,20 @@ const STYLES = `
       padding: 12px;
       min-height: 50px;
     }
+    .ci-mobile-action-bar .ci-footer-panel {
+      border-top: 0;
+      border-radius: 0;
+      background: transparent;
+      box-shadow: none;
+      backdrop-filter: none;
+      -webkit-backdrop-filter: none;
+      padding: 0;
+    }
+    .ci-mobile-action-bar .ci-add-btn {
+      border-color: rgba(14,15,18,0.10);
+      background: rgba(255,255,255,0.72);
+      box-shadow: none;
+    }
     .ci-location-header {
       display: grid;
       grid-template-columns: minmax(max-content, 1fr) auto;
@@ -1989,7 +2025,6 @@ export default function Checkin() {
     : activity
       ? "/linewalk"
       : "/activity";
-  const desktopPanelHeight = "clamp(420px, calc(100dvh - 360px), 650px)";
 
   // ── Locate Button helper component
   const LocateButton = () => (
@@ -2044,13 +2079,20 @@ export default function Checkin() {
   return (
     <div
       className="ci"
-      style={{ height: isMobile ? "100%" : "auto", minHeight: "100%", background: T.background, display: "flex", flexDirection: "column" }}
+      style={{
+        height: "100%",
+        minHeight: isMobile ? "100%" : 0,
+        background: T.background,
+        display: "flex",
+        flexDirection: "column",
+        overflow: isMobile ? "visible" : "hidden",
+      }}
     >
       <style>{STYLES}</style>
 
       {/* ── Desktop layout ──────────────────────────────────────────────── */}
       {!isMobile && (
-        <>
+        <div style={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column" }}>
           <div style={{
             width: "100%",
             maxWidth: 1500,
@@ -2059,6 +2101,7 @@ export default function Checkin() {
             flexDirection: "column",
             gap: 16,
             padding: "8px 20px 0",
+            flexShrink: 0,
           }}>
             <StepHeader />
           </div>
@@ -2070,14 +2113,18 @@ export default function Checkin() {
             flexDirection: "column",
             gap: 12,
             padding: "8px 24px 16px",
+            flex: 1,
+            minHeight: 0,
           }}>
             <div style={{
               display: "grid",
               gridTemplateColumns: "minmax(0, 1.45fr) minmax(460px, 0.9fr)",
               gap: 18,
               alignItems: "stretch",
+              flex: 1,
+              minHeight: 0,
             }}>
-              <CheckinMapView height={desktopPanelHeight} mapMounted={mapMounted} mapInstanceKey={mapInstanceKey} mapCenter={mapCenter} userPos={userPos} allLocations={allLocations} selected={selected} setSelected={setSelected} fitPoints={fitPoints} windowWidth={width} />
+              <CheckinMapView height="100%" mapMounted={mapMounted} mapInstanceKey={mapInstanceKey} mapCenter={mapCenter} userPos={userPos} allLocations={allLocations} selected={selected} setSelected={setSelected} fitPoints={fitPoints} windowWidth={width} />
 
               {/* Right panel — this is the scrollable area on desktop */}
               <div style={{
@@ -2086,7 +2133,7 @@ export default function Checkin() {
                 borderRadius: "20px",
                 background: "var(--c-faf9f6)",
                 boxShadow: "0 12px 30px rgba(34,25,11,0.06)",
-                height: desktopPanelHeight,
+                minHeight: 0,
                 overflow: "hidden",
               }}>
                 <div className="ci-sidebar-section">
@@ -2207,7 +2254,7 @@ export default function Checkin() {
               </div>
             </div>
           </div>
-        </>
+        </div>
       )}
 
       {/* ── Mobile layout ───────────────────────────────────────────────── */}
@@ -2217,7 +2264,7 @@ export default function Checkin() {
           <div
             id="ci-mobile-scroll-area"
             className="ci-list"
-            style={{ flex: 1, overflowY: "auto", display: "flex", flexDirection: "column", background: "var(--c-faf9f6)", padding: "12px", gap: 12 }}
+            style={{ flex: 1, minHeight: 0, overflowY: "auto", display: "flex", flexDirection: "column", background: "var(--c-faf9f6)", padding: "12px", gap: 12 }}
           >
             <StepHeader />
 
@@ -2345,10 +2392,13 @@ export default function Checkin() {
           </div>
 
           <div
+            className="ci-mobile-action-bar"
             style={{
               flexShrink: 0,
               background: "var(--c-faf9f6)",
-              padding: "0 12px calc(10px + env(safe-area-inset-bottom))",
+              borderTop: "1px solid rgba(14,15,18,0.08)",
+              boxShadow: "0 -6px 18px rgba(14,15,18,0.06)",
+              padding: "10px 12px calc(10px + env(safe-area-inset-bottom))",
             }}
           >
             <FooterPanel />
