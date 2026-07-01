@@ -125,6 +125,43 @@ const HOME_HERO_SLIDES = [
   },
 ] as const;
 
+type HomeHeroSlide = {
+  id: string;
+  imageSrc: string;
+  eyebrow: string;
+  title: string;
+  description: string;
+};
+
+function normalizeHomeHeroSlides(value: unknown): HomeHeroSlide[] {
+  let parsedValue = value;
+  if (typeof parsedValue === "string") {
+    try {
+      parsedValue = JSON.parse(parsedValue);
+    } catch {
+      parsedValue = null;
+    }
+  }
+  const raw = parsedValue && typeof parsedValue === "object" && "slides" in parsedValue
+    ? (parsedValue as { slides?: unknown }).slides
+    : parsedValue;
+  if (!Array.isArray(raw)) return [...HOME_HERO_SLIDES];
+  const slides = raw
+    .map((item, index) => {
+      const record = item && typeof item === "object" ? item as Record<string, unknown> : {};
+      const fallback = HOME_HERO_SLIDES[index % HOME_HERO_SLIDES.length];
+      return {
+        id: String(record.id || fallback.id || `home-hero-${index + 1}`),
+        imageSrc: String(record.imageSrc || fallback.imageSrc || HERO_BG),
+        eyebrow: String(record.eyebrow || fallback.eyebrow || ""),
+        title: String(record.title || fallback.title || "Safety Caring"),
+        description: String(record.description || fallback.description || ""),
+      };
+    })
+    .filter((slide) => slide.title.trim() || slide.description.trim() || slide.imageSrc.trim());
+  return slides.length > 0 ? slides : [...HOME_HERO_SLIDES];
+}
+
 function bangkokDateKey(date: Date) {
   const parts = new Intl.DateTimeFormat("en-CA", {
     timeZone: "Asia/Bangkok",
@@ -201,7 +238,7 @@ export default function SafePlusDashboard() {
   const [effortYear, setEffortYear] = useState(currentYear);
   const [effortMonthlyCounts, setEffortMonthlyCounts] = useState<Array<{ month: string; linewalk: number; contact: number }>>([]);
   const [effortYearOptions, setEffortYearOptions] = useState<number[]>([currentYear]);
-  const [awarenessCalendarMode, setAwarenessCalendarMode] = useState<"done" | "missed" | null>(null);
+  const [awarenessCalendarMode, setAwarenessCalendarMode] = useState<"all" | "done" | "missed" | null>(null);
 
   const activeEvents = useMemo(
     () => feedEvents.filter((event) => event.published && event.status === "open"),
@@ -211,7 +248,7 @@ export default function SafePlusDashboard() {
     () => (activeEvents.length > 0 ? activeEvents : isDemoLogin ? DEMO_ACTIVITY_EVENTS : []),
     [activeEvents, isDemoLogin],
   );
-  const heroBannerSlides = HOME_HERO_SLIDES;
+  const [heroBannerSlides, setHeroBannerSlides] = useState<HomeHeroSlide[]>([...HOME_HERO_SLIDES]);
   const [activeHeroIndex, setActiveHeroIndex] = useState(0);
 
   const awarenessUserStartDate = useMemo(() => {
@@ -234,6 +271,19 @@ export default function SafePlusDashboard() {
     } catch {
       setIsDemoLogin(false);
     }
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    void apiFetch<{ setting: { setting_value?: unknown } | null }>("/api/safety-settings?key=home_hero_slides").then((result) => {
+      if (cancelled || !result.ok) return;
+      const nextSlides = normalizeHomeHeroSlides(result.data?.setting?.setting_value);
+      setHeroBannerSlides(nextSlides);
+      setActiveHeroIndex((current) => Math.min(current, nextSlides.length - 1));
+    });
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   useEffect(() => {
@@ -457,7 +507,7 @@ export default function SafePlusDashboard() {
     return `${start} - ${end}`;
   }, [awarenessEnabled, awarenessScheduleEndDate, awarenessScheduleStartDate]);
 
-  const openAwarenessCalendar = (mode: "done" | "missed") => {
+  const openAwarenessCalendar = (mode: "all" | "done" | "missed") => {
     setAwarenessCalendarMode(mode);
     setAwarenessCalendarMonth(awarenessCalendarMinMonth);
   };
@@ -751,12 +801,20 @@ export default function SafePlusDashboard() {
                   </span>
                 </div>
                 <div className="mt-1 flex flex-wrap items-center gap-1.5 text-[8.5px] font-bold leading-tight text-[#6b7f9e] sm:text-[9px]">
-                  <span className="rounded-full bg-white px-2 py-0.5 shadow-[inset_0_0_0_1px_rgba(185,216,251,.9)]">
-                    ช่วงกิจกรรม: {awarenessScheduleLabel}
-                  </span>
-                  <span className="rounded-full bg-white px-2 py-0.5 shadow-[inset_0_0_0_1px_rgba(185,216,251,.9)]">
-                    เวลา: {awarenessActiveStartTime || "00:00"} - {awarenessActiveEndTime || "23:59"} น.
-                  </span>
+                  {awarenessEnabled ? (
+                    <>
+                      <span className="rounded-full bg-white px-2 py-0.5 shadow-[inset_0_0_0_1px_rgba(185,216,251,.9)]">
+                        ช่วงกิจกรรม: {awarenessScheduleLabel}
+                      </span>
+                      <span className="rounded-full bg-white px-2 py-0.5 shadow-[inset_0_0_0_1px_rgba(185,216,251,.9)]">
+                        เวลา: {awarenessActiveStartTime || "00:00"} - {awarenessActiveEndTime || "23:59"} น.
+                      </span>
+                    </>
+                  ) : (
+                    <span className="rounded-full bg-white px-2 py-0.5 text-[#9a6a00] shadow-[inset_0_0_0_1px_rgba(185,216,251,.9)]">
+                      ช่วงกิจกรรม: ปิดใช้งาน
+                    </span>
+                  )}
                 </div>
                 <div className="mt-0.5 flex items-end gap-2">
                   <strong className="text-[25px] font-black leading-none text-[#0b3572] sm:text-[22px]">{dashboardData.completionRate}%</strong>
@@ -770,27 +828,19 @@ export default function SafePlusDashboard() {
                 </div>
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-2 sm:grid-cols-[repeat(2,minmax(110px,1fr))]">
-              {([
-                { value: String(dashboardData.done), label: "ทำแล้ว", danger: false },
-                { value: String(dashboardData.missed), label: "ไม่ได้ทำ", danger: true },
-              ] as const).map(({ value, label, danger }) => (
-                <button
-                  key={label}
-                  type="button"
-                  onClick={() => openAwarenessCalendar(danger ? "missed" : "done")}
-                  className={cn(
-                    "flex min-h-[48px] flex-col items-center justify-center rounded-[14px] border px-2.5 text-center shadow-[inset_0_1px_0_rgba(255,255,255,.65)] transition-transform hover:-translate-y-[1px] sm:min-h-[50px] sm:rounded-[15px] sm:px-3",
-                    danger
-                      ? "border-[#ffc7c2] bg-[#fff3f1] text-[#da3127]"
-                      : "border-[#c5dcf8] bg-[#f3f8ff] text-[#0b3572]",
-                  )}
-                >
-                  <strong className="text-[17px] font-black leading-none sm:text-[18px]">{value}</strong>
-                  <span className={cn("mt-0.5 text-[8.5px] font-extrabold sm:text-[9px]", danger ? "text-[#da3127]/85" : "text-[#4a6fa5]")}>{label}</span>
-                </button>
-              ))}
-            </div>
+            <button
+              type="button"
+              onClick={() => openAwarenessCalendar("all")}
+              className="flex min-h-[52px] flex-col items-center justify-center rounded-[15px] border border-[#c5dcf8] bg-white px-4 text-center text-[#0b3572] shadow-[inset_0_1px_0_rgba(255,255,255,.65)] transition-transform hover:-translate-y-[1px] sm:min-h-[54px] sm:px-5"
+            >
+              <span className="inline-flex items-center gap-1.5 text-[12px] font-black">
+                <CalendarDays className="h-4 w-4" strokeWidth={2.6} />
+                ปฏิทิน Safety Awareness
+              </span>
+              <span className="mt-1 text-[9px] font-extrabold text-[#5d7599]">
+                ทำแล้ว {dashboardData.done} วัน · ไม่ได้ทำ {dashboardData.missed} วัน
+              </span>
+            </button>
           </div>
 
           <div className="rounded-[16px] border border-[#dbe9fa] bg-[#f9fbff] p-1.5">
@@ -1124,7 +1174,11 @@ export default function SafePlusDashboard() {
         <AppDialogContent size="md" className="max-w-[560px]">
           <AppDialogSectionHeader className="border-[#d7e6f6] bg-[linear-gradient(135deg,#ffffff_0%,#f4f9ff_56%,#eaf4ff_100%)]">
             <AppDialogTitle className="text-[#0b3572]">
-              {awarenessCalendarMode === "done" ? "ปฏิทินวันที่ทำ Safety Awareness แล้ว" : "ปฏิทินวันที่ไม่ได้ทำ Safety Awareness"}
+              {awarenessCalendarMode === "done"
+                ? "ปฏิทินวันที่ทำ Safety Awareness แล้ว"
+                : awarenessCalendarMode === "missed"
+                  ? "ปฏิทินวันที่ไม่ได้ทำ Safety Awareness"
+                  : "ปฏิทิน Safety Awareness"}
             </AppDialogTitle>
             <AppDialogDescription>
               ตัวเลขด้านบนนับสะสมตั้งแต่วันเริ่มต้นถึงวันนี้ ส่วนปฏิทินนี้จะแสดงสถานะทุกวันที่นับ KPI
@@ -1164,7 +1218,11 @@ export default function SafePlusDashboard() {
                 </div>
               ))}
               {awarenessCalendarDays.map((day) => {
-                const emphasized = awarenessCalendarMode === "done" ? day.isDone : day.isMissed;
+                const emphasized = awarenessCalendarMode === "all"
+                  ? day.isDone || day.isMissed
+                  : awarenessCalendarMode === "done"
+                    ? day.isDone
+                    : day.isMissed;
                 return (
                   <div
                     key={day.dateKey}
@@ -1174,7 +1232,7 @@ export default function SafePlusDashboard() {
                       day.isToday
                         ? "border-[#0b82f0] bg-[#e8f4ff] text-[#0b3572]"
                         : emphasized
-                          ? awarenessCalendarMode === "done"
+                          ? awarenessCalendarMode !== "missed" && day.isDone
                             ? "border-[#7fd7a4] bg-[#ebfbf1] text-[#13814a]"
                             : "border-[#ffc8c2] bg-[#fff3f1] text-[#c9352b]"
                           : day.required

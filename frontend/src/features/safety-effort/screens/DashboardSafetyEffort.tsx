@@ -5,10 +5,12 @@ import {
   AlertTriangle,
   BarChart3,
   Building2,
+  Calendar,
   CheckCircle2,
   Factory,
   MapPinned,
   ShieldCheck,
+  Speech,
 } from "lucide-react";
 import {
   Bar,
@@ -65,6 +67,10 @@ type LinewalkOverview = {
   summary: OverviewSummary;
   byLocationType: LocationTypeRow[];
   byBusinessUnit: BusinessUnitRow[];
+  activityComparison?: {
+    linewalk: number;
+    safetyContact: number;
+  };
 };
 
 const CHART_COLORS = {
@@ -90,6 +96,21 @@ function formatNumber(value: number) {
 
 function percent(value: number) {
   return `${Number(value || 0).toFixed(1)}%`;
+}
+
+function getBangkokDateKey(date = new Date()) {
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Bangkok",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(date);
+}
+
+function getBangkokMonthStartKey(date = new Date()) {
+  const todayKey = getBangkokDateKey(date);
+  const [year, month] = todayKey.split("-");
+  return `${year}-${month}-01`;
 }
 
 function DashboardCard({
@@ -125,15 +146,27 @@ export default function DashboardSafetyEffort() {
   const [overview, setOverview] = useState<LinewalkOverview | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [dateFrom, setDateFrom] = useState(() => getBangkokMonthStartKey());
+  const [dateTo, setDateTo] = useState(() => getBangkokDateKey());
+  const dateRangeInvalid = Boolean(dateFrom && dateTo && dateFrom > dateTo);
 
   useEffect(() => {
     let cancelled = false;
 
     (async () => {
+      if (dateRangeInvalid) {
+        setOverview(null);
+        setLoading(false);
+        setError("วันที่เริ่มต้นต้องไม่มากกว่าวันที่สิ้นสุด");
+        return;
+      }
       setLoading(true);
       setError(null);
       try {
-        const response = await fetch("/api/safety-effort/reports/linewalk-overview", {
+        const params = new URLSearchParams();
+        if (dateFrom) params.set("from", dateFrom);
+        if (dateTo) params.set("to", dateTo);
+        const response = await fetch(`/api/safety-effort/reports/linewalk-overview?${params.toString()}`, {
           credentials: "include",
           cache: "no-store",
         });
@@ -155,7 +188,7 @@ export default function DashboardSafetyEffort() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [dateFrom, dateRangeInvalid, dateTo]);
 
   const summary = overview?.summary ?? {
     submissions: 0,
@@ -212,6 +245,12 @@ export default function DashboardSafetyEffort() {
   );
 
   const strongestBusinessUnit = businessUnitChartData[0];
+  const activityComparison = overview?.activityComparison ?? { linewalk: 0, safetyContact: 0 };
+  const activityChartData = [
+    { name: "Linewalk", value: activityComparison.linewalk, color: "#0B82F0" },
+    { name: "Safety Contact", value: activityComparison.safetyContact, color: "#22C55E" },
+  ];
+  const leadingActivity = [...activityChartData].sort((a, b) => b.value - a.value)[0];
 
   return (
     <div className="page-shell-wide bg-[radial-gradient(circle_at_top_left,rgba(11,130,240,0.08),transparent_28%),linear-gradient(180deg,#F7FBFF_0%,#EEF6FF_100%)] px-3 pt-3 pb-8 font-sarabun sm:px-4 lg:px-5">
@@ -232,9 +271,71 @@ export default function DashboardSafetyEffort() {
                 หน้านี้สรุปเฉพาะข้อมูลที่ต้องใช้จริง 3 มุมมอง ได้แก่ พื้นที่การตรวจ สถานะความปลอดภัยตามหมวด และความปลอดภัยแยกตามโรงงานจากข้อมูล BU ที่อ้างอิง
                 <span className="font-black text-[#0B82F0]"> DIVISION_NAME</span>
               </p>
+              <div className="mt-4 inline-flex items-center gap-2 rounded-full border border-[#D7EAFE] bg-white px-3 py-2 text-[12px] font-black text-[#5B7594]">
+                <Calendar className="h-4 w-4 text-[#0B82F0]" />
+                ช่วงวันที่ {dateFrom || "-"} ถึง {dateTo || "-"}
+              </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-3">
+              <div className="rounded-[24px] border border-[#D7EAFE] bg-white/95 p-4 shadow-[0_10px_24px_rgba(11,130,240,0.06)]">
+                <div className="mb-3 flex items-center gap-2">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-[14px] bg-[#EAF6FF] text-[#0B82F0]">
+                    <Calendar className="h-4.5 w-4.5" />
+                  </div>
+                  <div>
+                    <div className="text-[13px] font-black text-[#0B2F6B]">เลือกช่วงเวลา Dashboard</div>
+                    <div className="text-[11.5px] font-bold text-[#6E86A5]">ทุกกราฟจะเปลี่ยนตามช่วงวันที่นี้</div>
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  <label className="block">
+                    <div className="mb-1.5 text-[11px] font-black text-[#6E86A5]">วันที่เริ่มต้น</div>
+                    <input
+                      type="date"
+                      value={dateFrom}
+                      onChange={(event) => setDateFrom(event.target.value)}
+                      className="h-11 w-full rounded-2xl border border-[#CFE2F6] bg-[#F9FCFF] px-3 text-[13px] font-black text-[#0B2F6B] outline-none transition focus:border-[#0B82F0] focus:ring-2 focus:ring-[#DCEEFF]"
+                    />
+                  </label>
+                  <label className="block">
+                    <div className="mb-1.5 text-[11px] font-black text-[#6E86A5]">วันที่สิ้นสุด</div>
+                    <input
+                      type="date"
+                      value={dateTo}
+                      onChange={(event) => setDateTo(event.target.value)}
+                      className="h-11 w-full rounded-2xl border border-[#CFE2F6] bg-[#F9FCFF] px-3 text-[13px] font-black text-[#0B2F6B] outline-none transition focus:border-[#0B82F0] focus:ring-2 focus:ring-[#DCEEFF]"
+                    />
+                  </label>
+                </div>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setDateFrom(getBangkokMonthStartKey());
+                      setDateTo(getBangkokDateKey());
+                    }}
+                    className="h-10 rounded-full border border-[#BFD9F6] bg-[#F5FAFF] px-4 text-[12px] font-black text-[#0B82F0]"
+                  >
+                    เดือนปัจจุบัน
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setDateFrom("");
+                      setDateTo(getBangkokDateKey());
+                    }}
+                    className="h-10 rounded-full border border-[#D7EAFE] bg-white px-4 text-[12px] font-black text-[#5B7594]"
+                  >
+                    ดูทั้งหมดถึงวันนี้
+                  </button>
+                </div>
+                {dateRangeInvalid && (
+                  <div className="mt-3 text-[12px] font-black text-[#D92D20]">วันที่เริ่มต้นต้องไม่มากกว่าวันที่สิ้นสุด</div>
+                )}
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
               <div className="rounded-[22px] border border-[#D7EAFE] bg-white/95 p-4 shadow-[0_10px_24px_rgba(11,130,240,0.06)]">
                 <div className="text-[11px] font-black uppercase tracking-[0.14em] text-[#7B93B2]">Line walk ทั้งหมด</div>
                 <div className="mt-2 text-[28px] font-black leading-none text-[#0B2F6B]">{formatNumber(summary.totalLinewalk)}</div>
@@ -255,6 +356,7 @@ export default function DashboardSafetyEffort() {
                 <div className="mt-2 text-[28px] font-black leading-none text-[#E35549]">{formatNumber(summary.unsafe)}</div>
                 <div className="mt-2 text-[12px] font-bold text-[#5B7594]">รวม Unsafe Action และ Unsafe Condition</div>
               </div>
+            </div>
             </div>
           </div>
         </section>
@@ -327,6 +429,61 @@ export default function DashboardSafetyEffort() {
                       </div>
                     </div>
                   ))}
+                </div>
+              </div>
+            </DashboardCard>
+
+            <DashboardCard
+              title="เปรียบเทียบจำนวน Linewalk / Safety Contact"
+              description="ดูว่ากิจกรรมประเภทไหนถูกทำมากกว่ากันจากข้อมูลรวมในระบบ"
+              icon={<Speech className="h-5 w-5" strokeWidth={2.3} />}
+            >
+              <div className="grid gap-5 lg:grid-cols-[0.95fr_1.05fr] lg:items-center">
+                <div className="rounded-[22px] border border-[#DCEBFA] bg-[linear-gradient(135deg,#F9FCFF_0%,#EEF6FF_100%)] p-4">
+                  <div className="text-[11px] font-black uppercase tracking-[0.14em] text-[#7B93B2]">กิจกรรมที่มากกว่า</div>
+                  <div className="mt-2 text-[24px] font-black leading-tight text-[#0B2F6B]">{leadingActivity?.name || "-"}</div>
+                  <div className="mt-2 text-[13px] font-bold text-[#5B7594]">
+                    {leadingActivity ? `จำนวน ${formatNumber(leadingActivity.value)} ครั้ง` : "ยังไม่มีข้อมูล"}
+                  </div>
+                  <div className="mt-4 grid grid-cols-2 gap-3">
+                    {activityChartData.map((item) => (
+                      <div key={item.name} className="rounded-[18px] border border-[#D7EAFE] bg-white px-4 py-3">
+                        <div className="text-[12px] font-black text-[#5B7594]">{item.name}</div>
+                        <div className="mt-1 text-[22px] font-black" style={{ color: item.color }}>
+                          {formatNumber(item.value)}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="h-[320px] w-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={activityChartData} margin={{ top: 10, right: 10, left: 10, bottom: 0 }}>
+                      <CartesianGrid stroke="#E6F0FA" vertical={false} />
+                      <XAxis dataKey="name" tick={{ fill: "#5B7594", fontSize: 12, fontWeight: 700 }} axisLine={false} tickLine={false} />
+                      <YAxis tick={{ fill: "#5B7594", fontSize: 12, fontWeight: 700 }} axisLine={false} tickLine={false} />
+                      <Tooltip
+                        formatter={(value: number) => [`${formatNumber(Number(value))} ครั้ง`, "จำนวนทำรายการ"]}
+                        contentStyle={{
+                          borderRadius: 16,
+                          border: "1px solid #D7EAFE",
+                          boxShadow: "0 12px 30px rgba(8,59,132,0.10)",
+                        }}
+                      />
+                      <Bar dataKey="value" radius={[12, 12, 0, 0]} barSize={56}>
+                        {activityChartData.map((entry) => (
+                          <Cell key={entry.name} fill={entry.color} />
+                        ))}
+                        <LabelList
+                          dataKey="value"
+                          position="top"
+                          formatter={(value: number) => formatNumber(value)}
+                          style={{ fill: "#0B2F6B", fontSize: 12, fontWeight: 900 }}
+                        />
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
                 </div>
               </div>
             </DashboardCard>

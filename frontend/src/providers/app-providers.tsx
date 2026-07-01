@@ -1673,8 +1673,9 @@ export function AppProviders({ children }: { children: ReactNode }) {
   const [eventNow, setEventNow] = useState(0);
   const postsRef = useRef<Post[]>([]);
   const lastLiveRefreshAtRef = useRef(0);
-  const likeRequestStateRef = useRef<Record<string, { inFlight: boolean }>>({});
+  const likeRequestStateRef = useRef<Record<string, { inFlight: boolean; pendingLiked?: boolean }>>({});
   const likeCooldownUntilRef = useRef<Record<string, number>>({});
+  const delayedPointRefreshRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const resolvePostApiId = useCallback((postId: number | string) => {
     const key = String(postId);
     const post = postsRef.current.find((item) => String(item.id) === key || item.apiId === key);
@@ -1689,6 +1690,14 @@ export function AppProviders({ children }: { children: ReactNode }) {
   useEffect(() => {
     postsRef.current = posts;
   }, [posts]);
+
+  useEffect(() => {
+    return () => {
+      if (delayedPointRefreshRef.current) {
+        clearTimeout(delayedPointRefreshRef.current);
+      }
+    };
+  }, []);
 
   const getLinkedFeedEvent = useCallback(
     (feedEventId?: string) => {
@@ -1805,6 +1814,17 @@ export function AppProviders({ children }: { children: ReactNode }) {
 
     return leaderboardResult.ok && teamsResult.ok;
   }, []);
+
+  const schedulePointRefresh = useCallback(() => {
+    if (delayedPointRefreshRef.current) {
+      clearTimeout(delayedPointRefreshRef.current);
+    }
+    delayedPointRefreshRef.current = setTimeout(() => {
+      delayedPointRefreshRef.current = null;
+      void refreshPointBalance();
+      void refreshLeaderboardState(currentUserRef.current);
+    }, 1200);
+  }, [refreshLeaderboardState, refreshPointBalance]);
 
   const refreshAwarenessAttempts = useCallback(async () => {
     const attemptsResult = await apiFetch<{ items: ApiAwarenessAttempt[] }>("/api/safety-awareness/attempts/me?pageSize=120");
@@ -2289,7 +2309,24 @@ export function AppProviders({ children }: { children: ReactNode }) {
     if (!targetPost) return;
     const requestState = likeRequestStateRef.current[requestKey] || { inFlight: false };
     const now = Date.now();
-    if (requestState.inFlight || (likeCooldownUntilRef.current[requestKey] || 0) > now) return;
+    if (requestState.inFlight) {
+      const pendingIsAdding = !targetPost.hasLiked;
+      const pendingPosts = postsRef.current.map((post) =>
+        post.id === localPostId || post.apiId === requestKey
+          ? {
+              ...post,
+              hasLiked: pendingIsAdding,
+              likes: pendingIsAdding ? post.likes + 1 : Math.max(0, post.likes - 1),
+            }
+          : post
+      );
+      postsRef.current = pendingPosts;
+      setPosts(pendingPosts);
+      requestState.pendingLiked = pendingIsAdding;
+      likeRequestStateRef.current[requestKey] = requestState;
+      return;
+    }
+    if ((likeCooldownUntilRef.current[requestKey] || 0) > now) return;
     requestState.inFlight = true;
     likeRequestStateRef.current[requestKey] = requestState;
     likeCooldownUntilRef.current[requestKey] = now + 800;
@@ -2354,14 +2391,56 @@ export function AppProviders({ children }: { children: ReactNode }) {
             setPosts(revertedPosts);
           }
 
-          await Promise.all([refreshInboxNotifications(), refreshPointBalance()]);
+          await refreshInboxNotifications();
+          schedulePointRefresh();
         } finally {
           const activeState = likeRequestStateRef.current[requestKey];
-          if (activeState) activeState.inFlight = false;
+          const pendingLiked = activeState?.pendingLiked;
+          if (activeState) {
+            activeState.inFlight = false;
+            delete activeState.pendingLiked;
+          }
+          if (typeof pendingLiked === "boolean") {
+            activeState!.inFlight = true;
+            void (async () => {
+              try {
+                const apiPostId = resolvePostApiId(postId);
+                await apiFetch(
+                  `/api/safety-culture/posts/${apiPostId}/reactions`,
+                  apiJson(pendingLiked ? "POST" : "DELETE", { reactionType: "LIKE" })
+                );
+                const syncedPostResult = await apiFetch<{ post: ApiPost }>(`/api/safety-culture/posts/${apiPostId}`);
+                const syncedPostBase = syncedPostResult.ok && syncedPostResult.data?.post
+                  ? postFromApi(syncedPostResult.data.post)
+                  : null;
+                if (syncedPostBase) {
+                  setPosts((current) => {
+                    const syncedPosts = current.map((post) =>
+                      post.id === localPostId || post.apiId === requestKey
+                        ? {
+                            ...post,
+                            likes: syncedPostBase.likes,
+                            hasLiked: syncedPostBase.hasLiked,
+                            likedBy: syncedPostBase.likedBy,
+                            points: syncedPostBase.points,
+                          }
+                        : post
+                    );
+                    postsRef.current = syncedPosts;
+                    return syncedPosts;
+                  });
+                }
+                schedulePointRefresh();
+              } finally {
+                const latestState = likeRequestStateRef.current[requestKey];
+                if (latestState) latestState.inFlight = false;
+              }
+            })();
+          }
         }
       })();
     }
-  }, [refreshInboxNotifications, refreshPointBalance, resolvePostApiId]);
+  }, [refreshInboxNotifications, resolvePostApiId, schedulePointRefresh]);
 
   const fetchComments = useCallback(async (postId: number | string) => {
     const localPostId = Number(postId);

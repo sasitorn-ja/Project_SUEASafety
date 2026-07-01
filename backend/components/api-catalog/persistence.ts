@@ -1778,6 +1778,21 @@ async function handleCultureRewards(request: NextRequest, method: string, match:
       teamId = String(memberships[0]?.team_id || "");
     }
 
+    if (!teamId) {
+      const fallbackTeams = await queryRows<DbRow>(
+        `SELECT t.id
+         FROM teams t
+         LEFT JOIN team_members tm ON tm.team_id = t.id AND tm.left_at IS NULL
+         LEFT JOIN point_balances pb ON pb.user_id = tm.user_id
+         WHERE t.deleted_at IS NULL
+           AND t.status = 'ACTIVE'
+         GROUP BY t.id
+         ORDER BY COALESCE(SUM(pb.balance), 0) DESC, COUNT(tm.user_id) DESC, t.name
+         LIMIT 1`,
+      );
+      teamId = String(fallbackTeams[0]?.id || "");
+    }
+
     if (!teamId) return jsonData({ items: [] });
 
     const rows = await queryRows<DbRow>(
@@ -2545,6 +2560,35 @@ async function handleImportsReportsAudit(request: NextRequest, method: string, m
         `,
         legacyParams,
       );
+      const activityParams: Record<string, unknown> = {};
+      const activityWhere = [
+        "s.deleted_at IS NULL",
+        "s.activity_type IN ('LINE_WALK', 'SAFETY_CONTACT')",
+        ...linewalkSubmissionDateFilters(request, activityParams),
+      ];
+      const activityRows = await queryRows<DbRow>(
+        `
+          SELECT
+            s.activity_type,
+            COUNT(*) AS total
+          FROM safety_effort_submissions s
+          WHERE ${activityWhere.join(" AND ")}
+          GROUP BY s.activity_type
+        `,
+        activityParams,
+      );
+      const legacyActivityParams: Record<string, unknown> = {};
+      const legacyActivityWhere = legacySafetyOldMonthFilters(request, legacyActivityParams);
+      const legacyActivityRows = await queryRows<DbRow>(
+        `
+          SELECT
+            SUM(COALESCE(so.LineWalk_Count, 0)) AS legacy_linewalk,
+            SUM(COALESCE(so.SafetyContact_Count, 0)) AS legacy_contact
+          FROM safety_old so
+          ${legacyActivityWhere.length > 0 ? `WHERE ${legacyActivityWhere.join(" AND ")}` : ""}
+        `,
+        legacyActivityParams,
+      );
       const correctiveParams: Record<string, unknown> = {};
       const correctiveWhere = [
         "sf.deleted_at IS NULL",
@@ -2623,11 +2667,9 @@ async function handleImportsReportsAudit(request: NextRequest, method: string, m
 
         if (normalizedType === "PLANT") {
           const code = String(row.location_code || "");
-          const locationSource = String(row.location_source || "").toUpperCase();
           const plantMeta = plantBusinessUnitMap.get(code);
-          const businessUnit = locationSource === "LOCATION_HUB_PLANT"
-            ? plantMeta?.divisionName || plantMeta?.factName || "ไม่ระบุ BU โรงงาน"
-            : String(row.selected_location_name_snapshot || "ไม่ระบุ BU โรงงาน");
+          const businessUnitFromMaster = String(plantMeta?.divisionName || plantMeta?.factName || "").trim();
+          const businessUnit = businessUnitFromMaster || String(row.selected_location_name_snapshot || "ไม่ระบุ BU โรงงาน");
           const buBucket = byBusinessUnitMap.get(businessUnit) || {
             name: businessUnit,
             submissions: 0,
@@ -2705,6 +2747,20 @@ async function handleImportsReportsAudit(request: NextRequest, method: string, m
         },
         { completed: 0, pending: 0, overdue: 0, total: 0 },
       );
+      const currentActivityComparison = activityRows.reduce(
+        (acc, row) => {
+          const count = Number(row.total || 0);
+          if (String(row.activity_type || "").toUpperCase() === "SAFETY_CONTACT") acc.safetyContact += count;
+          else acc.linewalk += count;
+          return acc;
+        },
+        { linewalk: 0, safetyContact: 0 },
+      );
+      const legacyActivityTotals = legacyActivityRows[0] || {};
+      const activityComparison = {
+        linewalk: currentActivityComparison.linewalk + Number(legacyActivityTotals.legacy_linewalk || 0),
+        safetyContact: currentActivityComparison.safetyContact + Number(legacyActivityTotals.legacy_contact || 0),
+      };
 
       return jsonData({
         summary: {
@@ -2716,6 +2772,7 @@ async function handleImportsReportsAudit(request: NextRequest, method: string, m
         byLocationType: [...byLocationType, ...legacyLocationBucket],
         byBusinessUnit: limitedByBusinessUnit,
         correctiveActions,
+        activityComparison,
       });
     }
     if (route === "/api/safety-effort/reports/by-user") {

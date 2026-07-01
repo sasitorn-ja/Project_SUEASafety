@@ -146,6 +146,12 @@ export function getDefaultMenu(): MenuNode[] {
           description: "ดูภาพรวม Dashboard ของระบบความปลอดภัย",
         }),
         n({
+          label: "Home Hero",
+          href: "/safety-culture/admin-home",
+          icon: "Megaphone",
+          description: "เปลี่ยนคำประกาศและรูป Hero เฉพาะหน้า Home",
+        }),
+        n({
           label: "Safety Awareness",
           href: "/safety-culture/admin-awareness",
           icon: "ShieldCheck",
@@ -270,6 +276,7 @@ function applyAdminMenuLabels(adminNode: MenuNode) {
   }
 
   rename("/dashboard", "Dashboard", "ดูภาพรวม Dashboard ของระบบความปลอดภัย", "LayoutDashboard");
+  rename("/safety-culture/admin-home", "Home Hero", "เปลี่ยนคำประกาศและรูป Hero เฉพาะหน้า Home", "Megaphone");
   rename("/safety-culture/admin-awareness", "Safety Awareness", "จัดการวัน KPI และคลังคำถาม Safety Awareness", "ShieldCheck");
   rename("/category", "Safety Effort", undefined, "ShieldCheck");
   rename("/safety-admin", "แบบประเมิน", "เพิ่ม แก้ไข และจัดลำดับหัวข้อ Linewalk / Safety Contact", "Settings2");
@@ -327,6 +334,21 @@ export function loadMenu(): MenuNode[] {
                 href: "/dashboard",
                 icon: "LayoutDashboard",
                 description: "ดูภาพรวม Dashboard ของระบบความปลอดภัย",
+              })
+            );
+            updated = true;
+          }
+
+          if (!findNodeByHref(adminNode.children, "/safety-culture/admin-home")) {
+            const dashboardIndex = adminNode.children.findIndex((child) => child.href === "/dashboard");
+            adminNode.children.splice(
+              dashboardIndex >= 0 ? dashboardIndex + 1 : 0,
+              0,
+              n({
+                label: "Home Hero",
+                href: "/safety-culture/admin-home",
+                icon: "Megaphone",
+                description: "เปลี่ยนคำประกาศและรูป Hero เฉพาะหน้า Home",
               })
             );
             updated = true;
@@ -431,6 +453,7 @@ export function loadMenu(): MenuNode[] {
           // Dashboard → Safety Awareness → Safety Effort → Safety Culture → ตั้งค่า Coin → จัดการผู้ใช้ฯ
           const DESIRED_ADMIN_ORDER = [
             "/dashboard",
+            "/safety-culture/admin-home",
             "/safety-culture/admin-awareness",
             "/category",
             "/safety-culture",

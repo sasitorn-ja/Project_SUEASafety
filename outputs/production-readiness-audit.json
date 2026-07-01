@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-01T12:05:12.340Z",
+  "generatedAt": "2026-07-01T13:31:45.694Z",
   "overall": {
     "current": 85,
     "target": 92
@@ -415,7 +415,7 @@
     },
     {
       "file": "frontend/src/features/safety-effort/screens/DashboardSafetyEffort.tsx",
-      "path": "/api/safety-effort/reports/linewalk-overview"
+      "path": "/api/safety-effort/reports/linewalk-overview?${params.toString()}"
     },
     {
       "file": "frontend/src/features/safety-effort/screens/Linewalk.tsx",
