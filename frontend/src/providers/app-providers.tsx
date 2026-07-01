@@ -1628,6 +1628,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
   const [eventNow, setEventNow] = useState(0);
   const postsRef = useRef<Post[]>([]);
   const demoModeRef = useRef(false);
+  const likeRequestStateRef = useRef<Record<number, { inFlight: boolean; desiredLiked: boolean | null }>>({});
 
   const [mounted, setMounted] = useState(false);
   useEffect(() => {
@@ -2197,13 +2198,11 @@ export function AppProviders({ children }: { children: ReactNode }) {
   const toggleLike = useCallback((postId: number) => {
     let currentDelta = 0;
     let likedPost: Post | null = null;
-    let previousPost: Post | null = null;
     const occurredAt = Date.now();
 
     setPosts((prev) =>
       prev.map((p) => {
         if (p.id !== postId) return p;
-        previousPost = p;
         const isAdding = !p.hasLiked;
         const linkedFeedEvent = getLinkedFeedEvent(p.feedEventId);
         const awarded = linkedFeedEvent
@@ -2246,38 +2245,67 @@ export function AppProviders({ children }: { children: ReactNode }) {
       setCurrentUserPoints((prev) => Math.max(0, prev + currentDelta));
     }
     if (isAuthenticatedRef.current) {
-      void apiFetch(`/api/safety-culture/posts/${postId}/reactions`, apiJson(currentDelta > 0 ? "POST" : "DELETE", { reactionType: "LIKE" }))
-        .then(async (result) => {
-          if (result.ok) {
-            const syncedPostResult = await apiFetch<{ post: ApiPost }>(`/api/safety-culture/posts/${postId}`);
-            if (!syncedPostResult.ok || !syncedPostResult.data?.post) return;
+      const nextDesiredLiked = currentDelta > 0;
+      const requestState = likeRequestStateRef.current[postId] || { inFlight: false, desiredLiked: null };
+      requestState.desiredLiked = nextDesiredLiked;
+      likeRequestStateRef.current[postId] = requestState;
 
-            // Reconcile only the reaction fields with the server. Replacing the
-            // whole post (and reloading its comments) on every tap made the card
-            // visibly "jump"; the optimistic update already keeps the rest in sync.
-            const syncedPostBase = postFromApi(syncedPostResult.data.post);
-            setPosts((current) =>
-              current.map((post) =>
-                post.id === postId
-                  ? {
-                      ...post,
-                      likes: syncedPostBase.likes,
-                      hasLiked: syncedPostBase.hasLiked,
-                      likedBy: syncedPostBase.likedBy,
-                    }
-                  : post
-              )
+      if (requestState.inFlight) return;
+
+      requestState.inFlight = true;
+      void (async () => {
+        try {
+          while (true) {
+            const activeState = likeRequestStateRef.current[postId];
+            const desiredLiked = activeState?.desiredLiked;
+            if (!activeState || typeof desiredLiked !== "boolean") break;
+
+            activeState.desiredLiked = null;
+            const result = await apiFetch(
+              `/api/safety-culture/posts/${postId}/reactions`,
+              apiJson(desiredLiked ? "POST" : "DELETE", { reactionType: "LIKE" })
             );
-            await Promise.all([refreshInboxNotifications(), refreshPointBalance()]);
-            return;
-          }
 
-          const rollbackPost = previousPost;
-          if (rollbackPost) {
-            setPosts((current) => current.map((post) => (post.id === postId ? rollbackPost : post)));
-            setCurrentUserPoints((points) => Math.max(0, points - currentDelta));
+            const syncedPostResult = await apiFetch<{ post: ApiPost }>(`/api/safety-culture/posts/${postId}`);
+            const syncedPostBase = syncedPostResult.ok && syncedPostResult.data?.post
+              ? postFromApi(syncedPostResult.data.post)
+              : null;
+
+            if (syncedPostBase) {
+              // Keep only the server-owned reaction fields in sync so the card
+              // doesn't jump around when users tap the heart repeatedly.
+              setPosts((current) =>
+                current.map((post) =>
+                  post.id === postId
+                    ? {
+                        ...post,
+                        likes: syncedPostBase.likes,
+                        hasLiked: syncedPostBase.hasLiked,
+                        likedBy: syncedPostBase.likedBy,
+                        points: syncedPostBase.points,
+                      }
+                    : post
+                )
+              );
+            }
+
+            await Promise.all([refreshInboxNotifications(), refreshPointBalance()]);
+            if (!result.ok || !syncedPostBase) break;
+            if (activeState.desiredLiked === null || activeState.desiredLiked === syncedPostBase.hasLiked) {
+              activeState.desiredLiked = null;
+              break;
+            }
           }
-        });
+        } finally {
+          const activeState = likeRequestStateRef.current[postId];
+          if (activeState) {
+            activeState.inFlight = false;
+            if (activeState.desiredLiked === null) {
+              delete likeRequestStateRef.current[postId];
+            }
+          }
+        }
+      })();
     }
   }, [getLinkedFeedEvent, refreshInboxNotifications, refreshPointBalance, safetyCultureEvent]);
 

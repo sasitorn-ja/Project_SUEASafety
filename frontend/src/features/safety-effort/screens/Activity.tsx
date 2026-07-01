@@ -840,9 +840,9 @@ const STYLES = `
 // ฤฤฤ Activity card ฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤ
 function ActivityCard({ activity, isSelected, onClick }) {
   const cardImage = activity.id === "line-walk"
-    ? "/images/heroes/Contact.png"
+    ? "/images/heroes/linewalk-activity-card.png"
     : activity.id === "safety-contact"
-    ? "/images/heroes/Linewalk.png"
+    ? "/images/heroes/safety-contact-activity-card.png"
     : "/images/heroes/safety-location-admin-hero.png";
 
   return (
