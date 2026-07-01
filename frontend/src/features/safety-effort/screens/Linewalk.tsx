@@ -554,6 +554,8 @@ export default function Linewalk() {
 
   const isFirstRender = useRef(true);
   const uploadInputRefs = useRef({});
+  const questionStepperRef = useRef(null);
+  const questionStepRefs = useRef({});
   useEffect(() => {
     if (isFirstRender.current) {
       isFirstRender.current = false;
@@ -748,6 +750,18 @@ export default function Linewalk() {
   const isMobileQuestionScreen = isMobileViewport && isQuestionScreen && !isSafetyContactFlow;
   const mobileQuestionNavColumns = totalItems <= 8 ? totalItems : Math.min(5, totalItems);
   const linewalkMascotAction = isSafetyContactFlow ? "clipboardPost" : "linewalkClip";
+
+  useEffect(() => {
+    if (!isMobileQuestionScreen) return;
+    const container = questionStepperRef.current;
+    const item = questionStepRefs.current[currentQuestionIndex];
+    if (!container || !item) return;
+
+    container.scrollTo({
+      left: Math.max(0, item.offsetLeft - 12),
+      behavior: "smooth",
+    });
+  }, [currentQuestionIndex, isMobileQuestionScreen, totalItems]);
 
   useEffect(() => {
     const handleResize = () => setIsMobileViewport(window.innerWidth <= 480);
@@ -1165,6 +1179,7 @@ export default function Linewalk() {
               </div>}
 
               <div
+                ref={questionStepperRef}
                 className="no-scrollbar"
                 style={{
                   display: "flex",
@@ -1222,6 +1237,10 @@ export default function Linewalk() {
                   return (
                     <div
                       key={item.id}
+                      ref={(node) => {
+                        if (node) questionStepRefs.current[idx] = node;
+                        else delete questionStepRefs.current[idx];
+                      }}
                       style={{
                         display: "flex",
                         flexDirection: "column",
