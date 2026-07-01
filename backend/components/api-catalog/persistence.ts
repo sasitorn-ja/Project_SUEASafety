@@ -16,7 +16,7 @@ import {
   parseLocationInput,
   updateSafetyEffortLocation,
 } from "@backend/components/safety-effort/locations/repository";
-import { buildRmrPlantBusinessUnitMap } from "@backend/components/safety-effort/locations/rmc-location-search";
+import { buildLocationHubPlantBusinessUnitMap } from "@backend/components/safety-effort/locations/location-hub-search";
 import { awardPoints } from "@backend/components/points/repository";
 import { fixedTeamByCode } from "@/lib/safety-culture-fixed-teams";
 
@@ -2309,7 +2309,7 @@ async function handleImportsReportsAudit(request: NextRequest, method: string, m
         legacyParams,
       );
 
-      const plantBusinessUnitMap = await buildRmrPlantBusinessUnitMap().catch(() => new Map<string, { divisionName: string; factName: string }>());
+      const plantBusinessUnitMap = await buildLocationHubPlantBusinessUnitMap().catch(() => new Map<string, { divisionName: string; factName: string }>());
       const locationTypeMap = new Map<string, {
         locationType: string;
         name: string;
@@ -2367,7 +2367,7 @@ async function handleImportsReportsAudit(request: NextRequest, method: string, m
           const code = String(row.location_code || "");
           const locationSource = String(row.location_source || "").toUpperCase();
           const plantMeta = plantBusinessUnitMap.get(code);
-          const businessUnit = locationSource === "RMR_SSO_PLANT"
+          const businessUnit = locationSource === "LOCATION_HUB_PLANT"
             ? plantMeta?.divisionName || plantMeta?.factName || "ไม่ระบุ BU โรงงาน"
             : String(row.selected_location_name_snapshot || "ไม่ระบุ BU โรงงาน");
           const buBucket = byBusinessUnitMap.get(businessUnit) || {

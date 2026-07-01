@@ -44,6 +44,7 @@ export type Comment = {
 
 export type Post = {
   id: number;
+  apiId?: string;
   author: string;
   avatarBg: string;
   avatarColor: string;
@@ -250,13 +251,13 @@ type AppActions = {
   markAllInboxNotificationsRead: () => void;
   addPost: (post: Post) => Promise<Post>;
   fetchPosts: (options?: { scope?: "all" | "my-team" | "mine"; category?: string | null; limit?: number }) => Promise<Post[]>;
-  toggleLike: (postId: number) => void;
-  addComment: (postId: number, text: string) => Promise<boolean>;
-  fetchComments: (postId: number) => Promise<Comment[]>;
-  updateComment: (postId: number, commentId: string, text: string) => Promise<boolean>;
-  deleteComment: (postId: number, commentId: string) => Promise<boolean>;
-  updatePost: (postId: number, content: string) => Promise<boolean>;
-  deletePost: (postId: number) => Promise<boolean>;
+  toggleLike: (postId: number | string) => void;
+  addComment: (postId: number | string, text: string) => Promise<boolean>;
+  fetchComments: (postId: number | string) => Promise<Comment[]>;
+  updateComment: (postId: number | string, commentId: string, text: string) => Promise<boolean>;
+  deleteComment: (postId: number | string, commentId: string) => Promise<boolean>;
+  updatePost: (postId: number | string, content: string) => Promise<boolean>;
+  deletePost: (postId: number | string) => Promise<boolean>;
   updateSafetyCultureEvent: (data: SafetyCultureEventConfig) => void;
   updateFeedEvents: (events: SafetyCultureFeedEvent[]) => Promise<boolean>;
   sendFeedEventNotification: (feedEventId: string) => boolean;
@@ -388,6 +389,7 @@ function normalizePosts(posts: Post[]) {
   return posts.map((post, index) => ({
     ...post,
     id: Number.isFinite(post.id) ? post.id : index + 1,
+    apiId: post.apiId || String(post.id),
     author: repairMojibakeText(post.author) || "Unknown author",
     avatarText: repairMojibakeText(post.avatarText) || "U",
     subtext: repairMojibakeText(post.subtext) || "Safety Culture",
@@ -999,6 +1001,7 @@ function postFromApi(post: ApiPost): Post {
 
   return {
     id: Number.isFinite(idNumber) ? idNumber : Date.now(),
+    apiId: String(post.id),
     author: authorName,
     avatarBg: "var(--brand-accent)",
     avatarColor: "#1A1A1A",
@@ -1632,7 +1635,12 @@ export function AppProviders({ children }: { children: ReactNode }) {
   const [eventNow, setEventNow] = useState(0);
   const postsRef = useRef<Post[]>([]);
   const demoModeRef = useRef(false);
-  const likeRequestStateRef = useRef<Record<number, { inFlight: boolean; desiredLiked: boolean | null }>>({});
+  const likeRequestStateRef = useRef<Record<string, { inFlight: boolean; desiredLiked: boolean | null }>>({});
+  const resolvePostApiId = useCallback((postId: number | string) => {
+    const key = String(postId);
+    const post = postsRef.current.find((item) => String(item.id) === key || item.apiId === key);
+    return post?.apiId || key;
+  }, []);
 
   const [mounted, setMounted] = useState(false);
   useEffect(() => {
@@ -1656,10 +1664,11 @@ export function AppProviders({ children }: { children: ReactNode }) {
   const currentUserRef = useRef<SessionUser | null>(null);
 
   const loadPostComments = useCallback(async (postId: number | string, viewerId?: string | null) => {
-    const result = await apiFetch<{ items: ApiComment[] }>(`/api/safety-culture/posts/${postId}/comments?limit=100`);
+    const apiPostId = resolvePostApiId(postId);
+    const result = await apiFetch<{ items: ApiComment[] }>(`/api/safety-culture/posts/${apiPostId}/comments?limit=100`);
     if (!result.ok || !Array.isArray(result.data?.items)) return null;
     return result.data.items.map((item) => commentFromApi(item, viewerId ?? currentUserRef.current?.id ?? null));
-  }, []);
+  }, [resolvePostApiId]);
 
   const refreshInboxNotifications = useCallback(async (events: SafetyCultureFeedEvent[] = feedEvents) => {
     if (!isAuthenticatedRef.current) return;
@@ -2215,14 +2224,16 @@ export function AppProviders({ children }: { children: ReactNode }) {
     return { ...post, points: awardedPoints };
   }, [getLinkedFeedEvent, refreshPointBalance, safetyCultureEvent]);
 
-  const toggleLike = useCallback((postId: number) => {
+  const toggleLike = useCallback((postId: number | string) => {
+    const localPostId = Number(postId);
+    const requestKey = String(postId);
     let currentDelta = 0;
     let likedPost: Post | null = null;
     const occurredAt = Date.now();
 
     setPosts((prev) =>
       prev.map((p) => {
-        if (p.id !== postId) return p;
+        if (p.id !== localPostId && p.apiId !== requestKey) return p;
         const isAdding = !p.hasLiked;
         const linkedFeedEvent = getLinkedFeedEvent(p.feedEventId);
         const awarded = linkedFeedEvent
@@ -2266,9 +2277,9 @@ export function AppProviders({ children }: { children: ReactNode }) {
     }
     if (isAuthenticatedRef.current) {
       const nextDesiredLiked = currentDelta > 0;
-      const requestState = likeRequestStateRef.current[postId] || { inFlight: false, desiredLiked: null };
+      const requestState = likeRequestStateRef.current[requestKey] || { inFlight: false, desiredLiked: null };
       requestState.desiredLiked = nextDesiredLiked;
-      likeRequestStateRef.current[postId] = requestState;
+      likeRequestStateRef.current[requestKey] = requestState;
 
       if (requestState.inFlight) return;
 
@@ -2276,17 +2287,18 @@ export function AppProviders({ children }: { children: ReactNode }) {
       void (async () => {
         try {
           while (true) {
-            const activeState = likeRequestStateRef.current[postId];
+            const activeState = likeRequestStateRef.current[requestKey];
             const desiredLiked = activeState?.desiredLiked;
             if (!activeState || typeof desiredLiked !== "boolean") break;
 
             activeState.desiredLiked = null;
+            const apiPostId = resolvePostApiId(postId);
             const result = await apiFetch(
-              `/api/safety-culture/posts/${postId}/reactions`,
+              `/api/safety-culture/posts/${apiPostId}/reactions`,
               apiJson(desiredLiked ? "POST" : "DELETE", { reactionType: "LIKE" })
             );
 
-            const syncedPostResult = await apiFetch<{ post: ApiPost }>(`/api/safety-culture/posts/${postId}`);
+            const syncedPostResult = await apiFetch<{ post: ApiPost }>(`/api/safety-culture/posts/${apiPostId}`);
             const syncedPostBase = syncedPostResult.ok && syncedPostResult.data?.post
               ? postFromApi(syncedPostResult.data.post)
               : null;
@@ -2296,7 +2308,8 @@ export function AppProviders({ children }: { children: ReactNode }) {
               // doesn't jump around when users tap the heart repeatedly.
               setPosts((current) =>
                 current.map((post) =>
-                  post.id === postId
+                  post.id === localPostId
+                  || post.apiId === requestKey
                     ? {
                         ...post,
                         likes: syncedPostBase.likes,
@@ -2317,30 +2330,34 @@ export function AppProviders({ children }: { children: ReactNode }) {
             }
           }
         } finally {
-          const activeState = likeRequestStateRef.current[postId];
+          const activeState = likeRequestStateRef.current[requestKey];
           if (activeState) {
             activeState.inFlight = false;
             if (activeState.desiredLiked === null) {
-              delete likeRequestStateRef.current[postId];
+              delete likeRequestStateRef.current[requestKey];
             }
           }
         }
       })();
     }
-  }, [getLinkedFeedEvent, refreshInboxNotifications, refreshPointBalance, safetyCultureEvent]);
+  }, [getLinkedFeedEvent, refreshInboxNotifications, refreshPointBalance, resolvePostApiId, safetyCultureEvent]);
 
-  const fetchComments = useCallback(async (postId: number) => {
+  const fetchComments = useCallback(async (postId: number | string) => {
+    const localPostId = Number(postId);
+    const requestKey = String(postId);
     if (demoModeRef.current) {
-      const post = postsRef.current.find((item) => item.id === postId);
+      const post = postsRef.current.find((item) => item.id === localPostId || item.apiId === requestKey);
       return post && Array.isArray(post.comments) ? post.comments : [];
     }
     const comments = await loadPostComments(postId);
     if (!comments) return [];
-    setPosts((current) => current.map((post) => (post.id === postId ? { ...post, comments } : post)));
+    setPosts((current) => current.map((post) => (post.id === localPostId || post.apiId === requestKey ? { ...post, comments } : post)));
     return comments;
   }, [loadPostComments]);
 
-  const addComment = useCallback(async (postId: number, text: string) => {
+  const addComment = useCallback(async (postId: number | string, text: string) => {
+    const localPostId = Number(postId);
+    const requestKey = String(postId);
     const occurredAt = Date.now();
     let targetPost: Post | null = null;
     let currentAwardedPoints = 0;
@@ -2352,7 +2369,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
 
     setPosts((prev) =>
       prev.map((p) => {
-        if (p.id !== postId) return p;
+        if (p.id !== localPostId && p.apiId !== requestKey) return p;
         targetPost = p;
         const linkedFeedEvent = getLinkedFeedEvent(p.feedEventId);
         currentAwardedPoints = linkedFeedEvent
@@ -2400,10 +2417,10 @@ export function AppProviders({ children }: { children: ReactNode }) {
     setCurrentUserPoints((prev) => prev + currentAwardedPoints);
     if (!isAuthenticatedRef.current) return true;
 
-    const result = await apiFetch<{ comment: ApiComment }>(`/api/safety-culture/posts/${postId}/comments`, apiJson("POST", { content: text }));
+    const result = await apiFetch<{ comment: ApiComment }>(`/api/safety-culture/posts/${resolvePostApiId(postId)}/comments`, apiJson("POST", { content: text }));
     if (!result.ok || !result.data?.comment) {
       setPosts((current) => current.map((post) => {
-        if (post.id !== postId || !Array.isArray(post.comments)) return post;
+        if ((post.id !== localPostId && post.apiId !== requestKey) || !Array.isArray(post.comments)) return post;
         return {
           ...post,
           comments: post.comments.filter((comment) => comment.id !== optimisticId),
@@ -2415,7 +2432,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
     }
     const savedComment = commentFromApi(result.data.comment, actorId);
     setPosts((current) => current.map((post) => {
-      if (post.id !== postId || !Array.isArray(post.comments)) return post;
+      if ((post.id !== localPostId && post.apiId !== requestKey) || !Array.isArray(post.comments)) return post;
       return {
         ...post,
         comments: post.comments.map((comment) => comment.id === optimisticId ? savedComment : comment),
@@ -2423,14 +2440,16 @@ export function AppProviders({ children }: { children: ReactNode }) {
     }));
     void refreshPointBalance();
     return true;
-  }, [getLinkedFeedEvent, refreshPointBalance, safetyCultureEvent]);
+  }, [getLinkedFeedEvent, refreshPointBalance, resolvePostApiId, safetyCultureEvent]);
 
-  const updateComment = useCallback(async (postId: number, commentId: string, text: string) => {
+  const updateComment = useCallback(async (postId: number | string, commentId: string, text: string) => {
+    const localPostId = Number(postId);
+    const requestKey = String(postId);
     const trimmed = text.trim();
     if (!trimmed) return false;
     let previousText: string | undefined;
     setPosts((current) => current.map((post) => {
-      if (post.id !== postId || !Array.isArray(post.comments)) return post;
+      if ((post.id !== localPostId && post.apiId !== requestKey) || !Array.isArray(post.comments)) return post;
       return {
         ...post,
         comments: post.comments.map((comment) => {
@@ -2444,24 +2463,26 @@ export function AppProviders({ children }: { children: ReactNode }) {
     const result = await apiFetch<{ comment: ApiComment }>(`/api/safety-culture/comments/${commentId}`, apiJson("PATCH", { content: trimmed }));
     if (!result.ok || !result.data?.comment) {
       setPosts((current) => current.map((post) => {
-        if (post.id !== postId || !Array.isArray(post.comments)) return post;
+        if ((post.id !== localPostId && post.apiId !== requestKey) || !Array.isArray(post.comments)) return post;
         return { ...post, comments: post.comments.map((comment) => comment.id === commentId && previousText !== undefined ? { ...comment, text: previousText } : comment) };
       }));
       return false;
     }
     const savedComment = commentFromApi(result.data.comment, currentUserRef.current?.id);
     setPosts((current) => current.map((post) => {
-      if (post.id !== postId || !Array.isArray(post.comments)) return post;
+      if ((post.id !== localPostId && post.apiId !== requestKey) || !Array.isArray(post.comments)) return post;
       return { ...post, comments: post.comments.map((comment) => comment.id === commentId ? savedComment : comment) };
     }));
     return true;
   }, []);
 
-  const deleteComment = useCallback(async (postId: number, commentId: string) => {
+  const deleteComment = useCallback(async (postId: number | string, commentId: string) => {
+    const localPostId = Number(postId);
+    const requestKey = String(postId);
     let removed: Comment | undefined;
     let removedIndex = -1;
     setPosts((current) => current.map((post) => {
-      if (post.id !== postId || !Array.isArray(post.comments)) return post;
+      if ((post.id !== localPostId && post.apiId !== requestKey) || !Array.isArray(post.comments)) return post;
       removedIndex = post.comments.findIndex((comment) => comment.id === commentId);
       removed = removedIndex >= 0 ? post.comments[removedIndex] : undefined;
       return { ...post, comments: post.comments.filter((comment) => comment.id !== commentId) };
@@ -2471,7 +2492,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
     if (!result.ok || !result.data?.deleted) {
       const restored = removed;
       setPosts((current) => current.map((post) => {
-        if (post.id !== postId || !restored) return post;
+        if ((post.id !== localPostId && post.apiId !== requestKey) || !restored) return post;
         const comments = Array.isArray(post.comments) ? [...post.comments] : [];
         comments.splice(removedIndex >= 0 ? removedIndex : comments.length, 0, restored);
         return { ...post, comments };
@@ -2482,45 +2503,49 @@ export function AppProviders({ children }: { children: ReactNode }) {
   }, []);
 
   // Edit own post (text). Backend enforces author_id = current user.
-  const updatePost = useCallback(async (postId: number, content: string) => {
+  const updatePost = useCallback(async (postId: number | string, content: string) => {
+    const localPostId = Number(postId);
+    const requestKey = String(postId);
     const trimmed = content.trim();
     if (!trimmed) return false;
     // optimistic update
     let previousBody: string | undefined;
     setPosts((prev) =>
       prev.map((p) => {
-        if (p.id !== postId) return p;
+        if (p.id !== localPostId && p.apiId !== requestKey) return p;
         previousBody = p.body;
         return { ...p, body: trimmed };
       })
     );
     if (!isAuthenticatedRef.current) return true;
     const result = await apiFetch<{ post: ApiPost }>(
-      `/api/safety-culture/posts/${postId}`,
+      `/api/safety-culture/posts/${resolvePostApiId(postId)}`,
       apiJson("PATCH", { content: trimmed })
     );
     if (!result.ok || !result.data?.post) {
       // revert on failure
-      setPosts((prev) => prev.map((p) => (p.id === postId && previousBody !== undefined ? { ...p, body: previousBody } : p)));
+      setPosts((prev) => prev.map((p) => ((p.id === localPostId || p.apiId === requestKey) && previousBody !== undefined ? { ...p, body: previousBody } : p)));
       return false;
     }
     const saved = postFromApi(result.data.post);
-    setPosts((prev) => prev.map((p) => (p.id === postId ? { ...p, body: saved.body, isYou: true } : p)));
+    setPosts((prev) => prev.map((p) => (p.id === localPostId || p.apiId === requestKey ? { ...p, body: saved.body, isYou: true } : p)));
     return true;
-  }, []);
+  }, [resolvePostApiId]);
 
   // Delete own post (soft delete server-side). Backend enforces author_id = current user.
-  const deletePost = useCallback(async (postId: number) => {
+  const deletePost = useCallback(async (postId: number | string) => {
+    const localPostId = Number(postId);
+    const requestKey = String(postId);
     let removed: Post | undefined;
     let removedIndex = -1;
     setPosts((prev) => {
-      removedIndex = prev.findIndex((p) => p.id === postId);
+      removedIndex = prev.findIndex((p) => p.id === localPostId || p.apiId === requestKey);
       removed = removedIndex >= 0 ? prev[removedIndex] : undefined;
-      return prev.filter((p) => p.id !== postId);
+      return prev.filter((p) => p.id !== localPostId && p.apiId !== requestKey);
     });
     if (!isAuthenticatedRef.current) return true;
     const result = await apiFetch<{ deleted: boolean; pointsReversed: number; balance: number | null }>(
-      `/api/safety-culture/posts/${postId}`,
+      `/api/safety-culture/posts/${resolvePostApiId(postId)}`,
       apiJson("DELETE")
     );
     if (!result.ok || result.data?.deleted !== true) {
@@ -2541,9 +2566,9 @@ export function AppProviders({ children }: { children: ReactNode }) {
     } else if (removed?.points) {
       setCurrentUserPoints((current) => current - Math.max(0, removed?.points || 0));
     }
-    setUserActivityHistory((current) => current.filter((item) => !(item.type === "post" && item.postId === postId)));
+    setUserActivityHistory((current) => current.filter((item) => !(item.type === "post" && item.postId === localPostId)));
     return true;
-  }, []);
+  }, [resolvePostApiId]);
 
   const updateSafetyCultureEvent = useCallback((data: SafetyCultureEventConfig) => {
     setSafetyCultureEvent(data);

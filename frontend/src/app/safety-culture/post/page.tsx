@@ -27,7 +27,7 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { AppDialogBody, AppDialogContent, AppDialogDescription, AppDialogSectionHeader, AppDialogTitle } from "@/components/ui/app-dialog";
 import { uploadMedia } from "@/features/safety-effort/lib/upload-media";
 import { SAFETY_CULTURE_CATEGORIES } from "@/lib/safety-culture";
-import { getSafetyPoint } from "@/lib/point-rules";
+import { useSafetyPointValue } from "@/hooks/useSafetyPointValue";
 import { cn } from "@/lib/utils";
 import { getSessionDisplayName, getSessionInitials, getSessionProfileImage, useSessionUser } from "@/lib/session-user";
 import { useAppTheme } from "@/providers/theme-provider";
@@ -206,7 +206,7 @@ export default function PostSocialPage() {
   };
 
   const selectedFeedEvent = availableFeedEvents.find((event) => event.id === selectedFeedEventId) ?? null;
-  const basePostPoints = getSafetyPoint("safetyPostApproved");
+  const basePostPoints = useSafetyPointValue("safetyPostApproved");
   const selectedFeedEventBonusPoints = selectedFeedEvent?.enabledActions.includes("theme-post")
     ? selectedFeedEvent.bonusMode === "multiplier"
       ? Math.round(selectedFeedEvent.points * Math.max(1, selectedFeedEvent.multiplier))

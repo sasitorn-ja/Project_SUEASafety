@@ -1767,7 +1767,7 @@ export default function Checkin() {
         setExtraLocs(current => {
           const merged = new Map(
             current
-              .filter(item => item.source !== "RMC_SSO_SITE")
+              .filter(item => item.source !== "LOCATION_HUB_SITE")
               .map(item => [item.id, item]),
           );
           nearbySites.forEach(item => merged.set(item.id, item));
@@ -1874,13 +1874,13 @@ export default function Checkin() {
   const searchKeyword = deferredSearchKeyword;
   const locationDataHint = selectedTypeKey === "site"
     ? searchKeyword.length < 3
-      ? "กำลังแสดง Site งานใกล้คุณ 20 รายการจาก rmc_sso.sites และค้นหาเพิ่มเติมได้เมื่อพิมพ์อย่างน้อย 3 ตัว"
-      : "กำลังแสดง Site งานใกล้คุณจาก rmc_sso.sites ตามคำค้นหา"
+      ? "กำลังแสดง Site งานใกล้คุณ 20 รายการจาก location_hub.sites และค้นหาเพิ่มเติมได้เมื่อพิมพ์อย่างน้อย 3 ตัว"
+      : "กำลังแสดง Site งานใกล้คุณจาก location_hub.sites ตามคำค้นหา"
     : selectedTypeKey === "office"
-      ? "สำนักงานดึงจาก rmc_sso.offices โดยตรง"
+      ? "สำนักงานดึงจาก location_hub.offices โดยตรง"
       : "โรงงาน/สำนักงาน/Site งานแสดงจากระบบ และค้นหา Site เพิ่มเติมได้เมื่อพิมพ์อย่างน้อย 3 ตัว";
   const emptyLocationMessage = selectedTypeKey === "site" && searchKeyword.length < 3
-    ? "ยังไม่พบ Site งานจาก rmc_sso.sites"
+    ? "ยังไม่พบ Site งานจาก location_hub.sites"
     : "ไม่พบสถานที่ที่ค้นหา";
 
   // Only render the first `visibleCount` results; "show more" reveals the rest.

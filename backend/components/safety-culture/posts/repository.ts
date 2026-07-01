@@ -4,6 +4,7 @@ import type { ResultSetHeader, RowDataPacket } from "mysql2/promise";
 
 import { queryRows, withTransaction } from "@backend/components/core/db";
 import { awardPoints, getPointRule, retractPoints } from "@backend/components/points/repository";
+import { getSafetyPoint } from "@/lib/point-rules";
 
 type PostRow = RowDataPacket & {
   id: string;
@@ -143,7 +144,7 @@ async function resolvePostPoints(eventId?: string | number | null) {
   const ruleRows = await queryRows<RowDataPacket & { id: string; points: number | string }>(
     "SELECT id, points FROM point_rules WHERE code='safetyPostApproved' AND status='ACTIVE' LIMIT 1",
   ).catch(() => []);
-  const fallback = 6;
+  const fallback = getSafetyPoint("safetyPostApproved");
   if (!eventId) return { amount: Number(ruleRows[0]?.points || fallback), pointRuleId: ruleRows[0]?.id || null };
 
   const eventRows = await queryRows<CultureEventRow>(
@@ -610,9 +611,7 @@ export async function createComment(postId: string, authorId: string, content: s
   if (!text) throw new Error("content_required");
   const commentRule = await getPointRule("commentCreated");
   const minCommentLength = Math.max(0, Number(commentRule.minCommentLength) || 0);
-  if (minCommentLength > 0 && text.length < minCommentLength) {
-    throw new Error(`comment_too_short:${minCommentLength}`);
-  }
+  const shouldAwardCommentPoints = minCommentLength <= 0 || text.length >= minCommentLength;
 
   const id = await withTransaction(async (connection) => {
     const [result] = await connection.execute<ResultSetHeader>(
@@ -638,14 +637,16 @@ export async function createComment(postId: string, authorId: string, content: s
     return String(result.insertId);
   });
 
-  await awardPoints({
-    userId: authorId,
-    action: "commentCreated",
-    sourceType: "COMMENT",
-    sourceId: id,
-    idempotencyKey: `comment:${id}:created`,
-    description: "Comment",
-  }).catch(() => null);
+  if (shouldAwardCommentPoints) {
+    await awardPoints({
+      userId: authorId,
+      action: "commentCreated",
+      sourceType: "COMMENT",
+      sourceId: id,
+      idempotencyKey: `comment:${id}:created`,
+      description: "Comment",
+    }).catch(() => null);
+  }
 
   const rows = await queryRows<CommentRow>(
     `

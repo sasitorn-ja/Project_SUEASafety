@@ -2,7 +2,7 @@ import "server-only";
 
 import type { RowDataPacket } from "mysql2/promise";
 
-import { queryRmrSsoRows } from "@backend/components/core/rmr-sso-db";
+import { queryLocationHubRows } from "@backend/components/core/location-hub-db";
 import { withTransaction } from "@backend/components/core/db";
 
 type PlantSourceRow = RowDataPacket & Record<string, unknown>;
@@ -25,8 +25,8 @@ function validCoordinates(lat: number | null, lng: number | null) {
   return lat !== null && lng !== null && lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180;
 }
 
-export async function syncRmrPlants(importedBy: string) {
-  const sourceRows = await queryRmrSsoRows<PlantSourceRow>("SELECT * FROM plant");
+export async function syncLocationHubPlants(importedBy: string) {
+  const sourceRows = await queryLocationHubRows<PlantSourceRow>("SELECT * FROM plant");
   const normalized = sourceRows.flatMap((row) => {
     const plantKey = sourceValue(row, "PLANT_NO", "PLANT_ID", "ID", "CODE");
     const plantName = sourceValue(row, "PLANT_NAME", "NAME_TH", "NAME");
@@ -61,8 +61,8 @@ export async function syncRmrPlants(importedBy: string) {
     const [batchResult] = await connection.execute<import("mysql2/promise").ResultSetHeader>(
       `INSERT INTO location_import_batches
        (file_name, source, imported_by, status, total_rows)
-       VALUES (:fileName, 'RMR_SSO_PLANT', :importedBy, 'PROCESSING', :totalRows)`,
-      { fileName: `rmr_sso_plant_${Date.now()}`, importedBy, totalRows: sourceRows.length },
+       VALUES (:fileName, 'LOCATION_HUB_PLANT', :importedBy, 'PROCESSING', :totalRows)`,
+      { fileName: `location_hub_plant_${Date.now()}`, importedBy, totalRows: sourceRows.length },
     );
     const batchId = String(batchResult.insertId);
     let successRows = 0;
@@ -85,7 +85,7 @@ export async function syncRmrPlants(importedBy: string) {
       const status = item.statusCode === "C" ? "CLOSED" : "ACTIVE";
       const pointWkt = `POINT(${item.lng} ${item.lat})`;
       const [existing] = await connection.execute<RowDataPacket[]>(
-        "SELECT id FROM locations WHERE source='RMR_SSO_PLANT' AND external_key=:plantKey LIMIT 1",
+        "SELECT id FROM locations WHERE source='LOCATION_HUB_PLANT' AND external_key=:plantKey LIMIT 1",
         { plantKey: item.plantKey },
       );
       let locationId: string;
@@ -123,7 +123,7 @@ export async function syncRmrPlants(importedBy: string) {
            (location_type, source, external_key, code, name_th, name_en, name_cn,
             position, province_name, district_name, plant_type, production_type,
             sap_code, site_material_code, status, map_visible, checkin_enabled)
-           VALUES ('PLANT','RMR_SSO_PLANT',:plantKey,:plantKey,:nameTh,:nameEn,:nameCn,
+           VALUES ('PLANT','LOCATION_HUB_PLANT',:plantKey,:plantKey,:nameTh,:nameEn,:nameCn,
            ST_GeomFromText(:pointWkt,4326,'axis-order=long-lat'),:provinceName,:districtName,:plantType,
            :productionType,:sapCode,:siteMaterialCode,:status,1,1)`,
           {
@@ -200,7 +200,7 @@ export async function syncRmrPlants(importedBy: string) {
     if (seenKeys.length) {
       await connection.query(
         `UPDATE locations SET status='INACTIVE'
-         WHERE source='RMR_SSO_PLANT' AND external_key NOT IN (?)`,
+         WHERE source='LOCATION_HUB_PLANT' AND external_key NOT IN (?)`,
         [seenKeys],
       );
     }

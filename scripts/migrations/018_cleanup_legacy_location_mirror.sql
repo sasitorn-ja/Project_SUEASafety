@@ -22,10 +22,10 @@ PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 UPDATE checkins c
 JOIN locations l ON l.id = c.selected_location_id
 SET c.selected_location_id = NULL
-WHERE l.source IN ('RMR_SSO_PLANT', 'RMC_SSO_OFFICE', 'RMC_SSO_SITE');
+WHERE l.source IN ('LOCATION_HUB_PLANT', 'LOCATION_HUB_OFFICE', 'LOCATION_HUB_SITE');
 
 DELETE FROM locations
-WHERE source IN ('RMR_SSO_PLANT', 'RMC_SSO_OFFICE', 'RMC_SSO_SITE');
+WHERE source IN ('LOCATION_HUB_PLANT', 'LOCATION_HUB_OFFICE', 'LOCATION_HUB_SITE');
 
 DROP TABLE IF EXISTS plant_location_details;
 DROP TABLE IF EXISTS office_location_details;

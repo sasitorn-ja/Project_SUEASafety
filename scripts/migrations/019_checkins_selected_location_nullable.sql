@@ -1,4 +1,4 @@
--- Allow live master locations from rmc_sso.* to be stored via snapshot columns
+-- Allow live master locations from location_hub.* to be stored via snapshot columns
 -- without requiring a mirrored row in CPAC_Safety.locations.
 
 SET @schema_name := DATABASE();

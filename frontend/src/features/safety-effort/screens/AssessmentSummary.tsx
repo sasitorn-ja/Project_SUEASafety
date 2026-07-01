@@ -12,6 +12,7 @@ import { linkUploadedMedia, uploadSafetyEffortMedia } from "@/features/safety-ef
 import { useAppActions } from "@/providers/app-providers";
 import { getSessionDisplayName, useSessionUser } from "@/lib/session-user";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { useSafetyPointValue } from "@/hooks/useSafetyPointValue";
 
 
 const T = {
@@ -132,6 +133,7 @@ export default function AssessmentSummary() {
   const location = useLocation();
   const actions = useAppActions();
   const { user: sessionUser } = useSessionUser();
+  const safetyEffortPoints = useSafetyPointValue("safetyEffortCompleted");
   const [showSuccessPopup, setShowSuccessPopup] = useState(false);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [hasInitializedExpanded, setHasInitializedExpanded] = useState(false);
@@ -847,7 +849,7 @@ export default function AssessmentSummary() {
                 boxShadow: "0 6px 14px rgba(11,130,240,0.20)"
               }}>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/images/icons/STCoin.png" alt="Coin" style={{ width: 17, height: 17, objectFit: 'contain', display: 'inline-block', verticalAlign: 'middle', marginRight: 4 }} /> +10 Coin
+                <img src="/images/icons/STCoin.png" alt="Coin" style={{ width: 17, height: 17, objectFit: 'contain', display: 'inline-block', verticalAlign: 'middle', marginRight: 4 }} /> +{safetyEffortPoints} Coin
               </div>
 
               <button

@@ -61,6 +61,7 @@ function postFromApi(apiPost: ApiPost, viewerId?: string | number | null): Post 
   const organizationName = apiPost.organizationName || null;
   return {
     id: Number(apiPost.id),
+    apiId: String(apiPost.id),
     author,
     avatarBg: "var(--brand-accent)",
     avatarColor: "#1A1A1A",
@@ -224,20 +225,20 @@ export default function SafetyCulturePostDetailPage() {
       hasLiked: nextLiked,
       likes: nextLiked ? post.likes + 1 : Math.max(0, post.likes - 1),
     });
-    toggleLike(post.id);
+    toggleLike(post.apiId || post.id);
   };
 
   const handleCommentSubmit = async () => {
     if (!post) return;
     const text = commentDraft.trim();
     if (!text) return;
-    const ok = await addComment(post.id, text);
+    const ok = await addComment(post.apiId || post.id, text);
     if (!ok) {
       window.alert("ไม่สามารถบันทึกความคิดเห็นได้ กรุณาลองใหม่อีกครั้ง");
       return;
     }
     setCommentDraft("");
-    const latestComments = await fetchComments(post.id);
+    const latestComments = await fetchComments(post.apiId || post.id);
     setComments(latestComments);
     setPost((current) => current ? { ...current, comments: latestComments } : current);
   };

@@ -205,8 +205,7 @@ function canManageLocation(item) {
 
 function getLocationSourceLabel(source) {
   if (source === "ADMIN") return "ADMIN";
-  if (source?.startsWith("RMC_SSO")) return "RMC";
-  if (source?.startsWith("RMR_SSO")) return "RMR";
+  if (source?.startsWith("LOCATION_HUB")) return "LOCATION HUB";
   return source || "UNKNOWN";
 }
 

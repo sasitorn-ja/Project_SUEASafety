@@ -725,6 +725,19 @@ export default function Linewalk() {
     });
   }
 
+  function scrollQuestionStepToStart(index, behavior = "smooth") {
+    if (!isMobileViewport || !isQuestionScreen || isSafetyContactFlow) return;
+    window.requestAnimationFrame(() => {
+      const container = questionStepperRef.current;
+      const item = questionStepRefs.current[index];
+      if (!container || !item) return;
+      container.scrollTo({
+        left: Math.max(0, item.offsetLeft - 12),
+        behavior,
+      });
+    });
+  }
+
   function handlePrevQuestion() {
     if (currentQuestionIndex === 0) {
       navigate("/linewalk", {
@@ -737,11 +750,15 @@ export default function Linewalk() {
       });
       return;
     }
-    setCurrentQuestionIndex((prev) => Math.max(0, prev - 1));
+    const nextIndex = Math.max(0, currentQuestionIndex - 1);
+    setCurrentQuestionIndex(nextIndex);
+    scrollQuestionStepToStart(nextIndex);
   }
 
   function handleNextQuestion() {
-    setCurrentQuestionIndex((prev) => Math.min(totalItems - 1, prev + 1));
+    const nextIndex = Math.min(totalItems - 1, currentQuestionIndex + 1);
+    setCurrentQuestionIndex(nextIndex);
+    scrollQuestionStepToStart(nextIndex);
   }
 
   const currentItem = checklist[currentQuestionIndex] ?? null;
@@ -753,14 +770,7 @@ export default function Linewalk() {
 
   useEffect(() => {
     if (!isMobileQuestionScreen) return;
-    const container = questionStepperRef.current;
-    const item = questionStepRefs.current[currentQuestionIndex];
-    if (!container || !item) return;
-
-    container.scrollTo({
-      left: Math.max(0, item.offsetLeft - 12),
-      behavior: "smooth",
-    });
+    scrollQuestionStepToStart(currentQuestionIndex);
   }, [currentQuestionIndex, isMobileQuestionScreen, totalItems]);
 
   useEffect(() => {
@@ -1252,7 +1262,10 @@ export default function Linewalk() {
                     >
                       <button
                         type="button"
-                        onClick={() => setCurrentQuestionIndex(idx)}
+                        onClick={() => {
+                          setCurrentQuestionIndex(idx);
+                          scrollQuestionStepToStart(idx);
+                        }}
                         style={{
                           width: isMobileQuestionScreen ? 36 : (isQuestionScreen ? 34 : 42),
                           height: isMobileQuestionScreen ? 36 : (isQuestionScreen ? 34 : 42),
@@ -1593,16 +1606,16 @@ export default function Linewalk() {
                   </div>
                 </div>
 
-                <div style={{ display:"flex", flexDirection:isMobileQuestionScreen ? "column" : "row", gap:isMobileQuestionScreen ? 10 : 12, justifyContent:"space-between", marginTop:isMobileQuestionScreen ? 2 : 6, flexShrink:0, position:isMobileQuestionScreen ? "fixed" : "static", left:isMobileQuestionScreen ? 0 : undefined, right:isMobileQuestionScreen ? 0 : undefined, bottom:isMobileQuestionScreen ? 0 : undefined, zIndex:isMobileQuestionScreen ? 99 : undefined, background:isMobileQuestionScreen ? "linear-gradient(180deg, rgba(241,236,223,0) 0%, rgba(241,236,223,0.96) 18%, rgba(241,236,223,1) 40%)" : undefined, padding:isMobileQuestionScreen ? "10px 12px calc(10px + env(safe-area-inset-bottom))" : undefined, boxShadow:isMobileQuestionScreen ? "0 -10px 24px rgba(34,25,11,0.10)" : undefined }}>
+                <div style={{ display:"flex", flexDirection:isMobileQuestionScreen ? "column" : "row", gap:isMobileQuestionScreen ? 10 : 12, justifyContent:"space-between", marginTop:isMobileQuestionScreen ? 2 : 6, flexShrink:0, position:isMobileQuestionScreen ? "fixed" : "static", left:isMobileQuestionScreen ? 0 : undefined, right:isMobileQuestionScreen ? 0 : undefined, bottom:isMobileQuestionScreen ? 0 : undefined, zIndex:isMobileQuestionScreen ? 99 : undefined, background:isMobileQuestionScreen ? "linear-gradient(180deg, rgba(241,236,223,0) 0%, var(--background) 18%, var(--background) 100%)" : undefined, padding:isMobileQuestionScreen ? "10px 12px calc(10px + env(safe-area-inset-bottom))" : undefined, boxShadow:isMobileQuestionScreen ? "none" : undefined }}>
                   {isMobileQuestionScreen && (
                     <div
                       style={{
                         borderRadius: 16,
-                        border: "1px solid rgba(64,38,16,0.10)",
-                        background: "rgba(255,255,255,0.92)",
+                        border: "1px solid var(--background)",
+                        background: "var(--background)",
                         backdropFilter: "blur(10px)",
                         padding: "10px 12px",
-                        boxShadow: "0 8px 20px rgba(34,25,11,0.08)",
+                        boxShadow: "none",
                         display: "flex",
                         alignItems: "flex-start",
                         justifyContent: "space-between",

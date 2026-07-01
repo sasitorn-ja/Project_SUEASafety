@@ -113,7 +113,7 @@ function mapLocation(row: LocationRow) {
     organizationName: row.organization_name,
     locationType: row.location_type,
     source: row.source,
-    readOnly: row.source.startsWith("RMR_SSO_") || row.source.startsWith("RMC_SSO_"),
+    readOnly: row.source.startsWith("LOCATION_HUB_"),
     externalKey: row.external_key,
     code: row.code,
     nameTh: row.name_th,
@@ -382,7 +382,7 @@ export async function createSafetyEffortLocation(input: SafetyEffortLocationInpu
 export async function updateSafetyEffortLocation(id: string, input: Partial<SafetyEffortLocationInput>) {
   const current = await getSafetyEffortLocation(id);
   if (!current) return null;
-  if (current.source.startsWith("RMR_SSO_") || current.source.startsWith("RMC_SSO_")) throw new Error("source_read_only");
+  if (current.source.startsWith("LOCATION_HUB_")) throw new Error("source_read_only");
 
   const next = {
     locationType: input.locationType ?? current.locationType,
@@ -434,7 +434,7 @@ export async function updateSafetyEffortLocation(id: string, input: Partial<Safe
 export async function deleteSafetyEffortLocation(id: string) {
   const current = await getSafetyEffortLocation(id);
   if (!current) return;
-  if (current.source.startsWith("RMR_SSO_") || current.source.startsWith("RMC_SSO_")) throw new Error("source_read_only");
+  if (current.source.startsWith("LOCATION_HUB_")) throw new Error("source_read_only");
   await withTransaction(async (connection) => {
     await connection.execute<ResultSetHeader>(
       `

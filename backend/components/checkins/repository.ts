@@ -4,7 +4,7 @@ import type { ResultSetHeader, RowDataPacket } from "mysql2/promise";
 
 import { queryRows, withTransaction } from "@backend/components/core/db";
 import { findNearestSafetyEffortLocation, findSafetyEffortLocationForCheckin, getSafetyEffortLocation } from "@backend/components/safety-effort/locations/repository";
-import { findMasterLocationBySource, findNearestMasterLocation } from "@backend/components/safety-effort/locations/rmc-location-search";
+import { findMasterLocationBySource, findNearestMasterLocation } from "@backend/components/safety-effort/locations/location-hub-search";
 
 type CheckinRow = RowDataPacket & {
   id: string;

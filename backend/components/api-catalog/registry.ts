@@ -98,7 +98,7 @@ export const API_CATALOG_ROUTES = [
     "pagination": "Required page/pageSize",
     "responseSizeRisk": "High if unpaged",
     "status": "Existing",
-    "notes": "อ่านสดจาก rmc_sso.plant และ merge สถานที่ ADMIN ใน CPAC_Safety"
+    "notes": "อ่านสดจาก location_hub.plant และ merge สถานที่ ADMIN ใน CPAC_Safety"
   },
   {
     "module": "Locations",
@@ -112,7 +112,7 @@ export const API_CATALOG_ROUTES = [
     "pagination": "Required page/pageSize",
     "responseSizeRisk": "High if unpaged",
     "status": "Existing",
-    "notes": "อ่านสดจาก rmc_sso.offices และ merge สถานที่ ADMIN ใน CPAC_Safety"
+    "notes": "อ่านสดจาก location_hub.offices และ merge สถานที่ ADMIN ใน CPAC_Safety"
   },
   {
     "module": "Locations",
@@ -126,7 +126,7 @@ export const API_CATALOG_ROUTES = [
     "pagination": "Required page/pageSize",
     "responseSizeRisk": "High if unpaged",
     "status": "Existing",
-    "notes": "อ่านสดจาก rmc_sso.sites และ merge สถานที่ ADMIN ใน CPAC_Safety"
+    "notes": "อ่านสดจาก location_hub.sites และ merge สถานที่ ADMIN ใน CPAC_Safety"
   },
   {
     "module": "Locations",

@@ -4,7 +4,7 @@ import { createHash } from "node:crypto";
 import type { RowDataPacket } from "mysql2/promise";
 
 import { queryRows } from "@backend/components/core/db";
-import { queryRmrSsoRows } from "@backend/components/core/rmr-sso-db";
+import { queryLocationHubRows } from "@backend/components/core/location-hub-db";
 import type { SafetyEffortLocationType } from "./repository";
 
 type SourceRow = RowDataPacket & Record<string, unknown>;
@@ -136,7 +136,7 @@ function normalizeOfficeRows(rows: SourceRow[], near?: { lat: number | null; lng
       return [
         buildLiveLocation({
           locationType: "OFFICE",
-          source: "RMC_SSO_OFFICE",
+          source: "LOCATION_HUB_OFFICE",
           externalKey,
           nameTh,
           provinceName: text(row.PROVINCE_NAME) || null,
@@ -166,7 +166,7 @@ function normalizeSiteRows(rows: SourceRow[], near?: { lat: number | null; lng: 
       return [
         buildLiveLocation({
           locationType: "SITE",
-          source: "RMC_SSO_SITE",
+          source: "LOCATION_HUB_SITE",
           externalKey,
           nameTh,
           provinceName: text(row.PROVINCE_NAME) || null,
@@ -212,7 +212,7 @@ function normalizePlantRows(rows: SourceRow[], near?: { lat: number | null; lng:
       return [
         buildLiveLocation({
           locationType: "PLANT",
-          source: "RMR_SSO_PLANT",
+          source: "LOCATION_HUB_PLANT",
           externalKey: plantKey,
           code: plantKey,
           nameTh: plantName,
@@ -282,12 +282,12 @@ function filterAndLimit(
   return filtered.slice(0, Math.min(Math.max(limit || 30, 1), 1000));
 }
 
-export async function listRmcOffices(options?: {
+export async function listLocationHubOffices(options?: {
   search?: string;
   limit?: number;
   near?: { lat: number | null; lng: number | null };
 }) {
-  const rows = await queryRmrSsoRows<SourceRow>(
+  const rows = await queryLocationHubRows<SourceRow>(
     `SELECT DIVISION_NAME, OFFICE_NAME, LATITUDE, LONGITUDE, PROVINCE_NAME
      FROM offices
      WHERE OFFICE_NAME IS NOT NULL AND LATITUDE IS NOT NULL AND LONGITUDE IS NOT NULL`,
@@ -295,7 +295,7 @@ export async function listRmcOffices(options?: {
   return filterAndLimit(normalizeOfficeRows(rows, options?.near), options?.search, options?.limit || 200, options?.near);
 }
 
-export async function searchRmcSites(query: string, limit = 30, near?: { lat: number | null; lng: number | null }) {
+export async function searchLocationHubSites(query: string, limit = 30, near?: { lat: number | null; lng: number | null }) {
   const keyword = query.trim();
   const safeLimit = Math.min(Math.max(Number(limit) || 30, 1), 50);
   const nearLat = near?.lat ?? null;
@@ -306,7 +306,7 @@ export async function searchRmcSites(query: string, limit = 30, near?: { lat: nu
     : "";
 
   const rows = keyword.length < 3
-    ? await queryRmrSsoRows<SourceRow>(
+    ? await queryLocationHubRows<SourceRow>(
         `SELECT SITE_NO, SITE_NAME, DISTRICT_NAME, PROVINCE_NAME, LATITUDE, LONGITUDE, STATUS, CUSTOMER_NAME
          FROM sites
          WHERE STATUS = 'A'
@@ -315,7 +315,7 @@ export async function searchRmcSites(query: string, limit = 30, near?: { lat: nu
          LIMIT ${safeLimit}`,
         hasNear ? { nearLat, nearLng } : undefined,
       )
-    : await queryRmrSsoRows<SourceRow>(
+    : await queryLocationHubRows<SourceRow>(
         `SELECT SITE_NO, SITE_NAME, DISTRICT_NAME, PROVINCE_NAME, LATITUDE, LONGITUDE, STATUS, CUSTOMER_NAME
          FROM sites
          WHERE STATUS = 'A'
@@ -332,17 +332,17 @@ export async function searchRmcSites(query: string, limit = 30, near?: { lat: nu
   return normalizeSiteRows(rows, near).slice(0, safeLimit);
 }
 
-export async function listRmrPlants(options?: {
+export async function listLocationHubPlants(options?: {
   search?: string;
   limit?: number;
   near?: { lat: number | null; lng: number | null };
 }) {
-  const rows = await queryRmrSsoRows<SourceRow>("SELECT * FROM plant");
+  const rows = await queryLocationHubRows<SourceRow>("SELECT * FROM plant");
   return filterAndLimit(normalizePlantRows(rows, options?.near), options?.search, options?.limit || 1000, options?.near);
 }
 
-export async function buildRmrPlantBusinessUnitMap() {
-  const rows = await listRmrPlants({ limit: 5000 });
+export async function buildLocationHubPlantBusinessUnitMap() {
+  const rows = await listLocationHubPlants({ limit: 5000 });
   return new Map(
     rows.map((row) => [
       row.code,
@@ -363,16 +363,16 @@ export async function findMasterLocationBySource(input: {
   const code = text(input.code);
   const name = text(input.name);
 
-  if (source === "RMR_SSO_PLANT") {
-    const plants = await listRmrPlants({ search: code || name, limit: 50 });
+  if (source === "LOCATION_HUB_PLANT") {
+    const plants = await listLocationHubPlants({ search: code || name, limit: 50 });
     return plants.find((item) => item.code === code || item.externalKey === code || item.nameTh === name) || null;
   }
-  if (source === "RMC_SSO_OFFICE") {
-    const offices = await listRmcOffices({ search: code || name, limit: 50 });
+  if (source === "LOCATION_HUB_OFFICE") {
+    const offices = await listLocationHubOffices({ search: code || name, limit: 50 });
     return offices.find((item) => item.code === code || item.externalKey === code || item.nameTh === name) || null;
   }
-  if (source === "RMC_SSO_SITE") {
-    const sites = await searchRmcSites(code || name, 50);
+  if (source === "LOCATION_HUB_SITE") {
+    const sites = await searchLocationHubSites(code || name, 50);
     return sites.find((item) => item.code === code || item.externalKey === code || item.nameTh === name) || null;
   }
   return null;
@@ -433,9 +433,9 @@ export async function findNearestCustomLocation(input: { lat: number; lng: numbe
 
 export async function findNearestMasterLocation(input: { lat: number; lng: number }) {
   const [plants, offices, sites, custom] = await Promise.all([
-    listRmrPlants({ limit: 5000, near: input }),
-    listRmcOffices({ limit: 200, near: input }),
-    searchRmcSites("", 30, input),
+    listLocationHubPlants({ limit: 5000, near: input }),
+    listLocationHubOffices({ limit: 200, near: input }),
+    searchLocationHubSites("", 30, input),
     findNearestCustomLocation(input),
   ]);
 

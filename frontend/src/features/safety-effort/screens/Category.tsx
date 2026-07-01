@@ -19,6 +19,7 @@ import {
 import { SafetyCultureHero } from "@/components/safety-culture/safety-culture-hero";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useSafetyPointValue } from "@/hooks/useSafetyPointValue";
 
 type MonthlyStats = {
   count: number | null;
@@ -50,6 +51,7 @@ const steps = [
 
 export default function Category() {
   const navigate = useNavigate();
+  const safetyEffortPoints = useSafetyPointValue("safetyEffortCompleted");
   const [monthlyStats, setMonthlyStats] = useState<MonthlyStats>({ count: null, loading: true });
 
   useEffect(() => {
@@ -117,7 +119,7 @@ export default function Category() {
                     <span className="inline-flex items-center gap-1.5 rounded-full bg-[#0B82F0] px-3.5 py-1.5 text-[14px] font-black leading-none text-white shadow-[0_6px_14px_rgba(11,130,240,0.20)]">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img src="/images/icons/STCoin.png" alt="Coin" className="h-5 w-5 object-contain" />
-                      +10 Coin
+                      +{safetyEffortPoints} Coin
                     </span>
                   </div>
                   <p className="text-[12px] font-bold leading-relaxed text-[#55739B]">ความปลอดภัยเริ่มต้นที่นี่</p>
