@@ -212,23 +212,27 @@ const meIcon = L.divIcon({
 // ─── Map helper components ────────────────────────────────────────────────────
 function FlyTo({ target }) {
   const map = useMap();
+  const targetPoint = pointToArray(target);
+  const lat = targetPoint?.[0] ?? null;
+  const lng = targetPoint?.[1] ?? null;
   useEffect(() => {
-    const targetPoint = pointToArray(target);
-    if (targetPoint) {
-      map.flyTo(targetPoint, 14, { duration: 0.8 });
+    if (lat != null && lng != null) {
+      map.flyTo([lat, lng], 14, { duration: 0.8 });
     }
-  }, [target, map]);
+  }, [lat, lng, map]);
   return null;
 }
 
 function Recenter({ position, zoom }) {
   const map = useMap();
+  const targetPoint = pointToArray(position);
+  const lat = targetPoint?.[0] ?? null;
+  const lng = targetPoint?.[1] ?? null;
   useEffect(() => {
-    const targetPoint = pointToArray(position);
-    if (targetPoint) {
-      map.setView(targetPoint, zoom ?? map.getZoom());
+    if (lat != null && lng != null) {
+      map.setView([lat, lng], zoom ?? map.getZoom());
     }
-  }, [position, map, zoom]);
+  }, [lat, lng, map, zoom]);
   return null;
 }
 
@@ -1701,7 +1705,7 @@ export default function Checkin() {
     setSearchQuery("");
     setSelectedType("ทั้งหมด");
     setApiError("");
-    locateUser();
+    locateUser(false);
   }, [location.pathname, location.state]);
 
   useEffect(() => {
@@ -1899,19 +1903,49 @@ export default function Checkin() {
     });
   }
 
-  function locateUser() {
+  async function locateUser(userInitiated = true) {
     if (typeof navigator === "undefined" || !navigator.geolocation) {
+      setApiError("อุปกรณ์หรือเบราว์เซอร์นี้ไม่รองรับการระบุตำแหน่ง กรุณาเลือกสถานที่จากรายการ");
       setUserPos(DEFAULT_CENTER);
       return;
     }
+
+    if (!userInitiated && navigator.permissions?.query) {
+      try {
+        const permission = await navigator.permissions.query({ name: "geolocation" as PermissionName });
+        if (permission.state === "denied") {
+          setApiError("เบราว์เซอร์บล็อกการใช้ตำแหน่ง กรุณาเปิด Location permission แล้วกด “ระบุตำแหน่ง”");
+          setUserPos(DEFAULT_CENTER);
+          return;
+        }
+        if (permission.state === "prompt") {
+          setApiError("กด “ระบุตำแหน่ง” เพื่ออนุญาตให้เบราว์เซอร์อ่านตำแหน่งปัจจุบัน");
+          setUserPos(DEFAULT_CENTER);
+          return;
+        }
+      } catch {
+        // Some browsers do not expose permission state reliably; user click can still request location.
+      }
+    }
+
     setLocating(true);
+    setApiError("");
     navigator.geolocation.getCurrentPosition(
       pos => {
         setUserPos({ lat: pos.coords.latitude, lng: pos.coords.longitude, accuracy: pos.coords.accuracy });
+        setApiError("");
         setLocating(false);
       },
-      () => {
-        setApiError("ระบบจำลองตำแหน่งอัตโนมัติเนื่องจากไม่สามารถระบุตำแหน่ง GPS จริงได้");
+      error => {
+        const denied = error?.code === error?.PERMISSION_DENIED;
+        const timeout = error?.code === error?.TIMEOUT;
+        setApiError(
+          denied
+            ? "เบราว์เซอร์ไม่อนุญาตให้ใช้ตำแหน่ง กรุณาเปิด Location permission แล้วกด “ระบุตำแหน่ง” อีกครั้ง"
+            : timeout
+              ? "อ่านตำแหน่งไม่สำเร็จภายในเวลาที่กำหนด กรุณาลองกด “ระบุตำแหน่ง” อีกครั้ง"
+              : "ไม่สามารถอ่านตำแหน่งปัจจุบันได้ กรุณากด “ระบุตำแหน่ง” หรือเลือกสถานที่จากรายการ"
+        );
         setUserPos(DEFAULT_CENTER);
         setLocating(false);
       },
@@ -2034,7 +2068,7 @@ export default function Checkin() {
           ? "bg-[#0B82F0] text-white border-transparent shadow-[0_4px_10px_rgba(11,130,240,0.15)]"
           : "bg-white text-[#0B82F0] border-[#D7EAFE] shadow-[0_2px_6px_rgba(11,130,240,0.04)] hover:bg-[#0B82F0] hover:text-white"
       }`}
-      onClick={locateUser}
+      onClick={() => locateUser(true)}
     >
       <IcoLocate spin={locating} />
       <span>{locating ? "กำลังระบุ..." : "ระบุตำแหน่ง"}</span>
