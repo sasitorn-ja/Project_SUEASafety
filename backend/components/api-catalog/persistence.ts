@@ -1355,6 +1355,42 @@ async function handleActivitiesAssessments(request: NextRequest, method: string,
     return jsonData(await getLegacySafetyEffortCoverage(limit));
   }
   if (method === "GET" && ["/api/safety-effort/submissions", "/api/safety-effort/submissions/me"].includes(route)) {
+    if (route.endsWith("/me") && userId && request.nextUrl.searchParams.get("summary") === "monthly") {
+      const [currentRows, legacy] = await Promise.all([
+        queryRows<DbRow>(
+          `SELECT DATE_FORMAT(submission_date, '%Y-%m') AS month,
+                  SUM(CASE WHEN activity_type = 'LINE_WALK' THEN 1 ELSE 0 END) AS linewalk,
+                  SUM(CASE WHEN activity_type = 'SAFETY_CONTACT' THEN 1 ELSE 0 END) AS contact
+             FROM safety_effort_submissions
+            WHERE user_id = :userId AND deleted_at IS NULL
+            GROUP BY DATE_FORMAT(submission_date, '%Y-%m')
+            ORDER BY month`,
+          { userId },
+        ),
+        getLegacySafetyEffortSummaryForUser(String(userId)),
+      ]);
+      const monthlyCounts = new Map<string, { month: string; linewalk: number; contact: number }>();
+      for (const row of currentRows) {
+        const month = String(row.month || "");
+        if (!month) continue;
+        monthlyCounts.set(month, {
+          month,
+          linewalk: Number(row.linewalk || 0),
+          contact: Number(row.contact || 0),
+        });
+      }
+      for (const row of legacy.monthlyCounts) {
+        const current = monthlyCounts.get(row.month) || { month: row.month, linewalk: 0, contact: 0 };
+        current.linewalk += Number(row.linewalk || 0);
+        current.contact += Number(row.contact || 0);
+        monthlyCounts.set(row.month, current);
+      }
+      const items = [...monthlyCounts.values()].sort((left, right) => left.month.localeCompare(right.month));
+      return jsonData({
+        items,
+        years: [...new Set(items.map((item) => Number(item.month.slice(0, 4))).filter(Number.isInteger))].sort((a, b) => b - a),
+      });
+    }
     const where = ["s.deleted_at IS NULL"];
     const params: Record<string, unknown> = {};
     if (route.endsWith("/me")) {
@@ -2379,6 +2415,22 @@ async function handleImportsReportsAudit(request: NextRequest, method: string, m
   if (route === "/api/safety-settings") {
     const key = String(request.nextUrl.searchParams.get("key") || input.key || "safety_backdate");
     if (method === "GET") {
+      const keys = String(request.nextUrl.searchParams.get("keys") || "")
+        .split(",")
+        .map((item) => item.trim())
+        .filter(Boolean)
+        .slice(0, 30);
+      if (keys.length > 0) {
+        const rows = await queryRows<DbRow>(
+          "SELECT setting_key, setting_value, updated_at FROM safety_settings WHERE setting_key IN (:keys)",
+          { keys },
+        );
+        const items = rows.map(serializeRow);
+        return jsonData({
+          items,
+          settings: Object.fromEntries(items.map((item) => [String(item.setting_key), item])),
+        });
+      }
       const rows = await queryRows<DbRow>(
         "SELECT setting_key, setting_value, updated_at FROM safety_settings WHERE setting_key = :key LIMIT 1",
         { key },
@@ -2488,6 +2540,27 @@ async function handleImportsReportsAudit(request: NextRequest, method: string, m
           WHERE ${legacyWhere.join(" AND ")}
         `,
         legacyParams,
+      );
+      const correctiveParams: Record<string, unknown> = {};
+      const correctiveWhere = [
+        "sf.deleted_at IS NULL",
+        ...dateRangeFilters(request, "ca.created_at", correctiveParams),
+      ];
+      const correctiveRows = await queryRows<DbRow>(
+        `
+          SELECT
+            CASE
+              WHEN UPPER(ca.status) IN ('COMPLETED', 'CLOSED') THEN 'COMPLETED'
+              WHEN ca.due_at IS NOT NULL AND ca.due_at < UTC_TIMESTAMP(3) THEN 'OVERDUE'
+              ELSE 'PENDING'
+            END AS status_group,
+            COUNT(*) AS count
+          FROM corrective_actions ca
+          INNER JOIN safety_findings sf ON sf.id = ca.finding_id
+          WHERE ${correctiveWhere.join(" AND ")}
+          GROUP BY status_group
+        `,
+        correctiveParams,
       );
 
       const plantBusinessUnitMap = await buildLocationHubPlantBusinessUnitMap().catch(() => new Map<string, { divisionName: string; factName: string }>());
@@ -2617,6 +2690,17 @@ async function handleImportsReportsAudit(request: NextRequest, method: string, m
         }),
         { submissions: 0, total: 0, safe: 0, unsafeAct: 0, unsafeCond: 0, unsafe: 0 },
       );
+      const correctiveActions = correctiveRows.reduce(
+        (acc, row) => {
+          const count = Number(row.count || 0);
+          if (row.status_group === "COMPLETED") acc.completed += count;
+          else if (row.status_group === "OVERDUE") acc.overdue += count;
+          else acc.pending += count;
+          acc.total += count;
+          return acc;
+        },
+        { completed: 0, pending: 0, overdue: 0, total: 0 },
+      );
 
       return jsonData({
         summary: {
@@ -2627,6 +2711,7 @@ async function handleImportsReportsAudit(request: NextRequest, method: string, m
         },
         byLocationType: [...byLocationType, ...legacyLocationBucket],
         byBusinessUnit: limitedByBusinessUnit,
+        correctiveActions,
       });
     }
     if (route === "/api/safety-effort/reports/by-user") {

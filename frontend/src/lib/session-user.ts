@@ -23,6 +23,7 @@ export type SessionUser = {
   positionEn?: string;
   positionTh?: string;
   reportToEmail?: string;
+  createdAt?: string;
   roles?: string[];
   permissions?: string[];
   isAdmin?: boolean;
@@ -39,6 +40,15 @@ export const DEMO_ADMIN_USER: SessionUser = {
   isAdmin: true,
 };
 
+type SessionSnapshot = {
+  authenticated: boolean;
+  user: SessionUser | null;
+};
+
+let sessionSnapshotCache: { value: SessionSnapshot; expiresAt: number } | null = null;
+let sessionSnapshotInFlight: Promise<SessionSnapshot> | null = null;
+const SESSION_SNAPSHOT_CACHE_MS = 15_000;
+
 export function isLocalDemoLoginHost(hostname?: string) {
   return hostname === "localhost" || hostname === "127.0.0.1" || hostname === "::1" || hostname === "[::1]";
 }
@@ -54,6 +64,42 @@ export function isDemoLoginActive() {
   } catch {
     return false;
   }
+}
+
+export async function getSessionSnapshot(options: { force?: boolean } = {}): Promise<SessionSnapshot> {
+  const now = Date.now();
+  if (!options.force && sessionSnapshotCache && sessionSnapshotCache.expiresAt > now) {
+    return sessionSnapshotCache.value;
+  }
+  if (!options.force && sessionSnapshotInFlight) return sessionSnapshotInFlight;
+
+  sessionSnapshotInFlight = fetch("/api/auth/session", {
+    credentials: "include",
+    cache: "no-store",
+  })
+    .then(async (response) => {
+      const session = response.ok ? await response.json().catch(() => null) : null;
+      return {
+        authenticated: Boolean(session?.authenticated || session?.user),
+        user: session?.user || null,
+      };
+    })
+    .catch(() => ({ authenticated: false, user: null }))
+    .then((value) => {
+      sessionSnapshotCache = {
+        value,
+        expiresAt: Date.now() + SESSION_SNAPSHOT_CACHE_MS,
+      };
+      sessionSnapshotInFlight = null;
+      return value;
+    });
+
+  return sessionSnapshotInFlight;
+}
+
+export function clearSessionSnapshotCache() {
+  sessionSnapshotCache = null;
+  sessionSnapshotInFlight = null;
 }
 
 export function getSessionDisplayName(user?: SessionUser | null) {
@@ -101,11 +147,7 @@ export function useSessionUser() {
 
     const loadSession = async () => {
       try {
-        const response = await fetch("/api/auth/session", {
-          credentials: "include",
-          cache: "no-store",
-        });
-        const session = response.ok ? await response.json().catch(() => ({ user: null })) : { user: null };
+        const session = await getSessionSnapshot();
         if (!cancelled) setUser(session.user || (demoLoginAllowed ? DEMO_ADMIN_USER : null));
       } catch {
         if (!cancelled) setUser(demoLoginAllowed ? DEMO_ADMIN_USER : null);
@@ -115,11 +157,16 @@ export function useSessionUser() {
     };
 
     void loadSession();
-    window.addEventListener(PROFILE_IMAGE_UPDATED_EVENT, loadSession);
+    const handleProfileImageUpdated = () => {
+      clearSessionSnapshotCache();
+      void loadSession();
+    };
+
+    window.addEventListener(PROFILE_IMAGE_UPDATED_EVENT, handleProfileImageUpdated);
 
     return () => {
       cancelled = true;
-      window.removeEventListener(PROFILE_IMAGE_UPDATED_EVENT, loadSession);
+      window.removeEventListener(PROFILE_IMAGE_UPDATED_EVENT, handleProfileImageUpdated);
     };
   }, []);
 

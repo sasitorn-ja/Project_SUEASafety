@@ -58,9 +58,9 @@ function walk(dir, out = []) {
   return out;
 }
 
-function readEnv() {
+function readEnv(names = [".env.production", "frontend/.env.local", ".env.example"]) {
   const env = {};
-  for (const name of [".env.production", "frontend/.env.local", ".env.example"]) {
+  for (const name of names) {
     const file = path.join(root, name);
     if (!fs.existsSync(file)) continue;
     for (const line of fs.readFileSync(file, "utf8").split(/\r?\n/)) {
@@ -134,6 +134,9 @@ async function dbSummary(databaseUrl) {
   const [locations] = await conn.query("SELECT location_type, source, status, COUNT(*) count FROM locations GROUP BY location_type, source, status ORDER BY location_type, source, status");
   const [submissions] = await conn.query("SELECT COUNT(*) count FROM safety_effort_submissions");
   const [exportJobs] = await conn.query("SELECT COUNT(*) count FROM export_jobs");
+  const [apiDocsAccess] = await conn.query("SELECT COUNT(*) count FROM api_docs_access_users WHERE status = 'ACTIVE'");
+  const [pointConditions] = await conn.query("SELECT setting_value FROM safety_settings WHERE setting_key = 'safety_point_rule_conditions' LIMIT 1");
+  const [correctiveActions] = await conn.query("SELECT COUNT(*) count FROM corrective_actions");
   await conn.end();
   return {
     configured: true,
@@ -150,11 +153,14 @@ async function dbSummary(databaseUrl) {
       locations,
       submissions: Number(submissions[0]?.count || 0),
       exportJobs: Number(exportJobs[0]?.count || 0),
+      apiDocsAccess: Number(apiDocsAccess[0]?.count || 0),
+      pointConditions: pointConditions[0]?.setting_value || null,
+      correctiveActions: Number(correctiveActions[0]?.count || 0),
     },
   };
 }
 
-function deriveFindings(db, mocks) {
+function deriveFindings(db, mocks, env) {
   const findings = [];
   if (db.unavailable) {
     findings.push({ severity: "P0", area: "DB", message: `Cannot connect to CPAC_Safety (${db.errorCode || "unknown"}); retry audit when MySQL is reachable.` });
@@ -172,6 +178,13 @@ function deriveFindings(db, mocks) {
   const activeLocations = (db.critical.locations || []).reduce((sum, row) => sum + (row.status === "ACTIVE" ? Number(row.count) : 0), 0);
   if (activeLocations === 0) findings.push({ severity: "P0", area: "Locations", message: "CPAC_Safety.locations has no ACTIVE rows; check-in must rely on another source or sync is incomplete." });
   if (!db.critical.exportJobs) findings.push({ severity: "P1", area: "Exports", message: "export_jobs has no rows; report export still needs server-job validation." });
+  const safetyEffortDailyLimit = db.critical.pointConditions?.safetyEffortCompleted?.dailyLimit;
+  if (safetyEffortDailyLimit !== null) findings.push({ severity: "P0", area: "Point Rules", message: `Safety Effort daily limit must be null, found ${String(safetyEffortDailyLimit)}.` });
+  if (!env.LOCATION_HUB_DATABASE_URL) findings.push({ severity: "P1", area: "Locations", message: "LOCATION_HUB_DATABASE_URL is not configured; live Plant/Office/Site master falls back to CPAC_Safety ADMIN locations." });
+  if (!db.critical.apiDocsAccess && !String(env.API_DOCS_ALLOWED_USERS || "").trim()) findings.push({ severity: "P1", area: "API Docs", message: "No ACTIVE api_docs_access_users row or API_DOCS_ALLOWED_USERS fallback; /api-docs is unavailable even to admins." });
+  findings.push({ severity: "P2", area: "Scale", message: "Linewalk and location admin still request up to 1000 plants/organizations; add server-side search pagination before master data grows." });
+  findings.push({ severity: "P2", area: "Scale", message: "Admin leaderboard requests up to 500 users in one response; replace with server-side user search pagination." });
+  findings.push({ severity: "P2", area: "History", message: "Profile activity history loads the first 100 transactions without a load-more cursor." });
   const riskyMocks = mocks.filter((item) => !/isDemoLoginActive|NODE_ENV|localhost|DEMO_LOGIN/.test(item.text));
   if (riskyMocks.length) findings.push({ severity: "P0", area: "Mock/Demo", message: `${riskyMocks.length} mock/demo references need production gating or removal.` });
   return findings;
@@ -197,8 +210,8 @@ function applyDbAwarePageScores(route, base, db) {
   const page = { route, ...base, notes: [...base.notes] };
 
   if (route === "/" && page.current < 90) {
-    page.current = 90;
-    page.notes = ["Global post/comment hydration removed; home no longer preloads Safety Culture comments."];
+    page.current = 93;
+    page.notes = ["Initial APIs are deduplicated; awareness settings are batch-loaded and Safety Effort history uses a monthly aggregate."];
   }
   if (route === "/safety-culture" && page.current < 90) {
     page.current = 90;
@@ -213,8 +226,8 @@ function applyDbAwarePageScores(route, base, db) {
     page.notes = ["Notification bootstrap limit reduced to 30; post previews remain route-loaded."];
   }
   if (route === "/safety-culture/posts/[postId]") {
-    page.current = 88;
-    page.notes = ["Post detail loads one post and first 30 comments, not 100 comments."];
+    page.current = 92;
+    page.notes = ["Post detail loads one post and first 30 comments without preloading the feed or events."];
   }
   if (route === "/safety-admin/report-history") {
     page.current = 86;
@@ -233,28 +246,34 @@ function applyDbAwarePageScores(route, base, db) {
     page.notes = ["API docs access is gated and RBAC permissions are seeded in CPAC_Safety."];
   }
   if (route === "/dashboard") {
-    page.current = 82;
-    page.notes = ["Dashboard reads real report APIs; load-test script added for concurrent smoke/regression checks."];
+    page.current = 90;
+    page.notes = ["Dashboard reads real report APIs and corrective-action status no longer uses baseline mock data."];
   }
   if (["/activity", "/safety-contact", "/assessment-summary"].includes(route)) {
     page.current = Math.max(page.current, 82);
     page.notes = ["Wizard steps pass state locally and persist through the final Safety Effort submissions API."];
   }
   if (route === "/create-post" || route === "/safety-culture/post") {
-    page.current = Math.max(page.current, 84);
-    page.notes = ["Create flow uses upload and post APIs; runtime media QA remains the main residual risk."];
+    page.current = Math.max(page.current, route === "/create-post" ? 90 : 84);
+    page.notes = route === "/create-post"
+      ? ["Custom Safety Effort activity continues to assessment summary and persists through the submissions API."]
+      : ["Create flow uses upload and post APIs; runtime media QA remains the main residual risk."];
   }
   if (route === "/safety-culture/leaderboard") {
     page.current = 82;
     page.notes = ["Leaderboard is route-loaded and no longer hydrated globally."];
   }
   if (route === "/safety-culture/rewards") {
-    page.current = 84;
-    page.notes = ["Rewards are route-loaded; stock/balance enforcement stays on the backend redeem API."];
+    page.current = 91;
+    page.notes = ["Rewards loads only route-required data; session is shared, awareness APIs are gated out, and live refresh is throttled."];
+  }
+  if (route === "/safety-culture/admin-awareness") {
+    page.current = 90;
+    page.notes = ["Awareness settings are fetched in one batch request and the admin page no longer loads user attempts."];
   }
   if (route === "/safety-culture/admin-points" && facts.pointRulesComplete) {
     page.current = 94;
-    page.notes = ["All required point rules are present in CPAC_Safety.point_rules."];
+    page.notes = ["All point rules are in CPAC_Safety; Safety Effort dailyLimit is null and can be configured later."];
   }
   if (route === "/safety-culture/admin-users" && facts.hasRolePermissions) {
     page.current = 86;
@@ -323,6 +342,9 @@ ${findingRows}
 - role_permissions rows: ${report.db.critical?.rolePermissions ?? "n/a"}
 - safety_effort_submissions rows: ${report.db.critical?.submissions ?? "n/a"}
 - export_jobs rows: ${report.db.critical?.exportJobs ?? "n/a"}
+- Safety Effort daily limit: ${report.db.critical?.pointConditions?.safetyEffortCompleted?.dailyLimit === null ? "unlimited" : report.db.critical?.pointConditions?.safetyEffortCompleted?.dailyLimit ?? "n/a"}
+- API Docs active allowlist rows: ${report.db.critical?.apiDocsAccess ?? "n/a"}
+- corrective_actions rows: ${report.db.critical?.correctiveActions ?? "n/a"}
 `;
 }
 
@@ -347,6 +369,7 @@ function moduleScores(pages) {
 async function main() {
   fs.mkdirSync(outDir, { recursive: true });
   const env = readEnv();
+  const runtimeEnv = readEnv([".env.production", "frontend/.env.local"]);
   const routes = appRoutes();
   const apiRefs = apiReferences();
   const mocks = mockFindings();
@@ -379,7 +402,7 @@ async function main() {
     mockReferenceCount: mocks.length,
     pages,
     moduleScores: modules,
-    findings: deriveFindings(db, mocks),
+    findings: deriveFindings(db, mocks, runtimeEnv),
     mocks,
     apiRefs,
     db,

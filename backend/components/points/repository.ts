@@ -66,7 +66,7 @@ const DEFAULT_RULE_CONDITIONS: Record<SafetyPointAction, PointRuleCondition> = {
   safetyPostApproved: { dailyLimit: 3, minCommentLength: null, awardPostOwner: false },
   commentCreated: { dailyLimit: 3, minCommentLength: 15, awardPostOwner: false },
   reactionCreated: { dailyLimit: 3, minCommentLength: null, awardPostOwner: true },
-  safetyEffortCompleted: { dailyLimit: 3, minCommentLength: null, awardPostOwner: false },
+  safetyEffortCompleted: { dailyLimit: null, minCommentLength: null, awardPostOwner: false },
 };
 
 const ACTION_SOURCE_TYPES: Record<SafetyPointAction, string[]> = {
@@ -92,8 +92,12 @@ function normalizeCondition(action: SafetyPointAction, value: unknown): PointRul
   const record = value && typeof value === "object" ? value as Record<string, unknown> : {};
   const fallback = DEFAULT_RULE_CONDITIONS[action];
   return {
-    dailyLimit: normalizeConditionNumber(record.dailyLimit) ?? fallback.dailyLimit,
-    minCommentLength: normalizeConditionNumber(record.minCommentLength) ?? fallback.minCommentLength,
+    dailyLimit: Object.prototype.hasOwnProperty.call(record, "dailyLimit")
+      ? normalizeConditionNumber(record.dailyLimit)
+      : fallback.dailyLimit,
+    minCommentLength: Object.prototype.hasOwnProperty.call(record, "minCommentLength")
+      ? normalizeConditionNumber(record.minCommentLength)
+      : fallback.minCommentLength,
     awardPostOwner: typeof record.awardPostOwner === "boolean" ? record.awardPostOwner : fallback.awardPostOwner,
   };
 }
@@ -139,10 +143,10 @@ async function savePointRuleConditions(input: Partial<Record<SafetyPointAction, 
     await connection.execute<ResultSetHeader>(
       `
         INSERT INTO safety_settings (setting_key, setting_value, updated_by)
-        VALUES (:key, :value, 'system')
+        VALUES (:key, :value, NULL)
         ON DUPLICATE KEY UPDATE
           setting_value = VALUES(setting_value),
-          updated_by = VALUES(updated_by),
+          updated_by = NULL,
           updated_at = UTC_TIMESTAMP(3)
       `,
       {

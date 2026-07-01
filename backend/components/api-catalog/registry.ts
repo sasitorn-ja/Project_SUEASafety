@@ -1568,7 +1568,7 @@ export const API_CATALOG_ROUTES = [
     "pagination": "Aggregate",
     "responseSizeRisk": "Medium",
     "status": "Existing",
-    "notes": "อ่าน safety_effort_submissions.answers_json และ join checkins/locations/plant_location_details"
+    "notes": "อ่าน safety_effort_submissions.answers_json และ checkin location snapshots; ข้อมูล BU โรงงานอ่านสดจาก location_hub เมื่อ configure"
   },
   {
     "module": "Reports",

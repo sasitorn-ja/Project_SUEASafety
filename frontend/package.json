@@ -9,6 +9,7 @@
     "start": "next start",
     "qa:e2e": "playwright test",
     "qa:e2e:headed": "playwright test --headed",
+    "qa:network": "node scripts/audit-page-network.cjs",
     "start:standalone": "node ../scripts/run-with-env.cjs node .next/standalone/server.js"
   },
   "dependencies": {

@@ -1,0 +1,849 @@
+{
+  "generatedAt": "2026-07-01T11:44:39.854Z",
+  "baseUrl": "http://localhost:3007",
+  "pages": [
+    {
+      "route": "/",
+      "finalUrl": "http://localhost:3007/",
+      "totalRequests": 10,
+      "uniqueRequests": 10,
+      "duplicateCount": 0,
+      "score": 90,
+      "duplicates": [],
+      "requests": [
+        {
+          "request": "GET /api/auth/session",
+          "count": 1
+        },
+        {
+          "request": "GET /api/safety-culture/points/me",
+          "count": 1
+        },
+        {
+          "request": "GET /api/safety-culture/rewards?pageSize=1",
+          "count": 1
+        },
+        {
+          "request": "GET /api/safety-awareness/questions/admin?pageSize=1000",
+          "count": 1
+        },
+        {
+          "request": "GET /api/safety-awareness/attempts/me?pageSize=120",
+          "count": 1
+        },
+        {
+          "request": "GET /api/holidays?year=2026",
+          "count": 1
+        },
+        {
+          "request": "GET /api/safety-culture/events?pageSize=100",
+          "count": 1
+        },
+        {
+          "request": "GET /api/safety-culture/points/me/transactions?limit=100",
+          "count": 1
+        },
+        {
+          "request": "GET /api/safety-settings?keys=safety_awareness_enabled,safety_awareness_weekdays,safety_awareness_active_start_time,safety_awareness_active_end_time,safety_awareness_schedule_start_date,safety_awareness_schedule_end_date,safety_awareness_description",
+          "count": 1
+        },
+        {
+          "request": "GET /api/safety-effort/submissions/me?summary=monthly",
+          "count": 1
+        }
+      ],
+      "error": ""
+    },
+    {
+      "route": "/activity",
+      "finalUrl": "http://localhost:3007/activity",
+      "totalRequests": 2,
+      "uniqueRequests": 2,
+      "duplicateCount": 0,
+      "score": 100,
+      "duplicates": [],
+      "requests": [
+        {
+          "request": "GET /api/auth/session",
+          "count": 1
+        },
+        {
+          "request": "GET /api/safety-culture/points/me",
+          "count": 1
+        }
+      ],
+      "error": ""
+    },
+    {
+      "route": "/api-docs",
+      "finalUrl": "http://localhost:3007/api-docs",
+      "totalRequests": 2,
+      "uniqueRequests": 2,
+      "duplicateCount": 0,
+      "score": 100,
+      "duplicates": [],
+      "requests": [
+        {
+          "request": "GET /api/auth/session",
+          "count": 1
+        },
+        {
+          "request": "GET /api/safety-culture/points/me",
+          "count": 1
+        }
+      ],
+      "error": ""
+    },
+    {
+      "route": "/assessment-summary",
+      "finalUrl": "http://localhost:3007/category",
+      "totalRequests": 4,
+      "uniqueRequests": 4,
+      "duplicateCount": 0,
+      "score": 100,
+      "duplicates": [],
+      "requests": [
+        {
+          "request": "GET /api/auth/session",
+          "count": 1
+        },
+        {
+          "request": "GET /api/safety-culture/points/me",
+          "count": 1
+        },
+        {
+          "request": "GET /api/safety-culture/points/rules",
+          "count": 1
+        },
+        {
+          "request": "GET /api/safety-effort/submissions/me?from=2026-07-01&to=2026-07-31&pageSize=1",
+          "count": 1
+        }
+      ],
+      "error": ""
+    },
+    {
+      "route": "/category",
+      "finalUrl": "http://localhost:3007/category",
+      "totalRequests": 4,
+      "uniqueRequests": 4,
+      "duplicateCount": 0,
+      "score": 100,
+      "duplicates": [],
+      "requests": [
+        {
+          "request": "GET /api/auth/session",
+          "count": 1
+        },
+        {
+          "request": "GET /api/safety-culture/points/me",
+          "count": 1
+        },
+        {
+          "request": "GET /api/safety-culture/points/rules",
+          "count": 1
+        },
+        {
+          "request": "GET /api/safety-effort/submissions/me?from=2026-07-01&to=2026-07-31&pageSize=1",
+          "count": 1
+        }
+      ],
+      "error": ""
+    },
+    {
+      "route": "/checkin",
+      "finalUrl": "http://localhost:3007/checkin",
+      "totalRequests": 4,
+      "uniqueRequests": 4,
+      "duplicateCount": 0,
+      "score": 100,
+      "duplicates": [],
+      "requests": [
+        {
+          "request": "GET /api/auth/session",
+          "count": 1
+        },
+        {
+          "request": "GET /api/safety-culture/points/me",
+          "count": 1
+        },
+        {
+          "request": "GET /api/locations/map?limit=300",
+          "count": 1
+        },
+        {
+          "request": "GET /api/locations/offices?limit=30",
+          "count": 1
+        }
+      ],
+      "error": ""
+    },
+    {
+      "route": "/create-post",
+      "finalUrl": "http://localhost:3007/create-post",
+      "totalRequests": 2,
+      "uniqueRequests": 2,
+      "duplicateCount": 0,
+      "score": 100,
+      "duplicates": [],
+      "requests": [
+        {
+          "request": "GET /api/auth/session",
+          "count": 1
+        },
+        {
+          "request": "GET /api/safety-culture/points/me",
+          "count": 1
+        }
+      ],
+      "error": ""
+    },
+    {
+      "route": "/dashboard",
+      "finalUrl": "http://localhost:3007/dashboard",
+      "totalRequests": 4,
+      "uniqueRequests": 4,
+      "duplicateCount": 0,
+      "score": 100,
+      "duplicates": [],
+      "requests": [
+        {
+          "request": "GET /api/auth/session",
+          "count": 1
+        },
+        {
+          "request": "GET /api/safety-culture/points/me",
+          "count": 1
+        },
+        {
+          "request": "GET /api/safety-culture/rewards?pageSize=1",
+          "count": 1
+        },
+        {
+          "request": "GET /api/safety-effort/reports/linewalk-overview",
+          "count": 1
+        }
+      ],
+      "error": ""
+    },
+    {
+      "route": "/dashboard-safety-effort",
+      "finalUrl": "http://localhost:3007/dashboard",
+      "totalRequests": 4,
+      "uniqueRequests": 4,
+      "duplicateCount": 0,
+      "score": 100,
+      "duplicates": [],
+      "requests": [
+        {
+          "request": "GET /api/auth/session",
+          "count": 1
+        },
+        {
+          "request": "GET /api/safety-culture/points/me",
+          "count": 1
+        },
+        {
+          "request": "GET /api/safety-culture/rewards?pageSize=1",
+          "count": 1
+        },
+        {
+          "request": "GET /api/safety-effort/reports/linewalk-overview",
+          "count": 1
+        }
+      ],
+      "error": ""
+    },
+    {
+      "route": "/linewalk",
+      "finalUrl": "http://localhost:3007/linewalk",
+      "totalRequests": 7,
+      "uniqueRequests": 7,
+      "duplicateCount": 0,
+      "score": 95,
+      "duplicates": [],
+      "requests": [
+        {
+          "request": "GET /api/auth/session",
+          "count": 1
+        },
+        {
+          "request": "GET /api/safety-culture/points/me",
+          "count": 1
+        },
+        {
+          "request": "GET /api/safety-settings?key=safety_backdate",
+          "count": 1
+        },
+        {
+          "request": "GET /api/locations/plants?pageSize=1000",
+          "count": 1
+        },
+        {
+          "request": "GET /api/locations/offices?pageSize=30",
+          "count": 1
+        },
+        {
+          "request": "GET /api/organizations?pageSize=1000",
+          "count": 1
+        },
+        {
+          "request": "GET /api/safety-effort/checklists",
+          "count": 1
+        }
+      ],
+      "error": ""
+    },
+    {
+      "route": "/login",
+      "finalUrl": "http://localhost:3007/login",
+      "totalRequests": 2,
+      "uniqueRequests": 2,
+      "duplicateCount": 0,
+      "score": 100,
+      "duplicates": [],
+      "requests": [
+        {
+          "request": "GET /api/auth/session",
+          "count": 1
+        },
+        {
+          "request": "GET /api/safety-culture/points/me",
+          "count": 1
+        }
+      ],
+      "error": ""
+    },
+    {
+      "route": "/notifications",
+      "finalUrl": "http://localhost:3007/notifications",
+      "totalRequests": 5,
+      "uniqueRequests": 5,
+      "duplicateCount": 0,
+      "score": 100,
+      "duplicates": [],
+      "requests": [
+        {
+          "request": "GET /api/auth/session",
+          "count": 1
+        },
+        {
+          "request": "GET /api/safety-culture/posts?limit=15",
+          "count": 1
+        },
+        {
+          "request": "GET /api/safety-culture/points/me",
+          "count": 1
+        },
+        {
+          "request": "GET /api/notifications?limit=30",
+          "count": 1
+        },
+        {
+          "request": "GET /api/safety-culture/events?pageSize=100",
+          "count": 1
+        }
+      ],
+      "error": ""
+    },
+    {
+      "route": "/profile",
+      "finalUrl": "http://localhost:3007/profile",
+      "totalRequests": 5,
+      "uniqueRequests": 5,
+      "duplicateCount": 0,
+      "score": 100,
+      "duplicates": [],
+      "requests": [
+        {
+          "request": "GET /api/auth/session",
+          "count": 1
+        },
+        {
+          "request": "GET /api/safety-culture/points/me",
+          "count": 1
+        },
+        {
+          "request": "GET /api/safety-culture/leaderboard",
+          "count": 1
+        },
+        {
+          "request": "GET /api/safety-culture/teams",
+          "count": 1
+        },
+        {
+          "request": "GET /api/safety-culture/points/me/transactions?limit=100",
+          "count": 1
+        }
+      ],
+      "error": ""
+    },
+    {
+      "route": "/profile/activity-history",
+      "finalUrl": "http://localhost:3007/profile/activity-history",
+      "totalRequests": 3,
+      "uniqueRequests": 3,
+      "duplicateCount": 0,
+      "score": 100,
+      "duplicates": [],
+      "requests": [
+        {
+          "request": "GET /api/auth/session",
+          "count": 1
+        },
+        {
+          "request": "GET /api/safety-culture/points/me",
+          "count": 1
+        },
+        {
+          "request": "GET /api/safety-culture/points/me/transactions?limit=100",
+          "count": 1
+        }
+      ],
+      "error": ""
+    },
+    {
+      "route": "/safety-admin",
+      "finalUrl": "http://localhost:3007/safety-admin",
+      "totalRequests": 4,
+      "uniqueRequests": 4,
+      "duplicateCount": 0,
+      "score": 100,
+      "duplicates": [],
+      "requests": [
+        {
+          "request": "GET /api/auth/session",
+          "count": 1
+        },
+        {
+          "request": "GET /api/safety-culture/points/me",
+          "count": 1
+        },
+        {
+          "request": "GET /api/safety-effort/checklists",
+          "count": 1
+        },
+        {
+          "request": "GET /api/safety-settings?key=safety_backdate",
+          "count": 1
+        }
+      ],
+      "error": ""
+    },
+    {
+      "route": "/safety-admin/export-report",
+      "finalUrl": "http://localhost:3007/safety-admin/report-history",
+      "totalRequests": 3,
+      "uniqueRequests": 3,
+      "duplicateCount": 0,
+      "score": 100,
+      "duplicates": [],
+      "requests": [
+        {
+          "request": "GET /api/auth/session",
+          "count": 1
+        },
+        {
+          "request": "GET /api/safety-culture/points/me",
+          "count": 1
+        },
+        {
+          "request": "GET /api/safety-effort/submissions?pageSize=50",
+          "count": 1
+        }
+      ],
+      "error": ""
+    },
+    {
+      "route": "/safety-admin/manage-data",
+      "finalUrl": "http://localhost:3007/safety-admin/manage-data",
+      "totalRequests": 5,
+      "uniqueRequests": 5,
+      "duplicateCount": 0,
+      "score": 100,
+      "duplicates": [],
+      "requests": [
+        {
+          "request": "GET /api/auth/session",
+          "count": 1
+        },
+        {
+          "request": "GET /api/safety-culture/points/me",
+          "count": 1
+        },
+        {
+          "request": "GET /api/safety-effort/locations?type=PLANT&source=ADMIN&limit=1000",
+          "count": 1
+        },
+        {
+          "request": "GET /api/safety-effort/locations?type=OFFICE&source=ADMIN&limit=1000",
+          "count": 1
+        },
+        {
+          "request": "GET /api/safety-effort/locations?type=SITE&source=ADMIN&limit=1000",
+          "count": 1
+        }
+      ],
+      "error": ""
+    },
+    {
+      "route": "/safety-admin/report-history",
+      "finalUrl": "http://localhost:3007/safety-admin/report-history",
+      "totalRequests": 3,
+      "uniqueRequests": 3,
+      "duplicateCount": 0,
+      "score": 100,
+      "duplicates": [],
+      "requests": [
+        {
+          "request": "GET /api/auth/session",
+          "count": 1
+        },
+        {
+          "request": "GET /api/safety-culture/points/me",
+          "count": 1
+        },
+        {
+          "request": "GET /api/safety-effort/submissions?pageSize=50",
+          "count": 1
+        }
+      ],
+      "error": ""
+    },
+    {
+      "route": "/safety-contact",
+      "finalUrl": "http://localhost:3007/safety-contact",
+      "totalRequests": 3,
+      "uniqueRequests": 3,
+      "duplicateCount": 0,
+      "score": 100,
+      "duplicates": [],
+      "requests": [
+        {
+          "request": "GET /api/auth/session",
+          "count": 1
+        },
+        {
+          "request": "GET /api/safety-culture/points/me",
+          "count": 1
+        },
+        {
+          "request": "GET /api/safety-settings?key=safety_backdate",
+          "count": 1
+        }
+      ],
+      "error": ""
+    },
+    {
+      "route": "/safety-culture",
+      "finalUrl": "http://localhost:3007/safety-culture",
+      "totalRequests": 4,
+      "uniqueRequests": 4,
+      "duplicateCount": 0,
+      "score": 100,
+      "duplicates": [],
+      "requests": [
+        {
+          "request": "GET /api/auth/session",
+          "count": 1
+        },
+        {
+          "request": "GET /api/safety-culture/posts?limit=15",
+          "count": 1
+        },
+        {
+          "request": "GET /api/safety-culture/points/me",
+          "count": 1
+        },
+        {
+          "request": "GET /api/safety-culture/events?pageSize=100",
+          "count": 1
+        }
+      ],
+      "error": ""
+    },
+    {
+      "route": "/safety-culture/admin-awareness",
+      "finalUrl": "http://localhost:3007/safety-culture/admin-awareness",
+      "totalRequests": 5,
+      "uniqueRequests": 5,
+      "duplicateCount": 0,
+      "score": 100,
+      "duplicates": [],
+      "requests": [
+        {
+          "request": "GET /api/auth/session",
+          "count": 1
+        },
+        {
+          "request": "GET /api/safety-culture/points/me",
+          "count": 1
+        },
+        {
+          "request": "GET /api/safety-awareness/questions/admin?pageSize=1000",
+          "count": 1
+        },
+        {
+          "request": "GET /api/holidays?year=2026",
+          "count": 1
+        },
+        {
+          "request": "GET /api/safety-settings?keys=safety_awareness_enabled,safety_awareness_weekdays,safety_awareness_active_start_time,safety_awareness_active_end_time,safety_awareness_schedule_start_date,safety_awareness_schedule_end_date,safety_awareness_description",
+          "count": 1
+        }
+      ],
+      "error": ""
+    },
+    {
+      "route": "/safety-culture/admin-event",
+      "finalUrl": "http://localhost:3007/safety-culture/admin-event",
+      "totalRequests": 3,
+      "uniqueRequests": 3,
+      "duplicateCount": 0,
+      "score": 100,
+      "duplicates": [],
+      "requests": [
+        {
+          "request": "GET /api/auth/session",
+          "count": 1
+        },
+        {
+          "request": "GET /api/safety-culture/points/me",
+          "count": 1
+        },
+        {
+          "request": "GET /api/safety-culture/events?pageSize=100",
+          "count": 1
+        }
+      ],
+      "error": ""
+    },
+    {
+      "route": "/safety-culture/admin-leaderboard",
+      "finalUrl": "http://localhost:3007/safety-culture/admin-leaderboard",
+      "totalRequests": 5,
+      "uniqueRequests": 5,
+      "duplicateCount": 0,
+      "score": 100,
+      "duplicates": [],
+      "requests": [
+        {
+          "request": "GET /api/auth/session",
+          "count": 1
+        },
+        {
+          "request": "GET /api/safety-culture/points/me",
+          "count": 1
+        },
+        {
+          "request": "GET /api/safety-culture/leaderboard",
+          "count": 1
+        },
+        {
+          "request": "GET /api/safety-culture/teams",
+          "count": 1
+        },
+        {
+          "request": "GET /api/users?pageSize=500",
+          "count": 1
+        }
+      ],
+      "error": ""
+    },
+    {
+      "route": "/safety-culture/admin-points",
+      "finalUrl": "http://localhost:3007/safety-culture/admin-points",
+      "totalRequests": 3,
+      "uniqueRequests": 3,
+      "duplicateCount": 0,
+      "score": 100,
+      "duplicates": [],
+      "requests": [
+        {
+          "request": "GET /api/auth/session",
+          "count": 1
+        },
+        {
+          "request": "GET /api/safety-culture/points/me",
+          "count": 1
+        },
+        {
+          "request": "GET /api/safety-culture/points/rules",
+          "count": 1
+        }
+      ],
+      "error": ""
+    },
+    {
+      "route": "/safety-culture/admin-reward",
+      "finalUrl": "http://localhost:3007/safety-culture/admin-reward",
+      "totalRequests": 4,
+      "uniqueRequests": 4,
+      "duplicateCount": 0,
+      "score": 100,
+      "duplicates": [],
+      "requests": [
+        {
+          "request": "GET /api/auth/session",
+          "count": 1
+        },
+        {
+          "request": "GET /api/safety-culture/points/me",
+          "count": 1
+        },
+        {
+          "request": "GET /api/safety-culture/rewards?pageSize=100",
+          "count": 1
+        },
+        {
+          "request": "GET /api/safety-settings?key=safety_reward_categories",
+          "count": 1
+        }
+      ],
+      "error": ""
+    },
+    {
+      "route": "/safety-culture/admin-users",
+      "finalUrl": "http://localhost:3007/safety-culture/admin-users",
+      "totalRequests": 4,
+      "uniqueRequests": 4,
+      "duplicateCount": 0,
+      "score": 100,
+      "duplicates": [],
+      "requests": [
+        {
+          "request": "GET /api/auth/session",
+          "count": 1
+        },
+        {
+          "request": "GET /api/safety-culture/points/me",
+          "count": 1
+        },
+        {
+          "request": "GET /api/users?page=1&pageSize=25",
+          "count": 1
+        },
+        {
+          "request": "GET /api/roles?pageSize=500",
+          "count": 1
+        }
+      ],
+      "error": ""
+    },
+    {
+      "route": "/safety-culture/leaderboard",
+      "finalUrl": "http://localhost:3007/safety-culture/leaderboard",
+      "totalRequests": 4,
+      "uniqueRequests": 4,
+      "duplicateCount": 0,
+      "score": 100,
+      "duplicates": [],
+      "requests": [
+        {
+          "request": "GET /api/auth/session",
+          "count": 1
+        },
+        {
+          "request": "GET /api/safety-culture/points/me",
+          "count": 1
+        },
+        {
+          "request": "GET /api/safety-culture/leaderboard",
+          "count": 1
+        },
+        {
+          "request": "GET /api/safety-culture/teams",
+          "count": 1
+        }
+      ],
+      "error": ""
+    },
+    {
+      "route": "/safety-culture/post",
+      "finalUrl": "http://localhost:3007/safety-culture/post",
+      "totalRequests": 4,
+      "uniqueRequests": 4,
+      "duplicateCount": 0,
+      "score": 100,
+      "duplicates": [],
+      "requests": [
+        {
+          "request": "GET /api/auth/session",
+          "count": 1
+        },
+        {
+          "request": "GET /api/safety-culture/points/me",
+          "count": 1
+        },
+        {
+          "request": "GET /api/safety-culture/events?pageSize=100",
+          "count": 1
+        },
+        {
+          "request": "GET /api/safety-culture/points/rules",
+          "count": 1
+        }
+      ],
+      "error": ""
+    },
+    {
+      "route": "/safety-culture/posts/37",
+      "finalUrl": "http://localhost:3007/safety-culture/posts/37",
+      "totalRequests": 4,
+      "uniqueRequests": 4,
+      "duplicateCount": 0,
+      "score": 100,
+      "duplicates": [],
+      "requests": [
+        {
+          "request": "GET /api/auth/session",
+          "count": 1
+        },
+        {
+          "request": "GET /api/safety-culture/points/me",
+          "count": 1
+        },
+        {
+          "request": "GET /api/safety-culture/posts/37",
+          "count": 1
+        },
+        {
+          "request": "GET /api/safety-culture/posts/37/comments?limit=30",
+          "count": 1
+        }
+      ],
+      "error": ""
+    },
+    {
+      "route": "/safety-culture/rewards",
+      "finalUrl": "http://localhost:3007/safety-culture/rewards",
+      "totalRequests": 4,
+      "uniqueRequests": 4,
+      "duplicateCount": 0,
+      "score": 100,
+      "duplicates": [],
+      "requests": [
+        {
+          "request": "GET /api/auth/session",
+          "count": 1
+        },
+        {
+          "request": "GET /api/safety-culture/points/me",
+          "count": 1
+        },
+        {
+          "request": "GET /api/safety-culture/rewards?pageSize=100",
+          "count": 1
+        },
+        {
+          "request": "GET /api/safety-settings?key=safety_reward_categories",
+          "count": 1
+        }
+      ],
+      "error": ""
+    }
+  ],
+  "averageRequests": 4,
+  "pagesWithDuplicates": 0,
+  "networkScore": 100
+}

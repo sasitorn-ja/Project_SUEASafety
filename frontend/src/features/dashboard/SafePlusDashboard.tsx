@@ -5,7 +5,7 @@ import Link from "next/link";
 import { type CSSProperties, useEffect, useMemo, useRef, useState } from "react";
 import { type SafetyCultureFeedEvent, useAppState } from "@/providers/app-providers";
 import { apiFetch } from "@/lib/api-client";
-import { isLocalDemoLoginHost } from "@/lib/session-user";
+import { isLocalDemoLoginHost, useSessionUser } from "@/lib/session-user";
 import { cn } from "@/lib/utils";
 import { formatDisplayDate } from "@/lib/utils";
 import { Card } from "@/components/ui/card";
@@ -193,13 +193,14 @@ export default function SafePlusDashboard() {
     awarenessStartDate,
     feedEvents,
     rewardsCatalog,
+    userActivityHistory,
   } = useAppState();
+  const { user: sessionUser } = useSessionUser();
   const [isDemoLogin, setIsDemoLogin] = useState(false);
   const currentYear = new Date().getFullYear();
   const [effortYear, setEffortYear] = useState(currentYear);
-  const [effortChartData, setEffortChartData] = useState<Array<{ month: string; linewalk: number; contact: number }>>([]);
+  const [effortMonthlyCounts, setEffortMonthlyCounts] = useState<Array<{ month: string; linewalk: number; contact: number }>>([]);
   const [effortYearOptions, setEffortYearOptions] = useState<number[]>([currentYear]);
-  const [awarenessUserStartDate, setAwarenessUserStartDate] = useState<string | null>(null);
   const [awarenessCalendarMode, setAwarenessCalendarMode] = useState<"done" | "missed" | null>(null);
 
   const activeEvents = useMemo(
@@ -213,7 +214,11 @@ export default function SafePlusDashboard() {
   const heroBannerSlides = HOME_HERO_SLIDES;
   const [activeHeroIndex, setActiveHeroIndex] = useState(0);
 
-  const [pointTransactions, setPointTransactions] = useState<Array<{ amount: number; occurredAt: string }>>([]);
+  const awarenessUserStartDate = useMemo(() => {
+    if (!sessionUser?.createdAt) return null;
+    const date = new Date(sessionUser.createdAt);
+    return Number.isNaN(date.getTime()) ? null : bangkokDateKey(date);
+  }, [sessionUser?.createdAt]);
   const effectiveAwarenessStartDate = [awarenessUserStartDate, awarenessStartDate, awarenessScheduleStartDate]
     .filter((date): date is string => Boolean(date))
     .sort((left, right) => right.localeCompare(left))[0] || bangkokDateKey(new Date());
@@ -240,32 +245,6 @@ export default function SafePlusDashboard() {
   }, [heroBannerSlides.length]);
 
   useEffect(() => {
-    let cancelled = false;
-    void apiFetch<{ items: Array<{ amount: number; occurredAt: string }> }>("/api/safety-culture/points/me/transactions?limit=100")
-      .then((result) => {
-        if (!cancelled && result.ok && Array.isArray(result.data?.items)) {
-          setPointTransactions(result.data.items);
-        }
-      });
-    return () => { cancelled = true; };
-  }, [currentUserPoints]);
-
-  useEffect(() => {
-    let cancelled = false;
-    void apiFetch<{ user?: { created_at?: string | null; createdAt?: string | null } }>("/api/users/me")
-      .then((result) => {
-        if (cancelled || !result.ok) return;
-        const rawCreatedAt = result.data?.user?.created_at || result.data?.user?.createdAt;
-        if (!rawCreatedAt) return;
-        const createdDateKey = bangkokDateKey(new Date(String(rawCreatedAt)));
-        if (!createdDateKey || Number.isNaN(new Date(String(rawCreatedAt)).getTime())) return;
-        setAwarenessUserStartDate(createdDateKey);
-      })
-      .catch(() => null);
-    return () => { cancelled = true; };
-  }, []);
-
-  useEffect(() => {
     setAwarenessCalendarMonth((current) => {
       const minMonth = startOfBangkokMonth(effectiveAwarenessStartDate);
       const maxMonth = startOfBangkokMonth(bangkokDateKey(new Date()));
@@ -278,37 +257,27 @@ export default function SafePlusDashboard() {
   useEffect(() => {
     if (isDemoLogin) {
       setEffortYearOptions(Array.from({ length: 3 }, (_, i) => currentYear - i));
+      setEffortMonthlyCounts([]);
       return;
     }
 
     let cancelled = false;
     void apiFetch<{
-      items?: Array<{ submissionDate?: string; submission_date?: string; date?: string; timestamp?: string }>;
-      legacy?: { monthlyCounts?: Array<{ month?: string | null }> };
-    }>("/api/safety-effort/submissions/me?pageSize=500")
+      items?: Array<{ month: string; linewalk: number; contact: number }>;
+      years?: number[];
+    }>("/api/safety-effort/submissions/me?summary=monthly")
       .then((result) => {
         if (cancelled || !result.ok) return;
-
-        const years = new Set<number>();
         const items = Array.isArray(result.data?.items) ? result.data.items : [];
-        const legacyMonthly = Array.isArray(result.data?.legacy?.monthlyCounts) ? result.data.legacy.monthlyCounts : [];
-
-        for (const item of items) {
-          const rawDate = String(item.submissionDate || item.submission_date || item.date || item.timestamp || "");
-          const year = Number(rawDate.slice(0, 4));
-          if (Number.isInteger(year) && year > 2000) years.add(year);
-        }
-
-        for (const item of legacyMonthly) {
-          const year = Number(String(item.month || "").slice(0, 4));
-          if (Number.isInteger(year) && year > 2000) years.add(year);
-        }
-
-        const nextOptions = Array.from(years).sort((left, right) => right - left);
+        const nextOptions = Array.isArray(result.data?.years) ? result.data.years : [];
+        setEffortMonthlyCounts(items);
         setEffortYearOptions(nextOptions.length > 0 ? nextOptions : [currentYear]);
       })
       .catch(() => {
-        if (!cancelled) setEffortYearOptions([currentYear]);
+        if (!cancelled) {
+          setEffortMonthlyCounts([]);
+          setEffortYearOptions([currentYear]);
+        }
       });
 
     return () => {
@@ -321,72 +290,35 @@ export default function SafePlusDashboard() {
     setEffortYear(effortYearOptions[0] ?? currentYear);
   }, [currentYear, effortYear, effortYearOptions]);
 
-  useEffect(() => {
+  const effortChartData = useMemo(() => {
     const THAI_MONTHS = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.ค.", "มิ.ย.", "ก.ค.", "ส.ค.", "ก.ย.", "ต.ค.", "พ.ย.", "ธ.ค."];
-
-    const buildMonthMap = () => {
-      const map = new Map<string, { linewalk: number; contact: number }>();
-      for (let m = 0; m < 12; m++) {
-        const key = `${effortYear}-${String(m + 1).padStart(2, "0")}`;
-        map.set(key, { linewalk: 0, contact: 0 });
-      }
-      return map;
-    };
-
-    const toChartData = (monthMap: Map<string, { linewalk: number; contact: number }>) =>
-      Array.from(monthMap.entries()).map(([key, val]) => ({
-        month: THAI_MONTHS[parseInt(key.slice(5, 7), 10) - 1],
-        ...val,
-      }));
+    const monthMap = new Map<string, { linewalk: number; contact: number }>();
+    for (let month = 0; month < 12; month += 1) {
+      monthMap.set(`${effortYear}-${String(month + 1).padStart(2, "0")}`, { linewalk: 0, contact: 0 });
+    }
 
     if (isDemoLogin) {
       const DEMO_POOL: Array<[number, number]> = [[3, 2], [4, 3], [2, 4], [5, 2], [3, 3], [2, 1], [4, 2], [3, 4], [5, 1], [2, 3], [4, 4], [3, 2]];
-      const monthMap = buildMonthMap();
       let idx = 0;
       for (const entry of monthMap.values()) {
         const [lw, sc] = DEMO_POOL[idx++ % DEMO_POOL.length];
         entry.linewalk = lw;
         entry.contact = sc;
       }
-      setEffortChartData(toChartData(monthMap));
-      return;
+    } else {
+      for (const item of effortMonthlyCounts) {
+        const current = monthMap.get(item.month);
+        if (!current) continue;
+        current.linewalk = Number(item.linewalk || 0);
+        current.contact = Number(item.contact || 0);
+      }
     }
 
-    let cancelled = false;
-    const fromStr = `${effortYear}-01-01`;
-    const toStr = `${effortYear}-12-31`;
-    fetch(`/api/safety-effort/submissions/me?from=${fromStr}&to=${toStr}&pageSize=500`, {
-      credentials: "include",
-      cache: "no-store",
-    })
-      .then((r) => (r.ok ? r.json() : null))
-      .then((payload) => {
-        if (cancelled) return;
-        const items: Array<{ activityType?: string; activity_type?: string; date?: string; timestamp?: string }> =
-          Array.isArray(payload?.data?.items) ? payload.data.items : [];
-        const legacyMonthly: Array<{ month?: string; linewalk?: number; contact?: number }> =
-          Array.isArray(payload?.data?.legacy?.monthlyCounts) ? payload.data.legacy.monthlyCounts : [];
-        const monthMap = buildMonthMap();
-        for (const item of items) {
-          const monthKey = String(item.date || item.timestamp || "").slice(0, 7);
-          if (!monthMap.has(monthKey)) continue;
-          const type = String(item.activityType || item.activity_type || "").toUpperCase();
-          const entry = monthMap.get(monthKey)!;
-          if (type === "LINE_WALK") entry.linewalk += 1;
-          else if (type === "SAFETY_CONTACT") entry.contact += 1;
-        }
-        for (const item of legacyMonthly) {
-          const monthKey = String(item.month || "").slice(0, 7);
-          if (!monthMap.has(monthKey)) continue;
-          const entry = monthMap.get(monthKey)!;
-          entry.linewalk += Number(item.linewalk || 0);
-          entry.contact += Number(item.contact || 0);
-        }
-        setEffortChartData(toChartData(monthMap));
-      })
-      .catch(() => { /* keep empty state */ });
-    return () => { cancelled = true; };
-  }, [isDemoLogin, effortYear]);
+    return Array.from(monthMap.entries()).map(([key, value]) => ({
+      month: THAI_MONTHS[parseInt(key.slice(5, 7), 10) - 1],
+      ...value,
+    }));
+  }, [effortMonthlyCounts, effortYear, isDemoLogin]);
 
   const dashboardData = useMemo(() => {
     const now = new Date();
@@ -532,10 +464,10 @@ export default function SafePlusDashboard() {
 
   const weeklyPoints = useMemo(() => {
     const cutoff = Date.now() - 7 * 24 * 60 * 60 * 1000;
-    return pointTransactions
-      .filter((tx) => new Date(tx.occurredAt).getTime() >= cutoff)
-      .reduce((sum, tx) => sum + tx.amount, 0);
-  }, [pointTransactions]);
+    return userActivityHistory
+      .filter((activity) => activity.occurredAt >= cutoff)
+      .reduce((sum, activity) => sum + activity.pointsDelta, 0);
+  }, [userActivityHistory]);
 
   const awarenessLoadingCard = (
     <Card className="self-start gap-1.5 rounded-[18px] border border-[rgba(13,80,165,0.18)] bg-white p-2.5 shadow-[0_4px_18px_rgba(11,53,110,0.10),0_1px_4px_rgba(11,53,110,0.06)] sm:p-2 lg:p-2">

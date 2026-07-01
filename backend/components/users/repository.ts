@@ -29,11 +29,13 @@ export type DbUser = {
   ssoProvider: string | null;
   ssoSubject: string | null;
   ssoLastLoginAt: string | null;
+  createdAt: string;
   status: string;
 };
 
 export type SessionDbUser = SsoUser & {
   id: string;
+  createdAt?: string;
   profileImageUrl?: string;
   roles?: string[];
   permissions?: string[];
@@ -67,6 +69,7 @@ type DbUserRow = RowDataPacket & {
   sso_provider: string | null;
   sso_subject: string | null;
   sso_last_login_at: Date | string | null;
+  created_at: Date | string;
   status: string;
 };
 
@@ -101,6 +104,7 @@ function mapUser(row: DbUserRow): DbUser {
     ssoProvider: row.sso_provider,
     ssoSubject: row.sso_subject,
     ssoLastLoginAt: row.sso_last_login_at ? new Date(row.sso_last_login_at).toISOString() : null,
+    createdAt: new Date(row.created_at).toISOString(),
     status: row.status,
   };
 }
@@ -145,6 +149,7 @@ const SELECT_USER_SQL = `
     sso_provider,
     sso_subject,
     sso_last_login_at,
+    created_at,
     status
   FROM users
 `;
@@ -210,6 +215,7 @@ export function dbUserToSessionUser(user: DbUser, access: UserAccess = { roles: 
     positionEn: user.positionEn || undefined,
     positionTh: user.positionTh || user.positionName || undefined,
     reportToEmail: user.reportToEmail || undefined,
+    createdAt: user.createdAt,
     roles: access.roles,
     permissions: access.permissions,
     isAdmin: hasAdminAccess(access),

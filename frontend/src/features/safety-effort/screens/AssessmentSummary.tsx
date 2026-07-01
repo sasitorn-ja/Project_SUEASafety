@@ -222,7 +222,11 @@ export default function AssessmentSummary() {
   }, [answeredItems, hasInitializedExpanded]);
 
   const handleBack = () => {
-    if (linewalkData?.isSafetyContact) {
+    if (linewalkData?.customActivity) {
+      navigate("/create-post", {
+        state: { checkin, activity, linewalkData, fromActivity: true },
+      });
+    } else if (linewalkData?.isSafetyContact) {
       navigate("/safety-contact", {
         state: {
           checkin,

@@ -1,20 +1,20 @@
 {
-  "generatedAt": "2026-07-01T10:50:32.797Z",
+  "generatedAt": "2026-07-01T12:05:12.340Z",
   "overall": {
-    "current": 84,
+    "current": 85,
     "target": 92
   },
   "routeCount": 30,
-  "apiReferenceCount": 54,
+  "apiReferenceCount": 51,
   "mockReferenceCount": 0,
   "pages": [
     {
       "route": "/",
       "module": "Home",
-      "current": 90,
+      "current": 93,
       "target": 95,
       "notes": [
-        "Global post/comment hydration removed; home no longer preloads Safety Culture comments."
+        "Initial APIs are deduplicated; awareness settings are batch-loaded and Safety Effort history uses a monthly aggregate."
       ]
     },
     {
@@ -65,19 +65,19 @@
     {
       "route": "/create-post",
       "module": "Safety Effort",
-      "current": 84,
+      "current": 90,
       "target": 90,
       "notes": [
-        "Create flow uses upload and post APIs; runtime media QA remains the main residual risk."
+        "Custom Safety Effort activity continues to assessment summary and persists through the submissions API."
       ]
     },
     {
       "route": "/dashboard",
       "module": "Dashboard",
-      "current": 82,
+      "current": 90,
       "target": 92,
       "notes": [
-        "Dashboard reads real report APIs; load-test script added for concurrent smoke/regression checks."
+        "Dashboard reads real report APIs and corrective-action status no longer uses baseline mock data."
       ]
     },
     {
@@ -191,10 +191,10 @@
     {
       "route": "/safety-culture/admin-awareness",
       "module": "Culture Admin",
-      "current": 82,
+      "current": 90,
       "target": 95,
       "notes": [
-        "Awareness question/settings are DB-backed."
+        "Awareness settings are fetched in one batch request and the admin page no longer loads user attempts."
       ]
     },
     {
@@ -221,7 +221,7 @@
       "current": 94,
       "target": 95,
       "notes": [
-        "All required point rules are present in CPAC_Safety.point_rules."
+        "All point rules are in CPAC_Safety; Safety Effort dailyLimit is null and can be configured later."
       ]
     },
     {
@@ -263,25 +263,25 @@
     {
       "route": "/safety-culture/posts/[postId]",
       "module": "Safety Culture",
-      "current": 88,
+      "current": 92,
       "target": 95,
       "notes": [
-        "Post detail loads one post and first 30 comments, not 100 comments."
+        "Post detail loads one post and first 30 comments without preloading the feed or events."
       ]
     },
     {
       "route": "/safety-culture/rewards",
       "module": "Safety Culture",
-      "current": 84,
+      "current": 91,
       "target": 92,
       "notes": [
-        "Rewards are route-loaded; stock/balance enforcement stays on the backend redeem API."
+        "Rewards loads only route-required data; session is shared, awareness APIs are gated out, and live refresh is throttled."
       ]
     }
   ],
   "moduleScores": {
     "Home": {
-      "current": 90,
+      "current": 93,
       "target": 95
     },
     "Safety Effort": {
@@ -293,7 +293,7 @@
       "target": 95
     },
     "Dashboard": {
-      "current": 82,
+      "current": 90,
       "target": 92
     },
     "Unscored": {
@@ -313,11 +313,11 @@
       "target": 93
     },
     "Safety Culture": {
-      "current": 86,
+      "current": 88,
       "target": 93
     },
     "Culture Admin": {
-      "current": 80,
+      "current": 81,
       "target": 93
     },
     "IAM": {
@@ -325,7 +325,28 @@
       "target": 92
     }
   },
-  "findings": [],
+  "findings": [
+    {
+      "severity": "P1",
+      "area": "Locations",
+      "message": "LOCATION_HUB_DATABASE_URL is not configured; live Plant/Office/Site master falls back to CPAC_Safety ADMIN locations."
+    },
+    {
+      "severity": "P2",
+      "area": "Scale",
+      "message": "Linewalk and location admin still request up to 1000 plants/organizations; add server-side search pagination before master data grows."
+    },
+    {
+      "severity": "P2",
+      "area": "Scale",
+      "message": "Admin leaderboard requests up to 500 users in one response; replace with server-side user search pagination."
+    },
+    {
+      "severity": "P2",
+      "area": "History",
+      "message": "Profile activity history loads the first 100 transactions without a load-more cursor."
+    }
+  ],
   "mocks": [],
   "apiRefs": [
     {
@@ -345,16 +366,8 @@
       "path": "/api/safety-settings?key=safety_backdate"
     },
     {
-      "file": "frontend/src/components/layout/app-shell.tsx",
-      "path": "/api/auth/session"
-    },
-    {
       "file": "frontend/src/components/layout/floating-safety-assistant.tsx",
       "path": "/api/assistant/chat"
-    },
-    {
-      "file": "frontend/src/features/dashboard/SafePlusDashboard.tsx",
-      "path": "/api/safety-effort/submissions/me?from=${fromStr}&to=${toStr}&pageSize=500"
     },
     {
       "file": "frontend/src/features/safety-effort/config/checklists.ts",
@@ -458,10 +471,6 @@
     },
     {
       "file": "frontend/src/lib/session-user.ts",
-      "path": "/api/auth/session"
-    },
-    {
-      "file": "frontend/src/providers/app-providers.tsx",
       "path": "/api/auth/session"
     },
     {
@@ -872,7 +881,16 @@
         }
       ],
       "submissions": 59,
-      "exportJobs": 1
+      "exportJobs": 1,
+      "apiDocsAccess": 1,
+      "pointConditions": {
+        "safetyEffortCompleted": {
+          "dailyLimit": null,
+          "awardPostOwner": false,
+          "minCommentLength": null
+        }
+      },
+      "correctiveActions": 0
     }
   }
 }

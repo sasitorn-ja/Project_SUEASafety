@@ -50,14 +50,6 @@ const C = {
   neutral: "#E2E5EA",   // light gray
 };
 
-// Extracted PPTX baseline data
-// Baseline Chart 3 data: สถานะการแก้ไข
-const BASELINE_CHART3_DATA = [
-  { name: "Success", value: 84.2, count: 48, color: "#6FB07A" }, // Soft Green
-  { name: "Pending", value: 14.0, count: 8, color: "#E6B45A" },  // Soft Amber
-  { name: "Unresolved", value: 1.8, count: 1, color: "#E2E5EA" } // Light Gray
-];
-
 export default function DashboardSafetyEffort() {
   const exportDateStamp = new Date().toISOString().slice(0, 10);
 
@@ -124,8 +116,6 @@ export default function DashboardSafetyEffort() {
     XLSX.writeFile(workbook, `Safety_Effort_Summary_all-data_${exportDateStamp}.xlsx`);
   };
 
-  const scaleFactor = 1;
-
   // Chart 1 (distribution by location type) — built from REAL Line walk submissions
   // when available; otherwise falls back to the legacy report/baseline.
   const chart1Data = (() => {
@@ -169,10 +159,19 @@ export default function DashboardSafetyEffort() {
     });
   })();
 
-  const chart3Data = BASELINE_CHART3_DATA.map(item => ({
-    ...item,
-    count: Math.round(item.count * scaleFactor)
-  }));
+  const chart3Data = (() => {
+    const corrective = liveLinewalkOverview?.correctiveActions || {};
+    const rows = [
+      { name: "Success", count: Number(corrective.completed || 0), color: "#6FB07A" },
+      { name: "Pending", count: Number(corrective.pending || 0), color: "#E6B45A" },
+      { name: "Unresolved", count: Number(corrective.overdue || 0), color: "#E2E5EA" },
+    ];
+    const total = rows.reduce((sum, item) => sum + item.count, 0);
+    return rows.map((item) => ({
+      ...item,
+      value: total > 0 ? Number(((item.count / total) * 100).toFixed(1)) : 0,
+    }));
+  })();
 
   const chart4Data = (() => {
     const rows = Array.isArray(liveLinewalkOverview?.byBusinessUnit)

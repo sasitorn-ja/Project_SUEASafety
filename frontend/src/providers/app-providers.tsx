@@ -19,6 +19,7 @@ import {
   DEMO_ADMIN_USER,
   getSessionDisplayName,
   getSessionInitials,
+  getSessionSnapshot,
   isDemoLoginActive,
   type SessionUser,
 } from "@/lib/session-user";
@@ -1614,7 +1615,6 @@ export function AppProviders({ children }: { children: ReactNode }) {
   const pathname = usePathname() ?? "";
   const shouldLoadPosts =
     pathname === "/safety-culture"
-    || pathname.startsWith("/safety-culture/posts/")
     || pathname === "/notifications";
   const shouldLoadLeaderboard =
     pathname === "/safety-culture/leaderboard"
@@ -1625,6 +1625,23 @@ export function AppProviders({ children }: { children: ReactNode }) {
     || pathname === "/dashboard"
     || pathname === "/safety-culture/rewards"
     || pathname === "/safety-culture/admin-reward";
+  const shouldLoadRewardCategories =
+    pathname === "/safety-culture/rewards"
+    || pathname === "/safety-culture/admin-reward";
+  const rewardsPageSize = pathname === "/" || pathname === "/dashboard" ? 1 : 100;
+  const shouldLoadNotifications = pathname === "/notifications";
+  const shouldLoadAwareness =
+    pathname === "/"
+    || pathname === "/safety-culture/admin-awareness";
+  const shouldLoadAwarenessAttempts = pathname === "/";
+  const shouldLoadEvents =
+    pathname === "/"
+    || shouldLoadPosts
+    || pathname === "/safety-culture/post"
+    || pathname === "/safety-culture/admin-event";
+  const shouldLoadActivityHistory =
+    pathname === "/"
+    || pathname.startsWith("/profile");
   const [posts, setPosts] = useState<Post[]>([]);
   const [userActivityHistory, setUserActivityHistory] = useState<SafetyCultureUserActivity[]>([]);
   const [notification, setNotification] = useState<NotificationType>(null);
@@ -1657,6 +1674,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
   const [eventNow, setEventNow] = useState(0);
   const postsRef = useRef<Post[]>([]);
   const demoModeRef = useRef(false);
+  const lastLiveRefreshAtRef = useRef(0);
   const likeRequestStateRef = useRef<Record<string, { inFlight: boolean; desiredLiked: boolean | null }>>({});
   const resolvePostApiId = useCallback((postId: number | string) => {
     const key = String(postId);
@@ -1722,8 +1740,10 @@ export function AppProviders({ children }: { children: ReactNode }) {
 
   const refreshRewardsState = useCallback(async () => {
     const [rewardsResult, rewardCategoriesResult] = await Promise.all([
-      apiFetch<{ items: Array<Record<string, unknown>> }>("/api/safety-culture/rewards?pageSize=100"),
-      apiFetch<{ setting: { setting_value?: unknown } | null }>("/api/safety-settings?key=safety_reward_categories"),
+      apiFetch<{ items: Array<Record<string, unknown>> }>(`/api/safety-culture/rewards?pageSize=${rewardsPageSize}`),
+      shouldLoadRewardCategories
+        ? apiFetch<{ setting: { setting_value?: unknown } | null }>("/api/safety-settings?key=safety_reward_categories")
+        : Promise.resolve({ ok: false } as const),
     ]);
 
     if (rewardsResult.ok && Array.isArray(rewardsResult.data?.items)) {
@@ -1740,7 +1760,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
     }
 
     return rewardsResult.ok && rewardCategoriesResult.ok;
-  }, []);
+  }, [rewardsPageSize, shouldLoadRewardCategories]);
 
   const refreshLeaderboardState = useCallback(async (sessionUser?: SessionUser | null) => {
     const [leaderboardResult, teamsResult] = await Promise.all([
@@ -1816,12 +1836,9 @@ export function AppProviders({ children }: { children: ReactNode }) {
       let authed = false;
       let sessionUser: SessionUser | null = null;
       try {
-        const sessionRes = await fetch("/api/auth/session", { credentials: "include", cache: "no-store" });
-        if (sessionRes.ok) {
-          const session = await sessionRes.json().catch(() => null);
-          authed = !!(session?.authenticated || session?.user);
-          sessionUser = session?.user || null;
-        }
+        const session = await getSessionSnapshot();
+        authed = !!(session.authenticated || session.user);
+        sessionUser = session.user || null;
       } catch {
         authed = false;
       }
@@ -1874,23 +1891,19 @@ export function AppProviders({ children }: { children: ReactNode }) {
         holidaysResult,
         eventsResult,
         transactionsResult,
-        awarenessEnabledResult,
-        awarenessWeekdaysResult,
-        campaignStartDateResult,
-        campaignEndDateResult,
-        awarenessScheduleStartDateResult,
-        awarenessScheduleEndDateResult,
-        awarenessDescriptionResult
+        awarenessSettingsResult
       ] = await Promise.all([
         shouldLoadPosts
           ? apiFetch<{ items: ApiPost[] }>("/api/safety-culture/posts?limit=15")
           : Promise.resolve({ ok: false } as const),
         apiFetch<{ balance: { balance: number } }>("/api/safety-culture/points/me"),
-        apiFetch<{ items: Array<Record<string, unknown>> }>("/api/notifications?limit=30"),
-        shouldLoadRewards
-          ? apiFetch<{ items: Array<Record<string, unknown>> }>("/api/safety-culture/rewards?pageSize=100")
+        shouldLoadNotifications
+          ? apiFetch<{ items: Array<Record<string, unknown>> }>("/api/notifications?limit=30")
           : Promise.resolve({ ok: false } as const),
         shouldLoadRewards
+          ? apiFetch<{ items: Array<Record<string, unknown>> }>(`/api/safety-culture/rewards?pageSize=${rewardsPageSize}`)
+          : Promise.resolve({ ok: false } as const),
+        shouldLoadRewardCategories
           ? apiFetch<{ setting: { setting_value?: unknown } | null }>("/api/safety-settings?key=safety_reward_categories")
           : Promise.resolve({ ok: false } as const),
         shouldLoadLeaderboard
@@ -1899,18 +1912,26 @@ export function AppProviders({ children }: { children: ReactNode }) {
         shouldLoadLeaderboard
           ? apiFetch<{ items: Array<Record<string, unknown>> }>("/api/safety-culture/teams")
           : Promise.resolve({ ok: false } as const),
-        apiFetch<{ items: Array<Record<string, unknown>> }>("/api/safety-awareness/questions/admin?pageSize=1000"),
-        apiFetch<{ items: ApiAwarenessAttempt[] }>("/api/safety-awareness/attempts/me?pageSize=120"),
-        apiFetch<{ items: Array<Record<string, unknown>> }>(`/api/holidays?year=${new Date().getFullYear()}`),
-        apiFetch<{ items: Array<Record<string, unknown>> }>("/api/safety-culture/events?pageSize=100"),
-        apiFetch<{ items: Array<{ id: string; amount: number; sourceType: string; sourceId?: string | null; description?: string | null; occurredAt: string }> }>("/api/safety-culture/points/me/transactions?limit=100"),
-        apiFetch<{ setting: { setting_value?: unknown } | null }>("/api/safety-settings?key=safety_awareness_enabled"),
-        apiFetch<{ setting: { setting_value?: unknown } | null }>("/api/safety-settings?key=safety_awareness_weekdays"),
-        apiFetch<{ setting: { setting_value?: unknown } | null }>("/api/safety-settings?key=safety_awareness_active_start_time"),
-        apiFetch<{ setting: { setting_value?: unknown } | null }>("/api/safety-settings?key=safety_awareness_active_end_time"),
-        apiFetch<{ setting: { setting_value?: unknown } | null }>("/api/safety-settings?key=safety_awareness_schedule_start_date"),
-        apiFetch<{ setting: { setting_value?: unknown } | null }>("/api/safety-settings?key=safety_awareness_schedule_end_date"),
-        apiFetch<{ setting: { setting_value?: unknown } | null }>("/api/safety-settings?key=safety_awareness_description"),
+        shouldLoadAwareness
+          ? apiFetch<{ items: Array<Record<string, unknown>> }>("/api/safety-awareness/questions/admin?pageSize=1000")
+          : Promise.resolve({ ok: false } as const),
+        shouldLoadAwarenessAttempts
+          ? apiFetch<{ items: ApiAwarenessAttempt[] }>("/api/safety-awareness/attempts/me?pageSize=120")
+          : Promise.resolve({ ok: false } as const),
+        shouldLoadAwareness
+          ? apiFetch<{ items: Array<Record<string, unknown>> }>(`/api/holidays?year=${new Date().getFullYear()}`)
+          : Promise.resolve({ ok: false } as const),
+        shouldLoadEvents
+          ? apiFetch<{ items: Array<Record<string, unknown>> }>("/api/safety-culture/events?pageSize=100")
+          : Promise.resolve({ ok: false } as const),
+        shouldLoadActivityHistory
+          ? apiFetch<{ items: Array<{ id: string; amount: number; sourceType: string; sourceId?: string | null; description?: string | null; occurredAt: string }> }>("/api/safety-culture/points/me/transactions?limit=100")
+          : Promise.resolve({ ok: false } as const),
+        shouldLoadAwareness
+          ? apiFetch<{ settings: Record<string, { setting_value?: unknown } | null> }>(
+              "/api/safety-settings?keys=safety_awareness_enabled,safety_awareness_weekdays,safety_awareness_active_start_time,safety_awareness_active_end_time,safety_awareness_schedule_start_date,safety_awareness_schedule_end_date,safety_awareness_description"
+            )
+          : Promise.resolve({ ok: false } as const),
       ]);
 
       if (cancelled) return;
@@ -2032,56 +2053,66 @@ export function AppProviders({ children }: { children: ReactNode }) {
         })));
       }
 
-      if (awarenessEnabledResult.ok && awarenessEnabledResult.data?.setting) {
-        const raw = awarenessEnabledResult.data.setting.setting_value;
+      const awarenessSettingValue = (key: string) =>
+        awarenessSettingsResult.ok ? awarenessSettingsResult.data?.settings?.[key]?.setting_value : undefined;
+
+      const awarenessEnabledValue = awarenessSettingValue("safety_awareness_enabled");
+      if (awarenessEnabledValue !== undefined) {
+        const raw = awarenessEnabledValue;
         const value = typeof raw === "string" ? JSON.parse(raw) : raw;
         if (value && typeof value === "object" && value.enabled !== undefined) {
           setAwarenessEnabledState(Boolean(value.enabled));
         }
       }
 
-      if (awarenessWeekdaysResult && awarenessWeekdaysResult.ok && awarenessWeekdaysResult.data?.setting) {
-        const raw = awarenessWeekdaysResult.data.setting.setting_value;
+      const awarenessWeekdaysValue = awarenessSettingValue("safety_awareness_weekdays");
+      if (awarenessWeekdaysValue !== undefined) {
+        const raw = awarenessWeekdaysValue;
         const value = typeof raw === "string" ? JSON.parse(raw) : raw;
         if (value && typeof value === "object" && Array.isArray(value.weekdays)) {
           setAwarenessWeekdaysState(value.weekdays.map(Number));
         }
       }
 
-      if (campaignStartDateResult && campaignStartDateResult.ok && campaignStartDateResult.data?.setting) {
-        const raw = campaignStartDateResult.data.setting.setting_value;
+      const awarenessStartTimeValue = awarenessSettingValue("safety_awareness_active_start_time");
+      if (awarenessStartTimeValue !== undefined) {
+        const raw = awarenessStartTimeValue;
         const value = typeof raw === "string" ? JSON.parse(raw) : raw;
         if (value && typeof value === "object" && value.startTime !== undefined) {
           setAwarenessActiveStartTimeState(String(value.startTime));
         }
       }
 
-      if (campaignEndDateResult && campaignEndDateResult.ok && campaignEndDateResult.data?.setting) {
-        const raw = campaignEndDateResult.data.setting.setting_value;
+      const awarenessEndTimeValue = awarenessSettingValue("safety_awareness_active_end_time");
+      if (awarenessEndTimeValue !== undefined) {
+        const raw = awarenessEndTimeValue;
         const value = typeof raw === "string" ? JSON.parse(raw) : raw;
         if (value && typeof value === "object" && value.endTime !== undefined) {
           setAwarenessActiveEndTimeState(String(value.endTime));
         }
       }
 
-      if (awarenessScheduleStartDateResult && awarenessScheduleStartDateResult.ok && awarenessScheduleStartDateResult.data?.setting) {
-        const raw = awarenessScheduleStartDateResult.data.setting.setting_value;
+      const awarenessScheduleStartDateValue = awarenessSettingValue("safety_awareness_schedule_start_date");
+      if (awarenessScheduleStartDateValue !== undefined) {
+        const raw = awarenessScheduleStartDateValue;
         const value = typeof raw === "string" ? JSON.parse(raw) : raw;
         if (value && typeof value === "object" && value.startDate !== undefined) {
           setAwarenessScheduleStartDateState(String(value.startDate || ""));
         }
       }
 
-      if (awarenessScheduleEndDateResult && awarenessScheduleEndDateResult.ok && awarenessScheduleEndDateResult.data?.setting) {
-        const raw = awarenessScheduleEndDateResult.data.setting.setting_value;
+      const awarenessScheduleEndDateValue = awarenessSettingValue("safety_awareness_schedule_end_date");
+      if (awarenessScheduleEndDateValue !== undefined) {
+        const raw = awarenessScheduleEndDateValue;
         const value = typeof raw === "string" ? JSON.parse(raw) : raw;
         if (value && typeof value === "object" && value.endDate !== undefined) {
           setAwarenessScheduleEndDateState(String(value.endDate || ""));
         }
       }
 
-      if (awarenessDescriptionResult && awarenessDescriptionResult.ok && awarenessDescriptionResult.data?.setting) {
-        const raw = awarenessDescriptionResult.data.setting.setting_value;
+      const awarenessDescriptionValue = awarenessSettingValue("safety_awareness_description");
+      if (awarenessDescriptionValue !== undefined) {
+        const raw = awarenessDescriptionValue;
         const value = typeof raw === "string" ? JSON.parse(raw) : raw;
         if (value && typeof value === "object" && value.description !== undefined) {
           setAwarenessDescriptionState(String(value.description || ""));
@@ -2107,13 +2138,28 @@ export function AppProviders({ children }: { children: ReactNode }) {
     return () => {
       cancelled = true;
     };
-  }, [pathname, shouldLoadLeaderboard, shouldLoadPosts, shouldLoadRewards]);
+  }, [
+    pathname,
+    shouldLoadActivityHistory,
+    shouldLoadAwareness,
+    shouldLoadAwarenessAttempts,
+    shouldLoadEvents,
+    shouldLoadLeaderboard,
+    shouldLoadNotifications,
+    shouldLoadPosts,
+    shouldLoadRewardCategories,
+    shouldLoadRewards,
+    rewardsPageSize,
+  ]);
 
   useEffect(() => {
     if (!isAuthenticatedRef.current) return;
 
-    const refreshLiveSafetyCultureState = () => {
-      void refreshInboxNotifications();
+    const refreshLiveSafetyCultureState = (force = false) => {
+      const now = Date.now();
+      if (!force && now - lastLiveRefreshAtRef.current < 60_000) return;
+      lastLiveRefreshAtRef.current = now;
+      if (shouldLoadNotifications) void refreshInboxNotifications();
       if (shouldLoadPosts) void refreshPostsSnapshot();
       if (shouldLoadRewards) void refreshRewardsState();
       if (shouldLoadLeaderboard) void refreshLeaderboardState(currentUserRef.current);
@@ -2125,16 +2171,26 @@ export function AppProviders({ children }: { children: ReactNode }) {
       }
     };
 
-    window.addEventListener("focus", refreshLiveSafetyCultureState);
+    const handleWindowFocus = () => refreshLiveSafetyCultureState();
+    window.addEventListener("focus", handleWindowFocus);
     document.addEventListener("visibilitychange", handleVisibilityChange);
-    const intervalId = window.setInterval(refreshLiveSafetyCultureState, 30000);
+    const intervalId = window.setInterval(() => refreshLiveSafetyCultureState(true), 120_000);
 
     return () => {
-      window.removeEventListener("focus", refreshLiveSafetyCultureState);
+      window.removeEventListener("focus", handleWindowFocus);
       document.removeEventListener("visibilitychange", handleVisibilityChange);
       window.clearInterval(intervalId);
     };
-  }, [refreshInboxNotifications, refreshLeaderboardState, refreshPostsSnapshot, refreshRewardsState, shouldLoadLeaderboard, shouldLoadPosts, shouldLoadRewards]);
+  }, [
+    refreshInboxNotifications,
+    refreshLeaderboardState,
+    refreshPostsSnapshot,
+    refreshRewardsState,
+    shouldLoadLeaderboard,
+    shouldLoadNotifications,
+    shouldLoadPosts,
+    shouldLoadRewards,
+  ]);
 
   useEffect(() => {
     setEventNow(Date.now());

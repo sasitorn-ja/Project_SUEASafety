@@ -23,12 +23,16 @@ export default function CreatePost() {
   const [caption, setCaption] = useState(linewalkData?.safetyContactText ?? "");
 
   function handleSave() {
-    navigate("/category", {
+    navigate("/assessment-summary", {
       state: {
         checkin,
         activity,
         linewalkData: {
           ...(linewalkData ?? {}),
+          date: linewalkData?.date || new Date().toISOString().slice(0, 10),
+          locType: linewalkData?.locType || "factory",
+          itemStates: linewalkData?.itemStates || {},
+          customActivity: true,
           safetyContactText: caption.trim(),
         },
       },

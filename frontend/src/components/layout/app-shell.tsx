@@ -15,6 +15,7 @@ import {
   DEMO_ADMIN_USER,
   DEMO_LOGIN_PERSISTED_KEY,
   DEMO_LOGIN_SESSION_KEY,
+  getSessionSnapshot,
   hasAdminAccess,
   isDemoLoginActive,
   type SessionUser,
@@ -72,11 +73,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       setSessionChecked(false);
     }
     setSessionCheckPending(true);
-    fetch("/api/auth/session", {
-      credentials: "include",
-      cache: "no-store",
-    })
-      .then((response) => (response.ok ? response.json() : { authenticated: false }))
+    getSessionSnapshot()
       .then((session) => {
         if (cancelled) return;
         if (session.authenticated) {
