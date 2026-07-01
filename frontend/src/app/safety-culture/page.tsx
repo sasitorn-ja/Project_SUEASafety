@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import Image from "next/image";
 import Link from "next/link";
@@ -254,17 +254,17 @@ function SUEATipCard({ className, style, tipText }: { className?: string; style?
 function getActivityStatusMeta(status: SafetyCultureFeedEvent["status"]) {
   return status === "open"
     ? {
-        label: "เปิดกิจกรรม",
-        badgeClass: "border-[#b8e7d2] bg-[#effff6] text-[#127a52]",
-        iconClass: "text-[#18b989]",
-        note: "กิจกรรมนี้ยังเปิดรับการมีส่วนร่วม",
-      }
+      label: "เปิดกิจกรรม",
+      badgeClass: "border-[#b8e7d2] bg-[#effff6] text-[#127a52]",
+      iconClass: "text-[#18b989]",
+      note: "กิจกรรมนี้ยังเปิดรับการมีส่วนร่วม",
+    }
     : {
-        label: "ปิดกิจกรรม",
-        badgeClass: "border-[var(--c-ddd9cd)] bg-[var(--c-faf8f2)] text-[var(--c-6a6256)]",
-        iconClass: "text-[#71809c]",
-        note: "กิจกรรมนี้ไม่รับการส่งข้อมูลแล้ว",
-      };
+      label: "ปิดกิจกรรม",
+      badgeClass: "border-[var(--c-ddd9cd)] bg-[var(--c-faf8f2)] text-[var(--c-6a6256)]",
+      iconClass: "text-[#71809c]",
+      note: "กิจกรรมนี้ไม่รับการส่งข้อมูลแล้ว",
+    };
 }
 
 function getActivityCardCopy(activity: Pick<SafetyCultureFeedEvent, "details" | "summary">) {
@@ -319,15 +319,15 @@ export default function Page() {
   const [openCommentReactionPicker, setOpenCommentReactionPicker] = useState<string | null>(null);
   const expandedPost = expandedPostId
     ? (liveExpandedPost && liveExpandedPost.id === expandedPostId
-        ? liveExpandedPost
-        : posts.find((post) => post.id === expandedPostId) ?? null)
+      ? liveExpandedPost
+      : posts.find((post) => post.id === expandedPostId) ?? null)
     : null;
   const isNotificationPostPopup = Boolean(searchParams?.get("postId"));
   const likedByPost = likedByPostId == null
     ? null
     : posts.find((post) => post.id === likedByPostId)
-      ?? myTeamPosts.find((post) => post.id === likedByPostId)
-      ?? (liveExpandedPost?.id === likedByPostId ? liveExpandedPost : null);
+    ?? myTeamPosts.find((post) => post.id === likedByPostId)
+    ?? (liveExpandedPost?.id === likedByPostId ? liveExpandedPost : null);
 
   const animStyle = (delay: number) => ({
     animationDelay: `${delay}s`,
@@ -384,9 +384,9 @@ export default function Page() {
     ? posts
     : activeCategory === MY_POSTS_CATEGORY
       ? posts.filter((post) => post.isYou)
-    : activeCategory === "ทีมของฉัน"
-      ? myTeamPosts
-      : posts.filter((post) => post.category === activeCategory);
+      : activeCategory === "ทีมของฉัน"
+        ? myTeamPosts
+        : posts.filter((post) => post.category === activeCategory);
 
   const getPostPhotos = useCallback((post: Post) => {
     if (Array.isArray(post.photos) && post.photos.length > 0) {
@@ -643,7 +643,7 @@ export default function Page() {
             description="พื้นที่แชร์เรื่องความปลอดภัย และช่วยกันต่อยอดพฤติกรรมปลอดภัยในทุกวัน"
             variant="community"
             backgroundImage="/images/heroes/safety-culture-hero-custom.png"
-            backgroundOverlay="linear-gradient(90deg, rgba(210,235,255,.82) 0%, rgba(210,235,255,.60) 32%, rgba(210,235,255,.10) 56%, rgba(210,235,255,0) 74%)"
+            backgroundOverlay="linear-gradient(90deg, rgba(255,255,255,0.96) 0%, rgba(255,255,255,0.82) 35%, rgba(255,255,255,0.48) 70%, rgba(255,255,255,0.25) 100%)"
             contentFrame
             mascotSrc="/images/mascots/wangjai/5.png"
             mascotAction="announce"
@@ -696,48 +696,48 @@ export default function Page() {
                   style={{ transform: `translateX(-${mobileActivityStartIndex * 100}%)` }}
                 >
                   {visibleFeedEvents.map((activity) => {
-                const statusMeta = getActivityStatusMeta(activity.status);
+                    const statusMeta = getActivityStatusMeta(activity.status);
 
-                return (
-                  <article
-                    key={activity.id}
-                    className="relative min-h-[260px] min-w-full flex-[0_0_100%] overflow-hidden text-white"
-                  >
-                    {activity.imageSrc ? (
-                      <Image src={activity.imageSrc} alt={activity.title} fill sizes="100vw" className="object-cover" />
-                    ) : (
-                      <div className="absolute inset-0 flex items-center justify-center bg-[linear-gradient(135deg,#0794FF_0%,#0B2F6B_62%,#FFB020_100%)] px-5 text-center text-[22px] font-black">
-                        {activity.imageText}
-                      </div>
-                    )}
-                    <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(3,18,48,.88)_0%,rgba(4,35,82,.60)_48%,rgba(4,35,82,.12)_100%)]" />
-                    <div className="absolute inset-x-0 top-0 flex items-center justify-between gap-3 px-4 py-3">
-                      <span className={cn("rounded-full border px-2.5 py-1 text-[10px] font-black backdrop-blur-[3px]", statusMeta.badgeClass)}>
-                        {statusMeta.label}
-                      </span>
-                      <span className="rounded-full bg-white/92 px-3 py-1 text-[11px] font-black text-[#0B2F6B]">
-                        {activity.dateLabel}
-                      </span>
-                    </div>
-                    <div className="absolute inset-x-0 bottom-0 px-4 pb-8 pt-14">
-                      <div className="max-w-[78%]">
-                        <h3 className="line-clamp-2 text-[24px] font-black leading-tight text-white [text-shadow:0_2px_10px_rgba(0,0,0,.45)]">{activity.title}</h3>
-                        <p className="mt-1.5 line-clamp-2 text-[12px] font-bold leading-relaxed text-white/88">{getActivityCardCopy(activity)}</p>
-                        <div className="mt-3 flex flex-wrap items-center gap-2">
-                          <span className="rounded-full bg-[#18B989] px-3 py-1.5 text-[12px] font-black text-white">+{activity.points} {POINT_UNIT}</span>
-                          <Button
-                            type="button"
-                            variant="secondary"
-                            onClick={() => setExpandedActivity(activity)}
-                            className="h-8 rounded-full bg-white px-4 text-[12px] font-black text-[#0B2F6B] hover:bg-[#EAF6FF]"
-                          >
-                            ดูรายละเอียด
-                          </Button>
+                    return (
+                      <article
+                        key={activity.id}
+                        className="relative min-h-[260px] min-w-full flex-[0_0_100%] overflow-hidden text-white"
+                      >
+                        {activity.imageSrc ? (
+                          <Image src={activity.imageSrc} alt={activity.title} fill sizes="100vw" className="object-cover" />
+                        ) : (
+                          <div className="absolute inset-0 flex items-center justify-center bg-[linear-gradient(135deg,#0794FF_0%,#0B2F6B_62%,#FFB020_100%)] px-5 text-center text-[22px] font-black">
+                            {activity.imageText}
+                          </div>
+                        )}
+                        <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(3,18,48,.88)_0%,rgba(4,35,82,.60)_48%,rgba(4,35,82,.12)_100%)]" />
+                        <div className="absolute inset-x-0 top-0 flex items-center justify-between gap-3 px-4 py-3">
+                          <span className={cn("rounded-full border px-2.5 py-1 text-[10px] font-black backdrop-blur-[3px]", statusMeta.badgeClass)}>
+                            {statusMeta.label}
+                          </span>
+                          <span className="rounded-full bg-white/92 px-3 py-1 text-[11px] font-black text-[#0B2F6B]">
+                            {activity.dateLabel}
+                          </span>
                         </div>
-                      </div>
-                    </div>
-                  </article>
-                );
+                        <div className="absolute inset-x-0 bottom-0 px-4 pb-8 pt-14">
+                          <div className="max-w-[78%]">
+                            <h3 className="line-clamp-2 text-[24px] font-black leading-tight text-white [text-shadow:0_2px_10px_rgba(0,0,0,.45)]">{activity.title}</h3>
+                            <p className="mt-1.5 line-clamp-2 text-[12px] font-bold leading-relaxed text-white/88">{getActivityCardCopy(activity)}</p>
+                            <div className="mt-3 flex flex-wrap items-center gap-2">
+                              <span className="rounded-full bg-[#18B989] px-3 py-1.5 text-[12px] font-black text-white">+{activity.points} {POINT_UNIT}</span>
+                              <Button
+                                type="button"
+                                variant="secondary"
+                                onClick={() => setExpandedActivity(activity)}
+                                className="h-8 rounded-full bg-white px-4 text-[12px] font-black text-[#0B2F6B] hover:bg-[#EAF6FF]"
+                              >
+                                ดูรายละเอียด
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                      </article>
+                    );
                   })}
                 </div>
                 {visibleFeedEvents.length > 1 ? (
@@ -785,46 +785,46 @@ export default function Page() {
                   style={{ transform: `translateX(-${desktopActivityStartIndex * 100}%)` }}
                 >
                   {visibleFeedEvents.map((activity) => {
-                  const statusMeta = getActivityStatusMeta(activity.status);
+                    const statusMeta = getActivityStatusMeta(activity.status);
 
-                  return (
-                    <article
-                      key={activity.id}
-                      className="relative h-[250px] min-w-full flex-[0_0_100%] overflow-hidden text-white xl:h-[280px]"
-                    >
-                      {activity.imageSrc ? (
-                        <Image src={activity.imageSrc} alt={activity.title} fill sizes="100vw" className="object-cover transition-transform duration-500 hover:scale-[1.025]" />
-                      ) : (
-                        <div className="absolute inset-0 flex items-center justify-center bg-[linear-gradient(135deg,#0794FF_0%,#0B2F6B_62%,#FFB020_100%)] px-10 text-center text-[34px] font-black">
-                          {activity.imageText}
+                    return (
+                      <article
+                        key={activity.id}
+                        className="relative h-[250px] min-w-full flex-[0_0_100%] overflow-hidden text-white xl:h-[280px]"
+                      >
+                        {activity.imageSrc ? (
+                          <Image src={activity.imageSrc} alt={activity.title} fill sizes="100vw" className="object-cover transition-transform duration-500 hover:scale-[1.025]" />
+                        ) : (
+                          <div className="absolute inset-0 flex items-center justify-center bg-[linear-gradient(135deg,#0794FF_0%,#0B2F6B_62%,#FFB020_100%)] px-10 text-center text-[34px] font-black">
+                            {activity.imageText}
+                          </div>
+                        )}
+                        <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(3,18,48,.90)_0%,rgba(4,35,82,.64)_42%,rgba(4,35,82,.10)_100%)]" />
+                        <div className="absolute inset-x-0 top-0 flex items-center justify-between gap-3 px-7 py-5">
+                          <span className={cn("rounded-full border px-3 py-1.5 text-[11px] font-black backdrop-blur-[3px]", statusMeta.badgeClass)}>
+                            {statusMeta.label}
+                          </span>
+                          <span className="rounded-full bg-white/92 px-4 py-1.5 text-[13px] font-black text-[#0B2F6B]">
+                            {activity.dateLabel}
+                          </span>
                         </div>
-                      )}
-                      <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(3,18,48,.90)_0%,rgba(4,35,82,.64)_42%,rgba(4,35,82,.10)_100%)]" />
-                      <div className="absolute inset-x-0 top-0 flex items-center justify-between gap-3 px-7 py-5">
-                        <span className={cn("rounded-full border px-3 py-1.5 text-[11px] font-black backdrop-blur-[3px]", statusMeta.badgeClass)}>
-                          {statusMeta.label}
-                        </span>
-                        <span className="rounded-full bg-white/92 px-4 py-1.5 text-[13px] font-black text-[#0B2F6B]">
-                          {activity.dateLabel}
-                        </span>
-                      </div>
-                      <div className="absolute inset-y-0 left-0 flex w-[62%] flex-col justify-center px-8 py-8 xl:px-10">
-                        <h3 className="line-clamp-2 text-[34px] font-black leading-[1.05] text-white [text-shadow:0_2px_12px_rgba(0,0,0,.45)] xl:text-[42px]">{activity.title}</h3>
-                        <p className="mt-3 line-clamp-2 text-[15px] font-bold leading-relaxed text-white/88">{getActivityCardCopy(activity)}</p>
-                        <div className="mt-5 flex flex-wrap items-center gap-3">
-                          <span className="rounded-full bg-[#18B989] px-4 py-2 text-[15px] font-black text-white">+{activity.points} {POINT_UNIT}</span>
-                          <Button
-                            type="button"
-                            variant="secondary"
-                            onClick={() => setExpandedActivity(activity)}
-                            className="h-10 rounded-full bg-white px-5 text-[14px] font-black text-[#0B2F6B] hover:bg-[#EAF6FF]"
-                          >
-                            ดูรายละเอียด
-                          </Button>
+                        <div className="absolute inset-y-0 left-0 flex w-[62%] flex-col justify-center px-8 py-8 xl:px-10">
+                          <h3 className="line-clamp-2 text-[34px] font-black leading-[1.05] text-white [text-shadow:0_2px_12px_rgba(0,0,0,.45)] xl:text-[42px]">{activity.title}</h3>
+                          <p className="mt-3 line-clamp-2 text-[15px] font-bold leading-relaxed text-white/88">{getActivityCardCopy(activity)}</p>
+                          <div className="mt-5 flex flex-wrap items-center gap-3">
+                            <span className="rounded-full bg-[#18B989] px-4 py-2 text-[15px] font-black text-white">+{activity.points} {POINT_UNIT}</span>
+                            <Button
+                              type="button"
+                              variant="secondary"
+                              onClick={() => setExpandedActivity(activity)}
+                              className="h-10 rounded-full bg-white px-5 text-[14px] font-black text-[#0B2F6B] hover:bg-[#EAF6FF]"
+                            >
+                              ดูรายละเอียด
+                            </Button>
+                          </div>
                         </div>
-                      </div>
-                    </article>
-                  );
+                      </article>
+                    );
                   })}
                 </div>
                 {visibleFeedEvents.length > 1 ? (
@@ -839,7 +839,7 @@ export default function Page() {
           </Card>
         ) : null}
 
-<div className={cn("grid grid-cols-1 gap-3 md:gap-4 xl:grid-cols-[minmax(0,1.82fr)_minmax(310px,0.88fr)]", styles.communityGrid)}>
+        <div className={cn("grid grid-cols-1 gap-3 md:gap-4 xl:grid-cols-[minmax(0,1.82fr)_minmax(310px,0.88fr)]", styles.communityGrid)}>
           <div className="mx-auto flex w-full max-w-[900px] flex-col gap-3 xl:max-w-[860px] 2xl:max-w-[900px]">
             <Card className={cn("rounded-[16px] px-3 py-2 anim-fade md:rounded-[18px] md:px-3.5 md:py-2.5", styles.composer)} style={animStyle(0.04)}>
               <div className="flex items-center gap-2 sm:gap-2.5">
@@ -1059,22 +1059,22 @@ export default function Page() {
                       >
                         {post.likes}
                       </button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleToggleComments(post)}
-                      className="h-auto gap-1.5 rounded-lg px-0 py-0 text-[13.5px] font-black text-[#5f7591] hover:bg-transparent hover:text-foreground"
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleToggleComments(post)}
+                        className="h-auto gap-1.5 rounded-lg px-0 py-0 text-[13.5px] font-black text-[#5f7591] hover:bg-transparent hover:text-foreground"
                       >
-                      <MessageCircle className="h-[18px] w-[18px] text-[#5f7591]" strokeWidth={2.2} />
-                      <span style={{ color: "#5f7591" }}>{commentCount}</span>
-                    </Button>
-                    <Link
-                      href={`/safety-culture/posts/${post.id}`}
-                      className="rounded-lg px-1.5 py-0 text-[13.5px] font-black text-[#0B82F0] hover:underline"
-                    >
-                      ดูโพสต์เต็ม
-                    </Link>
-                  </div>
+                        <MessageCircle className="h-[18px] w-[18px] text-[#5f7591]" strokeWidth={2.2} />
+                        <span style={{ color: "#5f7591" }}>{commentCount}</span>
+                      </Button>
+                      <Link
+                        href={`/safety-culture/posts/${post.id}`}
+                        className="rounded-lg px-1.5 py-0 text-[13.5px] font-black text-[#0B82F0] hover:underline"
+                      >
+                        ดูโพสต์เต็ม
+                      </Link>
+                    </div>
                     {post.isYou ? (
                       <span className="w-fit rounded-full bg-[#e9fff4] px-2 py-0.5 text-[12px] font-black tracking-normal text-[#3D9A6A]">
                         + {post.points} {POINT_UNIT}
@@ -1227,12 +1227,12 @@ export default function Page() {
                 {activeCategory === MY_POSTS_CATEGORY
                   ? "ยังไม่มีโพสต์ของฉัน"
                   : activeCategory === "ทีมของฉัน"
-                  ? myTeamLoading
-                    ? "กำลังโหลดโพสต์ทีมของฉัน..."
-                    : myTeamLoaded
-                      ? "ยังไม่มีโพสต์ในทีมของฉัน หรือบัญชียังไม่ได้ผูกทีม"
-                      : "เลือกทีมของฉันเพื่อโหลดโพสต์จากทีม"
-                  : "ยังไม่มีโพสต์ในหมวดหมู่นี้"}
+                    ? myTeamLoading
+                      ? "กำลังโหลดโพสต์ทีมของฉัน..."
+                      : myTeamLoaded
+                        ? "ยังไม่มีโพสต์ในทีมของฉัน หรือบัญชียังไม่ได้ผูกทีม"
+                        : "เลือกทีมของฉันเพื่อโหลดโพสต์จากทีม"
+                    : "ยังไม่มีโพสต์ในหมวดหมู่นี้"}
               </Card>
             )}
           </div>
@@ -1263,284 +1263,284 @@ export default function Page() {
         >
           {expandedPost ? (
             <>
-            <div className="flex flex-shrink-0 items-start justify-between gap-3 border-b border-[#d7e6f6] bg-[linear-gradient(135deg,#ffffff_0%,#f4f9ff_56%,#eaf4ff_100%)] px-4 py-3 md:gap-4 md:px-5 md:py-3.5">
-              <div className="min-w-0">
-                <div className="flex items-center gap-2.5 md:gap-3">
-                  <ProfileAvatar
-                    imageUrl={expandedPost.avatarImageUrl || (expandedPost.isYou ? getSessionProfileImage(sessionUser) : null)}
-                    text={expandedPost.avatarText}
-                    sizeClassName="h-[40px] w-[40px] md:h-[36px] md:w-[36px]"
-                    textClassName="text-[15px] md:text-[14px]"
-                  />
-                  <div className="min-w-0">
-                    <h3 className="truncate text-[16px] font-black text-[var(--c-2f261d)] md:text-[18px]">{expandedPost.author}</h3>
-                    <p className="text-[11px] font-bold text-[#667085] md:text-[11px]">{formatPostSubtext(expandedPost)}</p>
+              <div className="flex flex-shrink-0 items-start justify-between gap-3 border-b border-[#d7e6f6] bg-[linear-gradient(135deg,#ffffff_0%,#f4f9ff_56%,#eaf4ff_100%)] px-4 py-3 md:gap-4 md:px-5 md:py-3.5">
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2.5 md:gap-3">
+                    <ProfileAvatar
+                      imageUrl={expandedPost.avatarImageUrl || (expandedPost.isYou ? getSessionProfileImage(sessionUser) : null)}
+                      text={expandedPost.avatarText}
+                      sizeClassName="h-[40px] w-[40px] md:h-[36px] md:w-[36px]"
+                      textClassName="text-[15px] md:text-[14px]"
+                    />
+                    <div className="min-w-0">
+                      <h3 className="truncate text-[16px] font-black text-[var(--c-2f261d)] md:text-[18px]">{expandedPost.author}</h3>
+                      <p className="text-[11px] font-bold text-[#667085] md:text-[11px]">{formatPostSubtext(expandedPost)}</p>
+                    </div>
                   </div>
                 </div>
+                <button
+                  type="button"
+                  onClick={closeExpandedPost}
+                  className="inline-flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full border border-[var(--c-ddd9cd)] bg-white text-[#667085] transition-colors hover:bg-[var(--c-faf8f2)] md:h-9 md:w-9"
+                  aria-label="ปิดรายละเอียดโพสต์"
+                >
+                  <X className="h-5 w-5" strokeWidth={2.3} />
+                </button>
               </div>
-              <button
-                type="button"
-                onClick={closeExpandedPost}
-                className="inline-flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full border border-[var(--c-ddd9cd)] bg-white text-[#667085] transition-colors hover:bg-[var(--c-faf8f2)] md:h-9 md:w-9"
-                aria-label="ปิดรายละเอียดโพสต์"
+
+              <div
+                className="min-h-0 flex-1 overflow-y-auto px-4 py-3.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden md:px-5 md:py-4"
               >
-                <X className="h-5 w-5" strokeWidth={2.3} />
-              </button>
-            </div>
-
-            <div
-              className="min-h-0 flex-1 overflow-y-auto px-4 py-3.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden md:px-5 md:py-4"
-            >
-              <div className="flex flex-col gap-3.5 font-sarabun md:gap-4">
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <span className="w-fit rounded-full border border-[var(--c-e8cda4)] bg-[var(--c-fff7e8)] px-2 py-0.5 text-[10.5px] font-black tracking-wide text-[var(--c-7b5625)]">
-                    {expandedPost.category}
-                  </span>
-                  {expandedPost.isYou ? (
-                    <span className="w-fit rounded-full bg-[#e9fff4] px-2 py-0.5 text-[12px] font-black tracking-normal text-[#3D9A6A]">
-                      + {expandedPost.points} {POINT_UNIT}
+                <div className="flex flex-col gap-3.5 font-sarabun md:gap-4">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <span className="w-fit rounded-full border border-[var(--c-e8cda4)] bg-[var(--c-fff7e8)] px-2 py-0.5 text-[10.5px] font-black tracking-wide text-[var(--c-7b5625)]">
+                      {expandedPost.category}
                     </span>
-                  ) : null}
-                </div>
+                    {expandedPost.isYou ? (
+                      <span className="w-fit rounded-full bg-[#e9fff4] px-2 py-0.5 text-[12px] font-black tracking-normal text-[#3D9A6A]">
+                        + {expandedPost.points} {POINT_UNIT}
+                      </span>
+                    ) : null}
+                  </div>
 
-                <p className="text-[14px] md:text-[14px] font-bold leading-relaxed text-[var(--c-33271a)]">{expandedPost.body}</p>
+                  <p className="text-[14px] md:text-[14px] font-bold leading-relaxed text-[var(--c-33271a)]">{expandedPost.body}</p>
 
-                {(expandedPostPhotos.length > 0 || expandedPost.imageText) && (
-                  <div className="flex flex-col gap-2">
-                    <div className="relative w-full overflow-hidden rounded-[16px] border-[1.5px] border-[var(--c-e5cfad)] bg-[#f3f6fa] md:mx-auto md:max-w-[680px]">
-                      {expandedPostActivePhoto ? (
-                        <>
-                          {isNotificationPostPopup ? (
-                            <div className="relative z-0 flex min-h-[220px] max-h-[500px] w-full items-center justify-center bg-[#eef3f8] sm:min-h-[260px] md:min-h-[300px] md:max-h-[540px]">
-                              <Image
-                                src={expandedPostActivePhoto.dataUrl}
-                                alt={`Attached post scene by ${expandedPost.author}`}
-                                width={1200}
-                                height={900}
-                                sizes="(max-width: 1023px) 100vw, 680px"
-                                className="h-auto max-h-[500px] w-full object-contain md:max-h-[540px]"
-                              />
-                            </div>
-                          ) : (
+                  {(expandedPostPhotos.length > 0 || expandedPost.imageText) && (
+                    <div className="flex flex-col gap-2">
+                      <div className="relative w-full overflow-hidden rounded-[16px] border-[1.5px] border-[var(--c-e5cfad)] bg-[#f3f6fa] md:mx-auto md:max-w-[680px]">
+                        {expandedPostActivePhoto ? (
+                          <>
+                            {isNotificationPostPopup ? (
+                              <div className="relative z-0 flex min-h-[220px] max-h-[500px] w-full items-center justify-center bg-[#eef3f8] sm:min-h-[260px] md:min-h-[300px] md:max-h-[540px]">
+                                <Image
+                                  src={expandedPostActivePhoto.dataUrl}
+                                  alt={`Attached post scene by ${expandedPost.author}`}
+                                  width={1200}
+                                  height={900}
+                                  sizes="(max-width: 1023px) 100vw, 680px"
+                                  className="h-auto max-h-[500px] w-full object-contain md:max-h-[540px]"
+                                />
+                              </div>
+                            ) : (
+                              <button
+                                type="button"
+                                onClick={() => showExpandedPhotoAt(expandedPost, expandedPostActivePhotoIndex)}
+                                className="relative z-0 flex min-h-[220px] max-h-[500px] w-full cursor-zoom-in items-center justify-center bg-[#eef3f8] sm:min-h-[260px] md:min-h-[300px] md:max-h-[540px]"
+                                aria-label="ดูรูปภาพเต็ม"
+                              >
+                                <Image
+                                  src={expandedPostActivePhoto.dataUrl}
+                                  alt={`Attached post scene by ${expandedPost.author}`}
+                                  width={1200}
+                                  height={900}
+                                  sizes="(max-width: 1023px) 100vw, 680px"
+                                  className="h-auto max-h-[500px] w-full object-contain md:max-h-[540px]"
+                                />
+                              </button>
+                            )}
+                            {expandedPostPhotos.length > 1 && (
+                              <span className="absolute right-3 bottom-3 z-10 rounded-full bg-[rgba(53,50,48,0.86)] px-2.5 py-1 text-[13px] font-black text-white">
+                                {expandedPostActivePhotoIndex + 1} / {expandedPostPhotos.length}
+                              </span>
+                            )}
+                            {!isNotificationPostPopup ? (
+                              <span className="pointer-events-none absolute top-3 right-3 z-10 rounded-full bg-[rgba(53,50,48,0.72)] px-2.5 py-1 text-[11px] font-black text-white">
+                                แตะเพื่อดูเต็มรูป
+                              </span>
+                            ) : null}
+                          </>
+                        ) : (
+                          <div className="flex h-full flex-col items-center justify-center gap-2 text-[15px] font-black lowercase text-[#5f7591]">
+                            <ImageIcon className="h-8 w-8" />
+                            <span>{expandedPost.imageText}</span>
+                          </div>
+                        )}
+                      </div>
+
+                      {expandedPostPhotos.length > 1 && (
+                        <div className="flex gap-2 overflow-x-auto pt-0.5">
+                          {expandedPostPhotos.map((photo, photoIndex) => (
                             <button
-                              type="button"
-                              onClick={() => showExpandedPhotoAt(expandedPost, expandedPostActivePhotoIndex)}
-                              className="relative z-0 flex min-h-[220px] max-h-[500px] w-full cursor-zoom-in items-center justify-center bg-[#eef3f8] sm:min-h-[260px] md:min-h-[300px] md:max-h-[540px]"
-                              aria-label="ดูรูปภาพเต็ม"
+                              key={photo.id}
+                              onClick={() => setActivePhotoByPost((prev) => ({ ...prev, [expandedPost.id]: photoIndex }))}
+                              className={cn(
+                                "h-[56px] w-[56px] overflow-hidden rounded-[10px] border-[1.5px] bg-[var(--c-efebe0)] p-0",
+                                photoIndex === expandedPostActivePhotoIndex ? "border-[var(--c-f3b400)] shadow-[0_0_0_1px_var(--c-3b1d07)]" : "border-[var(--c-ddd9cd)]"
+                              )}
                             >
-                              <Image
-                                src={expandedPostActivePhoto.dataUrl}
-                                alt={`Attached post scene by ${expandedPost.author}`}
-                                width={1200}
-                                height={900}
-                                sizes="(max-width: 1023px) 100vw, 680px"
-                                className="h-auto max-h-[500px] w-full object-contain md:max-h-[540px]"
-                              />
+                              <Image src={photo.dataUrl} alt="" width={56} height={56} className="h-full w-full object-cover" />
                             </button>
-                          )}
-                          {expandedPostPhotos.length > 1 && (
-                            <span className="absolute right-3 bottom-3 z-10 rounded-full bg-[rgba(53,50,48,0.86)] px-2.5 py-1 text-[13px] font-black text-white">
-                              {expandedPostActivePhotoIndex + 1} / {expandedPostPhotos.length}
-                            </span>
-                          )}
-                          {!isNotificationPostPopup ? (
-                            <span className="pointer-events-none absolute top-3 right-3 z-10 rounded-full bg-[rgba(53,50,48,0.72)] px-2.5 py-1 text-[11px] font-black text-white">
-                              แตะเพื่อดูเต็มรูป
-                            </span>
-                          ) : null}
-                        </>
-                      ) : (
-                        <div className="flex h-full flex-col items-center justify-center gap-2 text-[15px] font-black lowercase text-[#5f7591]">
-                          <ImageIcon className="h-8 w-8" />
-                          <span>{expandedPost.imageText}</span>
+                          ))}
                         </div>
                       )}
                     </div>
+                  )}
 
-                    {expandedPostPhotos.length > 1 && (
-                      <div className="flex gap-2 overflow-x-auto pt-0.5">
-                        {expandedPostPhotos.map((photo, photoIndex) => (
-                          <button
-                            key={photo.id}
-                            onClick={() => setActivePhotoByPost((prev) => ({ ...prev, [expandedPost.id]: photoIndex }))}
-                            className={cn(
-                              "h-[56px] w-[56px] overflow-hidden rounded-[10px] border-[1.5px] bg-[var(--c-efebe0)] p-0",
-                              photoIndex === expandedPostActivePhotoIndex ? "border-[var(--c-f3b400)] shadow-[0_0_0_1px_var(--c-3b1d07)]" : "border-[var(--c-ddd9cd)]"
-                            )}
-                          >
-                            <Image src={photo.dataUrl} alt="" width={56} height={56} className="h-full w-full object-cover" />
-                          </button>
-                        ))}
-                      </div>
-                    )}
+                  <div className="mt-0.5 flex items-center justify-between border-t border-[rgba(228,212,184,0.82)] pt-3">
+                    <div className="flex items-center gap-3">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => toggleLike(expandedPost.id)}
+                        className="h-auto gap-1.5 rounded-lg px-0 py-0 text-[13.5px] font-black text-[#65676b] hover:bg-transparent hover:text-[#65676b] active:translate-y-0!"
+                      >
+                        <ThumbsUp className={cn("h-[18px] w-[18px] text-[#65676b]", expandedPost.hasLiked && "fill-[#65676b]")} strokeWidth={2.2} />
+                      </Button>
+                      <button
+                        type="button"
+                        onClick={() => setLikedByPostId(expandedPost.id)}
+                        className="-ml-2 tabular-nums text-[13.5px] font-black text-[#5f7591] hover:underline"
+                        aria-label={`ดูผู้กดถูกใจ ${expandedPost.likes} คน`}
+                      >
+                        {expandedPost.likes}
+                      </button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleToggleComments(expandedPost)}
+                        className="h-auto gap-1.5 rounded-lg px-0 py-0 text-[13.5px] font-black text-[#5f7591] hover:bg-transparent hover:text-foreground"
+                      >
+                        <MessageCircle className="h-[18px] w-[18px] text-[#5f7591]" strokeWidth={2.2} />
+                        <span style={{ color: "#5f7591" }}>{expandedPostCommentCount}</span>
+                      </Button>
+                    </div>
                   </div>
-                )}
 
-                <div className="mt-0.5 flex items-center justify-between border-t border-[rgba(228,212,184,0.82)] pt-3">
-                  <div className="flex items-center gap-3">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => toggleLike(expandedPost.id)}
-                      className="h-auto gap-1.5 rounded-lg px-0 py-0 text-[13.5px] font-black text-[#65676b] hover:bg-transparent hover:text-[#65676b] active:translate-y-0!"
-                    >
-                      <ThumbsUp className={cn("h-[18px] w-[18px] text-[#65676b]", expandedPost.hasLiked && "fill-[#65676b]")} strokeWidth={2.2} />
-                    </Button>
-                    <button
-                      type="button"
-                      onClick={() => setLikedByPostId(expandedPost.id)}
-                      className="-ml-2 tabular-nums text-[13.5px] font-black text-[#5f7591] hover:underline"
-                      aria-label={`ดูผู้กดถูกใจ ${expandedPost.likes} คน`}
-                    >
-                      {expandedPost.likes}
-                    </button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleToggleComments(expandedPost)}
-                      className="h-auto gap-1.5 rounded-lg px-0 py-0 text-[13.5px] font-black text-[#5f7591] hover:bg-transparent hover:text-foreground"
-                    >
-                      <MessageCircle className="h-[18px] w-[18px] text-[#5f7591]" strokeWidth={2.2} />
-                      <span style={{ color: "#5f7591" }}>{expandedPostCommentCount}</span>
-                    </Button>
-                  </div>
-                </div>
+                  {expandedComments[expandedPost.id] ? (
+                    <div className="flex flex-col gap-2.5 border-t-[1.5px] border-[rgba(221,217,205,0.7)] pt-3">
+                      {expandedPostComments.length > 0 && (
+                        <div className="flex flex-col gap-2.5">
+                          {expandedPostComments.map((comment) => {
+                            const reactionData = getCommentReactionData(expandedPost.id, comment.id);
+                            const selectedReaction = COMMENT_REACTION_CHOICES.find((reaction) => reaction.id === reactionData.selected);
+                            const pickerKey = getCommentReactionKey(expandedPost.id, comment.id);
 
-                {expandedComments[expandedPost.id] ? (
-                  <div className="flex flex-col gap-2.5 border-t-[1.5px] border-[rgba(221,217,205,0.7)] pt-3">
-                    {expandedPostComments.length > 0 && (
-                      <div className="flex flex-col gap-2.5">
-                        {expandedPostComments.map((comment) => {
-                          const reactionData = getCommentReactionData(expandedPost.id, comment.id);
-                          const selectedReaction = COMMENT_REACTION_CHOICES.find((reaction) => reaction.id === reactionData.selected);
-                          const pickerKey = getCommentReactionKey(expandedPost.id, comment.id);
-
-                          return (
-                            <div key={comment.id} className="flex items-start gap-2">
-                              <ProfileAvatar
-                                imageUrl={comment.avatarImageUrl}
-                                text={comment.avatarText || comment.author.charAt(0) || "C"}
-                                sizeClassName="h-6 w-6"
-                                textClassName="text-[11px]"
-                              />
-                              <div className="flex min-w-0 flex-col items-start gap-1">
-                                <div className="min-w-0 rounded-[12px] border-[1.5px] border-[var(--c-ddd9cd)] bg-[var(--c-faf8f2)] px-2.5 py-1.5 text-[13px] font-bold leading-relaxed text-[#173b6b]">
-                                  <span className="mb-0.5 flex flex-wrap items-baseline gap-x-1.5 text-[11.5px] font-black text-[#173b6b]">
-                                    {comment.author}
-                                    {formatThaiDateTime(comment.createdAt) && (
-                                      <span className="text-[10.5px] font-bold text-[var(--c-9f988d)]">{formatThaiDateTime(comment.createdAt)}</span>
-                                    )}
-                                  </span>
-                                  {editingComment?.postId === expandedPost.id && editingComment.commentId === comment.id ? (
-                                    <div className="flex min-w-[220px] flex-col gap-1.5">
-                                      <Input
-                                        value={commentEditDraft}
-                                        onChange={(event) => setCommentEditDraft(event.target.value)}
-                                        onKeyDown={(event) => {
-                                          if (event.key === "Enter") void handleSaveComment();
-                                          if (event.key === "Escape") cancelEditComment();
-                                        }}
-                                        className="h-8 rounded-lg bg-white text-[13px] font-bold"
-                                        autoFocus
-                                      />
-                                      <div className="flex gap-1.5">
-                                        <button type="button" onClick={cancelEditComment} className="text-[11px] font-black text-[#5f7591]">ยกเลิก</button>
-                                        <button type="button" disabled={commentSaving || !commentEditDraft.trim()} onClick={() => void handleSaveComment()} className="text-[11px] font-black text-[#0b69c7] disabled:opacity-50">บันทึก</button>
+                            return (
+                              <div key={comment.id} className="flex items-start gap-2">
+                                <ProfileAvatar
+                                  imageUrl={comment.avatarImageUrl}
+                                  text={comment.avatarText || comment.author.charAt(0) || "C"}
+                                  sizeClassName="h-6 w-6"
+                                  textClassName="text-[11px]"
+                                />
+                                <div className="flex min-w-0 flex-col items-start gap-1">
+                                  <div className="min-w-0 rounded-[12px] border-[1.5px] border-[var(--c-ddd9cd)] bg-[var(--c-faf8f2)] px-2.5 py-1.5 text-[13px] font-bold leading-relaxed text-[#173b6b]">
+                                    <span className="mb-0.5 flex flex-wrap items-baseline gap-x-1.5 text-[11.5px] font-black text-[#173b6b]">
+                                      {comment.author}
+                                      {formatThaiDateTime(comment.createdAt) && (
+                                        <span className="text-[10.5px] font-bold text-[var(--c-9f988d)]">{formatThaiDateTime(comment.createdAt)}</span>
+                                      )}
+                                    </span>
+                                    {editingComment?.postId === expandedPost.id && editingComment.commentId === comment.id ? (
+                                      <div className="flex min-w-[220px] flex-col gap-1.5">
+                                        <Input
+                                          value={commentEditDraft}
+                                          onChange={(event) => setCommentEditDraft(event.target.value)}
+                                          onKeyDown={(event) => {
+                                            if (event.key === "Enter") void handleSaveComment();
+                                            if (event.key === "Escape") cancelEditComment();
+                                          }}
+                                          className="h-8 rounded-lg bg-white text-[13px] font-bold"
+                                          autoFocus
+                                        />
+                                        <div className="flex gap-1.5">
+                                          <button type="button" onClick={cancelEditComment} className="text-[11px] font-black text-[#5f7591]">ยกเลิก</button>
+                                          <button type="button" disabled={commentSaving || !commentEditDraft.trim()} onClick={() => void handleSaveComment()} className="text-[11px] font-black text-[#0b69c7] disabled:opacity-50">บันทึก</button>
+                                        </div>
                                       </div>
-                                    </div>
-                                  ) : (
-                                    comment.text
-                                  )}
-                                </div>
-                                <div className="relative flex items-center gap-1 pl-0.5">
-                                  {comment.isYou && !(editingComment?.postId === expandedPost.id && editingComment.commentId === comment.id) && (
-                                    <>
-                                      <button
-                                        type="button"
-                                        onClick={() => startEditComment(expandedPost.id, comment)}
-                                        className="px-1.5 py-[3px] text-[11.5px] font-[850] text-[#5f7591] hover:text-[#173b6b]"
-                                      >
-                                        แก้ไข
-                                      </button>
-                                      <button
-                                        type="button"
-                                        onClick={() => void handleDeleteComment(expandedPost.id, comment.id)}
-                                        className="px-1.5 py-[3px] text-[11.5px] font-[850] text-[#b3271a] hover:text-[#7f1d1d]"
-                                      >
-                                        ลบ
-                                      </button>
-                                    </>
-                                  )}
-                                  <button
-                                    className={cn(
-                                      "inline-flex cursor-pointer items-center gap-1 rounded-full bg-transparent px-1.5 py-[3px] text-[11.5px] font-[850] leading-none text-[#5f7591] transition-all hover:bg-[var(--c-faf8f2)] hover:text-[#173b6b]",
-                                      selectedReaction && "bg-[var(--c-fff7d6)] text-[#173b6b] shadow-[inset_0_0_0_1.5px_var(--c-f5bb00)]"
-                                    )}
-                                    onClick={() => setOpenCommentReactionPicker((prev) => (prev === pickerKey ? null : pickerKey))}
-                                  >
-                                    {selectedReaction ? (
-                                      <>
-                                        <span>{selectedReaction.icon}</span>
-                                        <span>{selectedReaction.label}</span>
-                                      </>
                                     ) : (
-                                      <span>แสดงความรู้สึก</span>
+                                      comment.text
                                     )}
-                                  </button>
-                                  {openCommentReactionPicker === pickerKey && (
-                                    <div className="absolute bottom-[calc(100%+6px)] left-0 z-20 flex gap-[3px] rounded-full border-[1.5px] border-[var(--c-ddd9cd)] bg-white p-[5px] shadow-[0_8px_22px_rgba(0,0,0,0.12)] animate-[scaleUp_0.16s_ease-out_both]">
-                                      {COMMENT_REACTION_CHOICES.map((reaction) => (
+                                  </div>
+                                  <div className="relative flex items-center gap-1 pl-0.5">
+                                    {comment.isYou && !(editingComment?.postId === expandedPost.id && editingComment.commentId === comment.id) && (
+                                      <>
                                         <button
-                                          key={reaction.id}
-                                          className="flex h-[28px] w-[28px] items-center justify-center rounded-full bg-transparent text-md transition-all hover:-translate-y-0.5 hover:scale-110 hover:bg-[var(--c-fff7d6)]"
-                                          onClick={() => handleCommentReaction(expandedPost.id, comment.id, reaction.id)}
-                                          title={reaction.label}
+                                          type="button"
+                                          onClick={() => startEditComment(expandedPost.id, comment)}
+                                          className="px-1.5 py-[3px] text-[11.5px] font-[850] text-[#5f7591] hover:text-[#173b6b]"
                                         >
-                                          {reaction.icon}
+                                          แก้ไข
                                         </button>
-                                      ))}
-                                    </div>
-                                  )}
+                                        <button
+                                          type="button"
+                                          onClick={() => void handleDeleteComment(expandedPost.id, comment.id)}
+                                          className="px-1.5 py-[3px] text-[11.5px] font-[850] text-[#b3271a] hover:text-[#7f1d1d]"
+                                        >
+                                          ลบ
+                                        </button>
+                                      </>
+                                    )}
+                                    <button
+                                      className={cn(
+                                        "inline-flex cursor-pointer items-center gap-1 rounded-full bg-transparent px-1.5 py-[3px] text-[11.5px] font-[850] leading-none text-[#5f7591] transition-all hover:bg-[var(--c-faf8f2)] hover:text-[#173b6b]",
+                                        selectedReaction && "bg-[var(--c-fff7d6)] text-[#173b6b] shadow-[inset_0_0_0_1.5px_var(--c-f5bb00)]"
+                                      )}
+                                      onClick={() => setOpenCommentReactionPicker((prev) => (prev === pickerKey ? null : pickerKey))}
+                                    >
+                                      {selectedReaction ? (
+                                        <>
+                                          <span>{selectedReaction.icon}</span>
+                                          <span>{selectedReaction.label}</span>
+                                        </>
+                                      ) : (
+                                        <span>แสดงความรู้สึก</span>
+                                      )}
+                                    </button>
+                                    {openCommentReactionPicker === pickerKey && (
+                                      <div className="absolute bottom-[calc(100%+6px)] left-0 z-20 flex gap-[3px] rounded-full border-[1.5px] border-[var(--c-ddd9cd)] bg-white p-[5px] shadow-[0_8px_22px_rgba(0,0,0,0.12)] animate-[scaleUp_0.16s_ease-out_both]">
+                                        {COMMENT_REACTION_CHOICES.map((reaction) => (
+                                          <button
+                                            key={reaction.id}
+                                            className="flex h-[28px] w-[28px] items-center justify-center rounded-full bg-transparent text-md transition-all hover:-translate-y-0.5 hover:scale-110 hover:bg-[var(--c-fff7d6)]"
+                                            onClick={() => handleCommentReaction(expandedPost.id, comment.id, reaction.id)}
+                                            title={reaction.label}
+                                          >
+                                            {reaction.icon}
+                                          </button>
+                                        ))}
+                                      </div>
+                                    )}
+                                  </div>
                                 </div>
                               </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </div>
-                ) : null}
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  ) : null}
+                </div>
               </div>
-            </div>
 
-            <div className="border-t border-[var(--c-eee2cb)] bg-[var(--c-fffdfa)] px-4 py-3 pb-[calc(env(safe-area-inset-bottom)+12px)] md:px-5 md:py-3">
-              <div className="flex w-full items-center gap-2">
-                <Input
-                  value={commentDrafts[expandedPost.id] || ""}
-                  onChange={(e) => setCommentDrafts((prev) => ({ ...prev, [expandedPost.id]: e.target.value }))}
-                  onFocus={() => setExpandedComments((prev) => ({ ...prev, [expandedPost.id]: true }))}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") void handleCommentSubmit(expandedPost.id);
-                  }}
-                  placeholder="เขียนคอมเมนต์..."
-                  className="h-[44px] min-w-0 flex-1 rounded-full border border-[var(--c-2a2118)] bg-white px-4 text-[14px] font-bold placeholder:text-[var(--c-9f988d)] focus-visible:border-[var(--c-2a2118)] focus-visible:ring-0"
-                />
-                <Button
-                  type="button"
-                  size="sm"
-                  className={cn(
-                    "h-[44px] min-w-[52px] rounded-full px-4 text-[13px] font-black text-white transition-colors duration-200",
-                    (commentDrafts[expandedPost.id] || "").trim()
-                      ? "bg-[var(--c-5c3214)] hover:bg-[var(--c-45250f)] active:bg-[var(--c-341b0b)]"
-                      : "bg-[#A39E96] cursor-not-allowed hover:bg-[#A39E96]"
-                  )}
-                  onClick={() => void handleCommentSubmit(expandedPost.id)}
-                  disabled={!(commentDrafts[expandedPost.id] || "").trim()}
-                >
-                  ส่ง
-                </Button>
+              <div className="border-t border-[var(--c-eee2cb)] bg-[var(--c-fffdfa)] px-4 py-3 pb-[calc(env(safe-area-inset-bottom)+12px)] md:px-5 md:py-3">
+                <div className="flex w-full items-center gap-2">
+                  <Input
+                    value={commentDrafts[expandedPost.id] || ""}
+                    onChange={(e) => setCommentDrafts((prev) => ({ ...prev, [expandedPost.id]: e.target.value }))}
+                    onFocus={() => setExpandedComments((prev) => ({ ...prev, [expandedPost.id]: true }))}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") void handleCommentSubmit(expandedPost.id);
+                    }}
+                    placeholder="เขียนคอมเมนต์..."
+                    className="h-[44px] min-w-0 flex-1 rounded-full border border-[var(--c-2a2118)] bg-white px-4 text-[14px] font-bold placeholder:text-[var(--c-9f988d)] focus-visible:border-[var(--c-2a2118)] focus-visible:ring-0"
+                  />
+                  <Button
+                    type="button"
+                    size="sm"
+                    className={cn(
+                      "h-[44px] min-w-[52px] rounded-full px-4 text-[13px] font-black text-white transition-colors duration-200",
+                      (commentDrafts[expandedPost.id] || "").trim()
+                        ? "bg-[var(--c-5c3214)] hover:bg-[var(--c-45250f)] active:bg-[var(--c-341b0b)]"
+                        : "bg-[#A39E96] cursor-not-allowed hover:bg-[#A39E96]"
+                    )}
+                    onClick={() => void handleCommentSubmit(expandedPost.id)}
+                    disabled={!(commentDrafts[expandedPost.id] || "").trim()}
+                  >
+                    ส่ง
+                  </Button>
+                </div>
               </div>
-            </div>
             </>
           ) : null}
         </AppDialogContent>

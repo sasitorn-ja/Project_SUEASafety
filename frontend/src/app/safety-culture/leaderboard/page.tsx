@@ -157,8 +157,8 @@ export default function LeaderboardPage() {
             backgroundOverlay="linear-gradient(90deg, rgba(210,235,255,.82) 0%, rgba(210,235,255,.56) 42%, rgba(210,235,255,0) 100%)"
             backgroundPosition="78% center"
             contentFrame
-            mascotSrc="/images/mascots/wangjai/1.png"
-            mascotAction="cheer"
+            mascotSrc="/images/mascots/wangjai/7.png"
+            mascotAction="flashlight"
           />
         </div>
 

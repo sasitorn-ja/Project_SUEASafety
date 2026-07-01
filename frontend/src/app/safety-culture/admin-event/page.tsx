@@ -805,8 +805,8 @@ export default function AdminEventPage() {
           variant="community"
           backgroundImage="/images/heroes/Home01.png"
           backgroundOverlay="linear-gradient(90deg, rgba(210,235,255,.82) 0%, rgba(210,235,255,.60) 32%, rgba(210,235,255,.10) 56%, rgba(210,235,255,0) 74%)"
-          mascotSrc="/images/mascots/wangjai/24.png"
-          mascotAction="announce2"
+          mascotSrc="/images/mascots/wangjai/21.png"
+          mascotAction="logoMobile"
         />
 
         {editorMode === "bonus" ? (
