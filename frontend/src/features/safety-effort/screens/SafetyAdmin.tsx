@@ -580,7 +580,7 @@ export default function SafetyAdmin() {
             title={<>จัดการแบบประเมิน</>}
             description="เพิ่ม แก้ไข และจัดเรียงข้อประเมินความปลอดภัยสำหรับ Linewalk และ Safety Contact"
             variant="community"
-            backgroundImage="/images/heroes/safety-assessment-admin-hero.png"
+            backgroundImage="/images/heroes/Safety-Culture-Admin-Awareness1.png"
             backgroundOverlay="linear-gradient(90deg, rgba(210,235,255,.82) 0%, rgba(210,235,255,.60) 32%, rgba(210,235,255,.10) 56%, rgba(210,235,255,0) 74%)"
           />
         </div>

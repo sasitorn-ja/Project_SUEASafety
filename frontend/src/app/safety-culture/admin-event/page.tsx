@@ -803,10 +803,9 @@ export default function AdminEventPage() {
           }
           description="สร้าง แก้ไข จัดลำดับ และตั้งค่าการแสดงผลกิจกรรมบนหน้า Feed"
           variant="community"
-          backgroundImage="/images/heroes/Home01.png"
+          backgroundImage="/images/heroes/Safety-Culture-Admin-Awareness1.png"
           backgroundOverlay="linear-gradient(90deg, rgba(210,235,255,.82) 0%, rgba(210,235,255,.60) 32%, rgba(210,235,255,.10) 56%, rgba(210,235,255,0) 74%)"
-          mascotSrc="/images/mascots/wangjai/21.png"
-          mascotAction="logoMobile"
+
         />
 
         {editorMode === "bonus" ? (

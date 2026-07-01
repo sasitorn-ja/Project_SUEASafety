@@ -175,10 +175,9 @@ export function PointRulesManager() {
         title={<>ตั้งค่า Coin ในระบบ</>}
         description="กำหนด Coin, จำนวนสูงสุดต่อวัน และเงื่อนไขเสริมของ Safety Awareness, Safety Culture และ Safety Effort ได้จากหน้าเดียว"
         variant="community"
-        backgroundImage="/images/heroes/Home01.png"
+        backgroundImage="/images/heroes/Safety-Culture-Admin-Awareness1.png"
         backgroundOverlay="linear-gradient(90deg, rgba(210,235,255,.82) 0%, rgba(210,235,255,.60) 32%, rgba(210,235,255,.10) 56%, rgba(210,235,255,0) 74%)"
-        mascotSrc="/images/mascots/wangjai/17.png"
-        mascotAction="idea"
+
       />
 
       <Card className="mt-4 rounded-[18px] border border-border bg-(--brand-surface) p-4 shadow-[0_10px_26px_var(--brand-shadow)]">

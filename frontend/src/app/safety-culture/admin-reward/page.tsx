@@ -983,10 +983,9 @@ export default function AdminRewardPage() {
           }
           description="จัดการแคตตาล็อกรางวัล รูปภาพ รายละเอียด Coin แลก และสถานะเด่นจากที่เดียว"
           variant="community"
-          backgroundImage="/images/heroes/Safety-Culture-Rewards.png"
+          backgroundImage="/images/heroes/Safety-Culture-Admin-Awareness1.png"
           backgroundOverlay="linear-gradient(90deg, rgba(210,235,255,.82) 0%, rgba(210,235,255,.60) 32%, rgba(210,235,255,.10) 56%, rgba(210,235,255,0) 74%)"
-          mascotSrc="/images/mascots/wangjai/4.png"
-          mascotAction="welcome"
+
         />
 
         <div className="mt-4 flex flex-col gap-4">

@@ -132,10 +132,9 @@ export function AdminUsersManager() {
         title={<>จัดการผู้ใช้และสิทธิ์ Admin</>}
         description="แสดงรายชื่อผู้ใช้แบบแบ่งหน้า รองรับผู้ใช้จำนวนมากโดยไม่โหลดทั้งหมดพร้อมกัน"
         variant="community"
-        backgroundImage="/images/heroes/Home01.png"
+        backgroundImage="/images/heroes/Safety-Culture-Admin-Awareness1.png"
         backgroundOverlay="linear-gradient(90deg, rgba(210,235,255,.82) 0%, rgba(210,235,255,.60) 32%, rgba(210,235,255,.10) 56%, rgba(210,235,255,0) 74%)"
-        mascotSrc="/images/mascots/wangjai/31.png"
-        mascotAction="shield"
+
       />
 
       <Card className="mt-4 rounded-[18px] border border-[var(--border)] bg-[var(--brand-surface)] p-4 shadow-[0_10px_26px_var(--brand-shadow)]">
