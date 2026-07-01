@@ -42,6 +42,7 @@ import {
 } from "@/components/ui/app-dialog";
 import {
   Dialog,
+  DialogContent,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -77,6 +78,10 @@ type AwarenessSchedulePopup = {
   type: "success" | "info";
   title: string;
   description: string;
+};
+
+type AwarenessToggleDialogState = {
+  nextEnabled: boolean;
 };
 
 function SectionCard({
@@ -160,6 +165,8 @@ export default function AdminAwarenessPage() {
 
   const [savingScheduleSettings, setSavingScheduleSettings] = useState(false);
   const [schedulePopup, setSchedulePopup] = useState<AwarenessSchedulePopup | null>(null);
+  const [toggleDialog, setToggleDialog] = useState<AwarenessToggleDialogState | null>(null);
+  const [savingAwarenessEnabled, setSavingAwarenessEnabled] = useState(false);
 
   useEffect(() => {
     setTempStartTime(awarenessActiveStartTime || "08:00");
@@ -337,6 +344,26 @@ export default function AdminAwarenessPage() {
     setTempScheduleStartDate(awarenessScheduleStartDate || "");
     setTempScheduleEndDate(awarenessScheduleEndDate || "");
     setTempDescription(awarenessDescription || "");
+  };
+
+  const handleRequestAwarenessToggle = () => {
+    if (savingAwarenessEnabled) return;
+    setToggleDialog({ nextEnabled: !awarenessEnabled });
+  };
+
+  const handleConfirmAwarenessToggle = async () => {
+    if (!toggleDialog) return;
+    setSavingAwarenessEnabled(true);
+    const ok = await updateAwarenessEnabled(toggleDialog.nextEnabled);
+    setSavingAwarenessEnabled(false);
+    setToggleDialog(null);
+    setSchedulePopup({
+      type: ok ? "success" : "info",
+      title: ok ? (toggleDialog.nextEnabled ? "เปิดใช้งานสำเร็จ" : "ปิดใช้งานสำเร็จ") : "บันทึกไม่สำเร็จ",
+      description: ok
+        ? `ระบบ${toggleDialog.nextEnabled ? "เปิด" : "ปิด"}ใช้งาน Safety Awareness เรียบร้อยแล้ว`
+        : "ระบบยังบันทึกสถานะการเปิดใช้งานไปยัง API ไม่สำเร็จ กรุณาลองใหม่อีกครั้ง",
+    });
   };
 
   const [search, setSearch] = useState("");
@@ -632,12 +659,12 @@ export default function AdminAwarenessPage() {
                 </div>
                 <button
                   type="button"
-                  onClick={async () => {
-                    await updateAwarenessEnabled(!awarenessEnabled);
-                  }}
+                  onClick={handleRequestAwarenessToggle}
+                  disabled={savingAwarenessEnabled}
+                  aria-label={awarenessEnabled ? "ปิดใช้งาน Safety Awareness" : "เปิดใช้งาน Safety Awareness"}
                   className={cn(
-                    "relative inline-flex h-8 w-[54px] shrink-0 cursor-pointer rounded-full border-2 border-white shadow-[0_4px_12px_rgba(23,59,107,0.16)] transition-colors duration-200 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-[#8FC8FF]",
-                    awarenessEnabled ? "bg-[#0B82F0]" : "bg-[#C9D8E8]"
+                    "relative inline-flex h-8 w-[54px] shrink-0 rounded-full border-2 border-white shadow-[0_4px_12px_rgba(23,59,107,0.16)] transition-colors duration-200 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-[#8FC8FF] disabled:cursor-not-allowed disabled:opacity-70",
+                    awarenessEnabled ? "bg-[#0B82F0]" : "bg-[#C9D8E8]",
                   )}
                 >
                   <span
@@ -1457,65 +1484,140 @@ export default function AdminAwarenessPage() {
         </AppDialogContent>
       </Dialog>
 
-      <Dialog open={!!schedulePopup} onOpenChange={(open) => !open && setSchedulePopup(null)}>
+      <Dialog
+        open={!!toggleDialog}
+        onOpenChange={(open) => {
+          if (!open && !savingAwarenessEnabled) setToggleDialog(null);
+        }}
+      >
         <AppDialogContent
           size="sm"
-          className={cn(
-            "w-[calc(100vw-24px)] max-w-[480px] shadow-[0_28px_64px_rgba(18,52,95,0.18)]",
-            schedulePopup?.type === "success"
-              ? "border-[#CFEAD9] bg-[linear-gradient(180deg,#F7FFF8_0%,#EFFAF1_100%)]"
-              : "border-[#D9E7F5] bg-[linear-gradient(180deg,#FFFFFF_0%,#F5FAFF_100%)]",
-          )}
+          className="w-[calc(100vw-24px)] max-w-[500px] border-[#D9E7F5] bg-[linear-gradient(180deg,#FFFFFF_0%,#F5FAFF_100%)] shadow-[0_28px_64px_rgba(18,52,95,0.18)]"
         >
-          <AppDialogBody className="grid-cols-[auto_1fr] items-start gap-3 px-4 py-4 sm:px-5 sm:py-4.5">
-            <div
-              className={cn(
-                "mt-0.5 flex h-8 w-8 items-center justify-center rounded-full border bg-white shadow-sm",
-                schedulePopup?.type === "success"
-                  ? "border-[#A9E2BA] text-[#2C9A57]"
-                  : "border-[#BFDAF4] text-[#0B82F0]",
-              )}
-            >
-              {schedulePopup?.type === "success" ? (
-                <CheckCircle2 className="h-4.5 w-4.5" strokeWidth={2.6} />
-              ) : (
-                <Info className="h-4.5 w-4.5" strokeWidth={2.6} />
-              )}
+          <AppDialogSectionHeader>
+            <AppDialogTitle className="text-[#0B2F6B]">
+              {toggleDialog?.nextEnabled ? "ยืนยันการเปิดใช้งาน" : "ยืนยันการปิดใช้งาน"}
+            </AppDialogTitle>
+            <AppDialogDescription>
+              {toggleDialog?.nextEnabled
+                ? "เมื่อยืนยันแล้ว ระบบจะเปิดใช้งาน Safety Awareness ตามช่วงวันที่และเวลาที่ตั้งค่าไว้"
+                : "เมื่อยืนยันแล้ว ผู้ใช้จะไม่เห็น Safety Awareness จนกว่าจะกลับมาเปิดใช้งานอีกครั้ง"}
+            </AppDialogDescription>
+          </AppDialogSectionHeader>
+
+          <AppDialogBody className="grid-cols-[auto_1fr] items-start gap-3">
+            <div className="mt-0.5 flex h-9 w-9 items-center justify-center rounded-full border border-[#BFDAF4] bg-white text-[#0B82F0] shadow-sm">
+              <ShieldAlert className="h-4.5 w-4.5" strokeWidth={2.6} />
             </div>
-            <div className="space-y-1 text-left">
-              <AppDialogTitle
-                className={cn(
-                  "text-[24px] leading-none sm:text-[26px]",
-                  schedulePopup?.type === "success" ? "text-[#1E9B55]" : "text-[#0B2F6B]",
-                )}
-              >
-                {schedulePopup?.title}
-              </AppDialogTitle>
-              <AppDialogDescription
-                className={cn(
-                  "mt-0 text-[14px] font-extrabold leading-[1.45] sm:text-[15px]",
-                  schedulePopup?.type === "success" ? "text-[#36A862]" : "text-[#55739B]",
-                )}
-              >
-                {schedulePopup?.description}
-              </AppDialogDescription>
+            <div className="space-y-1.5 text-left">
+              <p className="text-[14px] font-black leading-relaxed text-[#0B2F6B]">
+                {toggleDialog?.nextEnabled
+                  ? "ต้องการเปิดใช้งาน Safety Awareness ใช่หรือไม่?"
+                  : "ต้องการปิดใช้งาน Safety Awareness ใช่หรือไม่?"}
+              </p>
+              <p className="text-[12.5px] font-bold leading-relaxed text-[#55739B]">
+                สถานะปัจจุบัน: {awarenessEnabled ? "เปิดใช้งาน" : "ปิดใช้งาน"}
+              </p>
             </div>
           </AppDialogBody>
 
-          <AppDialogSectionFooter className="justify-end pt-0">
+          <AppDialogSectionFooter className="justify-end">
             <Button
-              onClick={() => setSchedulePopup(null)}
+              type="button"
+              variant="outline"
+              onClick={() => setToggleDialog(null)}
+              disabled={savingAwarenessEnabled}
+              className="h-10 rounded-full border-[#C9DDF2] px-4 text-[13px] font-black text-[#55739B]"
+            >
+              ยกเลิก
+            </Button>
+            <Button
+              type="button"
+              onClick={handleConfirmAwarenessToggle}
+              disabled={savingAwarenessEnabled}
               className={cn(
                 "h-10 rounded-full px-4 text-[13px] font-black text-white",
-                schedulePopup?.type === "success"
-                  ? "bg-[#1E9B55] hover:bg-[#16834A]"
-                  : "bg-[#0B82F0] hover:bg-[#0973D6]",
+                toggleDialog?.nextEnabled ? "bg-[#0B82F0] hover:bg-[#0973D6]" : "bg-[#D92D20] hover:bg-[#B42318]",
               )}
             >
-              รับทราบ
+              {savingAwarenessEnabled
+                ? "กำลังบันทึก..."
+                : toggleDialog?.nextEnabled
+                  ? "ยืนยันเปิดใช้งาน"
+                  : "ยืนยันปิดใช้งาน"}
             </Button>
           </AppDialogSectionFooter>
         </AppDialogContent>
+      </Dialog>
+
+      <Dialog open={!!schedulePopup} onOpenChange={(open) => !open && setSchedulePopup(null)}>
+        {schedulePopup?.type === "success" ? (
+          <DialogContent
+            showCloseButton={false}
+            className="z-[9999] w-full max-w-[380px] rounded-[24px] border border-[#cfe0f2] bg-[linear-gradient(180deg,#ffffff,#f8fcff)] p-0 text-center shadow-[0_28px_80px_rgba(6,43,99,0.28)]"
+          >
+            <div
+              className="flex flex-col items-center gap-[18px] px-6 pt-8 pb-6"
+              style={{ animation: "scaleUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)" }}
+            >
+              <style>{`
+                @keyframes scaleUp {
+                  from { transform: scale(0.9); opacity: 0; }
+                  to { transform: scale(1); opacity: 1; }
+                }
+              `}</style>
+
+              <div className="flex h-[68px] w-[68px] items-center justify-center rounded-full border-[2.5px] border-[#86efac] bg-[#e6f7ed] text-[#15803d]">
+                <Check className="h-9 w-9" strokeWidth={3} />
+              </div>
+
+              <div>
+                <h3 className="m-0 font-['Prompt',sans-serif] text-[20px] font-black text-[#0e3e7d]">
+                  {schedulePopup.title}
+                </h3>
+                <p className="mt-1.5 font-['Prompt',sans-serif] text-[13.5px] font-bold leading-[1.4] text-[#5f7591]">
+                  {schedulePopup.description}
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setSchedulePopup(null)}
+                className="mt-1 h-12 w-full rounded-2xl border-0 bg-[linear-gradient(180deg,#158eff,#075cc8)] font-['Prompt',sans-serif] text-[14.5px] font-extrabold text-white shadow-[0_6px_16px_rgba(21,142,255,0.22)]"
+              >
+                รับทราบ
+              </button>
+            </div>
+          </DialogContent>
+        ) : (
+          <AppDialogContent
+            size="sm"
+            className="w-[calc(100vw-24px)] max-w-[480px] border-[#D9E7F5] bg-[linear-gradient(180deg,#FFFFFF_0%,#F5FAFF_100%)] shadow-[0_28px_64px_rgba(18,52,95,0.18)]"
+          >
+            <AppDialogBody className="grid-cols-[auto_1fr] items-start gap-3 px-4 py-4 sm:px-5 sm:py-4.5">
+              <div className="mt-0.5 flex h-8 w-8 items-center justify-center rounded-full border border-[#BFDAF4] bg-white text-[#0B82F0] shadow-sm">
+                <Info className="h-4.5 w-4.5" strokeWidth={2.6} />
+              </div>
+              <div className="space-y-1 text-left">
+                <AppDialogTitle className="text-[24px] leading-none text-[#0B2F6B] sm:text-[26px]">
+                  {schedulePopup?.title}
+                </AppDialogTitle>
+                <AppDialogDescription className="mt-0 text-[14px] font-extrabold leading-[1.45] text-[#55739B] sm:text-[15px]">
+                  {schedulePopup?.description}
+                </AppDialogDescription>
+              </div>
+            </AppDialogBody>
+
+            <AppDialogSectionFooter className="justify-end pt-0">
+              <Button
+                onClick={() => setSchedulePopup(null)}
+                className="h-10 rounded-full bg-[#0B82F0] px-4 text-[13px] font-black text-white hover:bg-[#0973D6]"
+              >
+                รับทราบ
+              </Button>
+            </AppDialogSectionFooter>
+          </AppDialogContent>
+        )}
       </Dialog>
     </div>
   );

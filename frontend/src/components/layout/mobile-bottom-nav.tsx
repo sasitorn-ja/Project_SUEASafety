@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Bell, Home, LayoutDashboard, ShieldCheck, UsersRound } from "lucide-react";
+import { Bell, Home, ShieldCheck, UsersRound } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { isMainNavActive } from "@/lib/navigation";
 import { useAppState } from "@/providers/app-providers";
@@ -13,7 +13,6 @@ function NavTo(props: any) {
 
 const NAV_ITEMS = [
   { id: "home", label: "Home", icon: Home, href: "/" },
-  { id: "dashboard", label: "Dashboard", icon: LayoutDashboard, href: "/dashboard" },
   { id: "safety-effort", label: "Safety Effort", icon: ShieldCheck, href: "/category" },
   { id: "safety-culture", label: "Safety Culture", icon: UsersRound, href: "/safety-culture" },
   { id: "notifications", label: "Notice", icon: Bell, href: "/notifications" },
@@ -44,7 +43,7 @@ export function MobileBottomNav({ hidden = false }: { hidden?: boolean }) {
       }}
       aria-label="Mobile main navigation"
     >
-      <div className="grid min-h-[60px] w-full grid-cols-5 px-1 pt-[5px]">
+      <div className="grid min-h-[60px] w-full grid-cols-4 px-1 pt-[5px]">
         {NAV_ITEMS.map((item) => {
           const Icon = item.icon;
           const active = isActive(item.href);

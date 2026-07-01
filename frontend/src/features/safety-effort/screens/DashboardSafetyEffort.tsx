@@ -1,1876 +1,475 @@
-// @ts-nocheck
-import { useState, useEffect } from "react";
+"use client";
+
+import { type ReactNode, useEffect, useMemo, useState } from "react";
 import {
-  Calendar,
-  Filter,
+  AlertTriangle,
   BarChart3,
-  PieChart,
   Building2,
   CheckCircle2,
-  AlertTriangle,
-  Clock,
-  Download,
-  TrendingUp
+  Factory,
+  MapPinned,
+  ShieldCheck,
 } from "lucide-react";
-import * as XLSX from "xlsx";
-import { Combobox } from "@/components/ui/combobox";
-import dashboardStyles from "./dashboard-safety-effort.module.css";
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Cell,
+  LabelList,
+  Pie,
+  PieChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
 
-// Design tokens matching system branding
-const T = {
-  background: "var(--background)",
-  background2: "var(--secondary)",
-  foreground: "var(--foreground)",
-  foreground2: "color-mix(in srgb, var(--foreground) 78%, transparent)",
-  foreground3: "color-mix(in srgb, var(--foreground) 54%, transparent)",
-  card: "var(--card)",
-  surface2: "var(--secondary)",
-  primary: "var(--brand-accent)",
-  primaryForeground: "#0e0f12",
-  primarySoft: "var(--brand-soft)",
-  ok: "#1f7a55",
-  info: "#234c8e",
-  warning: "var(--c-c97a00)",
-  border: "rgba(14,15,18,0.10)",
-  borderStrong: "#0e0f12",
-  radius: "14px",
+type LocationTypeRow = {
+  locationType: string;
+  name: string;
+  submissions: number;
+  total: number;
+  safe: number;
+  unsafeAct: number;
+  unsafeCond: number;
+  unsafe: number;
+  safeRate: number;
 };
 
-// Softer, brand-aligned chart palette (replaces harsh #FF0000 / #FFFF00 / #92D050)
-const C = {
-  safe: "#6FB07A",      // soft green
-  safeText: "#2f8a55",
-  unsafe: "#E07A6B",    // soft coral red
-  unsafeText: "#c0473a",
-  warn: "#E6B45A",      // soft amber
-  warnText: "#a9772a",
-  office: "#5B9BD5",    // soft blue
-  plant: "#7FB069",     // soft green
-  site: "#E6B45A",      // soft amber
-  neutral: "#E2E5EA",   // light gray
+type BusinessUnitRow = {
+  name: string;
+  submissions: number;
+  total: number;
+  safe: number;
+  unsafeAct: number;
+  unsafeCond: number;
+  unsafe: number;
+  safeRate: number;
+  legacyLinewalk: number;
+  totalLinewalk: number;
 };
+
+type OverviewSummary = {
+  submissions: number;
+  total: number;
+  safe: number;
+  unsafeAct: number;
+  unsafeCond: number;
+  unsafe: number;
+  legacyLinewalk: number;
+  totalLinewalk: number;
+  safeRate: number;
+};
+
+type LinewalkOverview = {
+  summary: OverviewSummary;
+  byLocationType: LocationTypeRow[];
+  byBusinessUnit: BusinessUnitRow[];
+};
+
+const CHART_COLORS = {
+  plant: "#0B82F0",
+  office: "#38BDF8",
+  site: "#F59E0B",
+  legacy: "#94A3B8",
+  safe: "#22C55E",
+  unsafeAction: "#F97316",
+  unsafeCondition: "#EF4444",
+};
+
+const LOCATION_COLOR_MAP: Record<string, string> = {
+  Plant: CHART_COLORS.plant,
+  Office: CHART_COLORS.office,
+  Site: CHART_COLORS.site,
+  "ข้อมูลเก่า": CHART_COLORS.legacy,
+};
+
+function formatNumber(value: number) {
+  return new Intl.NumberFormat("th-TH").format(value);
+}
+
+function percent(value: number) {
+  return `${Number(value || 0).toFixed(1)}%`;
+}
+
+function DashboardCard({
+  title,
+  description,
+  icon,
+  children,
+}: {
+  title: string;
+  description: string;
+  icon: ReactNode;
+  children: ReactNode;
+}) {
+  return (
+    <section className="overflow-hidden rounded-[28px] border border-[#D8E9FB] bg-white shadow-[0_22px_50px_rgba(8,59,132,0.08)]">
+      <div className="border-b border-[#E4F0FB] bg-[linear-gradient(180deg,#F9FCFF_0%,#F1F8FF_100%)] px-5 py-4 sm:px-6">
+        <div className="flex items-start gap-3">
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[18px] bg-[linear-gradient(135deg,#E5F4FF_0%,#D4ECFF_100%)] text-[#0B82F0] shadow-[inset_0_0_0_1px_rgba(11,130,240,0.08)]">
+            {icon}
+          </div>
+          <div className="min-w-0">
+            <h2 className="text-[18px] font-black leading-tight text-[#0B2F6B] sm:text-[20px]">{title}</h2>
+            <p className="mt-1 text-[12.5px] font-bold leading-relaxed text-[#5B7594] sm:text-[13px]">{description}</p>
+          </div>
+        </div>
+      </div>
+      <div className="px-4 py-5 sm:px-6 sm:py-6">{children}</div>
+    </section>
+  );
+}
 
 export default function DashboardSafetyEffort() {
-  const exportDateStamp = new Date().toISOString().slice(0, 10);
+  const [overview, setOverview] = useState<LinewalkOverview | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // States
-  const [selectedBU, setSelectedBU] = useState("All Business Units");
-  const [hoveredSlice, setHoveredSlice] = useState(null);
-  const [hoveredBar, setHoveredBar] = useState(null);
-  const [scaleType, setScaleType] = useState("logarithmic");
-  const [width, setWidth] = useState(() => typeof window !== "undefined" ? window.innerWidth : 1200);
-
-  // Live data from the real reports API (admin).
-  const [liveLinewalkOverview, setLiveLinewalkOverview] = useState(null); // { summary, byLocationType, byBusinessUnit }
-
-  useEffect(() => {
-    const handleResize = () => setWidth(window.innerWidth);
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
-
-  // Fetch real aggregates without exposing date filters to the user.
   useEffect(() => {
     let cancelled = false;
+
     (async () => {
+      setLoading(true);
+      setError(null);
       try {
-        const linewalkRes = await fetch("/api/safety-effort/reports/linewalk-overview", { credentials: "include", cache: "no-store" });
-        if (linewalkRes.ok) {
-          const p = await linewalkRes.json().catch(() => null);
-          if (!cancelled) {
-            setLiveLinewalkOverview(p?.data || null);
-          }
-        } else if (!cancelled) {
-          setLiveLinewalkOverview(null);
-        }
-      } catch {
+        const response = await fetch("/api/safety-effort/reports/linewalk-overview", {
+          credentials: "include",
+          cache: "no-store",
+        });
+        if (!response.ok) throw new Error("โหลดข้อมูล dashboard ไม่สำเร็จ");
+        const payload = await response.json().catch(() => null);
         if (!cancelled) {
-          setLiveLinewalkOverview(null);
+          setOverview(payload?.data ?? null);
         }
+      } catch (fetchError) {
+        if (!cancelled) {
+          setOverview(null);
+          setError(fetchError instanceof Error ? fetchError.message : "โหลดข้อมูล dashboard ไม่สำเร็จ");
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
       }
     })();
-    return () => { cancelled = true; };
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
-  const isMobile = width < 768;
-  const isTablet = width >= 768 && width < 1024;
-  const isDesktop = width >= 1024;
+  const summary = overview?.summary ?? {
+    submissions: 0,
+    total: 0,
+    safe: 0,
+    unsafeAct: 0,
+    unsafeCond: 0,
+    unsafe: 0,
+    legacyLinewalk: 0,
+    totalLinewalk: 0,
+    safeRate: 0,
+  };
 
-  const exportToExcel = () => {
-    const data = chart4Data.map(item => {
-      const total = item.safe + item.unsafe;
-      const safePercent = item.safeRate ?? (total > 0 ? (item.safe / total) * 100 : 0);
+  const areaChartData = useMemo(
+    () =>
+      (overview?.byLocationType ?? [])
+        .filter((item) => item.submissions > 0)
+        .map((item) => ({
+          name: item.name,
+          value: item.submissions,
+          percentLabel: percent(summary.totalLinewalk > 0 ? (item.submissions / summary.totalLinewalk) * 100 : 0),
+          color: LOCATION_COLOR_MAP[item.name] ?? CHART_COLORS.legacy,
+        })),
+    [overview?.byLocationType, summary.totalLinewalk],
+  );
+
+  const statusChartData = useMemo(() => {
+    const wanted = ["Plant", "Office", "Site"];
+    return wanted.map((name) => {
+      const found = overview?.byLocationType?.find((item) => item.name === name);
       return {
-        "หน่วยงาน": item.name,
-        "สแกนที่ปลอดภัย (Safe)": item.safe,
-        "ความไม่ปลอดภัย (Unsafe)": item.unsafe,
-        "แก้ไขแล้ว (Solved)": item.solved,
-        "Line walk จากระบบเก่า": item.legacyLinewalk || 0,
-        "อัตราความปลอดภัย (%)": parseFloat(Number(safePercent).toFixed(1))
+        name,
+        safe: found?.safe ?? 0,
+        unsafeAction: found?.unsafeAct ?? 0,
+        unsafeCondition: found?.unsafeCond ?? 0,
+        total: found?.total ?? 0,
       };
     });
-    
-    const worksheet = XLSX.utils.json_to_sheet(data);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Safety Effort Summary");
-    XLSX.writeFile(workbook, `Safety_Effort_Summary_all-data_${exportDateStamp}.xlsx`);
-  };
+  }, [overview?.byLocationType]);
 
-  // Chart 1 (distribution by location type) — built from REAL Line walk submissions
-  // when available; otherwise falls back to the legacy report/baseline.
-  const chart1Data = (() => {
-    const rows = Array.isArray(liveLinewalkOverview?.byLocationType)
-      ? liveLinewalkOverview.byLocationType
-      : [];
-    const total = rows.reduce((sum, row) => sum + Number(row.submissions || row.total || 0), 0);
-    const colors = { Office: "#2F80D0", Plant: "#79BE4B", Site: "#F5BE00", "ข้อมูลเก่า": "#9CA3AF" };
-    const order = { Office: 0, Plant: 1, Site: 2, "ข้อมูลเก่า": 3 };
-    return rows
-      .map((row) => {
-        const name = String(row.name || "Other");
-        const count = Number(row?.submissions || row?.total || 0);
-        return {
-          name,
-          count,
-          value: total > 0 ? Number(((count / total) * 100).toFixed(1)) : 0,
-          color: colors[name] || "#94A3B8",
-        };
-      })
-      .sort((a, b) => (order[a.name] ?? 99) - (order[b.name] ?? 99));
-  })();
+  const businessUnitChartData = useMemo(
+    () =>
+      [...(overview?.byBusinessUnit ?? [])]
+        .sort((a, b) => b.totalLinewalk - a.totalLinewalk || b.safeRate - a.safeRate)
+        .slice(0, 12)
+        .map((item) => ({
+          name: item.name,
+          safeRate: Number(item.safeRate || 0),
+          totalLinewalk: item.totalLinewalk,
+          safe: item.safe,
+          unsafe: item.unsafe,
+        })),
+    [overview?.byBusinessUnit],
+  );
 
-  const chart2Data = (() => {
-    const rows = Array.isArray(liveLinewalkOverview?.byLocationType)
-      ? liveLinewalkOverview.byLocationType
-      : [];
-    const byName = new Map(rows.map((row) => [String(row.name || ""), row]));
-    return ["Plant", "Office", "Site"].map((category) => {
-      const row = byName.get(category);
-      const safe = Number(row?.safe || 0);
-      const unsafeAct = Number(row?.unsafeAct || 0);
-      const unsafeCond = Number(row?.unsafeCond || 0);
-      return {
-        category,
-        safe,
-        unsafeAct,
-        unsafeCond,
-        total: Number(row?.total || safe + unsafeAct + unsafeCond),
-      };
-    });
-  })();
-
-  const chart3Data = (() => {
-    const corrective = liveLinewalkOverview?.correctiveActions || {};
-    const rows = [
-      { name: "Success", count: Number(corrective.completed || 0), color: "#6FB07A" },
-      { name: "Pending", count: Number(corrective.pending || 0), color: "#E6B45A" },
-      { name: "Unresolved", count: Number(corrective.overdue || 0), color: "#E2E5EA" },
-    ];
-    const total = rows.reduce((sum, item) => sum + item.count, 0);
-    return rows.map((item) => ({
-      ...item,
-      value: total > 0 ? Number(((item.count / total) * 100).toFixed(1)) : 0,
-    }));
-  })();
-
-  const chart4Data = (() => {
-    const rows = Array.isArray(liveLinewalkOverview?.byBusinessUnit)
-      ? liveLinewalkOverview.byBusinessUnit
-      : [];
-    return rows.map((row) => {
-      const safe = Number(row.safe || 0);
-      const unsafe = Number(row.unsafe || 0);
-      return {
-        name: String(row.name || "ไม่ระบุ BU โรงงาน"),
-        safe,
-        unsafe,
-        solved: 0,
-        legacyLinewalk: 0,
-        totalLinewalk: Number(row.totalLinewalk || row.submissions || 0),
-        safeRate: Number(row.safeRate || (safe + unsafe > 0 ? (safe / (safe + unsafe)) * 100 : 0)),
-      };
-    });
-  })();
-
-  useEffect(() => {
-    if (selectedBU === "All Business Units") return;
-    if (!chart4Data.some((bu) => bu.name === selectedBU)) {
-      setSelectedBU("All Business Units");
-    }
-  }, [chart4Data, selectedBU]);
-
-  // Derived filtered metrics
-  const getFilteredMetrics = () => {
-    if (selectedBU === "All Business Units") {
-      const summary = liveLinewalkOverview?.summary;
-      const totalChecks = Number(summary?.totalLinewalk || summary?.submissions || 0);
-      const unsafeCases = Number(summary?.unsafe || 0);
-      return {
-        totalChecks,
-        safeRate: Number(summary?.safeRate || 0),
-        unsafeCases,
-        solvedCases: 0,
-        pendingCases: unsafeCases,
-        unresolvedCases: unsafeCases,
-      };
-    }
-    const bu = chart4Data.find(b => b.name === selectedBU);
-    if (!bu) {
-      return {
-        totalChecks: 0,
-        safeRate: 0,
-        unsafeCases: 0,
-        solvedCases: 0,
-        pendingCases: 0,
-        unresolvedCases: 0
-      };
-    }
-    
-    const total = bu.safe + bu.unsafe;
-    const rate = bu.safeRate ?? (total > 0 ? Number(((bu.safe / total) * 100).toFixed(1)) : 0);
-    return {
-      totalChecks: bu.totalLinewalk ?? total,
-      safeRate: rate,
-      unsafeCases: bu.unsafe,
-      solvedCases: bu.solved,
-      pendingCases: Math.max(0, bu.unsafe - bu.solved),
-      unresolvedCases: 0
-    };
-  };
-
-  const metrics = getFilteredMetrics();
-  const correctionRate = ((metrics.solvedCases / (metrics.solvedCases + metrics.pendingCases || 1)) * 100).toFixed(1);
-  const focusedBusinessUnitCount = selectedBU === "All Business Units" ? chart4Data.length : 1;
-  const topBusinessUnit = [...chart4Data].sort((a, b) => (b.totalLinewalk ?? (b.safe + b.unsafe)) - (a.totalLinewalk ?? (a.safe + a.unsafe)))[0];
-
-  // Helper to scale values for column heights
-  const getScaledHeight = (val, max) => {
-    if (val === 0 || !Number.isFinite(max) || max <= 0) return 0;
-    // Bar container height differs per breakpoint (desktop bars-flex = 90px,
-    // tablet/mobile = 165px). Keep bars inside the container with a little headroom.
-    const maxHeight = isDesktop ? 82 : 150;
-    if (scaleType === "linear") {
-      return (val / (max || 1)) * maxHeight;
-    } else {
-      const logVal = Math.log10(val + 1);
-      const logMax = Math.log10(max + 1 || 1);
-      return (logVal / logMax) * maxHeight;
-    }
-  };
-
-  const formatNumberCompact = (val: number) => {
-    if (val >= 1000) {
-      return (val / 1000).toFixed(1) + "k";
-    }
-    return val.toString();
-  };
+  const strongestBusinessUnit = businessUnitChartData[0];
 
   return (
-    <div className="page-shell-wide pt-2.5 pb-7 font-sarabun">
-      <style>{`
-        .db-container {
-          min-height: 100%;
-          background: transparent;
-          font-family: 'Prompt', 'Sarabun', sans-serif;
-          color: ${T.foreground};
-          padding: 16px;
-        }
-
-        @media (min-width: 1024px) {
-          .db-container {
-            padding: 18px 20px 22px;
-          }
-        }
-
-        .db-top-layout {
-          display: grid;
-          grid-template-columns: 1fr;
-          gap: 12px;
-          margin-bottom: 12px;
-        }
-        .db-hero-wrap {
-          margin-bottom: 12px;
-        }
-        .db-top-left-panel {
-          display: flex;
-          flex-direction: column;
-          gap: 12px;
-        }
-        .db-header-row {
-          display: flex;
-          flex-direction: column;
-          gap: 12px;
-        }
-        .db-kpi-row {
-          display: grid;
-          grid-template-columns: repeat(2, 1fr);
-          gap: 10px;
-        }
-        .db-top-right-panel {
-          display: grid;
-          grid-template-columns: repeat(2, 1fr);
-          gap: 10px;
-        }
-        .db-charts-row-1 {
-          display: grid;
-          grid-template-columns: 1fr;
-          gap: 12px;
-          margin-bottom: 12px;
-        }
-        .db-charts-row-2 {
-          display: grid;
-          grid-template-columns: 1fr;
-          gap: 12px;
-          margin-bottom: 12px;
-        }
-        .db-metrics-summary-card {
-          background: ${T.card};
-          border: 1px solid ${T.border};
-          border-radius: ${T.radius};
-          padding: 16px;
-          box-shadow: 0 6px 18px rgba(22,63,104,0.04);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          height: 100%;
-        }
-        .db-metrics-summary-grid {
-          display: grid;
-          grid-template-columns: repeat(2, 1fr);
-          gap: 12px;
-          width: 100%;
-        }
-        .db-summary-metric-item {
-          display: flex;
-          align-items: center;
-          gap: 10px;
-          background: rgba(14,15,18,0.02);
-          border: 1px solid rgba(14,15,18,0.04);
-          padding: 10px 12px;
-          border-radius: 10px;
-        }
-        .db-summary-metric-icon {
-          width: 36px;
-          height: 36px;
-          border-radius: 8px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          flex-shrink: 0;
-        }
-        .db-summary-metric-info {
-          display: flex;
-          flex-direction: column;
-          min-width: 0;
-        }
-        .db-summary-metric-val {
-          font-size: 13.5px;
-          font-weight: 800;
-          color: ${T.foreground};
-          line-height: 1.2;
-        }
-        .db-summary-metric-lbl {
-          font-size: 10.5px;
-          color: ${T.foreground3};
-          font-weight: 600;
-          margin-top: 1px;
-        }
-
-        @media (min-width: 1024px) {
-          .db-top-layout {
-            grid-template-columns: 1.7fr 1fr;
-            gap: 16px;
-            margin-bottom: 12px;
-          }
-          .db-header-row {
-            flex-direction: row;
-            align-items: center;
-            justify-content: space-between;
-            gap: 12px;
-          }
-          .db-kpi-row {
-            grid-template-columns: repeat(4, 1fr);
-            gap: 10px;
-          }
-          .db-top-right-panel {
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-          }
-          .db-charts-row-1 {
-            grid-template-columns: 3.2fr 4.8fr 3fr;
-            gap: 14px;
-            margin-bottom: 12px;
-          }
-          .db-charts-row-2 {
-            grid-template-columns: 2.14fr 1fr;
-            gap: 14px;
-            margin-bottom: 12px;
-          }
-          .db-metrics-summary-card {
-            padding: 10px 12px;
-            border-radius: 12px;
-          }
-          .db-metrics-summary-grid {
-            gap: 6px;
-          }
-          .db-summary-metric-item {
-            padding: 6px 8px;
-            gap: 8px;
-            border-radius: 8px;
-          }
-          .db-summary-metric-icon {
-            width: 28px;
-            height: 28px;
-            border-radius: 6px;
-          }
-          .db-summary-metric-icon svg {
-            width: 14px;
-            height: 14px;
-          }
-          .db-summary-metric-val {
-            font-size: 11.5px;
-          }
-          .db-summary-metric-lbl {
-            font-size: 9px;
-          }
-        }
-
-        .db-overview-card {
-          background: linear-gradient(135deg, rgba(var(--brand-accent-rgb),0.12) 0%, ${T.card} 44%, ${T.card} 100%);
-          border: 1px solid ${T.border};
-          border-radius: 18px;
-          padding: 16px;
-          box-shadow: 0 10px 24px rgba(22,63,104,0.05);
-          display: grid;
-          gap: 14px;
-        }
-
-        .db-header {
-          display: flex;
-          flex-direction: column;
-          gap: 14px;
-          margin-bottom: 0;
-        }
-
-        @media (min-width: 1024px) {
-          .db-header {
-            flex-direction: row;
-            align-items: stretch;
-            justify-content: space-between;
-          }
-        }
-
-        .db-header-left {
-          display: flex;
-          align-items: flex-start;
-          gap: 14px;
-        }
-
-        .db-overview-top {
-          display: flex;
-          align-items: flex-start;
-          justify-content: space-between;
-          gap: 12px;
-        }
-
-        .db-overview-copy {
-          display: grid;
-          gap: 8px;
-          min-width: 0;
-        }
-
-        .db-tag-row {
-          display: flex;
-          flex-wrap: wrap;
-          gap: 8px;
-        }
-
-        .db-tag {
-          display: inline-flex;
-          align-items: center;
-          gap: 6px;
-          padding: 6px 10px;
-          border-radius: 999px;
-          border: 1px solid rgba(14,15,18,0.08);
-          background: rgba(255,255,255,0.78);
-          font-size: 11.5px;
-          font-weight: 800;
-          color: ${T.foreground2};
-        }
-
-        .db-overview-stats {
-          display: grid;
-          grid-template-columns: repeat(2, minmax(0, 1fr));
-          gap: 10px;
-        }
-
-        @media (min-width: 768px) {
-          .db-overview-stats {
-            grid-template-columns: repeat(4, minmax(0, 1fr));
-          }
-        }
-
-        .db-overview-stat {
-          border: 1px solid rgba(14,15,18,0.08);
-          background: rgba(255,255,255,0.82);
-          border-radius: 14px;
-          padding: 12px 12px 11px;
-          display: grid;
-          gap: 3px;
-        }
-
-        .db-overview-stat-value {
-          font-size: 19px;
-          font-weight: 900;
-          line-height: 1.05;
-        }
-
-        .db-overview-stat-label {
-          font-size: 11.5px;
-          font-weight: 700;
-          color: ${T.foreground3};
-          line-height: 1.35;
-        }
-
-        .db-side-stack {
-          display: grid;
-          gap: 12px;
-        }
-
-        .db-side-card {
-          background: ${T.card};
-          border: 1px solid ${T.border};
-          border-radius: 18px;
-          padding: 14px 16px;
-          box-shadow: 0 8px 20px rgba(22,63,104,0.04);
-          display: grid;
-          gap: 12px;
-        }
-
-        .db-side-title {
-          font-size: 12px;
-          font-weight: 900;
-          color: ${T.foreground3};
-          text-transform: uppercase;
-          letter-spacing: 0.06em;
-        }
-
-        .db-side-list {
-          display: grid;
-          gap: 10px;
-        }
-
-        .db-side-row {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          gap: 12px;
-          font-size: 13px;
-        }
-
-        .db-side-row strong {
-          font-size: 13.5px;
-          color: ${T.foreground};
-        }
-
-        .db-back-btn {
-          width: 40px;
-          height: 40px;
-          border-radius: 12px;
-          background: ${T.card};
-          border: 1px solid ${T.border};
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          cursor: pointer;
-          transition: all 0.2s ease;
-          color: ${T.foreground2};
-        }
-
-        .db-back-btn:hover {
-          background: ${T.surface2};
-          border-color: ${T.primary};
-          color: ${T.foreground};
-          transform: translateX(-2px);
-        }
-
-        .db-title-area {
-          display: flex;
-          flex-direction: column;
-        }
-
-        .db-title {
-          font-size: 25px;
-          font-weight: 800;
-          margin: 0;
-          color: ${T.foreground};
-          line-height: 1.15;
-        }
-
-        .db-subtitle {
-          font-size: 13px;
-          color: ${T.foreground3};
-          margin-top: 0;
-          font-weight: 600;
-          line-height: 1.45;
-        }
-
-        .db-filters {
-          display: flex;
-          flex-wrap: wrap;
-          gap: 10px;
-          align-items: center;
-        }
-
-        .db-datepicker-container {
-          display: flex;
-          align-items: center;
-          gap: 8px;
-        }
-
-        .db-date-box {
-          display: flex;
-          align-items: center;
-          gap: 6px;
-          background: ${T.card};
-          padding: 6px 10px;
-          border-radius: 8px;
-          border: 1px solid ${T.border};
-          box-shadow: 0 2px 6px rgba(0,0,0,0.02);
-          position: relative;
-        }
-
-        .db-date-input {
-          font-family: inherit;
-          font-size: 12.5px;
-          font-weight: 700;
-          border: none;
-          background: transparent;
-          color: ${T.foreground2};
-          outline: none;
-          cursor: pointer;
-          padding: 2px 4px;
-        }
-
-        .db-date-input::-webkit-calendar-picker-indicator {
-          background: transparent;
-          bottom: 0;
-          color: transparent;
-          cursor: pointer;
-          height: auto;
-          left: 0;
-          position: absolute;
-          right: 0;
-          top: 0;
-          width: auto;
-        }
-
-        .db-date-icon {
-          color: ${T.foreground3};
-          pointer-events: none;
-          flex-shrink: 0;
-        }
-
-        .db-filter-label {
-          font-size: 12px;
-          font-weight: 800;
-          color: ${T.foreground3};
-          user-select: none;
-        }
-
-        .db-select-wrapper {
-          position: relative;
-          display: flex;
-          align-items: center;
-        }
-
-        .db-select {
-          padding: 8px 36px 8px 14px;
-          font-family: inherit;
-          font-size: 13.5px;
-          font-weight: 700;
-          border-radius: 10px;
-          border: 1px solid ${T.border};
-          background: ${T.card};
-          color: ${T.foreground2};
-          cursor: pointer;
-          outline: none;
-          appearance: none;
-          transition: all 0.2s ease;
-        }
-
-        .db-select:focus {
-          border-color: ${T.primary};
-          box-shadow: 0 0 0 3px ${T.primarySoft};
-        }
-
-        .db-select-icon {
-          position: absolute;
-          right: 12px;
-          pointer-events: none;
-          color: ${T.foreground3};
-        }
-
-        /* Metrics Grid */
-        .db-metrics-grid {
-          display: grid;
-          grid-template-columns: repeat(2, 1fr);
-          gap: 12px;
-          margin-bottom: 14px;
-        }
-
-        @media (min-width: 1024px) {
-          .db-metrics-grid {
-            grid-template-columns: repeat(4, minmax(0, 1fr));
-          }
-        }
-
-        .db-metric-card {
-          background: ${T.card};
-          border: 1px solid ${T.border};
-          border-radius: ${T.radius};
-          padding: 14px 16px;
-          box-shadow: 0 4px 12px rgba(22,63,104,0.03);
-          display: flex;
-          align-items: center;
-          gap: 12px;
-          transition: transform 0.2s ease, box-shadow 0.2s ease;
-        }
-
-        .db-metric-card:hover {
-          transform: translateY(-2px);
-          box-shadow: 0 8px 20px rgba(22,63,104,0.06);
-        }
-
-        .db-metric-icon-wrapper {
-          width: 42px;
-          height: 42px;
-          border-radius: 11px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          flex-shrink: 0;
-        }
-
-        .db-metric-info {
-          display: flex;
-          flex-direction: column;
-          min-width: 0;
-        }
-
-        .db-metric-value {
-          font-size: 20px;
-          font-weight: 900;
-          color: ${T.foreground};
-          line-height: 1.1;
-        }
-
-        .db-metric-label {
-          font-size: 11.5px;
-          font-weight: 700;
-          color: ${T.foreground3};
-          margin-top: 3px;
-          line-height: 1.35;
-        }
-
-        /* Charts Layout */
-        .db-charts-grid {
-          display: grid;
-          grid-template-columns: 1fr;
-          gap: 14px;
-          margin-bottom: 14px;
-        }
-
-        @media (min-width: 1024px) {
-          .db-charts-grid {
-            grid-template-columns: repeat(12, 1fr);
-          }
-        }
-
-        .db-card-5 {
-          grid-column: span 5;
-        }
-
-        .db-card-7 {
-          grid-column: span 7;
-        }
-
-        .db-chart-card {
-          background: ${T.card};
-          border: 1px solid ${T.border};
-          border-radius: ${T.radius};
-          padding: 16px;
-          box-shadow: 0 6px 18px rgba(22,63,104,0.04);
-          display: flex;
-          flex-direction: column;
-          min-height: 320px;
-          position: relative;
-        }
-
-        .db-chart-card-header {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          border-bottom: 1px solid ${T.border};
-          padding-bottom: 10px;
-          margin-bottom: 12px;
-          gap: 10px;
-        }
-
-        .db-chart-title {
-          font-size: 17.5px;
-          font-weight: 850;
-          color: ${T.foreground};
-          margin: 0;
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          line-height: 1.35;
-        }
-
-        .db-chart-body {
-          flex: 1;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: center;
-          position: relative;
-          width: 100%;
-        }
-
-        /* Custom Donut Chart Elements */
-        .db-donut-wrapper {
-          position: relative;
-          width: 212px;
-          height: 212px;
-        }
-
-        .db-donut-svg {
-          transform: rotate(-90deg);
-          width: 100%;
-          height: 100%;
-        }
-
-        .db-donut-circle {
-          fill: none;
-          stroke-width: 13px;
-          transition: stroke-width 0.2s ease, filter 0.2s ease;
-          cursor: pointer;
-        }
-
-        .db-donut-circle:hover {
-          stroke-width: 16px;
-          filter: drop-shadow(0 2px 8px rgba(0,0,0,0.15));
-        }
-
-        .db-donut-center {
-          position: absolute;
-          inset: 0;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: center;
-          pointer-events: none;
-        }
-
-        .db-donut-center-value {
-          font-size: 30px;
-          font-weight: 900;
-          color: ${T.foreground};
-          line-height: 1;
-        }
-
-        .db-donut-center-label {
-          font-size: 13px;
-          font-weight: 700;
-          color: ${T.foreground3};
-          margin-top: 4px;
-          text-transform: uppercase;
-        }
-
-        .db-legend {
-          display: flex;
-          flex-wrap: wrap;
-          justify-content: center;
-          gap: 10px;
-          margin-top: 14px;
-          width: 100%;
-        }
-
-        .db-legend-item {
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          font-size: 14px;
-          font-weight: 700;
-          color: ${T.foreground2};
-          cursor: pointer;
-          padding: 4px 7px;
-          border-radius: 8px;
-          transition: background 0.15s ease;
-        }
-
-        .db-legend-item:hover {
-          background: ${T.surface2};
-        }
-
-        .db-legend-dot {
-          width: 14px;
-          height: 14px;
-          border-radius: 4px;
-        }
-
-        /* Column Chart Elements */
-        .db-col-chart-container {
-          width: 100%;
-          height: 214px;
-          display: flex;
-          align-items: flex-end;
-          justify-content: space-around;
-          border-bottom: 2px solid ${T.border};
-          padding-bottom: 6px;
-          margin-top: 6px;
-        }
-
-        .db-col-group {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          flex: 1;
-          max-width: 80px;
-          position: relative;
-        }
-
-        .db-col-bars-flex {
-          display: flex;
-          align-items: flex-end;
-          gap: 4px;
-          height: 165px;
-          width: 100%;
-          justify-content: center;
-          overflow: hidden;
-        }
-
-        .db-col-bar {
-          flex: 1;
-          border-radius: 5px 5px 0 0;
-          min-height: 4px;
-          transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-          cursor: pointer;
-          position: relative;
-        }
-
-        .db-col-bar:hover {
-          filter: brightness(1.04) saturate(1.08) drop-shadow(0 -2px 6px rgba(0,0,0,0.08));
-        }
-
-        .db-col-label {
-          font-size: 13px;
-          font-weight: 800;
-          color: ${T.foreground2};
-          margin-top: 8px;
-          text-align: center;
-          white-space: nowrap;
-          overflow: hidden;
-          text-overflow: ellipsis;
-          width: 100%;
-        }
-
-        /* Tooltip style */
-        .db-chart-tooltip {
-          position: absolute;
-          background: rgba(15,23,42,0.92);
-          backdrop-filter: blur(4px);
-          color: #fff;
-          padding: 8px 12px;
-          border-radius: 8px;
-          font-size: 11.5px;
-          pointer-events: none;
-          z-index: 50;
-          box-shadow: 0 10px 20px rgba(0,0,0,0.15);
-          display: flex;
-          flex-direction: column;
-          gap: 3px;
-          transition: opacity 0.1s ease;
-          border: 1px solid rgba(255,255,255,0.08);
-        }
-
-        .db-tooltip-title {
-          font-weight: 800;
-          border-bottom: 1px solid rgba(255,255,255,0.2);
-          padding-bottom: 3px;
-          margin-bottom: 3px;
-        }
-
-        /* Scale Selector styles */
-        .db-scale-toggle {
-          display: flex;
-          align-items: center;
-          background: ${T.surface2};
-          padding: 3px;
-          border-radius: 8px;
-          border: 1px solid ${T.border};
-        }
-
-        .db-scale-btn {
-          padding: 4px 10px;
-          font-size: 11.5px;
-          font-weight: 700;
-          border-radius: 6px;
-          border: none;
-          background: transparent;
-          color: ${T.foreground3};
-          cursor: pointer;
-          transition: all 0.15s ease;
-        }
-
-        .db-scale-btn.active {
-          background: ${T.card};
-          color: ${T.foreground};
-          box-shadow: 0 2px 6px rgba(0,0,0,0.05);
-        }
-
-        /* Data Table */
-        .db-table-card {
-          background: ${T.card};
-          border: 1px solid ${T.border};
-          border-radius: ${T.radius};
-          padding: 16px;
-          box-shadow: 0 6px 18px rgba(22,63,104,0.04);
-          margin-bottom: 10px;
-        }
-
-        .db-table {
-          width: 100%;
-          border-collapse: collapse;
-          margin-top: 10px;
-          text-align: left;
-        }
-
-        .db-table th {
-          font-size: 11.5px;
-          font-weight: 800;
-          color: ${T.foreground3};
-          padding: 10px 12px;
-          border-bottom: 2px solid ${T.border};
-          text-transform: uppercase;
-          letter-spacing: 0.04em;
-        }
-
-        .db-table td {
-          font-size: 12.5px;
-          font-weight: 600;
-          color: ${T.foreground2};
-          padding: 10px 12px;
-          border-bottom: 1px solid ${T.border};
-        }
-
-        .db-table tr:last-child td {
-          border-bottom: none;
-        }
-
-        .db-table tr:hover td {
-          background: ${T.surface2};
-        }
-
-        .db-badge {
-          display: inline-flex;
-          align-items: center;
-          padding: 3px 8px;
-          border-radius: 6px;
-          font-size: 11.5px;
-          font-weight: 800;
-        }
-
-        .db-badge-green { background: #ecfdf5; color: #1f7a55; }
-        .db-badge-red { background: #fef2f2; color: #d5301a; }
-        .db-badge-yellow { background: #fffbeb; color: #b7791f; }
-        .db-badge-amber { background: #fff7ed; color: #c2410c; }
-
-        @media (max-width: 767px) {
-          .db-chart-card-header {
-            flex-direction: column;
-            align-items: flex-start;
-          }
-
-          .db-overview-top {
-            flex-direction: column;
-          }
-        }
-
-        @media (min-width: 1024px) {
-          .db-container {
-            padding: 8px 12px 10px;
-          }
-          .db-overview-shell {
-            gap: 10px;
-            margin-bottom: 10px;
-          }
-          .db-overview-card {
-            padding: 10px 12px;
-            gap: 8px;
-            border-radius: 12px;
-          }
-          .db-header {
-            gap: 8px;
-          }
-          .db-title {
-            font-size: 19px;
-          }
-          .db-subtitle {
-            font-size: 11px;
-          }
-          .db-overview-top {
-            gap: 6px;
-          }
-          .db-overview-copy div {
-            font-size: 13.5px !important;
-            line-height: 1.4 !important;
-          }
-          .db-tag {
-            padding: 3px 6px;
-            font-size: 10px;
-          }
-          .db-overview-stats {
-            gap: 6px;
-          }
-          .db-overview-stat {
-            padding: 6px 8px 5px;
-            border-radius: 8px;
-          }
-          .db-overview-stat-value {
-            font-size: 15px;
-          }
-          .db-overview-stat-label {
-            font-size: 9.5px;
-            line-height: 1.25;
-          }
-          .db-side-stack {
-            gap: 6px;
-          }
-          .db-side-card {
-            padding: 8px 10px;
-            border-radius: 12px;
-            gap: 6px;
-          }
-          .db-side-row {
-            font-size: 11px;
-            gap: 6px;
-          }
-          .db-side-row strong {
-            font-size: 11.5px;
-          }
-          .db-metrics-grid {
-            margin-bottom: 10px;
-            gap: 8px;
-          }
-          .db-metric-card {
-            padding: 8px 10px;
-            border-radius: 12px;
-            gap: 6px;
-          }
-          .db-metric-icon-wrapper {
-            width: 30px;
-            height: 30px;
-            border-radius: 6px;
-          }
-          .db-metric-icon-wrapper svg {
-            width: 16px;
-            height: 16px;
-          }
-          .db-metric-value {
-            font-size: 15px;
-          }
-          .db-metric-label {
-            font-size: 9.5px;
-            margin-top: 1px;
-          }
-          .db-charts-grid {
-            gap: 10px;
-            margin-bottom: 10px;
-          }
-          .db-chart-card {
-            min-height: 220px;
-            padding: 8px 10px;
-            border-radius: 12px;
-          }
-          .db-chart-card-header {
-            padding-bottom: 4px;
-            margin-bottom: 6px;
-          }
-          .db-chart-title {
-            font-size: 12.5px;
-          }
-          .db-donut-wrapper {
-            width: 105px;
-            height: 105px;
-          }
-          .db-donut-circle {
-            stroke-width: 8px;
-          }
-          .db-donut-circle:hover {
-            stroke-width: 10px;
-          }
-          .db-donut-center-value {
-            font-size: 14px;
-          }
-          .db-donut-center-label {
-            font-size: 8px;
-            margin-top: 1px;
-          }
-          .db-legend {
-            margin-top: 4px;
-            gap: 4px;
-          }
-          .db-legend-item {
-            padding: 1px 3px;
-            font-size: 9.5px;
-            gap: 3px;
-          }
-          .db-legend-dot {
-            width: 6px;
-            height: 6px;
-            border-radius: 1px;
-          }
-          .db-col-chart-container {
-            height: 110px !important;
-            padding-bottom: 2px;
-            margin-top: 0px;
-          }
-          .db-col-bars-flex {
-            height: 90px !important;
-            gap: 2px;
-          }
-          .db-col-bar {
-            border-radius: 2px 2px 0 0;
-          }
-          .db-col-label {
-            font-size: 8px;
-            margin-top: 2px;
-          }
-          .db-table-card {
-            padding: 8px 12px;
-            border-radius: 12px;
-            margin-bottom: 0px;
-          }
-          .db-table-card h2 {
-            font-size: 12.5px;
-          }
-          .db-table {
-            margin-top: 4px;
-          }
-          .db-table th {
-            padding: 4px 8px;
-            font-size: 9.5px;
-          }
-          .db-table td {
-            padding: 4px 8px;
-            font-size: 10.5px;
-          }
-        }
-      `}</style>
-
-      <div className={`${dashboardStyles.dashboard} db-container`}>
-      <div className="db-top-layout">
-        {/* Left Side: Header & KPI Cards */}
-        <div className="db-top-left-panel">
-          {/* Header Row */}
-          <div className="db-header-row">
-            <div className="db-header-left">
-              <div className="db-title-area">
-                <h1 className="db-title">ภาพรวมการประเมินความปลอดภัย</h1>
-                <span className="db-subtitle">Safety Effort / Line Walk Analytics Overview</span>
+    <div className="page-shell-wide bg-[radial-gradient(circle_at_top_left,rgba(11,130,240,0.08),transparent_28%),linear-gradient(180deg,#F7FBFF_0%,#EEF6FF_100%)] px-3 pt-3 pb-8 font-sarabun sm:px-4 lg:px-5">
+      <div className="mx-auto max-w-[1520px]">
+        <section className="overflow-hidden rounded-[32px] border border-[#D4E7FB] bg-[linear-gradient(135deg,#FFFFFF_0%,#F5FAFF_52%,#EDF6FF_100%)] shadow-[0_26px_60px_rgba(8,59,132,0.08)]">
+          <div className="grid gap-5 px-5 py-5 sm:px-7 sm:py-6 lg:grid-cols-[1.35fr_0.95fr] lg:items-center">
+            <div className="min-w-0">
+              <div className="inline-flex items-center gap-2 rounded-full border border-[#C9E2FB] bg-white/90 px-3 py-1 text-[11px] font-black uppercase tracking-[0.18em] text-[#0B82F0]">
+                <ShieldCheck className="h-3.5 w-3.5" />
+                Safety Dashboard
               </div>
+              <h1 className="mt-3 text-[28px] font-black leading-[1.05] text-[#0B2F6B] sm:text-[34px] lg:text-[40px]">
+                Dashboard ภาพรวม
+                <br />
+                Line walk ความปลอดภัย
+              </h1>
+              <p className="mt-3 max-w-[760px] text-[13px] font-bold leading-relaxed text-[#5B7594] sm:text-[14px]">
+                หน้านี้สรุปเฉพาะข้อมูลที่ต้องใช้จริง 3 มุมมอง ได้แก่ พื้นที่การตรวจ สถานะความปลอดภัยตามหมวด และความปลอดภัยแยกตามโรงงานจากข้อมูล BU ที่อ้างอิง
+                <span className="font-black text-[#0B82F0]"> DIVISION_NAME</span>
+              </p>
             </div>
 
-            <div className="db-filters">
-              <div className="db-select-wrapper">
-                <Filter size={14} className="db-select-icon" style={{ left: 12, right: "auto" }} />
-                <Combobox
-                  value={selectedBU}
-                  onValueChange={setSelectedBU}
-                  aria-label="กรองหน่วยงาน"
-                  searchPlaceholder="ค้นหาหน่วยงาน"
-                  style={{ paddingLeft: 34, minWidth: isMobile ? 160 : 200 }}
-                  options={[
-                    { value: "All Business Units", label: "ทุกหน่วยงาน (All BUs)" },
-                    ...chart4Data.map((bu) => ({ value: bu.name, label: bu.name })),
-                  ]}
-                />
+            <div className="grid grid-cols-2 gap-3">
+              <div className="rounded-[22px] border border-[#D7EAFE] bg-white/95 p-4 shadow-[0_10px_24px_rgba(11,130,240,0.06)]">
+                <div className="text-[11px] font-black uppercase tracking-[0.14em] text-[#7B93B2]">Line walk ทั้งหมด</div>
+                <div className="mt-2 text-[28px] font-black leading-none text-[#0B2F6B]">{formatNumber(summary.totalLinewalk)}</div>
+                <div className="mt-2 text-[12px] font-bold text-[#5B7594]">รวม submission ปัจจุบันและข้อมูลเก่า</div>
+              </div>
+              <div className="rounded-[22px] border border-[#D7EAFE] bg-white/95 p-4 shadow-[0_10px_24px_rgba(11,130,240,0.06)]">
+                <div className="text-[11px] font-black uppercase tracking-[0.14em] text-[#7B93B2]">Safe Rate</div>
+                <div className="mt-2 text-[28px] font-black leading-none text-[#129B63]">{percent(summary.safeRate)}</div>
+                <div className="mt-2 text-[12px] font-bold text-[#5B7594]">คิดจากรายการประเมินใน answers จริง</div>
+              </div>
+              <div className="rounded-[22px] border border-[#D7EAFE] bg-white/95 p-4 shadow-[0_10px_24px_rgba(11,130,240,0.06)]">
+                <div className="text-[11px] font-black uppercase tracking-[0.14em] text-[#7B93B2]">Safe</div>
+                <div className="mt-2 text-[28px] font-black leading-none text-[#129B63]">{formatNumber(summary.safe)}</div>
+                <div className="mt-2 text-[12px] font-bold text-[#5B7594]">รายการปลอดภัยทั้งหมด</div>
+              </div>
+              <div className="rounded-[22px] border border-[#D7EAFE] bg-white/95 p-4 shadow-[0_10px_24px_rgba(11,130,240,0.06)]">
+                <div className="text-[11px] font-black uppercase tracking-[0.14em] text-[#7B93B2]">Unsafe</div>
+                <div className="mt-2 text-[28px] font-black leading-none text-[#E35549]">{formatNumber(summary.unsafe)}</div>
+                <div className="mt-2 text-[12px] font-bold text-[#5B7594]">รวม Unsafe Action และ Unsafe Condition</div>
               </div>
             </div>
-          </div>
-
-          {/* KPIs Grid */}
-          <div className="db-kpi-row">
-            <div className="db-metric-card">
-              <div className="db-metric-icon-wrapper" style={{ background: "var(--brand-soft)", color: "var(--brand-text)" }}>
-                <BarChart3 size={20} />
-              </div>
-              <div className="db-metric-info">
-                <span className="db-metric-value">{metrics.totalChecks.toLocaleString()}</span>
-                <span className="db-metric-label">จำนวนจุดตรวจทั้งหมด</span>
-              </div>
-            </div>
-
-            <div className="db-metric-card">
-              <div className="db-metric-icon-wrapper" style={{ background: "#ecfdf5", color: "#1f7a55" }}>
-                <CheckCircle2 size={20} />
-              </div>
-              <div className="db-metric-info">
-                <span className="db-metric-value">{metrics.safeRate}%</span>
-                <span className="db-metric-label">อัตราจุดปลอดภัย (Safe)</span>
-              </div>
-            </div>
-
-            <div className="db-metric-card">
-              <div className="db-metric-icon-wrapper" style={{ background: "#fef2f2", color: "#d5301a" }}>
-                <AlertTriangle size={20} />
-              </div>
-              <div className="db-metric-info">
-                <span className="db-metric-value">{metrics.unsafeCases.toLocaleString()}</span>
-                <span className="db-metric-label">พบข้อไม่ปลอดภัย (Unsafe)</span>
-              </div>
-            </div>
-
-            <div className="db-metric-card">
-              <div className="db-metric-icon-wrapper" style={{ background: "#fffbeb", color: "#b7791f" }}>
-                <Clock size={20} />
-              </div>
-              <div className="db-metric-info">
-                <span className="db-metric-value">
-                  {((metrics.solvedCases / (metrics.solvedCases + metrics.pendingCases || 1)) * 100).toFixed(1)}%
-                </span>
-                <span className="db-metric-label">สัดส่วนแก้ไขสำเร็จ</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Right Side: Quick Insight & View Mode */}
-        <div className="db-top-right-panel">
-          <section className="db-side-card">
-            <div className="db-side-title"><TrendingUp size={15} />Quick Insight</div>
-            <div className="db-side-list">
-              <div className="db-side-row">
-                <span style={{ color: T.foreground3 }}>หน่วยงานที่มี volume สูงสุด</span>
-                <strong>{topBusinessUnit?.name || "-"}</strong>
-              </div>
-              <div className="db-side-row">
-                <span style={{ color: T.foreground3 }}>Unsafe cases</span>
-                <strong style={{ color: "#d5301a" }}>{metrics.unsafeCases.toLocaleString()}</strong>
-              </div>
-              <div className="db-side-row">
-                <span style={{ color: T.foreground3 }}>สถานะ unresolved</span>
-                <strong>{metrics.unresolvedCases.toLocaleString()}</strong>
-              </div>
-            </div>
-          </section>
-
-          <section className="db-side-card">
-            <div className="db-side-title">View Mode</div>
-            <div className="db-side-list">
-              <div className="db-side-row">
-                <span style={{ color: T.foreground3 }}>Bar scaling</span>
-                <div className="db-scale-toggle">
-                  <button
-                    className={`db-scale-btn ${scaleType === "logarithmic" ? "active" : ""}`}
-                    onClick={() => setScaleType("logarithmic")}
-                  >
-                    Log
-                  </button>
-                  <button
-                    className={`db-scale-btn ${scaleType === "linear" ? "active" : ""}`}
-                    onClick={() => setScaleType("linear")}
-                  >
-                    Linear
-                  </button>
-                </div>
-              </div>
-              <div style={{ fontSize: 11, color: T.foreground3, lineHeight: 1.4 }}>
-                ใช้ `Log` เมื่อเทียบข้อมูลที่มีขนาดต่างกันมาก และ `Linear` เมื่อดูสัดส่วนจริง
-              </div>
-            </div>
-          </section>
-        </div>
-      </div>
-
-      {/* Row 2: Charts Row 1 (Pie, Bar, Donut) */}
-      <div className="db-charts-row-1">
-        {/* Chart 1: ภาพรวม Line walk */}
-        <section className="db-chart-card">
-          <div className="db-chart-card-header">
-            <h2 className="db-chart-title">
-              <PieChart size={18} color={T.primary} />
-              ภาพรวมพื้นที่การตรวจ Line walk
-            </h2>
-          </div>
-          <div className="db-chart-body">
-            <div className="db-donut-wrapper">
-              <svg className="db-donut-svg" viewBox="0 0 100 100">
-                <circle cx="50" cy="50" r="35" stroke="var(--secondary)" strokeWidth="13" fill="none" />
-                {chart1Data.map((item, idx) => {
-                  const circumference = 219.9;
-                  const strokeLength = (item.value / 100) * circumference;
-                  let offset = 0;
-                  for (let i = 0; i < idx; i++) {
-                    offset += (chart1Data[i].value / 100) * circumference;
-                  }
-                  
-                  return (
-                    <circle
-                      key={item.name}
-                      className="db-donut-circle"
-                      cx="50"
-                      cy="50"
-                      r="35"
-                      stroke={item.color}
-                      strokeWidth="10"
-                      strokeDasharray={`${strokeLength} ${circumference}`}
-                      strokeDashoffset={-offset}
-                      onMouseEnter={() => setHoveredSlice({ ...item, type: "chart1" })}
-                      onMouseLeave={() => setHoveredSlice(null)}
-                    />
-                  );
-                })}
-              </svg>
-              <div className="db-donut-center">
-                <span className="db-donut-center-value">
-                  {chart1Data.reduce((acc, curr) => acc + curr.count, 0).toLocaleString()}
-                </span>
-                <span className="db-donut-center-label">ครั้ง</span>
-              </div>
-            </div>
-
-            {/* Legend */}
-            <div className="db-legend">
-              {chart1Data.map(item => (
-                <div 
-                  key={item.name} 
-                  className="db-legend-item"
-                  onMouseEnter={() => setHoveredSlice({ ...item, type: "chart1" })}
-                  onMouseLeave={() => setHoveredSlice(null)}
-                >
-                  <span className="db-legend-dot" style={{ background: item.color }} />
-                  <span className="db-legend-copy">
-                    <span>{item.name} ({item.value}%)</span>
-                    <strong>{item.count.toLocaleString()}</strong>
-                  </span>
-                </div>
-              ))}
-            </div>
-
-            {/* Local Tooltip */}
-            {hoveredSlice && hoveredSlice.type === "chart1" && (
-              <div className="db-chart-tooltip" style={{ bottom: 8, left: 16 }}>
-                <span className="db-tooltip-title">{hoveredSlice.name}</span>
-                <span>จำนวนสแกนตรวจ: <strong>{hoveredSlice.count.toLocaleString()} ครั้ง</strong></span>
-                <span>คิดเป็นสัดส่วน: <strong>{hoveredSlice.value}%</strong></span>
-              </div>
-            )}
           </div>
         </section>
 
-        {/* Chart 2: Status Line walk */}
-        <section className="db-chart-card">
-          <div className="db-chart-card-header">
-            <h2 className="db-chart-title">
-              <BarChart3 size={18} color={T.ok} />
-              สถานะความปลอดภัยแยกตามหมวด (Status Line walk)
-            </h2>
+        {loading ? (
+          <div className="mt-4 rounded-[28px] border border-[#D7EAFE] bg-white px-6 py-14 text-center shadow-[0_18px_40px_rgba(8,59,132,0.06)]">
+            <div className="text-[22px] font-black text-[#0B2F6B]">กำลังโหลด Dashboard</div>
+            <div className="mt-2 text-[13px] font-bold text-[#5B7594]">ระบบกำลังเตรียมข้อมูลกราฟ Line walk ล่าสุด</div>
           </div>
+        ) : error ? (
+          <div className="mt-4 rounded-[28px] border border-[#FFD5D0] bg-[linear-gradient(180deg,#FFF8F7_0%,#FFF2EF_100%)] px-6 py-10 text-center shadow-[0_18px_40px_rgba(154,52,18,0.08)]">
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-white text-[#E35549] shadow-sm">
+              <AlertTriangle className="h-7 w-7" />
+            </div>
+            <div className="mt-4 text-[22px] font-black text-[#A33922]">โหลดข้อมูลไม่สำเร็จ</div>
+            <div className="mt-2 text-[13px] font-bold text-[#9A5D4D]">{error}</div>
+          </div>
+        ) : (
+          <div className="mt-4 grid gap-4 xl:grid-cols-[1.02fr_1.18fr]">
+            <DashboardCard
+              title="ภาพรวมพื้นที่การตรวจ Line walk"
+              description="สัดส่วนการตรวจแยกตามพื้นที่ Plant, Office, Site และข้อมูลเก่าที่นำมารวมในภาพรวม"
+              icon={<MapPinned className="h-5 w-5" strokeWidth={2.3} />}
+            >
+              <div className="grid gap-5 lg:grid-cols-[1fr_0.92fr] lg:items-center">
+                <div className="h-[320px] w-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={areaChartData}
+                        dataKey="value"
+                        nameKey="name"
+                        innerRadius={72}
+                        outerRadius={112}
+                        paddingAngle={3}
+                        stroke="#ffffff"
+                        strokeWidth={4}
+                      >
+                        {areaChartData.map((entry) => (
+                          <Cell key={entry.name} fill={entry.color} />
+                        ))}
+                      </Pie>
+                      <Tooltip
+                        formatter={(value: number, _name, props) => [
+                          `${formatNumber(Number(value))} ครั้ง • ${props.payload.percentLabel}`,
+                          props.payload.name,
+                        ]}
+                        contentStyle={{
+                          borderRadius: 16,
+                          border: "1px solid #D7EAFE",
+                          boxShadow: "0 12px 30px rgba(8,59,132,0.10)",
+                        }}
+                      />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
 
-          <div className="db-chart-body">
-            <div className="db-col-chart-container" style={{ gap: isDesktop ? "12px" : "28px" }}>
-              {chart2Data.map(item => {
-                const max = Math.max(...chart2Data.map(d => d.safe));
-                const safeHeight = getScaledHeight(item.safe, max);
-                const actHeight = getScaledHeight(item.unsafeAct, max);
-                const condHeight = getScaledHeight(item.unsafeCond, max);
-                
-                return (
-                  <div key={item.category} className="db-col-group">
-                    <div className="db-col-bars-flex">
-                      {/* Safe Bar (Green) */}
-                      <div
-                        className="db-col-bar"
-                        style={{ height: `${safeHeight}px`, background: C.safe, width: "24px" }}
-                        onMouseEnter={() => setHoveredBar({ title: `${item.category} - ปลอดภัย (Safe)`, value: item.safe })}
-                        onMouseLeave={() => setHoveredBar(null)}
-                      />
-                      {/* Unsafe Act Bar (Red) */}
-                      <div
-                        className="db-col-bar"
-                        style={{ height: `${actHeight}px`, background: C.unsafe, width: "24px" }}
-                        onMouseEnter={() => setHoveredBar({ title: `${item.category} - Unsafe Act`, value: item.unsafeAct })}
-                        onMouseLeave={() => setHoveredBar(null)}
-                      />
-                      {/* Unsafe Condition Bar (Yellow) */}
-                      <div
-                        className="db-col-bar"
-                        style={{ height: `${condHeight}px`, background: C.warn, width: "24px" }}
-                        onMouseEnter={() => setHoveredBar({ title: `${item.category} - Unsafe Condition`, value: item.unsafeCond })}
-                        onMouseLeave={() => setHoveredBar(null)}
-                      />
+                <div className="grid gap-3">
+                  {areaChartData.map((item) => (
+                    <div key={item.name} className="rounded-[18px] border border-[#E2EDF8] bg-[#F9FCFF] px-4 py-3">
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="flex items-center gap-3">
+                          <span className="h-3.5 w-3.5 rounded-full" style={{ backgroundColor: item.color }} />
+                          <span className="text-[14px] font-black text-[#0B2F6B]">{item.name}</span>
+                        </div>
+                        <span className="text-[13px] font-black text-[#0B82F0]">{item.percentLabel}</span>
+                      </div>
+                      <div className="mt-1.5 text-[12px] font-bold text-[#6E86A5]">
+                        จำนวนครั้งที่ตรวจ {formatNumber(item.value)} ครั้ง
+                      </div>
                     </div>
-                    <div style={{ display: "flex", gap: "5px", fontSize: "11.5px", fontWeight: "800", marginTop: "5px", justifyContent: "center" }}>
-                      <span style={{ color: C.safeText }}>{formatNumberCompact(item.safe)}</span>
-                      <span style={{ color: C.unsafeText }}>{formatNumberCompact(item.unsafeAct)}</span>
-                      <span style={{ color: C.warnText }}>{formatNumberCompact(item.unsafeCond)}</span>
+                  ))}
+                </div>
+              </div>
+            </DashboardCard>
+
+            <DashboardCard
+              title="สถานะความปลอดภัยแยกตามหมวด (Status Line walk)"
+              description="เปรียบเทียบสถานะ Safe, Unsafe Action และ Unsafe Condition แยกตามหมวดพื้นที่การตรวจ"
+              icon={<BarChart3 className="h-5 w-5" strokeWidth={2.3} />}
+            >
+              <div className="h-[360px] w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={statusChartData} barGap={8} barCategoryGap="20%">
+                    <CartesianGrid stroke="#E6F0FA" vertical={false} />
+                    <XAxis dataKey="name" tick={{ fill: "#5B7594", fontSize: 12, fontWeight: 700 }} axisLine={false} tickLine={false} />
+                    <YAxis tick={{ fill: "#5B7594", fontSize: 12, fontWeight: 700 }} axisLine={false} tickLine={false} />
+                    <Tooltip
+                      contentStyle={{
+                        borderRadius: 16,
+                        border: "1px solid #D7EAFE",
+                        boxShadow: "0 12px 30px rgba(8,59,132,0.10)",
+                      }}
+                    />
+                    <Bar dataKey="safe" name="Safe" fill={CHART_COLORS.safe} radius={[10, 10, 0, 0]} />
+                    <Bar dataKey="unsafeAction" name="Unsafe Action" fill={CHART_COLORS.unsafeAction} radius={[10, 10, 0, 0]} />
+                    <Bar dataKey="unsafeCondition" name="Unsafe Condition" fill={CHART_COLORS.unsafeCondition} radius={[10, 10, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+
+              <div className="mt-4 grid gap-3 sm:grid-cols-3">
+                <div className="rounded-[18px] border border-[#DCF3E7] bg-[#F5FFF9] px-4 py-3">
+                  <div className="text-[11px] font-black uppercase tracking-[0.14em] text-[#5F8E77]">Safe รวม</div>
+                  <div className="mt-1 text-[22px] font-black text-[#129B63]">{formatNumber(summary.safe)}</div>
+                </div>
+                <div className="rounded-[18px] border border-[#FFE0CF] bg-[#FFF8F2] px-4 py-3">
+                  <div className="text-[11px] font-black uppercase tracking-[0.14em] text-[#A9652D]">Unsafe Action</div>
+                  <div className="mt-1 text-[22px] font-black text-[#F97316]">{formatNumber(summary.unsafeAct)}</div>
+                </div>
+                <div className="rounded-[18px] border border-[#FFD7D3] bg-[#FFF6F5] px-4 py-3">
+                  <div className="text-[11px] font-black uppercase tracking-[0.14em] text-[#B65A52]">Unsafe Condition</div>
+                  <div className="mt-1 text-[22px] font-black text-[#EF4444]">{formatNumber(summary.unsafeCond)}</div>
+                </div>
+              </div>
+            </DashboardCard>
+
+            <div className="xl:col-span-2">
+              <DashboardCard
+                title="ความปลอดภัยแยกตามโรงงาน (Safety Line walk BU)"
+                description="จัดอันดับตามข้อมูลโรงงานที่ดึงจาก DIVISION_NAME ในฐานข้อมูล เพื่อดู BU ที่มีอัตราความปลอดภัยสูงและปริมาณการตรวจมาก"
+                icon={<Factory className="h-5 w-5" strokeWidth={2.3} />}
+              >
+                <div className="mb-5 grid gap-3 lg:grid-cols-[1.15fr_0.85fr]">
+                  <div className="rounded-[22px] border border-[#DCEBFA] bg-[linear-gradient(135deg,#F9FCFF_0%,#EEF6FF_100%)] p-4">
+                    <div className="text-[11px] font-black uppercase tracking-[0.14em] text-[#7B93B2]">BU เด่นที่สุดตอนนี้</div>
+                    <div className="mt-2 flex items-start gap-3">
+                      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[16px] bg-white text-[#0B82F0] shadow-sm">
+                        <Building2 className="h-5 w-5" />
+                      </div>
+                      <div className="min-w-0">
+                        <div className="text-[20px] font-black leading-tight text-[#0B2F6B]">
+                          {strongestBusinessUnit?.name || "ยังไม่มีข้อมูล BU"}
+                        </div>
+                        <div className="mt-1 text-[13px] font-bold text-[#5B7594]">
+                          Safe Rate {percent(strongestBusinessUnit?.safeRate || 0)} จาก {formatNumber(strongestBusinessUnit?.totalLinewalk || 0)} ครั้ง
+                        </div>
+                      </div>
                     </div>
-                    <div className="db-col-label">{item.category}</div>
                   </div>
-                );
-              })}
-            </div>
 
-            {/* Custom Legend */}
-            <div className="db-legend">
-              <div className="db-legend-item"><span className="db-legend-dot" style={{ background: C.safe }} /><span>Safe</span></div>
-              <div className="db-legend-item"><span className="db-legend-dot" style={{ background: C.unsafe }} /><span>Unsafe Act</span></div>
-              <div className="db-legend-item"><span className="db-legend-dot" style={{ background: C.warn }} /><span>Unsafe Condition</span></div>
-            </div>
-
-            {/* Tooltip */}
-            {hoveredBar && (
-              <div className="db-chart-tooltip" style={{ bottom: 8, left: 16 }}>
-                <span className="db-tooltip-title">{hoveredBar.title}</span>
-                <span>จำนวน: <strong>{hoveredBar.value.toLocaleString()} จุด</strong></span>
-              </div>
-            )}
-          </div>
-        </section>
-
-        {/* Chart 3: สถานะการแก้ไข */}
-        <section className="db-chart-card">
-          <div className="db-chart-card-header">
-            <h2 className="db-chart-title">
-              <PieChart size={18} color={T.warning} />
-              สถานะการแก้ไข (Correction Status)
-            </h2>
-          </div>
-          <div className="db-chart-body">
-            <div className="db-donut-wrapper">
-              <svg className="db-donut-svg" viewBox="0 0 100 100">
-                <circle cx="50" cy="50" r="35" stroke="var(--secondary)" strokeWidth="13" fill="none" />
-                {chart3Data.map((item, idx) => {
-                  const circumference = 219.9;
-                  const strokeLength = (item.value / 100) * circumference;
-                  let offset = 0;
-                  for (let i = 0; i < idx; i++) {
-                    offset += (chart3Data[i].value / 100) * circumference;
-                  }
-                  
-                  return (
-                    <circle
-                      key={item.name}
-                      className="db-donut-circle"
-                      cx="50"
-                      cy="50"
-                      r="35"
-                      stroke={item.color}
-                      strokeWidth="10"
-                      strokeDasharray={`${strokeLength} ${circumference}`}
-                      strokeDashoffset={-offset}
-                      onMouseEnter={() => setHoveredSlice({ ...item, type: "chart3" })}
-                      onMouseLeave={() => setHoveredSlice(null)}
-                    />
-                  );
-                })}
-              </svg>
-              <div className="db-donut-center">
-                <span className="db-donut-center-value">
-                  {chart3Data[0].value}%
-                </span>
-                <span className="db-donut-center-label">แก้ไขสำเร็จ</span>
-              </div>
-            </div>
-
-            {/* Legend */}
-            <div className="db-legend">
-              {chart3Data.map(item => (
-                <div 
-                  key={item.name} 
-                  className="db-legend-item"
-                  onMouseEnter={() => setHoveredSlice({ ...item, type: "chart3" })}
-                  onMouseLeave={() => setHoveredSlice(null)}
-                >
-                  <span className="db-legend-dot" style={{ background: item.color }} />
-                  <span className="db-legend-copy">
-                    <span>{item.name === "Success" ? "แก้ไขแล้ว" : item.name === "Pending" ? "รอดำเนินการ" : "ยังไม่ได้ทำ"} ({item.value}%)</span>
-                    <strong>{item.count.toLocaleString()}</strong>
-                  </span>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="rounded-[18px] border border-[#D7EAFE] bg-white p-4">
+                      <div className="text-[11px] font-black uppercase tracking-[0.14em] text-[#7B93B2]">จำนวน BU</div>
+                      <div className="mt-1 text-[24px] font-black text-[#0B2F6B]">{formatNumber(overview?.byBusinessUnit?.length ?? 0)}</div>
+                    </div>
+                    <div className="rounded-[18px] border border-[#D7EAFE] bg-white p-4">
+                      <div className="text-[11px] font-black uppercase tracking-[0.14em] text-[#7B93B2]">Legacy Line walk</div>
+                      <div className="mt-1 text-[24px] font-black text-[#0B2F6B]">{formatNumber(summary.legacyLinewalk)}</div>
+                    </div>
+                  </div>
                 </div>
-              ))}
-            </div>
 
-            {/* Local Tooltip */}
-            {hoveredSlice && hoveredSlice.type === "chart3" && (
-              <div className="db-chart-tooltip" style={{ bottom: 8, left: 16 }}>
-                <span className="db-tooltip-title">{hoveredSlice.name}</span>
-                <span>จำนวนกรณี: <strong>{hoveredSlice.count.toLocaleString()} เคส</strong></span>
-                <span>สัดส่วน: <strong>{hoveredSlice.value}%</strong></span>
-              </div>
-            )}
-          </div>
-        </section>
-      </div>
-
-      {/* Row 3: Charts Row 2 (BU Bar Chart & 6 Metrics Grid) */}
-      <div className="db-charts-row-2">
-        {/* Chart 4: Safety Line walk */}
-        <section className="db-chart-card">
-          <div className="db-chart-card-header">
-            <h2 className="db-chart-title">
-              <Building2 size={18} color={T.info} />
-              ความปลอดภัยแยกตามโรงงาน (Safety Line walk BU)
-            </h2>
-          </div>
-
-          <div className="db-chart-body">
-            <div className="db-col-chart-container" style={{ gap: "4px" }}>
-              {chart4Data.map(item => {
-                const max = Math.max(...chart4Data.map(d => d.safe));
-                const safeHeight = getScaledHeight(item.safe, max);
-                const unsafeHeight = getScaledHeight(item.unsafe, max);
-                const solvedHeight = getScaledHeight(item.solved, max);
-                
-                const isHighlighted = selectedBU === "All Business Units" || selectedBU === item.name;
-                
-                return (
-                  <div 
-                    key={item.name} 
-                    className="db-col-group" 
-                    style={{ 
-                      opacity: isHighlighted ? 1 : 0.28,
-                      transition: "opacity 0.25s ease"
-                    }}
-                  >
-                    <div className="db-col-bars-flex" style={{ gap: "2px" }}>
-                      {/* Safe Bar (Green) */}
-                      <div
-                        className="db-col-bar"
-                        style={{ height: `${safeHeight}px`, background: C.safe, width: "13px" }}
-                        onMouseEnter={() => setHoveredBar({ title: `${item.name} - Safe`, value: item.safe })}
-                        onMouseLeave={() => setHoveredBar(null)}
-                      />
-                      {/* Unsafe Bar (Red) */}
-                      <div
-                        className="db-col-bar"
-                        style={{ height: `${unsafeHeight}px`, background: C.unsafe, width: "13px" }}
-                        onMouseEnter={() => setHoveredBar({ title: `${item.name} - Unsafe`, value: item.unsafe })}
-                        onMouseLeave={() => setHoveredBar(null)}
-                      />
-                      {/* Solved Bar (Yellow) */}
-                      <div
-                        className="db-col-bar"
-                        style={{ height: `${solvedHeight}px`, background: C.warn, width: "13px" }}
-                        onMouseEnter={() => setHoveredBar({ title: `${item.name} - Solved`, value: item.solved })}
-                        onMouseLeave={() => setHoveredBar(null)}
-                      />
-                    </div>
-                    <div style={{ display: "flex", gap: "4px", fontSize: "10.5px", fontWeight: "800", marginTop: "5px", justifyContent: "center" }}>
-                      <span style={{ color: C.safeText }}>{formatNumberCompact(item.safe)}</span>
-                      <span style={{ color: C.unsafeText }}>{formatNumberCompact(item.unsafe)}</span>
-                      <span style={{ color: C.warnText }}>{formatNumberCompact(item.solved)}</span>
-                    </div>
-                    {/* Shortened Label for UI fit */}
-                    <div 
-                      className="db-col-label" 
-                      style={{ fontSize: "9.5px", fontWeight: isHighlighted ? "800" : "500" }}
-                      title={item.name}
+                <div className="h-[520px] w-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart
+                      data={businessUnitChartData}
+                      layout="vertical"
+                      margin={{ top: 4, right: 24, left: 12, bottom: 4 }}
                     >
-                      {item.name.replace("CPAC ", "").replace(" - South Chain", "")}
+                      <CartesianGrid stroke="#E6F0FA" horizontal={false} />
+                      <XAxis
+                        type="number"
+                        domain={[0, 100]}
+                        tick={{ fill: "#5B7594", fontSize: 12, fontWeight: 700 }}
+                        tickFormatter={(value) => `${value}%`}
+                        axisLine={false}
+                        tickLine={false}
+                      />
+                      <YAxis
+                        dataKey="name"
+                        type="category"
+                        width={220}
+                        tick={{ fill: "#0B2F6B", fontSize: 12, fontWeight: 800 }}
+                        axisLine={false}
+                        tickLine={false}
+                      />
+                      <Tooltip
+                        formatter={(value: number, _name, props) => [
+                          `${Number(value).toFixed(1)}%`,
+                          `Safe Rate • ตรวจ ${formatNumber(props.payload.totalLinewalk)} ครั้ง`,
+                        ]}
+                        contentStyle={{
+                          borderRadius: 16,
+                          border: "1px solid #D7EAFE",
+                          boxShadow: "0 12px 30px rgba(8,59,132,0.10)",
+                        }}
+                      />
+                      <Bar dataKey="safeRate" fill={CHART_COLORS.plant} radius={[0, 12, 12, 0]} barSize={24}>
+                        <LabelList
+                          dataKey="safeRate"
+                          position="right"
+                          formatter={(value: number) => percent(value)}
+                          style={{ fill: "#0B2F6B", fontSize: 12, fontWeight: 900 }}
+                        />
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+
+                <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                  {businessUnitChartData.slice(0, 4).map((item) => (
+                    <div key={item.name} className="rounded-[18px] border border-[#DCEBFA] bg-[#F9FCFF] px-4 py-3">
+                      <div className="truncate text-[13px] font-black text-[#0B2F6B]">{item.name}</div>
+                      <div className="mt-1 text-[20px] font-black text-[#0B82F0]">{percent(item.safeRate)}</div>
+                      <div className="mt-1 text-[12px] font-bold text-[#6E86A5]">
+                        Safe {formatNumber(item.safe)} • Unsafe {formatNumber(item.unsafe)}
+                      </div>
                     </div>
-                  </div>
-                );
-              })}
-            </div>
-
-            {/* Custom Legend */}
-            <div className="db-legend">
-              <div className="db-legend-item"><span className="db-legend-dot" style={{ background: C.safe }} /><span>Safe</span></div>
-              <div className="db-legend-item"><span className="db-legend-dot" style={{ background: C.unsafe }} /><span>Unsafe</span></div>
-              <div className="db-legend-item"><span className="db-legend-dot" style={{ background: C.warn }} /><span>Solved (แก้ไขแล้ว)</span></div>
+                  ))}
+                </div>
+              </DashboardCard>
             </div>
           </div>
-        </section>
-
-        {/* 6 Metrics Grid Card */}
-        <div className="db-metrics-summary-card">
-          <div className="db-metrics-summary-grid">
-            
-            {/* 1. ช่วงเวลาตรวจ */}
-            <div className="db-summary-metric-item">
-              <div className="db-summary-metric-icon" style={{ background: "rgba(35, 76, 142, 0.08)", color: "#234c8e" }}>
-                <Calendar size={18} />
-              </div>
-              <div className="db-summary-metric-info">
-                <span className="db-summary-metric-val">ทั้งหมด</span>
-                <span className="db-summary-metric-lbl">ขอบเขตข้อมูล</span>
-              </div>
-            </div>
-
-            {/* 2. BUs ทั้งหมด */}
-            <div className="db-summary-metric-item">
-              <div className="db-summary-metric-icon" style={{ background: "rgba(146, 106, 69, 0.08)", color: "var(--brand-text)" }}>
-                <Building2 size={18} />
-              </div>
-              <div className="db-summary-metric-info">
-                <span className="db-summary-metric-val">{focusedBusinessUnitCount} หน่วยงาน</span>
-                <span className="db-summary-metric-lbl">BUS ทั้งหมด</span>
-              </div>
-            </div>
-            <div className="db-summary-metric-item">
-              <div className="db-summary-metric-icon" style={{ background: "#ecfdf5", color: "#1f7a55" }}>
-                <CheckCircle2 size={18} />
-              </div>
-              <div className="db-summary-metric-info">
-                <span className="db-summary-metric-val">Safe Rate {metrics.safeRate}%</span>
-                <span className="db-summary-metric-lbl">อัตราจุดปลอดภัย</span>
-              </div>
-            </div>
-
-            {/* 4. อยู่ระหว่างติดตาม */}
-            <div className="db-summary-metric-item">
-              <div className="db-summary-metric-icon" style={{ background: "#fff7ed", color: "#ea580c" }}>
-                <Clock size={18} />
-              </div>
-              <div className="db-summary-metric-info">
-                <span className="db-summary-metric-val">{metrics.pendingCases}</span>
-                <span className="db-summary-metric-lbl">อยู่ระหว่างติดตาม</span>
-              </div>
-            </div>
-
-            {/* 5. จำนวนจุดตรวจทั้งหมด */}
-            <div className="db-summary-metric-item">
-              <div className="db-summary-metric-icon" style={{ background: "var(--brand-soft)", color: "var(--brand-text)" }}>
-                <BarChart3 size={18} />
-              </div>
-              <div className="db-summary-metric-info">
-                <span className="db-summary-metric-val">{metrics.totalChecks.toLocaleString()}</span>
-                <span className="db-summary-metric-lbl">จำนวนจุดตรวจทั้งหมด</span>
-              </div>
-            </div>
-
-            {/* 6. แก้ไขสำเร็จแล้ว */}
-            <div className="db-summary-metric-item">
-              <div className="db-summary-metric-icon" style={{ background: "#fef2f2", color: "#d5301a" }}>
-                <CheckCircle2 size={18} />
-              </div>
-              <div className="db-summary-metric-info">
-                <span className="db-summary-metric-val">{metrics.solvedCases}</span>
-                <span className="db-summary-metric-lbl">แก้ไขสำเร็จแล้ว</span>
-              </div>
-            </div>
-
-          </div>
-        </div>
-      </div>
-
-      {/* Data Table */}
-      <section className="db-table-card">
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", borderBottom: `1px solid ${T.border}`, paddingBottom: "12px", marginBottom: "12px" }}>
-          <h2 className="db-chart-title" style={{ margin: 0 }}>
-            ตารางสรุปผลการตรวจความปลอดภัยของหน่วยงาน
-          </h2>
-          <button
-            type="button"
-            onClick={exportToExcel}
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: 8,
-              padding: "8px 14px",
-              borderRadius: 8,
-              border: `1px solid ${T.primary}`,
-              background: "transparent",
-              color: T.foreground,
-              fontSize: 13,
-              fontWeight: 700,
-              cursor: "pointer",
-              transition: "all 0.2s ease",
-            }}
-            onMouseEnter={(e) => e.currentTarget.style.background = T.primarySoft}
-            onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
-          >
-            <Download size={14} strokeWidth={2.6} />
-            ดาวน์โหลด Excel
-          </button>
-        </div>
-        <div style={{ overflowX: "auto" }}>
-          <table className="db-table">
-            <thead>
-              <tr>
-                <th>หน่วยงาน (BUSINESS UNIT)</th>
-                <th>สแกนที่ปลอดภัย (SAFE)</th>
-                <th>ความไม่ปลอดภัย (UNSAFE)</th>
-                <th>แก้ไขแล้ว (SOLVED)</th>
-                <th>ระดับความปลอดภัย</th>
-              </tr>
-            </thead>
-            <tbody>
-              {chart4Data.map(item => {
-                const total = item.safe + item.unsafe;
-                const safePercent = item.safeRate ?? (total > 0 ? (item.safe / total) * 100 : 0);
-                let rating = "ปลอดภัยดีมาก";
-                let ratingClass = "db-badge-green";
-
-                if (safePercent < 94) {
-                  rating = "ควรปรับปรุง";
-                  ratingClass = "db-badge-red";
-                } else if (safePercent < 97) {
-                  rating = "ปลอดภัยพอใช้";
-                  ratingClass = "db-badge-amber";
-                } else if (safePercent < 98) {
-                  rating = "ปลอดภัยดี";
-                  ratingClass = "db-badge-yellow";
-                }
-
-                return (
-                  <tr 
-                    key={item.name}
-                    style={{ 
-                      background: selectedBU === item.name ? "rgba(var(--brand-accent-rgb), 0.08)" : "transparent",
-                      cursor: "pointer"
-                    }}
-                    onClick={() => setSelectedBU(selectedBU === item.name ? "All Business Units" : item.name)}
-                  >
-                    <td style={{ fontWeight: "700" }}>{item.name}</td>
-                    <td style={{ color: "#1f7a55" }}>{item.safe.toLocaleString()}</td>
-                    <td style={{ color: "#d5301a", fontWeight: "700" }}>{item.unsafe.toLocaleString()}</td>
-                    <td style={{ color: "#b7791f", fontWeight: "700" }}>{item.solved.toLocaleString()}</td>
-                    <td>
-                      <span className={`db-badge ${ratingClass}`}>
-                        {rating} ({safePercent.toFixed(1)}%)
-                      </span>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-      </section>
-
-      {/* Footer */}
-      <div 
-        style={{ 
-          display: "flex", 
-          justifyContent: "center", 
-          alignItems: "center", 
-          gap: "12px", 
-          fontSize: "12px", 
-          color: T.foreground3, 
-          marginTop: "16px",
-          paddingBottom: "8px",
-          fontWeight: "600"
-        }}
-      >
-        <span>ข้อมูล ณ วันที่ 31 มีนาคม 2026</span>
-        <span>•</span>
-        <span>แหล่งข้อมูล: Safety Caring System</span>
-      </div>
+        )}
       </div>
     </div>
   );

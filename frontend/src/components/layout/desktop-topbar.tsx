@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { Bell, ChevronDown, FileText, Gift, Heart, Home, LayoutDashboard, LogOut, ShieldCheck, Trophy, UserRound } from "lucide-react";
+import { Bell, ChevronDown, FileText, Gift, Heart, Home, LogOut, ShieldCheck, Trophy, UserRound } from "lucide-react";
 import { NotificationCenter } from "@/components/notifications/notification-center";
 import { cn } from "@/lib/utils";
 import { isExactNavActive, isMainNavActive } from "@/lib/navigation";
@@ -26,7 +26,6 @@ function NavTo(props: any) {
 
 const NAV_ITEMS = [
   { id: "home", label: "Home", icon: Home, href: "/" },
-  { id: "dashboard", label: "Dashboard", icon: LayoutDashboard, href: "/dashboard" },
   { id: "safety-effort", label: "Safety Effort", icon: ShieldCheck, href: "/category" },
   { id: "safety-culture", label: "Safety Culture", icon: Heart, href: "/safety-culture" },
   { id: "admin", label: "Admin", icon: UserRound, href: "/safety-admin" },
@@ -192,7 +191,7 @@ export function DesktopTopbar() {
   const [configuredMenu, setConfiguredMenu] = useState<MenuNode[]>([]);
   const { user: sessionUser } = useSessionUser();
   const isWangjai = theme === "wangjai";
-  const [desktopMenu, setDesktopMenu] = useState<"dashboard" | "safety-culture" | "admin" | "profile" | null>(null);
+  const [desktopMenu, setDesktopMenu] = useState<"safety-culture" | "admin" | "profile" | null>(null);
   const [adminSubmenuId, setAdminSubmenuId] = useState<string | null>(null);
   const [notificationOpen, setNotificationOpen] = useState(false);
   const [profileImageFailed, setProfileImageFailed] = useState(false);
@@ -300,7 +299,7 @@ export function DesktopTopbar() {
         <nav className="desktop-nav-visible flex min-w-0 flex-1 items-center justify-center gap-1" aria-label="Main navigation">
           {navItems.map((item) => {
             const Icon = item.icon;
-            const active = isActive(item.href);
+            const active = item.id === "admin" ? pathname === "/dashboard" || isActive(item.href) : isActive(item.href);
             const enabled = ENABLED_HREFS.has(item.href);
 
             if (item.id === "admin") {

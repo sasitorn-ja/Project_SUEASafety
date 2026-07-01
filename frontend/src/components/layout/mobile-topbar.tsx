@@ -10,7 +10,6 @@ import {
   Gift,
   Heart,
   Home,
-  LayoutDashboard,
   LogOut,
   Menu,
   ShieldCheck,
@@ -57,7 +56,6 @@ type NavNode = {
 
 const NAV_TREE: NavNode[] = [
   { id: "home", label: "Home", icon: Home, href: "/" },
-  { id: "dashboard", label: "Dashboard", icon: LayoutDashboard, href: "/dashboard" },
   { id: "safety-effort", label: "Safety Effort", icon: ShieldCheck, href: "/category" },
   { id: "safety-culture", label: "Safety Culture", icon: UsersRound, href: "/safety-culture", children: CULTURE_ITEMS },
   { id: "admin", label: "Admin", icon: UserRound },
@@ -182,13 +180,11 @@ export function MobileTopbar({ hidden = false }: { hidden?: boolean }) {
   const isWangjai = theme === "wangjai";
 
   const isActive = (href: string) => isMainNavActive(pathname, href);
-  const dashboardActive = pathname === "/dashboard";
   const cultureActive = CULTURE_ITEMS.some((item) => isExactNavActive(pathname, item.href));
-  const adminActive = pathname.startsWith("/safety-admin") || pathname.startsWith("/safety-culture/admin-");
+  const adminActive = pathname === "/dashboard" || pathname.startsWith("/safety-admin") || pathname.startsWith("/safety-culture/admin-");
   const profileSectionActive = pathname === "/profile" || pathname.startsWith("/profile/");
 
   const [openSections, setOpenSections] = useState<Record<string, boolean>>(() => ({
-    "dashboard": dashboardActive,
     "safety-culture": cultureActive,
     admin: adminActive,
     "admin-safety-effort": pathname.startsWith("/safety-admin"),
@@ -369,7 +365,7 @@ export function MobileTopbar({ hidden = false }: { hidden?: boolean }) {
 
                   if (item.children) {
                     const isOpen = !!openSections[item.id];
-                    const sectionActive = item.id === "safety-culture" ? cultureActive : item.id === "dashboard" ? dashboardActive : false;
+                    const sectionActive = item.id === "safety-culture" ? cultureActive : false;
 
                     return (
                       <div key={item.id}>

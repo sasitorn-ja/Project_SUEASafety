@@ -108,7 +108,6 @@ export function getDefaultMenu(): MenuNode[] {
   const n = (p: Partial<MenuNode>) => createMenuNode(p);
   return [
     n({ label: "Home", href: "/", icon: "Home" }),
-    n({ label: "Dashboard", href: "/dashboard", icon: "LayoutDashboard" }),
     n({ label: "Safety Effort", href: "/category", icon: "ShieldCheck" }),
     n({
       label: "Safety Culture",
@@ -140,6 +139,12 @@ export function getDefaultMenu(): MenuNode[] {
       href: "/safety-admin",
       icon: "UserRound",
       children: [
+        n({
+          label: "Dashboard",
+          href: "/dashboard",
+          icon: "LayoutDashboard",
+          description: "ดูภาพรวม Dashboard ของระบบความปลอดภัย",
+        }),
         n({
           label: "Safety Awareness",
           href: "/safety-culture/admin-awareness",
@@ -264,6 +269,7 @@ function applyAdminMenuLabels(adminNode: MenuNode) {
     updated = true;
   }
 
+  rename("/dashboard", "Dashboard", "ดูภาพรวม Dashboard ของระบบความปลอดภัย", "LayoutDashboard");
   rename("/safety-culture/admin-awareness", "Safety Awareness", "จัดการวัน KPI และคลังคำถาม Safety Awareness", "ShieldCheck");
   rename("/category", "Safety Effort", undefined, "ShieldCheck");
   rename("/safety-admin", "แบบประเมิน", "เพิ่ม แก้ไข และจัดลำดับหัวข้อ Linewalk / Safety Contact", "Settings2");
@@ -300,6 +306,31 @@ export function loadMenu(): MenuNode[] {
         if (adminNode) {
           const n = (p: Partial<MenuNode>) => createMenuNode(p);
           let updated = applyAdminMenuLabels(adminNode);
+
+          const topLevelDashboardIndex = parsed.findIndex((node) => node.href === "/dashboard");
+          if (topLevelDashboardIndex !== -1) {
+            const [dashboardNode] = parsed.splice(topLevelDashboardIndex, 1);
+            const existingDashboardInAdmin = findNodeByHref(adminNode.children, "/dashboard");
+            if (!existingDashboardInAdmin) {
+              adminNode.children.unshift({
+                ...dashboardNode,
+                label: "Dashboard",
+                icon: "LayoutDashboard",
+                description: "ดูภาพรวม Dashboard ของระบบความปลอดภัย",
+              });
+            }
+            updated = true;
+          } else if (!findNodeByHref(adminNode.children, "/dashboard")) {
+            adminNode.children.unshift(
+              n({
+                label: "Dashboard",
+                href: "/dashboard",
+                icon: "LayoutDashboard",
+                description: "ดูภาพรวม Dashboard ของระบบความปลอดภัย",
+              })
+            );
+            updated = true;
+          }
 
           // Migration: remove the deprecated "Role" (User Role Management) node.
           // Replaced by DB-backed "จัดการผู้ใช้และสิทธิ์ Admin" (/safety-culture/admin-users).
@@ -397,8 +428,9 @@ export function loadMenu(): MenuNode[] {
           }
 
           // Migration: enforce canonical admin-children order:
-          // Safety Awareness → Safety Effort → Safety Culture → ตั้งค่า Coin → จัดการผู้ใช้ฯ
+          // Dashboard → Safety Awareness → Safety Effort → Safety Culture → ตั้งค่า Coin → จัดการผู้ใช้ฯ
           const DESIRED_ADMIN_ORDER = [
+            "/dashboard",
             "/safety-culture/admin-awareness",
             "/category",
             "/safety-culture",
