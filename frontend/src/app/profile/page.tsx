@@ -1,6 +1,6 @@
 "use client";
 import Image from "next/image";
-import { ChangeEvent, useEffect, useRef, useState } from "react";
+import { type CSSProperties, ChangeEvent, useEffect, useRef, useState } from "react";
 import {
   BadgeCheck,
   Building2,
@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { notifyProfileImageUpdated } from "@/lib/profile";
 import { useAppTheme } from "@/providers/theme-provider";
+import { useAppState } from "@/providers/app-providers";
 import { getSessionDisplayName, getSessionEnglishName, getSessionProfileImage, useSessionUser } from "@/lib/session-user";
 import { uploadMedia } from "@/features/safety-effort/lib/upload-media";
 
@@ -33,7 +34,8 @@ export default function ProfilePage() {
   const [profileImage, setProfileImage] = useState("");
   const [imageError, setImageError] = useState("");
   const { user: sessionUser } = useSessionUser();
-  const { mascot } = useAppTheme();
+  const { personalRankings, teamStandings } = useAppState();
+  const { mascot, themedColor } = useAppTheme();
   const displayName = sessionUser ? getSessionDisplayName(sessionUser) : "-";
   const displayNameEn = getSessionEnglishName(sessionUser) || "-";
   const displayPosition = sessionUser?.positionTh || sessionUser?.positionEn || "-";
@@ -43,6 +45,13 @@ export default function ProfilePage() {
   const ssoProfileImage = sessionUser?.lineProfileImageUrl || "";
   const displayImage = profileImage || ssoProfileImage;
   const isUsingCustomProfileImage = Boolean(profileImage);
+  const activeRankingTeam = personalRankings.find((person) => person.active)?.team;
+  const profileTeam = teamStandings.find((team) => {
+    const divisionMatched = Boolean(displayDivision && team.sourceDivisions?.some((division) => division === displayDivision));
+    const rankingTeamMatched = Boolean(activeRankingTeam && team.name === activeRankingTeam);
+    return divisionMatched || rankingTeamMatched;
+  });
+  const profileTeamColor = themedColor(profileTeam?.color ?? "var(--brand-accent)");
   const connections = getConnections(sessionUser);
   const profileFields = [
     { label: "ชื่อภาษาไทย", value: displayName, icon: UserRound },
@@ -126,17 +135,22 @@ export default function ProfilePage() {
           <div className="relative grid gap-4 p-3.5 sm:grid-cols-[170px_minmax(0,1fr)] sm:gap-5 sm:p-5 md:grid-cols-[190px_minmax(0,1fr)_auto] md:items-center md:p-6">
             {/* profile photo */}
             <div className="relative mx-auto w-full max-w-[190px] rounded-[22px] border border-white/80 bg-white/90 p-3 shadow-[0_18px_34px_rgba(11,130,240,0.18)] backdrop-blur-md sm:mx-0">
-              <div className="group relative mx-auto h-28 w-28 overflow-hidden rounded-full border-[5px] border-white shadow-[0_14px_30px_rgba(11,130,240,0.20)] sm:h-32 sm:w-32 md:h-[136px] md:w-[136px]">
-                {displayImage ? (
-                  <img src={displayImage} alt="รูปโปรไฟล์" className="h-full w-full object-cover" />
-                ) : (
-                  <div className="grid h-full w-full place-items-center bg-[#EEF7FF]">
-                    <UserRound className="h-14 w-14 text-[#0B82F0]/60 md:h-16 md:w-16" strokeWidth={1.7} />
-                  </div>
-                )}
-                <span className="absolute bottom-1 right-1 flex h-7 w-7 items-center justify-center rounded-full border-[3px] border-white bg-emerald-500 shadow-[0_7px_16px_rgba(16,185,129,0.32)]">
-                  <CheckCircle2 className="h-4 w-4 text-white" strokeWidth={3} />
-                </span>
+              <div
+                className="team-color-running-ring group relative mx-auto h-28 w-28 rounded-full p-[5px] shadow-[0_14px_30px_rgba(11,130,240,0.20)] sm:h-32 sm:w-32 md:h-[136px] md:w-[136px]"
+                style={{ "--team-ring-color": profileTeamColor } as CSSProperties}
+              >
+                <div className="relative h-full w-full overflow-hidden rounded-full border-[3px] border-white bg-white">
+                  {displayImage ? (
+                    <img src={displayImage} alt="รูปโปรไฟล์" className="h-full w-full object-cover" />
+                  ) : (
+                    <div className="grid h-full w-full place-items-center bg-[#EEF7FF]">
+                      <UserRound className="h-14 w-14 text-[#0B82F0]/60 md:h-16 md:w-16" strokeWidth={1.7} />
+                    </div>
+                  )}
+                  <span className="absolute bottom-1 right-1 flex h-7 w-7 items-center justify-center rounded-full border-[3px] border-white bg-emerald-500 shadow-[0_7px_16px_rgba(16,185,129,0.32)]">
+                    <CheckCircle2 className="h-4 w-4 text-white" strokeWidth={3} />
+                  </span>
+                </div>
               </div>
               <div className="mt-3 grid grid-cols-1 gap-2">
                 <button

@@ -17,21 +17,14 @@ import {
   AppDialogTitle,
 } from "@/components/ui/app-dialog";
 import { useAppActions, useAppState } from "@/providers/app-providers";
-import { cn } from "@/lib/utils";
+import { cn, formatDisplayDateTime } from "@/lib/utils";
 import { useAppTheme } from "@/providers/theme-provider";
 
 const POINT_UNIT = "Coin";
 
 function formatRewardDateTime(value?: string | null) {
   if (!value) return null;
-
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) return null;
-
-  return new Intl.DateTimeFormat("th-TH", {
-    dateStyle: "medium",
-    timeStyle: "short",
-  }).format(parsed);
+  return formatDisplayDateTime(value) || null;
 }
 
 function getRewardAvailability(reward: {
@@ -362,27 +355,33 @@ export default function RewardsPage() {
       </div>
 
       <Dialog open={!!redeeming} onOpenChange={(open) => !open && setRedeeming(null)}>
-        <AppDialogContent size="sm">
-          <AppDialogSectionHeader className="border-[#d7e6f6] bg-[linear-gradient(135deg,#ffffff_0%,#f4f9ff_56%,#eaf4ff_100%)] text-center">
-            <AppDialogTitle className="text-center text-[17px] sm:text-[19px]">ยืนยันการแลกรางวัล</AppDialogTitle>
-            <AppDialogDescription className="text-center">ตรวจสอบข้อมูลก่อนใช้ Coin แลกรางวัล</AppDialogDescription>
+        <AppDialogContent size="sm" className="max-w-[560px]">
+          <AppDialogSectionHeader className="border-[#d7e6f6] bg-[linear-gradient(135deg,#ffffff_0%,#f4f9ff_56%,#eaf4ff_100%)]">
+            <AppDialogTitle className="text-[#0b3572]">
+              ยืนยันการแลกรางวัล
+            </AppDialogTitle>
+            <AppDialogDescription>
+              ตรวจสอบข้อมูลก่อนใช้ Coin แลกรางวัล
+            </AppDialogDescription>
           </AppDialogSectionHeader>
 
           <AppDialogBody className="flex flex-col items-center gap-4 text-center">
-            <div className="w-27.5 animate-[sueaMascotFloat_1.8s_ease-in-out_infinite_alternate]">
+            <div className="w-24 animate-[sueaMascotFloat_1.8s_ease-in-out_infinite_alternate]">
               <Image
                 src={mascot("happyClaim")}
                 alt="น้องวางใจ Safety mascot"
-                width={120}
-                height={120}
+                width={104}
+                height={104}
                 className="mascot-motion h-auto w-full"
               />
             </div>
+
             <p className="text-sm font-semibold leading-relaxed text-[#555149]">
               คุณต้องการใช้ Coin จำนวน <strong className="text-(--brand-accent-strong)">{redeeming?.points} {POINT_UNIT}</strong> เพื่อแลก
               <br />
               <strong>&quot;{redeeming?.name}&quot;</strong> ใช่หรือไม่?
             </p>
+
             {redeeming ? (
               <div className="w-full rounded-[14px] border border-border bg-white/80 px-3 py-2 text-left text-[12px] font-bold text-[#6f665b]">
                 <div>{redeeming.stockMode === "limited" ? `คงเหลือ ${Math.max(0, Number(redeeming.stockRemaining) || 0)} ชิ้น` : "ไม่จำกัดจำนวน"}</div>
@@ -391,15 +390,9 @@ export default function RewardsPage() {
             ) : null}
           </AppDialogBody>
 
-          <AppDialogSectionFooter className="flex-col gap-2.5 bg-transparent sm:flex-col">
-            <button onClick={confirmRedeem} className="w-full rounded-xl bg-brand-accent py-3 text-center text-[13px] font-[850] text-white transition-all hover:bg-(--brand-nav-active)">
+          <AppDialogSectionFooter className="justify-end bg-transparent">
+            <button onClick={confirmRedeem} className="h-10 rounded-full bg-brand-accent px-4 text-center text-[13px] font-[850] text-white transition-all hover:bg-(--brand-nav-active)">
               ยืนยันการแลก
-            </button>
-            <button
-              onClick={() => setRedeeming(null)}
-              className="w-full rounded-xl bg-secondary py-2.5 text-center text-[13px] font-[850] text-foreground transition-colors hover:bg-border"
-            >
-              ยกเลิก
             </button>
           </AppDialogSectionFooter>
         </AppDialogContent>

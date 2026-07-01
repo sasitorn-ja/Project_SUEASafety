@@ -8,7 +8,7 @@ import {
   CalendarDays,
   ChevronRight,
   ClipboardCheck,
-  Coins,
+  CircleDollarSign,
   FolderOpen,
   HardHat,
   MapPin,
@@ -115,8 +115,8 @@ export default function Category() {
                 <div>
                   <div className="flex flex-wrap items-center gap-2">
                     <h3 className="text-[16px] font-extrabold leading-tight sm:text-[18px]">ตรวจ Linewalk / Safety Contact</h3>
-                    <span className="inline-flex items-center gap-1 rounded-full bg-[#0B82F0] px-2 py-0.5 text-[10px] font-black text-white shadow-[0_6px_14px_rgba(11,130,240,0.20)]">
-                      <Coins className="h-3 w-3" strokeWidth={2.5} />
+                    <span className="inline-flex items-center gap-1 rounded-full bg-[#0B82F0] px-2.5 py-1 text-[12px] font-black leading-none text-white shadow-[0_6px_14px_rgba(11,130,240,0.20)]">
+                      <CircleDollarSign className="h-4 w-4" strokeWidth={2.5} />
                       +10 Coin
                     </span>
                   </div>

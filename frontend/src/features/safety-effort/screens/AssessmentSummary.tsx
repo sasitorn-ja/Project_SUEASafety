@@ -12,6 +12,7 @@ import { linkUploadedMedia, uploadSafetyEffortMedia } from "@/features/safety-ef
 import { useAppActions } from "@/providers/app-providers";
 import { getSessionDisplayName, useSessionUser } from "@/lib/session-user";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { CircleDollarSign } from "lucide-react";
 
 const T = {
   background: "var(--background)",
@@ -743,18 +744,19 @@ export default function AssessmentSummary() {
                 display: "inline-flex",
                 alignItems: "center",
                 gap: 6,
-                background: "#eaf4ff",
-                border: "1.5px solid #b9d3ed",
+                background: "#0B82F0",
+                border: "1.5px solid rgba(255,255,255,0.55)",
                 borderRadius: 99,
-                padding: "6px 16px",
+                padding: "7px 16px",
                 fontSize: "14.5px",
                 fontWeight: 900,
-                color: "#0e3e7d",
+                color: "#fff",
+                lineHeight: 1,
                 fontFamily: "'Prompt',sans-serif",
                 marginTop: -4,
-                boxShadow: "0 4px 12px rgba(14,62,125,0.12)"
+                boxShadow: "0 6px 14px rgba(11,130,240,0.20)"
               }}>
-                <IcoTrophy size={16} color={T.goldDeep} /> +10 Coin
+                <CircleDollarSign size={17} strokeWidth={2.5} /> +10 Coin
               </div>
 
               <button

@@ -6,6 +6,9 @@ export type PointRule = {
   points: number;
   status: string;
   source: string;
+  dailyLimit: number | null;
+  minCommentLength: number | null;
+  awardPostOwner: boolean;
 };
 
 export type PointRulesResponse = {
@@ -17,4 +20,7 @@ export type SavePointRulePayload = {
   code: string;
   points: number;
   status: string;
+  dailyLimit?: number | null;
+  minCommentLength?: number | null;
+  awardPostOwner?: boolean;
 };

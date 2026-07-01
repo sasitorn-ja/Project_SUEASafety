@@ -24,7 +24,7 @@ import { useAppActions, useAppState } from "@/providers/app-providers";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog } from "@/components/ui/dialog";
-import { AppDialogBody, AppDialogContent, AppDialogDescription, AppDialogTitle } from "@/components/ui/app-dialog";
+import { AppDialogBody, AppDialogContent, AppDialogDescription, AppDialogSectionHeader, AppDialogTitle } from "@/components/ui/app-dialog";
 import { uploadMedia } from "@/features/safety-effort/lib/upload-media";
 import { SAFETY_CULTURE_CATEGORIES } from "@/lib/safety-culture";
 import { getSafetyPoint } from "@/lib/point-rules";
@@ -411,33 +411,33 @@ export default function PostSocialPage() {
 
         {/* Mascot / Profile Banner */}
         <div 
-          className="anim-fade relative overflow-hidden rounded-[24px] border border-[#d9e5f3] bg-gradient-to-r from-[#f0f7ff] to-[#e1f0ff] p-5 shadow-[0_12px_30px_rgba(23,59,107,0.08)] flex justify-between items-center gap-4 mb-5"
+          className="anim-fade relative mb-3.5 flex items-center justify-between gap-2.5 overflow-hidden rounded-[20px] border border-[#d9e5f3] bg-gradient-to-r from-[#f0f7ff] to-[#e1f0ff] p-3.5 shadow-[0_10px_24px_rgba(23,59,107,0.08)]"
           style={animStyle(0.03)}
         >
           {/* Left info & quote */}
-          <div className="flex-1 z-10 space-y-4">
+          <div className="z-10 flex-1 space-y-2.5">
             {/* User details */}
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
               <div className="relative">
-                <div className="flex h-14 w-14 items-center justify-center overflow-hidden rounded-full bg-[var(--brand-soft)] text-xl font-extrabold text-[var(--brand-accent)] ring-2 ring-[rgba(var(--brand-accent-rgb),0.22)]">
+                <div className="flex h-11 w-11 items-center justify-center overflow-hidden rounded-full bg-[var(--brand-soft)] text-[17px] font-extrabold text-[var(--brand-accent)] ring-2 ring-[rgba(var(--brand-accent-rgb),0.22)]">
                   {getSessionProfileImage(sessionUser) ? (
-                    <Image src={getSessionProfileImage(sessionUser)} alt="" width={56} height={56} className="h-full w-full object-cover" />
+                    <Image src={getSessionProfileImage(sessionUser)} alt="" width={44} height={44} className="h-full w-full object-cover" />
                   ) : (
                     getSessionInitials(sessionUser)
                   )}
                 </div>
                 {/* Pencil Edit Icon overlay */}
-                <div className="absolute -bottom-1 -right-1 bg-[#188fff] border-2 border-white rounded-full p-1 shadow-md">
-                  <svg className="h-3 w-3 text-white fill-current" viewBox="0 0 24 24">
+                <div className="absolute -bottom-1 -right-1 rounded-full border-2 border-white bg-[#188fff] p-[3px] shadow-md">
+                  <svg className="h-2.5 w-2.5 text-white fill-current" viewBox="0 0 24 24">
                     <path d="M3 17.25V21h3.75L17.81(9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
                   </svg>
                 </div>
               </div>
               <div className="flex flex-col gap-0.5">
-                <span className="text-[16px] font-extrabold text-[#112f59]">
+                <span className="text-[14px] font-extrabold text-[#112f59]">
                   {getSessionDisplayName(sessionUser)}
                 </span>
-                <div className="flex items-center gap-1.5 text-[11px] font-bold text-[#188fff] bg-[#e6f4ff] border border-[#bae0ff] rounded-full px-2.5 py-0.5 w-fit">
+                <div className="flex w-fit items-center gap-1 rounded-full border border-[#bae0ff] bg-[#e6f4ff] px-2 py-0.5 text-[10px] font-bold text-[#188fff]">
                   <span className="inline-block w-1.5 h-1.5 rounded-full bg-[#188fff] animate-pulse"></span>
                   <span>Safety Culture</span>
                 </div>
@@ -445,23 +445,23 @@ export default function PostSocialPage() {
             </div>
 
             {/* Quote bubble container */}
-            <div className="relative border border-[#bae0ff] bg-white/70 backdrop-blur-sm rounded-[18px] p-3 text-[13px] font-bold text-[#1a539c] leading-relaxed max-w-[280px]">
-              <span className="text-[20px] font-serif text-[#188fff] absolute -top-1 left-2">“</span>
-              <p className="pl-4 pr-4 flex items-center flex-wrap gap-1">
+            <div className="relative max-w-[230px] rounded-[14px] border border-[#bae0ff] bg-white/70 p-2.5 text-[11.5px] font-bold leading-relaxed text-[#1a539c] backdrop-blur-sm">
+              <span className="absolute -top-1 left-2 text-[18px] font-serif text-[#188fff]">“</span>
+              <p className="flex items-center flex-wrap gap-1 pl-3 pr-3">
                 <span>ทุกการแชร์ คือพลังเล็ก ๆ ที่ช่วยให้ทุกคนปลอดภัยมากขึ้น</span>
-                <Heart className="inline-block h-3.5 w-3.5 fill-[#188fff] text-[#188fff] animate-pulse" />
+                <Heart className="inline-block h-3 w-3 fill-[#188fff] text-[#188fff] animate-pulse" />
               </p>
-              <span className="text-[20px] font-serif text-[#188fff] absolute bottom-1 right-2">”</span>
+              <span className="absolute bottom-1 right-2 text-[18px] font-serif text-[#188fff]">”</span>
             </div>
           </div>
 
           {/* Right Mascot */}
-          <div className="relative w-[180px] h-[150px] shrink-0 z-10 flex items-end justify-center">
+          <div className="relative z-10 flex h-[116px] w-[138px] shrink-0 items-end justify-center">
             <Image 
               src="/images/mascots/scenes/thumbsup-cool.png" 
               alt="Mascot" 
-              width={160} 
-              height={160} 
+              width={120} 
+              height={120} 
               className="object-contain hover:scale-105 transition-transform duration-300"
             />
           </div>
@@ -474,8 +474,8 @@ export default function PostSocialPage() {
 
         {/* select event tab cards */}
         <div className="anim-fade mb-5" style={animStyle(0.06)}>
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="text-[15px] font-extrabold text-[#112f59]">
+          <div className="mb-2.5 flex items-center justify-between">
+            <h3 className="text-[14px] font-extrabold text-[#112f59]">
               เลือกประเภทกิจกรรม (Card Event)
             </h3>
           </div>
@@ -502,14 +502,14 @@ export default function PostSocialPage() {
               type="button"
               onClick={() => setSelectedFeedEventId("")}
               className={cn(
-                "relative flex items-center p-3.5 rounded-[20px] border text-left transition-all h-[92px] w-[260px] shrink-0 snap-start gap-3.5 group select-none pointer-events-auto",
+                "relative flex h-[76px] w-[214px] shrink-0 snap-start items-center gap-2.5 rounded-[17px] border p-2.5 text-left transition-all group select-none pointer-events-auto",
                 !selectedFeedEventId
                   ? "border-[#0663d2] bg-gradient-to-br from-[#188fff] to-[#0663d2] text-white shadow-[0_8px_20px_rgba(24,143,255,0.25)]"
                   : "border-[#d9e5f3] bg-white text-[#555149] hover:border-[#188fff] hover:bg-slate-50"
               )}
             >
               {!selectedFeedEventId && (
-                <div className="absolute top-3 right-3 bg-white text-[#0663d2] rounded-full p-0.5 shadow-sm">
+                <div className="absolute right-2 top-2 rounded-full bg-white p-0.5 text-[#0663d2] shadow-sm">
                   <svg className="h-3 w-3 fill-none stroke-current" viewBox="0 0 24 24" strokeWidth="4">
                     <polyline points="20 6 9 17 4 12"/>
                   </svg>
@@ -517,19 +517,19 @@ export default function PostSocialPage() {
               )}
 
               <div className={cn(
-                "w-15 h-15 rounded-xl flex items-center justify-center shrink-0 overflow-hidden",
+                "flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-[14px]",
                 !selectedFeedEventId ? "bg-white/20 text-white" : "bg-[#e6f4ff] text-[#188fff]"
               )}>
-                <svg className="h-7 w-7 fill-current rotate-45 mr-0.5" viewBox="0 0 24 24">
+                <svg className="mr-0.5 h-5.5 w-5.5 rotate-45 fill-current" viewBox="0 0 24 24">
                   <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
                 </svg>
               </div>
 
               <div className="flex flex-col gap-0.5">
-                <span className={cn("text-[14.5px] font-extrabold leading-tight", !selectedFeedEventId ? "text-white" : "text-[#112f59]")}>
+                <span className={cn("text-[13px] font-extrabold leading-tight", !selectedFeedEventId ? "text-white" : "text-[#112f59]")}>
                   โพสต์ทั่วไป
                 </span>
-                <span className={cn("text-[11.5px] font-bold", !selectedFeedEventId ? "text-white/80" : "text-[#8292a8]")}>
+                <span className={cn("text-[10.5px] font-bold", !selectedFeedEventId ? "text-white/80" : "text-[#8292a8]")}>
                   ได้รับ {basePostPoints} Coin
                 </span>
               </div>
@@ -552,21 +552,21 @@ export default function PostSocialPage() {
                   type="button"
                   onClick={() => setSelectedFeedEventId(event.id)}
                   className={cn(
-                    "relative flex items-center p-3.5 rounded-[20px] border text-left transition-all h-[92px] w-[260px] shrink-0 snap-start gap-3.5 group select-none pointer-events-auto",
+                    "relative flex h-[76px] w-[214px] shrink-0 snap-start items-center gap-2.5 rounded-[17px] border p-2.5 text-left transition-all group select-none pointer-events-auto",
                     isSelected
                       ? "border-[#0663d2] bg-gradient-to-br from-[#188fff] to-[#0663d2] text-white shadow-[0_8px_20px_rgba(24,143,255,0.25)]"
                       : "border-[#d9e5f3] bg-white text-[#555149] hover:border-[#188fff] hover:bg-slate-50"
                   )}
                 >
                   {isSelected && (
-                    <div className="absolute top-3 right-3 bg-white text-[#0663d2] rounded-full p-0.5 shadow-sm">
+                    <div className="absolute right-2 top-2 rounded-full bg-white p-0.5 text-[#0663d2] shadow-sm">
                       <svg className="h-3 w-3 fill-none stroke-current" viewBox="0 0 24 24" strokeWidth="4">
                         <polyline points="20 6 9 17 4 12"/>
                       </svg>
                     </div>
                   )}
 
-                  <div className="shrink-0 overflow-hidden rounded-xl w-15 h-15 relative">
+                  <div className="relative h-11 w-11 shrink-0 overflow-hidden rounded-[14px]">
                     {event.imageSrc ? (
                       <img
                         src={themedImage(event.imageSrc)}
@@ -574,15 +574,15 @@ export default function PostSocialPage() {
                         className="h-full w-full object-cover"
                       />
                     ) : (
-                      cardInfo.icon(isSelected ? "bg-white/20 text-white w-full h-full flex items-center justify-center [&_svg]:h-7 [&_svg]:w-7" : "w-full h-full flex items-center justify-center [&_svg]:h-7 [&_svg]:w-7")
+                      cardInfo.icon(isSelected ? "bg-white/20 text-white w-full h-full flex items-center justify-center [&_svg]:h-5.5 [&_svg]:w-5.5" : "w-full h-full flex items-center justify-center [&_svg]:h-5.5 [&_svg]:w-5.5")
                     )}
                   </div>
 
                   <div className="flex flex-col gap-0.5">
-                    <span className={cn("text-[14.5px] font-extrabold line-clamp-1 leading-tight", isSelected ? "text-white" : "text-[#112f59]")}>
+                    <span className={cn("line-clamp-1 text-[13px] font-extrabold leading-tight", isSelected ? "text-white" : "text-[#112f59]")}>
                       {cardInfo.title}
                     </span>
-                    <span className={cn("text-[11.5px] font-bold line-clamp-1", isSelected ? "text-white/80" : "text-[#8292a8]")}>
+                    <span className={cn("line-clamp-1 text-[10.5px] font-bold", isSelected ? "text-white/80" : "text-[#8292a8]")}>
                       ได้รับ {totalPoints} Coin
                     </span>
                   </div>
@@ -593,9 +593,9 @@ export default function PostSocialPage() {
             {/* Fallback mock cards to complete grid if database has no dynamic events */}
             {availableFeedEvents.length < 1 && (
               <>
-                <div className="relative flex items-center p-3.5 rounded-[20px] border border-[#d9e5f3] bg-white/60 text-[#555149] opacity-75 h-[92px] w-[260px] shrink-0 snap-start gap-3.5 select-none">
-                  <div className="shrink-0 overflow-hidden rounded-xl">
-                    <div className="p-2.5 rounded-xl bg-[#e6ffed] text-[#28a745] w-15 h-15 flex items-center justify-center [&_svg]:h-7 [&_svg]:w-7">
+                <div className="relative flex h-[76px] w-[214px] shrink-0 snap-start items-center gap-2.5 rounded-[17px] border border-[#d9e5f3] bg-white/60 p-2.5 text-[#555149] opacity-75 select-none">
+                  <div className="shrink-0 overflow-hidden rounded-[14px]">
+                    <div className="flex h-11 w-11 items-center justify-center rounded-[14px] bg-[#e6ffed] p-2 text-[#28a745] [&_svg]:h-5.5 [&_svg]:w-5.5">
                       <svg className="h-7 w-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                         <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
                         <line x1="16" y1="2" x2="16" y2="6"/>
@@ -605,34 +605,34 @@ export default function PostSocialPage() {
                     </div>
                   </div>
                   <div className="flex flex-col gap-0.5">
-                    <span className="text-[14.5px] font-extrabold text-[#112f59]">KYT</span>
-                    <span className="text-[11.5px] font-bold text-[#8292a8]">ได้รับ 41 Coin</span>
+                    <span className="text-[13px] font-extrabold text-[#112f59]">KYT</span>
+                    <span className="text-[10.5px] font-bold text-[#8292a8]">ได้รับ 41 Coin</span>
                   </div>
                 </div>
-                <div className="relative flex items-center p-3.5 rounded-[20px] border border-[#d9e5f3] bg-white/60 text-[#555149] opacity-75 h-[92px] w-[260px] shrink-0 snap-start gap-3.5 select-none">
-                  <div className="shrink-0 overflow-hidden rounded-xl">
-                    <div className="p-2.5 rounded-xl bg-[#fff7e6] text-[#fa8c16] w-15 h-15 flex items-center justify-center [&_svg]:h-7 [&_svg]:w-7">
+                <div className="relative flex h-[76px] w-[214px] shrink-0 snap-start items-center gap-2.5 rounded-[17px] border border-[#d9e5f3] bg-white/60 p-2.5 text-[#555149] opacity-75 select-none">
+                  <div className="shrink-0 overflow-hidden rounded-[14px]">
+                    <div className="flex h-11 w-11 items-center justify-center rounded-[14px] bg-[#fff7e6] p-2 text-[#fa8c16] [&_svg]:h-5.5 [&_svg]:w-5.5">
                       <svg className="h-7 w-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                         <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
                       </svg>
                     </div>
                   </div>
                   <div className="flex flex-col gap-0.5">
-                    <span className="text-[14.5px] font-extrabold text-[#112f59]">PPE Focus</span>
-                    <span className="text-[11.5px] font-bold text-[#8292a8]">ได้รับ 20 Coin</span>
+                    <span className="text-[13px] font-extrabold text-[#112f59]">PPE Focus</span>
+                    <span className="text-[10.5px] font-bold text-[#8292a8]">ได้รับ 20 Coin</span>
                   </div>
                 </div>
-                <div className="relative flex items-center p-3.5 rounded-[20px] border border-[#d9e5f3] bg-white/60 text-[#555149] opacity-75 h-[92px] w-[260px] shrink-0 snap-start gap-3.5 select-none">
-                  <div className="shrink-0 overflow-hidden rounded-xl">
-                    <div className="p-2.5 rounded-xl bg-[#e6f7ff] text-[#1890ff] w-15 h-15 flex items-center justify-center [&_svg]:h-7 [&_svg]:w-7">
+                <div className="relative flex h-[76px] w-[214px] shrink-0 snap-start items-center gap-2.5 rounded-[17px] border border-[#d9e5f3] bg-white/60 p-2.5 text-[#555149] opacity-75 select-none">
+                  <div className="shrink-0 overflow-hidden rounded-[14px]">
+                    <div className="flex h-11 w-11 items-center justify-center rounded-[14px] bg-[#e6f7ff] p-2 text-[#1890ff] [&_svg]:h-5.5 [&_svg]:w-5.5">
                       <svg className="h-7 w-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                         <path d="M4 16v-2a2 2 0 1 1 4 0v2M12 14v-2a2 2 0 1 1 4 0v2M16 8v-2a2 2 0 1 1 4 0v2"/>
                       </svg>
                     </div>
                   </div>
                   <div className="flex flex-col gap-0.5">
-                    <span className="text-[14.5px] font-extrabold text-[#112f59]">Line Walk</span>
-                    <span className="text-[11.5px] font-bold text-[#8292a8]">ได้รับ 15 Coin</span>
+                    <span className="text-[13px] font-extrabold text-[#112f59]">Line Walk</span>
+                    <span className="text-[10.5px] font-bold text-[#8292a8]">ได้รับ 15 Coin</span>
                   </div>
                 </div>
               </>
@@ -742,7 +742,7 @@ export default function PostSocialPage() {
                   )}
                 >
                   <Camera className="h-4.5 w-4.5 text-[#188fff]" />
-                  <span>ถ่ายรูป</span>
+                  <span>ถ่ายรูปทันที</span>
                   <input
                     id={cameraInputId}
                     type="file"
@@ -764,7 +764,7 @@ export default function PostSocialPage() {
                   <svg className="h-4.5 w-4.5 text-[#188fff]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
                   </svg>
-                  <span>เลือกจากแกลเลอรี</span>
+                  <span>อัปโหลดรูป</span>
                   <input
                     id={uploadInputId}
                     type="file"
@@ -831,19 +831,25 @@ export default function PostSocialPage() {
 
       {/* Success Dialog Popup */}
       <Dialog open={!!postSuccessPopup} onOpenChange={(open) => !open && closePostSuccessPopup()}>
-        <AppDialogContent
-          size="sm"
-          className="w-[calc(100vw-24px)] max-w-[420px] border-[#cfead9] bg-[linear-gradient(180deg,#f7fff8_0%,#effaf1_100%)] shadow-[0_28px_64px_rgba(16,91,51,0.18)]"
-        >
-          <AppDialogBody className="grid-cols-[auto_1fr] items-start gap-3 px-4 py-4 sm:px-5 sm:py-4.5">
-            <div className="mt-0.5 flex h-7 w-7 items-center justify-center rounded-full border border-[#a9e2ba] bg-white text-[#2c9a57] shadow-[0_4px_10px_rgba(44,154,87,0.12)]">
+        <AppDialogContent size="sm" className="max-w-[560px]">
+          <AppDialogSectionHeader className="border-[#d7e6f6] bg-[linear-gradient(135deg,#ffffff_0%,#f4f9ff_56%,#eaf4ff_100%)]">
+            <AppDialogTitle className="text-[#0b3572]">
+              {postSuccessPopup?.title}
+            </AppDialogTitle>
+            <AppDialogDescription>
+              ระบบบันทึกโพสต์เรียบร้อยแล้ว
+            </AppDialogDescription>
+          </AppDialogSectionHeader>
+
+          <AppDialogBody className="grid-cols-[auto_1fr] items-center gap-2.5 sm:gap-3">
+            <div className="flex h-8 w-8 items-center justify-center rounded-full border border-[#a9e2ba] bg-white text-[#2c9a57] shadow-[0_4px_10px_rgba(44,154,87,0.12)]">
               <CheckCircle2 className="h-4.5 w-4.5" strokeWidth={2.6} />
             </div>
-            <div className="space-y-1 text-left">
-              <AppDialogTitle className="text-[26px] leading-none text-[#1e9b55] sm:text-[28px]">
-                {postSuccessPopup?.title}
-              </AppDialogTitle>
-              <AppDialogDescription className="mt-0 text-[14px] leading-[1.45] font-extrabold text-[#36a862] sm:text-[15px]">
+            <div className="space-y-0.5 text-left">
+              <div className="text-[18px] font-black leading-tight text-[#1e9b55] sm:text-[20px]">
+                สำเร็จ
+              </div>
+              <AppDialogDescription className="mt-0 text-[14px] leading-snug font-extrabold text-[#36a862] sm:text-[15px]">
                 {postSuccessPopup?.description}
               </AppDialogDescription>
             </div>

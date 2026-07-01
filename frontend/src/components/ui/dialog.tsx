@@ -38,8 +38,9 @@ function DialogOverlay({
     <DialogPrimitive.Overlay
       data-slot="dialog-overlay"
       className={cn(
-        "fixed inset-0 isolate z-50 bg-black/55 duration-150 supports-backdrop-filter:backdrop-blur-sm data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0",
-        className
+        "fixed inset-0 isolate bg-black/55 duration-150 supports-backdrop-filter:backdrop-blur-[6px] data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0",
+        className,
+        "z-[90000]"
       )}
       {...props}
     />
@@ -50,10 +51,20 @@ function DialogContent({
   className,
   children,
   showCloseButton = true,
+  onInteractOutside,
   ...props
 }: React.ComponentProps<typeof DialogPrimitive.Content> & {
   showCloseButton?: boolean
 }) {
+  const handleInteractOutside: React.ComponentProps<typeof DialogPrimitive.Content>["onInteractOutside"] = (event) => {
+    onInteractOutside?.(event);
+    if (event.defaultPrevented) return;
+    const target = event.target;
+    if (target instanceof Element && target.closest('[data-slot="popover-content"]')) {
+      event.preventDefault();
+    }
+  };
+
   return (
     <DialogPortal>
       <DialogOverlay />
@@ -61,9 +72,11 @@ function DialogContent({
         data-slot="dialog-content"
         className={cn(
           dialogPanelClassName(),
-          "fixed top-1/2 left-1/2 z-50 grid max-h-[calc(100dvh-2rem)] w-full max-w-[calc(100%-1rem)] -translate-x-1/2 -translate-y-1/2 gap-4 p-6 text-sm duration-150 outline-none sm:max-w-lg data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95",
-          className
+          "fixed top-1/2 left-1/2 grid max-h-[calc(100dvh-2rem)] w-full max-w-[calc(100%-1rem)] -translate-x-1/2 -translate-y-1/2 gap-4 p-6 text-sm duration-150 outline-none sm:max-w-lg data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95",
+          className,
+          "z-[90001]"
         )}
+        onInteractOutside={handleInteractOutside}
         {...props}
       >
         {children}

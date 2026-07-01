@@ -1,9 +1,9 @@
 export const SAFETY_POINT_RULES = {
-  safetyAwarenessCompleted: 5,
-  safetyPostApproved: 6,
+  safetyAwarenessCompleted: 1,
+  safetyPostApproved: 3,
   commentCreated: 1,
   reactionCreated: 1,
-  safetyEffortCompleted: 10,
+  safetyEffortCompleted: 3,
 } as const;
 
 export type SafetyPointAction = keyof typeof SAFETY_POINT_RULES;
@@ -13,9 +13,9 @@ export function getSafetyPoint(action: SafetyPointAction) {
 }
 
 export const SAFETY_POINT_RULE_LABELS: Record<SafetyPointAction, string> = {
-  safetyAwarenessCompleted: "ผ่าน Safety Awareness",
-  safetyPostApproved: "สร้าง Safety Post ที่อนุมัติ",
-  commentCreated: "Comment",
-  reactionCreated: "Reaction",
-  safetyEffortCompleted: "Safety Effort สำเร็จ",
+  safetyAwarenessCompleted: "ทำ Safety Awareness",
+  safetyPostApproved: "สร้าง Post ใหม่ใน Safety Culture",
+  commentCreated: "Comment ให้ Post ใน Safety Culture",
+  reactionCreated: "กด Like ให้ Post ใน Safety Culture",
+  safetyEffortCompleted: "ทำ Safety Effort",
 };

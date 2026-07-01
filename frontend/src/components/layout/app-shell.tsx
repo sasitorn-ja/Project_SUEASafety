@@ -10,6 +10,7 @@ import { isAdminRoute, SAFETY_EFFORT_ROUTES } from "@/lib/navigation";
 import { cn } from "@/lib/utils";
 import { SafetyAwarenessGate } from "@/components/safety-awareness/safety-awareness-gate";
 import { FloatingSafetyAssistant } from "./floating-safety-assistant";
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import {
   DEMO_ADMIN_USER,
   DEMO_LOGIN_PERSISTED_KEY,
@@ -212,46 +213,45 @@ export function AppShell({ children }: { children: ReactNode }) {
   return (
     <div className="app-shell-root">
       {notification && (
-        <div
-          className="fixed top-5 left-1/2 z-[99999] flex w-[calc(100%-40px)] max-w-[480px] items-start gap-3"
-          style={{
-            transform: "translateX(-50%)",
-            background: "rgba(250, 248, 242, 0.95)",
-            backdropFilter: "blur(12px)",
-            WebkitBackdropFilter: "blur(12px)",
-            border: "2.5px solid #D9383A",
-            borderRadius: "22px",
-            padding: "16px 20px",
-            boxShadow: "0 12px 32px rgba(217, 56, 58, 0.18), 0 4px 12px rgba(0,0,0,0.05)",
-            fontFamily: "var(--font-sans)",
-            animation: "slideDownToast 0.4s cubic-bezier(0.16, 1, 0.3, 1) both",
-          }}
-        >
-          <div className="text-2xl leading-none" style={{ animation: "pulsePulse 1.5s infinite" }}>
-            🚨
-          </div>
-          <div className="min-w-0 flex-1">
-            <div className="mb-[3px] text-sm font-extrabold" style={{ color: "#D9383A" }}>
-              แจ้งเตือนจากระบบ (SOS SIGNAL)
-            </div>
-            <p className="text-xs font-bold leading-relaxed" style={{ color: "#1A1A1A" }}>
-              {notification.message}
-            </p>
-          </div>
-          <button
-            onClick={dismissNotification}
-            className="text-xl font-bold leading-none text-[#8E8A81] hover:text-foreground"
-            style={{
-              background: "transparent",
-              border: "none",
-              cursor: "pointer",
-              padding: "0 2px",
-            }}
-            aria-label="ปิด"
+        <Dialog open onOpenChange={(open) => { if (!open) dismissNotification(); }}>
+          <DialogContent
+            className="w-[calc(100vw-24px)] max-w-[560px] gap-0 overflow-hidden rounded-[28px] border-[3px] border-[#D9383A] bg-[rgba(250,248,242,0.98)] p-0 shadow-[0_24px_64px_rgba(217,56,58,0.20),0_10px_24px_rgba(0,0,0,0.10)]"
+            showCloseButton={false}
           >
-            ×
-          </button>
-        </div>
+            <div className="flex items-start gap-3 px-5 py-5 sm:px-6">
+              <div
+                className="flex h-13 w-13 flex-shrink-0 items-center justify-center rounded-[18px] bg-[#FFF1F1] text-[30px] leading-none"
+                style={{ animation: "pulsePulse 1.5s infinite" }}
+              >
+                🚨
+              </div>
+              <div className="min-w-0 flex-1">
+                <DialogTitle className="text-[18px] font-black leading-tight text-[#D9383A] sm:text-[20px]">
+                  แจ้งเตือนจากระบบ (SOS SIGNAL)
+                </DialogTitle>
+                <DialogDescription className="mt-2 text-[16px] font-black leading-relaxed text-[#1A1A1A]">
+                  {notification.message}
+                </DialogDescription>
+              </div>
+              <button
+                onClick={dismissNotification}
+                className="flex h-10 w-10 flex-shrink-0 items-center justify-center bg-transparent text-[28px] leading-none text-[#8E8A81] transition-colors hover:text-foreground"
+                aria-label="ปิด"
+              >
+                ×
+              </button>
+            </div>
+            <div className="flex justify-end border-t border-[#F1D3D4] bg-[#FFF8F8] px-5 py-4 sm:px-6">
+              <button
+                type="button"
+                onClick={dismissNotification}
+                className="inline-flex h-11 items-center justify-center rounded-full bg-[#D9383A] px-5 text-[14px] font-black text-white shadow-[0_10px_24px_rgba(217,56,58,0.22)] transition-colors hover:bg-[#c92c2e]"
+              >
+                รับทราบ
+              </button>
+            </div>
+          </DialogContent>
+        </Dialog>
       )}
 
       <MobileTopbar hidden={topHidden} />

@@ -565,11 +565,11 @@ function AddModal({ onAdd, onClose, userPos }) {
 
   return (
     <Dialog open onOpenChange={(open) => !open && onClose()}>
-      <DialogContent showCloseButton={false} className="ci-modal p-0" style={{ maxHeight: "98vh", overflow: "hidden", display: "flex", flexDirection: "column", padding: "18px 20px 20px" }}>
-        <div style={{ display: "flex", justifyContent: "center", marginBottom: 10 }}>
-          <div style={{ width: 36, height: 4, borderRadius: 99, background: "rgba(14,15,18,0.15)" }} />
-        </div>
-
+      <DialogContent
+        showCloseButton={false}
+        className="w-[calc(100vw-20px)] max-w-[680px] rounded-[26px] border border-[#cfe0f2] bg-[linear-gradient(180deg,#ffffff,#f8fcff)] p-0 shadow-[0_24px_64px_rgba(6,43,99,0.24)]"
+        style={{ maxHeight: "min(92dvh, 760px)", overflow: "hidden", display: "flex", flexDirection: "column", padding: "20px" }}
+      >
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
           <div>
             <h2 style={{ margin: 0, fontSize: 17, fontWeight: 800, color: T.foreground, fontFamily: "'Prompt',sans-serif" }}>
@@ -655,13 +655,18 @@ function AddModal({ onAdd, onClose, userPos }) {
             <label className="ci-label" style={{ marginBottom: 4 }}>ประเภท</label>
             <Combobox
               value={type}
-              onValueChange={setType}
+              onValueChange={nextType => setType(sanitizeModalType(nextType))}
               aria-label="ประเภท"
+              searchable={false}
               options={[
                 { value: "โรงงาน", label: "โรงงาน" },
                 { value: "สำนักงาน", label: "สำนักงาน" },
                 { value: "Site งาน", label: "Site งาน" },
               ]}
+              className="h-[46px] rounded-[14px] border-[rgba(14,15,18,0.12)] px-3.5 text-[14px] font-extrabold"
+              contentClassName="min-w-[180px]"
+              preserveScrollOnOpen={false}
+              placeholder="เลือกประเภท"
             />
           </div>
         </div>
@@ -945,6 +950,48 @@ const STYLES = `
     font-size: 13px; font-weight: 800; color: ${T.foreground3};
     text-transform: uppercase; letter-spacing: 0.12em;
     font-family: 'Prompt', sans-serif;
+  }
+  .ci-location-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .ci-location-title {
+    margin-top: 3px;
+    font-size: 18px;
+    font-weight: 800;
+    color: ${T.foreground};
+    font-family: 'Prompt', sans-serif;
+    line-height: 1.15;
+    white-space: nowrap;
+  }
+  .ci-location-subtitle {
+    margin-top: 5px;
+    font-size: 13.5px;
+    font-weight: 700;
+    color: ${T.foreground3};
+    line-height: 1.35;
+  }
+  .ci-location-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+  }
+  .ci-location-count {
+    flex-shrink: 0;
+    font-size: 12.5px;
+    color: #4B6B96;
+    font-family: 'Prompt', sans-serif;
+    font-weight: 800;
+    background: #F4F8FF;
+    padding: 6px 10px;
+    border-radius: 999px;
+    border: 1px solid #D7EAFE;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.7);
+    white-space: nowrap;
   }
 
   .ci-list::-webkit-scrollbar { width: 4px; }
@@ -1363,6 +1410,35 @@ const STYLES = `
   }
   .ci-input:focus { border-color: ${yellow}; box-shadow: 0 0 0 3.5px rgba(var(--brand-accent-rgb),0.18), inset 0 2px 4px rgba(0,0,0,0.01); }
 
+  .ci-select {
+    width: 100%;
+    height: 46px;
+    border: 1px solid rgba(14,15,18,0.12);
+    border-radius: 14px;
+    background: #ffffff;
+    color: ${T.foreground};
+    font-family: 'Prompt', 'Sarabun', inherit;
+    font-size: 14px;
+    font-weight: 800;
+    outline: none;
+    padding: 0 38px 0 14px;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.01);
+    transition: border-color 0.2s, box-shadow 0.2s;
+    appearance: none;
+    background-image:
+      linear-gradient(45deg, transparent 50%, #6f7f92 50%),
+      linear-gradient(135deg, #6f7f92 50%, transparent 50%);
+    background-position:
+      calc(100% - 18px) 18px,
+      calc(100% - 12px) 18px;
+    background-size: 6px 6px, 6px 6px;
+    background-repeat: no-repeat;
+  }
+  .ci-select:focus {
+    border-color: ${yellowBdr};
+    box-shadow: 0 0 0 3.5px rgba(var(--brand-accent-rgb),0.18), inset 0 2px 4px rgba(0,0,0,0.01);
+  }
+
   .ci-label {
     font-size: 11px; font-weight: 800; color: ${T.foreground3};
     text-transform: uppercase; letter-spacing: 0.10em;
@@ -1404,13 +1480,70 @@ const STYLES = `
   }
 
   @media (max-width: 767px) {
-    /* Keep the "next" action pinned to the bottom of the viewport on mobile
-       so users never have to scroll past the whole location list to reach it. */
     .ci-footer-panel {
-      position: sticky;
-      bottom: 0;
-      z-index: 6;
+      position: static;
       box-shadow: 0 -6px 18px rgba(14,15,18,0.08);
+      border-radius: 20px 20px 0 0;
+      padding: 10px 12px 12px;
+    }
+    .ci-add-btn {
+      padding: 10px;
+      margin-bottom: 8px !important;
+    }
+    .ci-cta.ready,
+    .ci-cta.disabled {
+      padding: 12px;
+      min-height: 50px;
+    }
+    .ci-location-header {
+      display: grid;
+      grid-template-columns: minmax(max-content, 1fr) auto;
+      align-items: start;
+      gap: 10px;
+    }
+    .ci-location-title {
+      font-size: clamp(20px, 5.2vw, 24px);
+      line-height: 1.2;
+      max-width: 100%;
+      white-space: nowrap;
+    }
+    .ci-location-subtitle {
+      font-size: 13px;
+      line-height: 1.35;
+    }
+    .ci-location-actions {
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 8px;
+    }
+    .ci-location-actions .ci-location-count {
+      order: -1;
+    }
+    .ci-location-actions button {
+      min-width: 148px;
+      justify-content: center;
+    }
+    .ci-location-count {
+      font-size: 12px;
+      padding: 7px 10px;
+      max-width: 148px;
+      white-space: normal;
+      text-align: center;
+      line-height: 1.1;
+    }
+  }
+
+  @media (max-width: 420px) {
+    .ci-location-header {
+      grid-template-columns: 1fr;
+    }
+    .ci-location-actions {
+      width: 100%;
+      flex-direction: row;
+      justify-content: space-between;
+    }
+    .ci-location-title {
+      font-size: clamp(19px, 5vw, 21px);
     }
   }
 
@@ -1935,16 +2068,16 @@ export default function Checkin() {
               overflow: "hidden",
             }}>
               <div className="ci-sidebar-section">
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+                <div className="ci-location-header">
                   <div>
                     <span className="ci-panel-label">ใกล้คุณที่สุด</span>
-                    <div style={{ marginTop: 3, fontSize: 18, fontWeight: 800, color: T.foreground, fontFamily: "'Prompt',sans-serif" }}>
+                    <div className="ci-location-title">
                       เลือกสถานที่ตรวจ
                     </div>
                   </div>
-                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <div className="ci-location-actions">
                     <LocateButton />
-                    <span style={{ fontSize: 12.5, color: T.foreground3, fontFamily: "'Prompt',sans-serif", fontWeight: 700, background: "var(--secondary)", padding: "4px 8px", borderRadius: "6px" }}>
+                    <span className="ci-location-count">
                       {visibleLocations.length} สถานที่
                     </span>
                   </div>
@@ -2061,7 +2194,7 @@ export default function Checkin() {
           <div
             id="ci-mobile-scroll-area"
             className="ci-list"
-            style={{ flex: 1, overflowY: "auto", display: "flex", flexDirection: "column", background: "var(--c-faf9f6)", padding: "12px 12px calc(170px + var(--mobile-bottomnav-h) + env(safe-area-inset-bottom))", gap: 12 }}
+            style={{ flex: 1, overflowY: "auto", display: "flex", flexDirection: "column", background: "var(--c-faf9f6)", padding: "12px", gap: 12 }}
           >
             <StepHeader />
 
@@ -2079,36 +2212,22 @@ export default function Checkin() {
                 boxShadow: "0 10px 24px rgba(34,25,11,0.05)",
               }}
             >
-              <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12 }}>
+              <div className="ci-location-header">
                 <div style={{ minWidth: 0 }}>
                   <span className="ci-panel-label">ใกล้คุณที่สุด</span>
-                  <div style={{ marginTop: 3, fontSize: 18, fontWeight: 800, color: T.foreground, fontFamily: "'Prompt',sans-serif", lineHeight: 1.15 }}>
+                  <div className="ci-location-title">
                     เลือกสถานที่ตรวจ
                   </div>
-                  <div style={{ marginTop: 5, fontSize: 13.5, fontWeight: 700, color: T.foreground3 }}>
+                  <div className="ci-location-subtitle">
                     เลือกจากรายการใกล้คุณ หรือค้นหาสถานที่ที่ต้องการ
                   </div>
                 </div>
-                <span
-                  style={{
-                    flexShrink: 0,
-                    fontSize: 12.5,
-                    color: "#4B6B96",
-                    fontFamily: "'Prompt',sans-serif",
-                    fontWeight: 800,
-                    background: "#F4F8FF",
-                    padding: "6px 10px",
-                    borderRadius: "999px",
-                    border: "1px solid #D7EAFE",
-                    boxShadow: "inset 0 1px 0 rgba(255,255,255,0.7)",
-                  }}
-                >
-                  {visibleLocations.length} สถานที่
-                </span>
-              </div>
-
-              <div style={{ marginTop: 12 }}>
-                <LocateButton />
+                <div className="ci-location-actions">
+                  <span className="ci-location-count">
+                    {visibleLocations.length} สถานที่
+                  </span>
+                  <LocateButton />
+                </div>
               </div>
 
               {loadingLocations && (
@@ -2204,13 +2323,9 @@ export default function Checkin() {
 
           <div
             style={{
-              position: "fixed",
-              left: 0,
-              right: 0,
-              bottom: "calc(var(--mobile-bottomnav-h) + env(safe-area-inset-bottom))",
-              zIndex: 40,
-              background: "linear-gradient(180deg, rgba(250,249,246,0) 0%, rgba(250,249,246,0.88) 18%, rgba(250,249,246,1) 100%)",
-              padding: "10px 12px 0",
+              flexShrink: 0,
+              background: "var(--c-faf9f6)",
+              padding: "0 12px calc(10px + env(safe-area-inset-bottom))",
             }}
           >
             <FooterPanel />

@@ -3,7 +3,7 @@ import "server-only";
 import type { ResultSetHeader, RowDataPacket } from "mysql2/promise";
 
 import { queryRows, withTransaction } from "@backend/components/core/db";
-import { awardPoints, retractPoints } from "@backend/components/points/repository";
+import { awardPoints, getPointRule, retractPoints } from "@backend/components/points/repository";
 
 type PostRow = RowDataPacket & {
   id: string;
@@ -451,30 +451,20 @@ export async function createPost(input: {
         { postId, mediaId, authorId: input.authorId },
       );
     }
-    if (points.amount > 0) {
-      const [pointResult] = await connection.execute<ResultSetHeader>(
-        `INSERT IGNORE INTO point_transactions
-         (user_id, point_rule_id, transaction_type, amount, source_type, source_id, idempotency_key, description)
-         VALUES (:userId, :pointRuleId, 'EARN', :amount, 'POST', :postId, :key, :description)`,
-        {
-          userId: input.authorId,
-          pointRuleId: points.pointRuleId,
-          amount: points.amount,
-          postId,
-          key: `post:${postId}:approved`,
-          description: input.eventId ? "สร้าง Safety Post ใน Card Event" : "สร้าง Safety Post ที่อนุมัติ",
-        },
-      );
-      if (pointResult.affectedRows > 0) {
-        await connection.execute(
-          `INSERT INTO point_balances (user_id, balance) VALUES (:userId, :amount)
-           ON DUPLICATE KEY UPDATE balance=balance+:amount, updated_at=UTC_TIMESTAMP(3)`,
-          { userId: input.authorId, amount: points.amount },
-        );
-      }
-    }
     return postId;
   });
+
+  if (points.amount > 0) {
+    await awardPoints({
+      userId: input.authorId,
+      action: "safetyPostApproved",
+      sourceType: "POST",
+      sourceId: id,
+      idempotencyKey: `post:${id}:approved`,
+      description: input.eventId ? "สร้าง Safety Post ใน Card Event" : "สร้าง Post ใหม่ใน Safety Culture",
+      amountOverride: points.amount,
+    }).catch(() => null);
+  }
 
   return getPost(id, input.authorId);
 }
@@ -618,6 +608,11 @@ export async function listComments(postId: string, options: { limit?: number; cu
 export async function createComment(postId: string, authorId: string, content: string) {
   const text = content.trim();
   if (!text) throw new Error("content_required");
+  const commentRule = await getPointRule("commentCreated");
+  const minCommentLength = Math.max(0, Number(commentRule.minCommentLength) || 0);
+  if (minCommentLength > 0 && text.length < minCommentLength) {
+    throw new Error(`comment_too_short:${minCommentLength}`);
+  }
 
   const id = await withTransaction(async (connection) => {
     const [result] = await connection.execute<ResultSetHeader>(
@@ -708,11 +703,15 @@ export async function deleteComment(commentId: string, authorId: string) {
 }
 
 export async function setReaction(postId: string, userId: string, reactionType = "LIKE") {
+  let createdNewReaction = false;
+  let ownerId: string | null = null;
+
   await withTransaction(async (connection) => {
     const [existingRows] = await connection.execute<RowDataPacket[]>(
       "SELECT reaction_type FROM reactions WHERE post_id=:postId AND user_id=:userId LIMIT 1", { postId, userId },
     );
     const isNew = !existingRows[0];
+    createdNewReaction = isNew;
 
     // Plain INSERT/UPDATE instead of "ON DUPLICATE KEY UPDATE" so this works even
     // when the legacy reactions table has no UNIQUE(post_id, user_id) key.
@@ -736,11 +735,14 @@ export async function setReaction(postId: string, userId: string, reactionType =
            WHERE p.id=:postId AND p.deleted_at IS NULL LIMIT 1`, { postId, userId },
         );
         const owner = owners[0] as (RowDataPacket & { author_id?: string; actor_name?: string }) | undefined;
-        if (owner?.author_id) await createNotification(connection, {
-          userId: String(owner.author_id), actorId: userId, type: "LIKE",
-          title: `${owner.actor_name || "มีผู้ใช้"} กดถูกใจโพสต์ของคุณ`, body: "กดเพื่อดูโพสต์",
-          metadata: { postId, href: `/safety-culture/posts/${postId}` },
-        });
+        if (owner?.author_id) {
+          ownerId = String(owner.author_id);
+          await createNotification(connection, {
+            userId: String(owner.author_id), actorId: userId, type: "LIKE",
+            title: `${owner.actor_name || "มีผู้ใช้"} กดถูกใจโพสต์ของคุณ`, body: "กดเพื่อดูโพสต์",
+            metadata: { postId, href: `/safety-culture/posts/${postId}` },
+          });
+        }
       } catch {
         // ignore notification errors
       }
@@ -756,10 +758,30 @@ export async function setReaction(postId: string, userId: string, reactionType =
     description: "Reaction",
   }).catch(() => null);
 
+  if (createdNewReaction) {
+    const reactionRule = await getPointRule("reactionCreated").catch(() => null);
+    if (reactionRule?.awardPostOwner && ownerId && ownerId !== String(userId)) {
+      await awardPoints({
+        userId: ownerId,
+        action: "reactionCreated",
+        sourceType: "REACTION",
+        sourceId: postId,
+        idempotencyKey: `reaction-owner:${postId}:${userId}:${ownerId}`,
+        description: "Reaction received",
+      }).catch(() => null);
+    }
+  }
+
   return { postId, userId, reactionType };
 }
 
 export async function deleteReaction(postId: string, userId: string) {
+  const ownerRows = await queryRows<RowDataPacket & { author_id: string | number | null }>(
+    "SELECT author_id FROM posts WHERE id = :postId AND deleted_at IS NULL LIMIT 1",
+    { postId },
+  ).catch(() => []);
+  const ownerId = ownerRows[0]?.author_id ? String(ownerRows[0].author_id) : null;
+
   await withTransaction(async (connection) => {
     await connection.execute<ResultSetHeader>(
       "DELETE FROM reactions WHERE post_id = :postId AND user_id = :userId",
@@ -772,6 +794,13 @@ export async function deleteReaction(postId: string, userId: string) {
     userId,
     idempotencyKey: `reaction:${postId}:${userId}`,
   }).catch(() => null);
+
+  if (ownerId && ownerId !== String(userId)) {
+    await retractPoints({
+      userId: ownerId,
+      idempotencyKey: `reaction-owner:${postId}:${userId}:${ownerId}`,
+    }).catch(() => null);
+  }
 
   return { deleted: true };
 }

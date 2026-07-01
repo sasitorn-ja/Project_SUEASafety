@@ -31,7 +31,7 @@ import {
   formatPostSubtext,
   formatThaiDateTime,
 } from "@/lib/safety-culture";
-import { CalendarDays, ChevronLeft, ChevronRight, ClipboardList, Clock3, ImageIcon, MessageCircle, ThumbsUp, Pencil, Sparkles, Trash2, Trophy, UsersRound, X } from "lucide-react";
+import { CalendarDays, ChevronLeft, ChevronRight, CircleDollarSign, ClipboardList, Clock3, ImageIcon, MessageCircle, ThumbsUp, Pencil, Sparkles, Trash2, Trophy, UsersRound, X } from "lucide-react";
 import { SafetyCultureHero } from "@/components/safety-culture/safety-culture-hero";
 import { FullscreenImageViewer } from "@/components/safety-culture/fullscreen-image-viewer";
 import { useAppTheme } from "@/providers/theme-provider";
@@ -1659,7 +1659,7 @@ export default function Page() {
                       </div>
                       <p className="text-[12px] font-bold leading-relaxed text-[#667085] sm:text-[13px]">{expandedActivity.details}</p>
                       <div className="mt-4 inline-flex w-full items-center gap-2 rounded-full bg-[linear-gradient(90deg,#ecfff5,#eefdf3)] px-3 py-2 text-[12px] font-black text-[#18b989] sm:px-3.5 sm:text-[13px]">
-                        <Trophy className="h-4 w-4" strokeWidth={2.2} />
+                        <CircleDollarSign className="h-4 w-4" strokeWidth={2.2} />
                         Points: {expandedActivity.points}
                       </div>
                     </Card>

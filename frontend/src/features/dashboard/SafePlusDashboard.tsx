@@ -7,6 +7,7 @@ import { type SafetyCultureFeedEvent, useAppState } from "@/providers/app-provid
 import { apiFetch } from "@/lib/api-client";
 import { isLocalDemoLoginHost } from "@/lib/session-user";
 import { cn } from "@/lib/utils";
+import { formatDisplayDate } from "@/lib/utils";
 import { Card } from "@/components/ui/card";
 import { Dialog } from "@/components/ui/dialog";
 import { AppDialogBody, AppDialogContent, AppDialogDescription, AppDialogSectionHeader, AppDialogTitle } from "@/components/ui/app-dialog";
@@ -28,6 +29,7 @@ import {
   CheckCircle2,
   ChevronLeft,
   ChevronRight,
+  CircleDollarSign,
   Gift,
   ShieldCheck,
   ThumbsUp,
@@ -136,13 +138,7 @@ function bangkokDateKey(date: Date) {
 }
 
 function formatThaiDate(dateKey: string) {
-  const date = new Date(`${dateKey}T00:00:00+07:00`);
-  return new Intl.DateTimeFormat("th-TH", {
-    timeZone: "Asia/Bangkok",
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  }).format(date);
+  return formatDisplayDate(dateKey);
 }
 
 function previousBangkokDateKey(dateKey: string) {
@@ -407,9 +403,22 @@ export default function SafePlusDashboard() {
         isFuture,
       };
     });
-    const requiredDays = days.filter((day) => day.required && !day.isFuture);
-    const pastRequiredDays = requiredDays.filter((day) => day.dateKey !== today);
-    const done = requiredDays.filter((day) => day.completion).length;
+    const allRequiredDays: Array<{ dateKey: string; completion: boolean; isToday: boolean }> = [];
+    let countDateKey = effectiveAwarenessStartDate;
+    while (countDateKey <= today) {
+      const date = new Date(`${countDateKey}T00:00:00+07:00`);
+      const required = ![0, 6].includes(date.getDay()) && !holidayDates.has(countDateKey);
+      if (required) {
+        allRequiredDays.push({
+          dateKey: countDateKey,
+          completion: historyByDate.has(countDateKey),
+          isToday: countDateKey === today,
+        });
+      }
+      countDateKey = addBangkokDays(countDateKey, 1);
+    }
+    const pastRequiredDays = allRequiredDays.filter((day) => !day.isToday);
+    const done = allRequiredDays.filter((day) => day.completion).length;
     const pastDone = pastRequiredDays.filter((day) => day.completion).length;
     const missed = Math.max(0, pastRequiredDays.length - pastDone);
     const completionRate = pastRequiredDays.length ? Math.round((pastDone / pastRequiredDays.length) * 100) : 0;
@@ -546,7 +555,7 @@ export default function SafePlusDashboard() {
           <div className="flex w-[min(320px,24vw)] flex-col gap-3">
             <div className="rounded-[18px] border border-white/75 bg-white/58 px-4 py-3.5 shadow-[0_12px_28px_rgba(11,130,240,.16)] backdrop-blur-[4px]">
               <div className="flex items-center gap-2 text-[11px] font-black text-[#083B84] [text-shadow:0_1px_0_rgba(255,255,255,.78)]">
-                <ShieldCheck className="h-[20px] w-[20px] text-[#0077F0]" strokeWidth={2.7} />
+                <CircleDollarSign className="h-[20px] w-[20px] text-[#0077F0]" strokeWidth={2.7} />
                 <span>Coin SAFETY ของฉัน</span>
               </div>
               <div className="mt-1 flex items-end gap-2">
@@ -557,7 +566,7 @@ export default function SafePlusDashboard() {
               </div>
               {weeklyPoints > 0 && (
                 <span className="mt-1.5 inline-flex w-fit items-center gap-1 rounded-full bg-[#e6f9ef] px-2.5 py-1 text-[10.5px] font-black text-[#1a8c52] shadow-[inset_0_0_0_1px_rgba(26,140,82,.18)]">
-                  <Zap className="h-3 w-3" />+{weeklyPoints} Coin จากสัปดาห์ที่แล้ว
+                  <CircleDollarSign className="h-3 w-3" strokeWidth={2.5} />+{weeklyPoints} Coin จากสัปดาห์ที่แล้ว
                 </span>
               )}
             </div>
@@ -568,7 +577,7 @@ export default function SafePlusDashboard() {
             >
               <div className="flex items-center gap-2.5">
                 <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[12px] border border-[#D7EAFE] bg-[#F5FAFF] shadow-[inset_0_1px_rgba(255,255,255,.9)]">
-                  <Trophy className="h-6 w-6 text-[#0B82F0]" strokeWidth={2.15} />
+                  <CircleDollarSign className="h-6 w-6 text-[#0B82F0]" strokeWidth={2.15} />
                 </div>
                 <div className="flex min-w-0 flex-col gap-1">
                   <strong className="text-[15px] font-black leading-tight text-[#0B2F6B]">
@@ -635,7 +644,7 @@ export default function SafePlusDashboard() {
           <div className="absolute top-4 left-[5%] z-[4] flex w-[56%] max-w-[230px] flex-col gap-2">
             <div className="rounded-[18px] border border-white/70 bg-white/62 px-3.5 py-3 shadow-[0_12px_28px_rgba(0,92,180,.16)] backdrop-blur-[5px]">
               <div className="flex items-center gap-1.5 text-[11.5px] font-black leading-tight text-[#0B2F6B]">
-                <ShieldCheck className="h-[18px] w-[18px] flex-shrink-0 text-[#0B82F0]" strokeWidth={2.4} />
+                <CircleDollarSign className="h-[18px] w-[18px] flex-shrink-0 text-[#0B82F0]" strokeWidth={2.4} />
                 <span>Coin SAFETY ของฉัน</span>
               </div>
               <div className="mt-2 flex items-baseline gap-2">
@@ -737,7 +746,7 @@ export default function SafePlusDashboard() {
           <div className="grid gap-1.5 rounded-[16px] border-[1.5px] border-[#b9d8fb] bg-gradient-to-br from-[#f8fbff] via-[#eef6ff] to-[#f5fbff] p-2 shadow-[inset_0_1px_0_rgba(255,255,255,.78)] sm:gap-1.5 sm:p-2 lg:grid-cols-[minmax(0,1.3fr)_auto] lg:items-center">
             <div className="grid grid-cols-[46px_minmax(0,1fr)] items-center gap-2 sm:grid-cols-[48px_minmax(0,1fr)] sm:gap-2">
               <div
-                className="grid h-[46px] w-[46px] place-items-center overflow-hidden rounded-[14px] border border-[#d4e6fb] bg-white shadow-[0_8px_14px_rgba(0,71,140,.16)] sm:h-[46px] sm:w-[46px]"
+                className="safety-awareness-icon-frame grid h-[46px] w-[46px] place-items-center overflow-hidden rounded-[14px] bg-white shadow-[0_8px_14px_rgba(0,71,140,.16)] sm:h-[46px] sm:w-[46px]"
               >
                 <Image
                   src={SAFETY_AWARENESS_ICON}
@@ -1123,7 +1132,7 @@ export default function SafePlusDashboard() {
               {awarenessCalendarMode === "done" ? "ปฏิทินวันที่ทำ Safety Awareness แล้ว" : "ปฏิทินวันที่ไม่ได้ทำ Safety Awareness"}
             </AppDialogTitle>
             <AppDialogDescription>
-              ตัวเลขด้านบนจะนับเฉพาะย้อนหลัง 5 วันถึงวันนี้ ส่วนปฏิทินนี้จะแสดงสถานะทุกวันที่นับ KPI ตั้งแต่วันเริ่มต้น
+              ตัวเลขด้านบนนับสะสมตั้งแต่วันเริ่มต้นถึงวันนี้ ส่วนปฏิทินนี้จะแสดงสถานะทุกวันที่นับ KPI
             </AppDialogDescription>
           </AppDialogSectionHeader>
 
@@ -1140,7 +1149,7 @@ export default function SafePlusDashboard() {
               </button>
               <div className="text-center">
                 <div className="text-[16px] font-black text-[#0b3572]">{formatThaiMonthYear(awarenessCalendarMonth)}</div>
-                <div className="text-[11px] font-bold text-[#6c7f99]">เดือนนี้แสดงทั้งเดือน แต่จะเน้นเฉพาะวันที่ถูกนับในการ์ดด้านบน</div>
+                <div className="text-[11px] font-bold text-[#6c7f99]">เดือนนี้แสดงทั้งเดือน และเน้นวันที่ตรงกับสถานะที่เลือก</div>
               </div>
               <button
                 type="button"

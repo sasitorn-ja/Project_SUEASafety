@@ -297,9 +297,31 @@ const STYLES = `
     width: 100%;
     margin: 0 auto;
   }
+  .lw-info-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 12px;
+  }
+  .lw-info-item {
+    min-width: 0;
+  }
+  .lw-info-value {
+    min-width: 0;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow-wrap: anywhere;
+  }
   @media (min-width: 768px) {
     .lw-step1-grid {
       grid-template-columns: minmax(0, 1fr) minmax(320px, 1.2fr);
+    }
+    .lw-info-grid {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    }
+    .lw-info-location {
+      grid-column: 1 / -1;
     }
   }
   @media (min-width: 1200px) {
@@ -722,6 +744,7 @@ export default function Linewalk() {
 
   const currentItem = checklist[currentQuestionIndex] ?? null;
   const currentState = currentItem ? itemStates[currentItem.id] || { status:null, note:"", photos:[] } : null;
+  const nextItem = currentQuestionIndex < totalItems - 1 ? checklist[currentQuestionIndex + 1] ?? null : null;
   const isMobileQuestionScreen = isMobileViewport && isQuestionScreen && !isSafetyContactFlow;
   const mobileQuestionNavColumns = totalItems <= 8 ? totalItems : Math.min(5, totalItems);
   const linewalkMascotAction = isSafetyContactFlow ? "clipboardPost" : "linewalkClip";
@@ -743,7 +766,7 @@ export default function Linewalk() {
         `}</style>
       )}
       <div className="lw">
-        <div style={{ width:"100%", maxWidth:isMobileViewport ? "100%" : 1500, margin:"0 auto", display:"flex", flexDirection:"column", gap:isMobileViewport ? 12 : 16, padding:isMobileViewport ? "10px 12px calc(90px + env(safe-area-inset-bottom))" : (isQuestionScreen ? "4px 20px 4px" : "8px 20px 20px") }}>
+        <div style={{ width:"100%", maxWidth:isMobileViewport ? "100%" : 1500, margin:"0 auto", display:"flex", flexDirection:"column", gap:isMobileViewport ? 12 : 16, padding:isMobileViewport ? "10px 12px calc(150px + env(safe-area-inset-bottom))" : (isQuestionScreen ? "4px 20px 4px" : "8px 20px 20px") }}>
 
           {/* ── HEADER ── */}
           <ProgressHeader
@@ -771,9 +794,9 @@ export default function Linewalk() {
                     </span>
                   </div>
 
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+                  <div className="lw-info-grid">
                     {/* Item 1: กิจกรรม */}
-                    <div style={{
+                    <div className="lw-info-item" style={{
                       background: "linear-gradient(135deg, #FFFFFF 0%, #F8FAFC 100%)",
                       border: "1px solid #E2E8F0",
                       borderRadius: 12,
@@ -788,14 +811,14 @@ export default function Linewalk() {
                       </div>
                       <div style={{ display: "flex", flexDirection: "column", minWidth: 0 }}>
                         <span style={{ fontSize: 12.5, fontWeight: 600, color: "#64748B", fontFamily: "'Prompt', sans-serif" }}>กิจกรรม</span>
-                        <span style={{ fontSize: 15, fontWeight: 800, color: "#0B2F6B", fontFamily: "'Prompt', sans-serif", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                        <span className="lw-info-value" style={{ fontSize: 15, fontWeight: 800, color: "#0B2F6B", fontFamily: "'Prompt', sans-serif" }}>
                           {isSafetyContactFlow ? "Safety Contact" : "Line Walk"}
                         </span>
                       </div>
                     </div>
 
                     {/* Item 2: วันที่ทำ */}
-                    <div style={{
+                    <div className="lw-info-item" style={{
                       background: "linear-gradient(135deg, #FFFFFF 0%, #F8FAFC 100%)",
                       border: "1px solid #E2E8F0",
                       borderRadius: 12,
@@ -810,14 +833,14 @@ export default function Linewalk() {
                       </div>
                       <div style={{ display: "flex", flexDirection: "column", minWidth: 0 }}>
                         <span style={{ fontSize: 12.5, fontWeight: 600, color: "#64748B", fontFamily: "'Prompt', sans-serif" }}>วันที่ทำ</span>
-                        <span style={{ fontSize: 15, fontWeight: 800, color: "#0B2F6B", fontFamily: "'Prompt', sans-serif", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                        <span className="lw-info-value" style={{ fontSize: 15, fontWeight: 800, color: "#0B2F6B", fontFamily: "'Prompt', sans-serif" }}>
                           {date || "-"}
                         </span>
                       </div>
                     </div>
 
                     {/* Item 3: สถานที่ */}
-                    <div style={{
+                    <div className="lw-info-item lw-info-location" style={{
                       background: "linear-gradient(135deg, #FFFFFF 0%, #F8FAFC 100%)",
                       border: "1px solid #E2E8F0",
                       borderRadius: 12,
@@ -832,14 +855,14 @@ export default function Linewalk() {
                       </div>
                       <div style={{ display: "flex", flexDirection: "column", minWidth: 0 }}>
                         <span style={{ fontSize: 12.5, fontWeight: 600, color: "#64748B", fontFamily: "'Prompt', sans-serif" }}>สถานที่</span>
-                        <span style={{ fontSize: 15, fontWeight: 800, color: "#0B2F6B", fontFamily: "'Prompt', sans-serif", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                        <span className="lw-info-value" style={{ fontSize: 15, fontWeight: 800, color: "#0B2F6B", fontFamily: "'Prompt', sans-serif" }}>
                           {checkin?.name || "-"}
                         </span>
                       </div>
                     </div>
 
                     {/* Item 4: รหัสสถานที่ */}
-                    <div style={{
+                    <div className="lw-info-item" style={{
                       background: "linear-gradient(135deg, #FFFFFF 0%, #F8FAFC 100%)",
                       border: "1px solid #E2E8F0",
                       borderRadius: 12,
@@ -854,7 +877,7 @@ export default function Linewalk() {
                       </div>
                       <div style={{ display: "flex", flexDirection: "column", minWidth: 0 }}>
                         <span style={{ fontSize: 12.5, fontWeight: 600, color: "#64748B", fontFamily: "'Prompt', sans-serif" }}>รหัสสถานที่</span>
-                        <span style={{ fontSize: 15, fontWeight: 800, color: "#0B2F6B", fontFamily: "'Prompt', sans-serif", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                        <span className="lw-info-value" style={{ fontSize: 15, fontWeight: 800, color: "#0B2F6B", fontFamily: "'Prompt', sans-serif" }}>
                           {checkin?.tag || "-"}
                         </span>
                       </div>
@@ -1205,22 +1228,22 @@ export default function Linewalk() {
                         alignItems: "center",
                         gap: 4,
                         flexShrink: 0,
-                        width: isMobileQuestionScreen ? 56 : (isQuestionScreen ? 70 : 80),
+                        width: isMobileQuestionScreen ? 64 : (isQuestionScreen ? 74 : 84),
                       }}
                     >
                       <button
                         type="button"
                         onClick={() => setCurrentQuestionIndex(idx)}
                         style={{
-                          width: isMobileQuestionScreen ? 32 : (isQuestionScreen ? 30 : 40),
-                          height: isMobileQuestionScreen ? 32 : (isQuestionScreen ? 30 : 40),
+                          width: isMobileQuestionScreen ? 36 : (isQuestionScreen ? 34 : 42),
+                          height: isMobileQuestionScreen ? 36 : (isQuestionScreen ? 34 : 42),
                           borderRadius: isQuestionScreen ? 12 : "50%",
                           border: border,
                           background: bg,
                           color: color,
                           fontFamily: "'Prompt',sans-serif",
                           fontWeight: 800,
-                          fontSize: isMobileQuestionScreen ? 11.5 : (isQuestionScreen ? 12 : 14),
+                          fontSize: isMobileQuestionScreen ? 13 : (isQuestionScreen ? 13 : 14),
                           cursor: "pointer",
                           boxShadow: active
                             ? `0 0 0 2px ${shadowColor}, 0 6px 14px rgba(0,0,0,0.10)`
@@ -1231,7 +1254,7 @@ export default function Linewalk() {
                       </button>
                       <span
                         style={{
-                          fontSize: isMobileQuestionScreen ? "8.5px" : (isQuestionScreen ? "9px" : "10px"),
+                          fontSize: isMobileQuestionScreen ? "10.5px" : (isQuestionScreen ? "10px" : "11px"),
                           fontWeight: active ? 800 : 600,
                           color: active ? "var(--brand-accent)" : "#55739B",
                           textAlign: "center",
@@ -1251,7 +1274,7 @@ export default function Linewalk() {
                 })}
               </div>
 
-              <div className="lw-card" style={{ padding:isMobileQuestionScreen ? "12px 12px 10px" : (isQuestionScreen ? "10px 16px 8px" : "18px 18px 20px"), display:"flex", flexDirection:"column", gap:isMobileQuestionScreen ? 8 : (isQuestionScreen ? 6 : 16), flex:1, minHeight:0, overflow:"hidden", background:"linear-gradient(180deg,var(--brand-surface) 0%, var(--c-fff8ee) 100%)", border:"1px solid rgba(82,52,24,0.08)", boxShadow:"0 16px 32px rgba(64,38,16,0.08)" }}>
+              <div className="lw-card" style={{ padding:isMobileQuestionScreen ? "14px 14px 12px" : (isQuestionScreen ? "12px 18px 10px" : "18px 18px 20px"), display:"flex", flexDirection:"column", gap:isMobileQuestionScreen ? 10 : (isQuestionScreen ? 8 : 16), flex:1, minHeight:0, overflow:"hidden", background:"linear-gradient(180deg,var(--brand-surface) 0%, var(--c-fff8ee) 100%)", border:"1px solid rgba(82,52,24,0.08)", boxShadow:"0 16px 32px rgba(64,38,16,0.08)" }}>
                 <div style={{
                   display: (isMobileQuestionScreen || isMobileViewport) ? "block" : "flex",
                   gap: (isMobileQuestionScreen || isMobileViewport) ? 0 : 28,
@@ -1267,28 +1290,28 @@ export default function Linewalk() {
                     borderRight: (isMobileQuestionScreen || isMobileViewport) ? "none" : "1px solid rgba(82,52,24,0.08)",
                     paddingRight: (isMobileQuestionScreen || isMobileViewport) ? 0 : 28
                   }}>
-                    <div style={{ display:"flex", alignItems:"center", gap:isMobileQuestionScreen ? 8 : (isQuestionScreen ? 10 : 12), flexShrink:0 }}>
-                      <div style={{ width:isMobileQuestionScreen ? 34 : (isQuestionScreen ? 38 : 42), height:isMobileQuestionScreen ? 34 : (isQuestionScreen ? 38 : 42), borderRadius:"50%", background:"linear-gradient(180deg,var(--c-f7c948) 0%, var(--c-d89b00) 100%)", color:"var(--brand-text)", display:"flex", alignItems:"center", justifyContent:"center", fontFamily:"'Prompt',sans-serif", fontWeight:900, fontSize:isMobileQuestionScreen ? 15 : (isQuestionScreen ? 17 : 18) }}>
+                    <div style={{ display:"flex", alignItems:"center", gap:isMobileQuestionScreen ? 10 : (isQuestionScreen ? 10 : 12), flexShrink:0 }}>
+                      <div style={{ width:isMobileQuestionScreen ? 40 : (isQuestionScreen ? 40 : 42), height:isMobileQuestionScreen ? 40 : (isQuestionScreen ? 40 : 42), borderRadius:"50%", background:"linear-gradient(180deg,var(--c-f7c948) 0%, var(--c-d89b00) 100%)", color:"var(--brand-text)", display:"flex", alignItems:"center", justifyContent:"center", fontFamily:"'Prompt',sans-serif", fontWeight:900, fontSize:isMobileQuestionScreen ? 18 : (isQuestionScreen ? 18 : 18) }}>
                         {currentQuestionIndex + 1}
                       </div>
                       <div>
-                        <div style={{ fontFamily:"'Prompt',sans-serif", fontSize:isMobileQuestionScreen ? 11 : (isQuestionScreen ? 12 : 13), fontWeight:800, color:"var(--c-8a6a45)" }}>
+                        <div style={{ fontFamily:"'Prompt',sans-serif", fontSize:isMobileQuestionScreen ? 15 : (isQuestionScreen ? 13 : 13), fontWeight:800, color:"var(--c-8a6a45)", lineHeight:1.25 }}>
                           ข้อ {currentQuestionIndex + 1} จาก {totalItems}
                         </div>
-                        <h3 style={{ margin:"2px 0 0", fontFamily:"'Prompt',sans-serif", fontSize:isMobileQuestionScreen ? 15 : (isQuestionScreen ? 18 : 20), fontWeight:900, color:"var(--brand-text)", lineHeight:isMobileQuestionScreen ? 1.18 : 1.35 }}>
+                        <h3 style={{ margin:"2px 0 0", fontFamily:"'Prompt',sans-serif", fontSize:isMobileQuestionScreen ? 21 : (isQuestionScreen ? 19 : 20), fontWeight:900, color:"var(--brand-text)", lineHeight:isMobileQuestionScreen ? 1.28 : 1.35 }}>
                           {currentItem.title}
                         </h3>
                       </div>
                     </div>
 
                     {currentItem.guideTitle !== false && (
-                      <p style={{ margin:0, fontFamily:"'Prompt',sans-serif", fontSize:isMobileQuestionScreen ? 10.5 : (isQuestionScreen ? 12 : 12.5), fontWeight:700, color:"var(--c-8a6a45)", flexShrink:0 }}>
+                      <p style={{ margin:0, fontFamily:"'Prompt',sans-serif", fontSize:isMobileQuestionScreen ? 16 : (isQuestionScreen ? 13 : 13.5), fontWeight:800, color:"var(--c-8a6a45)", flexShrink:0, lineHeight:1.4 }}>
                         {currentItem.guideTitle || `แนวทางการตรวจ ${currentItem.title.split(":")[0]}`}
                       </p>
                     )}
 
-                    <ul style={{ margin:"0 0 2px", paddingLeft:isMobileQuestionScreen ? 15 : (isQuestionScreen ? 16 : 18), fontSize:isMobileQuestionScreen ? "10.5px" : (isQuestionScreen ? "12px" : "12.5px"), color:T.foreground2, lineHeight:isMobileQuestionScreen ? 1.32 : (isQuestionScreen ? 1.42 : 1.7) }}>
-                      {currentItem.guidelines.map((g, gi) => <li key={gi} style={{ marginBottom:2 }}>{g}</li>)}
+                    <ul style={{ margin:"0 0 2px", paddingLeft:isMobileQuestionScreen ? 22 : (isQuestionScreen ? 18 : 20), fontSize:isMobileQuestionScreen ? "16px" : (isQuestionScreen ? "13.5px" : "13.5px"), color:T.foreground2, lineHeight:isMobileQuestionScreen ? 1.58 : (isQuestionScreen ? 1.5 : 1.7) }}>
+                      {currentItem.guidelines.map((g, gi) => <li key={gi} style={{ marginBottom:isMobileQuestionScreen ? 6 : 2 }}>{g}</li>)}
                     </ul>
 
                     {currentItem.image && (
@@ -1321,7 +1344,7 @@ export default function Linewalk() {
                     {currentItem.format === "text_box" ? (
                       <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
                         <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                          <span style={{ fontSize: 11, color: T.foreground3, fontWeight: 700, fontFamily: "'Prompt',sans-serif" }}>
+                          <span style={{ fontSize: isMobileQuestionScreen ? 13 : 12, color: T.foreground3, fontWeight: 700, fontFamily: "'Prompt',sans-serif" }}>
                             ระบุคำตอบข้อความ
                           </span>
                           <textarea
@@ -1333,7 +1356,7 @@ export default function Linewalk() {
                               border: "1px solid rgba(14,15,18,0.15)",
                               padding: "12px 14px",
                               fontFamily: "inherit",
-                              fontSize: 13.5,
+                              fontSize: isMobileQuestionScreen ? 15 : 13.5,
                               color: T.foreground,
                               outline: "none",
                               background: "#fcfcfb",
@@ -1422,7 +1445,7 @@ export default function Linewalk() {
                       </div>
                     ) : (
                       <>
-                        <div style={{ display: "grid", gap: isMobileQuestionScreen ? 7 : (isQuestionScreen ? 6 : 10), marginTop: 0 }}>
+                        <div style={{ display: "grid", gap: isMobileQuestionScreen ? 10 : (isQuestionScreen ? 8 : 10), marginTop: 0 }}>
                           {[
                             { key: "safe", label: "ปลอดภัย (Safe)", sub: "ข้อความนี้ถูกต้อง", border: "#22c55e", bg: "#f0fdf4", color: "#15803d", icon: "✓" },
                             { key: "unsafe_condition", label: "สภาพไม่ปลอดภัย (Unsafe Condition)", sub: "พบสภาพแวดล้อมที่ต้องแก้ไข", border: "#ef4444", bg: "#fef2f2", color: "#b91c1c", icon: "!" },
@@ -1440,29 +1463,29 @@ export default function Linewalk() {
                                   borderRadius: isMobileQuestionScreen ? 16 : 14,
                                   border: `3px solid ${themedChoice.border}`,
                                   background: selected ? themedChoice.bg : "#fff",
-                                  padding: isMobileQuestionScreen ? "10px 12px" : (isQuestionScreen ? "8px 14px" : "16px 18px"),
+                                  padding: isMobileQuestionScreen ? "13px 14px" : (isQuestionScreen ? "12px 16px" : "16px 18px"),
                                   display: "flex",
                                   alignItems: "center",
                                   justifyContent: "space-between",
-                                  gap: isMobileQuestionScreen ? 8 : (isQuestionScreen ? 10 : 12),
+                                  gap: isMobileQuestionScreen ? 10 : (isQuestionScreen ? 10 : 12),
                                   cursor: "pointer",
                                   textAlign: "left",
                                 }}
                               >
-                                <div style={{ display: "flex", alignItems: "center", gap: isMobileQuestionScreen ? 8 : (isQuestionScreen ? 10 : 14), minWidth: 0 }}>
-                                  <div style={{ width: isMobileQuestionScreen ? 28 : (isQuestionScreen ? 30 : 34), height: isMobileQuestionScreen ? 28 : (isQuestionScreen ? 30 : 34), borderRadius: 10, background: selected ? themedChoice.border : "rgba(14,15,18,0.06)", color: selected ? "#fff" : themedChoice.color, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 900, fontSize: isMobileQuestionScreen ? 16 : (isQuestionScreen ? 18 : 22), flexShrink: 0 }}>
+                                <div style={{ display: "flex", alignItems: "center", gap: isMobileQuestionScreen ? 10 : (isQuestionScreen ? 12 : 14), minWidth: 0 }}>
+                                  <div style={{ width: isMobileQuestionScreen ? 34 : (isQuestionScreen ? 34 : 34), height: isMobileQuestionScreen ? 34 : (isQuestionScreen ? 34 : 34), borderRadius: 10, background: selected ? themedChoice.border : "rgba(14,15,18,0.06)", color: selected ? "#fff" : themedChoice.color, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 900, fontSize: isMobileQuestionScreen ? 20 : (isQuestionScreen ? 20 : 22), flexShrink: 0 }}>
                                     {themedChoice.icon}
                                   </div>
                                   <div style={{ minWidth: 0 }}>
-                                    <div style={{ fontFamily: "'Prompt',sans-serif", fontSize: isMobileQuestionScreen ? 14 : (isQuestionScreen ? 15.5 : 17), fontWeight: 900, color: themedChoice.color }}>
+                                    <div style={{ fontFamily: "'Prompt',sans-serif", fontSize: isMobileQuestionScreen ? 16 : (isQuestionScreen ? 16.5 : 17), fontWeight: 900, color: themedChoice.color, lineHeight:1.25 }}>
                                       {choice.label}
                                     </div>
-                                    <div style={{ fontFamily: "'Prompt',sans-serif", fontSize: isMobileQuestionScreen ? 10 : (isQuestionScreen ? 11 : 12), fontWeight: 600, color: T.foreground3 }}>
+                                    <div style={{ fontFamily: "'Prompt',sans-serif", fontSize: isMobileQuestionScreen ? 12 : (isQuestionScreen ? 12 : 12), fontWeight: 600, color: T.foreground3, lineHeight:1.3 }}>
                                       {choice.sub}
                                     </div>
                                   </div>
                                 </div>
-                                <div style={{ width: isMobileQuestionScreen ? 22 : (isQuestionScreen ? 24 : 28), height: isMobileQuestionScreen ? 22 : (isQuestionScreen ? 24 : 28), borderRadius: "50%", border: `3px solid ${selected ? themedChoice.border : "rgba(14,15,18,0.16)"}`, background: selected ? themedChoice.border : "#fff", flexShrink: 0 }} />
+                                <div style={{ width: isMobileQuestionScreen ? 26 : (isQuestionScreen ? 26 : 28), height: isMobileQuestionScreen ? 26 : (isQuestionScreen ? 26 : 28), borderRadius: "50%", border: `3px solid ${selected ? themedChoice.border : "rgba(14,15,18,0.16)"}`, background: selected ? themedChoice.border : "#fff", flexShrink: 0 }} />
                               </button>
                             );
                           })}
@@ -1478,12 +1501,12 @@ export default function Linewalk() {
                             {/* Note Box: Show when status is safe, unsafe_condition, or unsafe_action */}
                             {(currentState.status === "safe" || currentState.status === "unsafe_condition" || currentState.status === "unsafe_action") && (
                               <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                                <span style={{ fontSize: 11, color: T.foreground3, fontWeight: 700, fontFamily: "'Prompt',sans-serif" }}>
+                                <span style={{ fontSize: isMobileQuestionScreen ? 13 : 12, color: T.foreground3, fontWeight: 700, fontFamily: "'Prompt',sans-serif" }}>
                                   {currentState.status === "safe" ? "หมายเหตุ / รายละเอียดเพิ่มเติม / ชื่นชม" : "หมายเหตุ / รายละเอียดเพิ่มเติม"}
                                 </span>
                                 <textarea
                                   className="lw-note-box"
-                                  style={{ minHeight: 50, height: 50, resize: "none" }}
+                                  style={{ minHeight: isMobileQuestionScreen ? 64 : 50, height: isMobileQuestionScreen ? 64 : 50, resize: "none", fontSize: isMobileQuestionScreen ? 14.5 : undefined }}
                                   value={currentState.note}
                                   placeholder="กรอกรายละเอียดเพิ่มเติม..."
                                   onChange={e => handleNoteChange(currentItem.id, e.target.value)}
@@ -1551,7 +1574,66 @@ export default function Linewalk() {
                   </div>
                 </div>
 
-                <div style={{ display:"flex", gap:isMobileQuestionScreen ? 8 : 12, justifyContent:"space-between", marginTop:isMobileQuestionScreen ? 2 : 6, flexShrink:0, position:isMobileQuestionScreen ? "fixed" : "static", left:isMobileQuestionScreen ? 0 : undefined, right:isMobileQuestionScreen ? 0 : undefined, bottom:isMobileQuestionScreen ? 0 : undefined, zIndex:isMobileQuestionScreen ? 99 : undefined, background:isMobileQuestionScreen ? "linear-gradient(180deg, rgba(241,236,223,0) 0%, rgba(241,236,223,0.96) 18%, rgba(241,236,223,1) 40%)" : undefined, padding:isMobileQuestionScreen ? "8px 12px calc(8px + env(safe-area-inset-bottom))" : undefined, boxShadow:isMobileQuestionScreen ? "0 -10px 24px rgba(34,25,11,0.10)" : undefined }}>
+                <div style={{ display:"flex", flexDirection:isMobileQuestionScreen ? "column" : "row", gap:isMobileQuestionScreen ? 10 : 12, justifyContent:"space-between", marginTop:isMobileQuestionScreen ? 2 : 6, flexShrink:0, position:isMobileQuestionScreen ? "fixed" : "static", left:isMobileQuestionScreen ? 0 : undefined, right:isMobileQuestionScreen ? 0 : undefined, bottom:isMobileQuestionScreen ? 0 : undefined, zIndex:isMobileQuestionScreen ? 99 : undefined, background:isMobileQuestionScreen ? "linear-gradient(180deg, rgba(241,236,223,0) 0%, rgba(241,236,223,0.96) 18%, rgba(241,236,223,1) 40%)" : undefined, padding:isMobileQuestionScreen ? "10px 12px calc(10px + env(safe-area-inset-bottom))" : undefined, boxShadow:isMobileQuestionScreen ? "0 -10px 24px rgba(34,25,11,0.10)" : undefined }}>
+                  {isMobileQuestionScreen && (
+                    <div
+                      style={{
+                        borderRadius: 16,
+                        border: "1px solid rgba(64,38,16,0.10)",
+                        background: "rgba(255,255,255,0.92)",
+                        backdropFilter: "blur(10px)",
+                        padding: "10px 12px",
+                        boxShadow: "0 8px 20px rgba(34,25,11,0.08)",
+                        display: "flex",
+                        alignItems: "flex-start",
+                        justifyContent: "space-between",
+                        gap: 12,
+                      }}
+                    >
+                      <div style={{ minWidth: 0, display: "flex", flexDirection: "column", gap: 3 }}>
+                        <span style={{ fontSize: 11, fontWeight: 800, color: "#8a6a45", fontFamily: "'Prompt',sans-serif" }}>
+                          ข้อ {currentQuestionIndex + 1} / {totalItems}
+                        </span>
+                        <span
+                          style={{
+                            fontSize: 14,
+                            lineHeight: 1.3,
+                            fontWeight: 900,
+                            color: "var(--brand-text)",
+                            fontFamily: "'Prompt',sans-serif",
+                            display: "-webkit-box",
+                            WebkitLineClamp: 2,
+                            WebkitBoxOrient: "vertical",
+                            overflow: "hidden",
+                          }}
+                        >
+                          {currentItem.title}
+                        </span>
+                      </div>
+                      <div style={{ minWidth: 88, textAlign: "right", flexShrink: 0 }}>
+                        <div style={{ fontSize: 10.5, fontWeight: 800, color: "#55739B", fontFamily: "'Prompt',sans-serif" }}>
+                          {nextItem ? "ข้อถัดไป" : "ขั้นตอนถัดไป"}
+                        </div>
+                        <div
+                          style={{
+                            marginTop: 2,
+                            fontSize: 12.5,
+                            lineHeight: 1.25,
+                            fontWeight: 800,
+                            color: nextItem ? "var(--brand-accent)" : "#15803d",
+                            fontFamily: "'Prompt',sans-serif",
+                            display: "-webkit-box",
+                            WebkitLineClamp: 2,
+                            WebkitBoxOrient: "vertical",
+                            overflow: "hidden",
+                          }}
+                        >
+                          {nextItem ? nextItem.title : "ส่งสรุปการตรวจ"}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  <div style={{ display:"flex", gap:isMobileQuestionScreen ? 8 : 12, justifyContent:"space-between" }}>
                   <button
                     type="button"
                     onClick={handlePrevQuestion}
@@ -1573,7 +1655,7 @@ export default function Linewalk() {
 
                   {currentQuestionIndex < totalItems - 1 ? (
                       <button type="button" onClick={handleNextQuestion} className="lw-cta" style={{ flex:1, height:isMobileQuestionScreen ? 44 : (isQuestionScreen ? 40 : undefined), padding:isMobileQuestionScreen ? "10px" : (isQuestionScreen ? "0 16px" : undefined), borderRadius:isMobileQuestionScreen ? 14 : (isQuestionScreen ? 12 : undefined), fontSize:isMobileQuestionScreen ? 14 : (isQuestionScreen ? 14 : undefined), minHeight:0 }}>
-                      ถัดไป →
+                      {isMobileQuestionScreen ? "ไปข้อถัดไป →" : "ถัดไป →"}
                     </button>
                   ) : (
                     <button
@@ -1589,6 +1671,7 @@ export default function Linewalk() {
                       <IcoArrow />
                     </button>
                   )}
+                  </div>
                 </div>
               </div>
             </div>

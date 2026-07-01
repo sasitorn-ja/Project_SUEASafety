@@ -50,9 +50,31 @@ const STYLES = `
     width: 100%;
     margin: 0 auto;
   }
+  .lw-info-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 12px;
+  }
+  .lw-info-item {
+    min-width: 0;
+  }
+  .lw-info-value {
+    min-width: 0;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow-wrap: anywhere;
+  }
   @media (min-width: 768px) {
     .lw-step1-grid {
       grid-template-columns: minmax(0, 1fr) minmax(320px, 1.2fr);
+    }
+    .lw-info-grid {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    }
+    .lw-info-location {
+      grid-column: 1 / -1;
     }
   }
   @media (min-width: 1200px) {
@@ -227,9 +249,9 @@ export default function SafetyContact() {
                     </span>
                   </div>
 
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+                  <div className="lw-info-grid">
                     {/* Item 1: กิจกรรม */}
-                    <div style={{
+                    <div className="lw-info-item" style={{
                       background: "linear-gradient(135deg, #FFFFFF 0%, #F8FAFC 100%)",
                       border: "1px solid #E2E8F0",
                       borderRadius: 12,
@@ -244,14 +266,14 @@ export default function SafetyContact() {
                       </div>
                       <div style={{ display: "flex", flexDirection: "column", minWidth: 0 }}>
                         <span style={{ fontSize: 12.5, fontWeight: 600, color: "#64748B", fontFamily: "'Prompt', sans-serif" }}>กิจกรรม</span>
-                        <span style={{ fontSize: 15, fontWeight: 800, color: "#0B2F6B", fontFamily: "'Prompt', sans-serif", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                        <span className="lw-info-value" style={{ fontSize: 15, fontWeight: 800, color: "#0B2F6B", fontFamily: "'Prompt', sans-serif" }}>
                           Safety Contact
                         </span>
                       </div>
                     </div>
 
                     {/* Item 2: วันที่ทำ */}
-                    <div style={{
+                    <div className="lw-info-item" style={{
                       background: "linear-gradient(135deg, #FFFFFF 0%, #F8FAFC 100%)",
                       border: "1px solid #E2E8F0",
                       borderRadius: 12,
@@ -266,14 +288,14 @@ export default function SafetyContact() {
                       </div>
                       <div style={{ display: "flex", flexDirection: "column", minWidth: 0 }}>
                         <span style={{ fontSize: 12.5, fontWeight: 600, color: "#64748B", fontFamily: "'Prompt', sans-serif" }}>วันที่ทำ</span>
-                        <span style={{ fontSize: 15, fontWeight: 800, color: "#0B2F6B", fontFamily: "'Prompt', sans-serif", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                        <span className="lw-info-value" style={{ fontSize: 15, fontWeight: 800, color: "#0B2F6B", fontFamily: "'Prompt', sans-serif" }}>
                           {date || "-"}
                         </span>
                       </div>
                     </div>
 
                     {/* Item 3: สถานที่ */}
-                    <div style={{
+                    <div className="lw-info-item lw-info-location" style={{
                       background: "linear-gradient(135deg, #FFFFFF 0%, #F8FAFC 100%)",
                       border: "1px solid #E2E8F0",
                       borderRadius: 12,
@@ -288,14 +310,14 @@ export default function SafetyContact() {
                       </div>
                       <div style={{ display: "flex", flexDirection: "column", minWidth: 0 }}>
                         <span style={{ fontSize: 12.5, fontWeight: 600, color: "#64748B", fontFamily: "'Prompt', sans-serif" }}>สถานที่</span>
-                        <span style={{ fontSize: 15, fontWeight: 800, color: "#0B2F6B", fontFamily: "'Prompt', sans-serif", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                        <span className="lw-info-value" style={{ fontSize: 15, fontWeight: 800, color: "#0B2F6B", fontFamily: "'Prompt', sans-serif" }}>
                           {checkin?.name || "-"}
                         </span>
                       </div>
                     </div>
 
                     {/* Item 4: รหัสสถานที่ */}
-                    <div style={{
+                    <div className="lw-info-item" style={{
                       background: "linear-gradient(135deg, #FFFFFF 0%, #F8FAFC 100%)",
                       border: "1px solid #E2E8F0",
                       borderRadius: 12,
@@ -310,7 +332,7 @@ export default function SafetyContact() {
                       </div>
                       <div style={{ display: "flex", flexDirection: "column", minWidth: 0 }}>
                         <span style={{ fontSize: 12.5, fontWeight: 600, color: "#64748B", fontFamily: "'Prompt', sans-serif" }}>รหัสสถานที่</span>
-                        <span style={{ fontSize: 15, fontWeight: 800, color: "#0B2F6B", fontFamily: "'Prompt', sans-serif", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                        <span className="lw-info-value" style={{ fontSize: 15, fontWeight: 800, color: "#0B2F6B", fontFamily: "'Prompt', sans-serif" }}>
                           {checkin?.tag || "-"}
                         </span>
                       </div>

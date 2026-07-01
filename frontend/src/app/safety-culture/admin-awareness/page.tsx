@@ -69,10 +69,11 @@ const EMPTY_EDITOR: EditorState = {
   enabled: true,
 };
 
-const HOURS = Array.from({ length: 24 }, (_, i) => String(i).padStart(2, "0"));
-const MINUTES = Array.from({ length: 60 }, (_, i) => String(i).padStart(2, "0"));
-const HOUR_OPTIONS = HOURS.map((value) => ({ value, label: value }));
-const MINUTE_OPTIONS = MINUTES.map((value) => ({ value, label: value }));
+type AwarenessSchedulePopup = {
+  type: "success" | "info";
+  title: string;
+  description: string;
+};
 
 function SectionCard({
   title,
@@ -105,38 +106,108 @@ function SectionCard({
 }
 
 export default function AdminAwarenessPage() {
-  const { awarenessQuestions, awarenessHolidays, awarenessEnabled, awarenessActiveStartTime, awarenessActiveEndTime } = useAppState();
-  const { updateAwarenessQuestions, updateAwarenessHolidays, updateAwarenessEnabled, updateAwarenessTimeWindow, showNotification } = useAppActions();
+  const {
+    awarenessQuestions,
+    awarenessHolidays,
+    awarenessEnabled,
+    awarenessActiveStartTime,
+    awarenessActiveEndTime,
+    awarenessScheduleStartDate,
+  } = useAppState();
+  const {
+    updateAwarenessQuestions,
+    updateAwarenessHolidays,
+    updateAwarenessEnabled,
+    updateAwarenessTimeWindow,
+    updateAwarenessScheduleStartDate,
+  } = useAppActions();
+  const [tempStartTime, setTempStartTime] = useState(awarenessActiveStartTime || "08:00");
+  const [tempEndTime, setTempEndTime] = useState(awarenessActiveEndTime || "17:00");
+  const [tempScheduleStartDate, setTempScheduleStartDate] = useState(awarenessScheduleStartDate || "");
 
-  const [startHour, startMinute] = (awarenessActiveStartTime || "08:00").split(":");
-  const [endHour, endMinute] = (awarenessActiveEndTime || "17:00").split(":");
-
-  const [tempStartHour, setTempStartHour] = useState(startHour);
-  const [tempStartMinute, setTempStartMinute] = useState(startMinute);
-  const [tempEndHour, setTempEndHour] = useState(endHour);
-  const [tempEndMinute, setTempEndMinute] = useState(endMinute);
-
-  const [savingTime, setSavingTime] = useState(false);
+  const [savingScheduleSettings, setSavingScheduleSettings] = useState(false);
+  const [schedulePopup, setSchedulePopup] = useState<AwarenessSchedulePopup | null>(null);
 
   useEffect(() => {
-    const [sh, sm] = (awarenessActiveStartTime || "08:00").split(":");
-    const [eh, em] = (awarenessActiveEndTime || "17:00").split(":");
-    setTempStartHour(sh);
-    setTempStartMinute(sm);
-    setTempEndHour(eh);
-    setTempEndMinute(em);
+    setTempStartTime(awarenessActiveStartTime || "08:00");
+    setTempEndTime(awarenessActiveEndTime || "17:00");
   }, [awarenessActiveStartTime, awarenessActiveEndTime]);
 
-  const handleSaveTime = async () => {
-    setSavingTime(true);
-    const newStart = `${tempStartHour}:${tempStartMinute}`;
-    const newEnd = `${tempEndHour}:${tempEndMinute}`;
-    const ok = await updateAwarenessTimeWindow(newStart, newEnd);
-    setSavingTime(false);
-    if (ok) {
-      showNotification({
+  useEffect(() => {
+    setTempScheduleStartDate(awarenessScheduleStartDate || "");
+  }, [awarenessScheduleStartDate]);
+
+  const todayLabel = useMemo(
+    () => new Intl.DateTimeFormat("th-TH", {
+      dateStyle: "full",
+      timeZone: "Asia/Bangkok",
+    }).format(new Date()),
+    [],
+  );
+
+  const bangkokTodayKey = useMemo(
+    () => new Intl.DateTimeFormat("en-CA", {
+      timeZone: "Asia/Bangkok",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    }).format(new Date()),
+    [],
+  );
+
+  const formatDisplayDate = (dateValue?: string) => {
+    if (!dateValue) return "";
+    const [year, month, day] = dateValue.split("-");
+    if (!year || !month || !day) return dateValue;
+    return `${day}/${month}/${year}`;
+  };
+
+  const toMinutes = (time: string) => {
+    const [hour = "0", minute = "0"] = time.split(":");
+    return Number(hour) * 60 + Number(minute);
+  };
+
+  const activeWindowMinutes = Math.max(0, toMinutes(tempEndTime) - toMinutes(tempStartTime));
+  const timeRangeInvalid = toMinutes(tempStartTime) >= toMinutes(tempEndTime);
+  const timeWindowChanged =
+    tempStartTime !== (awarenessActiveStartTime || "08:00")
+    || tempEndTime !== (awarenessActiveEndTime || "17:00");
+  const activeWindowSummary = timeRangeInvalid
+    ? "เวลาสิ้นสุดต้องอยู่หลังเวลาเริ่มต้น"
+    : `เปิดคำถามทุกวันช่วง ${tempStartTime} - ${tempEndTime} น. (${Math.floor(activeWindowMinutes / 60)} ชม. ${activeWindowMinutes % 60} นาที)`;
+  const scheduleDateChanged = tempScheduleStartDate !== (awarenessScheduleStartDate || "");
+  const scheduleSettingsChanged = scheduleDateChanged || timeWindowChanged;
+  const awarenessScheduledForFuture = awarenessEnabled && Boolean(tempScheduleStartDate) && tempScheduleStartDate > bangkokTodayKey;
+  const awarenessEffectiveEnabled = awarenessEnabled && !awarenessScheduledForFuture;
+  const scheduleStartDateLabel = formatDisplayDate(tempScheduleStartDate);
+  const scheduleStateSummary = !tempScheduleStartDate
+    ? "ยังไม่ได้ตั้งวันล่วงหน้า ระบบจะใช้สถานะและช่วงเวลาทันที"
+    : tempScheduleStartDate > bangkokTodayKey
+      ? `ตั้งล่วงหน้าไว้แล้ว วันนี้ยังไม่แสดงให้ผู้ใช้เห็น ระบบจะเริ่มมีผลวันที่ ${scheduleStartDateLabel}`
+      : `ระบบมีผลตั้งแต่วันที่ ${scheduleStartDateLabel}`;
+
+  const handleSaveScheduleSettings = async () => {
+    if (timeRangeInvalid) {
+      setSchedulePopup({
+        type: "info",
+        title: "ยังบันทึกไม่ได้",
+        description: "กรุณาตั้งเวลาให้เวลาสิ้นสุดอยู่หลังเวลาเริ่มต้น",
+      });
+      return;
+    }
+    setSavingScheduleSettings(true);
+    const [timeOk, dateOk] = await Promise.all([
+      updateAwarenessTimeWindow(tempStartTime, tempEndTime),
+      updateAwarenessScheduleStartDate(tempScheduleStartDate),
+    ]);
+    setSavingScheduleSettings(false);
+    if (timeOk && dateOk) {
+      setSchedulePopup({
         type: "success",
-        message: `บันทึกเวลาสำเร็จ: เปลี่ยนเวลาขึ้น-ลงคำถามเป็น ${newStart} น. ถึง ${newEnd} น. เรียบร้อยแล้ว`,
+        title: "บันทึกสำเร็จ",
+        description: tempScheduleStartDate
+          ? `บันทึกการตั้งค่าเรียบร้อยแล้ว ระบบจะเริ่มใช้วันที่ ${scheduleStartDateLabel} ช่วง ${tempStartTime} - ${tempEndTime} น.`
+          : `บันทึกการตั้งค่าเรียบร้อยแล้ว ระบบจะใช้ทันทีช่วง ${tempStartTime} - ${tempEndTime} น.`,
       });
     }
   };
@@ -390,131 +461,184 @@ export default function AdminAwarenessPage() {
       </div>
 
       {/* Settings Card (Global Status & Active Hours) */}
-      <Card className="mt-3 rounded-[18px] border border-[#B9E0FF] bg-white p-4 md:p-5 shadow-sm">
-        <div className="grid gap-6 md:grid-cols-2 items-center divide-y md:divide-y-0 md:divide-x divide-[#D7EAFE]">
+      <Card className="mt-3 rounded-[18px] border border-[#B9E0FF] bg-white p-4 shadow-sm md:p-4.5">
+        <div className="grid gap-4 xl:grid-cols-[minmax(300px,0.85fr)_minmax(420px,1.15fr)] xl:items-start xl:divide-x xl:divide-y-0 divide-[#D7EAFE]">
           {/* Global Toggle */}
-          <div className="pb-4 md:pb-0 md:pr-6 flex items-center justify-between gap-4">
+          <div className="flex flex-col gap-3 border-b border-[#D7EAFE] pb-4 xl:border-b-0 xl:pr-4 xl:pb-0">
             <div className="flex items-start gap-3">
-              <div className={cn(
-                "flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl transition-all duration-200",
-                awarenessEnabled ? "bg-[#EAF6FF] text-[#0B82F0] shadow-sm shadow-blue-50" : "bg-[#F1F5F9] text-[#94A3B8]"
-              )}>
+              <div
+                className={cn(
+                  "flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-2xl transition-all duration-200",
+                  awarenessEnabled ? "bg-[#EAF6FF] text-[#0B82F0] shadow-sm shadow-blue-50" : "bg-[#F1F5F9] text-[#94A3B8]",
+                )}
+              >
                 <ShieldCheck className="h-5.5 w-5.5" strokeWidth={2.2} />
               </div>
               <div className="min-w-0">
-                <h3 className="text-[14px] font-black text-[#0B2F6B]">สถานะระบบ Safety Awareness</h3>
-                <p className="text-[11.5px] font-bold text-[#55739B] mt-0.5">เปิด/ปิดการแสดงหน้าต่างคำถามประจำวันแก่ผู้ใช้ทั่วไป</p>
+                <h3 className="text-[15px] font-black text-[#0B2F6B]">สถานะระบบ Safety Awareness</h3>
+                <p className="mt-0.5 text-[11.5px] font-bold text-[#55739B]">เปิด/ปิดการแสดงหน้าต่างคำถามประจำวันแก่ผู้ใช้ทั่วไป</p>
               </div>
             </div>
-            
-            <div className="flex items-center gap-2 flex-shrink-0">
-              <span className={cn("text-[12.5px] font-black transition-colors hidden sm:inline", awarenessEnabled ? "text-[#0B82F0]" : "text-[#94A3B8]")}>
-                {awarenessEnabled ? "เปิดใช้งาน" : "ปิดใช้งาน"}
-              </span>
-              <button
-                type="button"
-                onClick={async () => {
-                  await updateAwarenessEnabled(!awarenessEnabled);
-                }}
-                className={cn(
-                  "relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none",
-                  awarenessEnabled ? "bg-[#0B82F0]" : "bg-[#cbd5e1]"
-                )}
-              >
-                <span
-                  className={cn(
-                    "pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out",
-                    awarenessEnabled ? "translate-x-5" : "translate-x-0"
-                  )}
-                />
-              </button>
+
+            <div className="rounded-2xl border border-[#D7EAFE] bg-[linear-gradient(135deg,#F8FCFF_0%,#EEF7FF_100%)] px-4 py-3">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                <div className="min-w-0 space-y-1">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Badge className={cn(
+                      "rounded-full px-2.5 py-1 text-[11px] font-black shadow-none",
+                      awarenessEffectiveEnabled
+                        ? "bg-[#EAF6FF] text-[#0B82F0]"
+                        : awarenessScheduledForFuture
+                          ? "bg-[#FFF6DB] text-[#B7791F]"
+                          : "bg-[#EEF2F6] text-[#6B7E95]",
+                    )}>
+                      {awarenessEffectiveEnabled ? "ระบบเปิดใช้งาน" : awarenessScheduledForFuture ? "ยังไม่เปิดวันนี้" : "ระบบปิดใช้งาน"}
+                    </Badge>
+                    <span className="text-[11.5px] font-bold text-[#55739B]">
+                      {tempScheduleStartDate ? `เริ่มใช้ ${scheduleStartDateLabel}` : "มีผลทุกวัน"}
+                    </span>
+                  </div>
+                  <p className="text-[12.5px] font-black text-[#0B2F6B]">{todayLabel}</p>
+                  <p className="text-[11.5px] font-bold leading-5 text-[#55739B]">
+                    {awarenessEnabled
+                      ? `${scheduleStateSummary} • ${activeWindowSummary}`
+                      : "ปิดการแสดงป็อปอัพคำถามชั่วคราวสำหรับผู้ใช้ทั่วไป"}
+                  </p>
+                </div>
+
+                <div className="flex min-w-[72px] flex-col items-center gap-1 self-start sm:self-center">
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      await updateAwarenessEnabled(!awarenessEnabled);
+                    }}
+                    className={cn(
+                      "relative inline-flex h-7 w-12 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none",
+                      awarenessEnabled ? "bg-[#0B82F0]" : "bg-[#cbd5e1]",
+                    )}
+                  >
+                    <span
+                      className={cn(
+                        "pointer-events-none inline-block h-5.5 w-5.5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out",
+                        awarenessEnabled ? "translate-x-5" : "translate-x-0",
+                      )}
+                    />
+                  </button>
+                  <span
+                    className={cn(
+                      "w-full text-center text-[11px] font-black leading-none whitespace-nowrap transition-colors",
+                      awarenessEffectiveEnabled
+                        ? "text-[#0B82F0]"
+                        : awarenessScheduledForFuture
+                          ? "text-[#B7791F]"
+                          : "text-[#94A3B8]",
+                    )}
+                  >
+                    {awarenessEffectiveEnabled ? "เปิดใช้งาน" : awarenessScheduledForFuture ? "รอวันเริ่ม" : "ปิดใช้งาน"}
+                  </span>
+                </div>
+              </div>
             </div>
           </div>
 
           {/* Daily Time Window Selector */}
-          <div className="pt-4 md:pt-0 md:pl-6 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-              {/* Start Time */}
-              <div className="flex flex-col gap-1">
-                <span className="text-[12px] font-bold text-[#55739B]">เวลาเริ่มต้น</span>
-                <div className="flex items-center gap-2">
-                  <div className="relative">
-                    <Clock className="pointer-events-none absolute left-3 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-[#0B82F0]" />
-                    <div className="pointer-events-none absolute left-9 top-1/2 z-10 h-5 w-px -translate-y-1/2 bg-[#CFE3F4]" />
-                    <Combobox
-                      disabled={!awarenessEnabled}
-                      value={tempStartHour}
-                      onValueChange={setTempStartHour}
-                      options={HOUR_OPTIONS}
-                      searchable={false}
-                      aria-label="เลือกชั่วโมงเริ่มต้น"
-                      className="h-10 w-[96px] rounded-xl border-[#CFE3F4] pl-12 pr-2 text-[14px] font-black text-[#0B2F6B] hover:border-[#0B82F0] [&>svg]:h-3.5 [&>svg]:w-3.5"
-                      contentClassName="min-w-[96px]"
-                    />
-                  </div>
+          <div className="flex flex-col gap-3 xl:pl-4">
+            <div className="space-y-1">
+              <h4 className="text-[14px] font-black text-[#0B2F6B]">ช่วงเวลาแสดงคำถามประจำวัน</h4>
+              <p className="text-[11.5px] font-bold text-[#55739B]">กำหนดเวลาที่ผู้ใช้จะเห็น Safety Awareness ในแต่ละวัน โดยแสดงเป็นเวลาไทย (Bangkok)</p>
+            </div>
 
-                  <div className="relative">
-                    <Combobox
-                      disabled={!awarenessEnabled}
-                      value={tempStartMinute}
-                      onValueChange={setTempStartMinute}
-                      options={MINUTE_OPTIONS}
-                      searchable={false}
-                      aria-label="เลือกนาทีเริ่มต้น"
-                      className="h-10 w-[76px] rounded-xl border-[#CFE3F4] text-[14px] font-black text-[#0B2F6B] hover:border-[#0B82F0] [&>svg]:h-3.5 [&>svg]:w-3.5"
-                      contentClassName="min-w-[76px]"
-                    />
-                  </div>
-                  <span className="text-[13px] font-black text-[#0B2F6B]">น.</span>
+            <div className="rounded-2xl border border-[#D7EAFE] bg-[#FBFEFF] px-4 py-3">
+              <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
+                <div className="space-y-1">
+                  <Label className="text-[12px] font-black text-[#55739B]">วันที่เริ่มใช้งาน</Label>
+                  <Input
+                    type="date"
+                    min={bangkokTodayKey}
+                    disabled={!awarenessEnabled}
+                    value={tempScheduleStartDate}
+                    onChange={(event) => setTempScheduleStartDate(event.target.value)}
+                    aria-label="เลือกวันที่เริ่มใช้งาน Safety Awareness"
+                    className="h-11 rounded-2xl border-[#CFE3F4] bg-white px-4 text-[15px] font-black text-[#0B2F6B] shadow-none focus-visible:border-[#0B82F0] focus-visible:ring-[rgba(11,130,240,0.16)]"
+                  />
+                  <p className="text-[11px] font-bold text-[#7B8CA5]">ถ้าเว้นว่าง ระบบจะใช้ทันที แต่ถ้าตั้งวันไว้ ระบบจะเริ่มแสดงในวันนั้น</p>
+                </div>
+
+                <div className="flex items-center gap-3 lg:self-end">
+                  {tempScheduleStartDate ? (
+                    <button
+                      type="button"
+                      onClick={() => setTempScheduleStartDate("")}
+                      className="text-[11px] font-black text-[#55739B] underline underline-offset-2"
+                    >
+                      ล้าง
+                    </button>
+                  ) : null}
                 </div>
               </div>
 
-              <span className="text-[13px] font-black text-[#55739B] mt-5 self-center">ถึง</span>
+              <div className="mt-3 rounded-xl bg-[#F1F8FE] px-3 py-2 text-[11.5px] font-bold text-[#24567F]">
+                {scheduleStateSummary}
+              </div>
 
-              {/* End Time */}
-              <div className="flex flex-col gap-1">
-                <span className="text-[12px] font-bold text-[#55739B]">เวลาสิ้นสุด</span>
-                <div className="flex items-center gap-2">
+              <div className="mt-3 grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)_auto] lg:items-end">
+                <div className="space-y-1">
+                  <Label className="text-[12px] font-black text-[#55739B]">เวลาเริ่มต้น</Label>
+                  <div className="relative">
+                    <Clock className="pointer-events-none absolute left-4 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-[#0B82F0]" />
+                    <Input
+                      type="time"
+                      step={300}
+                      disabled={!awarenessEnabled}
+                      value={tempStartTime}
+                      onChange={(event) => setTempStartTime(event.target.value)}
+                      aria-label="เลือกเวลาเริ่มต้น"
+                      className="h-11 rounded-2xl border-[#CFE3F4] bg-white pl-12 pr-4 text-[16px] font-black text-[#0B2F6B] shadow-none focus-visible:border-[#0B82F0] focus-visible:ring-[rgba(11,130,240,0.16)] [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:opacity-90"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex h-11 items-center justify-center text-[13px] font-black text-[#55739B] lg:px-1">ถึง</div>
+
+                <div className="space-y-1">
+                  <Label className="text-[12px] font-black text-[#55739B]">เวลาสิ้นสุด</Label>
                   <div className="relative">
                     <Clock className="pointer-events-none absolute left-3 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-[#0B82F0]" />
-                    <div className="pointer-events-none absolute left-9 top-1/2 z-10 h-5 w-px -translate-y-1/2 bg-[#CFE3F4]" />
-                    <Combobox
+                    <Input
+                      type="time"
+                      step={300}
                       disabled={!awarenessEnabled}
-                      value={tempEndHour}
-                      onValueChange={setTempEndHour}
-                      options={HOUR_OPTIONS}
-                      searchable={false}
-                      aria-label="เลือกชั่วโมงสิ้นสุด"
-                      className="h-10 w-[96px] rounded-xl border-[#CFE3F4] pl-12 pr-2 text-[14px] font-black text-[#0B2F6B] hover:border-[#0B82F0] [&>svg]:h-3.5 [&>svg]:w-3.5"
-                      contentClassName="min-w-[96px]"
+                      value={tempEndTime}
+                      onChange={(event) => setTempEndTime(event.target.value)}
+                      aria-label="เลือกเวลาสิ้นสุด"
+                      className="h-11 rounded-2xl border-[#CFE3F4] bg-white pl-12 pr-4 text-[16px] font-black text-[#0B2F6B] shadow-none focus-visible:border-[#0B82F0] focus-visible:ring-[rgba(11,130,240,0.16)] [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:opacity-90"
                     />
                   </div>
+                </div>
 
-                  <div className="relative">
-                    <Combobox
-                      disabled={!awarenessEnabled}
-                      value={tempEndMinute}
-                      onValueChange={setTempEndMinute}
-                      options={MINUTE_OPTIONS}
-                      searchable={false}
-                      aria-label="เลือกนาทีสิ้นสุด"
-                      className="h-10 w-[76px] rounded-xl border-[#CFE3F4] text-[14px] font-black text-[#0B2F6B] hover:border-[#0B82F0] [&>svg]:h-3.5 [&>svg]:w-3.5"
-                      contentClassName="min-w-[76px]"
-                    />
-                  </div>
-                  <span className="text-[13px] font-black text-[#0B2F6B]">น.</span>
+                <div />
+              </div>
+
+              <div className="mt-3 flex flex-col gap-1.5 lg:flex-row lg:items-center lg:justify-between">
+                <div className={cn(
+                  "rounded-xl px-3 py-2 text-[11.5px] font-bold",
+                  timeRangeInvalid ? "bg-[#FEF2F2] text-[#B91C1C]" : "bg-[#F1F8FE] text-[#24567F]",
+                )}>
+                  {timeRangeInvalid ? "กรุณาตั้งเวลาสิ้นสุดให้หลังเวลาเริ่มต้น" : activeWindowSummary}
+                </div>
+                <div className="flex items-center gap-3 self-start lg:self-center">
+                  <span className="text-[11px] font-bold text-[#7B8CA5]">แนะนำช่วงเวลางานจริง เช่น 08:00 - 17:00 น.</span>
+                  <Button
+                    onClick={handleSaveScheduleSettings}
+                    disabled={!awarenessEnabled || savingScheduleSettings || timeRangeInvalid || !scheduleSettingsChanged}
+                    className="h-11 rounded-2xl bg-[#0B82F0] px-4 text-[13px] font-black text-white shadow-sm transition-colors hover:bg-[#0973d6]"
+                  >
+                    <Check className="mr-2 h-4.5 w-4.5" strokeWidth={3} />
+                    {savingScheduleSettings ? "กำลังบันทึก..." : "บันทึกการตั้งค่า"}
+                  </Button>
                 </div>
               </div>
             </div>
-
-            <Button
-              onClick={handleSaveTime}
-              disabled={!awarenessEnabled || savingTime}
-              className="h-10 px-5 rounded-full bg-[#0B82F0] text-white hover:bg-[#0973d6] font-black text-[13.5px] shadow-sm flex items-center gap-2 cursor-pointer mt-5 lg:mt-5 self-end lg:self-center transition-colors"
-            >
-              <Check className="h-4.5 w-4.5" strokeWidth={3} />
-              {savingTime ? "กำลังบันทึก..." : "บันทึกเวลา"}
-            </Button>
           </div>
         </div>
       </Card>
@@ -1193,6 +1317,67 @@ export default function AdminAwarenessPage() {
               className="h-9 rounded-xl bg-[var(--c-5c3214)] px-4 text-[12.5px] font-black text-white hover:bg-[var(--c-4a280f)] disabled:opacity-50"
             >
               นำเข้า {importQuestions.length > 0 ? `(${importQuestions.length} ข้อ)` : ""}
+            </Button>
+          </AppDialogSectionFooter>
+        </AppDialogContent>
+      </Dialog>
+
+      <Dialog open={!!schedulePopup} onOpenChange={(open) => !open && setSchedulePopup(null)}>
+        <AppDialogContent
+          size="sm"
+          className={cn(
+            "w-[calc(100vw-24px)] max-w-[480px] shadow-[0_28px_64px_rgba(18,52,95,0.18)]",
+            schedulePopup?.type === "success"
+              ? "border-[#CFEAD9] bg-[linear-gradient(180deg,#F7FFF8_0%,#EFFAF1_100%)]"
+              : "border-[#D9E7F5] bg-[linear-gradient(180deg,#FFFFFF_0%,#F5FAFF_100%)]",
+          )}
+        >
+          <AppDialogBody className="grid-cols-[auto_1fr] items-start gap-3 px-4 py-4 sm:px-5 sm:py-4.5">
+            <div
+              className={cn(
+                "mt-0.5 flex h-8 w-8 items-center justify-center rounded-full border bg-white shadow-sm",
+                schedulePopup?.type === "success"
+                  ? "border-[#A9E2BA] text-[#2C9A57]"
+                  : "border-[#BFDAF4] text-[#0B82F0]",
+              )}
+            >
+              {schedulePopup?.type === "success" ? (
+                <CheckCircle2 className="h-4.5 w-4.5" strokeWidth={2.6} />
+              ) : (
+                <Info className="h-4.5 w-4.5" strokeWidth={2.6} />
+              )}
+            </div>
+            <div className="space-y-1 text-left">
+              <AppDialogTitle
+                className={cn(
+                  "text-[24px] leading-none sm:text-[26px]",
+                  schedulePopup?.type === "success" ? "text-[#1E9B55]" : "text-[#0B2F6B]",
+                )}
+              >
+                {schedulePopup?.title}
+              </AppDialogTitle>
+              <AppDialogDescription
+                className={cn(
+                  "mt-0 text-[14px] font-extrabold leading-[1.45] sm:text-[15px]",
+                  schedulePopup?.type === "success" ? "text-[#36A862]" : "text-[#55739B]",
+                )}
+              >
+                {schedulePopup?.description}
+              </AppDialogDescription>
+            </div>
+          </AppDialogBody>
+
+          <AppDialogSectionFooter className="justify-end pt-0">
+            <Button
+              onClick={() => setSchedulePopup(null)}
+              className={cn(
+                "h-10 rounded-full px-4 text-[13px] font-black text-white",
+                schedulePopup?.type === "success"
+                  ? "bg-[#1E9B55] hover:bg-[#16834A]"
+                  : "bg-[#0B82F0] hover:bg-[#0973D6]",
+              )}
+            >
+              รับทราบ
             </Button>
           </AppDialogSectionFooter>
         </AppDialogContent>

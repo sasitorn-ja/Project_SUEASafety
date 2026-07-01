@@ -36,7 +36,7 @@ import {
   AppDialogSectionHeader,
   AppDialogTitle,
 } from "@/components/ui/app-dialog";
-import { cn } from "@/lib/utils";
+import { cn, formatDisplayDate } from "@/lib/utils";
 import {
   getSafetyCultureEventPhase,
   useAppActions,
@@ -144,10 +144,7 @@ function formatWindowLabel(startDate: string, startTime: string, endDate: string
     return "กรุณาระบุวันและเวลาเริ่ม-จบให้ครบ";
   }
 
-  return `${startAt.toLocaleDateString("th-TH", { day: "2-digit", month: "short" })} ${startTime} - ${endAt.toLocaleDateString("th-TH", {
-    day: "2-digit",
-    month: "short",
-  })} ${endTime}`;
+  return `${formatDisplayDate(startDate)} ${startTime} - ${formatDisplayDate(endDate)} ${endTime}`;
 }
 
 function getPhaseLabel(phase: ReturnType<typeof getSafetyCultureEventPhase>) {
@@ -212,20 +209,7 @@ function createFeedEventDraft(index: number): SafetyCultureFeedEvent {
 
 function formatFeedEventDateLabel(startDate?: string, endDate?: string) {
   if (!startDate || !endDate) return "TBD";
-
-  const start = new Date(`${startDate}T00:00:00`);
-  const end = new Date(`${endDate}T00:00:00`);
-
-  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) {
-    return "TBD";
-  }
-
-  const formatter = new Intl.DateTimeFormat("en-GB", {
-    day: "2-digit",
-    month: "short",
-  });
-
-  return `${formatter.format(start)} - ${formatter.format(end)}`;
+  return `${formatDisplayDate(startDate)} - ${formatDisplayDate(endDate)}`;
 }
 
 function syncFeedEventDateLabel(event: SafetyCultureFeedEvent): SafetyCultureFeedEvent {

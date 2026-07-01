@@ -1782,7 +1782,7 @@ async function handleAwarenessHolidays(request: NextRequest, method: string, mat
     return jsonData({ question: await updateRow("awareness_questions", match.params.id, input) });
   }
   if (method === "DELETE" && route === "/api/safety-awareness/questions/:id") {
-    return jsonData({ question: await updateRow("awareness_questions", match.params.id, { status: "INACTIVE" }) });
+    return jsonData(await deleteRow("awareness_questions", match.params.id));
   }
   if (method === "GET" && route === "/api/safety-awareness/attempts/me") {
     const result = await listRows("awareness_attempts", request, { where: ["user_id = :userId"], params: { userId }, orderBy: "attempt_date DESC, id DESC" });
@@ -2349,14 +2349,7 @@ async function handleImportsReportsAudit(request: NextRequest, method: string, m
           FROM (
             SELECT
               s.id,
-              COALESCE(
-                NULLIF(pld.division_name, ''),
-                NULLIF(od.division_name, ''),
-                NULLIF(o.name_th, ''),
-                NULLIF(l.name_th, ''),
-                NULLIF(s.location_name, ''),
-                'ไม่ระบุหน่วยงาน'
-              ) AS business_unit,
+              COALESCE(NULLIF(pld.division_name, ''), 'ไม่ระบุ BU โรงงาน') AS business_unit,
               SUM(CASE WHEN ans.status IN ('safe', 'unsafe_action', 'unsafe_condition') THEN 1 ELSE 0 END) AS answer_count,
               SUM(CASE WHEN ans.status = 'safe' THEN 1 ELSE 0 END) AS safe,
               SUM(CASE WHEN ans.status = 'unsafe_action' THEN 1 ELSE 0 END) AS unsafe_act,
@@ -2364,11 +2357,10 @@ async function handleImportsReportsAudit(request: NextRequest, method: string, m
             FROM safety_effort_submissions s
             LEFT JOIN checkins c ON c.id = s.checkin_id
             LEFT JOIN locations l ON l.id = c.selected_location_id
-            LEFT JOIN organizations o ON o.id = l.organization_id
             LEFT JOIN plant_location_details pld ON pld.location_id = l.id
-            LEFT JOIN office_location_details od ON od.location_id = l.id
             ${answeredJoin}
             WHERE ${baseWhere.join(" AND ")}
+              AND ${locationTypeExpression} = 'PLANT'
             GROUP BY s.id, business_unit
           ) x
           GROUP BY business_unit
@@ -2385,22 +2377,46 @@ async function handleImportsReportsAudit(request: NextRequest, method: string, m
       const legacyRows = await queryRows<DbRow>(
         `
           SELECT
-            COALESCE(NULLIF(o.name_th, ''), 'ข้อมูลเก่าไม่ระบุหน่วยงาน') AS business_unit,
             SUM(COALESCE(so.LineWalk_Count, 0)) AS legacy_linewalk
           FROM safety_old so
-          LEFT JOIN users u ON LOWER(u.username) = LOWER(so.CreatedBy) AND u.deleted_at IS NULL
-          LEFT JOIN organizations o ON o.id = u.organization_id AND o.deleted_at IS NULL
           WHERE ${legacyWhere.join(" AND ")}
-          GROUP BY business_unit
-          ORDER BY legacy_linewalk DESC, business_unit
-          LIMIT 50
         `,
         legacyParams,
       );
 
-      const byLocationType = serializeLinewalkOverviewRows(locationTypeRows).map((row) => ({
-        locationType: String(row.location_type || "CUSTOM"),
-        name: mapLinewalkLocationTypeLabel(row.location_type),
+      const locationTypeMap = new Map(serializeLinewalkOverviewRows(locationTypeRows).map((row) => [
+        mapLinewalkLocationTypeLabel(row.location_type),
+        {
+          locationType: String(row.location_type || "CUSTOM"),
+          name: mapLinewalkLocationTypeLabel(row.location_type),
+          submissions: Number(row.submissions || 0),
+          total: row.total,
+          safe: row.safe,
+          unsafeAct: row.unsafeAct,
+          unsafeCond: row.unsafeCond,
+          unsafe: row.unsafe,
+          safeRate: row.safeRate,
+        },
+      ]));
+      const byLocationType = [
+        { locationType: "PLANT", name: "Plant" },
+        { locationType: "OFFICE", name: "Office" },
+        { locationType: "SITE", name: "Site" },
+      ].map((fallback) => locationTypeMap.get(fallback.name) || ({
+        ...fallback,
+        submissions: 0,
+        total: 0,
+        safe: 0,
+        unsafeAct: 0,
+        unsafeCond: 0,
+        unsafe: 0,
+        safeRate: 0,
+      }));
+      const otherLocationTypes = Array.from(locationTypeMap.values()).filter((row) => !["Plant", "Office", "Site"].includes(row.name));
+      byLocationType.push(...otherLocationTypes);
+      const legacyLinewalk = Number(legacyRows[0]?.legacy_linewalk || 0);
+      const byBusinessUnit = serializeLinewalkOverviewRows(buRows).map((row) => ({
+        name: String(row.business_unit || "ไม่ระบุ BU โรงงาน"),
         submissions: Number(row.submissions || 0),
         total: row.total,
         safe: row.safe,
@@ -2408,44 +2424,9 @@ async function handleImportsReportsAudit(request: NextRequest, method: string, m
         unsafeCond: row.unsafeCond,
         unsafe: row.unsafe,
         safeRate: row.safeRate,
+        legacyLinewalk: 0,
+        totalLinewalk: Number(row.submissions || 0),
       }));
-      const legacyByBusinessUnit = legacyRows.map((row) => ({
-        name: String(row.business_unit || "ข้อมูลเก่าไม่ระบุหน่วยงาน"),
-        legacyLinewalk: Number(row.legacy_linewalk || 0),
-      }));
-      const legacyLinewalk = legacyByBusinessUnit.reduce((sum, row) => sum + row.legacyLinewalk, 0);
-      const legacyByName = new Map(legacyByBusinessUnit.map((row) => [row.name, row.legacyLinewalk]));
-      const byBusinessUnit = serializeLinewalkOverviewRows(buRows).map((row) => {
-        const name = String(row.business_unit || "ไม่ระบุหน่วยงาน");
-        const legacyForUnit = legacyByName.get(name) || 0;
-        legacyByName.delete(name);
-        return {
-          name,
-          submissions: Number(row.submissions || 0),
-          legacyLinewalk: legacyForUnit,
-          totalLinewalk: Number(row.submissions || 0) + legacyForUnit,
-          total: row.total,
-          safe: row.safe,
-          unsafeAct: row.unsafeAct,
-          unsafeCond: row.unsafeCond,
-          unsafe: row.unsafe,
-          safeRate: row.safeRate,
-        };
-      });
-      for (const [name, legacyForUnit] of legacyByName) {
-        byBusinessUnit.push({
-          name,
-          submissions: 0,
-          legacyLinewalk: legacyForUnit,
-          totalLinewalk: legacyForUnit,
-          total: 0,
-          safe: 0,
-          unsafeAct: 0,
-          unsafeCond: 0,
-          unsafe: 0,
-          safeRate: 0,
-        });
-      }
       byBusinessUnit.sort((a, b) => b.totalLinewalk - a.totalLinewalk || a.name.localeCompare(b.name));
       const limitedByBusinessUnit = byBusinessUnit.slice(0, 50);
       const legacyLocationBucket = legacyLinewalk > 0 ? [{

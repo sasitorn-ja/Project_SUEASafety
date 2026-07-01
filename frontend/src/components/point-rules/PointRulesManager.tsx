@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { RefreshCcw, Save, Trophy } from "lucide-react";
+import { CircleDollarSign, RefreshCcw, Save } from "lucide-react";
 
 import { SafetyCultureHero } from "@/components/safety-culture/safety-culture-hero";
 import { Button } from "@/components/ui/button";
@@ -11,9 +11,16 @@ import { getPointRules, savePointRule } from "@/services/pointRulesServices";
 import type { PointRule } from "@/types/pointRulesType";
 import { POINT_RULE_HINTS, POINT_RULE_ORDER } from "@/utils/point-rules/pointRulesConfig";
 
+type PointRuleDraft = {
+  points: string;
+  dailyLimit: string;
+  minCommentLength: string;
+  awardPostOwner: boolean;
+};
+
 export function PointRulesManager() {
   const [rules, setRules] = useState<PointRule[]>([]);
-  const [draft, setDraft] = useState<Record<string, string>>({});
+  const [draft, setDraft] = useState<Record<string, PointRuleDraft>>({});
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
@@ -39,8 +46,13 @@ export function PointRulesManager() {
 
     setRules(ordered);
     setDraft(
-      ordered.reduce<Record<string, string>>((acc, rule) => {
-        acc[rule.code] = String(rule.points);
+      ordered.reduce<Record<string, PointRuleDraft>>((acc, rule) => {
+        acc[rule.code] = {
+          points: String(rule.points),
+          dailyLimit: rule.dailyLimit === null ? "" : String(rule.dailyLimit),
+          minCommentLength: rule.minCommentLength === null ? "" : String(rule.minCommentLength),
+          awardPostOwner: Boolean(rule.awardPostOwner),
+        };
         return acc;
       }, {}),
     );
@@ -52,12 +64,26 @@ export function PointRulesManager() {
   }, [loadRules]);
 
   const totalPoints = useMemo(
-    () => rules.reduce((sum, rule) => sum + (Number(draft[rule.code] || rule.points) || 0), 0),
+    () => rules.reduce((sum, rule) => sum + (Number(draft[rule.code]?.points || rule.points) || 0), 0),
+    [draft, rules],
+  );
+
+  const totalDailyCap = useMemo(
+    () => rules.reduce((sum, rule) => sum + Math.max(0, Number(draft[rule.code]?.dailyLimit || rule.dailyLimit || 0)), 0),
     [draft, rules],
   );
 
   const hasChanges = useMemo(
-    () => rules.some((rule) => String(rule.points) !== String(draft[rule.code] ?? rule.points)),
+    () => rules.some((rule) => {
+      const currentDraft = draft[rule.code];
+      if (!currentDraft) return false;
+      return (
+        String(rule.points) !== String(currentDraft.points ?? rule.points)
+        || String(rule.dailyLimit ?? "") !== String(currentDraft.dailyLimit ?? "")
+        || String(rule.minCommentLength ?? "") !== String(currentDraft.minCommentLength ?? "")
+        || Boolean(rule.awardPostOwner) !== Boolean(currentDraft.awardPostOwner)
+      );
+    }),
     [draft, rules],
   );
 
@@ -95,18 +121,37 @@ export function PointRulesManager() {
 
     try {
       for (const rule of rules) {
-        const nextPoints = Number(draft[rule.code]);
+        const currentDraft = draft[rule.code];
+        if (!currentDraft) continue;
+
+        const nextPoints = Number(currentDraft.points);
+        const nextDailyLimit = currentDraft.dailyLimit === "" ? null : Number(currentDraft.dailyLimit);
+        const nextMinCommentLength = currentDraft.minCommentLength === "" ? null : Number(currentDraft.minCommentLength);
+
         if (!Number.isFinite(nextPoints) || nextPoints < 0) {
           throw new Error(`Coin ของ "${rule.label}" ไม่ถูกต้อง`);
         }
+        if (nextDailyLimit !== null && (!Number.isFinite(nextDailyLimit) || nextDailyLimit < 0)) {
+          throw new Error(`Max Coin/วัน ของ "${rule.label}" ไม่ถูกต้อง`);
+        }
+        if (nextMinCommentLength !== null && (!Number.isFinite(nextMinCommentLength) || nextMinCommentLength < 0)) {
+          throw new Error(`ขั้นต่ำตัวอักษรของ "${rule.label}" ไม่ถูกต้อง`);
+        }
 
-        if (nextPoints === rule.points) continue;
+        const unchanged = nextPoints === rule.points
+          && String(nextDailyLimit ?? "") === String(rule.dailyLimit ?? "")
+          && String(nextMinCommentLength ?? "") === String(rule.minCommentLength ?? "")
+          && currentDraft.awardPostOwner === Boolean(rule.awardPostOwner);
+        if (unchanged) continue;
 
         const result = await savePointRule({
           id: rule.id,
           code: rule.code,
           points: nextPoints,
           status: rule.status || "ACTIVE",
+          dailyLimit: nextDailyLimit,
+          minCommentLength: nextMinCommentLength,
+          awardPostOwner: currentDraft.awardPostOwner,
         });
 
         if (!result.ok) {
@@ -114,7 +159,7 @@ export function PointRulesManager() {
         }
       }
 
-      setMessage("บันทึกการตั้งค่า Coin เรียบร้อยแล้ว");
+      setMessage("บันทึกการตั้งค่า Coin และเงื่อนไขเรียบร้อยแล้ว");
       await loadRules();
     } catch (saveError) {
       setError(saveError instanceof Error ? saveError.message : "บันทึกข้อมูลไม่สำเร็จ");
@@ -128,7 +173,7 @@ export function PointRulesManager() {
       <SafetyCultureHero
         eyebrow="POINT SETTINGS"
         title={<>ตั้งค่า Coin ในระบบ</>}
-        description="กำหนด Coin ของกิจกรรมหลักใน Safety Awareness, Safety Culture และ Safety Effort ได้จากหน้าเดียว"
+        description="กำหนด Coin, จำนวนสูงสุดต่อวัน และเงื่อนไขเสริมของ Safety Awareness, Safety Culture และ Safety Effort ได้จากหน้าเดียว"
         variant="community"
         backgroundImage="/images/heroes/Home01.png"
         backgroundOverlay="linear-gradient(90deg, rgba(210,235,255,.82) 0%, rgba(210,235,255,.60) 32%, rgba(210,235,255,.10) 56%, rgba(210,235,255,0) 74%)"
@@ -139,19 +184,23 @@ export function PointRulesManager() {
       <Card className="mt-4 rounded-[18px] border border-border bg-(--brand-surface) p-4 shadow-[0_10px_26px_var(--brand-shadow)]">
         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <div>
-            <h2 className="text-[18px] font-black text-[#0B2F6B]">Coin กิจกรรมหลัก</h2>
-            <p className="mt-1 text-[12px] font-bold text-[#55739B]">แอดมินสามารถเพิ่มหรือลด Coin ได้เอง แล้วระบบจะใช้ค่าชุดนี้ต่อจากนี้</p>
+            <h2 className="text-[18px] font-black text-[#0B2F6B]">Coin และเงื่อนไขกิจกรรม</h2>
+            <p className="mt-1 text-[12px] font-bold text-[#55739B]">แอดมินสามารถปรับ Coin และกติกาการให้ Coin ได้ตลอด ระบบจะใช้ค่าชุดล่าสุดทันที</p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <div className="rounded-[14px] border border-[#D7EAFE] bg-[#F5FAFF] px-4 py-2 text-center">
-              <div className="text-[10px] font-bold text-[#55739B]">รวม Coin ตั้งต้น</div>
+              <div className="text-[10px] font-bold text-[#55739B]">รวม Coin ต่อครั้ง</div>
               <div className="mt-0.5 text-[20px] font-black text-[#0B82F0]">{totalPoints}</div>
+            </div>
+            <div className="rounded-[14px] border border-[#FFE0B2] bg-[#FFF8ED] px-4 py-2 text-center">
+              <div className="text-[10px] font-bold text-[#9A5A00]">Max Coin/วัน รวม</div>
+              <div className="mt-0.5 text-[20px] font-black text-[#F97316]">{totalDailyCap}</div>
             </div>
             <Button type="button" variant="outline" onClick={() => void loadRules()} disabled={loading || saving} className="h-10 rounded-xl border-[#D7EAFE]">
               <RefreshCcw className="mr-2 h-4 w-4" />
               โหลดใหม่
             </Button>
-            <Button type="button" onClick={() => void onSaveRules()} disabled={loading || saving || !hasChanges} className="h-10 rounded-full bg-[#0B82F0] hover:bg-[#0973d6] text-white transition-colors">
+            <Button type="button" onClick={() => void onSaveRules()} disabled={loading || saving || !hasChanges} className="h-10 rounded-full bg-[#0B82F0] text-white transition-colors hover:bg-[#0973d6]">
               <Save className="mr-2 h-4 w-4" />
               {saving ? "กำลังบันทึก..." : "บันทึก Coin"}
             </Button>
@@ -166,48 +215,110 @@ export function PointRulesManager() {
 
           return (
             <div key={group.id} className="mt-6 first:mt-4">
-              {/* Group Section Title */}
-              <div className="flex items-center gap-2.5 mb-3">
+              <div className="mb-3 flex items-center gap-2.5">
                 <span className={`inline-flex items-center rounded-xl border px-3 py-1.5 text-[11px] font-black uppercase tracking-wider ${group.color}`}>
                   {group.name}
                 </span>
                 <div className="h-[1px] flex-1 bg-[var(--border)]" />
               </div>
 
-              {/* Group Grid Cards */}
               <div className="grid gap-3.5 md:grid-cols-2 xl:grid-cols-3">
-                {group.rules.map((rule) => (
-                  <div key={rule.code} className="rounded-[18px] border border-[#D7EAFE] bg-white p-4 shadow-[0_6px_18px_rgba(185,223,255,0.12)] transition-all duration-200 hover:border-[#0B82F0] hover:shadow-[0_8px_22px_var(--brand-shadow)]">
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="min-w-0">
-                        <h3 className="text-[16px] font-black leading-tight text-[#0B2F6B]">{rule.label}</h3>
-                        <p className="mt-1 text-[11px] font-bold leading-relaxed text-[#55739B]">{POINT_RULE_HINTS[rule.code] || rule.sourceType}</p>
-                      </div>
-                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-[#F5FAFF] text-[#0B82F0]">
-                        <Trophy className="h-5 w-5" strokeWidth={2.3} />
-                      </div>
-                    </div>
+                {group.rules.map((rule) => {
+                  const currentDraft = draft[rule.code] || {
+                    points: String(rule.points),
+                    dailyLimit: rule.dailyLimit === null ? "" : String(rule.dailyLimit),
+                    minCommentLength: rule.minCommentLength === null ? "" : String(rule.minCommentLength),
+                    awardPostOwner: Boolean(rule.awardPostOwner),
+                  };
 
-                    <div className="mt-4">
-                      <label className="mb-1.5 block text-[11px] font-black text-[#55739B]">Coin</label>
-                      <Input
-                        type="number"
-                        min="0"
-                        step="1"
-                        value={draft[rule.code] ?? ""}
-                        onChange={(event) => setDraft((current) => ({ ...current, [rule.code]: event.target.value }))}
-                        className="h-11 rounded-xl border-[#D7EAFE] text-[18px] font-black text-[#0B2F6B] focus:border-[#0B82F0]"
-                      />
-                    </div>
+                  return (
+                    <div key={rule.code} className="rounded-[18px] border border-[#D7EAFE] bg-white p-4 shadow-[0_6px_18px_rgba(185,223,255,0.12)] transition-all duration-200 hover:border-[#0B82F0] hover:shadow-[0_8px_22px_var(--brand-shadow)]">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <h3 className="text-[16px] font-black leading-tight text-[#0B2F6B]">{rule.label}</h3>
+                          <p className="mt-1 text-[11px] font-bold leading-relaxed text-[#55739B]">{POINT_RULE_HINTS[rule.code] || rule.sourceType}</p>
+                        </div>
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-[#F5FAFF] text-[#0B82F0]">
+                          <CircleDollarSign className="h-5 w-5" strokeWidth={2.3} />
+                        </div>
+                      </div>
 
-                    <div className="mt-3 flex flex-wrap items-center gap-2">
-                      <span className="rounded-full bg-[#F5FAFF] px-2.5 py-1 text-[10px] font-black text-[#0B82F0]">{rule.code}</span>
-                      <span className="rounded-full bg-[#FFF7E8] px-2.5 py-1 text-[10px] font-black text-[#A56A00]">
-                        {rule.source === "database" ? "ข้อมูลจริงจากระบบ" : "ค่าเริ่มต้นของระบบ"}
-                      </span>
+                      <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                        <div>
+                          <label className="mb-1.5 block text-[11px] font-black text-[#55739B]">Coin</label>
+                          <Input
+                            type="number"
+                            min="0"
+                            step="1"
+                            value={currentDraft.points}
+                            onChange={(event) => setDraft((current) => ({
+                              ...current,
+                              [rule.code]: { ...currentDraft, points: event.target.value },
+                            }))}
+                            className="h-11 rounded-xl border-[#D7EAFE] text-[18px] font-black text-[#0B2F6B] focus:border-[#0B82F0]"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="mb-1.5 block text-[11px] font-black text-[#55739B]">Max Coin/วัน</label>
+                          <Input
+                            type="number"
+                            min="0"
+                            step="1"
+                            value={currentDraft.dailyLimit}
+                            onChange={(event) => setDraft((current) => ({
+                              ...current,
+                              [rule.code]: { ...currentDraft, dailyLimit: event.target.value },
+                            }))}
+                            className="h-11 rounded-xl border-[#D7EAFE] text-[16px] font-black text-[#0B2F6B] focus:border-[#0B82F0]"
+                          />
+                        </div>
+                      </div>
+
+                      {rule.code === "commentCreated" && (
+                        <div className="mt-3">
+                          <label className="mb-1.5 block text-[11px] font-black text-[#55739B]">ขั้นต่ำตัวอักษรคอมเมนต์</label>
+                          <Input
+                            type="number"
+                            min="0"
+                            step="1"
+                            value={currentDraft.minCommentLength}
+                            onChange={(event) => setDraft((current) => ({
+                              ...current,
+                              [rule.code]: { ...currentDraft, minCommentLength: event.target.value },
+                            }))}
+                            className="h-11 rounded-xl border-[#D7EAFE] text-[16px] font-black text-[#0B2F6B] focus:border-[#0B82F0]"
+                          />
+                        </div>
+                      )}
+
+                      {rule.code === "reactionCreated" && (
+                        <label className="mt-3 flex cursor-pointer items-center justify-between gap-3 rounded-2xl border border-[#D7EAFE] bg-[#F8FBFF] px-3 py-2.5">
+                          <div>
+                            <div className="text-[12px] font-black text-[#0B2F6B]">ให้เจ้าของโพสต์ได้ Coin ด้วย</div>
+                            <div className="text-[10.5px] font-bold text-[#55739B]">ใช้ Coin และ Max/วัน ตามกติกานี้เหมือนกัน</div>
+                          </div>
+                          <input
+                            type="checkbox"
+                            checked={currentDraft.awardPostOwner}
+                            onChange={(event) => setDraft((current) => ({
+                              ...current,
+                              [rule.code]: { ...currentDraft, awardPostOwner: event.target.checked },
+                            }))}
+                            className="h-4 w-4 accent-[#0B82F0]"
+                          />
+                        </label>
+                      )}
+
+                      <div className="mt-3 flex flex-wrap items-center gap-2">
+                        <span className="rounded-full bg-[#F5FAFF] px-2.5 py-1 text-[10px] font-black text-[#0B82F0]">{rule.code}</span>
+                        <span className="rounded-full bg-[#FFF7E8] px-2.5 py-1 text-[10px] font-black text-[#A56A00]">
+                          {rule.source === "database" ? "ข้อมูลจริงจากระบบ" : "ค่าเริ่มต้นของระบบ"}
+                        </span>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           );

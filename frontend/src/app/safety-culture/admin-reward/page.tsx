@@ -43,7 +43,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { cn } from "@/lib/utils";
+import { cn, formatDisplayDateTime } from "@/lib/utils";
 import { type RewardCatalogItem, type RewardCategory, useAppActions, useAppState } from "@/providers/app-providers";
 import { useAppTheme } from "@/providers/theme-provider";
 
@@ -230,14 +230,7 @@ function getCategoryMeta(category: RewardCatalogItem["category"], categories: Re
 
 function formatRewardDateTime(value?: string | null) {
   if (!value) return null;
-
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) return null;
-
-  return new Intl.DateTimeFormat("th-TH", {
-    dateStyle: "medium",
-    timeStyle: "short",
-  }).format(parsed);
+  return formatDisplayDateTime(value) || null;
 }
 
 function getRewardScheduleLabel(reward: {
@@ -281,13 +274,7 @@ function getRewardRemainingOnlyLabel(reward: {
 }
 
 function formatRedemptionDateTime(value: string) {
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) return value;
-
-  return new Intl.DateTimeFormat("th-TH", {
-    dateStyle: "medium",
-    timeStyle: "short",
-  }).format(parsed);
+  return formatDisplayDateTime(value) || value;
 }
 
 function RewardImage({

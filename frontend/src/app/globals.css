@@ -848,6 +848,64 @@ body {
   will-change: transform, filter;
 }
 
+@keyframes safetyAwarenessBorderRun {
+  to {
+    --safety-awareness-border-angle: 360deg;
+  }
+}
+
+@property --safety-awareness-border-angle {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 0deg;
+}
+
+.safety-awareness-icon-frame {
+  position: relative;
+  border: 2px solid transparent;
+  background:
+    linear-gradient(#ffffff, #ffffff) padding-box,
+    conic-gradient(
+      from var(--safety-awareness-border-angle),
+      #c48a2a 0deg,
+      #f2c15b 70deg,
+      #8f5f22 145deg,
+      #f2c15b 220deg,
+      #c48a2a 290deg,
+      #c48a2a 360deg
+    ) border-box;
+  animation: safetyAwarenessBorderRun 2.4s linear infinite;
+}
+
+@keyframes teamColorBorderRun {
+  to {
+    --team-ring-angle: 360deg;
+  }
+}
+
+@property --team-ring-angle {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 0deg;
+}
+
+.team-color-running-ring {
+  --team-ring-color: var(--brand-accent);
+  --team-ring-highlight: color-mix(in srgb, var(--team-ring-color) 45%, #ffffff);
+  background:
+    conic-gradient(
+      from var(--team-ring-angle),
+      var(--team-ring-color) 0deg,
+      var(--team-ring-highlight) 72deg,
+      #ffffff 118deg,
+      var(--team-ring-color) 178deg,
+      var(--team-ring-highlight) 252deg,
+      var(--team-ring-color) 360deg
+    );
+  animation: teamColorBorderRun 2.2s linear infinite;
+  will-change: background;
+}
+
 @starting-style {
   .mascot-motion {
     opacity: 0;
@@ -859,7 +917,9 @@ body {
   .floating-safety-assistant-image,
   .mascot-motion,
   .mascot-motion:hover,
-  .safety-streak-flame {
+  .safety-streak-flame,
+  .safety-awareness-icon-frame,
+  .team-color-running-ring {
     animation: none;
     transition: none;
   }

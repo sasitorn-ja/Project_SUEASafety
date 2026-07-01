@@ -7,9 +7,9 @@ export const POINT_RULE_ORDER = [
 ] as const;
 
 export const POINT_RULE_HINTS: Record<string, string> = {
-  safetyAwarenessCompleted: "ได้คะแนนเมื่อผู้ใช้ผ่าน Safety Awareness ประจำวัน",
-  safetyPostApproved: "ได้คะแนนเมื่อโพสต์ Safety Post ถูกอนุมัติให้เผยแพร่",
-  commentCreated: "ได้คะแนนเมื่อมีการคอมเมนต์ใน Safety Culture",
-  reactionCreated: "ได้คะแนนเมื่อมีการกด Reaction",
-  safetyEffortCompleted: "ได้คะแนนเมื่อทำรายการ Safety Effort สำเร็จ",
+  safetyAwarenessCompleted: "ได้ Coin เมื่อผู้ใช้ทำ Safety Awareness สำเร็จ โดยจำกัดจำนวนสูงสุดต่อวัน",
+  safetyPostApproved: "ได้ Coin เมื่อสร้างโพสต์ใหม่ใน Safety Culture โดยจำกัดจำนวนสูงสุดต่อวัน",
+  commentCreated: "ได้ Coin เมื่อคอมเมนต์ใน Safety Culture และข้อความต้องยาวถึงเกณฑ์ที่กำหนด",
+  reactionCreated: "ได้ Coin เมื่อกด Like และสามารถให้เจ้าของโพสต์ได้รับ Coin ด้วยตามกติกาเดียวกัน",
+  safetyEffortCompleted: "ได้ Coin เมื่อทำ Safety Effort สำเร็จ โดยจำกัดจำนวนสูงสุดต่อวัน",
 };

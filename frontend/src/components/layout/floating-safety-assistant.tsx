@@ -3,12 +3,12 @@
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import {
+  CircleDollarSign,
   ImageIcon,
   Loader2,
-  Minus,
   Send,
   ShieldCheck,
-  Trophy,
+  X,
 } from "lucide-react";
 import {
   type CSSProperties,
@@ -24,6 +24,7 @@ import { useAppState } from "@/providers/app-providers";
 
 type ChatRole = "user" | "assistant";
 type ChatMessage = { id: string; role: ChatRole; content: string; error?: boolean; image?: string };
+type AssistantApiResponse = { ok: boolean; data?: { reply?: string }; error?: string };
 type DragPosition = { right: number; bottom: number };
 type DragState = {
   pointerId?: number;
@@ -38,6 +39,23 @@ const ASSISTANT_POSITION_STORAGE_KEY = "safety-hub:floating-assistant-position";
 const ASSISTANT_EDGE_GAP = 8;
 const ASSISTANT_TRIGGER_SIZE = 72;
 const DRAG_CLICK_SUPPRESSION_MS = 180;
+const ASSISTANT_NAME = "พี่เซฟ เซฟตี้ แคร์ริ่ง";
+
+function getAssistantErrorMessage(status?: number, error?: string) {
+  if (status === 401) {
+    return "เซสชันหมดอายุหรือยังไม่ได้เข้าสู่ระบบ กรุณาเข้าสู่ระบบใหม่แล้วลองถามพี่เซฟอีกครั้งนะ";
+  }
+  if (status === 403) {
+    return "บัญชีนี้ยังไม่มีสิทธิ์ใช้งานผู้ช่วย AI กรุณาติดต่อผู้ดูแลระบบนะ";
+  }
+  if (status === 503 || error?.includes("OPENROUTER_API_KEY")) {
+    return "ระบบ AI ยังไม่ได้ตั้งค่า OpenRouter ในโปรดักชัน กรุณาตรวจสอบ OPENROUTER_API_KEY แล้วลองใหม่อีกครั้งนะ";
+  }
+  if (error?.startsWith("openrouter_error")) {
+    return "ตอนนี้ OpenRouter ตอบกลับไม่สำเร็จ กรุณาตรวจสอบเครดิต/โมเดล หรือรอสักครู่แล้วลองใหม่อีกครั้งนะ";
+  }
+  return "ขออภัย ตอนนี้พี่เซฟเชื่อมต่อ AI ไม่ได้ชั่วคราว ลองใหม่อีกครั้งนะ";
+}
 
 type AssistantContext = {
   action: MascotAction;
@@ -122,6 +140,8 @@ export function FloatingSafetyAssistant() {
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [chatInput, setChatInput] = useState("");
   const [isSending, setIsSending] = useState(false);
+  const [isInputFocused, setIsInputFocused] = useState(false);
+  const [keyboardOffset, setKeyboardOffset] = useState(0);
   const chatScrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -135,7 +155,7 @@ export function FloatingSafetyAssistant() {
     () => ({
       id: "greeting",
       role: "assistant",
-      content: `${context.greeting} ${context.message} ลองพิมพ์คำถามด้านความปลอดภัยมาคุยกับน้องวางใจได้เลยนะ`,
+      content: `${context.greeting} ${context.message} ลองพิมพ์คำถามด้านความปลอดภัยมาคุยกับพี่เซฟได้เลยนะ`,
     }),
     [context.greeting, context.message]
   );
@@ -169,25 +189,23 @@ export function FloatingSafetyAssistant() {
           },
         }),
       });
-      const payload = (await res.json().catch(() => null)) as
-        | { ok: boolean; data?: { reply?: string }; error?: string }
-        | null;
+      const payload = (await res.json().catch(() => null)) as AssistantApiResponse | null;
 
       if (!res.ok || !payload?.ok || !payload.data?.reply) {
-        throw new Error(payload?.error || `request_failed_${res.status}`);
+        throw new Error(getAssistantErrorMessage(res.status, payload?.error || `request_failed_${res.status}`));
       }
 
       setChatMessages((current) => [
         ...current,
         { id: `a-${Date.now()}`, role: "assistant", content: payload.data!.reply!.trim() },
       ]);
-    } catch {
+    } catch (error) {
       setChatMessages((current) => [
         ...current,
         {
           id: `e-${Date.now()}`,
           role: "assistant",
-          content: "ขออภัย ตอนนี้น้องวางใจเชื่อมต่อ AI ไม่ได้ชั่วคราว ลองใหม่อีกครั้งนะ",
+          content: error instanceof Error ? error.message : getAssistantErrorMessage(),
           error: true,
         },
       ]);
@@ -260,25 +278,23 @@ export function FloatingSafetyAssistant() {
           context: { page: pathname },
         }),
       });
-      const payload = (await res.json().catch(() => null)) as
-        | { ok: boolean; data?: { reply?: string }; error?: string }
-        | null;
+      const payload = (await res.json().catch(() => null)) as AssistantApiResponse | null;
 
       if (!res.ok || !payload?.ok || !payload.data?.reply) {
-        throw new Error(payload?.error || `request_failed_${res.status}`);
+        throw new Error(getAssistantErrorMessage(res.status, payload?.error || `request_failed_${res.status}`));
       }
 
       setChatMessages((current) => [
         ...current,
         { id: `a-${Date.now()}`, role: "assistant", content: payload.data!.reply!.trim() },
       ]);
-    } catch {
+    } catch (error) {
       setChatMessages((current) => [
         ...current,
         {
           id: `e-${Date.now()}`,
           role: "assistant",
-          content: "ขออภัย ตอนนี้น้องวางใจวิเคราะห์รูปไม่ได้ชั่วคราว ลองใหม่อีกครั้งนะ",
+          content: error instanceof Error ? error.message : getAssistantErrorMessage(),
           error: true,
         },
       ]);
@@ -341,6 +357,23 @@ export function FloatingSafetyAssistant() {
     };
   }, []);
 
+  useEffect(() => {
+    if (typeof window === "undefined" || !window.visualViewport) return;
+    const viewport = window.visualViewport;
+    const updateKeyboardOffset = () => {
+      const offset = Math.max(0, window.innerHeight - viewport.height - viewport.offsetTop);
+      setKeyboardOffset(offset > 80 ? Math.round(offset) : 0);
+    };
+
+    updateKeyboardOffset();
+    viewport.addEventListener("resize", updateKeyboardOffset);
+    viewport.addEventListener("scroll", updateKeyboardOffset);
+    return () => {
+      viewport.removeEventListener("resize", updateKeyboardOffset);
+      viewport.removeEventListener("scroll", updateKeyboardOffset);
+    };
+  }, []);
+
   // ปิดเมื่อกดที่ว่างด้านนอก หรือกด Esc
   useEffect(() => {
     if (!open) return;
@@ -364,6 +397,11 @@ export function FloatingSafetyAssistant() {
   const assistantStyle: CSSProperties | undefined = position
     ? { bottom: position.bottom, right: position.right }
     : undefined;
+  const panelStyle: CSSProperties = {
+    bottom: isInputFocused && keyboardOffset > 0
+      ? `calc(${keyboardOffset}px + env(safe-area-inset-bottom) + 10px)`
+      : undefined,
+  };
 
   function startDrag(clientX: number, clientY: number, rect: DOMRect, pointerId?: number) {
     dragRef.current = {
@@ -472,11 +510,13 @@ export function FloatingSafetyAssistant() {
         position && (isDragging ? "transition-none" : "transition-[right,bottom] duration-200 ease-out"),
         isDockedLeft ? "items-start" : "items-end"
       )}
-      aria-label="ผู้ช่วยน้องวางใจ"
+      aria-label="ผู้ช่วยพี่เซฟ เซฟตี้ แคร์ริ่ง"
     >
       <div
+        style={panelStyle}
         className={cn(
-          "fixed bottom-[calc(var(--mobile-bottomnav-h)+84px)] flex max-h-[68vh] w-[min(calc(100vw-24px),350px)] flex-col overflow-hidden rounded-2xl border border-white/12 bg-[linear-gradient(145deg,rgba(5,24,52,0.98),rgba(11,57,104,0.96))] text-white shadow-[0_18px_46px_rgba(5,24,52,0.34)] backdrop-blur-xl transition-all duration-200 md:bottom-24 md:max-h-[min(70vh,560px)] md:w-[352px]",
+          "fixed bottom-[calc(var(--mobile-bottomnav-h)+84px)] flex max-h-[min(68vh,560px)] w-[min(calc(100vw-24px),350px)] flex-col overflow-hidden rounded-2xl border border-[#E2E8F0] bg-[linear-gradient(145deg,#E3F2FD_0%,#FFFFFF_42%,#E3F2FD_100%)] text-[#0D47A1] shadow-[0_18px_46px_rgba(13,71,161,0.18)] backdrop-blur-xl transition-all duration-200 md:bottom-24 md:max-h-[min(70vh,560px)] md:w-[352px]",
+          isInputFocused && "max-h-[min(58vh,430px)]",
           isDockedLeft ? "left-3 origin-bottom-left" : "right-3 origin-bottom-right",
           open ? "visible translate-y-0 scale-100 opacity-100" : "invisible translate-y-2 scale-95 opacity-0"
         )}
@@ -485,44 +525,44 @@ export function FloatingSafetyAssistant() {
             (chatMessages ถูกรีเซ็ตเมื่อ remount เช่น โหลดเว็บใหม่ → กลับมาโชว์เต็มเหมือนเดิม) */}
         {chatMessages.length === 0 ? (
           <div className="relative overflow-hidden px-3 pb-2 pt-2.5">
-            <div className="pointer-events-none absolute -right-8 top-4 h-24 w-24 rounded-full border-[14px] border-white/10" />
-            <ShieldCheck className="pointer-events-none absolute right-5 top-9 h-12 w-12 text-white/10" strokeWidth={1.6} />
+            <div className="pointer-events-none absolute -right-8 top-4 h-24 w-24 rounded-full border-[14px] border-[#2196F3]/12" />
+            <ShieldCheck className="pointer-events-none absolute right-5 top-9 h-12 w-12 text-[#0D47A1]/10" strokeWidth={1.6} />
             <button
               type="button"
               onClick={() => setOpen(false)}
-              className="absolute right-3 top-3 z-10 flex h-7 w-7 items-center justify-center rounded-full bg-white/10 text-white/75 outline-none transition hover:bg-white/16 hover:text-white focus-visible:ring-2 focus-visible:ring-[var(--brand-accent)]"
-              aria-label="ย่อผู้ช่วย"
+              className="absolute right-3 top-3 z-10 flex h-7 w-7 items-center justify-center rounded-full bg-[#2196F3] text-white outline-none shadow-[0_6px_14px_rgba(33,150,243,0.22)] transition hover:bg-[#0D47A1] focus-visible:ring-2 focus-visible:ring-[#2196F3]"
+              aria-label="ปิดผู้ช่วย"
             >
-              <Minus className="h-4 w-4" strokeWidth={3} />
+              <X className="h-4 w-4" strokeWidth={3} />
             </button>
 
-            <div className="relative grid grid-cols-[64px_minmax(0,1fr)] items-center gap-2.5 pr-7">
-              <div className="relative h-[68px]">
+            <div className="relative grid grid-cols-[92px_minmax(0,1fr)] items-center gap-2 pr-7">
+              <div className="relative h-[100px]">
                 <Image
                   src={mascot("idea2")}
-                  alt="น้องวางใจ AI Safety Buddy"
+                  alt={ASSISTANT_NAME}
                   width={200}
                   height={250}
-                  className="mascot-motion mascot-motion-compact absolute -left-2 bottom-0 h-[84px] w-[64px] max-w-none object-contain drop-shadow-[0_12px_22px_rgba(0,0,0,0.28)]"
+                  className="mascot-motion mascot-motion-compact absolute -left-5 bottom-[-14px] h-[148px] w-[118px] max-w-none object-contain drop-shadow-[0_12px_22px_rgba(0,0,0,0.24)]"
                 />
               </div>
               <div className="min-w-0">
-                <p className="text-[15px] font-black leading-tight text-white">
-                  น้องวางใจ AI Safety Buddy
+                <p className="text-[15px] font-black leading-tight text-[#0D47A1]">
+                  {ASSISTANT_NAME}
                 </p>
-                <p className="mt-0.5 text-[11px] font-bold leading-snug text-white/58">
+                <p className="mt-0.5 text-[11px] font-bold leading-snug text-[#60748C]">
                   ผู้ช่วยแนะนำงานด้านความปลอดภัย
                 </p>
               </div>
             </div>
 
-            <div className="relative mt-2 border-t border-white/12 px-0.5 pt-2">
+            <div className="relative mt-2 border-t border-[#E2E8F0] px-0.5 pt-2">
               <div className="flex items-center justify-between gap-3">
-                <span className="flex items-center gap-2 text-[12px] font-black text-white/86">
-                  <Trophy className="h-4.5 w-4.5 text-[var(--brand-accent)]" strokeWidth={2.5} />
+                <span className="flex items-center gap-2 text-[12px] font-black text-[#0D47A1]">
+                  <CircleDollarSign className="h-4.5 w-4.5 text-[#2196F3]" strokeWidth={2.5} />
                   Coin ของฉัน
                 </span>
-                <span className="text-[17px] font-black leading-none text-[var(--brand-accent)]">
+                <span className="text-[17px] font-black leading-none text-[#2196F3]">
                   {currentUserPoints.toLocaleString()}
                 </span>
               </div>
@@ -538,26 +578,26 @@ export function FloatingSafetyAssistant() {
               className="h-9 w-9 flex-shrink-0 rounded-full bg-[#eaf4ff] object-cover object-[50%_38%] p-0.5 ring-1 ring-white/20"
             />
             <div className="min-w-0 flex-1">
-              <p className="truncate text-[13px] font-black leading-tight text-white">
-                น้องวางใจ AI Safety Buddy
+              <p className="truncate text-[13px] font-black leading-tight text-[#0D47A1]">
+                {ASSISTANT_NAME}
               </p>
-              <p className="flex items-center gap-1 text-[10px] font-bold leading-tight text-white/55">
-                <Trophy className="h-3 w-3 text-[var(--brand-accent)]" strokeWidth={2.5} />
+              <p className="flex items-center gap-1 text-[10px] font-bold leading-tight text-[#60748C]">
+                <CircleDollarSign className="h-3 w-3 text-[#2196F3]" strokeWidth={2.5} />
                 {currentUserPoints.toLocaleString()} Coin
               </p>
             </div>
             <button
               type="button"
               onClick={() => setOpen(false)}
-              className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-white/10 text-white/75 outline-none transition hover:bg-white/16 hover:text-white focus-visible:ring-2 focus-visible:ring-[var(--brand-accent)]"
-              aria-label="ย่อผู้ช่วย"
+              className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-[#2196F3] text-white outline-none shadow-[0_6px_14px_rgba(33,150,243,0.22)] transition hover:bg-[#0D47A1] focus-visible:ring-2 focus-visible:ring-[#2196F3]"
+              aria-label="ปิดผู้ช่วย"
             >
-              <Minus className="h-4 w-4" strokeWidth={3} />
+              <X className="h-4 w-4" strokeWidth={3} />
             </button>
           </div>
         )}
 
-        <div className="mx-2.5 flex min-h-0 flex-1 flex-col rounded-t-2xl bg-white/[0.07] px-2.5 pb-2.5 pt-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]">
+        <div className="mx-2.5 flex min-h-0 flex-1 flex-col rounded-t-2xl border border-[#E2E8F0] bg-[#E3F2FD] px-2.5 pb-2.5 pt-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.72)]">
         <div ref={chatScrollRef} className="min-h-[96px] flex-1 space-y-2.5 overflow-y-auto pr-1">
           {[greeting, ...chatMessages].map((message) =>
             message.role === "assistant" ? (
@@ -571,8 +611,8 @@ export function FloatingSafetyAssistant() {
                 />
                 <div
                   className={cn(
-                    "max-w-[80%] rounded-2xl rounded-tl-md px-3 py-2 text-[11px] font-bold leading-relaxed",
-                    message.error ? "bg-red-500/25 text-white" : "bg-white/[0.10] text-white/90"
+                    "max-w-[80%] rounded-2xl rounded-tl-md px-3 py-2 text-[12px] font-bold leading-relaxed",
+                    message.error ? "bg-[#EF4444] text-white" : "bg-white text-[#0D47A1] shadow-[0_8px_18px_rgba(13,71,161,0.08)]"
                   )}
                 >
                   <p className="whitespace-pre-wrap">{message.content}</p>
@@ -580,7 +620,7 @@ export function FloatingSafetyAssistant() {
               </div>
             ) : (
               <div key={message.id} className="flex justify-end">
-                <div className="max-w-[80%] overflow-hidden rounded-2xl rounded-tr-md bg-[var(--brand-accent)] text-[11px] font-bold leading-relaxed text-[var(--brand-accent-contrast)]">
+                <div className="max-w-[80%] overflow-hidden rounded-2xl rounded-tr-md bg-[#2196F3] text-[12px] font-bold leading-relaxed text-white shadow-[0_8px_18px_rgba(33,150,243,0.18)]">
                   {message.image ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={message.image} alt="รูปที่ส่งให้ตรวจ" className="max-h-44 w-full object-cover" />
@@ -591,9 +631,9 @@ export function FloatingSafetyAssistant() {
             )
           )}
           {isSending ? (
-            <div className="flex items-center gap-2 pl-10 text-[10px] font-bold text-white/55">
-              <Loader2 className="h-3.5 w-3.5 animate-spin text-[var(--brand-accent)]" strokeWidth={2.5} />
-              น้องวางใจกำลังพิมพ์...
+            <div className="flex items-center gap-2 pl-10 text-[10px] font-bold text-[#60748C]">
+              <Loader2 className="h-3.5 w-3.5 animate-spin text-[#2196F3]" strokeWidth={2.5} />
+              พี่เซฟกำลังพิมพ์...
             </div>
           ) : null}
         </div>
@@ -612,13 +652,13 @@ export function FloatingSafetyAssistant() {
               event.preventDefault();
               sendMessage(chatInput);
             }}
-            className="flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.10] px-1.5 py-1.5"
+            className="flex items-center gap-1.5 rounded-full border border-[#E2E8F0] bg-white px-1.5 py-1.5 shadow-[0_8px_22px_rgba(13,71,161,0.12)]"
           >
             <button
               type="button"
               disabled={isSending}
               onClick={() => fileInputRef.current?.click()}
-              className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/[0.10] text-white/80 outline-none transition hover:bg-white/[0.18] focus-visible:ring-2 focus-visible:ring-[var(--brand-accent)] disabled:opacity-50"
+              className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full border border-[#E2E8F0] bg-[#E3F2FD] text-[#0D47A1] outline-none transition hover:bg-[#D7EAFE] focus-visible:ring-2 focus-visible:ring-[#2196F3] disabled:opacity-50"
               aria-label="แนบรูปเพื่อตรวจ PPE"
             >
               <ImageIcon className="h-4 w-4" strokeWidth={2.2} />
@@ -627,14 +667,16 @@ export function FloatingSafetyAssistant() {
               ref={inputRef}
               value={chatInput}
               onChange={(event) => setChatInput(event.target.value)}
+              onFocus={() => setIsInputFocused(true)}
+              onBlur={() => setIsInputFocused(false)}
               placeholder="ถามเรื่องความปลอดภัย..."
               disabled={isSending}
-              className="min-w-0 flex-1 bg-transparent px-2 py-1.5 text-[11px] font-bold text-white outline-none placeholder:text-white/40 disabled:opacity-60"
+              className="min-w-0 flex-1 !border-0 !bg-transparent px-2 py-2 text-[16px] font-bold leading-none text-[#0D47A1] !shadow-none outline-none placeholder:text-[#8CA4BF] focus:!border-0 focus:!shadow-none disabled:opacity-60 md:text-[13px]"
             />
             <button
               type="submit"
               disabled={isSending || !chatInput.trim()}
-              className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-[var(--brand-accent)] text-[var(--brand-accent-contrast)] outline-none transition hover:brightness-110 focus-visible:ring-2 focus-visible:ring-white disabled:opacity-40"
+              className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-[#2196F3] text-white outline-none transition hover:bg-[#0D47A1] focus-visible:ring-2 focus-visible:ring-[#2196F3] disabled:opacity-40"
               aria-label="ส่งข้อความ"
             >
               {isSending ? (
@@ -644,9 +686,9 @@ export function FloatingSafetyAssistant() {
               )}
             </button>
           </form>
-          <p className="mt-2 flex items-center gap-1.5 text-[9px] font-bold leading-relaxed text-white/45">
-            <ShieldCheck className="h-3 w-3 flex-shrink-0 text-[var(--brand-accent)]" strokeWidth={2.4} />
-            น้องวางใจ AI อาจมีข้อผิดพลาด โปรดตรวจสอบข้อมูลสำคัญก่อนดำเนินการ
+          <p className="mt-2 flex items-center gap-1.5 text-[9px] font-bold leading-relaxed text-[#60748C]">
+            <ShieldCheck className="h-3 w-3 flex-shrink-0 text-[#2196F3]" strokeWidth={2.4} />
+            พี่เซฟ AI อาจมีข้อผิดพลาด โปรดตรวจสอบข้อมูลสำคัญก่อนดำเนินการ
           </p>
         </div>
         </div>
@@ -665,7 +707,7 @@ export function FloatingSafetyAssistant() {
           open && "pointer-events-none scale-90 opacity-0"
         )}
         aria-expanded={open}
-        aria-label={open ? "ย่อผู้ช่วยน้องวางใจ" : "เปิดผู้ช่วยน้องวางใจ"}
+        aria-label={open ? "ย่อผู้ช่วยพี่เซฟ" : "เปิดผู้ช่วยพี่เซฟ"}
         title="ลากเพื่อย้ายตำแหน่ง หรือกดเพื่อเปิดผู้ช่วย"
       >
         <span className="absolute -left-1 top-1 flex h-5 w-5 items-center justify-center rounded-full border-2 border-[var(--brand-nav)] bg-[var(--brand-accent)] text-[9px] font-black text-[var(--brand-accent-contrast)]">
@@ -673,7 +715,7 @@ export function FloatingSafetyAssistant() {
         </span>
         <Image
           src="/images/mascots/wangjai/25.png"
-          alt="น้องวางใจ AI Safety Buddy"
+          alt={ASSISTANT_NAME}
           width={96}
           height={96}
           className="floating-safety-assistant-image h-[66px] w-[66px] max-w-none object-contain md:h-[76px] md:w-[76px]"

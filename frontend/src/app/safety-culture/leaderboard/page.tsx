@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { type CSSProperties, useEffect, useState } from "react";
 import { ChevronDown, ChevronRight, Users } from "lucide-react";
 import { SafetyCultureHero } from "@/components/safety-culture/safety-culture-hero";
 import { Card } from "@/components/ui/card";
@@ -84,6 +84,10 @@ export default function LeaderboardPage() {
   const { themedColor } = useAppTheme();
   const topScorers = [...teamMembers];
   const visibleTopScorers = showAllTopScorers ? topScorers.slice(0, 10) : topScorers.slice(0, 5);
+  const selectedTeamColor = themedColor(
+    teamStandings.find((team) => team.code === selectedTeamCode || team.name === selectedTeamName)?.color
+      ?? "var(--brand-accent)"
+  );
 
   useEffect(() => {
     if (personalRankings.length === 0) {
@@ -293,12 +297,15 @@ export default function LeaderboardPage() {
 
                     <div
                       className={cn(
-                        "relative flex h-10 w-10 flex-shrink-0 items-center justify-center overflow-hidden rounded-full bg-[linear-gradient(180deg,var(--brand-accent),var(--brand-nav-active))] text-[13px] font-black text-white ring-2 ring-offset-1 ring-offset-[var(--brand-surface)]",
+                        "team-color-running-ring h-11 w-11 flex-shrink-0 rounded-full p-[3px] shadow-[0_6px_14px_rgba(13,71,161,0.14)]",
                         rankStyle.avatarRingClassName
                       )}
+                      style={{ "--team-ring-color": selectedTeamColor } as CSSProperties}
                     >
-                      <RankingAvatar imageUrl={user.profileImageUrl} name={user.name} className="h-full w-full object-cover" />
-                      <div className="absolute inset-x-0 bottom-0 h-1/2 bg-[linear-gradient(180deg,transparent,rgba(0,0,0,0.18))]" />
+                      <div className="relative flex h-full w-full items-center justify-center overflow-hidden rounded-full bg-[linear-gradient(180deg,var(--brand-accent),var(--brand-nav-active))] text-[13px] font-black text-white">
+                        <RankingAvatar imageUrl={user.profileImageUrl} name={user.name} className="h-full w-full object-cover" />
+                        <div className="absolute inset-x-0 bottom-0 h-1/2 bg-[linear-gradient(180deg,transparent,rgba(0,0,0,0.18))]" />
+                      </div>
                     </div>
 
                     <div className="min-w-0 flex-1">

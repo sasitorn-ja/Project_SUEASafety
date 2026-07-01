@@ -53,64 +53,11 @@ const C = {
 };
 
 // Extracted PPTX baseline data
-const OVERALL_DATA = {
-  totalChecks: 20566,
-  safeRate: 97.4,
-  unsafeCases: 535,
-  solvedCases: 48,
-  pendingCases: 8,
-  unresolvedCases: 1,
-};
-
-// Baseline Chart 1 data: ภาพรวม Line walk (approx. 182-day period)
-const BASELINE_CHART1_DATA = [
-  { name: "Office", value: 11.8, count: 2427, color: "#5B9BD5" },
-  { name: "Plant", value: 82.6, count: 16988, color: "#7FB069" },
-  { name: "Site", value: 5.6, count: 1152, color: "#E6B45A" }
-];
-
-// Baseline Chart 2 data: Status Line walk
-const BASELINE_CHART2_DATA = [
-  {
-    category: "Plant",
-    safe: 16520,
-    unsafeAct: 43,
-    unsafeCond: 424,
-    total: 16987
-  },
-  {
-    category: "Office",
-    safe: 2404,
-    unsafeAct: 4,
-    unsafeCond: 19,
-    total: 2427
-  },
-  {
-    category: "Site",
-    safe: 1107,
-    unsafeAct: 1,
-    unsafeCond: 44,
-    total: 1152
-  }
-];
-
 // Baseline Chart 3 data: สถานะการแก้ไข
 const BASELINE_CHART3_DATA = [
   { name: "Success", value: 84.2, count: 48, color: "#6FB07A" }, // Soft Green
   { name: "Pending", value: 14.0, count: 8, color: "#E6B45A" },  // Soft Amber
   { name: "Unresolved", value: 1.8, count: 1, color: "#E2E5EA" } // Light Gray
-];
-
-// Baseline Chart 4 data: Safety Line walk by Business Unit
-// safeRate = ระดับความปลอดภัยที่รายงานของแต่ละหน่วยงาน (ใช้กับ badge ในตาราง)
-const BASELINE_CHART4_DATA = [
-  { name: "CPAC Metro", safe: 1301, unsafe: 29, solved: 7, safeRate: 97.8 },
-  { name: "CPAC East", safe: 2615, unsafe: 30, solved: 6, safeRate: 98.9 },
-  { name: "CPAC West", safe: 3235, unsafe: 1, solved: 3, safeRate: 100.0 },
-  { name: "CPAC North", safe: 2988, unsafe: 42, solved: 15, safeRate: 95.2 },
-  { name: "CPAC Northeast", safe: 3412, unsafe: 120, solved: 28, safeRate: 91.6 },
-  { name: "CPAC RMC", safe: 1786, unsafe: 51, solved: 22, safeRate: 94.8 },
-  { name: "CPAC SMART Structure", safe: 1229, unsafe: 11, solved: 4, safeRate: 97.1 }
 ];
 
 export default function DashboardSafetyEffort() {
@@ -125,9 +72,7 @@ export default function DashboardSafetyEffort() {
   const [scaleType, setScaleType] = useState("logarithmic");
   const [width, setWidth] = useState(() => typeof window !== "undefined" ? window.innerWidth : 1200);
 
-  // Live data from the real reports API (admin). Falls back to baseline below if unavailable.
-  const [liveSummary, setLiveSummary] = useState(null);     // { activities, submitted_assessments, open_findings, open_actions }
-  const [liveLocations, setLiveLocations] = useState(null); // [{ id, name_th, location_type, checkins, activities }]
+  // Live data from the real reports API (admin).
   const [liveLinewalkOverview, setLiveLinewalkOverview] = useState(null); // { summary, byLocationType, byBusinessUnit }
 
   useEffect(() => {
@@ -144,25 +89,19 @@ export default function DashboardSafetyEffort() {
         const qs = new URLSearchParams();
         if (startDate) qs.set("from", startDate);
         if (endDate) qs.set("to", endDate);
-        const [sumRes, locRes, linewalkRes] = await Promise.all([
-          fetch(`/api/safety-effort/reports/summary?${qs.toString()}`, { credentials: "include", cache: "no-store" }),
-          fetch(`/api/safety-effort/reports/by-location?${qs.toString()}&pageSize=200`, { credentials: "include", cache: "no-store" }),
-          fetch(`/api/safety-effort/reports/linewalk-overview?${qs.toString()}`, { credentials: "include", cache: "no-store" }),
-        ]);
-        if (sumRes.ok) {
-          const p = await sumRes.json().catch(() => null);
-          if (!cancelled && p?.data) setLiveSummary(p.data);
-        }
-        if (locRes.ok) {
-          const p = await locRes.json().catch(() => null);
-          if (!cancelled && Array.isArray(p?.data?.items)) setLiveLocations(p.data.items);
-        }
+        const linewalkRes = await fetch(`/api/safety-effort/reports/linewalk-overview?${qs.toString()}`, { credentials: "include", cache: "no-store" });
         if (linewalkRes.ok) {
           const p = await linewalkRes.json().catch(() => null);
-          if (!cancelled && p?.data) setLiveLinewalkOverview(p.data);
+          if (!cancelled) {
+            setLiveLinewalkOverview(p?.data || null);
+          }
+        } else if (!cancelled) {
+          setLiveLinewalkOverview(null);
         }
       } catch {
-        /* keep baseline data */
+        if (!cancelled) {
+          setLiveLinewalkOverview(null);
+        }
       }
     })();
     return () => { cancelled = true; };
@@ -209,80 +148,44 @@ export default function DashboardSafetyEffort() {
   // Chart 1 (distribution by location type) — built from REAL Line walk submissions
   // when available; otherwise falls back to the legacy report/baseline.
   const chart1Data = (() => {
-    if (liveLinewalkOverview) {
-      const rows = Array.isArray(liveLinewalkOverview.byLocationType)
-        ? liveLinewalkOverview.byLocationType
-        : [];
-      const total = rows.reduce((sum, row) => sum + Number(row.submissions || row.total || 0), 0);
-      const colors = { Office: "#2F80D0", Plant: "#79BE4B", Site: "#F5BE00", "ข้อมูลเก่า": "#9CA3AF" };
-      const order = { Office: 0, Plant: 1, Site: 2, "ข้อมูลเก่า": 3 };
-      return rows
-        .map((row) => {
-          const name = String(row.name || "Other");
+    const rows = Array.isArray(liveLinewalkOverview?.byLocationType)
+      ? liveLinewalkOverview.byLocationType
+      : [];
+    const total = rows.reduce((sum, row) => sum + Number(row.submissions || row.total || 0), 0);
+    const colors = { Office: "#2F80D0", Plant: "#79BE4B", Site: "#F5BE00", "ข้อมูลเก่า": "#9CA3AF" };
+    const order = { Office: 0, Plant: 1, Site: 2, "ข้อมูลเก่า": 3 };
+    return rows
+      .map((row) => {
+        const name = String(row.name || "Other");
         const count = Number(row?.submissions || row?.total || 0);
         return {
           name,
           count,
           value: total > 0 ? Number(((count / total) * 100).toFixed(1)) : 0,
-            color: colors[name] || "#94A3B8",
+          color: colors[name] || "#94A3B8",
         };
-        })
-        .sort((a, b) => (order[a.name] ?? 99) - (order[b.name] ?? 99));
-    }
-    if (Array.isArray(liveLocations) && liveLocations.length) {
-      const buckets = { Plant: 0, Office: 0, Site: 0 };
-      for (const row of liveLocations) {
-        const type = String(row.location_type || "").toUpperCase();
-        const count = Number(row.activities || 0);
-        if (type === "PLANT") buckets.Plant += count;
-        else if (type === "OFFICE") buckets.Office += count;
-        else if (type === "SITE") buckets.Site += count;
-      }
-      const total = buckets.Plant + buckets.Office + buckets.Site;
-      if (total > 0) {
-        const meta = {
-          Office: { color: "#2F80D0" },
-          Plant: { color: "#79BE4B" },
-          Site: { color: "#F5BE00" },
-        };
-        return ["Office", "Plant", "Site"].map((name) => ({
-          name,
-          count: buckets[name],
-          value: Number(((buckets[name] / total) * 100).toFixed(1)),
-          color: meta[name].color,
-        }));
-      }
-    }
-    return BASELINE_CHART1_DATA.map(item => ({ ...item, count: Math.round(item.count * scaleFactor) }));
+      })
+      .sort((a, b) => (order[a.name] ?? 99) - (order[b.name] ?? 99));
   })();
 
   const chart2Data = (() => {
-    if (liveLinewalkOverview) {
-      const rows = Array.isArray(liveLinewalkOverview.byLocationType)
-        ? liveLinewalkOverview.byLocationType
-        : [];
-      const byName = new Map(rows.map((row) => [String(row.name || ""), row]));
-      return ["Plant", "Office", "Site"].map((category) => {
-        const row = byName.get(category);
-        const safe = Number(row?.safe || 0);
-        const unsafeAct = Number(row?.unsafeAct || 0);
-        const unsafeCond = Number(row?.unsafeCond || 0);
-        return {
-          category,
-          safe,
-          unsafeAct,
-          unsafeCond,
-          total: Number(row?.total || safe + unsafeAct + unsafeCond),
-        };
-      });
-    }
-    return BASELINE_CHART2_DATA.map(item => ({
-      ...item,
-      safe: Math.round(item.safe * scaleFactor),
-      unsafeAct: Math.round(item.unsafeAct * scaleFactor),
-      unsafeCond: Math.round(item.unsafeCond * scaleFactor),
-      total: Math.round(item.total * scaleFactor),
-    }));
+    const rows = Array.isArray(liveLinewalkOverview?.byLocationType)
+      ? liveLinewalkOverview.byLocationType
+      : [];
+    const byName = new Map(rows.map((row) => [String(row.name || ""), row]));
+    return ["Plant", "Office", "Site"].map((category) => {
+      const row = byName.get(category);
+      const safe = Number(row?.safe || 0);
+      const unsafeAct = Number(row?.unsafeAct || 0);
+      const unsafeCond = Number(row?.unsafeCond || 0);
+      return {
+        category,
+        safe,
+        unsafeAct,
+        unsafeCond,
+        total: Number(row?.total || safe + unsafeAct + unsafeCond),
+      };
+    });
   })();
 
   const chart3Data = BASELINE_CHART3_DATA.map(item => ({
@@ -291,63 +194,44 @@ export default function DashboardSafetyEffort() {
   }));
 
   const chart4Data = (() => {
-    if (liveLinewalkOverview) {
-      const rows = Array.isArray(liveLinewalkOverview.byBusinessUnit)
-        ? liveLinewalkOverview.byBusinessUnit
-        : [];
-      return rows.map((row) => {
-        const safe = Number(row.safe || 0);
-        const unsafe = Number(row.unsafe || 0);
-        return {
-          name: String(row.name || "ไม่ระบุหน่วยงาน"),
-          safe,
-          unsafe,
-          solved: 0,
-          legacyLinewalk: Number(row.legacyLinewalk || 0),
-          totalLinewalk: Number(row.totalLinewalk || row.submissions || 0),
-          safeRate: Number(row.safeRate || (safe + unsafe > 0 ? (safe / (safe + unsafe)) * 100 : 0)),
-        };
-      });
-    }
-    return BASELINE_CHART4_DATA.map(item => ({
-      ...item,
-      safe: Math.round(item.safe * scaleFactor),
-      unsafe: Math.round(item.unsafe * scaleFactor),
-      solved: Math.round(item.solved * scaleFactor),
-    }));
+    const rows = Array.isArray(liveLinewalkOverview?.byBusinessUnit)
+      ? liveLinewalkOverview.byBusinessUnit
+      : [];
+    return rows.map((row) => {
+      const safe = Number(row.safe || 0);
+      const unsafe = Number(row.unsafe || 0);
+      return {
+        name: String(row.name || "ไม่ระบุ BU โรงงาน"),
+        safe,
+        unsafe,
+        solved: 0,
+        legacyLinewalk: 0,
+        totalLinewalk: Number(row.totalLinewalk || row.submissions || 0),
+        safeRate: Number(row.safeRate || (safe + unsafe > 0 ? (safe / (safe + unsafe)) * 100 : 0)),
+      };
+    });
   })();
+
+  useEffect(() => {
+    if (selectedBU === "All Business Units") return;
+    if (!chart4Data.some((bu) => bu.name === selectedBU)) {
+      setSelectedBU("All Business Units");
+    }
+  }, [chart4Data, selectedBU]);
 
   // Derived filtered metrics
   const getFilteredMetrics = () => {
     if (selectedBU === "All Business Units") {
-      if (liveLinewalkOverview?.summary) {
-        const totalChecks = Number(liveLinewalkOverview.summary.totalLinewalk || liveLinewalkOverview.summary.submissions || 0);
-        const unsafeCases = Number(liveLinewalkOverview.summary.unsafe || 0);
-        return {
-          totalChecks,
-          safeRate: Number(liveLinewalkOverview.summary.safeRate || 0),
-          unsafeCases,
-          solvedCases: 0,
-          pendingCases: unsafeCases,
-          unresolvedCases: unsafeCases,
-        };
-      }
-      // Prefer REAL summary aggregates when available.
-      if (liveSummary) {
-        const totalChecks = Number(liveSummary.activities || 0);
-        const unsafeCases = Number(liveSummary.open_findings || 0);
-        const pendingCases = Number(liveSummary.open_actions || 0);
-        const solvedCases = Math.max(0, unsafeCases - pendingCases);
-        const safeRate = totalChecks > 0 ? Number((((totalChecks - unsafeCases) / totalChecks) * 100).toFixed(1)) : 0;
-        return { totalChecks, safeRate, unsafeCases, solvedCases, pendingCases, unresolvedCases: 0 };
-      }
+      const summary = liveLinewalkOverview?.summary;
+      const totalChecks = Number(summary?.totalLinewalk || summary?.submissions || 0);
+      const unsafeCases = Number(summary?.unsafe || 0);
       return {
-        totalChecks: Math.round(OVERALL_DATA.totalChecks * scaleFactor),
-        safeRate: OVERALL_DATA.safeRate,
-        unsafeCases: Math.round(OVERALL_DATA.unsafeCases * scaleFactor),
-        solvedCases: Math.round(OVERALL_DATA.solvedCases * scaleFactor),
-        pendingCases: Math.round(OVERALL_DATA.pendingCases * scaleFactor),
-        unresolvedCases: Math.round(OVERALL_DATA.unresolvedCases * scaleFactor),
+        totalChecks,
+        safeRate: Number(summary?.safeRate || 0),
+        unsafeCases,
+        solvedCases: 0,
+        pendingCases: unsafeCases,
+        unresolvedCases: unsafeCases,
       };
     }
     const bu = chart4Data.find(b => b.name === selectedBU);

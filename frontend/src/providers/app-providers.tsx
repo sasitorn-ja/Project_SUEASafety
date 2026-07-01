@@ -234,6 +234,7 @@ type AppState = {
   awarenessWeekdays: number[];
   awarenessActiveStartTime: string;
   awarenessActiveEndTime: string;
+  awarenessScheduleStartDate: string;
   /** วันแรกที่ผู้ใช้เริ่มใช้งาน (YYYY-MM-DD). วันก่อนหน้านี้จะไม่ถูกนับใน KPI. */
   awarenessStartDate: string;
   isEventLive: boolean;
@@ -266,6 +267,7 @@ type AppActions = {
   updateAwarenessEnabled: (enabled: boolean) => Promise<boolean>;
   updateAwarenessWeekdays: (weekdays: number[]) => Promise<boolean>;
   updateAwarenessTimeWindow: (startTime: string, endTime: string) => Promise<boolean>;
+  updateAwarenessScheduleStartDate: (startDate: string) => Promise<boolean>;
   /** Mark today's Safety Awareness popup as completed. */
   markAwarenessDone: (completion: Omit<AwarenessCompletion, "date" | "completedAt">) => Promise<boolean>;
   awardSafetyEffortCompletion: (sourceId: string, label?: string) => void;
@@ -1622,6 +1624,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
   const [awarenessWeekdays, setAwarenessWeekdaysState] = useState<number[]>([1, 2, 3, 4, 5]);
   const [awarenessActiveStartTime, setAwarenessActiveStartTimeState] = useState<string>("08:00");
   const [awarenessActiveEndTime, setAwarenessActiveEndTimeState] = useState<string>("17:00");
+  const [awarenessScheduleStartDate, setAwarenessScheduleStartDateState] = useState<string>("");
   const [eventNow, setEventNow] = useState(0);
   const postsRef = useRef<Post[]>([]);
   const demoModeRef = useRef(false);
@@ -1841,7 +1844,8 @@ export function AppProviders({ children }: { children: ReactNode }) {
         awarenessEnabledResult,
         awarenessWeekdaysResult,
         campaignStartDateResult,
-        campaignEndDateResult
+        campaignEndDateResult,
+        awarenessScheduleStartDateResult
       ] = await Promise.all([
         apiFetch<{ items: ApiPost[] }>("/api/safety-culture/posts?limit=50"),
         apiFetch<{ balance: { balance: number } }>("/api/safety-culture/points/me"),
@@ -1859,6 +1863,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
         apiFetch<{ setting: { setting_value?: unknown } | null }>("/api/safety-settings?key=safety_awareness_weekdays"),
         apiFetch<{ setting: { setting_value?: unknown } | null }>("/api/safety-settings?key=safety_awareness_active_start_time"),
         apiFetch<{ setting: { setting_value?: unknown } | null }>("/api/safety-settings?key=safety_awareness_active_end_time"),
+        apiFetch<{ setting: { setting_value?: unknown } | null }>("/api/safety-settings?key=safety_awareness_schedule_start_date"),
       ]);
 
       if (cancelled) return;
@@ -2017,6 +2022,14 @@ export function AppProviders({ children }: { children: ReactNode }) {
         }
       }
 
+      if (awarenessScheduleStartDateResult && awarenessScheduleStartDateResult.ok && awarenessScheduleStartDateResult.data?.setting) {
+        const raw = awarenessScheduleStartDateResult.data.setting.setting_value;
+        const value = typeof raw === "string" ? JSON.parse(raw) : raw;
+        if (value && typeof value === "object" && value.startDate !== undefined) {
+          setAwarenessScheduleStartDateState(String(value.startDate || ""));
+        }
+      }
+
       if (eventsResult.ok && Array.isArray(eventsResult.data?.items)) {
         setFeedEvents(backendFeedEvents);
       }
@@ -2157,7 +2170,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
           ...current,
         ])
       );
-      setCurrentUserPoints((prev) => prev + savedPoints);
+      void refreshPointBalance();
       return savedPost;
     }
 
@@ -2179,7 +2192,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
     );
     setCurrentUserPoints((prev) => prev + pointsDelta);
     return { ...post, points: awardedPoints };
-  }, [getLinkedFeedEvent, safetyCultureEvent]);
+  }, [getLinkedFeedEvent, refreshPointBalance, safetyCultureEvent]);
 
   const toggleLike = useCallback((postId: number) => {
     let currentDelta = 0;
@@ -2255,7 +2268,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
                   : post
               )
             );
-            await refreshInboxNotifications();
+            await Promise.all([refreshInboxNotifications(), refreshPointBalance()]);
             return;
           }
 
@@ -2266,7 +2279,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
           }
         });
     }
-  }, [getLinkedFeedEvent, loadPostComments, refreshInboxNotifications, safetyCultureEvent]);
+  }, [getLinkedFeedEvent, refreshInboxNotifications, refreshPointBalance, safetyCultureEvent]);
 
   const fetchComments = useCallback(async (postId: number) => {
     if (demoModeRef.current) {
@@ -2360,8 +2373,9 @@ export function AppProviders({ children }: { children: ReactNode }) {
         comments: post.comments.map((comment) => comment.id === optimisticId ? savedComment : comment),
       };
     }));
+    void refreshPointBalance();
     return true;
-  }, [getLinkedFeedEvent, safetyCultureEvent]);
+  }, [getLinkedFeedEvent, refreshPointBalance, safetyCultureEvent]);
 
   const updateComment = useCallback(async (postId: number, commentId: string, text: string) => {
     const trimmed = text.trim();
@@ -2658,6 +2672,14 @@ export function AppProviders({ children }: { children: ReactNode }) {
     return true;
   }, []);
 
+  const updateAwarenessScheduleStartDate = useCallback(async (startDate: string) => {
+    setAwarenessScheduleStartDateState(startDate);
+    if (isAuthenticatedRef.current) {
+      void apiFetch("/api/safety-settings?key=safety_awareness_schedule_start_date", apiJson("PUT", { value: { startDate } })).catch(() => null);
+    }
+    return true;
+  }, []);
+
   const updateAwarenessQuestions = useCallback((questions: SafetyAwarenessQuestion[]) => {
     const existingByText = new Map(
       awarenessQuestions.map((question) => [question.text.trim(), question]),
@@ -2942,12 +2964,14 @@ export function AppProviders({ children }: { children: ReactNode }) {
         const endMin = endH * 60 + endM;
         return currentMin >= startMin && currentMin <= endMin;
       })() &&
+      (!awarenessScheduleStartDate || awarenessTodayKey >= awarenessScheduleStartDate) &&
       !awarenessHolidays.some((holiday) => holiday.date === awarenessTodayKey) &&
       ![0, 6].includes(awarenessBangkokDay),
     awarenessEnabled,
     awarenessWeekdays,
     awarenessActiveStartTime,
     awarenessActiveEndTime,
+    awarenessScheduleStartDate,
     awarenessStartDate,
     isEventLive: isSafetyCultureEventLive(safetyCultureEvent, eventNow),
     eventNow,
@@ -2979,6 +3003,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
     updateAwarenessEnabled,
     updateAwarenessWeekdays,
     updateAwarenessTimeWindow,
+    updateAwarenessScheduleStartDate,
     markAwarenessDone,
     awardSafetyEffortCompletion,
     redeemPoints,
