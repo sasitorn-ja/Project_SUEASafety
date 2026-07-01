@@ -12,7 +12,7 @@ import { FullscreenImageViewer } from "@/components/safety-culture/fullscreen-im
 import { apiFetch } from "@/lib/api-client";
 import { COMMENT_REACTION_CHOICES, formatPostSubtext, formatThaiDateTime } from "@/lib/safety-culture";
 import { cn } from "@/lib/utils";
-import { useAppActions, type Comment as CommentType, type Post } from "@/providers/app-providers";
+import { useAppState, useAppActions, type Comment as CommentType, type Post } from "@/providers/app-providers";
 import { getSessionInitials, getSessionProfileImage, useSessionUser } from "@/lib/session-user";
 
 const POINT_UNIT = "Coin";
@@ -151,6 +151,7 @@ export default function SafetyCulturePostDetailPage() {
   const postId = Number(params?.postId);
   const { user: sessionUser } = useSessionUser();
   const { toggleLike, addComment, fetchComments, deleteComment } = useAppActions();
+  const { posts: localPosts } = useAppState();
   const [post, setPost] = useState<Post | null>(null);
   const [comments, setComments] = useState<CommentType[]>([]);
   const [commentDraft, setCommentDraft] = useState("");
@@ -174,6 +175,14 @@ export default function SafetyCulturePostDetailPage() {
       apiFetch<{ items: ApiComment[] }>(`/api/safety-culture/posts/${postId}/comments?limit=100`),
     ]);
     if (!postResult.ok || !postResult.data?.post) {
+      const localPost = localPosts.find((p) => Number(p.id) === postId);
+      if (localPost) {
+        setPost(localPost);
+        setComments(Array.isArray(localPost.comments) ? localPost.comments : []);
+        setError("");
+        setLoading(false);
+        return;
+      }
       setError("ไม่พบโพสต์นี้ หรือโพสต์ถูกลบแล้ว");
       setLoading(false);
       return;

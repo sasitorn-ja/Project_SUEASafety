@@ -3,7 +3,6 @@
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import {
-  CircleDollarSign,
   ImageIcon,
   Loader2,
   Send,
@@ -559,7 +558,8 @@ export function FloatingSafetyAssistant() {
             <div className="relative mt-2 border-t border-[#E2E8F0] px-0.5 pt-2">
               <div className="flex items-center justify-between gap-3">
                 <span className="flex items-center gap-2 text-[12px] font-black text-[#0D47A1]">
-                  <CircleDollarSign className="h-4.5 w-4.5 text-[#2196F3]" strokeWidth={2.5} />
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src="/images/icons/STCoin.png" alt="Coin" className="h-4.5 w-4.5 object-contain" />
                   Coin ของฉัน
                 </span>
                 <span className="text-[17px] font-black leading-none text-[#2196F3]">
@@ -582,7 +582,8 @@ export function FloatingSafetyAssistant() {
                 {ASSISTANT_NAME}
               </p>
               <p className="flex items-center gap-1 text-[10px] font-bold leading-tight text-[#60748C]">
-                <CircleDollarSign className="h-3 w-3 text-[#2196F3]" strokeWidth={2.5} />
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/images/icons/STCoin.png" alt="Coin" className="h-3 w-3 object-contain" />
                 {currentUserPoints.toLocaleString()} Coin
               </p>
             </div>

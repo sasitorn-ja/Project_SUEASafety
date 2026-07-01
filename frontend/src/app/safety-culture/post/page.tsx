@@ -23,7 +23,7 @@ import { toast } from "sonner";
 import { useAppActions, useAppState } from "@/providers/app-providers";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Dialog } from "@/components/ui/dialog";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { AppDialogBody, AppDialogContent, AppDialogDescription, AppDialogSectionHeader, AppDialogTitle } from "@/components/ui/app-dialog";
 import { uploadMedia } from "@/features/safety-effort/lib/upload-media";
 import { SAFETY_CULTURE_CATEGORIES } from "@/lib/safety-culture";
@@ -400,7 +400,7 @@ export default function PostSocialPage() {
               "กำลังโพสต์..."
             ) : (
               <>
-                <svg className="h-4 w-4 fill-current rotate-45 mr-0.5" viewBox="0 0 24 24">
+                <svg className="h-4 w-4 fill-current -rotate-45 mr-0.5" viewBox="0 0 24 24">
                   <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
                 </svg>
                 <span>โพสต์</span>
@@ -520,7 +520,7 @@ export default function PostSocialPage() {
                 "flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-[14px]",
                 !selectedFeedEventId ? "bg-white/20 text-white" : "bg-[#e6f4ff] text-[#188fff]"
               )}>
-                <svg className="mr-0.5 h-5.5 w-5.5 rotate-45 fill-current" viewBox="0 0 24 24">
+                <svg className="mr-0.5 h-5.5 w-5.5 -rotate-45 fill-current" viewBox="0 0 24 24">
                   <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
                 </svg>
               </div>
@@ -831,30 +831,78 @@ export default function PostSocialPage() {
 
       {/* Success Dialog Popup */}
       <Dialog open={!!postSuccessPopup} onOpenChange={(open) => !open && closePostSuccessPopup()}>
-        <AppDialogContent size="sm" className="max-w-[560px]">
-          <AppDialogSectionHeader className="border-[#d7e6f6] bg-[linear-gradient(135deg,#ffffff_0%,#f4f9ff_56%,#eaf4ff_100%)]">
-            <AppDialogTitle className="text-[#0b3572]">
-              {postSuccessPopup?.title}
-            </AppDialogTitle>
-            <AppDialogDescription>
-              ระบบบันทึกโพสต์เรียบร้อยแล้ว
-            </AppDialogDescription>
-          </AppDialogSectionHeader>
+        <DialogContent
+          showCloseButton={false}
+          className="z-[9999] w-full max-w-[380px] border border-[#cfe0f2] bg-[linear-gradient(180deg,#ffffff,#f8fcff)] text-center shadow-[0_28px_80px_rgba(6,43,99,0.28)] rounded-[24px]"
+          style={{
+            padding: "32px 24px 24px",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            gap: 18,
+            animation: "scaleUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)",
+          }}
+        >
+          <style>{`
+            @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+            @keyframes scaleUp { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+          `}</style>
+          
+          <div style={{ width: 68, height: 68, borderRadius: "50%", background: "#e6f7ed", border: "2.5px solid #86efac", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 36, color: "#15803d" }}>
+            ✓
+          </div>
 
-          <AppDialogBody className="grid-cols-[auto_1fr] items-center gap-2.5 sm:gap-3">
-            <div className="flex h-8 w-8 items-center justify-center rounded-full border border-[#a9e2ba] bg-white text-[#2c9a57] shadow-[0_4px_10px_rgba(44,154,87,0.12)]">
-              <CheckCircle2 className="h-4.5 w-4.5" strokeWidth={2.6} />
-            </div>
-            <div className="space-y-0.5 text-left">
-              <div className="text-[18px] font-black leading-tight text-[#1e9b55] sm:text-[20px]">
-                สำเร็จ
-              </div>
-              <AppDialogDescription className="mt-0 text-[14px] leading-snug font-extrabold text-[#36a862] sm:text-[15px]">
-                {postSuccessPopup?.description}
-              </AppDialogDescription>
-            </div>
-          </AppDialogBody>
-        </AppDialogContent>
+          <div>
+            <h3 style={{ margin: 0, fontFamily: "'Prompt',sans-serif", fontSize: 20, fontWeight: 900, color: "#0e3e7d" }}>
+              โพสต์สำเร็จ
+            </h3>
+            <p style={{ margin: "6px 0 0", fontFamily: "'Prompt',sans-serif", fontSize: 13.5, fontWeight: 700, color: "#5f7591", lineHeight: 1.4 }}>
+              โพสต์ของคุณถูกเผยแพร่เรียบร้อยแล้ว
+            </p>
+          </div>
+
+          <div style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 6,
+            background: "#e6f4ff",
+            border: "1.5px solid #b3d8ff",
+            borderRadius: 99,
+            padding: "6px 16px",
+            fontSize: "14px",
+            fontWeight: 900,
+            color: "#0066cc",
+            lineHeight: 1,
+            fontFamily: "'Prompt',sans-serif",
+            marginTop: -2,
+            boxShadow: "0 4px 10px rgba(0,102,204,0.05)"
+          }}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/images/icons/STCoin.png" alt="Coin" className="h-[18px] w-[18px] object-contain" />
+            <span>+{selectedFeedEvent ? selectedFeedEventPoints : basePostPoints} Coin</span>
+          </div>
+
+          <button
+            type="button"
+            onClick={closePostSuccessPopup}
+            style={{
+              width: "100%",
+              height: 48,
+              border: "none",
+              borderRadius: 16,
+              background: "linear-gradient(180deg,#158eff,#075cc8)",
+              color: "#fff",
+              fontFamily: "'Prompt',sans-serif",
+              fontSize: 14.5,
+              fontWeight: 800,
+              cursor: "pointer",
+              marginTop: 6,
+              boxShadow: "0 6px 16px rgba(21,142,255,0.22)"
+            }}
+          >
+            กลับหน้าหลัก
+          </button>
+        </DialogContent>
       </Dialog>
     </>
   );
