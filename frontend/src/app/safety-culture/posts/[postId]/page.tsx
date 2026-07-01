@@ -177,14 +177,6 @@ export default function SafetyCulturePostDetailPage() {
       apiFetch<{ items: ApiComment[] }>(`/api/safety-culture/posts/${postId}/comments?limit=30`),
     ]);
     if (!postResult.ok || !postResult.data?.post) {
-      const localPost = localPosts.find((p) => Number(p.id) === postId);
-      if (localPost) {
-        setPost(localPost);
-        setComments(Array.isArray(localPost.comments) ? localPost.comments : []);
-        setError("");
-        setLoading(false);
-        return;
-      }
       setError("ไม่พบโพสต์นี้ หรือโพสต์ถูกลบแล้ว");
       setLoading(false);
       return;

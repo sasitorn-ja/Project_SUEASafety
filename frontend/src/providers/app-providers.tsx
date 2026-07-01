@@ -20,7 +20,6 @@ import {
   getSessionDisplayName,
   getSessionInitials,
   getSessionSnapshot,
-  isDemoLoginActive,
   type SessionUser,
 } from "@/lib/session-user";
 
@@ -1673,7 +1672,6 @@ export function AppProviders({ children }: { children: ReactNode }) {
   const [awarenessDescription, setAwarenessDescriptionState] = useState<string>("");
   const [eventNow, setEventNow] = useState(0);
   const postsRef = useRef<Post[]>([]);
-  const demoModeRef = useRef(false);
   const lastLiveRefreshAtRef = useRef(0);
   const likeRequestStateRef = useRef<Record<string, { inFlight: boolean }>>({});
   const likeCooldownUntilRef = useRef<Record<string, number>>({});
@@ -1826,13 +1824,6 @@ export function AppProviders({ children }: { children: ReactNode }) {
     async function loadBackendState() {
       setIsAppBootstrapping(true);
       setIsAwarenessLoading(true);
-      let demoLoginAllowed = false;
-      try {
-        demoLoginAllowed = isDemoLoginActive();
-      } catch {
-        demoLoginAllowed = false;
-      }
-
       // ตรวจ session ก่อน ถ้ายังไม่ล็อกอินก็ไม่ต้องเรียก API ที่ต้องยืนยันตัวตน
       let authed = false;
       let sessionUser: SessionUser | null = null;
@@ -1846,32 +1837,25 @@ export function AppProviders({ children }: { children: ReactNode }) {
       if (cancelled) return;
       isAuthenticatedRef.current = authed;
       currentUserRef.current = sessionUser;
-      demoModeRef.current = false;
 
       if (!authed) {
-        if (demoLoginAllowed) {
-          const demoUser = createDemoSessionUser();
-          const demoSnapshot = createDemoSafetyCultureSnapshot(demoUser);
-          currentUserRef.current = demoUser;
-          demoModeRef.current = true;
-          setCurrentUserPoints(demoSnapshot.currentUserPoints);
-          setPosts(demoSnapshot.posts);
-          setFeedEvents(demoSnapshot.feedEvents);
-          setTeamStandings(demoSnapshot.teamStandings);
-          setPersonalRankings(demoSnapshot.personalRankings);
-          setRewardsCatalog(demoSnapshot.rewardsCatalog);
-          setRewardCategories(demoSnapshot.rewardCategories);
-          setRewardRedemptions(demoSnapshot.rewardRedemptions);
-          setInboxNotifications(demoSnapshot.inboxNotifications);
-          setUserActivityHistory(demoSnapshot.userActivityHistory);
-          setAwarenessQuestions(demoSnapshot.awarenessQuestions);
-          setAwarenessHistory(demoSnapshot.awarenessHistory);
-          setAwarenessDoneDate(demoSnapshot.awarenessDoneDate);
-          setAwarenessHolidays(demoSnapshot.awarenessHolidays);
-          setSafetyCultureEvent(demoSnapshot.safetyCultureEvent);
-          setAwarenessActiveStartTimeState("08:00");
-          setAwarenessActiveEndTimeState("17:00");
-        }
+        setCurrentUserPoints(0);
+        setPosts([]);
+        setFeedEvents([]);
+        setTeamStandings([]);
+        setPersonalRankings([]);
+        setRewardsCatalog([]);
+        setRewardCategories(createDefaultRewardCategories());
+        setRewardRedemptions([]);
+        setInboxNotifications([]);
+        setUserActivityHistory([]);
+        setAwarenessQuestions([]);
+        setAwarenessHistory([]);
+        setAwarenessDoneDate("");
+        setAwarenessHolidays([]);
+        setSafetyCultureEvent(createDefaultSafetyCultureEvent());
+        setAwarenessActiveStartTimeState("08:00");
+        setAwarenessActiveEndTimeState("17:00");
         if (!cancelled) {
           setIsAwarenessLoading(false);
           setIsAppBootstrapping(false);
@@ -2232,10 +2216,6 @@ export function AppProviders({ children }: { children: ReactNode }) {
   }, []);
 
   const fetchPostsPage = useCallback(async (options: { scope?: "all" | "my-team" | "mine"; category?: string | null; limit?: number; cursor?: string | null } = {}) => {
-    if (demoModeRef.current) {
-      const currentUserId = String(currentUserRef.current?.id || currentUserRef.current?.sub || "demo-admin");
-      return { items: filterDemoPosts(postsRef.current, currentUserId, options), nextCursor: null };
-    }
     if (!isAuthenticatedRef.current) return { items: [], nextCursor: null };
     const params = new URLSearchParams();
     params.set("limit", String(options.limit || 15));
@@ -2299,24 +2279,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
       return savedPost;
     }
 
-    setPosts((prev) => [{ ...post, points: awardedPoints }, ...prev]);
-    setUserActivityHistory((current) =>
-      normalizeUserActivityHistory([
-        {
-          id: `activity-post-${post.id}-${occurredAt}`,
-          type: "post",
-          occurredAt,
-          postId: post.id,
-          postAuthor: post.author,
-          postCategory: post.category,
-          postPreview: post.body,
-          pointsDelta,
-        },
-        ...current,
-      ])
-    );
-    setCurrentUserPoints((prev) => prev + pointsDelta);
-    return { ...post, points: awardedPoints };
+    throw new Error("unauthorized");
   }, [getLinkedFeedEvent, refreshPointBalance, safetyCultureEvent]);
 
   const toggleLike = useCallback((postId: number | string) => {
@@ -2403,10 +2366,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
   const fetchComments = useCallback(async (postId: number | string) => {
     const localPostId = Number(postId);
     const requestKey = String(postId);
-    if (demoModeRef.current) {
-      const post = postsRef.current.find((item) => item.id === localPostId || item.apiId === requestKey);
-      return post && Array.isArray(post.comments) ? post.comments : [];
-    }
+    if (!isAuthenticatedRef.current) return [];
     const comments = await loadPostComments(postId);
     if (!comments) return [];
     setPosts((current) => current.map((post) => (post.id === localPostId || post.apiId === requestKey ? { ...post, comments } : post)));
@@ -2414,6 +2374,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
   }, [loadPostComments]);
 
   const addComment = useCallback(async (postId: number | string, text: string) => {
+    if (!isAuthenticatedRef.current) return false;
     const localPostId = Number(postId);
     const requestKey = String(postId);
     const occurredAt = Date.now();
@@ -2473,7 +2434,6 @@ export function AppProviders({ children }: { children: ReactNode }) {
       );
     }
     setCurrentUserPoints((prev) => prev + currentAwardedPoints);
-    if (!isAuthenticatedRef.current) return true;
 
     const result = await apiFetch<{ comment: ApiComment }>(`/api/safety-culture/posts/${resolvePostApiId(postId)}/comments`, apiJson("POST", { content: text }));
     if (!result.ok || !result.data?.comment) {
@@ -2501,6 +2461,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
   }, [getLinkedFeedEvent, refreshPointBalance, resolvePostApiId, safetyCultureEvent]);
 
   const updateComment = useCallback(async (postId: number | string, commentId: string, text: string) => {
+    if (!isAuthenticatedRef.current) return false;
     const localPostId = Number(postId);
     const requestKey = String(postId);
     const trimmed = text.trim();
@@ -2517,7 +2478,6 @@ export function AppProviders({ children }: { children: ReactNode }) {
         }),
       };
     }));
-    if (!isAuthenticatedRef.current) return true;
     const result = await apiFetch<{ comment: ApiComment }>(`/api/safety-culture/comments/${commentId}`, apiJson("PATCH", { content: trimmed }));
     if (!result.ok || !result.data?.comment) {
       setPosts((current) => current.map((post) => {
@@ -2535,6 +2495,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
   }, []);
 
   const deleteComment = useCallback(async (postId: number | string, commentId: string) => {
+    if (!isAuthenticatedRef.current) return false;
     const localPostId = Number(postId);
     const requestKey = String(postId);
     let removed: Comment | undefined;
@@ -2545,7 +2506,6 @@ export function AppProviders({ children }: { children: ReactNode }) {
       removed = removedIndex >= 0 ? post.comments[removedIndex] : undefined;
       return { ...post, comments: post.comments.filter((comment) => comment.id !== commentId) };
     }));
-    if (!isAuthenticatedRef.current) return true;
     const result = await apiFetch<{ deleted: boolean }>(`/api/safety-culture/comments/${commentId}`, { method: "DELETE" });
     if (!result.ok || !result.data?.deleted) {
       const restored = removed;
@@ -2562,6 +2522,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
 
   // Edit own post (text). Backend enforces author_id = current user.
   const updatePost = useCallback(async (postId: number | string, content: string) => {
+    if (!isAuthenticatedRef.current) return false;
     const localPostId = Number(postId);
     const requestKey = String(postId);
     const trimmed = content.trim();
@@ -2575,7 +2536,6 @@ export function AppProviders({ children }: { children: ReactNode }) {
         return { ...p, body: trimmed };
       })
     );
-    if (!isAuthenticatedRef.current) return true;
     const result = await apiFetch<{ post: ApiPost }>(
       `/api/safety-culture/posts/${resolvePostApiId(postId)}`,
       apiJson("PATCH", { content: trimmed })
@@ -2592,6 +2552,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
 
   // Delete own post (soft delete server-side). Backend enforces author_id = current user.
   const deletePost = useCallback(async (postId: number | string) => {
+    if (!isAuthenticatedRef.current) return false;
     const localPostId = Number(postId);
     const requestKey = String(postId);
     let removed: Post | undefined;
@@ -2601,7 +2562,6 @@ export function AppProviders({ children }: { children: ReactNode }) {
       removed = removedIndex >= 0 ? prev[removedIndex] : undefined;
       return prev.filter((p) => p.id !== localPostId && p.apiId !== requestKey);
     });
-    if (!isAuthenticatedRef.current) return true;
     const result = await apiFetch<{ deleted: boolean; pointsReversed: number; balance: number | null }>(
       `/api/safety-culture/posts/${resolvePostApiId(postId)}`,
       apiJson("DELETE")

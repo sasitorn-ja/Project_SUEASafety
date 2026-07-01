@@ -12,12 +12,8 @@ import { SafetyAwarenessGate } from "@/components/safety-awareness/safety-awaren
 import { FloatingSafetyAssistant } from "./floating-safety-assistant";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import {
-  DEMO_ADMIN_USER,
-  DEMO_LOGIN_PERSISTED_KEY,
-  DEMO_LOGIN_SESSION_KEY,
   getSessionSnapshot,
   hasAdminAccess,
-  isDemoLoginActive,
   type SessionUser,
 } from "@/lib/session-user";
 
@@ -54,36 +50,14 @@ export function AppShell({ children }: { children: ReactNode }) {
     }
 
     let cancelled = false;
-    let loggedIn = false;
-    try {
-      loggedIn =
-        window.sessionStorage.getItem(DEMO_LOGIN_SESSION_KEY) === "true" ||
-        window.localStorage.getItem(DEMO_LOGIN_PERSISTED_KEY) === "true";
-    } catch {
-      loggedIn = false;
-    }
-
-    const demoLoginAllowed = isDemoLoginActive();
-
-    if (loggedIn || demoLoginAllowed) {
-      setLoginChecked(true);
-      setSessionChecked(true);
-    } else {
-      setLoginChecked(false);
-      setSessionChecked(false);
-    }
+    setLoginChecked(false);
+    setSessionChecked(false);
     setSessionCheckPending(true);
     getSessionSnapshot()
       .then((session) => {
         if (cancelled) return;
         if (session.authenticated) {
           setSessionUser(session.user || null);
-          try {
-            window.sessionStorage.setItem(DEMO_LOGIN_SESSION_KEY, "true");
-            window.localStorage.setItem(DEMO_LOGIN_PERSISTED_KEY, "true");
-          } catch {
-            // The cookie-backed session remains authoritative.
-          }
           setLoginChecked(true);
           setSessionChecked(true);
           setSessionCheckPending(false);
@@ -92,28 +66,12 @@ export function AppShell({ children }: { children: ReactNode }) {
         setSessionUser(null);
         setSessionChecked(true);
         setSessionCheckPending(false);
-        if (demoLoginAllowed) {
-          setSessionUser(DEMO_ADMIN_USER);
-          setLoginChecked(true);
-          return;
-        }
-        try {
-          window.sessionStorage.removeItem(DEMO_LOGIN_SESSION_KEY);
-          window.localStorage.removeItem(DEMO_LOGIN_PERSISTED_KEY);
-        } catch {
-          // Storage is only an optimistic hint; the server session remains authoritative.
-        }
         router.replace(`/login?returnTo=${encodeURIComponent(getSafeReturnTo(window.location.pathname || "/"))}`);
       })
       .catch(() => {
         if (!cancelled) {
           setSessionChecked(true);
           setSessionCheckPending(false);
-          if (demoLoginAllowed) {
-            setSessionUser(DEMO_ADMIN_USER);
-            setLoginChecked(true);
-            return;
-          }
           router.replace(`/login?returnTo=${encodeURIComponent(getSafeReturnTo(window.location.pathname || "/"))}`);
         }
       });
