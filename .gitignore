@@ -16,6 +16,10 @@ yarn-error.log*
 
 .DS_Store
 Thumbs.db
+.~lock.*#
+*.inspect.ndjson
+*.xlsx#
+*.bak
 
 # local scratch / temp tooling
 .codex-tmp/
