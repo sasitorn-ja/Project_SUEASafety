@@ -216,7 +216,7 @@ export default function RewardsPage() {
             }
             description="Coin Safety ของคุณเปลี่ยนเป็นรางวัลสุดแสนพิเศษได้"
             variant="community"
-            backgroundImage="/images/heroes/Home01.png"
+            backgroundImage="/images/heroes/Safety-Culture-Rewards.png"
             backgroundOverlay="linear-gradient(90deg, rgba(210,235,255,.82) 0%, rgba(210,235,255,.60) 32%, rgba(210,235,255,.10) 56%, rgba(210,235,255,0) 74%)"
             mascotSrc="/images/mascots/wangjai/39.png"
             mascotAction="happyReward"

@@ -253,7 +253,7 @@ export default function AdminLeaderboardPage() {
         title={<>ทีมและ <span className="text-[var(--brand-accent)]">อันดับ</span></>}
         description="จัดทีมจาก SSO และสร้างทีมกำหนดเอง พร้อมย้ายสมาชิกและตั้งหัวหน้าทีม"
         variant="community"
-        backgroundImage="/images/heroes/Home01.png"
+        backgroundImage="/images/heroes/Safety-Culture-Admin-Leaderboard.png"
         backgroundOverlay="linear-gradient(90deg, rgba(210,235,255,.82) 0%, rgba(210,235,255,.60) 32%, rgba(210,235,255,.10) 56%, rgba(210,235,255,0) 74%)"
         mascotSrc="/images/mascots/wangjai/44.png"
         mascotAction="cheer2"
