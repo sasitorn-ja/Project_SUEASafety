@@ -229,7 +229,7 @@ const SELECT_POSTS_SQL = `
     p.category,
     u.name_th AS author_name,
     u.email AS author_email,
-    u.profile_image_url AS author_profile_image_url,
+    COALESCE(u.profile_image_url, u.line_profile_image_url) AS author_profile_image_url,
     o.name_th AS organization_name,
     t.name AS team_name,
     p.content,
@@ -246,7 +246,7 @@ const SELECT_POSTS_SQL = `
         JSON_OBJECT(
           'userId', CAST(lu.id AS CHAR),
           'name', COALESCE(NULLIF(lu.name_th, ''), NULLIF(lu.name_en, ''), lu.email, 'ผู้ใช้งาน'),
-          'profileImageUrl', lu.profile_image_url
+          'profileImageUrl', COALESCE(lu.profile_image_url, lu.line_profile_image_url)
         )
       )
       FROM reactions lr
@@ -577,7 +577,7 @@ export async function listComments(postId: string, options: { limit?: number; cu
 
   const rows = await queryRows<CommentRow>(
     `
-      SELECT c.id, c.post_id, c.author_id, u.name_th AS author_name, u.profile_image_url AS author_profile_image_url, c.content, c.created_at,
+      SELECT c.id, c.post_id, c.author_id, u.name_th AS author_name, COALESCE(u.profile_image_url, u.line_profile_image_url) AS author_profile_image_url, c.content, c.created_at,
         (SELECT cr.reaction_type FROM comment_reactions cr WHERE cr.comment_id=c.id AND cr.user_id=:viewerId LIMIT 1) viewer_reaction
       FROM comments c
       LEFT JOIN users u ON u.id = c.author_id
@@ -650,7 +650,7 @@ export async function createComment(postId: string, authorId: string, content: s
 
   const rows = await queryRows<CommentRow>(
     `
-      SELECT c.id, c.post_id, c.author_id, u.name_th AS author_name, u.profile_image_url AS author_profile_image_url, c.content, c.created_at
+      SELECT c.id, c.post_id, c.author_id, u.name_th AS author_name, COALESCE(u.profile_image_url, u.line_profile_image_url) AS author_profile_image_url, c.content, c.created_at
       FROM comments c
       LEFT JOIN users u ON u.id = c.author_id
       WHERE c.id = :id
@@ -678,7 +678,7 @@ export async function updateComment(commentId: string, authorId: string, content
 
   const rows = await queryRows<CommentRow>(
     `
-      SELECT c.id, c.post_id, c.author_id, u.name_th AS author_name, u.profile_image_url AS author_profile_image_url, c.content, c.created_at
+      SELECT c.id, c.post_id, c.author_id, u.name_th AS author_name, COALESCE(u.profile_image_url, u.line_profile_image_url) AS author_profile_image_url, c.content, c.created_at
       FROM comments c
       LEFT JOIN users u ON u.id = c.author_id
       WHERE c.id = :commentId AND c.author_id = :authorId AND c.deleted_at IS NULL
