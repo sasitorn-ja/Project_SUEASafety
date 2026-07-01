@@ -1632,17 +1632,10 @@ export default function Page() {
           <AppDialogSectionFooter className="flex justify-end gap-2">
             <button
               type="button"
-              onClick={() => setDeletingPostId(null)}
-              className="rounded-full border border-[var(--c-e3d0ae)] bg-white px-4 py-2 text-[13px] font-extrabold text-[var(--c-706557)] hover:bg-[var(--c-fff7e8)]"
-            >
-              ยกเลิก
-            </button>
-            <button
-              type="button"
               onClick={handleConfirmDeletePost}
               className="rounded-full bg-[#c73a21] px-4 py-2 text-[13px] font-extrabold text-white hover:bg-[#a82e19]"
             >
-              ยืนยันลบ
+              ยืนยัน
             </button>
           </AppDialogSectionFooter>
         </AppDialogContent>

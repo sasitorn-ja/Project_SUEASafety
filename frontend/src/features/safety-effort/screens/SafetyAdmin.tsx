@@ -652,7 +652,7 @@ export default function SafetyAdmin() {
             display: isMobile ? "flex" : "grid",
             gridTemplateColumns: isMobile
               ? undefined
-              : "minmax(300px, 360px) minmax(0, 1fr) 300px",
+              : "minmax(300px, 360px) minmax(0, 1fr)",
             flexDirection: isMobile ? "column" : undefined,
             gap: 16,
             minHeight: isMobile ? undefined : 0,
@@ -892,9 +892,112 @@ export default function SafetyAdmin() {
                             <h2 style={{ fontSize: 24, fontWeight: 900, margin: "4px 0 0", color: T.ink, lineHeight: 1.1 }}>{selectedQuestion.title}</h2>
                           </div>
                         </div>
+
+                        {/* Top-Right Settings & Actions */}
+                        <div style={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: 12 }}>
+                          {/* Toggle switch for active state */}
+                          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                            <span
+                              style={{
+                                fontSize: 12.5,
+                                fontWeight: 800,
+                                color: isQuestionActive(selectedQuestion) ? "#22c55e" : T.sub,
+                                transition: "color 0.15s ease",
+                              }}
+                            >
+                              {isQuestionActive(selectedQuestion) ? "เปิดใช้งาน" : "ปิดใช้งาน"}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => updateQuestion(selectedQuestion.id, (item) => ({ ...item, active: !isQuestionActive(item) }))}
+                              style={{
+                                position: "relative",
+                                display: "inline-flex",
+                                width: 42,
+                                height: 22,
+                                borderRadius: 999,
+                                background: isQuestionActive(selectedQuestion) ? "#22c55e" : "#cbd5e1",
+                                border: "none",
+                                cursor: "pointer",
+                                transition: "background-color 0.2s ease",
+                                padding: 0,
+                                outline: "none",
+                              }}
+                            >
+                              <span
+                                style={{
+                                  position: "absolute",
+                                  top: 2,
+                                  left: isQuestionActive(selectedQuestion) ? 22 : 2,
+                                  width: 18,
+                                  height: 18,
+                                  borderRadius: "50%",
+                                  background: "#fff",
+                                  boxShadow: "0 2px 4px rgba(0,0,0,0.15)",
+                                  transition: "left 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
+                                }}
+                              />
+                            </button>
+                          </div>
+
+                          {/* Divider */}
+                          <div style={{ width: 1, height: 20, background: T.line }} />
+
+                          {/* Save Status Badge */}
+                          <div
+                            style={{
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: 6,
+                              borderRadius: 8,
+                              background: dirty ? "var(--c-fff2cf)" : "#edf8f2",
+                              color: dirty ? T.accentDeep : T.ok,
+                              padding: "6px 10px",
+                              fontSize: 12,
+                              fontWeight: 800,
+                              border: `1px solid ${dirty ? "rgba(245,158,11,0.15)" : "rgba(31,122,85,0.12)"}`
+                            }}
+                          >
+                            <span style={{ width: 6, height: 6, borderRadius: 999, background: dirty ? T.accent : T.ok }} />
+                            {dirty ? "มีแก้ไขที่ยังไม่บันทึก" : "บันทึกข้อมูลแล้ว"}
+                          </div>
+
+                          {/* Buttons */}
+                          <button
+                            type="button"
+                            onClick={handleRestoreDefault}
+                            disabled={savingChecklists}
+                            style={{
+                              ...buttonDangerStyle,
+                              height: 34,
+                              borderRadius: 8,
+                              fontSize: 12.5,
+                              padding: "0 12px",
+                              opacity: savingChecklists ? 0.6 : 1
+                            }}
+                          >
+                            คืนค่าเริ่มต้น
+                          </button>
+                          <button
+                            type="button"
+                            onClick={handleSaveDraft}
+                            disabled={savingChecklists}
+                            style={{
+                              ...buttonPrimaryStyle,
+                              height: 34,
+                              borderRadius: 8,
+                              fontSize: 12.5,
+                              padding: "0 16px",
+                              boxShadow: "none",
+                              opacity: savingChecklists ? 0.7 : 1
+                            }}
+                          >
+                            {savingChecklists ? "กำลังบันทึก..." : "บันทึก"}
+                          </button>
+                        </div>
                       </div>
 
-                      <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 12, alignItems: "end" }}>
+                      <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 16, alignItems: "end" }}>
                         <label style={fieldStyle}>
                           <span style={fieldLabelStyle}>หัวข้อ</span>
                           <input
@@ -913,6 +1016,275 @@ export default function SafetyAdmin() {
                             placeholder="เว้นว่างเพื่อสร้างอัตโนมัติ"
                           />
                         </label>
+
+                        {/* หมวดหมู่สถานที่ */}
+                        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                          <span style={fieldLabelStyle}>หมวดหมู่สถานที่</span>
+                          <div style={{ position: "relative", zIndex: 30 }}>
+                            <button
+                              type="button"
+                              onClick={() => setLocationDropdownOpen(!locationDropdownOpen)}
+                              style={{
+                                width: "100%",
+                                height: 42,
+                                borderRadius: 12,
+                                border: `1px solid rgba(11, 78, 162, 0.18)`,
+                                background: "#fff",
+                                color: "#1d4ed8",
+                                padding: "0 14px",
+                                fontFamily: "inherit",
+                                fontWeight: 800,
+                                cursor: "pointer",
+                                fontSize: 13.5,
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "space-between",
+                                outline: "none",
+                                boxShadow: "0 2px 6px rgba(11, 78, 162, 0.04)",
+                                transition: "all 0.2s ease",
+                              }}
+                              onMouseOver={(e) => {
+                                e.currentTarget.style.background = "#eff6ff";
+                                e.currentTarget.style.borderColor = "#3b82f6";
+                              }}
+                              onMouseOut={(e) => {
+                                e.currentTarget.style.background = "#fff";
+                                e.currentTarget.style.borderColor = "rgba(11, 78, 162, 0.18)";
+                              }}
+                            >
+                              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                                {selectedType === "factory" && <Building size={16} style={{ color: "#1d4ed8" }} />}
+                                {selectedType === "office" && <Users size={16} style={{ color: "#1d4ed8" }} />}
+                                {selectedType === "site" && <MapPin size={16} style={{ color: "#1d4ed8" }} />}
+                                <span>{LOCATION_TYPE_LABELS[selectedType]}</span>
+                              </div>
+                              <ChevronDown size={14} style={{ color: "#1d4ed8", transform: locationDropdownOpen ? "rotate(180deg)" : "none", transition: "transform 0.15s ease" }} />
+                            </button>
+
+                            {locationDropdownOpen && (
+                              <div
+                                onClick={() => setLocationDropdownOpen(false)}
+                                style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, zIndex: 40 }}
+                              />
+                            )}
+
+                            {locationDropdownOpen && (
+                              <div
+                                style={{
+                                  position: "absolute",
+                                  top: "calc(100% + 6px)",
+                                  left: 0,
+                                  width: "100%",
+                                  background: "#fff",
+                                  border: `1px solid ${T.lineStrong}`,
+                                  borderRadius: 16,
+                                  boxShadow: "0 12px 36px rgba(6,43,99,0.16)",
+                                  zIndex: 50,
+                                  padding: 6,
+                                  display: "grid",
+                                  gap: 4,
+                                }}
+                              >
+                                {LOCATION_TYPE_OPTIONS.map((option) => {
+                                  const active = selectedType === option.key;
+                                  const count = draft[option.key].length;
+                                  return (
+                                    <button
+                                      key={option.key}
+                                      type="button"
+                                      onClick={() => {
+                                        setSelectedType(option.key);
+                                        setSelectedQuestionId(draft[option.key][0]?.id || "");
+                                        setLocationDropdownOpen(false);
+                                        if (isMobile) setMobileActiveView("list");
+                                      }}
+                                      style={{
+                                        width: "100%",
+                                        padding: "10px 12px",
+                                        borderRadius: 12,
+                                        border: "none",
+                                        background: active ? "#eff6ff" : "transparent",
+                                        color: active ? "#1d4ed8" : T.ink,
+                                        fontSize: 13.5,
+                                        fontWeight: 800,
+                                        textAlign: "left",
+                                        cursor: "pointer",
+                                        display: "flex",
+                                        alignItems: "center",
+                                        justifyContent: "space-between",
+                                        gap: 8,
+                                        outline: "none",
+                                      }}
+                                      onMouseOver={(e) => { if (!active) e.currentTarget.style.background = "#f1f5f9"; }}
+                                      onMouseOut={(e) => { if (!active) e.currentTarget.style.background = "transparent"; }}
+                                    >
+                                      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                                        <div
+                                          style={{
+                                            width: 28,
+                                            height: 28,
+                                            borderRadius: "50%",
+                                            background: active ? "#fff" : "#f1f5f9",
+                                            display: "grid",
+                                            placeItems: "center",
+                                            flexShrink: 0,
+                                          }}
+                                        >
+                                          {option.key === "factory" && <Building size={14} style={{ color: active ? "#1d4ed8" : "#475569" }} />}
+                                          {option.key === "office" && <Users size={14} style={{ color: active ? "#1d4ed8" : "#475569" }} />}
+                                          {option.key === "site" && <MapPin size={14} style={{ color: active ? "#1d4ed8" : "#475569" }} />}
+                                        </div>
+                                        <span>{option.label}</span>
+                                      </div>
+                                      <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                                        <span
+                                          style={{
+                                            minWidth: 22,
+                                            height: 22,
+                                            borderRadius: 999,
+                                            background: active ? "#fff" : "#f1f5f9",
+                                            color: active ? "#1d4ed8" : "#64748b",
+                                            display: "grid",
+                                            placeItems: "center",
+                                            fontSize: 11,
+                                            fontWeight: 800,
+                                            padding: "0 6px",
+                                          }}
+                                        >
+                                          {count}
+                                        </span>
+                                        {active && <Check size={14} style={{ color: "#1d4ed8" }} />}
+                                      </div>
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* รูปแบบคำตอบ */}
+                        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                          <span style={fieldLabelStyle}>รูปแบบคำตอบ</span>
+                          <div style={{ position: "relative", zIndex: 20 }}>
+                            <button
+                              type="button"
+                              onClick={() => setFormatDropdownOpen(!formatDropdownOpen)}
+                              style={{
+                                width: "100%",
+                                height: 42,
+                                borderRadius: 12,
+                                border: `1px solid ${T.lineStrong}`,
+                                background: "#fff",
+                                color: T.ink,
+                                padding: "0 14px",
+                                fontSize: 13.5,
+                                fontWeight: 800,
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "space-between",
+                                cursor: "pointer",
+                                outline: "none",
+                              }}
+                            >
+                              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                                {selectedQuestion.format === "text_box" ? (
+                                  <>
+                                    <div style={{ width: 24, height: 24, borderRadius: 6, background: "#eff6ff", display: "grid", placeItems: "center" }}>
+                                      <Pencil size={14} style={{ color: "#3b82f6" }} />
+                                    </div>
+                                    <span>Text Box</span>
+                                  </>
+                                ) : (
+                                  <>
+                                    <div style={{ width: 24, height: 24, borderRadius: 6, background: "#eff6ff", display: "grid", placeItems: "center" }}>
+                                      <ClipboardList size={14} style={{ color: "#3b82f6" }} />
+                                    </div>
+                                    <span>แบบตัวเลือก</span>
+                                  </>
+                                )}
+                              </div>
+                              <ChevronDown size={16} style={{ color: T.sub, transform: formatDropdownOpen ? "rotate(180deg)" : "none", transition: "transform 0.15s ease" }} />
+                            </button>
+
+                            {formatDropdownOpen && (
+                              <div
+                                onClick={() => setFormatDropdownOpen(false)}
+                                style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, zIndex: 40 }}
+                              />
+                            )}
+
+                            {formatDropdownOpen && (
+                              <div
+                                style={{
+                                  position: "absolute",
+                                  top: "calc(100% + 6px)",
+                                  left: 0,
+                                  width: "100%",
+                                  background: "#fff",
+                                  border: `1px solid ${T.lineStrong}`,
+                                  borderRadius: 12,
+                                  boxShadow: "0 10px 25px rgba(0,0,0,0.1)",
+                                  zIndex: 50,
+                                  padding: 4,
+                                  display: "grid",
+                                  gap: 2,
+                                }}
+                              >
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    updateQuestion(selectedQuestion.id, (item) => ({ ...item, format: "original" }));
+                                    setFormatDropdownOpen(false);
+                                  }}
+                                  style={{
+                                    width: "100%",
+                                    padding: "10px 12px",
+                                    borderRadius: 8,
+                                    border: "none",
+                                    background: selectedQuestion.format !== "text_box" ? "#f1f5f9" : "transparent",
+                                    color: T.ink,
+                                    fontSize: 13,
+                                    fontWeight: 800,
+                                    textAlign: "left",
+                                    cursor: "pointer",
+                                    display: "flex",
+                                    alignItems: "center",
+                                    gap: 8,
+                                  }}
+                                >
+                                  <ClipboardList size={14} style={{ color: "#3b82f6" }} />
+                                  <span>แบบตัวเลือก</span>
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    updateQuestion(selectedQuestion.id, (item) => ({ ...item, format: "text_box" }));
+                                    setFormatDropdownOpen(false);
+                                  }}
+                                  style={{
+                                    width: "100%",
+                                    padding: "10px 12px",
+                                    borderRadius: 8,
+                                    border: "none",
+                                    background: selectedQuestion.format === "text_box" ? "#f1f5f9" : "transparent",
+                                    color: T.ink,
+                                    fontSize: 13,
+                                    fontWeight: 800,
+                                    textAlign: "left",
+                                    cursor: "pointer",
+                                    display: "flex",
+                                    alignItems: "center",
+                                    gap: 8,
+                                  }}
+                                >
+                                  <Pencil size={14} style={{ color: "#3b82f6" }} />
+                                  <span>Text Box</span>
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        </div>
                       </div>
                     </div>
 
@@ -949,6 +1321,34 @@ export default function SafetyAdmin() {
                         />
                       </div>
                     </div>
+
+                    {/* Delete Question Button */}
+                    <div style={{ display: "flex", justifyContent: "flex-end", paddingRight: 4, marginTop: 8 }}>
+                      <button
+                        type="button"
+                        onClick={() => setDeleteTargetId(selectedQuestion.id)}
+                        style={{
+                          height: 38,
+                          borderRadius: 10,
+                          border: "1px solid #fecaca",
+                          background: "#fef2f2",
+                          color: "#dc2626",
+                          fontWeight: 800,
+                          fontSize: 12.5,
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          gap: 8,
+                          cursor: "pointer",
+                          transition: "all 0.15s ease",
+                          outline: "none",
+                          padding: "0 16px",
+                        }}
+                      >
+                        <Trash2 size={16} />
+                        <span>ลบข้อประเมินนี้</span>
+                      </button>
+                    </div>
                   </>
                 ) : (
                   <div
@@ -964,448 +1364,6 @@ export default function SafetyAdmin() {
                   </div>
                 )}
               </section>
-
-              {/* Right Column: Settings Panel */}
-              <aside
-                style={{
-                  background: T.card,
-                  border: `1px solid ${T.line}`,
-                  borderRadius: 24,
-                  padding: 20,
-                  boxShadow: T.shadow,
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: 20,
-                  height: isMobile ? "auto" : "100%",
-                  minHeight: isMobile ? undefined : 0,
-                }}
-              >
-                {/* Header */}
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", paddingBottom: 12, borderBottom: `1px solid ${T.line}` }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                    <Settings size={18} style={{ color: "#5f7591" }} />
-                    <span style={{ fontSize: 15, fontWeight: 900, color: T.ink }}>การตั้งค่า</span>
-                  </div>
-                  {selectedQuestion && (
-                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                      <span
-                        style={{
-                          fontSize: 12.5,
-                          fontWeight: 800,
-                          color: isQuestionActive(selectedQuestion) ? "#22c55e" : T.sub,
-                          transition: "color 0.15s ease",
-                        }}
-                      >
-                        {isQuestionActive(selectedQuestion) ? "เปิดใช้งาน" : "ปิดใช้งาน"}
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => updateQuestion(selectedQuestion.id, (item) => ({ ...item, active: !isQuestionActive(item) }))}
-                        style={{
-                          position: "relative",
-                          display: "inline-flex",
-                          width: 42,
-                          height: 22,
-                          borderRadius: 999,
-                          background: isQuestionActive(selectedQuestion) ? "#22c55e" : "#cbd5e1",
-                          border: "none",
-                          cursor: "pointer",
-                          transition: "background-color 0.2s ease",
-                          padding: 0,
-                          outline: "none",
-                        }}
-                      >
-                        <span
-                          style={{
-                            position: "absolute",
-                            top: 2,
-                            left: isQuestionActive(selectedQuestion) ? 22 : 2,
-                            width: 18,
-                            height: 18,
-                            borderRadius: "50%",
-                            background: "#fff",
-                            boxShadow: "0 2px 4px rgba(0,0,0,0.15)",
-                            transition: "left 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
-                          }}
-                        />
-                      </button>
-                    </div>
-                  )}
-                </div>
-
-                {/* เลือกหมวดหมู่สถานที่ (Location Category Selector) */}
-                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                  <label style={{ fontSize: 13, fontWeight: 900, color: T.ink }}>หมวดหมู่สถานที่</label>
-                  <div style={{ position: "relative", zIndex: 30 }}>
-                    <button
-                      type="button"
-                      onClick={() => setLocationDropdownOpen(!locationDropdownOpen)}
-                      style={{
-                        width: "100%",
-                        height: 40,
-                        borderRadius: 12,
-                        border: `1px solid rgba(11, 78, 162, 0.18)`,
-                        background: "#fff",
-                        color: "#1d4ed8",
-                        padding: "0 14px",
-                        fontFamily: "inherit",
-                        fontWeight: 800,
-                        cursor: "pointer",
-                        fontSize: 13.5,
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "space-between",
-                        outline: "none",
-                        boxShadow: "0 2px 6px rgba(11, 78, 162, 0.04)",
-                        transition: "all 0.2s ease",
-                      }}
-                      onMouseOver={(e) => {
-                        e.currentTarget.style.background = "#eff6ff";
-                        e.currentTarget.style.borderColor = "#3b82f6";
-                      }}
-                      onMouseOut={(e) => {
-                        e.currentTarget.style.background = "#fff";
-                        e.currentTarget.style.borderColor = "rgba(11, 78, 162, 0.18)";
-                      }}
-                    >
-                      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                        {selectedType === "factory" && <Building size={16} style={{ color: "#1d4ed8" }} />}
-                        {selectedType === "office" && <Users size={16} style={{ color: "#1d4ed8" }} />}
-                        {selectedType === "site" && <MapPin size={16} style={{ color: "#1d4ed8" }} />}
-                        <span>{LOCATION_TYPE_LABELS[selectedType]}</span>
-                      </div>
-                      <ChevronDown size={14} style={{ color: "#1d4ed8", transform: locationDropdownOpen ? "rotate(180deg)" : "none", transition: "transform 0.15s ease" }} />
-                    </button>
-
-                    {/* Backdrop */}
-                    {locationDropdownOpen && (
-                      <div
-                        onClick={() => setLocationDropdownOpen(false)}
-                        style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, zIndex: 40 }}
-                      />
-                    )}
-
-                    {/* Dropdown Menu */}
-                    {locationDropdownOpen && (
-                      <div
-                        style={{
-                          position: "absolute",
-                          top: "calc(100% + 6px)",
-                          left: 0,
-                          width: "100%",
-                          background: "#fff",
-                          border: `1px solid ${T.lineStrong}`,
-                          borderRadius: 16,
-                          boxShadow: "0 12px 36px rgba(6,43,99,0.16)",
-                          zIndex: 50,
-                          padding: 6,
-                          display: "grid",
-                          gap: 4,
-                        }}
-                      >
-                        {LOCATION_TYPE_OPTIONS.map((option) => {
-                          const active = selectedType === option.key;
-                          const count = draft[option.key].length;
-                          return (
-                            <button
-                              key={option.key}
-                              type="button"
-                              onClick={() => {
-                                setSelectedType(option.key);
-                                setSelectedQuestionId(draft[option.key][0]?.id || "");
-                                setLocationDropdownOpen(false);
-                                if (isMobile) setMobileActiveView("list");
-                              }}
-                              style={{
-                                width: "100%",
-                                padding: "10px 12px",
-                                borderRadius: 12,
-                                border: "none",
-                                background: active ? "#eff6ff" : "transparent",
-                                color: active ? "#1d4ed8" : T.ink,
-                                fontSize: 13.5,
-                                fontWeight: 800,
-                                textAlign: "left",
-                                cursor: "pointer",
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "space-between",
-                                gap: 8,
-                                outline: "none",
-                              }}
-                              onMouseOver={(e) => { if (!active) e.currentTarget.style.background = "#f1f5f9"; }}
-                              onMouseOut={(e) => { if (!active) e.currentTarget.style.background = "transparent"; }}
-                            >
-                              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                                <div
-                                  style={{
-                                    width: 28,
-                                    height: 28,
-                                    borderRadius: "50%",
-                                    background: active ? "#fff" : "#f1f5f9",
-                                    display: "grid",
-                                    placeItems: "center",
-                                    flexShrink: 0,
-                                  }}
-                                >
-                                  {option.key === "factory" && <Building size={14} style={{ color: active ? "#1d4ed8" : "#475569" }} />}
-                                  {option.key === "office" && <Users size={14} style={{ color: active ? "#1d4ed8" : "#475569" }} />}
-                                  {option.key === "site" && <MapPin size={14} style={{ color: active ? "#1d4ed8" : "#475569" }} />}
-                                </div>
-                                <span>{option.label}</span>
-                              </div>
-                              <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                                <span
-                                  style={{
-                                    minWidth: 22,
-                                    height: 22,
-                                    borderRadius: 999,
-                                    background: active ? "#fff" : "#f1f5f9",
-                                    color: active ? "#1d4ed8" : "#64748b",
-                                    display: "grid",
-                                    placeItems: "center",
-                                    fontSize: 11,
-                                    fontWeight: 800,
-                                    padding: "0 6px",
-                                  }}
-                                >
-                                  {count}
-                                </span>
-                                {active && <Check size={14} style={{ color: "#1d4ed8" }} />}
-                              </div>
-                            </button>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* สถานะการบันทึก และ ปุ่มควบคุมหลัก */}
-                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                  <div
-                    style={{
-                      display: "inline-flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      gap: 6,
-                      borderRadius: 10,
-                      background: dirty ? "var(--c-fff2cf)" : "#edf8f2",
-                      color: dirty ? T.accentDeep : T.ok,
-                      padding: "8px 12px",
-                      fontSize: 12,
-                      fontWeight: 800,
-                      border: `1px solid ${dirty ? "rgba(245,158,11,0.15)" : "rgba(31,122,85,0.12)"}`
-                    }}
-                  >
-                    <span style={{ width: 8, height: 8, borderRadius: 999, background: dirty ? T.accent : T.ok }} />
-                    {dirty ? "มีแก้ไขที่ยังไม่บันทึก" : "บันทึกข้อมูลแล้ว"}
-                  </div>
-
-                  <div style={{ display: "flex", gap: 8 }}>
-                    <button
-                      type="button"
-                      onClick={handleRestoreDefault}
-                      disabled={savingChecklists}
-                      style={{
-                        flex: 1,
-                        ...buttonDangerStyle,
-                        height: 38,
-                        borderRadius: 10,
-                        fontSize: 12.5,
-                        padding: 0,
-                        opacity: savingChecklists ? 0.6 : 1
-                      }}
-                    >
-                      คืนค่าเริ่มต้น
-                    </button>
-                    <button
-                      type="button"
-                      onClick={handleSaveDraft}
-                      disabled={savingChecklists}
-                      style={{
-                        flex: 1,
-                        ...buttonPrimaryStyle,
-                        height: 38,
-                        borderRadius: 10,
-                        fontSize: 12.5,
-                        padding: 0,
-                        boxShadow: "none",
-                        opacity: savingChecklists ? 0.7 : 1
-                      }}
-                    >
-                      {savingChecklists ? "กำลังบันทึก..." : "บันทึก"}
-                    </button>
-                  </div>
-                </div>
-
-                {selectedQuestion ? (
-                  <>
-                    <div style={{ height: 1, background: T.line }} />
-
-                    {/* รูปแบบคำตอบ */}
-                    <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                      <label style={{ fontSize: 13, fontWeight: 900, color: T.ink }}>รูปแบบคำตอบ</label>
-                      <div style={{ position: "relative" }}>
-                        <button
-                          type="button"
-                          onClick={() => setFormatDropdownOpen(!formatDropdownOpen)}
-                          style={{
-                            width: "100%",
-                            height: 44,
-                            borderRadius: 12,
-                            border: `1px solid ${T.lineStrong}`,
-                            background: "#fff",
-                            color: T.ink,
-                            padding: "0 14px",
-                            fontSize: 13.5,
-                            fontWeight: 800,
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "space-between",
-                            cursor: "pointer",
-                            outline: "none",
-                          }}
-                        >
-                          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                            {selectedQuestion.format === "text_box" ? (
-                              <>
-                                <div style={{ width: 24, height: 24, borderRadius: 6, background: "#eff6ff", display: "grid", placeItems: "center" }}>
-                                  <Pencil size={14} style={{ color: "#3b82f6" }} />
-                                </div>
-                                <span>Text Box</span>
-                              </>
-                            ) : (
-                              <>
-                                <div style={{ width: 24, height: 24, borderRadius: 6, background: "#eff6ff", display: "grid", placeItems: "center" }}>
-                                  <ClipboardList size={14} style={{ color: "#3b82f6" }} />
-                                </div>
-                                <span>แบบตัวเลือก</span>
-                              </>
-                            )}
-                          </div>
-                          <ChevronDown size={16} style={{ color: T.sub, transform: formatDropdownOpen ? "rotate(180deg)" : "none", transition: "transform 0.15s ease" }} />
-                        </button>
-
-                        {/* Backdrop overlay to close dropdown */}
-                        {formatDropdownOpen && (
-                          <div
-                            onClick={() => setFormatDropdownOpen(false)}
-                            style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, zIndex: 999 }}
-                          />
-                        )}
-
-                        {/* Dropdown Menu */}
-                        {formatDropdownOpen && (
-                          <div
-                            style={{
-                              position: "absolute",
-                              top: "calc(100% + 6px)",
-                              left: 0,
-                              width: "100%",
-                              background: "#fff",
-                              border: `1px solid ${T.lineStrong}`,
-                              borderRadius: 12,
-                              boxShadow: "0 10px 25px rgba(0,0,0,0.1)",
-                              zIndex: 1000,
-                              padding: 4,
-                              display: "grid",
-                              gap: 2,
-                            }}
-                          >
-                            <button
-                              type="button"
-                              onClick={() => {
-                                updateQuestion(selectedQuestion.id, (item) => ({ ...item, format: "original" }));
-                                setFormatDropdownOpen(false);
-                              }}
-                              style={{
-                                width: "100%",
-                                padding: "10px 12px",
-                                borderRadius: 8,
-                                border: "none",
-                                background: selectedQuestion.format !== "text_box" ? "#f1f5f9" : "transparent",
-                                color: T.ink,
-                                fontSize: 13,
-                                fontWeight: 800,
-                                textAlign: "left",
-                                cursor: "pointer",
-                                display: "flex",
-                                alignItems: "center",
-                                gap: 8,
-                              }}
-                            >
-                              <ClipboardList size={14} style={{ color: "#3b82f6" }} />
-                              <span>แบบตัวเลือก</span>
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => {
-                                updateQuestion(selectedQuestion.id, (item) => ({ ...item, format: "text_box" }));
-                                setFormatDropdownOpen(false);
-                              }}
-                              style={{
-                                width: "100%",
-                                padding: "10px 12px",
-                                borderRadius: 8,
-                                border: "none",
-                                background: selectedQuestion.format === "text_box" ? "#f1f5f9" : "transparent",
-                                color: T.ink,
-                                fontSize: 13,
-                                fontWeight: 800,
-                                textAlign: "left",
-                                cursor: "pointer",
-                                display: "flex",
-                                alignItems: "center",
-                                gap: 8,
-                              }}
-                            >
-                              <Pencil size={14} style={{ color: "#3b82f6" }} />
-                              <span>Text Box</span>
-                            </button>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Spacer */}
-                    <div style={{ flex: 1 }} />
-
-                    {/* ปุ่ม ลบข้อ */}
-                    <button
-                      type="button"
-                      onClick={() => setDeleteTargetId(selectedQuestion.id)}
-                      style={{
-                        width: "100%",
-                        height: 44,
-                        borderRadius: 12,
-                        border: "1px solid #fecaca",
-                        background: "#fef2f2",
-                        color: "#dc2626",
-                        fontWeight: 800,
-                        fontSize: 13.5,
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        gap: 8,
-                        cursor: "pointer",
-                        transition: "all 0.15s ease",
-                        outline: "none",
-                      }}
-                    >
-                      <Trash2 size={16} />
-                      <span>ลบข้อประเมินนี้</span>
-                    </button>
-                  </>
-                ) : (
-                  <>
-                    <div style={{ flex: 1 }} />
-                    <div style={{ textAlign: "center", color: T.sub, padding: "20px 0", fontSize: 13 }}>
-                      กรุณาเลือกหรือเพิ่มข้อประเมินเพื่อตั้งค่า
-                    </div>
-                  </>
-                )}
-              </aside>
 
 
 

@@ -71,7 +71,15 @@ function sanitizeQuestion(question: ChecklistQuestionInput, index: number) {
     title: title || `หัวข้อ ${index + 1}`,
     guideTitle: question.guideTitle === false ? false : question.guideTitle ? String(question.guideTitle) : undefined,
     guidelines: Array.isArray(question.guidelines)
-      ? question.guidelines.map((line) => String(line || "")).filter(Boolean)
+      ? question.guidelines
+          .map((line: any) => {
+            if (!line) return "";
+            if (typeof line === "object") {
+              return String(line.text || line.guideline || line.value || JSON.stringify(line));
+            }
+            return String(line);
+          })
+          .filter(Boolean)
       : [],
     format: question.format === "text_box" ? "text_box" : "original",
     image: question.image ? String(question.image) : undefined,
@@ -87,7 +95,15 @@ function questionFromRow(row: QuestionRow) {
     title: row.question_text,
     guideTitle: options.guideTitle === false ? false : options.guideTitle ? String(options.guideTitle) : undefined,
     guidelines: Array.isArray(options.guidelines)
-      ? options.guidelines.map((line) => String(line || "")).filter(Boolean)
+      ? options.guidelines
+          .map((line: any) => {
+            if (!line) return "";
+            if (typeof line === "object") {
+              return String(line.text || line.guideline || line.value || JSON.stringify(line));
+            }
+            return String(line);
+          })
+          .filter(Boolean)
       : [],
     format: row.answer_type === "TEXT_BOX" ? "text_box" : "original",
     image: options.image ? String(options.image) : undefined,
