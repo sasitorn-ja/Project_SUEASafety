@@ -501,7 +501,7 @@ function getFeedEventTimestamp(date?: string, endOfDay = false) {
   return Number.isNaN(timestamp) ? null : timestamp;
 }
 
-function isFeedEventLive(event: SafetyCultureFeedEvent, now = Date.now()) {
+export function isFeedEventLive(event: SafetyCultureFeedEvent, now = Date.now()) {
   if (!event.published || event.status !== "open") return false;
   const start = getFeedEventTimestamp(event.startDate, false);
   const end = getFeedEventTimestamp(event.endDate, true);
@@ -2227,44 +2227,41 @@ export function AppProviders({ children }: { children: ReactNode }) {
   const toggleLike = useCallback((postId: number | string) => {
     const localPostId = Number(postId);
     const requestKey = String(postId);
-    let currentDelta = 0;
-    let likedPost: Post | null = null;
+    const targetPost = postsRef.current.find((post) => post.id === localPostId || post.apiId === requestKey);
+    if (!targetPost) return;
+
     const occurredAt = Date.now();
+    const isAdding = !targetPost.hasLiked;
+    const linkedFeedEvent = getLinkedFeedEvent(targetPost.feedEventId);
+    const awarded = linkedFeedEvent
+      ? calculateFeedEventAwardedPoints(getSafetyPoint("reactionCreated"), "reaction", linkedFeedEvent)
+      : calculateAwardedPoints(getSafetyPoint("reactionCreated"), "reaction", safetyCultureEvent);
+    const currentDelta = isAdding ? awarded : -awarded;
 
-    setPosts((prev) =>
-      prev.map((p) => {
-        if (p.id !== localPostId && p.apiId !== requestKey) return p;
-        const isAdding = !p.hasLiked;
-        const linkedFeedEvent = getLinkedFeedEvent(p.feedEventId);
-        const awarded = linkedFeedEvent
-          ? calculateFeedEventAwardedPoints(getSafetyPoint("reactionCreated"), "reaction", linkedFeedEvent)
-          : calculateAwardedPoints(getSafetyPoint("reactionCreated"), "reaction", safetyCultureEvent);
-        currentDelta = isAdding ? awarded : -awarded;
-        if (isAdding) {
-          likedPost = p;
-        }
-
-        return {
-          ...p,
-          hasLiked: isAdding,
-          likes: isAdding ? p.likes + 1 : Math.max(0, p.likes - 1),
-          points: Math.max(0, (p.points || 0) + currentDelta),
-        };
-      })
+    const nextPosts = postsRef.current.map((post) =>
+      post.id === localPostId || post.apiId === requestKey
+        ? {
+            ...post,
+            hasLiked: isAdding,
+            likes: isAdding ? post.likes + 1 : Math.max(0, post.likes - 1),
+            points: Math.max(0, (post.points || 0) + currentDelta),
+          }
+        : post
     );
+    postsRef.current = nextPosts;
+    setPosts(nextPosts);
 
-    const activityPost = likedPost as Post | null;
-    if (activityPost) {
+    if (isAdding) {
       setUserActivityHistory((current) =>
         normalizeUserActivityHistory([
           {
             id: `activity-reaction-${postId}-${occurredAt}`,
             type: "reaction",
             occurredAt,
-            postId: activityPost.id,
-            postAuthor: activityPost.author,
-            postCategory: activityPost.category,
-            postPreview: activityPost.body,
+            postId: targetPost.id,
+            postAuthor: targetPost.author,
+            postCategory: targetPost.category,
+            postPreview: targetPost.body,
             pointsDelta: Math.max(0, currentDelta),
           },
           ...current,
@@ -2276,7 +2273,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
       setCurrentUserPoints((prev) => Math.max(0, prev + currentDelta));
     }
     if (isAuthenticatedRef.current) {
-      const nextDesiredLiked = currentDelta > 0;
+      const nextDesiredLiked = isAdding;
       const requestState = likeRequestStateRef.current[requestKey] || { inFlight: false, desiredLiked: null };
       requestState.desiredLiked = nextDesiredLiked;
       likeRequestStateRef.current[requestKey] = requestState;
@@ -2303,11 +2300,14 @@ export function AppProviders({ children }: { children: ReactNode }) {
               ? postFromApi(syncedPostResult.data.post)
               : null;
 
-            if (syncedPostBase) {
+            if (
+              syncedPostBase
+              && (activeState.desiredLiked === null || activeState.desiredLiked === syncedPostBase.hasLiked)
+            ) {
               // Keep only the server-owned reaction fields in sync so the card
               // doesn't jump around when users tap the heart repeatedly.
-              setPosts((current) =>
-                current.map((post) =>
+              setPosts((current) => {
+                const syncedPosts = current.map((post) =>
                   post.id === localPostId
                   || post.apiId === requestKey
                     ? {
@@ -2318,8 +2318,10 @@ export function AppProviders({ children }: { children: ReactNode }) {
                         points: syncedPostBase.points,
                       }
                     : post
-                )
-              );
+                );
+                postsRef.current = syncedPosts;
+                return syncedPosts;
+              });
             }
 
             await Promise.all([refreshInboxNotifications(), refreshPointBalance()]);

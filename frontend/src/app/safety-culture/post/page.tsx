@@ -20,7 +20,7 @@ import {
   ImageIcon
 } from "lucide-react";
 import { toast } from "sonner";
-import { useAppActions, useAppState } from "@/providers/app-providers";
+import { isFeedEventLive, useAppActions, useAppState } from "@/providers/app-providers";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
@@ -164,10 +164,11 @@ export default function PostSocialPage() {
   const uploadInputId = useId();
   const router = useRouter();
   const actions = useAppActions();
-  const { safetyCultureEvent, isEventLive, feedEvents } = useAppState();
+  const { safetyCultureEvent, isEventLive, feedEvents, eventNow } = useAppState();
   const { user: sessionUser } = useSessionUser();
   const { themedImage } = useAppTheme();
-  const availableFeedEvents = feedEvents.filter((event) => event.published && event.status === "open");
+  const now = eventNow || Date.now();
+  const availableFeedEvents = feedEvents.filter((event) => isFeedEventLive(event, now));
   const [text, setText] = useState("");
   const [activeCategory, setActiveCategory] = useState("ทั่วไป");
   const [selectedFeedEventId, setSelectedFeedEventId] = useState("");
@@ -325,12 +326,15 @@ export default function PostSocialPage() {
         comments: [],
         points: basePostPoints,
         hasLiked: false,
-        feedEventId: selectedFeedEvent?.id,
+        feedEventId: selectedFeedEvent && isFeedEventLive(selectedFeedEvent, Date.now()) ? selectedFeedEvent.id : undefined,
         feedEventTitle: selectedFeedEvent?.title,
       });
-    } catch {
+    } catch (error) {
+      const errorCode = error instanceof Error ? error.message : "";
       toast.error("โพสต์ไม่สำเร็จ", {
-        description: "ระบบยังบันทึกโพสต์ไม่ได้ กรุณาลองใหม่อีกครั้ง",
+        description: errorCode
+          ? `ระบบยังบันทึกโพสต์ไม่ได้ (${errorCode})`
+          : "ระบบยังบันทึกโพสต์ไม่ได้ กรุณาลองใหม่อีกครั้ง",
       });
       setIsSubmitting(false);
       return;

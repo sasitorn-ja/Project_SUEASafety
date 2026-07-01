@@ -558,6 +558,210 @@ async function updateNotificationPreferences(userId: string, input: JsonInput) {
   return getNotificationPreferences(userId);
 }
 
+function customTeamColor(seed: unknown) {
+  const palette = ["#0EA5E9", "#14B8A6", "#F97316", "#EC4899", "#6366F1", "#84CC16", "#F59E0B", "#06B6D4"];
+  const text = String(seed || "");
+  let hash = 0;
+  for (let index = 0; index < text.length; index += 1) {
+    hash = (hash * 31 + text.charCodeAt(index)) % palette.length;
+  }
+  return palette[Math.abs(hash) % palette.length];
+}
+
+function sanitizeTeamName(value: unknown) {
+  return String(value || "").trim().replace(/\s+/g, " ").slice(0, 150);
+}
+
+function normalizeUserIdList(value: unknown) {
+  const items = Array.isArray(value) ? value : [];
+  return [...new Set(items.map((item) => String(item || "").trim()).filter((item) => /^\d+$/.test(item)))];
+}
+
+async function activeSafetyCultureTeamItems() {
+  const rows = await queryRows<DbRow>(
+    `SELECT t.id, t.team_code, t.organization_id, t.leader_user_id, t.name, t.status,
+            leader.email leader_email,
+            COALESCE(leader.name_th, leader.name_en, leader.email) leader_name,
+            COALESCE(leader.profile_image_url, leader.line_profile_image_url) leader_profile_image_url,
+            COUNT(DISTINCT member.id) members,
+            COALESCE(SUM(CASE WHEN member.id IS NOT NULL THEN pb.balance ELSE 0 END), 0) points
+     FROM teams t
+     LEFT JOIN users leader ON leader.id = t.leader_user_id AND leader.deleted_at IS NULL
+     LEFT JOIN team_members tm ON tm.team_id = t.id AND tm.left_at IS NULL
+     LEFT JOIN users member ON member.id = tm.user_id AND member.deleted_at IS NULL AND member.status = 'ACTIVE'
+     LEFT JOIN point_balances pb ON pb.user_id = tm.user_id
+     WHERE t.deleted_at IS NULL AND t.status = 'ACTIVE'
+     GROUP BY t.id, t.team_code, t.organization_id, t.leader_user_id, t.name, t.status,
+              leader.email, leader.name_th, leader.name_en, leader.profile_image_url, leader.line_profile_image_url
+     ORDER BY CASE WHEN t.team_code IS NULL THEN 1 ELSE 0 END, points DESC, t.name`,
+  );
+  const sourceRows = await queryRows<DbRow>(
+    `SELECT t.team_code, u.division, COUNT(*) members
+     FROM team_members tm
+     JOIN teams t ON t.id = tm.team_id AND t.deleted_at IS NULL AND t.status = 'ACTIVE'
+     JOIN users u ON u.id = tm.user_id AND u.deleted_at IS NULL AND u.status = 'ACTIVE'
+     WHERE tm.left_at IS NULL AND t.team_code IS NOT NULL
+     GROUP BY t.team_code, u.division
+     ORDER BY t.team_code, members DESC, u.division`,
+  );
+  const memberRows = await queryRows<DbRow>(
+    `SELECT tm.team_id,
+            u.id user_id,
+            u.email,
+            u.name_th,
+            u.name_en,
+            u.division,
+            COALESCE(u.profile_image_url, u.line_profile_image_url) profile_image_url,
+            COALESCE(pb.balance, 0) points
+     FROM team_members tm
+     JOIN users u ON u.id = tm.user_id AND u.deleted_at IS NULL AND u.status = 'ACTIVE'
+     LEFT JOIN point_balances pb ON pb.user_id = u.id
+     WHERE tm.left_at IS NULL
+     ORDER BY u.name_th, u.name_en, u.email`,
+  );
+
+  const sourceDivisions = new Map<string, string[]>();
+  for (const row of sourceRows) {
+    const code = String(row.team_code || "");
+    const division = String(row.division || "").trim() || "(empty)";
+    sourceDivisions.set(code, [...(sourceDivisions.get(code) || []), division]);
+  }
+
+  const membersByTeam = new Map<string, Record<string, unknown>[]>();
+  for (const row of memberRows) {
+    const teamId = String(row.team_id || "");
+    const list = membersByTeam.get(teamId) || [];
+    list.push({
+      user_id: String(row.user_id || ""),
+      email: row.email || null,
+      name: String(row.name_th || row.name_en || row.email || "Unknown user"),
+      division: row.division || null,
+      profile_image_url: row.profile_image_url || null,
+      points: Number(row.points || 0),
+    });
+    membersByTeam.set(teamId, list);
+  }
+
+  return rows.map((row, index) => {
+    const serialized = serializeRow(row);
+    const code = row.team_code ? String(row.team_code) : "";
+    const fixedTeam = code ? fixedTeamByCode(code) : null;
+    const teamId = String(row.id || "");
+    const members = membersByTeam.get(teamId) || [];
+    return {
+      ...serialized,
+      code: fixedTeam?.code || code,
+      name: fixedTeam?.name || String(row.name || "Custom team"),
+      color: fixedTeam?.color || customTeamColor(row.id || row.name),
+      display_order: fixedTeam?.order || 1000 + index,
+      source_divisions: fixedTeam ? sourceDivisions.get(fixedTeam.code) || [] : [],
+      member_ids: members.map((member) => String(member.user_id || "")),
+      member_details: members,
+      leader_name: row.leader_name || null,
+    };
+  });
+}
+
+async function saveSafetyCultureTeam(input: JsonInput, actorUserId?: string) {
+  const name = sanitizeTeamName(input.name);
+  if (!name) throw new Error("team_name_required");
+
+  const requestedId = String(input.id || "").trim();
+  const leaderUserId = String(input.leaderUserId || input.leader_user_id || "").trim();
+  const memberUserIds = normalizeUserIdList(input.memberUserIds || input.member_user_ids || input.members);
+  if (leaderUserId && /^\d+$/.test(leaderUserId) && !memberUserIds.includes(leaderUserId)) {
+    memberUserIds.push(leaderUserId);
+  }
+
+  return withTransaction(async (connection) => {
+    let teamId = requestedId && /^\d+$/.test(requestedId) ? requestedId : "";
+    if (teamId) {
+      const [teamRows] = await connection.query<DbRow[]>(
+        "SELECT id FROM teams WHERE id = :teamId AND deleted_at IS NULL LIMIT 1",
+        { teamId },
+      );
+      if (!teamRows[0]) throw new Error("team_not_found");
+      await connection.execute<ResultSetHeader>(
+        `UPDATE teams
+         SET name = :name,
+             leader_user_id = :leaderUserId,
+             status = 'ACTIVE'
+         WHERE id = :teamId`,
+        { teamId, name, leaderUserId: leaderUserId || null },
+      );
+    } else {
+      const [result] = await connection.execute<ResultSetHeader>(
+        `INSERT INTO teams (name, leader_user_id, status)
+         VALUES (:name, :leaderUserId, 'ACTIVE')`,
+        { name, leaderUserId: leaderUserId || null },
+      );
+      teamId = String(result.insertId);
+    }
+
+    if (memberUserIds.length) {
+      const [activeUsers] = await connection.query<DbRow[]>(
+        "SELECT id FROM users WHERE id IN (:userIds) AND deleted_at IS NULL AND status = 'ACTIVE'",
+        { userIds: memberUserIds },
+      );
+      const activeUserIds = new Set(activeUsers.map((row) => String(row.id || "")));
+      const invalidUserIds = memberUserIds.filter((id) => !activeUserIds.has(id));
+      if (invalidUserIds.length) throw new Error("team_member_not_found");
+
+      await connection.execute<ResultSetHeader>(
+        `UPDATE team_members
+         SET left_at = UTC_TIMESTAMP(3)
+         WHERE user_id IN (:userIds)
+           AND left_at IS NULL
+           AND team_id <> :teamId`,
+        { userIds: memberUserIds, teamId },
+      );
+    }
+
+    if (memberUserIds.length) {
+      await connection.execute<ResultSetHeader>(
+        `UPDATE team_members
+         SET left_at = UTC_TIMESTAMP(3)
+         WHERE team_id = :teamId
+           AND left_at IS NULL
+           AND user_id NOT IN (:userIds)`,
+        { teamId, userIds: memberUserIds },
+      );
+    } else {
+      await connection.execute<ResultSetHeader>(
+        `UPDATE team_members
+         SET left_at = UTC_TIMESTAMP(3)
+         WHERE team_id = :teamId
+           AND left_at IS NULL`,
+        { teamId },
+      );
+    }
+
+    for (const targetUserId of memberUserIds) {
+      await connection.execute<ResultSetHeader>(
+        `INSERT INTO team_members (team_id, user_id, joined_at, left_at)
+         VALUES (:teamId, :userId, UTC_TIMESTAMP(3), NULL)
+         ON DUPLICATE KEY UPDATE
+           joined_at = IF(left_at IS NULL, joined_at, VALUES(joined_at)),
+           left_at = NULL`,
+        { teamId, userId: targetUserId },
+      );
+    }
+
+    await connection.execute<ResultSetHeader>(
+      `INSERT INTO audit_logs (actor_user_id, action, entity_type, entity_id, after_data)
+       VALUES (:actorUserId, :action, 'SAFETY_CULTURE_TEAM', :teamId, :afterData)`,
+      {
+        actorUserId: actorUserId || null,
+        action: teamId === requestedId ? "UPDATE" : "CREATE",
+        teamId,
+        afterData: JSON.stringify({ name, leaderUserId: leaderUserId || null, memberUserIds }),
+      },
+    );
+
+    return teamId;
+  });
+}
+
 async function handleOrganizations(request: NextRequest, method: string, match: RouteMatch, input: JsonInput, userId?: string) {
   const pathPattern = match.route.path;
   if (method === "GET" && pathPattern === "/api/organizations/tree") {
@@ -1425,50 +1629,19 @@ async function handleCultureRewards(request: NextRequest, method: string, match:
   const route = match.route.path;
   if (route === "/api/safety-culture/teams") {
     if (method === "GET") {
-      const rows = await queryRows<DbRow>(
-        `SELECT t.id, t.team_code, t.organization_id, t.leader_user_id, t.name, t.status,
-                COUNT(DISTINCT member.id) members,
-                COALESCE(SUM(CASE WHEN member.id IS NOT NULL THEN pb.balance ELSE 0 END), 0) points
-         FROM teams t
-         LEFT JOIN team_members tm ON tm.team_id = t.id AND tm.left_at IS NULL
-         LEFT JOIN users member ON member.id = tm.user_id AND member.deleted_at IS NULL AND member.status = 'ACTIVE'
-         LEFT JOIN point_balances pb ON pb.user_id = tm.user_id
-         WHERE t.deleted_at IS NULL AND t.status = 'ACTIVE' AND t.team_code IS NOT NULL
-         GROUP BY t.id, t.team_code, t.organization_id, t.leader_user_id, t.name, t.status
-         ORDER BY points DESC, t.name`,
-      );
-      const sourceRows = await queryRows<DbRow>(
-        `SELECT t.team_code, u.division, COUNT(*) members
-         FROM team_members tm
-         JOIN teams t ON t.id = tm.team_id AND t.deleted_at IS NULL AND t.status = 'ACTIVE'
-         JOIN users u ON u.id = tm.user_id AND u.deleted_at IS NULL AND u.status = 'ACTIVE'
-         WHERE tm.left_at IS NULL AND t.team_code IS NOT NULL
-         GROUP BY t.team_code, u.division
-         ORDER BY t.team_code, members DESC, u.division`,
-      );
-      const sourceDivisions = new Map<string, string[]>();
-      for (const row of sourceRows) {
-        const code = String(row.team_code || "");
-        const division = String(row.division || "").trim() || "(empty)";
-        sourceDivisions.set(code, [...(sourceDivisions.get(code) || []), division]);
-      }
-      return jsonData({
-        items: rows.map((row) => {
-          const serialized = serializeRow(row);
-          const team = fixedTeamByCode(row.team_code);
-          return {
-            ...serialized,
-            code: team.code,
-            name: team.name,
-            color: team.color,
-            display_order: team.order,
-            source_divisions: sourceDivisions.get(team.code) || [],
-          };
-        }),
-      });
+      return jsonData({ items: await activeSafetyCultureTeamItems() });
+    }
+    if (method === "POST") {
+      const id = await saveSafetyCultureTeam(input, userId);
+      return jsonData({ id, items: await activeSafetyCultureTeamItems() }, { status: 201 });
     }
     if (method === "PUT") {
-      return jsonError("fixed_teams_managed_automatically", 409);
+      const teams = Array.isArray(input.teams) ? input.teams : [input];
+      const ids: string[] = [];
+      for (const team of teams) {
+        ids.push(await saveSafetyCultureTeam(team, userId));
+      }
+      return jsonData({ ids, items: await activeSafetyCultureTeamItems() });
     }
   }
   if (route.startsWith("/api/safety-culture/events")) {

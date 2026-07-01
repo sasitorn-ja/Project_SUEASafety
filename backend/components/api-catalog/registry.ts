@@ -2191,28 +2191,42 @@ export const API_CATALOG_ROUTES = [
     "method": "GET",
     "path": "/api/safety-culture/teams",
     "documentedPath": "/api/safety-culture/teams",
-    "purpose": "อ่าน 8 ทีมถาวร จำนวนสมาชิก Coin สี และ Division ต้นทาง",
+    "purpose": "อ่านทีม จำนวนสมาชิก Coin สี หัวหน้า สมาชิก และ Division ต้นทาง",
     "caller": "Admin Leaderboard",
     "whenCalled": "เปิดหน้าจัดการทีม",
     "auth": "User",
     "pagination": "No",
     "responseSizeRisk": "Small",
     "status": "Existing",
-    "notes": "ทีมถูกจัดอัตโนมัติจาก users.division"
+    "notes": "รวมทีม SSO และทีมที่ Admin สร้างเอง"
+  },
+  {
+    "module": "Safety Culture",
+    "method": "POST",
+    "path": "/api/safety-culture/teams",
+    "documentedPath": "/api/safety-culture/teams",
+    "purpose": "สร้างทีมใหม่พร้อมหัวหน้าและสมาชิก",
+    "caller": "Admin Leaderboard",
+    "whenCalled": "Admin สร้างทีมกำหนดเอง",
+    "auth": "Admin",
+    "pagination": "No",
+    "responseSizeRisk": "Small",
+    "status": "Existing",
+    "notes": "ย้ายสมาชิกจากทีมอื่นด้วย team_members.left_at ใน transaction"
   },
   {
     "module": "Safety Culture",
     "method": "PUT",
     "path": "/api/safety-culture/teams",
     "documentedPath": "/api/safety-culture/teams",
-    "purpose": "ปฏิเสธการแก้ทีมถาวรด้วยมือ",
-    "caller": "Legacy clients",
-    "whenCalled": "เมื่อ client เก่าเรียกแก้ทีม",
+    "purpose": "แก้ชื่อทีม หัวหน้า และสมาชิก",
+    "caller": "Admin Leaderboard",
+    "whenCalled": "Admin บันทึกทีม",
     "auth": "Admin",
     "pagination": "No",
     "responseSizeRisk": "Small",
     "status": "Existing",
-    "notes": "ตอบ 409 fixed_teams_managed_automatically"
+    "notes": "รองรับทีมเดี่ยวหรือ payload teams[] และย้ายสมาชิกออกจากทีมเดิมแบบ transaction"
   },
   {
     "module": "Settings",

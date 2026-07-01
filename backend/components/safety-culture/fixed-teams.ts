@@ -12,6 +12,22 @@ export async function syncUserFixedTeamMembership(
   userId: string,
   division: string | null | undefined,
 ) {
+  const [manualRows] = await connection.query<TeamIdRow[]>(
+    `SELECT t.id
+     FROM team_members tm
+     JOIN teams t ON t.id = tm.team_id
+     WHERE tm.user_id = :userId
+       AND tm.left_at IS NULL
+       AND t.deleted_at IS NULL
+       AND t.status = 'ACTIVE'
+       AND t.team_code IS NULL
+     LIMIT 1`,
+    { userId },
+  );
+  if (manualRows[0]?.id) {
+    return { teamId: String(manualRows[0].id), teamCode: null };
+  }
+
   const team = fixedTeamByCode(fixedTeamCodeForDivision(division));
 
   await connection.execute(
