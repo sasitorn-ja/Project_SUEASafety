@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
-import { Gift } from "lucide-react";
+
 import { FullscreenImageViewer, type FullscreenImageViewerPhoto } from "@/components/safety-culture/fullscreen-image-viewer";
 import { SafetyCultureHero } from "@/components/safety-culture/safety-culture-hero";
 import { SafetyCulturePageHeader } from "@/components/safety-culture/safety-culture-page-header";
@@ -229,7 +229,8 @@ export default function RewardsPage() {
             title="ร้านแลกของรางวัล"
             rightSlot={
               <div className="flex items-center gap-1.5 rounded-xl border-2 border-[var(--brand-accent)] bg-[var(--brand-soft)] px-3.5 py-1.5 text-[13.5px] font-black text-[var(--brand-text)] shadow-[0_2px_6px_rgba(var(--brand-accent-rgb),0.12)]">
-                <Gift className="h-4 w-4 text-[var(--brand-accent)]" strokeWidth={2.5} />
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/images/icons/STCoin.png" alt="Coin" className="h-5 w-5 object-contain" />
                 <span>{currentUserPoints.toLocaleString()} {POINT_UNIT}</span>
               </div>
             }
@@ -291,7 +292,7 @@ export default function RewardsPage() {
                     >
                       <Image src={themedImage(reward.imageSrc)} alt={reward.name} fill sizes="(max-width: 768px) 50vw, 220px" className="object-cover" />
                       <span className="pointer-events-none absolute right-2 top-2 rounded-full bg-[rgba(53,50,48,0.72)] px-2 py-1 text-[10px] font-black text-white">
-                        แตะเพื่อดูเต็มรูป
+                        แตะเพื่อดูรูปใหญ่
                       </span>
                     </button>
                   ) : reward.isHot ? (
@@ -304,7 +305,9 @@ export default function RewardsPage() {
                 <div className="flex flex-1 flex-col gap-1">
                   <div className="flex items-start justify-between gap-3">
                     <span className="line-clamp-2 text-[14.5px] font-[850] text-foreground">{reward.name}</span>
-                    <span className="flex-shrink-0 rounded-full bg-[var(--brand-soft)] px-2.5 py-1 text-[11px] font-black text-[var(--brand-text)]">
+                    <span className="flex-shrink-0 inline-flex items-center gap-1 rounded-full bg-[var(--brand-soft)] px-2.5 py-1 text-[11px] font-black text-[var(--brand-text)]">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src="/images/icons/STCoin.png" alt="Coin" className="h-3.5 w-3.5 object-contain" />
                       {reward.points.toLocaleString()} {POINT_UNIT}
                     </span>
                   </div>
@@ -372,7 +375,7 @@ export default function RewardsPage() {
                 alt="น้องวางใจ Safety mascot"
                 width={104}
                 height={104}
-                className="mascot-motion h-auto w-full"
+                className="mascot-motion h-auto w-full translate-x-[10%]"
               />
             </div>
 

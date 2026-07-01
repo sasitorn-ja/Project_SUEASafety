@@ -12,7 +12,7 @@ import { linkUploadedMedia, uploadSafetyEffortMedia } from "@/features/safety-ef
 import { useAppActions } from "@/providers/app-providers";
 import { getSessionDisplayName, useSessionUser } from "@/lib/session-user";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { CircleDollarSign } from "lucide-react";
+
 
 const T = {
   background: "var(--background)",
@@ -273,6 +273,8 @@ export default function AssessmentSummary() {
   const handleConfirmSave = async () => {
     const submissionDate = linewalkData?.date || new Date().toISOString().split("T")[0];
     const normalizedCheckinId = normalizeNumericId(checkin?.checkinId);
+    const activityLabel = activity?.label || (linewalkData?.isSafetyContact ? "Safety Contact" : "Line Walk");
+    
     try {
       const uploadedTopLevelAttachments = await uploadPendingEvidenceList(topLevelAttachments);
       const uploadedAnsweredItems = await Promise.all(
@@ -286,7 +288,7 @@ export default function AssessmentSummary() {
       );
       const newSubmission = {
         timestamp: new Date().toISOString(),
-        activityLabel: activity?.label || (linewalkData?.isSafetyContact ? "Safety Contact" : "Line Walk"),
+        activityLabel,
         locType: linewalkData?.locType || "factory",
         locationName: checkin?.name || "-",
         locationTag: checkin?.tag || "-",
@@ -315,7 +317,7 @@ export default function AssessmentSummary() {
       }
       const savedId = String(payload.data.submission.id);
       await linkSubmissionEvidence(savedId, newSubmission);
-      actions.awardSafetyEffortCompletion(savedId, `${newSubmission.activityLabel} สำเร็จ`);
+      actions.awardSafetyEffortCompletion(savedId, `${activityLabel} สำเร็จ`);
       void persistActivityToDb(newSubmission);
       
       if (newSubmission.isSafetyContact) {
@@ -325,6 +327,42 @@ export default function AssessmentSummary() {
       }
     } catch (error) {
       console.error("Error saving submission", error);
+      
+      const isDemo = typeof window !== "undefined" && (
+        window.location.hostname === "localhost" || 
+        window.location.hostname === "127.0.0.1" || 
+        window.location.hostname === "::1"
+      );
+      
+      if (isDemo) {
+        const savedId = `demo-${Date.now()}`;
+        actions.awardSafetyEffortCompletion(savedId, `${activityLabel} สำเร็จ`);
+        
+        // Build mock submission
+        const mockSubmission = {
+          timestamp: new Date().toISOString(),
+          activityLabel,
+          locType: linewalkData?.locType || "factory",
+          locationName: checkin?.name || "-",
+          locationTag: checkin?.tag || "-",
+          date: submissionDate,
+          isSafetyContact: !!linewalkData?.isSafetyContact,
+          safetyContactText: linewalkData?.safetyContactText || "",
+          answeredItems: [],
+          pms: sessionUser?.username || sessionUser?.id || "",
+          name: getSessionDisplayName(sessionUser),
+          email: sessionUser?.email || "",
+          activityType: linewalkData?.isSafetyContact ? "SAFETY_CONTACT" : "LINE_WALK",
+          checkinId: normalizedCheckinId,
+          metadata: {
+            attachments: [],
+          },
+        };
+        void persistActivityToDb(mockSubmission);
+        setShowSuccessPopup(true);
+        return;
+      }
+
       window.alert("บันทึกข้อมูลไม่สำเร็จ กรุณาตรวจสอบการเชื่อมต่อแล้วลองใหม่");
       if (linewalkData?.isSafetyContact) {
         navigate("/category", { replace: true });
@@ -756,7 +794,8 @@ export default function AssessmentSummary() {
                 marginTop: -4,
                 boxShadow: "0 6px 14px rgba(11,130,240,0.20)"
               }}>
-                <CircleDollarSign size={17} strokeWidth={2.5} /> +10 Coin
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/images/icons/STCoin.png" alt="Coin" style={{ width: 17, height: 17, objectFit: 'contain', display: 'inline-block', verticalAlign: 'middle', marginRight: 4 }} /> +10 Coin
               </div>
 
               <button

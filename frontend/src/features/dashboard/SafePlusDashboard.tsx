@@ -29,7 +29,6 @@ import {
   CheckCircle2,
   ChevronLeft,
   ChevronRight,
-  CircleDollarSign,
   Gift,
   ShieldCheck,
   ThumbsUp,
@@ -555,7 +554,8 @@ export default function SafePlusDashboard() {
           <div className="flex w-[min(320px,24vw)] flex-col gap-3">
             <div className="rounded-[18px] border border-white/75 bg-white/58 px-4 py-3.5 shadow-[0_12px_28px_rgba(11,130,240,.16)] backdrop-blur-[4px]">
               <div className="flex items-center gap-2 text-[11px] font-black text-[#083B84] [text-shadow:0_1px_0_rgba(255,255,255,.78)]">
-                <CircleDollarSign className="h-[20px] w-[20px] text-[#0077F0]" strokeWidth={2.7} />
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/images/icons/STCoin.png" alt="Coin" className="h-[20px] w-[20px] object-contain" />
                 <span>Coin SAFETY ของฉัน</span>
               </div>
               <div className="mt-1 flex items-end gap-2">
@@ -566,7 +566,8 @@ export default function SafePlusDashboard() {
               </div>
               {weeklyPoints > 0 && (
                 <span className="mt-1.5 inline-flex w-fit items-center gap-1 rounded-full bg-[#e6f9ef] px-2.5 py-1 text-[10.5px] font-black text-[#1a8c52] shadow-[inset_0_0_0_1px_rgba(26,140,82,.18)]">
-                  <CircleDollarSign className="h-3 w-3" strokeWidth={2.5} />+{weeklyPoints} Coin จากสัปดาห์ที่แล้ว
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src="/images/icons/STCoin.png" alt="Coin" className="h-3 w-3 object-contain" />+{weeklyPoints} Coin จากสัปดาห์ที่แล้ว
                 </span>
               )}
             </div>
@@ -577,7 +578,8 @@ export default function SafePlusDashboard() {
             >
               <div className="flex items-center gap-2.5">
                 <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[12px] border border-[#D7EAFE] bg-[#F5FAFF] shadow-[inset_0_1px_rgba(255,255,255,.9)]">
-                  <CircleDollarSign className="h-6 w-6 text-[#0B82F0]" strokeWidth={2.15} />
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src="/images/icons/STCoin.png" alt="Coin" className="h-10 w-10 object-contain" />
                 </div>
                 <div className="flex min-w-0 flex-col gap-1">
                   <strong className="text-[15px] font-black leading-tight text-[#0B2F6B]">
@@ -644,7 +646,8 @@ export default function SafePlusDashboard() {
           <div className="absolute top-4 left-[5%] z-[4] flex w-[56%] max-w-[230px] flex-col gap-2">
             <div className="rounded-[18px] border border-white/70 bg-white/62 px-3.5 py-3 shadow-[0_12px_28px_rgba(0,92,180,.16)] backdrop-blur-[5px]">
               <div className="flex items-center gap-1.5 text-[11.5px] font-black leading-tight text-[#0B2F6B]">
-                <CircleDollarSign className="h-[18px] w-[18px] flex-shrink-0 text-[#0B82F0]" strokeWidth={2.4} />
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/images/icons/STCoin.png" alt="Coin" className="h-[18px] w-[18px] flex-shrink-0 object-contain" />
                 <span>Coin SAFETY ของฉัน</span>
               </div>
               <div className="mt-2 flex items-baseline gap-2">

@@ -1,6 +1,6 @@
 "use client";
 
-import { Building2, CircleDollarSign, LayoutList, Users } from "lucide-react";
+import { Building2, LayoutList, Users } from "lucide-react";
 
 import { SafetyCultureHero } from "@/components/safety-culture/safety-culture-hero";
 import { Badge } from "@/components/ui/badge";
@@ -52,7 +52,8 @@ export default function AdminLeaderboardPage() {
             {totalMembers.toLocaleString()} สมาชิก
           </Badge>
           <Badge className="rounded-xl border border-[var(--border)] bg-white px-3 py-2 text-[12px] font-black text-[var(--brand-text)]">
-            <CircleDollarSign className="mr-1.5 h-3.5 w-3.5" />
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/images/icons/STCoin.png" alt="Coin" className="mr-1.5 h-3.5 w-3.5 object-contain" />
             {totalPoints.toLocaleString()} Coin รวม
           </Badge>
         </div>

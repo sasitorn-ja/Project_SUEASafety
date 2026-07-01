@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { CircleDollarSign, RefreshCcw, Save } from "lucide-react";
+import { RefreshCcw, Save } from "lucide-react";
 
 import { SafetyCultureHero } from "@/components/safety-culture/safety-culture-hero";
 import { Button } from "@/components/ui/button";
@@ -238,8 +238,9 @@ export function PointRulesManager() {
                           <h3 className="text-[16px] font-black leading-tight text-[#0B2F6B]">{rule.label}</h3>
                           <p className="mt-1 text-[11px] font-bold leading-relaxed text-[#55739B]">{POINT_RULE_HINTS[rule.code] || rule.sourceType}</p>
                         </div>
-                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-[#F5FAFF] text-[#0B82F0]">
-                          <CircleDollarSign className="h-5 w-5" strokeWidth={2.3} />
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-[#F5FAFF]">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img src="/images/icons/STCoin.png" alt="Coin" className="h-5 w-5 object-contain" />
                         </div>
                       </div>
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronLeft, CircleDollarSign, Clock3 } from "lucide-react";
+import { ChevronLeft, Clock3 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { type SafetyCultureFeedEvent } from "@/providers/app-providers";
@@ -87,7 +87,8 @@ export function MobileNotificationActivityView({ activity, onBack }: MobileNotif
             <div className={cn("mb-3 text-[18px] font-black", titleTextClass)}>รายละเอียดของกิจกรรมนี้:</div>
             <p className={cn("text-[15px] font-bold leading-relaxed", bodyTextClass)}>{activity.details}</p>
             <div className={cn("mt-4 inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-[13px] font-black", pointsPillClass)}>
-              <CircleDollarSign className="h-4 w-4" strokeWidth={2.2} />
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/images/icons/STCoin.png" alt="Coin" className="h-4 w-4 object-contain" />
               Points: {activity.points}
             </div>
           </Card>
