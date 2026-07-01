@@ -182,6 +182,7 @@ function activityBonusLabel(event: { points: number; bonusMode: string; multipli
 export default function SafePlusDashboard() {
   const {
     currentUserPoints,
+    isAwarenessLoading,
     awarenessHistory,
     awarenessHolidays,
     awarenessRequiredToday,
@@ -502,6 +503,20 @@ export default function SafePlusDashboard() {
       .reduce((sum, tx) => sum + tx.amount, 0);
   }, [pointTransactions]);
 
+  const awarenessLoadingCard = (
+    <Card className="self-start gap-1.5 rounded-[18px] border border-[rgba(13,80,165,0.18)] bg-white p-2.5 shadow-[0_4px_18px_rgba(11,53,110,0.10),0_1px_4px_rgba(11,53,110,0.06)] sm:p-2 lg:p-2">
+      <div className="flex min-h-[320px] flex-col items-center justify-center gap-3 rounded-[16px] border-[1.5px] border-[#b9d8fb] bg-gradient-to-br from-[#f8fbff] via-[#eef6ff] to-[#f5fbff] p-6 text-center shadow-[inset_0_1px_0_rgba(255,255,255,.78)]">
+        <div className="grid h-14 w-14 place-items-center rounded-full bg-white text-[#087dff] shadow-[0_8px_14px_rgba(0,71,140,.12)]">
+          <ShieldCheck className="h-6 w-6 animate-pulse" strokeWidth={2.4} />
+        </div>
+        <div className="text-[18px] font-black leading-tight text-[#0b3572]">กำลังโหลดข้อมูล Safety Awareness</div>
+        <div className="max-w-[320px] text-[12px] font-bold leading-relaxed text-[#5d7599]">
+          ระบบกำลังคำนวณประวัติการทำ เปอร์เซ็นต์การเข้าร่วม และสถานะของวันนี้จากข้อมูลล่าสุด
+        </div>
+      </div>
+    </Card>
+  );
+
   return (
     <div className="min-h-screen bg-[var(--background)] pb-24 font-sarabun sm:pb-8 lg:pb-5">
 
@@ -694,6 +709,7 @@ export default function SafePlusDashboard() {
       <div className="mx-2.5 mt-2 grid gap-2 lg:mx-6 lg:mt-2.5 lg:grid-cols-[minmax(0,2.2fr)_minmax(300px,0.92fr)]">
 
         {/* ── Safety Awareness card ── */}
+        {isAwarenessLoading ? awarenessLoadingCard : (
         <Card className="self-start gap-1.5 rounded-[18px] border border-[rgba(13,80,165,0.18)] bg-white p-2.5 shadow-[0_4px_18px_rgba(11,53,110,0.10),0_1px_4px_rgba(11,53,110,0.06)] sm:p-2 lg:p-2">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex flex-wrap items-center gap-2">
@@ -926,6 +942,7 @@ export default function SafePlusDashboard() {
             )}
           </div>
         </Card>
+        )}
 
         {/* ── Activity card ── */}
         <div className="hidden flex-col self-start lg:flex">

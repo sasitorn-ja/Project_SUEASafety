@@ -1,8 +1,6 @@
 // @ts-nocheck
 import { useState, useEffect } from "react";
-import { useNavigate } from "@/lib/app-navigation";
 import {
-  ArrowLeft,
   Calendar,
   Filter,
   BarChart3,
@@ -61,12 +59,10 @@ const BASELINE_CHART3_DATA = [
 ];
 
 export default function DashboardSafetyEffort() {
-  const navigate = useNavigate();
+  const exportDateStamp = new Date().toISOString().slice(0, 10);
 
   // States
   const [selectedBU, setSelectedBU] = useState("All Business Units");
-  const [startDate, setStartDate] = useState("2025-10-01");
-  const [endDate, setEndDate] = useState("2026-03-31");
   const [hoveredSlice, setHoveredSlice] = useState(null);
   const [hoveredBar, setHoveredBar] = useState(null);
   const [scaleType, setScaleType] = useState("logarithmic");
@@ -81,15 +77,12 @@ export default function DashboardSafetyEffort() {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  // Fetch real aggregates whenever the date range changes.
+  // Fetch real aggregates without exposing date filters to the user.
   useEffect(() => {
     let cancelled = false;
     (async () => {
       try {
-        const qs = new URLSearchParams();
-        if (startDate) qs.set("from", startDate);
-        if (endDate) qs.set("to", endDate);
-        const linewalkRes = await fetch(`/api/safety-effort/reports/linewalk-overview?${qs.toString()}`, { credentials: "include", cache: "no-store" });
+        const linewalkRes = await fetch("/api/safety-effort/reports/linewalk-overview", { credentials: "include", cache: "no-store" });
         if (linewalkRes.ok) {
           const p = await linewalkRes.json().catch(() => null);
           if (!cancelled) {
@@ -105,7 +98,7 @@ export default function DashboardSafetyEffort() {
       }
     })();
     return () => { cancelled = true; };
-  }, [startDate, endDate]);
+  }, []);
 
   const isMobile = width < 768;
   const isTablet = width >= 768 && width < 1024;
@@ -128,22 +121,10 @@ export default function DashboardSafetyEffort() {
     const worksheet = XLSX.utils.json_to_sheet(data);
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "Safety Effort Summary");
-    XLSX.writeFile(workbook, `Safety_Effort_Summary_${startDate}_to_${endDate}.xlsx`);
+    XLSX.writeFile(workbook, `Safety_Effort_Summary_all-data_${exportDateStamp}.xlsx`);
   };
 
-  // Calculate dynamic date scaling factor
-  const getScaleFactor = () => {
-    if (!startDate || !endDate) return 1;
-    const start = new Date(startDate);
-    const end = new Date(endDate);
-    if (isNaN(start.getTime()) || isNaN(end.getTime())) return 1;
-    const diffTime = end - start;
-    if (diffTime < 0) return 0; // Negative range
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) || 1;
-    return diffDays / 182; // Baseline is 182 days (approx. 6 months)
-  };
-  
-  const scaleFactor = getScaleFactor();
+  const scaleFactor = 1;
 
   // Chart 1 (distribution by location type) — built from REAL Line walk submissions
   // when available; otherwise falls back to the legacy report/baseline.
@@ -259,12 +240,6 @@ export default function DashboardSafetyEffort() {
   };
 
   const metrics = getFilteredMetrics();
-  const dateRangeDays = (() => {
-    const start = new Date(startDate);
-    const end = new Date(endDate);
-    if (isNaN(start.getTime()) || isNaN(end.getTime()) || end < start) return 0;
-    return Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1;
-  })();
   const correctionRate = ((metrics.solvedCases / (metrics.solvedCases + metrics.pendingCases || 1)) * 100).toFixed(1);
   const focusedBusinessUnitCount = selectedBU === "All Business Units" ? chart4Data.length : 1;
   const topBusinessUnit = [...chart4Data].sort((a, b) => (b.totalLinewalk ?? (b.safe + b.unsafe)) - (a.totalLinewalk ?? (a.safe + a.unsafe)))[0];
@@ -1310,29 +1285,6 @@ export default function DashboardSafetyEffort() {
             </div>
 
             <div className="db-filters">
-              {/* Flexible Date Range Picker */}
-              <div className="db-datepicker-container">
-                <div className="db-date-box">
-                  <input 
-                    type="date" 
-                    className="db-date-input" 
-                    value={startDate} 
-                    onChange={(e) => setStartDate(e.target.value)}
-                  />
-                  <Calendar size={13} className="db-date-icon" />
-                </div>
-                <span style={{ color: T.foreground3, fontWeight: "800", fontSize: "13px" }}>—</span>
-                <div className="db-date-box">
-                  <input 
-                    type="date" 
-                    className="db-date-input" 
-                    value={endDate} 
-                    onChange={(e) => setEndDate(e.target.value)}
-                  />
-                  <Calendar size={13} className="db-date-icon" />
-                </div>
-              </div>
-
               <div className="db-select-wrapper">
                 <Filter size={14} className="db-select-icon" style={{ left: 12, right: "auto" }} />
                 <Combobox
@@ -1755,8 +1707,8 @@ export default function DashboardSafetyEffort() {
                 <Calendar size={18} />
               </div>
               <div className="db-summary-metric-info">
-                <span className="db-summary-metric-val">{dateRangeDays} วัน</span>
-                <span className="db-summary-metric-lbl">ช่วงเวลาตรวจ</span>
+                <span className="db-summary-metric-val">ทั้งหมด</span>
+                <span className="db-summary-metric-lbl">ขอบเขตข้อมูล</span>
               </div>
             </div>
 

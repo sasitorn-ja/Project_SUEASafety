@@ -5,6 +5,7 @@ import { MapContainer, TileLayer, Marker, Popup, useMap, useMapEvents } from "re
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { ProgressHeader } from "@/components/safety-effort/progress-mascot";
+import { isDemoLoginActive } from "@/lib/session-user";
 import { Combobox } from "@/components/ui/combobox";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 
@@ -109,6 +110,7 @@ function getLocationTypeLabel(type, id = "") {
 }
 
 function apiLocationToCheckinLocation(location) {
+  const locationTypeCode = location.locationType || location.location_type || "CUSTOM";
   const labelByType = {
     PLANT: "โรงงาน",
     OFFICE: "สำนักงาน",
@@ -120,6 +122,7 @@ function apiLocationToCheckinLocation(location) {
     name: location.nameTh || location.name_th || location.name || "-",
     tag: location.code || location.externalKey || location.external_key || String(location.id),
     type: labelByType[location.locationType || location.location_type] || "สถานที่",
+    locationTypeCode,
     lat: location.lat === null || location.lat === undefined ? null : Number(location.lat),
     lng: location.lng === null || location.lng === undefined ? null : Number(location.lng),
     source: location.source,
@@ -965,7 +968,7 @@ const STYLES = `
     color: ${T.foreground};
     font-family: 'Prompt', sans-serif;
     line-height: 1.15;
-    white-space: nowrap;
+    white-space: normal;
   }
   .ci-location-subtitle {
     margin-top: 5px;
@@ -1655,6 +1658,7 @@ export default function Checkin() {
 
   const isMobile = width < 768;
   const center   = userPos ?? DEFAULT_CENTER;
+  const demoLoginActive = useMemo(() => isDemoLoginActive(), []);
 
   useEffect(() => {
     setSelected(null);
@@ -1681,7 +1685,9 @@ export default function Checkin() {
       .then(([mapItems, officeItems]) => {
         if (cancelled) return;
         const merged = new Map();
-        merged.set(MOCK_CPAC_LOCATION.id, MOCK_CPAC_LOCATION);
+        if (demoLoginActive) {
+          merged.set(MOCK_CPAC_LOCATION.id, MOCK_CPAC_LOCATION);
+        }
         [...mapItems, ...officeItems]
           .map(apiLocationToCheckinLocation)
           .forEach(item => merged.set(item.id, item));
@@ -1689,7 +1695,7 @@ export default function Checkin() {
       })
       .catch(error => {
         if (cancelled) return;
-        setExtraLocs([MOCK_CPAC_LOCATION]);
+        setExtraLocs(demoLoginActive ? [MOCK_CPAC_LOCATION] : []);
         setApiError(error?.message || "ไม่สามารถโหลดสถานที่จาก API ได้");
       })
       .finally(() => {
@@ -1933,6 +1939,8 @@ export default function Checkin() {
             locationId: selectedForSubmit.id,
             locationCode: selectedForSubmit.tag,
             locationName: selectedForSubmit.name,
+            selectedLocationType: selectedForSubmit.locationTypeCode || null,
+            selectedLocationSource: selectedForSubmit.source || null,
             actualLat: Number(actualUserPos.lat),
             actualLng: Number(actualUserPos.lng),
             actualAccuracyM: Number.isFinite(Number(actualUserPos.accuracy)) ? Number(actualUserPos.accuracy) : null,
@@ -1951,6 +1959,7 @@ export default function Checkin() {
             name: selectedForSubmit.name,
             tag: selectedForSubmit.tag,
             type: selectedForSubmit.type,
+            source: selectedForSubmit.source || null,
             lat: Number(selectedForSubmit.lat),
             lng: Number(selectedForSubmit.lng),
             dist: selectedForSubmit.dist,
@@ -2040,151 +2049,164 @@ export default function Checkin() {
 
       {/* ── Desktop layout ──────────────────────────────────────────────── */}
       {!isMobile && (
-        <div style={{
-          width: "100%",
-          maxWidth: 1500,
-          margin: "0 auto",
-          display: "flex",
-          flexDirection: "column",
-          gap: 16,
-          padding: "8px 20px 40px",
-        }}>
-          <StepHeader />
+        <>
           <div style={{
-            display: "grid",
-            gridTemplateColumns: "1fr 370px",
-            gap: 18,
+            width: "100%",
+            maxWidth: 1500,
+            margin: "0 auto",
+            display: "flex",
+            flexDirection: "column",
+            gap: 16,
+            padding: "8px 20px 0",
           }}>
-            <CheckinMapView height="clamp(380px, calc(100vh - 240px), 550px)" mapMounted={mapMounted} mapInstanceKey={mapInstanceKey} mapCenter={mapCenter} userPos={userPos} allLocations={allLocations} selected={selected} setSelected={setSelected} fitPoints={fitPoints} windowWidth={width} />
-
-            {/* Right panel — this is the scrollable area on desktop */}
+            <StepHeader />
+          </div>
+          <div style={{
+            width: "100%",
+            maxWidth: 1720,
+            margin: "0 auto",
+            display: "flex",
+            flexDirection: "column",
+            gap: 16,
+            padding: "10px 24px 40px",
+          }}>
             <div style={{
-              display: "flex", flexDirection: "column",
-              border: `1px solid ${T.border}`,
-              borderRadius: "20px",
-              background: "var(--c-faf9f6)",
-              boxShadow: "0 12px 30px rgba(34,25,11,0.06)",
-              height: "clamp(380px, calc(100vh - 240px), 550px)",
-              overflow: "hidden",
+              display: "grid",
+              gridTemplateColumns: "minmax(0, 1.45fr) minmax(460px, 0.9fr)",
+              gap: 18,
+              alignItems: "stretch",
             }}>
-              <div className="ci-sidebar-section">
-                <div className="ci-location-header">
-                  <div>
-                    <span className="ci-panel-label">ใกล้คุณที่สุด</span>
-                    <div className="ci-location-title">
-                      เลือกสถานที่ตรวจ
+              <CheckinMapView height="clamp(460px, calc(100vh - 210px), 720px)" mapMounted={mapMounted} mapInstanceKey={mapInstanceKey} mapCenter={mapCenter} userPos={userPos} allLocations={allLocations} selected={selected} setSelected={setSelected} fitPoints={fitPoints} windowWidth={width} />
+
+              {/* Right panel — this is the scrollable area on desktop */}
+              <div style={{
+                display: "flex", flexDirection: "column",
+                border: `1px solid ${T.border}`,
+                borderRadius: "20px",
+                background: "var(--c-faf9f6)",
+                boxShadow: "0 12px 30px rgba(34,25,11,0.06)",
+                height: "clamp(460px, calc(100vh - 210px), 720px)",
+                overflow: "hidden",
+              }}>
+                <div className="ci-sidebar-section">
+                  <div className="ci-location-header">
+                    <div>
+                      <span className="ci-panel-label">ใกล้คุณที่สุด</span>
+                      <div className="ci-location-title">
+                        เลือกสถานที่ตรวจ
+                      </div>
+                    </div>
+                    <div className="ci-location-actions">
+                      <LocateButton />
+                      <span className="ci-location-count">
+                        {visibleLocations.length} สถานที่
+                      </span>
                     </div>
                   </div>
-                  <div className="ci-location-actions">
-                    <LocateButton />
-                    <span className="ci-location-count">
-                      {visibleLocations.length} สถานที่
-                    </span>
-                  </div>
-                </div>
 
-                {loadingLocations && (
-                  <div style={{ marginTop: 10, fontSize: 12, fontWeight: 700, color: T.foreground3 }}>
-                    กำลังโหลดสถานที่จาก API จริง...
-                  </div>
-                )}
-                {apiError && (
-                  <div style={{ marginTop: 10, fontSize: 12, fontWeight: 800, color: T.danger }}>
-                    {apiError}
-                  </div>
-                )}
-
-                {/* Sleek Search Box */}
-                <div className="ci-search-box">
-                  <IcoSearch s={16} c={T.foreground3} />
-                  <input
-                    type="text"
-                    placeholder="ค้นหาชื่อ หรือ รหัสสถานที่..."
-                    value={searchQuery}
-                    onChange={e => setSearchQuery(e.target.value)}
-                  />
-                  {searchQuery && (
-                    <button onClick={() => setSearchQuery("")} className="ci-search-clear" aria-label="ล้างคำค้นหา">
-                      <IcoX />
-                    </button>
+                  {loadingLocations && (
+                    <div style={{ marginTop: 10, fontSize: 12, fontWeight: 700, color: T.foreground3 }}>
+                      กำลังโหลดสถานที่จาก API จริง...
+                    </div>
                   )}
-                </div>
+                  {apiError && (
+                    <div style={{ marginTop: 10, fontSize: 12, fontWeight: 800, color: T.danger }}>
+                      {apiError}
+                    </div>
+                  )}
 
-                {/* Filter Chips */}
-                <div className="ci-filter-row">
-                  {LOCATION_FILTERS.map(type => (
-                    <button
-                      key={type.key}
-                      className={`ci-filter-chip ${selectedTypeKey === type.key ? "active" : ""}`}
-                      onClick={() => setSelectedType(type.key)}
-                    >
-                      {type.label}
-                    </button>
-                  ))}
-                </div>
-                <div className="ci-filter-row" style={{ display: "none" }}>
-                  {["ทั้งหมด", "โรงงาน", "ก่อสร้าง", "สำนักงาน", "บริษัท"].map(type => (
-                    <button
-                      key={type}
-                      className={`ci-filter-chip ${selectedType === type ? "active" : ""}`}
-                      onClick={() => setSelectedType(type)}
-                    >
-                      {type}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-
-              {/* ↓ onScroll forwarded to App.jsx for scroll-hide behaviour */}
-              <div
-                className="ci-list"
-                style={{
-                  flex: 1, overflowY: "auto",
-                  padding: "10px 16px 12px",
-                  display: "flex", flexDirection: "column", gap: 9,
-                }}
-              >
-                {visibleLocations.length > 0 ? (
-                  <>
-                    {pagedLocations.map(loc => (
-                      <FilteredLocCard
-                        key={loc.id}
-                        loc={loc}
-                        isSelected={selected?.id === loc.id}
-                        onClick={() => setSelected(loc)}
-                      />
-                    ))}
-                    {hasMoreLocations && (
-                      <button
-                        type="button"
-                        className="ci-show-more"
-                        onClick={() => setVisibleCount(c => c + LOCATIONS_PAGE_SIZE)}
-                      >
-                        แสดงเพิ่มเติม (เหลืออีก {remainingLocations})
+                  {/* Sleek Search Box */}
+                  <div className="ci-search-box">
+                    <IcoSearch s={16} c={T.foreground3} />
+                    <input
+                      type="text"
+                      placeholder="ค้นหาชื่อ หรือ รหัสสถานที่..."
+                      value={searchQuery}
+                      onChange={e => setSearchQuery(e.target.value)}
+                    />
+                    {searchQuery && (
+                      <button onClick={() => setSearchQuery("")} className="ci-search-clear" aria-label="ล้างคำค้นหา">
+                        <IcoX />
                       </button>
                     )}
-                  </>
-                ) : (
-                  <div style={{
-                    padding: "36px 16px", textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 10,
-                    color: T.foreground3, fontSize: 13, fontWeight: 600
-                  }}>
-                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" style={{ opacity: 0.5 }}>
-                      <circle cx="11" cy="11" r="8"/>
-                      <line x1="21" y1="21" x2="16.65" y2="16.65"/>
-                      <line x1="8" y1="11" x2="14" y2="11"/>
-                    </svg>
-                    <span>{emptyLocationMessage}</span>
                   </div>
-                )}
 
+                  {/* Filter Chips */}
+                  <div className="ci-filter-row">
+                    {LOCATION_FILTERS.map(type => (
+                      <button
+                        key={type.key}
+                        className={`ci-filter-chip ${selectedTypeKey === type.key ? "active" : ""}`}
+                        onClick={() => setSelectedType(type.key)}
+                      >
+                        {type.label}
+                      </button>
+                    ))}
+                  </div>
+                  <div className="ci-filter-row" style={{ display: "none" }}>
+                    {["ทั้งหมด", "โรงงาน", "ก่อสร้าง", "สำนักงาน", "บริษัท"].map(type => (
+                      <button
+                        key={type}
+                        className={`ci-filter-chip ${selectedType === type ? "active" : ""}`}
+                        onClick={() => setSelectedType(type)}
+                      >
+                        {type}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+
+                {/* ↓ onScroll forwarded to App.jsx for scroll-hide behaviour */}
+                <div
+                  className="ci-list"
+                  style={{
+                    flex: 1, overflowY: "auto",
+                    padding: "10px 16px 12px",
+                    display: "flex", flexDirection: "column", gap: 9,
+                  }}
+                >
+                  {visibleLocations.length > 0 ? (
+                    <>
+                      {pagedLocations.map(loc => (
+                        <FilteredLocCard
+                          key={loc.id}
+                          loc={loc}
+                          isSelected={selected?.id === loc.id}
+                          onClick={() => setSelected(loc)}
+                        />
+                      ))}
+                      {hasMoreLocations && (
+                        <button
+                          type="button"
+                          className="ci-show-more"
+                          onClick={() => setVisibleCount(c => c + LOCATIONS_PAGE_SIZE)}
+                        >
+                          แสดงเพิ่มเติม (เหลืออีก {remainingLocations})
+                        </button>
+                      )}
+                    </>
+                  ) : (
+                    <div style={{
+                      padding: "36px 16px", textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 10,
+                      color: T.foreground3, fontSize: 13, fontWeight: 600
+                    }}>
+                      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" style={{ opacity: 0.5 }}>
+                        <circle cx="11" cy="11" r="8"/>
+                        <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                        <line x1="8" y1="11" x2="14" y2="11"/>
+                      </svg>
+                      <span>{emptyLocationMessage}</span>
+                    </div>
+                  )}
+
+                </div>
+
+                <FooterPanel />
               </div>
-
-              <FooterPanel />
             </div>
           </div>
-        </div>
+        </>
       )}
 
       {/* ── Mobile layout ───────────────────────────────────────────────── */}

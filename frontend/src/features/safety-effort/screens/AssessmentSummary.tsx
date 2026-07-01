@@ -65,6 +65,30 @@ const IcoTrophy = ({ size = 16, color = "currentColor" }) => (
   </svg>
 );
 
+const PENDING_NAVIGATION_KEY = "suea-safety-pending-navigation";
+
+function readAssessmentSummaryState() {
+  if (typeof window === "undefined") return null;
+
+  const historyState = window.history.state?.__appState;
+  if (historyState && typeof historyState === "object") {
+    return historyState;
+  }
+
+  try {
+    const raw = window.sessionStorage.getItem(PENDING_NAVIGATION_KEY);
+    if (!raw) return null;
+    const pending = JSON.parse(raw);
+    if (pending?.pathname === "/assessment-summary" && pending.state && typeof pending.state === "object") {
+      return pending.state;
+    }
+  } catch {
+    // best-effort recovery only
+  }
+
+  return null;
+}
+
 function statusMeta(status) {
   if (status === "safe") return { label: "ปลอดภัย (Safe)", color: T.safe, bg: "#f0fdf4", border: "#bbf7d0" };
   if (status === "unsafe_condition") return { label: "สภาพไม่ปลอดภัย (Unsafe Condition)", color: T.issue, bg: "#fef2f2", border: "#fecaca" };
@@ -113,14 +137,26 @@ export default function AssessmentSummary() {
   const [hasInitializedExpanded, setHasInitializedExpanded] = useState(false);
   const [previewImages, setPreviewImages] = useState<string[] | null>(null);
   const [previewIndex, setPreviewIndex] = useState<number>(0);
-  const checkin = location.state?.checkin ?? null;
-  const activity = location.state?.activity ?? null;
-  const linewalkData = location.state?.linewalkData ?? null;
+  const [recoveredState, setRecoveredState] = useState(() => readAssessmentSummaryState());
+  const flowState = location.state ?? recoveredState;
+  const checkin = flowState?.checkin ?? null;
+  const activity = flowState?.activity ?? null;
+  const linewalkData = flowState?.linewalkData ?? null;
   const [width, setWidth] = useState(() => typeof window !== "undefined" ? window.innerWidth : 1200);
   const topLevelAttachments = useMemo(
     () => normalizeEvidenceMediaList(linewalkData?.attachments ?? linewalkData?.photos ?? []),
     [linewalkData],
   );
+
+  useEffect(() => {
+    if (location.state) {
+      setRecoveredState(location.state);
+      return;
+    }
+    if (!recoveredState) {
+      setRecoveredState(readAssessmentSummaryState());
+    }
+  }, [location.state, recoveredState]);
 
   const answeredItems = useMemo(() => {
     if (!linewalkData?.itemStates) return [];
@@ -164,7 +200,15 @@ export default function AssessmentSummary() {
 
   useEffect(() => {
     if (!linewalkData) {
-      navigate("/category", { replace: true });
+      const timer = window.setTimeout(() => {
+        const restored = readAssessmentSummaryState();
+        if (restored) {
+          setRecoveredState(restored);
+          return;
+        }
+        navigate("/category", { replace: true });
+      }, 120);
+      return () => window.clearTimeout(timer);
     }
   }, [linewalkData, navigate]);
 
@@ -273,7 +317,11 @@ export default function AssessmentSummary() {
   const handleConfirmSave = async () => {
     const submissionDate = linewalkData?.date || new Date().toISOString().split("T")[0];
     const normalizedCheckinId = normalizeNumericId(checkin?.checkinId);
+    const isMockCheckin = String(checkin?.source || "").toUpperCase() === "MOCK";
     try {
+      if (isMockCheckin) {
+        throw new Error("demo_location_submission_blocked");
+      }
       const uploadedTopLevelAttachments = await uploadPendingEvidenceList(topLevelAttachments);
       const uploadedAnsweredItems = await Promise.all(
         answeredItems.map(async (item) => ({
@@ -325,7 +373,11 @@ export default function AssessmentSummary() {
       }
     } catch (error) {
       console.error("Error saving submission", error);
-      window.alert("บันทึกข้อมูลไม่สำเร็จ กรุณาตรวจสอบการเชื่อมต่อแล้วลองใหม่");
+      window.alert(
+        error?.message === "demo_location_submission_blocked"
+          ? "สถานที่ Demo ไม่สามารถบันทึกเข้าระบบจริงได้ กรุณาเลือกสถานที่จริงอีกครั้ง"
+          : "บันทึกข้อมูลไม่สำเร็จ กรุณาตรวจสอบการเชื่อมต่อแล้วลองใหม่",
+      );
       if (linewalkData?.isSafetyContact) {
         navigate("/category", { replace: true });
       }

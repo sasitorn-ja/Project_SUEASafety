@@ -224,6 +224,8 @@ type AppState = {
   rewardsCatalog: RewardCatalogItem[];
   rewardCategories: RewardCategory[];
   rewardRedemptions: RewardRedemptionRecord[];
+  isAppBootstrapping: boolean;
+  isAwarenessLoading: boolean;
   awarenessQuestions: SafetyAwarenessQuestion[];
   /** true once the user has completed today's Safety Awareness popup. */
   awarenessDoneToday: boolean;
@@ -1616,6 +1618,8 @@ export function AppProviders({ children }: { children: ReactNode }) {
   const [rewardsCatalog, setRewardsCatalog] = useState<RewardCatalogItem[]>([]);
   const [rewardCategories, setRewardCategories] = useState<RewardCategory[]>(() => createDefaultRewardCategories());
   const [rewardRedemptions, setRewardRedemptions] = useState<RewardRedemptionRecord[]>([]);
+  const [isAppBootstrapping, setIsAppBootstrapping] = useState(true);
+  const [isAwarenessLoading, setIsAwarenessLoading] = useState(true);
   const [awarenessQuestions, setAwarenessQuestions] = useState<SafetyAwarenessQuestion[]>([]);
   const [awarenessDoneDate, setAwarenessDoneDate] = useState<string>("");
   const [awarenessHistory, setAwarenessHistory] = useState<AwarenessCompletion[]>([]);
@@ -1777,6 +1781,8 @@ export function AppProviders({ children }: { children: ReactNode }) {
     let cancelled = false;
 
     async function loadBackendState() {
+      setIsAppBootstrapping(true);
+      setIsAwarenessLoading(true);
       let demoLoginAllowed = false;
       try {
         demoLoginAllowed = isDemoLoginActive();
@@ -1825,6 +1831,10 @@ export function AppProviders({ children }: { children: ReactNode }) {
           setSafetyCultureEvent(demoSnapshot.safetyCultureEvent);
           setAwarenessActiveStartTimeState("08:00");
           setAwarenessActiveEndTimeState("17:00");
+        }
+        if (!cancelled) {
+          setIsAwarenessLoading(false);
+          setIsAppBootstrapping(false);
         }
         return;
       }
@@ -2034,9 +2044,19 @@ export function AppProviders({ children }: { children: ReactNode }) {
       if (eventsResult.ok && Array.isArray(eventsResult.data?.items)) {
         setFeedEvents(backendFeedEvents);
       }
+
+      if (!cancelled) {
+        setIsAwarenessLoading(false);
+        setIsAppBootstrapping(false);
+      }
     }
 
-    void loadBackendState();
+    void loadBackendState().catch(() => {
+      if (!cancelled) {
+        setIsAwarenessLoading(false);
+        setIsAppBootstrapping(false);
+      }
+    });
     return () => {
       cancelled = true;
     };
@@ -2973,6 +2993,8 @@ export function AppProviders({ children }: { children: ReactNode }) {
     rewardsCatalog,
     rewardCategories,
     rewardRedemptions,
+    isAppBootstrapping,
+    isAwarenessLoading,
     awarenessQuestions,
     awarenessDoneToday: awarenessDoneDate === awarenessTodayKey,
     awarenessHistory,

@@ -105,8 +105,27 @@ function SectionCard({
   );
 }
 
+function AwarenessLoadingCard() {
+  return (
+    <Card className="mt-3 rounded-[18px] border border-[#B9E0FF] bg-white p-6 shadow-sm">
+      <div className="flex flex-col items-center justify-center gap-3 py-10 text-center">
+        <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[#EAF6FF] text-[#0B82F0]">
+          <Clock className="h-6 w-6 animate-spin" />
+        </div>
+        <div className="space-y-1">
+          <div className="text-[18px] font-black text-[#0B2F6B]">กำลังโหลดข้อมูล Safety Awareness</div>
+          <div className="text-[13px] font-bold text-[#55739B]">
+            ระบบกำลังดึงค่าตั้งค่าและคลังคำถามล่าสุดจากฐานข้อมูล
+          </div>
+        </div>
+      </div>
+    </Card>
+  );
+}
+
 export default function AdminAwarenessPage() {
   const {
+    isAwarenessLoading,
     awarenessQuestions,
     awarenessHolidays,
     awarenessEnabled,
@@ -451,6 +470,18 @@ export default function AdminAwarenessPage() {
         mascotSrc="/images/mascots/wangjai/7.png"
         mascotAction="flashlight"
       />
+      {isAwarenessLoading ? (
+        <>
+          <div className="mt-3 grid grid-cols-2 gap-2 md:grid-cols-4">
+            <StatCard label="คำถามทั้งหมด" value={0} icon={<ListChecks className="h-5 w-5" />} />
+            <StatCard label="เปิดใช้งาน" value={0} icon={<CheckCircle2 className="h-5 w-5" />} tone="ok" />
+            <StatCard label="ปิดใช้งาน" value={0} icon={<CircleSlash className="h-5 w-5" />} tone="muted" />
+            <StatCard label="หมวดหมู่" value={0} icon={<ShieldCheck className="h-5 w-5" />} />
+          </div>
+          <AwarenessLoadingCard />
+        </>
+      ) : (
+        <>
 
       {/* Stat strip */}
       <div className="mt-3 grid grid-cols-2 gap-2 md:grid-cols-4">
@@ -1083,6 +1114,8 @@ export default function AdminAwarenessPage() {
           </div>
         </SectionCard>
       </div>
+        </>
+      )}
 
       {/* Add / Edit dialog */}
       <Dialog open={!!editor} onOpenChange={(open) => !open && setEditor(null)}>

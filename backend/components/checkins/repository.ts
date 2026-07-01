@@ -4,12 +4,16 @@ import type { ResultSetHeader, RowDataPacket } from "mysql2/promise";
 
 import { queryRows, withTransaction } from "@backend/components/core/db";
 import { findNearestSafetyEffortLocation, findSafetyEffortLocationForCheckin, getSafetyEffortLocation } from "@backend/components/safety-effort/locations/repository";
+import { findMasterLocationBySource, findNearestMasterLocation } from "@backend/components/safety-effort/locations/rmc-location-search";
 
 type CheckinRow = RowDataPacket & {
   id: string;
   user_id: string;
-  selected_location_id: string;
+  selected_location_id: string | null;
   selected_location_name_snapshot: string;
+  selected_location_code_snapshot: string | null;
+  selected_location_type_snapshot: string | null;
+  selected_location_source_snapshot: string | null;
   selected_lat: number | string | null;
   selected_lng: number | string | null;
   actual_lat: number | string | null;
@@ -47,8 +51,11 @@ function mapCheckin(row: CheckinRow) {
   return {
     id: String(row.id),
     userId: String(row.user_id),
-    selectedLocationId: String(row.selected_location_id),
+    selectedLocationId: row.selected_location_id === null ? null : String(row.selected_location_id),
     selectedLocationName: row.selected_location_name_snapshot,
+    selectedLocationCode: row.selected_location_code_snapshot || "",
+    selectedLocationType: row.selected_location_type_snapshot || "",
+    selectedLocationSource: row.selected_location_source_snapshot || "",
     selectedLat: row.selected_lat === null ? null : Number(row.selected_lat),
     selectedLng: row.selected_lng === null ? null : Number(row.selected_lng),
     actualLat: row.actual_lat === null ? null : Number(row.actual_lat),
@@ -73,6 +80,9 @@ const SELECT_CHECKINS_SQL = `
     c.user_id,
     c.selected_location_id,
     c.selected_location_name_snapshot,
+    c.selected_location_code_snapshot,
+    c.selected_location_type_snapshot,
+    c.selected_location_source_snapshot,
     ST_Latitude(c.selected_location_position_snapshot) AS selected_lat,
     ST_Longitude(c.selected_location_position_snapshot) AS selected_lng,
     ST_Latitude(c.actual_position) AS actual_lat,
@@ -93,9 +103,11 @@ const SELECT_CHECKINS_SQL = `
 
 export async function createCheckin(input: {
   userId: string;
-  locationId: string;
+  locationId?: string | null;
   locationCode?: string | null;
   locationName?: string | null;
+  selectedLocationType?: string | null;
+  selectedLocationSource?: string | null;
   actualLat: number;
   actualLng: number;
   actualAccuracyM?: number | null;
@@ -103,9 +115,14 @@ export async function createCheckin(input: {
   deviceMetadata?: unknown;
 }) {
   const selectedLocation =
-    (await getSafetyEffortLocation(input.locationId)) ||
+    (input.locationId ? await getSafetyEffortLocation(input.locationId) : null) ||
     (await findSafetyEffortLocationForCheckin({
-      id: input.locationId,
+      id: input.locationId || null,
+      code: input.locationCode,
+      name: input.locationName,
+    })) ||
+    (await findMasterLocationBySource({
+      source: input.selectedLocationSource,
       code: input.locationCode,
       name: input.locationName,
     }));
@@ -118,10 +135,18 @@ export async function createCheckin(input: {
     { lat: input.actualLat, lng: input.actualLng },
   );
   const matchStatus = distance <= 250 ? "MATCHED" : "OUT_OF_RANGE";
-  const actualLocation = await findNearestSafetyEffortLocation({
+  const actualLocation = await findNearestMasterLocation({
+    lat: input.actualLat,
+    lng: input.actualLng,
+  }) || await findNearestSafetyEffortLocation({
     lat: input.actualLat,
     lng: input.actualLng,
   });
+
+  const numericSelectedLocationId =
+    selectedLocation.source === "ADMIN" && input.locationId && /^\d+$/.test(String(input.locationId))
+      ? String(input.locationId)
+      : null;
 
   const id = await withTransaction(async (connection) => {
     const [result] = await connection.execute<ResultSetHeader>(
@@ -130,6 +155,9 @@ export async function createCheckin(input: {
           user_id,
           selected_location_id,
           selected_location_name_snapshot,
+          selected_location_code_snapshot,
+          selected_location_type_snapshot,
+          selected_location_source_snapshot,
           selected_location_position_snapshot,
           actual_position,
           actual_accuracy_m,
@@ -145,6 +173,9 @@ export async function createCheckin(input: {
           :userId,
           :locationId,
           :locationName,
+          :locationCode,
+          :locationType,
+          :selectedLocationSource,
           ST_GeomFromText(:selectedPointWkt, 4326, 'axis-order=long-lat'),
           ST_GeomFromText(:actualPointWkt, 4326, 'axis-order=long-lat'),
           :actualAccuracyM,
@@ -160,8 +191,11 @@ export async function createCheckin(input: {
       `,
       {
         userId: input.userId,
-        locationId: input.locationId,
+        locationId: numericSelectedLocationId,
         locationName: selectedLocation.nameTh,
+        locationCode: selectedLocation.code || selectedLocation.externalKey || input.locationCode || null,
+        locationType: selectedLocation.locationType || input.selectedLocationType || null,
+        selectedLocationSource: selectedLocation.source || input.selectedLocationSource || null,
         selectedPointWkt: `POINT(${selectedLocation.lng} ${selectedLocation.lat})`,
         actualPointWkt: `POINT(${input.actualLng} ${input.actualLat})`,
         actualAccuracyM: input.actualAccuracyM ?? null,
@@ -214,7 +248,7 @@ export async function listCheckins(options: {
     params.userId = options.userId;
   }
   if (options.locationId) {
-    where.push("c.selected_location_id = :locationId");
+    where.push("(c.selected_location_id = :locationId OR c.selected_location_code_snapshot = :locationId)");
     params.locationId = options.locationId;
   }
   if (options.from) {

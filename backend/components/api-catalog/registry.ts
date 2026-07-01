@@ -98,7 +98,7 @@ export const API_CATALOG_ROUTES = [
     "pagination": "Required page/pageSize",
     "responseSizeRisk": "High if unpaged",
     "status": "Existing",
-    "notes": "แยกจาก all locations เพราะข้อมูลเยอะ"
+    "notes": "อ่านสดจาก rmc_sso.plant และ merge สถานที่ ADMIN ใน CPAC_Safety"
   },
   {
     "module": "Locations",
@@ -112,7 +112,7 @@ export const API_CATALOG_ROUTES = [
     "pagination": "Required page/pageSize",
     "responseSizeRisk": "High if unpaged",
     "status": "Existing",
-    "notes": "แยกประเภทเพื่อ index/cache ได้ดี"
+    "notes": "อ่านสดจาก rmc_sso.offices และ merge สถานที่ ADMIN ใน CPAC_Safety"
   },
   {
     "module": "Locations",
@@ -126,7 +126,7 @@ export const API_CATALOG_ROUTES = [
     "pagination": "Required page/pageSize",
     "responseSizeRisk": "High if unpaged",
     "status": "Existing",
-    "notes": "site อาจเปลี่ยนบ่อยและมีปริมาณมาก"
+    "notes": "อ่านสดจาก rmc_sso.sites และ merge สถานที่ ADMIN ใน CPAC_Safety"
   },
   {
     "module": "Locations",
@@ -140,7 +140,7 @@ export const API_CATALOG_ROUTES = [
     "pagination": "Required page/pageSize",
     "responseSizeRisk": "Medium",
     "status": "Existing",
-    "notes": "รองรับ location นอก master"
+    "notes": "อ่านเฉพาะ CPAC_Safety.locations ที่ source=ADMIN"
   },
   {
     "module": "Locations",
@@ -154,7 +154,7 @@ export const API_CATALOG_ROUTES = [
     "pagination": "Required bbox + cap",
     "responseSizeRisk": "Critical if returns all",
     "status": "Existing",
-    "notes": "ต้องใช้ spatial index"
+    "notes": "รวม marker จาก live master และ CPAC custom ตาม viewport"
   },
   {
     "module": "Locations",
@@ -168,7 +168,7 @@ export const API_CATALOG_ROUTES = [
     "pagination": "Required limit <= 50",
     "responseSizeRisk": "Medium",
     "status": "Existing",
-    "notes": "ค้นด้วย code/name/external key"
+    "notes": "ค้นจาก live master + CPAC custom; site จะค้นเมื่อคำค้นยาวพอ"
   },
   {
     "module": "Locations",
@@ -182,21 +182,7 @@ export const API_CATALOG_ROUTES = [
     "pagination": "No",
     "responseSizeRisk": "Small",
     "status": "Existing",
-    "notes": "โหลด detail แยกจาก list"
-  },
-  {
-    "module": "Locations",
-    "method": "GET",
-    "path": "/api/locations/:id/source-detail",
-    "documentedPath": "/api/locations/:id/source-detail",
-    "purpose": "รายละเอียด source master ของ location เช่น plant/office/site",
-    "caller": "Check-in detail, Admin, Debug",
-    "whenCalled": "เมื่ออยากดูฟิลด์ดิบจากตาราง detail ต้นทาง",
-    "auth": "User",
-    "pagination": "No",
-    "responseSizeRisk": "Small",
-    "status": "Existing",
-    "notes": "อ่านจาก plant_location_details / office_location_details / site_location_details"
+    "notes": "ใช้กับ CPAC location id; live master ใช้ข้อมูลจาก list/search response"
   },
   {
     "module": "Locations",
@@ -252,7 +238,7 @@ export const API_CATALOG_ROUTES = [
     "pagination": "Optional limit",
     "responseSizeRisk": "High if raised too much",
     "status": "Existing",
-    "notes": "ควรค่อย migrate ไปเส้นแยกด้านบน"
+    "notes": "legacy alias สำหรับ CPAC custom locations เท่านั้น"
   },
   {
     "module": "Locations",
@@ -266,7 +252,7 @@ export const API_CATALOG_ROUTES = [
     "pagination": "No",
     "responseSizeRisk": "Small",
     "status": "Existing",
-    "notes": "มีแล้ว"
+    "notes": "legacy alias สำหรับสร้าง CPAC custom location"
   },
   {
     "module": "Locations",
@@ -280,7 +266,7 @@ export const API_CATALOG_ROUTES = [
     "pagination": "No",
     "responseSizeRisk": "Small",
     "status": "Existing",
-    "notes": "มีแล้ว"
+    "notes": "legacy alias สำหรับอ่าน CPAC custom location"
   },
   {
     "module": "Locations",
@@ -294,7 +280,7 @@ export const API_CATALOG_ROUTES = [
     "pagination": "No",
     "responseSizeRisk": "Small",
     "status": "Existing",
-    "notes": "มีแล้ว"
+    "notes": "legacy alias สำหรับแก้ไข CPAC custom location"
   },
   {
     "module": "Locations",
@@ -308,7 +294,7 @@ export const API_CATALOG_ROUTES = [
     "pagination": "No",
     "responseSizeRisk": "Small",
     "status": "Existing",
-    "notes": "มีแล้ว"
+    "notes": "legacy alias สำหรับลบ CPAC custom location"
   },
   {
     "module": "Check-in",
@@ -322,7 +308,7 @@ export const API_CATALOG_ROUTES = [
     "pagination": "No",
     "responseSizeRisk": "Small",
     "status": "Existing",
-    "notes": "คืน checkinId เพื่อเริ่มกิจกรรม"
+    "notes": "รองรับ selectedLocationType/selectedLocationSource และเก็บ selected_location_*_snapshot"
   },
   {
     "module": "Check-in",
@@ -336,7 +322,7 @@ export const API_CATALOG_ROUTES = [
     "pagination": "Required",
     "responseSizeRisk": "Medium",
     "status": "Existing",
-    "notes": "filter ตามวันที่"
+    "notes": "filter ตามวันที่และคืน selected location snapshot"
   },
   {
     "module": "Check-in",
@@ -350,7 +336,7 @@ export const API_CATALOG_ROUTES = [
     "pagination": "Required",
     "responseSizeRisk": "High",
     "status": "Existing",
-    "notes": "ต้องมี indexes ตาม user/date/location"
+    "notes": "filter locationId ได้ทั้ง selected_location_id และ selected_location_code_snapshot"
   },
   {
     "module": "Check-in",
@@ -1303,90 +1289,6 @@ export const API_CATALOG_ROUTES = [
     "responseSizeRisk": "Small",
     "status": "Existing",
     "notes": "transactional"
-  },
-  {
-    "module": "Location Import",
-    "method": "POST",
-    "path": "/api/location-imports",
-    "documentedPath": "/api/location-imports",
-    "purpose": "upload/import master location file",
-    "caller": "Admin",
-    "whenCalled": "admin import DataOcean/Excel",
-    "auth": "Admin",
-    "pagination": "Upload/job",
-    "responseSizeRisk": "High",
-    "status": "Existing",
-    "notes": "สร้าง batch"
-  },
-  {
-    "module": "Location Import",
-    "method": "GET",
-    "path": "/api/location-imports",
-    "documentedPath": "/api/location-imports?status=&page=&pageSize=",
-    "purpose": "รายการ import batch",
-    "caller": "Admin",
-    "whenCalled": "เปิด import history",
-    "auth": "Admin",
-    "pagination": "Required",
-    "responseSizeRisk": "Medium",
-    "status": "Existing",
-    "notes": ""
-  },
-  {
-    "module": "Location Import",
-    "method": "GET",
-    "path": "/api/location-imports/:id",
-    "documentedPath": "/api/location-imports/:id",
-    "purpose": "รายละเอียด import batch",
-    "caller": "Admin",
-    "whenCalled": "เปิด detail",
-    "auth": "Admin",
-    "pagination": "No",
-    "responseSizeRisk": "Medium",
-    "status": "Existing",
-    "notes": "รวม summary success/fail"
-  },
-  {
-    "module": "Location Import",
-    "method": "GET",
-    "path": "/api/location-imports/:id/rows",
-    "documentedPath": "/api/location-imports/:id/rows?page=&pageSize=&status=",
-    "purpose": "แถว import",
-    "caller": "Admin",
-    "whenCalled": "ดู error rows",
-    "auth": "Admin",
-    "pagination": "Required",
-    "responseSizeRisk": "High",
-    "status": "Existing",
-    "notes": "จำเป็นต้องแบ่งหน้า"
-  },
-  {
-    "module": "Location Import",
-    "method": "POST",
-    "path": "/api/location-imports/:id/retry",
-    "documentedPath": "/api/location-imports/:id/retry",
-    "purpose": "retry failed rows",
-    "caller": "Admin",
-    "whenCalled": "กด retry",
-    "auth": "Admin",
-    "pagination": "Batch cap",
-    "responseSizeRisk": "Medium",
-    "status": "Existing",
-    "notes": ""
-  },
-  {
-    "module": "Location Import",
-    "method": "POST",
-    "path": "/api/location-imports/:id/apply",
-    "documentedPath": "/api/location-imports/:id/apply",
-    "purpose": "apply staged import",
-    "caller": "Admin",
-    "whenCalled": "confirm import",
-    "auth": "Admin",
-    "pagination": "Async job",
-    "responseSizeRisk": "High",
-    "status": "Existing",
-    "notes": "upsert locations"
   },
   {
     "module": "Check-in",

@@ -16,7 +16,7 @@ import {
   parseLocationInput,
   updateSafetyEffortLocation,
 } from "@backend/components/safety-effort/locations/repository";
-import { syncRmrPlants } from "@backend/components/safety-effort/locations/rmr-plant-sync";
+import { buildRmrPlantBusinessUnitMap } from "@backend/components/safety-effort/locations/rmc-location-search";
 import { awardPoints } from "@backend/components/points/repository";
 import { fixedTeamByCode } from "@/lib/safety-culture-fixed-teams";
 
@@ -753,12 +753,12 @@ async function handleCheckinExtras(request: NextRequest, method: string, match: 
     const locationType = request.nextUrl.searchParams.get("locationType");
     if (from) { where.push("c.checked_in_at >= :from"); params.from = `${from} 00:00:00`; }
     if (to) { where.push("c.checked_in_at <= :to"); params.to = `${to} 23:59:59`; }
-    if (locationType) { where.push("l.location_type = :locationType"); params.locationType = locationType; }
+    if (locationType) { where.push("COALESCE(c.selected_location_type_snapshot, l.location_type) = :locationType"); params.locationType = locationType; }
     const rows = await queryRows<DbRow>(
       `SELECT COUNT(*) total_checkins, COUNT(DISTINCT c.user_id) unique_users,
-       COUNT(DISTINCT c.selected_location_id) unique_locations,
+       COUNT(DISTINCT COALESCE(c.selected_location_code_snapshot, CAST(c.selected_location_id AS CHAR))) unique_locations,
        AVG(c.distance_from_selected_m) avg_distance_m
-       FROM checkins c JOIN locations l ON l.id = c.selected_location_id
+       FROM checkins c LEFT JOIN locations l ON l.id = c.selected_location_id
        WHERE ${where.join(" AND ")}`,
       params,
     );
@@ -947,6 +947,17 @@ function normalizeOptionalNumericId(value: unknown) {
   if (value == null) return null;
   const normalized = String(value).trim();
   return /^\d+$/.test(normalized) ? normalized : null;
+}
+
+function parseJsonArray(value: unknown) {
+  if (Array.isArray(value)) return value;
+  if (typeof value !== "string" || !value.trim()) return [];
+  try {
+    const parsed = JSON.parse(value);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
 }
 
 function normalizeLegacyUsername(value: unknown) {
@@ -2213,45 +2224,6 @@ async function handleImportsReportsAudit(request: NextRequest, method: string, m
       return jsonData({ setting: rows[0] ? serializeRow(rows[0]) : null });
     }
   }
-  if (route === "/api/location-imports") {
-    if (method === "GET") {
-      const status = request.nextUrl.searchParams.get("status");
-      return jsonData(await listRows("location_import_batches", request, { where: status ? ["status=:status"] : [], params: status ? { status } : {} }));
-    }
-    if (method === "POST") {
-      if (!userId) return jsonError("unauthorized", 401);
-      if (input.source === "RMR_SSO_PLANT") {
-        return jsonData({ import: await syncRmrPlants(userId) }, { status: 202 });
-      }
-      const id = await withTransaction(async (connection) => {
-        const [result] = await connection.execute<ResultSetHeader>(
-          `INSERT INTO location_import_batches (file_name, source, imported_by, status)
-           VALUES (:fileName, :source, :importedBy, 'PROCESSING')`,
-          { fileName: input.fileName || `${input.source || "LOCATION"}-${Date.now()}`, source: input.source || "ADMIN", importedBy: userId },
-        );
-        return String(result.insertId);
-      });
-      return jsonData({ import: await getRow("location_import_batches", id) }, { status: 202 });
-    }
-  }
-  if (method === "GET" && route === "/api/location-imports/:id") return jsonData({ import: await getRow("location_import_batches", match.params.id) });
-  if (method === "GET" && route === "/api/location-imports/:id/rows") {
-    const status = request.nextUrl.searchParams.get("status");
-    return jsonData(await listRows("location_import_rows", request, {
-      where: ["import_batch_id=:id", ...(status ? ["action=:status"] : [])],
-      params: { id: match.params.id, ...(status ? { status } : {}) },
-      orderBy: "row_number",
-    }));
-  }
-  if (method === "POST" && ["/api/location-imports/:id/retry", "/api/location-imports/:id/apply"].includes(route)) {
-    const status = route.endsWith("/apply") ? "COMPLETED" : "PROCESSING";
-    await withTransaction(async (connection) => connection.execute(
-      `UPDATE location_import_batches SET status=:status,
-       completed_at=CASE WHEN :status='COMPLETED' THEN UTC_TIMESTAMP(3) ELSE NULL END WHERE id=:id`,
-      { id: match.params.id, status },
-    ));
-    return jsonData({ import: await getRow("location_import_batches", match.params.id) });
-  }
   if (method === "GET" && route.startsWith("/api/safety-effort/reports/")) {
     if (route === "/api/safety-effort/reports/summary") {
       const activityParams: Record<string, unknown> = {};
@@ -2297,75 +2269,28 @@ async function handleImportsReportsAudit(request: NextRequest, method: string, m
         "s.activity_type = 'LINE_WALK'",
         ...linewalkSubmissionDateFilters(request, baseParams),
       ];
-      const locationTypeExpression = normalizeReportLocationTypeExpression("s");
-      const answeredJoin = `
-        LEFT JOIN JSON_TABLE(
-          CASE WHEN JSON_VALID(s.answers_json) THEN s.answers_json ELSE JSON_ARRAY() END,
-          '$[*]' COLUMNS (
-            status VARCHAR(40) PATH '$.status' NULL ON EMPTY NULL ON ERROR
-          )
-        ) ans ON TRUE
-      `;
-
-      const locationTypeRows = await queryRows<DbRow>(
+      const linewalkRows = await queryRows<DbRow>(
         `
           SELECT
-            location_type,
-            COUNT(*) AS submissions,
-            SUM(answer_count) AS total_answers,
-            SUM(safe) AS safe,
-            SUM(unsafe_act) AS unsafe_act,
-            SUM(unsafe_condition) AS unsafe_condition
-          FROM (
-            SELECT
-              s.id,
-              ${locationTypeExpression} AS location_type,
-              SUM(CASE WHEN ans.status IN ('safe', 'unsafe_action', 'unsafe_condition') THEN 1 ELSE 0 END) AS answer_count,
-              SUM(CASE WHEN ans.status = 'safe' THEN 1 ELSE 0 END) AS safe,
-              SUM(CASE WHEN ans.status = 'unsafe_action' THEN 1 ELSE 0 END) AS unsafe_act,
-              SUM(CASE WHEN ans.status = 'unsafe_condition' THEN 1 ELSE 0 END) AS unsafe_condition
-            FROM safety_effort_submissions s
-            LEFT JOIN checkins c ON c.id = s.checkin_id
-            LEFT JOIN locations l ON l.id = c.selected_location_id
-            ${answeredJoin}
-            WHERE ${baseWhere.join(" AND ")}
-            GROUP BY s.id, location_type
-          ) x
-          GROUP BY location_type
-          ORDER BY FIELD(location_type, 'OFFICE', 'PLANT', 'SITE', 'CUSTOM')
-        `,
-        baseParams,
-      );
-
-      const buRows = await queryRows<DbRow>(
-        `
-          SELECT
-            business_unit,
-            COUNT(*) AS submissions,
-            SUM(answer_count) AS total_answers,
-            SUM(safe) AS safe,
-            SUM(unsafe_act) AS unsafe_act,
-            SUM(unsafe_condition) AS unsafe_condition
-          FROM (
-            SELECT
-              s.id,
-              COALESCE(NULLIF(pld.division_name, ''), 'ไม่ระบุ BU โรงงาน') AS business_unit,
-              SUM(CASE WHEN ans.status IN ('safe', 'unsafe_action', 'unsafe_condition') THEN 1 ELSE 0 END) AS answer_count,
-              SUM(CASE WHEN ans.status = 'safe' THEN 1 ELSE 0 END) AS safe,
-              SUM(CASE WHEN ans.status = 'unsafe_action' THEN 1 ELSE 0 END) AS unsafe_act,
-              SUM(CASE WHEN ans.status = 'unsafe_condition' THEN 1 ELSE 0 END) AS unsafe_condition
-            FROM safety_effort_submissions s
-            LEFT JOIN checkins c ON c.id = s.checkin_id
-            LEFT JOIN locations l ON l.id = c.selected_location_id
-            LEFT JOIN plant_location_details pld ON pld.location_id = l.id
-            ${answeredJoin}
-            WHERE ${baseWhere.join(" AND ")}
-              AND ${locationTypeExpression} = 'PLANT'
-            GROUP BY s.id, business_unit
-          ) x
-          GROUP BY business_unit
-          ORDER BY total_answers DESC, submissions DESC, business_unit
-          LIMIT 50
+            s.id,
+            s.answers_json,
+            c.selected_location_name_snapshot,
+            COALESCE(
+              c.selected_location_type_snapshot,
+              l.location_type,
+              CASE
+                WHEN UPPER(COALESCE(s.loc_type, '')) IN ('PLANT','FACTORY') THEN 'PLANT'
+                WHEN UPPER(COALESCE(s.loc_type, '')) = 'OFFICE' THEN 'OFFICE'
+                WHEN UPPER(COALESCE(s.loc_type, '')) = 'SITE' THEN 'SITE'
+                ELSE 'CUSTOM'
+              END
+            ) AS location_type,
+            COALESCE(c.selected_location_source_snapshot, l.source, '') AS location_source,
+            COALESCE(c.selected_location_code_snapshot, l.code, l.external_key, '') AS location_code
+          FROM safety_effort_submissions s
+          LEFT JOIN checkins c ON c.id = s.checkin_id
+          LEFT JOIN locations l ON l.id = c.selected_location_id
+          WHERE ${baseWhere.join(" AND ")}
         `,
         baseParams,
       );
@@ -2384,20 +2309,91 @@ async function handleImportsReportsAudit(request: NextRequest, method: string, m
         legacyParams,
       );
 
-      const locationTypeMap = new Map(serializeLinewalkOverviewRows(locationTypeRows).map((row) => [
-        mapLinewalkLocationTypeLabel(row.location_type),
-        {
-          locationType: String(row.location_type || "CUSTOM"),
-          name: mapLinewalkLocationTypeLabel(row.location_type),
-          submissions: Number(row.submissions || 0),
-          total: row.total,
-          safe: row.safe,
-          unsafeAct: row.unsafeAct,
-          unsafeCond: row.unsafeCond,
-          unsafe: row.unsafe,
-          safeRate: row.safeRate,
-        },
-      ]));
+      const plantBusinessUnitMap = await buildRmrPlantBusinessUnitMap().catch(() => new Map<string, { divisionName: string; factName: string }>());
+      const locationTypeMap = new Map<string, {
+        locationType: string;
+        name: string;
+        submissions: number;
+        total: number;
+        safe: number;
+        unsafeAct: number;
+        unsafeCond: number;
+        unsafe: number;
+        safeRate: number;
+      }>();
+      const byBusinessUnitMap = new Map<string, {
+        name: string;
+        submissions: number;
+        total: number;
+        safe: number;
+        unsafeAct: number;
+        unsafeCond: number;
+        unsafe: number;
+        safeRate: number;
+        legacyLinewalk: number;
+        totalLinewalk: number;
+      }>();
+
+      for (const row of linewalkRows) {
+        const normalizedType = String(row.location_type || "CUSTOM").toUpperCase();
+        const locationTypeLabel = mapLinewalkLocationTypeLabel(normalizedType);
+        const answers = parseJsonArray(row.answers_json);
+        const safe = answers.filter((answer: Record<string, unknown>) => answer?.status === "safe").length;
+        const unsafeAct = answers.filter((answer: Record<string, unknown>) => answer?.status === "unsafe_action").length;
+        const unsafeCond = answers.filter((answer: Record<string, unknown>) => answer?.status === "unsafe_condition").length;
+        const total = safe + unsafeAct + unsafeCond;
+
+        const locationBucket = locationTypeMap.get(locationTypeLabel) || {
+          locationType: normalizedType,
+          name: locationTypeLabel,
+          submissions: 0,
+          total: 0,
+          safe: 0,
+          unsafeAct: 0,
+          unsafeCond: 0,
+          unsafe: 0,
+          safeRate: 0,
+        };
+        locationBucket.submissions += 1;
+        locationBucket.total += total;
+        locationBucket.safe += safe;
+        locationBucket.unsafeAct += unsafeAct;
+        locationBucket.unsafeCond += unsafeCond;
+        locationBucket.unsafe = locationBucket.unsafeAct + locationBucket.unsafeCond;
+        locationBucket.safeRate = locationBucket.total > 0 ? Number(((locationBucket.safe / locationBucket.total) * 100).toFixed(1)) : 0;
+        locationTypeMap.set(locationTypeLabel, locationBucket);
+
+        if (normalizedType === "PLANT") {
+          const code = String(row.location_code || "");
+          const locationSource = String(row.location_source || "").toUpperCase();
+          const plantMeta = plantBusinessUnitMap.get(code);
+          const businessUnit = locationSource === "RMR_SSO_PLANT"
+            ? plantMeta?.divisionName || plantMeta?.factName || "ไม่ระบุ BU โรงงาน"
+            : String(row.selected_location_name_snapshot || "ไม่ระบุ BU โรงงาน");
+          const buBucket = byBusinessUnitMap.get(businessUnit) || {
+            name: businessUnit,
+            submissions: 0,
+            total: 0,
+            safe: 0,
+            unsafeAct: 0,
+            unsafeCond: 0,
+            unsafe: 0,
+            safeRate: 0,
+            legacyLinewalk: 0,
+            totalLinewalk: 0,
+          };
+          buBucket.submissions += 1;
+          buBucket.total += total;
+          buBucket.safe += safe;
+          buBucket.unsafeAct += unsafeAct;
+          buBucket.unsafeCond += unsafeCond;
+          buBucket.unsafe = buBucket.unsafeAct + buBucket.unsafeCond;
+          buBucket.totalLinewalk += 1;
+          buBucket.safeRate = buBucket.total > 0 ? Number(((buBucket.safe / buBucket.total) * 100).toFixed(1)) : 0;
+          byBusinessUnitMap.set(businessUnit, buBucket);
+        }
+      }
+
       const byLocationType = [
         { locationType: "PLANT", name: "Plant" },
         { locationType: "OFFICE", name: "Office" },
@@ -2415,18 +2411,7 @@ async function handleImportsReportsAudit(request: NextRequest, method: string, m
       const otherLocationTypes = Array.from(locationTypeMap.values()).filter((row) => !["Plant", "Office", "Site"].includes(row.name));
       byLocationType.push(...otherLocationTypes);
       const legacyLinewalk = Number(legacyRows[0]?.legacy_linewalk || 0);
-      const byBusinessUnit = serializeLinewalkOverviewRows(buRows).map((row) => ({
-        name: String(row.business_unit || "ไม่ระบุ BU โรงงาน"),
-        submissions: Number(row.submissions || 0),
-        total: row.total,
-        safe: row.safe,
-        unsafeAct: row.unsafeAct,
-        unsafeCond: row.unsafeCond,
-        unsafe: row.unsafe,
-        safeRate: row.safeRate,
-        legacyLinewalk: 0,
-        totalLinewalk: Number(row.submissions || 0),
-      }));
+      const byBusinessUnit = Array.from(byBusinessUnitMap.values());
       byBusinessUnit.sort((a, b) => b.totalLinewalk - a.totalLinewalk || a.name.localeCompare(b.name));
       const limitedByBusinessUnit = byBusinessUnit.slice(0, 50);
       const legacyLocationBucket = legacyLinewalk > 0 ? [{

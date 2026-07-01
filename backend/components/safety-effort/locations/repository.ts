@@ -53,12 +53,7 @@ type LocationRow = RowDataPacket & {
   updated_at: Date | string;
 };
 
-type LocationSourceDetailRow = RowDataPacket & Record<string, unknown>;
-
-export type SafetyEffortLocationSourceDetail = {
-  table: "plant_location_details" | "office_location_details" | "site_location_details";
-  data: Record<string, unknown>;
-} | null;
+export type SafetyEffortLocationSourceDetail = null;
 
 const LOCATION_TYPES = new Set<SafetyEffortLocationType>(["PLANT", "OFFICE", "SITE", "CUSTOM"]);
 
@@ -139,76 +134,7 @@ function mapLocation(row: LocationRow) {
   };
 }
 
-function normalizeSourceDetailValue(value: unknown): unknown {
-  if (value instanceof Date) return value.toISOString();
-  if (typeof value === "bigint") return Number(value);
-  if (Buffer.isBuffer(value)) {
-    const text = value.toString("utf8");
-    try {
-      return JSON.parse(text);
-    } catch {
-      return text;
-    }
-  }
-  if (typeof value === "string") {
-    const trimmed = value.trim();
-    if ((trimmed.startsWith("{") && trimmed.endsWith("}")) || (trimmed.startsWith("[") && trimmed.endsWith("]"))) {
-      try {
-        return JSON.parse(trimmed);
-      } catch {
-        return value;
-      }
-    }
-  }
-  return value;
-}
-
-function mapSourceDetail(table: "plant_location_details" | "office_location_details" | "site_location_details", row: LocationSourceDetailRow) {
-  return {
-    table,
-    data: Object.fromEntries(
-      Object.entries(row).map(([key, value]) => [key, normalizeSourceDetailValue(value)]),
-    ),
-  } satisfies NonNullable<SafetyEffortLocationSourceDetail>;
-}
-
 export async function getSafetyEffortLocationSourceDetail(id: string): Promise<SafetyEffortLocationSourceDetail> {
-  const rows = await queryRows<RowDataPacket & { location_type: SafetyEffortLocationType }>(
-    `
-      SELECT location_type
-      FROM locations
-      WHERE id = :id AND deleted_at IS NULL
-      LIMIT 1
-    `,
-    { id },
-  );
-  const locationType = rows[0]?.location_type;
-  if (!locationType) return null;
-
-  if (locationType === "PLANT") {
-    const detailRows = await queryRows<LocationSourceDetailRow>(
-      "SELECT * FROM plant_location_details WHERE location_id = :id LIMIT 1",
-      { id },
-    );
-    return detailRows[0] ? mapSourceDetail("plant_location_details", detailRows[0]) : null;
-  }
-
-  if (locationType === "OFFICE") {
-    const detailRows = await queryRows<LocationSourceDetailRow>(
-      "SELECT * FROM office_location_details WHERE location_id = :id LIMIT 1",
-      { id },
-    );
-    return detailRows[0] ? mapSourceDetail("office_location_details", detailRows[0]) : null;
-  }
-
-  if (locationType === "SITE") {
-    const detailRows = await queryRows<LocationSourceDetailRow>(
-      "SELECT * FROM site_location_details WHERE location_id = :id LIMIT 1",
-      { id },
-    );
-    return detailRows[0] ? mapSourceDetail("site_location_details", detailRows[0]) : null;
-  }
-
   return null;
 }
 

@@ -13,15 +13,13 @@ import {
   createSafetyEffortLocation,
   deleteSafetyEffortLocation,
   getSafetyEffortLocation,
-  getSafetyEffortLocationSourceDetail,
   listSafetyEffortLocations,
   normalizeLocationType,
   parseLocationInput,
   updateSafetyEffortLocation,
   type SafetyEffortLocationType,
 } from "@backend/components/safety-effort/locations/repository";
-import { syncRmrPlants } from "@backend/components/safety-effort/locations/rmr-plant-sync";
-import { listRmcOffices, searchRmcSites } from "@backend/components/safety-effort/locations/rmc-location-search";
+import { listRmcOffices, listRmrPlants, searchRmcSites } from "@backend/components/safety-effort/locations/rmc-location-search";
 import {
   createComment,
   createPost,
@@ -314,20 +312,17 @@ function locationTypeForPath(path: string): SafetyEffortLocationType | null {
 
 async function listLocationsWithPlantBootstrap(
   options: Parameters<typeof listSafetyEffortLocations>[0],
-  userId?: string,
 ) {
-  let locations = await listSafetyEffortLocations(options);
-  const includesPlants = !options.type || options.type === "PLANT";
-
-  if (includesPlants && userId && isRmrSsoDatabaseConfigured()) {
-    const plantMirror = await listSafetyEffortLocations({ type: "PLANT", limit: 1 });
-    if (plantMirror.length === 0) {
-      await syncRmrPlants(userId);
-      locations = await listSafetyEffortLocations(options);
-    }
+  if (options.source?.trim().toUpperCase() === "ADMIN") {
+    return listSafetyEffortLocations(options);
   }
+  return listSafetyEffortLocations({ ...options, source: "ADMIN" });
+}
 
-  return locations;
+function mergeLocations(...groups: Array<Array<{ id: string } & Record<string, unknown>>>) {
+  const merged = new Map<string, { id: string } & Record<string, unknown>>();
+  groups.flat().forEach((item) => merged.set(item.id, item));
+  return Array.from(merged.values());
 }
 
 async function tryHandleConcreteRoute(
@@ -347,17 +342,61 @@ async function tryHandleConcreteRoute(
 
   try {
     if (method === "GET" && path === "/api/locations/offices" && isRmrSsoDatabaseConfigured()) {
-      const locations = await listRmcOffices();
+      const [masterLocations, customLocations] = await Promise.all([
+        listRmcOffices({
+          search: query.get("search") || query.get("q") || "",
+          limit: Number(query.get("limit") || query.get("pageSize") || 200),
+          near: nearPoint,
+        }),
+        listSafetyEffortLocations({
+          type: "OFFICE",
+          source: "ADMIN",
+          search: query.get("search") || query.get("q"),
+          limit: Number(query.get("limit") || query.get("pageSize") || 200),
+        }),
+      ]);
+      const locations = mergeLocations(masterLocations, customLocations);
+      return jsonData({ items: locations, locations });
+    }
+    if (method === "GET" && path === "/api/locations/plants" && isRmrSsoDatabaseConfigured()) {
+      const [masterLocations, customLocations] = await Promise.all([
+        listRmrPlants({
+          search: query.get("search") || query.get("q") || "",
+          limit: Number(query.get("limit") || query.get("pageSize") || 1000),
+          near: nearPoint,
+        }),
+        listSafetyEffortLocations({
+          type: "PLANT",
+          source: "ADMIN",
+          search: query.get("search") || query.get("q"),
+          limit: Number(query.get("limit") || query.get("pageSize") || 1000),
+        }),
+      ]);
+      const locations = mergeLocations(masterLocations, customLocations);
       return jsonData({ items: locations, locations });
     }
     if (method === "GET" && path === "/api/locations/sites" && isRmrSsoDatabaseConfigured()) {
       const search = query.get("search") || query.get("q") || "";
-      const locations = await searchRmcSites(search, Number(query.get("limit") || query.get("pageSize") || 30), nearPoint);
+      const [masterLocations, customLocations] = await Promise.all([
+        searchRmcSites(search, Number(query.get("limit") || query.get("pageSize") || 30), nearPoint),
+        listSafetyEffortLocations({
+          type: "SITE",
+          source: "ADMIN",
+          search,
+          limit: Number(query.get("limit") || query.get("pageSize") || 30),
+        }),
+      ]);
+      const locations = mergeLocations(masterLocations, customLocations);
       return jsonData({ items: locations, locations, minimumSearchLength: 3 });
     }
     if (method === "GET" && path === "/api/locations/search"
       && normalizeLocationType(query.get("type")) === "SITE" && isRmrSsoDatabaseConfigured()) {
-      const locations = await searchRmcSites(query.get("q") || query.get("search") || "", Number(query.get("limit") || 30), nearPoint);
+      const search = query.get("q") || query.get("search") || "";
+      const [masterLocations, customLocations] = await Promise.all([
+        searchRmcSites(search, Number(query.get("limit") || 30), nearPoint),
+        listSafetyEffortLocations({ type: "SITE", source: "ADMIN", search, limit: Number(query.get("limit") || 30) }),
+      ]);
+      const locations = mergeLocations(masterLocations, customLocations);
       return jsonData({ items: locations, locations, minimumSearchLength: 3 });
     }
     const typeFromPath = locationTypeForPath(path);
@@ -366,7 +405,7 @@ async function tryHandleConcreteRoute(
         type: typeFromPath,
         search: query.get("search") || query.get("q"),
         limit: Number(query.get("pageSize") || query.get("limit") || 50),
-      }, userId);
+      });
       return jsonData({ items: locations, locations });
     }
 
@@ -376,38 +415,58 @@ async function tryHandleConcreteRoute(
       const limit = Number(query.get("limit") || 30);
 
       if (!searchType && isRmrSsoDatabaseConfigured()) {
-        const [storedLocations, siteLocations] = await Promise.all([
+        const [customLocations, plantLocations, officeLocations, siteLocations] = await Promise.all([
           listLocationsWithPlantBootstrap({
             search,
             limit,
-          }, userId),
+          }),
+          listRmrPlants({ search, limit, near: nearPoint }),
+          listRmcOffices({ search, limit, near: nearPoint }),
           search.trim().length >= 3 ? searchRmcSites(search, limit, nearPoint) : Promise.resolve([]),
         ]);
-        const merged = new Map<string, (typeof storedLocations)[number]>();
-        [...storedLocations, ...siteLocations].forEach((location) => merged.set(location.id, location));
-        const locations = Array.from(merged.values());
+        const locations = mergeLocations(customLocations, plantLocations, officeLocations, siteLocations);
         return jsonData({ items: locations, locations, minimumSearchLength: 3 });
       }
 
-      const locations = await listLocationsWithPlantBootstrap({
-        type: searchType,
-        search,
-        limit: Number(query.get("limit") || 20),
-      }, userId);
+      const locations = searchType === "PLANT" && isRmrSsoDatabaseConfigured()
+        ? mergeLocations(
+            await listRmrPlants({ search, limit: Number(query.get("limit") || 20), near: nearPoint }),
+            await listSafetyEffortLocations({ type: "PLANT", source: "ADMIN", search, limit: Number(query.get("limit") || 20) }),
+          )
+        : searchType === "OFFICE" && isRmrSsoDatabaseConfigured()
+          ? mergeLocations(
+              await listRmcOffices({ search, limit: Number(query.get("limit") || 20), near: nearPoint }),
+              await listSafetyEffortLocations({ type: "OFFICE", source: "ADMIN", search, limit: Number(query.get("limit") || 20) }),
+            )
+          : await listLocationsWithPlantBootstrap({
+              type: searchType,
+              search,
+              limit: Number(query.get("limit") || 20),
+            });
       return jsonData({ items: locations, locations });
     }
 
     if (method === "GET" && path === "/api/locations/map") {
-      const locations = await listLocationsWithPlantBootstrap({
-        type: normalizeLocationType(query.get("type")),
+      const requestedType = normalizeLocationType(query.get("type"));
+      const limit = Number(query.get("limit") || 500);
+      const customLocations = await listLocationsWithPlantBootstrap({
+        type: requestedType,
         search: query.get("search"),
-        limit: Number(query.get("limit") || 500),
-      }, userId);
+        limit,
+      });
+      const masterLocations = !isRmrSsoDatabaseConfigured()
+        ? []
+        : requestedType === "OFFICE"
+          ? await listRmcOffices({ search: query.get("search") || "", limit, near: nearPoint })
+          : requestedType === "SITE"
+            ? await searchRmcSites(query.get("search") || query.get("q") || "", limit, nearPoint)
+            : await listRmrPlants({ search: query.get("search") || "", limit, near: nearPoint });
+      const locations = mergeLocations(customLocations, masterLocations);
       const bbox = query.get("bbox")?.split(",").map(Number);
       const bounded = bbox?.length === 4 && bbox.every(Number.isFinite)
         ? locations.filter((location) => {
-            const lng = location.lng;
-            const lat = location.lat;
+            const lng = typeof location.lng === "number" ? location.lng : null;
+            const lat = typeof location.lat === "number" ? location.lat : null;
             return lng !== null && lat !== null && lng >= bbox[0] && lat >= bbox[1] && lng <= bbox[2] && lat <= bbox[3];
           })
         : locations;
@@ -434,17 +493,6 @@ async function tryHandleConcreteRoute(
       }
     }
 
-    if (method === "GET" && match.route.path === "/api/locations/:id/source-detail") {
-      const location = await getSafetyEffortLocation(match.params.id);
-      if (!location) return jsonError("location_not_found", 404);
-      return jsonData({
-        locationId: match.params.id,
-        locationType: location.locationType,
-        source: location.source,
-        sourceDetail: await getSafetyEffortLocationSourceDetail(match.params.id),
-      });
-    }
-
     if (path === "/api/checkins" && method === "POST" && userId) {
       const input = jsonBody(body);
       const checkin = await createCheckin({
@@ -452,6 +500,8 @@ async function tryHandleConcreteRoute(
         locationId: String(input.locationId || input.selectedLocationId || ""),
         locationCode: optionalScalar(input.locationCode || input.code || input.tag)?.toString() || null,
         locationName: optionalScalar(input.locationName || input.name || input.selectedLocationName)?.toString() || null,
+        selectedLocationType: optionalScalar(input.selectedLocationType || input.locationType || input.type)?.toString() || null,
+        selectedLocationSource: optionalScalar(input.selectedLocationSource || input.source)?.toString() || null,
         actualLat: Number(input.actualLat ?? input.lat),
         actualLng: Number(input.actualLng ?? input.lng),
         actualAccuracyM: input.actualAccuracyM === undefined ? null : Number(input.actualAccuracyM),
