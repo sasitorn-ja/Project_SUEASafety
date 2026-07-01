@@ -126,6 +126,10 @@ function snakeCase(value: string) {
 function normalizeValue(column: string, value: unknown) {
   if (value === undefined) return undefined;
   if (value === "") return null;
+  if (typeof value === "string" && column.endsWith("_at")) {
+    const parsed = new Date(value);
+    if (!Number.isNaN(parsed.getTime())) return parsed;
+  }
   if (JSON_COLUMNS.has(column) && value !== null && typeof value !== "string") {
     return JSON.stringify(value);
   }
@@ -1042,13 +1046,13 @@ function normalizeSafetyEffortAttachment(input: unknown) {
   }
   if (!input || typeof input !== "object") return null;
   const raw = input as Record<string, unknown>;
-  const urlValue = raw.url || raw.href || raw.src;
+  const urlValue = raw.url || raw.publicUrl || raw.public_url || raw.href || raw.src || raw.dataUrl || raw.data_url;
   if (typeof urlValue !== "string" || !urlValue.trim()) return null;
   return {
     id: raw.id == null ? null : String(raw.id),
     url: urlValue.trim(),
-    originalName: raw.originalName == null ? null : String(raw.originalName),
-    mimeType: raw.mimeType == null ? null : String(raw.mimeType),
+    originalName: raw.originalName == null ? (raw.original_name == null ? null : String(raw.original_name)) : String(raw.originalName),
+    mimeType: raw.mimeType == null ? (raw.mime_type == null ? null : String(raw.mime_type)) : String(raw.mimeType),
     provider: raw.provider == null ? null : String(raw.provider),
   };
 }

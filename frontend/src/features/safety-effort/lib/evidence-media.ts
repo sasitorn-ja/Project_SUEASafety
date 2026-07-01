@@ -15,15 +15,15 @@ function normalizeEvidenceMedia(item: any): EvidenceMedia | null {
   }
   if (!item || typeof item !== "object") return null;
 
-  const urlValue = item.url || item.href || item.src;
+  const urlValue = item.url || item.publicUrl || item.public_url || item.href || item.src || item.dataUrl || item.data_url;
   if (typeof urlValue !== "string" || !urlValue.trim()) return null;
   const file = typeof File !== "undefined" && item.file instanceof File ? item.file : null;
 
   return {
     id: item.id == null ? null : String(item.id),
     url: urlValue.trim(),
-    originalName: item.originalName == null ? null : String(item.originalName),
-    mimeType: item.mimeType == null ? null : String(item.mimeType),
+    originalName: item.originalName == null ? (item.original_name == null ? null : String(item.original_name)) : String(item.originalName),
+    mimeType: item.mimeType == null ? (item.mime_type == null ? null : String(item.mime_type)) : String(item.mimeType),
     provider: item.provider == null ? null : String(item.provider),
     file,
     isLocal: Boolean(item.isLocal || file || urlValue.startsWith("blob:")),

@@ -87,6 +87,40 @@ const LOCATION_TYPE_LABELS = {
   site: "Site งาน",
 };
 
+function renderEvidencePhotos(photos) {
+  if (!Array.isArray(photos) || photos.length === 0) return null;
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 6, marginTop: 8 }}>
+      <span style={fieldLabelStyle}>รูปภาพแนบ ({photos.length})</span>
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+        {photos.map((photo, pIdx) => (
+          <a
+            key={`${photo?.id || "photo"}-${pIdx}`}
+            href={photo.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              width: 64,
+              height: 64,
+              borderRadius: 8,
+              overflow: "hidden",
+              border: "1px solid rgba(0,0,0,0.08)",
+              display: "inline-block",
+              background: "#fff",
+            }}
+          >
+            <img
+              src={photo.url}
+              alt={`Evidence ${pIdx + 1}`}
+              style={{ width: "100%", height: "100%", objectFit: "cover" }}
+            />
+          </a>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function statusMeta(status) {
   if (status === "safe") return { label: "ปลอดภัย (Safe)", color: "#1f7a55", bg: "#f0fdf4", border: "#bbf7d0" };
   if (status === "unsafe_condition") return { label: "สภาพไม่ปลอดภัย (Unsafe Condition)", color: "#c73a21", bg: "#fef2f2", border: "#fecaca" };
@@ -677,35 +711,7 @@ export default function SafetyAdminReportHistory() {
                     {selectedSub.safetyContactText || "ไม่มีการบันทึกข้อความ"}
                   </div>
 
-                  {selectedSub.metadata?.attachments && selectedSub.metadata.attachments.length > 0 && (
-                    <div style={{ display: "flex", flexDirection: "column", gap: 6, marginTop: 8 }}>
-                      <span style={fieldLabelStyle}>รูปภาพแนบ ({selectedSub.metadata.attachments.length})</span>
-                      <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-                        {selectedSub.metadata.attachments.map((photo, pIdx) => (
-                          <a
-                            key={pIdx}
-                            href={photo.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            style={{
-                              width: 64,
-                              height: 64,
-                              borderRadius: 8,
-                              overflow: "hidden",
-                              border: "1px solid rgba(0,0,0,0.08)",
-                              display: "inline-block",
-                            }}
-                          >
-                            <img
-                              src={photo.url}
-                              alt={`Evidence ${pIdx + 1}`}
-                              style={{ width: "100%", height: "100%", objectFit: "cover" }}
-                            />
-                          </a>
-                        ))}
-                      </div>
-                    </div>
-                  )}
+                  {renderEvidencePhotos(selectedSub.metadata?.attachments)}
                 </div>
               ) : (
                 <div style={{ display: "grid", gap: 8 }}>
@@ -738,6 +744,7 @@ export default function SafetyAdminReportHistory() {
                               <strong style={{ color: T.sub }}>{isTextBox ? "คำตอบ: " : "หมายเหตุ: "}</strong>{item.note}
                             </div>
                           )}
+                          {renderEvidencePhotos(item.photos)}
                         </div>
                       );
                     })}
