@@ -185,6 +185,11 @@ export default function SafePlusDashboard() {
     awarenessHistory,
     awarenessHolidays,
     awarenessRequiredToday,
+    awarenessEnabled,
+    awarenessActiveStartTime,
+    awarenessActiveEndTime,
+    awarenessScheduleStartDate,
+    awarenessScheduleEndDate,
     awarenessStartDate,
     feedEvents,
     rewardsCatalog,
@@ -209,7 +214,9 @@ export default function SafePlusDashboard() {
   const [activeHeroIndex, setActiveHeroIndex] = useState(0);
 
   const [pointTransactions, setPointTransactions] = useState<Array<{ amount: number; occurredAt: string }>>([]);
-  const effectiveAwarenessStartDate = awarenessUserStartDate || awarenessStartDate;
+  const effectiveAwarenessStartDate = [awarenessUserStartDate, awarenessStartDate, awarenessScheduleStartDate]
+    .filter((date): date is string => Boolean(date))
+    .sort((left, right) => right.localeCompare(left))[0] || bangkokDateKey(new Date());
   const [awarenessCalendarMonth, setAwarenessCalendarMonth] = useState(startOfBangkokMonth(effectiveAwarenessStartDate));
 
   useEffect(() => {
@@ -391,7 +398,12 @@ export default function SafePlusDashboard() {
       date.setDate(now.getDate() + (index - 5));
       const dateKey = bangkokDateKey(date);
       const bkDate = new Date(`${dateKey}T00:00:00+07:00`);
-      const required = ![0, 6].includes(bkDate.getDay()) && !holidayDates.has(dateKey) && dateKey >= effectiveAwarenessStartDate;
+      const required =
+        awarenessEnabled &&
+        ![0, 6].includes(bkDate.getDay()) &&
+        !holidayDates.has(dateKey) &&
+        dateKey >= effectiveAwarenessStartDate &&
+        (!awarenessScheduleEndDate || dateKey <= awarenessScheduleEndDate);
       const completion = historyByDate.get(dateKey) || null;
       const isFuture = dateKey > today;
       return {
@@ -407,7 +419,11 @@ export default function SafePlusDashboard() {
     let countDateKey = effectiveAwarenessStartDate;
     while (countDateKey <= today) {
       const date = new Date(`${countDateKey}T00:00:00+07:00`);
-      const required = ![0, 6].includes(date.getDay()) && !holidayDates.has(countDateKey);
+      const required =
+        awarenessEnabled &&
+        ![0, 6].includes(date.getDay()) &&
+        !holidayDates.has(countDateKey) &&
+        (!awarenessScheduleEndDate || countDateKey <= awarenessScheduleEndDate);
       if (required) {
         allRequiredDays.push({
           dateKey: countDateKey,
@@ -430,7 +446,11 @@ export default function SafePlusDashboard() {
     }
     while (streakDate >= effectiveAwarenessStartDate) {
       const date = new Date(`${streakDate}T00:00:00+07:00`);
-      const required = ![0, 6].includes(date.getDay()) && !holidayDates.has(streakDate);
+      const required =
+        awarenessEnabled &&
+        ![0, 6].includes(date.getDay()) &&
+        !holidayDates.has(streakDate) &&
+        (!awarenessScheduleEndDate || streakDate <= awarenessScheduleEndDate);
       if (required) {
         if (!historyByDate.has(streakDate)) break;
         streak += 1;
@@ -438,7 +458,7 @@ export default function SafePlusDashboard() {
       streakDate = previousBangkokDateKey(streakDate);
     }
     return { days, done, missed, completionRate, latest, streak };
-  }, [awarenessHistory, awarenessHolidays, effectiveAwarenessStartDate]);
+  }, [awarenessEnabled, awarenessHistory, awarenessHolidays, awarenessScheduleEndDate, effectiveAwarenessStartDate]);
 
   const todayKey = bangkokDateKey(new Date());
   const doneToday = awarenessHistory.some((item) => item.date === todayKey);
@@ -465,7 +485,13 @@ export default function SafePlusDashboard() {
     return Array.from({ length: 42 }, (_, index) => {
       const dateKey = addBangkokDays(firstGridDateKey, index);
       const date = new Date(`${dateKey}T00:00:00+07:00`);
-      const required = ![0, 6].includes(date.getDay()) && !holidayDates.has(dateKey) && dateKey >= effectiveAwarenessStartDate && dateKey <= awarenessCalendarTodayKey;
+      const required =
+        awarenessEnabled &&
+        ![0, 6].includes(date.getDay()) &&
+        !holidayDates.has(dateKey) &&
+        dateKey >= effectiveAwarenessStartDate &&
+        dateKey <= awarenessCalendarTodayKey &&
+        (!awarenessScheduleEndDate || dateKey <= awarenessScheduleEndDate);
       const completion = historyByDate.get(dateKey) || null;
       const isCurrentMonth = dateKey.slice(0, 7) === awarenessCalendarMonth.slice(0, 7);
       const isFuture = dateKey > awarenessCalendarTodayKey;
@@ -485,10 +511,19 @@ export default function SafePlusDashboard() {
   }, [
     awarenessCalendarMonth,
     awarenessCalendarTodayKey,
+    awarenessEnabled,
     awarenessHistory,
     awarenessHolidays,
+    awarenessScheduleEndDate,
     effectiveAwarenessStartDate,
   ]);
+
+  const awarenessScheduleLabel = useMemo(() => {
+    if (!awarenessEnabled) return "ปิดใช้งาน";
+    const start = awarenessScheduleStartDate ? formatThaiDate(awarenessScheduleStartDate) : "เริ่มทันที";
+    const end = awarenessScheduleEndDate ? formatThaiDate(awarenessScheduleEndDate) : "ไม่มีวันสิ้นสุด";
+    return `${start} - ${end}`;
+  }, [awarenessEnabled, awarenessScheduleEndDate, awarenessScheduleStartDate]);
 
   const openAwarenessCalendar = (mode: "done" | "missed") => {
     setAwarenessCalendarMode(mode);
@@ -781,6 +816,14 @@ export default function SafePlusDashboard() {
                   <span className="block text-[9.5px] font-black leading-tight text-[#536e94] sm:text-[10px]">เปอร์เซ็นต์การเข้าร่วม Safety Awareness</span>
                   <span className="rounded-full bg-[#dff8e9] px-2.5 py-0.5 text-[9px] font-black leading-none text-[#118646] sm:px-2.5 sm:text-[9px]">
                     วันนี้: {!awarenessRequiredToday ? "ไม่นับ" : doneToday ? "ทำแล้ว" : "ยังไม่ได้ทำ"}
+                  </span>
+                </div>
+                <div className="mt-1 flex flex-wrap items-center gap-1.5 text-[8.5px] font-bold leading-tight text-[#6b7f9e] sm:text-[9px]">
+                  <span className="rounded-full bg-white px-2 py-0.5 shadow-[inset_0_0_0_1px_rgba(185,216,251,.9)]">
+                    ช่วงกิจกรรม: {awarenessScheduleLabel}
+                  </span>
+                  <span className="rounded-full bg-white px-2 py-0.5 shadow-[inset_0_0_0_1px_rgba(185,216,251,.9)]">
+                    เวลา: {awarenessActiveStartTime || "00:00"} - {awarenessActiveEndTime || "23:59"} น.
                   </span>
                 </div>
                 <div className="mt-0.5 flex items-end gap-2">

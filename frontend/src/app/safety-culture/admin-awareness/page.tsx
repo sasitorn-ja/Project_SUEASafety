@@ -322,6 +322,12 @@ export default function AdminAwarenessPage() {
         title: "บันทึกสำเร็จ",
         description: "บันทึกการตั้งค่าเรียบร้อยแล้ว",
       });
+    } else {
+      setSchedulePopup({
+        type: "info",
+        title: "บันทึกไม่สำเร็จ",
+        description: "ระบบยังบันทึกการตั้งค่าไปยัง API ไม่สำเร็จ กรุณาลองใหม่อีกครั้ง",
+      });
     }
   };
 

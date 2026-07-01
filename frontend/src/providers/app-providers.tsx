@@ -2750,52 +2750,60 @@ export function AppProviders({ children }: { children: ReactNode }) {
   }, []);
 
   const updateAwarenessEnabled = useCallback(async (enabled: boolean) => {
-    setAwarenessEnabledState(enabled);
     if (isAuthenticatedRef.current) {
-      void apiFetch("/api/safety-settings?key=safety_awareness_enabled", apiJson("PUT", { value: { enabled } })).catch(() => null);
+      const result = await apiFetch("/api/safety-settings?key=safety_awareness_enabled", apiJson("PUT", { value: { enabled } }));
+      if (!result.ok) return false;
     }
+    setAwarenessEnabledState(enabled);
     return true;
   }, []);
 
   const updateAwarenessWeekdays = useCallback(async (weekdays: number[]) => {
-    setAwarenessWeekdaysState(weekdays);
     if (isAuthenticatedRef.current) {
-      void apiFetch("/api/safety-settings?key=safety_awareness_weekdays", apiJson("PUT", { value: { weekdays } })).catch(() => null);
+      const result = await apiFetch("/api/safety-settings?key=safety_awareness_weekdays", apiJson("PUT", { value: { weekdays } }));
+      if (!result.ok) return false;
     }
+    setAwarenessWeekdaysState(weekdays);
     return true;
   }, []);
 
   const updateAwarenessTimeWindow = useCallback(async (startTime: string, endTime: string) => {
+    if (isAuthenticatedRef.current) {
+      const [startResult, endResult] = await Promise.all([
+        apiFetch("/api/safety-settings?key=safety_awareness_active_start_time", apiJson("PUT", { value: { startTime } })),
+        apiFetch("/api/safety-settings?key=safety_awareness_active_end_time", apiJson("PUT", { value: { endTime } })),
+      ]);
+      if (!startResult.ok || !endResult.ok) return false;
+    }
     setAwarenessActiveStartTimeState(startTime);
     setAwarenessActiveEndTimeState(endTime);
-    if (isAuthenticatedRef.current) {
-      void apiFetch("/api/safety-settings?key=safety_awareness_active_start_time", apiJson("PUT", { value: { startTime } })).catch(() => null);
-      void apiFetch("/api/safety-settings?key=safety_awareness_active_end_time", apiJson("PUT", { value: { endTime } })).catch(() => null);
-    }
     return true;
   }, []);
 
   const updateAwarenessScheduleStartDate = useCallback(async (startDate: string) => {
-    setAwarenessScheduleStartDateState(startDate);
     if (isAuthenticatedRef.current) {
-      void apiFetch("/api/safety-settings?key=safety_awareness_schedule_start_date", apiJson("PUT", { value: { startDate } })).catch(() => null);
+      const result = await apiFetch("/api/safety-settings?key=safety_awareness_schedule_start_date", apiJson("PUT", { value: { startDate } }));
+      if (!result.ok) return false;
     }
+    setAwarenessScheduleStartDateState(startDate);
     return true;
   }, []);
 
   const updateAwarenessScheduleEndDate = useCallback(async (endDate: string) => {
-    setAwarenessScheduleEndDateState(endDate);
     if (isAuthenticatedRef.current) {
-      void apiFetch("/api/safety-settings?key=safety_awareness_schedule_end_date", apiJson("PUT", { value: { endDate } })).catch(() => null);
+      const result = await apiFetch("/api/safety-settings?key=safety_awareness_schedule_end_date", apiJson("PUT", { value: { endDate } }));
+      if (!result.ok) return false;
     }
+    setAwarenessScheduleEndDateState(endDate);
     return true;
   }, []);
 
   const updateAwarenessDescription = useCallback(async (description: string) => {
-    setAwarenessDescriptionState(description);
     if (isAuthenticatedRef.current) {
-      void apiFetch("/api/safety-settings?key=safety_awareness_description", apiJson("PUT", { value: { description } })).catch(() => null);
+      const result = await apiFetch("/api/safety-settings?key=safety_awareness_description", apiJson("PUT", { value: { description } }));
+      if (!result.ok) return false;
     }
+    setAwarenessDescriptionState(description);
     return true;
   }, []);
 
