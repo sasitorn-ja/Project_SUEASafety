@@ -74,6 +74,12 @@ function mapCheckin(row: CheckinRow) {
   };
 }
 
+function numericSnapshotLocationId(location?: { id?: unknown; source?: string | null } | null) {
+  if (!location?.id) return null;
+  const id = String(location.id);
+  return location.source === "ADMIN" && /^\d+$/.test(id) ? id : null;
+}
+
 const SELECT_CHECKINS_SQL = `
   SELECT
     c.id,
@@ -143,10 +149,11 @@ export async function createCheckin(input: {
     lng: input.actualLng,
   });
 
-  const numericSelectedLocationId =
-    selectedLocation.source === "ADMIN" && input.locationId && /^\d+$/.test(String(input.locationId))
-      ? String(input.locationId)
-      : null;
+  const numericSelectedLocationId = numericSnapshotLocationId({
+    id: input.locationId,
+    source: selectedLocation.source,
+  });
+  const numericActualLocationId = numericSnapshotLocationId(actualLocation);
 
   const id = await withTransaction(async (connection) => {
     const [result] = await connection.execute<ResultSetHeader>(
@@ -199,7 +206,7 @@ export async function createCheckin(input: {
         selectedPointWkt: `POINT(${selectedLocation.lng} ${selectedLocation.lat})`,
         actualPointWkt: `POINT(${input.actualLng} ${input.actualLat})`,
         actualAccuracyM: input.actualAccuracyM ?? null,
-        actualLocationId: actualLocation?.id ?? null,
+        actualLocationId: numericActualLocationId,
         actualLocationName: actualLocation?.nameTh ?? null,
         actualLocationCode: actualLocation?.code ?? null,
         actualLocationDistanceM: actualLocation?.distanceM ?? null,
