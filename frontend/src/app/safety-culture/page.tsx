@@ -39,6 +39,10 @@ import styles from "./safety-culture-community.module.css";
 
 const POINT_UNIT = "Coin";
 
+function formatCoin(value: number) {
+  return Math.max(0, Number(value) || 0).toLocaleString("en-US");
+}
+
 function getPostComments(post: { comments: number | CommentType[] }): CommentType[] {
   if (Array.isArray(post.comments)) return post.comments;
   return [];
@@ -807,7 +811,7 @@ export default function Page() {
                             <h3 className="line-clamp-2 text-[24px] font-black leading-tight text-white [text-shadow:0_2px_10px_rgba(0,0,0,.45)]">{activity.title}</h3>
                             <p className="mt-1.5 line-clamp-2 text-[12px] font-bold leading-relaxed text-white/88">{getActivityCardCopy(activity)}</p>
                             <div className="mt-3 flex flex-wrap items-center gap-2">
-                              <span className="rounded-full bg-[#18B989] px-3 py-1.5 text-[12px] font-black text-white">+{activity.points} {POINT_UNIT}</span>
+                              <span className="rounded-full bg-[#18B989] px-3 py-1.5 text-[12px] font-black text-white">+{formatCoin(activity.points)} {POINT_UNIT}</span>
                               <Button
                                 type="button"
                                 variant="secondary"
@@ -895,7 +899,7 @@ export default function Page() {
                           <h3 className="line-clamp-2 text-[34px] font-black leading-[1.05] text-white [text-shadow:0_2px_12px_rgba(0,0,0,.45)] xl:text-[42px]">{activity.title}</h3>
                           <p className="mt-3 line-clamp-2 text-[15px] font-bold leading-relaxed text-white/88">{getActivityCardCopy(activity)}</p>
                           <div className="mt-5 flex flex-wrap items-center gap-3">
-                            <span className="rounded-full bg-[#18B989] px-4 py-2 text-[15px] font-black text-white">+{activity.points} {POINT_UNIT}</span>
+                            <span className="rounded-full bg-[#18B989] px-4 py-2 text-[15px] font-black text-white">+{formatCoin(activity.points)} {POINT_UNIT}</span>
                             <Button
                               type="button"
                               variant="secondary"
@@ -1160,7 +1164,7 @@ export default function Page() {
                     </div>
                     {post.isYou ? (
                       <span className="w-fit rounded-full bg-[#e9fff4] px-2 py-0.5 text-[12px] font-black tracking-normal text-[#3D9A6A]">
-                        + {post.points} {POINT_UNIT}
+                        + {formatCoin(post.points)} {POINT_UNIT}
                       </span>
                     ) : <span aria-hidden="true" />}
                   </div>
@@ -1402,7 +1406,7 @@ export default function Page() {
                     </span>
                     {expandedPost.isYou ? (
                       <span className="w-fit rounded-full bg-[#e9fff4] px-2 py-0.5 text-[12px] font-black tracking-normal text-[#3D9A6A]">
-                        + {expandedPost.points} {POINT_UNIT}
+                        + {formatCoin(expandedPost.points)} {POINT_UNIT}
                       </span>
                     ) : null}
                   </div>
@@ -1758,7 +1762,7 @@ export default function Page() {
                       <div className="mt-4 inline-flex w-full items-center gap-2 rounded-full bg-[linear-gradient(90deg,#ecfff5,#eefdf3)] px-3 py-2 text-[12px] font-black text-[#18b989] sm:px-3.5 sm:text-[13px]">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img src="/images/icons/STCoin.png" alt="Coin" className="h-[18px] w-[18px] object-contain mr-0.5" />
-                        Points: {expandedActivity.points}
+                        {formatCoin(expandedActivity.points)} Coin
                       </div>
                     </Card>
 

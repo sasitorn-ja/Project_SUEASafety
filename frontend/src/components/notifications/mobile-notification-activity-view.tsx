@@ -6,6 +6,10 @@ import { cn } from "@/lib/utils";
 import { type SafetyCultureFeedEvent } from "@/providers/app-providers";
 import { useAppTheme } from "@/providers/theme-provider";
 
+function formatCoin(value: number) {
+  return Math.max(0, Number(value) || 0).toLocaleString("en-US");
+}
+
 function getActivityStatusMeta(status: SafetyCultureFeedEvent["status"]) {
   return status === "open"
     ? {
@@ -89,7 +93,7 @@ export function MobileNotificationActivityView({ activity, onBack }: MobileNotif
             <div className={cn("mt-4 inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-[13px] font-black", pointsPillClass)}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src="/images/icons/STCoin.png" alt="Coin" className="h-4 w-4 object-contain" />
-              Points: {activity.points}
+              {formatCoin(activity.points)} Coin
             </div>
           </Card>
 

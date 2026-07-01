@@ -173,8 +173,8 @@ function formatThaiMonthYear(dateKey: string) {
 
 function activityBonusLabel(event: { points: number; bonusMode: string; multiplier: number; fixedPoints: number }) {
   if (event.bonusMode === "multiplier") return `x${event.multiplier}`;
-  if (event.fixedPoints > 0) return `+${event.fixedPoints} Coin`;
-  if (event.points > 0) return `+${event.points} Coin`;
+  if (event.fixedPoints > 0) return `+${event.fixedPoints.toLocaleString("en-US")} Coin`;
+  if (event.points > 0) return `+${event.points.toLocaleString("en-US")} Coin`;
   return "กำลังจัด";
 }
 

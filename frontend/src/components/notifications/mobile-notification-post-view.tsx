@@ -229,7 +229,7 @@ export function MobileNotificationPostView({
               </Button>
             </div>
             <span className={cn("rounded-full px-2 py-0.5 text-[12px] font-black", isWangjai ? "bg-[#edf6ff] text-[#2f69a3]" : "bg-[#e9fff4] text-[#3D9A6A]")}>
-              + {post.points} pts
+              + {Math.max(0, Number(post.points) || 0).toLocaleString("en-US")} Coin
             </span>
           </div>
 

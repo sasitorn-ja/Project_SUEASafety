@@ -380,7 +380,7 @@ export default function RewardsPage() {
             </div>
 
             <p className="text-sm font-semibold leading-relaxed text-[#555149]">
-              คุณต้องการใช้ Coin จำนวน <strong className="text-(--brand-accent-strong)">{redeeming?.points} {POINT_UNIT}</strong> เพื่อแลก
+              คุณต้องการใช้ Coin จำนวน <strong className="text-(--brand-accent-strong)">{redeeming ? redeeming.points.toLocaleString("en-US") : 0} {POINT_UNIT}</strong> เพื่อแลก
               <br />
               <strong>&quot;{redeeming?.name}&quot;</strong> ใช่หรือไม่?
             </p>

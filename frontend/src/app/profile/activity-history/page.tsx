@@ -191,7 +191,7 @@ export default function ProfileActivityHistoryPage() {
                 <h2 className="mt-1 text-[18px] font-black text-foreground">เลือกช่วงเวลาที่ต้องการดู</h2>
               </div>
               <div className="rounded-full bg-[var(--brand-soft)] px-3 py-1.5 text-[12px] font-black text-[var(--brand-text)]">
-                +{summary.points} Coin
+                +{summary.points.toLocaleString("en-US")} Coin
               </div>
             </div>
 

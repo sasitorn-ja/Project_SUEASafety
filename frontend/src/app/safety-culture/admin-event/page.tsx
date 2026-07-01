@@ -56,7 +56,7 @@ const EVENT_STATUS_OPTIONS = [
 
 const BONUS_MODE_OPTIONS = [
   { id: "multiplier", label: "Multiplier", hint: "คูณ Coin เช่น x2" },
-  { id: "fixed", label: "Fixed points", hint: "เพิ่ม Coin คงที่ เช่น +5" },
+  { id: "fixed", label: "Fixed Coin", hint: "เพิ่ม Coin คงที่ เช่น +5" },
 ] as const;
 
 const ACTION_OPTIONS = [
@@ -122,8 +122,17 @@ const ADMIN_EDITOR_MODES = [
   },
 ] as const;
 
+function formatCoin(value: number) {
+  return Math.max(0, Number(value) || 0).toLocaleString("en-US");
+}
+
+function parseCoinInput(value: string) {
+  const normalized = value.replace(/[^\d]/g, "");
+  return normalized ? Number(normalized) : 0;
+}
+
 function formatBonusLabel(mode: SafetyCultureBonusMode, multiplier: number, fixedPoints: number) {
-  return mode === "multiplier" ? `x${multiplier}` : `+${fixedPoints} Coin`;
+  return mode === "multiplier" ? `x${multiplier}` : `+${formatCoin(fixedPoints)} Coin`;
 }
 
 function buildAutoHeadline(eventName: string, mode: SafetyCultureBonusMode, multiplier: number, fixedPoints: number) {
@@ -1298,12 +1307,14 @@ export default function AdminEventPage() {
                           </Label>
                           <Input
                             id="fixed-points"
-                            value={`${fixedPoints}`}
+                            type="text"
+                            inputMode="numeric"
+                            value={formatCoin(fixedPoints)}
                             onChange={(event) =>
                               patchEvent(
                                 (current) => ({
                                   ...current,
-                                  fixedPoints: Number(event.target.value) || 0,
+                                  fixedPoints: parseCoinInput(event.target.value),
                                 }),
                                 true
                               )
@@ -1517,7 +1528,7 @@ export default function AdminEventPage() {
                             </button>
 
                             <div className="flex items-center">
-                              <span className="rounded-full bg-[var(--brand-soft)] px-3 py-1 text-[12px] font-black text-[var(--brand-text)]">+{activity.points} pts</span>
+                              <span className="rounded-full bg-[var(--brand-soft)] px-3 py-1 text-[12px] font-black text-[var(--brand-text)]">+{formatCoin(activity.points)} Coin</span>
                             </div>
 
                             <div className="flex items-center text-[12px] font-bold text-[var(--c-5f5344)]">{activity.dateLabel}</div>
@@ -1647,7 +1658,7 @@ export default function AdminEventPage() {
                               <div className="mt-1 line-clamp-2 text-[12px] font-bold leading-relaxed text-[var(--c-6e6254)]">{getFeedEventCardCopy(activity)}</div>
                               <div className="mt-3 flex items-center justify-between gap-2 text-[11px] font-black">
                                 <span className="text-[#8E8A81]">{activity.dateLabel}</span>
-                                <span className="text-[#087A5B]">+{activity.points} pts</span>
+                                <span className="text-[#087A5B]">+{formatCoin(activity.points)} Coin</span>
                               </div>
                               <div className="mt-3 flex items-center justify-between gap-2">
                                 <span className="flex items-center gap-1.5 text-[11px] font-black text-[#7a869a]">
@@ -1838,14 +1849,13 @@ export default function AdminEventPage() {
                           <div className="flex flex-col gap-2">
                             <Label className="text-[13px] font-black text-[#075FCC]">Coin กิจกรรม</Label>
                             <Input
-                              type="number"
-                              min={0}
+                              type="text"
                               inputMode="numeric"
-                              value={`${feedModalDraft.points}`}
+                              value={formatCoin(feedModalDraft.points)}
                               onChange={(event) =>
                                 patchFeedModalDraft((current) => ({
                                   ...current,
-                                  points: Number(event.target.value) || 0,
+                                  points: parseCoinInput(event.target.value),
                                 }))
                               }
                               className="h-11 rounded-[14px] border-[#B9DCFF] bg-white text-[14px] font-bold text-[#0B2F6B] focus-visible:border-[#0B82F0] focus-visible:ring-2 focus-visible:ring-[#0B82F0]/20"
