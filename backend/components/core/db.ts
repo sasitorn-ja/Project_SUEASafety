@@ -6,6 +6,12 @@ const globalForDb = globalThis as typeof globalThis & {
   cpacSafetyDbPool?: Pool;
 };
 
+function connectionLimitFromEnv() {
+  const configured = Number(process.env.DATABASE_CONNECTION_LIMIT || process.env.MYSQL_CONNECTION_LIMIT || 20);
+  if (!Number.isFinite(configured)) return 20;
+  return Math.min(Math.max(Math.floor(configured), 5), 100);
+}
+
 export function getDatabaseUrl() {
   return process.env.DATABASE_URL || "";
 }
@@ -38,8 +44,9 @@ export function getDbPool(): Pool {
     globalForDb.cpacSafetyDbPool = mysql.createPool({
       uri: getDatabaseUrl(),
       charset: "utf8mb4",
-      connectionLimit: 10,
+      connectionLimit: connectionLimitFromEnv(),
       waitForConnections: true,
+      queueLimit: 0,
       namedPlaceholders: true,
       supportBigNumbers: true,
       bigNumberStrings: true,

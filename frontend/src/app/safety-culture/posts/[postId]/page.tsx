@@ -173,7 +173,7 @@ export default function SafetyCulturePostDetailPage() {
     setLoading(true);
     const [postResult, commentsResult] = await Promise.all([
       apiFetch<{ post: ApiPost }>(`/api/safety-culture/posts/${postId}`),
-      apiFetch<{ items: ApiComment[] }>(`/api/safety-culture/posts/${postId}/comments?limit=100`),
+      apiFetch<{ items: ApiComment[] }>(`/api/safety-culture/posts/${postId}/comments?limit=30`),
     ]);
     if (!postResult.ok || !postResult.data?.post) {
       const localPost = localPosts.find((p) => Number(p.id) === postId);

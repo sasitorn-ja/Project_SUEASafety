@@ -510,6 +510,14 @@ function mediaListDto(rows: DbRow[]) {
 
 async function createExportJob(input: JsonInput, userId?: string | null) {
   const jobType = String(input.jobType || input.type || "GENERIC_EXPORT");
+  const rows = Array.isArray(input.rows) ? input.rows : [];
+  const resultJson = {
+    ready: true,
+    jobType,
+    rowCount: rows.length,
+    rows,
+    generatedAt: new Date().toISOString(),
+  };
   const id = await withTransaction(async (connection) => {
     const [result] = await connection.execute<ResultSetHeader>(
       `INSERT INTO export_jobs
@@ -518,7 +526,7 @@ async function createExportJob(input: JsonInput, userId?: string | null) {
       {
         jobType,
         params: JSON.stringify(input),
-        resultJson: JSON.stringify({ ready: true, jobType }),
+        resultJson: JSON.stringify(resultJson),
         fileName: input.fileName || `${jobType.toLowerCase()}-${Date.now()}.csv`,
         createdBy: userId || null,
       },
@@ -2653,8 +2661,11 @@ async function handleImportsReportsAudit(request: NextRequest, method: string, m
   if (method === "GET" && route === "/api/exports/:id/download") {
     const job = await getRow("export_jobs", match.params.id);
     if (!job) return jsonError("export_not_found", 404);
-    const csv = toCsv([job]);
-    return new NextResponse(csv, { headers: { "content-type": "text/csv; charset=utf-8", "content-disposition": `attachment; filename=export-${match.params.id}.csv` } });
+    const result = parseJson(job.result_json);
+    const rows = Array.isArray(result?.rows) ? result.rows : [job];
+    const fileName = String(job.file_name || `export-${match.params.id}.csv`).replace(/[\r\n"]/g, "");
+    const csv = toCsv(rows as Record<string, unknown>[]);
+    return new NextResponse(csv, { headers: { "content-type": "text/csv; charset=utf-8", "content-disposition": `attachment; filename="${fileName}"` } });
   }
   if (method === "GET" && route === "/api/audit-logs") {
     const where: string[] = [];

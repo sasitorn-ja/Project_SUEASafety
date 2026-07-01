@@ -62,20 +62,15 @@ export default function Category() {
     const to = `${toDate.getFullYear()}-${String(toDate.getMonth() + 1).padStart(2, "0")}-${String(toDate.getDate()).padStart(2, "0")}`;
 
     setMonthlyStats((current) => ({ ...current, loading: true }));
-    fetch(`/api/safety-effort/submissions/me?from=${from}&to=${to}&pageSize=500`, {
+    fetch(`/api/safety-effort/submissions/me?from=${from}&to=${to}&pageSize=1`, {
       credentials: "include",
       cache: "no-store",
     })
       .then((response) => (response.ok ? response.json() : null))
       .then((payload) => {
         if (cancelled) return;
-        const items = Array.isArray(payload?.data?.items) ? payload.data.items : [];
         const legacyTotals = payload?.data?.legacy?.totals || null;
-        const countedItems = items.filter((item) => {
-          const activityType = String(item?.activityType || item?.activity_type || "").toUpperCase();
-          return activityType === "LINE_WALK" || activityType === "SAFETY_CONTACT";
-        });
-        const total = countedItems.length + Number(legacyTotals?.linewalk || 0) + Number(legacyTotals?.contact || 0);
+        const total = Number(payload?.data?.total || 0) + Number(legacyTotals?.linewalk || 0) + Number(legacyTotals?.contact || 0);
         setMonthlyStats({ count: total, loading: false });
       })
       .catch(() => {

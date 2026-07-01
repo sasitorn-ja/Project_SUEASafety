@@ -1998,7 +1998,7 @@ export default function Checkin() {
       }
       const actualUserPos = userPos ?? DEFAULT_CENTER;
       let checkinRecord = null;
-      if (selectedForSubmit.id === "mock-cpac") {
+      if (demoLoginActive && selectedForSubmit.id === "mock-cpac") {
         checkinRecord = { id: "mock-checkin-id-" + Date.now() };
       } else {
         const response = await fetch("/api/checkins", {

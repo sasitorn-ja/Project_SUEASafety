@@ -8,6 +8,8 @@
     "build:frontend": "npm --prefix frontend run build",
     "start:frontend": "npm --prefix frontend run start",
     "start:frontend:standalone": "npm --prefix frontend run start:standalone",
+    "audit:production-readiness": "node scripts/audit-production-readiness.mjs",
+    "load-test:1000": "node scripts/load-test-1000.mjs",
     "test:e2e": "npm --prefix frontend run qa:e2e --",
     "test:e2e:headed": "npm --prefix frontend run qa:e2e:headed --"
   }

@@ -94,72 +94,6 @@ function statusMeta(status) {
   return { label: "N/A", color: "var(--c-6f665e)", bg: "#fbfbfa", border: "rgba(31,26,23,0.10)" };
 }
 
-const MOCKUP_SUBMISSIONS = [
-  {
-    id: "mock-1",
-    timestamp: "2026-06-26T10:30:00.000Z",
-    activityId: "line-walk",
-    activityLabel: "Line Walk",
-    locType: "factory",
-    locationName: "โรงบดปูนซีเมนต์คาร์บอนต่ำ",
-    locationTag: "บดที่ 2",
-    date: "2026-06-26",
-    isSafetyContact: false,
-    safetyContactText: "",
-    answeredItems: [
-      { id: "q1", title: "การใส่แว่นตานิรภัยและหมวกเซฟตี้", status: "safe" },
-      { id: "q2", title: "ทางหนีไฟไม่มีสิ่งกีดขวาง", status: "safe" },
-      { id: "q3", title: "ปลั๊กไฟและสายไฟอยู่ในสภาพสมบูรณ์", status: "unsafe_condition", note: "พบปลั๊กพ่วงสายชำรุด 1 จุด" },
-      { id: "q4", title: "การติดป้ายเตือนอันตราย", status: "safe" }
-    ],
-    actorName: "นายมานพ ปลอดภัย",
-    actorEmail: "manop.p@cpac.co.th",
-    actorCode: "0012345",
-    actualLat: 13.81930,
-    actualLng: 100.51430,
-  },
-  {
-    id: "mock-2",
-    timestamp: "2026-06-25T14:15:00.000Z",
-    activityId: "safety-contact",
-    activityLabel: "Safety Contact",
-    locType: "office",
-    locationName: "อาคาร 1 สำนักงานใหญ่",
-    locationTag: "ชั้น 3 ฝ่ายพัฒนาซอฟต์แวร์",
-    date: "2026-06-25",
-    isSafetyContact: true,
-    safetyContactText: "พูดคุยรณรงค์กับทีมงานเกี่ยวกับความเป็นระเบียบเรียบร้อยและการจัดเก็บสายไฟใต้โต๊ะทำงานเพื่อป้องกันความร้อนสะสมและการสะดุดล้ม ได้รับความร่วมมือเป็นอย่างดี",
-    answeredItems: [],
-    actorName: "นางสาวศิริลักษณ์ วิริยะ",
-    actorEmail: "sirilak.w@cpac.co.th",
-    actorCode: "0025678",
-    actualLat: 13.82050,
-    actualLng: 100.51520,
-  },
-  {
-    id: "mock-3",
-    timestamp: "2026-06-24T09:00:00.000Z",
-    activityId: "line-walk",
-    activityLabel: "Line Walk",
-    locType: "site",
-    locationName: "โครงการก่อสร้างทางด่วนข้ามแยก",
-    locationTag: "ตอม่อที่ 12-14",
-    date: "2026-06-24",
-    isSafetyContact: false,
-    safetyContactText: "",
-    answeredItems: [
-      { id: "q1", title: "นั่งร้านมีความแข็งแรงและปลอดภัย", status: "safe" },
-      { id: "q2", title: "คนงานทุกคนผูกสายเข็มขัดนิรภัยขณะทำงานบนที่สูง", status: "safe" },
-      { id: "q3", title: "มีแนวกั้นกันตกและป้ายเตือนการทำงานด้านล่าง", status: "safe" }
-    ],
-    actorName: "นายวิศรุต การช่าง",
-    actorEmail: "witsarut.k@cpac.co.th",
-    actorCode: "0039876",
-    actualLat: 13.79980,
-    actualLng: 100.50850,
-  }
-];
-
 function hasActualPosition(item) {
   return item.actualLat != null && item.actualLng != null && Number.isFinite(Number(item.actualLat)) && Number.isFinite(Number(item.actualLng));
 }
@@ -187,7 +121,7 @@ export default function SafetyAdminReportHistory() {
   const [width, setWidth] = useState(typeof window !== "undefined" ? window.innerWidth : 1024);
   const isMobile = width < 768;
 
-  const [submissions, setSubmissions] = useState(MOCKUP_SUBMISSIONS);
+  const [submissions, setSubmissions] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [activityFilter, setActivityFilter] = useState("all");
   const [locTypeFilter, setLocTypeFilter] = useState("all");
@@ -239,7 +173,7 @@ export default function SafetyAdminReportHistory() {
     let cancelled = false;
     (async () => {
       try {
-        const res = await fetch("/api/safety-effort/submissions?pageSize=200", { credentials: "include", cache: "no-store" });
+        const res = await fetch("/api/safety-effort/submissions?pageSize=50", { credentials: "include", cache: "no-store" });
         if (res.ok) {
           const payload = await res.json().catch(() => null);
           const items = payload?.data?.items;
@@ -261,10 +195,10 @@ export default function SafetyAdminReportHistory() {
               actorEmail: it.actorEmail || it.email || "",
               actorCode: it.actorCode || it.pms || "",
             }));
-            setSubmissions([...apiItems, ...MOCKUP_SUBMISSIONS]);
+            setSubmissions(apiItems);
           }
         }
-      } catch { if (!cancelled) setSubmissions(MOCKUP_SUBMISSIONS); }
+      } catch { if (!cancelled) setSubmissions([]); }
     })();
     return () => { cancelled = true; };
   }, []);

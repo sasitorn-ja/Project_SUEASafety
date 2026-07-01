@@ -1,6 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useState, useCallback, ReactNode, useEffect, useRef } from "react";
+import { usePathname } from "next/navigation";
 import {
   DEFAULT_REWARD_CATEGORIES,
   type RewardCategoryConfig,
@@ -252,7 +253,8 @@ type AppActions = {
   markInboxNotificationRead: (notificationId: string) => void;
   markAllInboxNotificationsRead: () => void;
   addPost: (post: Post) => Promise<Post>;
-  fetchPosts: (options?: { scope?: "all" | "my-team" | "mine"; category?: string | null; limit?: number }) => Promise<Post[]>;
+  fetchPosts: (options?: { scope?: "all" | "my-team" | "mine"; category?: string | null; limit?: number; cursor?: string | null }) => Promise<Post[]>;
+  fetchPostsPage: (options?: { scope?: "all" | "my-team" | "mine"; category?: string | null; limit?: number; cursor?: string | null }) => Promise<{ items: Post[]; nextCursor: string | null }>;
   toggleLike: (postId: number | string) => void;
   addComment: (postId: number | string, text: string) => Promise<boolean>;
   fetchComments: (postId: number | string) => Promise<Comment[]>;
@@ -1609,6 +1611,20 @@ function createDemoSafetyCultureSnapshot(demoUser: SessionUser, now = Date.now()
 }
 
 export function AppProviders({ children }: { children: ReactNode }) {
+  const pathname = usePathname() ?? "";
+  const shouldLoadPosts =
+    pathname === "/safety-culture"
+    || pathname.startsWith("/safety-culture/posts/")
+    || pathname === "/notifications";
+  const shouldLoadLeaderboard =
+    pathname === "/safety-culture/leaderboard"
+    || pathname === "/safety-culture/admin-leaderboard"
+    || pathname === "/profile";
+  const shouldLoadRewards =
+    pathname === "/"
+    || pathname === "/dashboard"
+    || pathname === "/safety-culture/rewards"
+    || pathname === "/safety-culture/admin-reward";
   const [posts, setPosts] = useState<Post[]>([]);
   const [userActivityHistory, setUserActivityHistory] = useState<SafetyCultureUserActivity[]>([]);
   const [notification, setNotification] = useState<NotificationType>(null);
@@ -1671,14 +1687,14 @@ export function AppProviders({ children }: { children: ReactNode }) {
 
   const loadPostComments = useCallback(async (postId: number | string, viewerId?: string | null) => {
     const apiPostId = resolvePostApiId(postId);
-    const result = await apiFetch<{ items: ApiComment[] }>(`/api/safety-culture/posts/${apiPostId}/comments?limit=100`);
+    const result = await apiFetch<{ items: ApiComment[] }>(`/api/safety-culture/posts/${apiPostId}/comments?limit=30`);
     if (!result.ok || !Array.isArray(result.data?.items)) return null;
     return result.data.items.map((item) => commentFromApi(item, viewerId ?? currentUserRef.current?.id ?? null));
   }, [resolvePostApiId]);
 
   const refreshInboxNotifications = useCallback(async (events: SafetyCultureFeedEvent[] = feedEvents) => {
     if (!isAuthenticatedRef.current) return;
-    const notificationsResult = await apiFetch<{ items: Array<Record<string, unknown>> }>("/api/notifications?limit=100");
+    const notificationsResult = await apiFetch<{ items: Array<Record<string, unknown>> }>("/api/notifications?limit=30");
     if (!notificationsResult.ok || !Array.isArray(notificationsResult.data?.items)) return;
     setInboxNotifications(notificationsResult.data.items.map((item) => inboxNotificationFromApi(item, events)));
   }, [feedEvents]);
@@ -1694,18 +1710,8 @@ export function AppProviders({ children }: { children: ReactNode }) {
       return { ...mapped, isYou: Boolean(viewerId && mapped.authorId && mapped.authorId === viewerId) };
     });
 
-    const currentPosts = postsRef.current;
-    const postsWithComments = await Promise.all(
-      mappedPosts.map(async (post) => {
-        const existing = currentPosts.find((item) => item.id === post.id);
-        if (!Array.isArray(existing?.comments)) return post;
-        const comments = await loadPostComments(post.id, viewerId).catch(() => null);
-        return comments ? { ...post, comments } : post;
-      }),
-    );
-
-    setPosts(postsWithComments);
-  }, [loadPostComments]);
+    setPosts(mappedPosts);
+  }, []);
 
   const refreshPointBalance = useCallback(async () => {
     const balance = await apiFetch<{ balance: { balance: number } }>("/api/safety-culture/points/me");
@@ -1791,7 +1797,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
       setAwarenessHistory(history);
       setAwarenessDoneDate(history.some((item) => item.date === todayKey()) ? todayKey() : "");
     }
-  }, [loadPostComments]);
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -1876,13 +1882,23 @@ export function AppProviders({ children }: { children: ReactNode }) {
         awarenessScheduleEndDateResult,
         awarenessDescriptionResult
       ] = await Promise.all([
-        apiFetch<{ items: ApiPost[] }>("/api/safety-culture/posts?limit=50"),
+        shouldLoadPosts
+          ? apiFetch<{ items: ApiPost[] }>("/api/safety-culture/posts?limit=15")
+          : Promise.resolve({ ok: false } as const),
         apiFetch<{ balance: { balance: number } }>("/api/safety-culture/points/me"),
-        apiFetch<{ items: Array<Record<string, unknown>> }>("/api/notifications?limit=100"),
-        apiFetch<{ items: Array<Record<string, unknown>> }>("/api/safety-culture/rewards?pageSize=100"),
-        apiFetch<{ setting: { setting_value?: unknown } | null }>("/api/safety-settings?key=safety_reward_categories"),
-        apiFetch<{ items: Array<Record<string, unknown>> }>("/api/safety-culture/leaderboard"),
-        apiFetch<{ items: Array<Record<string, unknown>> }>("/api/safety-culture/teams"),
+        apiFetch<{ items: Array<Record<string, unknown>> }>("/api/notifications?limit=30"),
+        shouldLoadRewards
+          ? apiFetch<{ items: Array<Record<string, unknown>> }>("/api/safety-culture/rewards?pageSize=100")
+          : Promise.resolve({ ok: false } as const),
+        shouldLoadRewards
+          ? apiFetch<{ setting: { setting_value?: unknown } | null }>("/api/safety-settings?key=safety_reward_categories")
+          : Promise.resolve({ ok: false } as const),
+        shouldLoadLeaderboard
+          ? apiFetch<{ items: Array<Record<string, unknown>> }>("/api/safety-culture/leaderboard")
+          : Promise.resolve({ ok: false } as const),
+        shouldLoadLeaderboard
+          ? apiFetch<{ items: Array<Record<string, unknown>> }>("/api/safety-culture/teams")
+          : Promise.resolve({ ok: false } as const),
         apiFetch<{ items: Array<Record<string, unknown>> }>("/api/safety-awareness/questions/admin?pageSize=1000"),
         apiFetch<{ items: ApiAwarenessAttempt[] }>("/api/safety-awareness/attempts/me?pageSize=120"),
         apiFetch<{ items: Array<Record<string, unknown>> }>(`/api/holidays?year=${new Date().getFullYear()}`),
@@ -1908,13 +1924,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
           const mapped = postFromApi(item);
           return { ...mapped, isYou: Boolean(viewerId && mapped.authorId && mapped.authorId === viewerId) };
         });
-        const hydratedPosts = await Promise.all(
-          backendPosts.map(async (post) => {
-            const comments = await loadPostComments(post.id, viewerId).catch(() => null);
-            return comments ? { ...post, comments } : post;
-          }),
-        );
-        if (!cancelled) setPosts(hydratedPosts);
+        if (!cancelled) setPosts(backendPosts);
       }
 
       if (balanceResult.ok && typeof balanceResult.data?.balance?.balance === "number") {
@@ -2097,16 +2107,16 @@ export function AppProviders({ children }: { children: ReactNode }) {
     return () => {
       cancelled = true;
     };
-  }, [loadPostComments]);
+  }, [pathname, shouldLoadLeaderboard, shouldLoadPosts, shouldLoadRewards]);
 
   useEffect(() => {
     if (!isAuthenticatedRef.current) return;
 
     const refreshLiveSafetyCultureState = () => {
       void refreshInboxNotifications();
-      void refreshPostsSnapshot();
-      void refreshRewardsState();
-      void refreshLeaderboardState(currentUserRef.current);
+      if (shouldLoadPosts) void refreshPostsSnapshot();
+      if (shouldLoadRewards) void refreshRewardsState();
+      if (shouldLoadLeaderboard) void refreshLeaderboardState(currentUserRef.current);
     };
 
     const handleVisibilityChange = () => {
@@ -2124,7 +2134,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
       document.removeEventListener("visibilitychange", handleVisibilityChange);
       window.clearInterval(intervalId);
     };
-  }, [refreshInboxNotifications, refreshLeaderboardState, refreshPostsSnapshot, refreshRewardsState]);
+  }, [refreshInboxNotifications, refreshLeaderboardState, refreshPostsSnapshot, refreshRewardsState, shouldLoadLeaderboard, shouldLoadPosts, shouldLoadRewards]);
 
   useEffect(() => {
     setEventNow(Date.now());
@@ -2164,17 +2174,18 @@ export function AppProviders({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  const fetchPosts = useCallback(async (options: { scope?: "all" | "my-team" | "mine"; category?: string | null; limit?: number } = {}) => {
+  const fetchPostsPage = useCallback(async (options: { scope?: "all" | "my-team" | "mine"; category?: string | null; limit?: number; cursor?: string | null } = {}) => {
     if (demoModeRef.current) {
       const currentUserId = String(currentUserRef.current?.id || currentUserRef.current?.sub || "demo-admin");
-      return filterDemoPosts(postsRef.current, currentUserId, options);
+      return { items: filterDemoPosts(postsRef.current, currentUserId, options), nextCursor: null };
     }
-    if (!isAuthenticatedRef.current) return [];
+    if (!isAuthenticatedRef.current) return { items: [], nextCursor: null };
     const params = new URLSearchParams();
-    params.set("limit", String(options.limit || 50));
+    params.set("limit", String(options.limit || 15));
     if (options.scope) params.set("scope", options.scope);
     if (options.category) params.set("category", options.category);
-    const result = await apiFetch<{ items: ApiPost[] }>(`/api/safety-culture/posts?${params.toString()}`);
+    if (options.cursor) params.set("cursor", options.cursor);
+    const result = await apiFetch<{ items: ApiPost[]; nextCursor?: string | null }>(`/api/safety-culture/posts?${params.toString()}`);
     if (!result.ok || !Array.isArray(result.data?.items)) {
       throw new Error(result.error || "posts_fetch_failed");
     }
@@ -2183,13 +2194,12 @@ export function AppProviders({ children }: { children: ReactNode }) {
       const mapped = postFromApi(item);
       return { ...mapped, isYou: Boolean(viewerId && mapped.authorId && mapped.authorId === viewerId) };
     });
-    return Promise.all(
-      mappedPosts.map(async (post) => {
-        const comments = await loadPostComments(post.id, viewerId).catch(() => null);
-        return comments ? { ...post, comments } : post;
-      }),
-    );
-  }, [loadPostComments]);
+    return { items: mappedPosts, nextCursor: result.data.nextCursor ?? null };
+  }, []);
+
+  const fetchPosts = useCallback(async (options: { scope?: "all" | "my-team" | "mine"; category?: string | null; limit?: number; cursor?: string | null } = {}) => {
+    return (await fetchPostsPage(options)).items;
+  }, [fetchPostsPage]);
 
   const addPost = useCallback(async (post: Post) => {
     const linkedFeedEvent = getLinkedFeedEvent(post.feedEventId);
@@ -3116,6 +3126,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
     markAllInboxNotificationsRead,
     addPost,
     fetchPosts,
+    fetchPostsPage,
     toggleLike,
     addComment,
     fetchComments,

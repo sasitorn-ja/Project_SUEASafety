@@ -13,7 +13,6 @@ import { Dialog } from "@/components/ui/dialog";
 import { AppDialogBody, AppDialogContent, AppDialogDescription, AppDialogSectionFooter, AppDialogSectionHeader, AppDialogTitle } from "@/components/ui/app-dialog";
 import { SafetyCultureHero } from "@/components/safety-culture/safety-culture-hero";
 import { Button } from "@/components/ui/button";
-import { isDemoLoginActive } from "@/lib/session-user";
 
 const T = {
   page: "var(--background)",
@@ -86,77 +85,6 @@ const REPORT_ACTIVITY_OPTIONS = [
 
 const REPORT_EXPORT_HEADERS = ["Status", "Linewalk ID", "Ref ID", "Create Date", "Username", "Full Name", "Email"];
 
-const DEMO_REPORT_RECORDS = [
-  {
-    id: "demo-report-1",
-    status: "LineWalk",
-    linewalkId: "SATIENPY",
-    pms: "SATIENPY",
-    refId: "CPAC-01",
-    createDate: "30/06/2026",
-    username: "satienpy",
-    fullName: "เสถียรพงษ์ เยี่ยงวาณิชสุขุล",
-    name: "เสถียรพงษ์ เยี่ยงวาณิชสุขุล",
-    email: "satienpy@scg.com",
-    year: 2026,
-    month: 6,
-    activityType: "Safety_Observation/Line_Walk",
-    source: "demo",
-  },
-  {
-    id: "demo-report-2",
-    status: "LineWalk",
-    linewalkId: "SASITOJA",
-    pms: "SASITOJA",
-    refId: "1975",
-    createDate: "27/06/2026",
-    username: "sasitoja",
-    fullName: "ศศิธร จรุงจรรยาพงศ์",
-    name: "ศศิธร จรุงจรรยาพงศ์",
-    email: "sasitoja@scg.com",
-    year: 2026,
-    month: 6,
-    activityType: "Safety_Observation/Line_Walk",
-    source: "demo",
-  },
-  {
-    id: "demo-report-3",
-    status: "SafetyContact",
-    linewalkId: "SATIENPY",
-    pms: "SATIENPY",
-    refId: "",
-    createDate: "27/06/2026",
-    username: "satienpy",
-    fullName: "เสถียรพงษ์ เยี่ยงวาณิชสุขุล",
-    name: "เสถียรพงษ์ เยี่ยงวาณิชสุขุล",
-    email: "satienpy@scg.com",
-    year: 2026,
-    month: 6,
-    activityType: "Safety_Contact",
-    source: "demo",
-  },
-  {
-    id: "demo-report-4",
-    status: "LineWalk",
-    linewalkId: "SASITOJA",
-    pms: "SASITOJA",
-    refId: "31EM",
-    createDate: "24/06/2026",
-    username: "sasitoja",
-    fullName: "ศศิธร จรุงจรรยาพงศ์",
-    name: "ศศิธร จรุงจรรยาพงศ์",
-    email: "sasitoja@scg.com",
-    year: 2026,
-    month: 6,
-    activityType: "Safety_Observation/Line_Walk",
-    source: "demo",
-  },
-];
-
-function isDemoReportMode() {
-  return isDemoLoginActive();
-}
-
 function toNumberOrFallback(value, fallback) {
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : fallback;
@@ -185,8 +113,8 @@ function normalizeReportRecord(raw, index = 0, source = "template") {
 
   let refId = String(raw.refId ?? raw["Ref ID"] ?? "").trim();
   if (!refId && status === "LineWalk") {
-    const mockRefNum = String((index * 17) % 900 + 100).padStart(3, "0");
-    refId = `FC${mockRefNum}`;
+    const generatedRefNum = String((index * 17) % 900 + 100).padStart(3, "0");
+    refId = `FC${generatedRefNum}`;
   }
 
   let createDate = String(raw.createDate ?? raw["Create Date"] ?? "").trim();
@@ -290,6 +218,7 @@ export default function SafetyAdminExportReport() {
   const [reportActivityFilter, setReportActivityFilter] = useState("all");
 
   const [submissions, setSubmissions] = useState([]);
+  const [exportingReports, setExportingReports] = useState(false);
 
   // Prefer real DB submissions (safety_activities). The richer report fields
   // (pms/year/month/name/email/activityType + answers) are carried in the
@@ -298,27 +227,18 @@ export default function SafetyAdminExportReport() {
     let cancelled = false;
     (async () => {
       try {
-        const res = await fetch("/api/safety-effort/submissions?pageSize=500", { credentials: "include", cache: "no-store" });
+        const res = await fetch("/api/safety-effort/submissions?pageSize=100", { credentials: "include", cache: "no-store" });
         if (!res.ok) {
-          if (!cancelled && isDemoReportMode()) {
-            setUploadedReportRecords(DEMO_REPORT_RECORDS);
-          }
           return;
         }
         const payload = await res.json().catch(() => null);
         const items = payload?.data?.items;
         if (Array.isArray(items) && !cancelled) {
           setSubmissions(items);
-          if (items.length === 0 && isDemoReportMode()) {
-            setUploadedReportRecords(DEMO_REPORT_RECORDS);
-          }
         }
       } catch {
         if (!cancelled) {
           setSubmissions([]);
-          if (isDemoReportMode()) {
-            setUploadedReportRecords(DEMO_REPORT_RECORDS);
-          }
         }
       }
     })();
@@ -384,7 +304,7 @@ export default function SafetyAdminExportReport() {
     }
   };
 
-  const handleExportReports = () => {
+  const handleExportReports = async () => {
     const rows = filteredReportRecords.map((item) => ({
       Status: item.status,
       "Linewalk ID": item.linewalkId,
@@ -395,10 +315,55 @@ export default function SafetyAdminExportReport() {
       Email: item.email,
     }));
 
-    const worksheet = XLSX.utils.json_to_sheet(rows, { header: REPORT_EXPORT_HEADERS });
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Evaluation Report");
-    XLSX.writeFile(workbook, `evaluation-report-${new Date().toISOString().slice(0, 10)}.xlsx`);
+    if (!rows.length) {
+      window.alert("ไม่มีข้อมูลสำหรับส่งออกตามเงื่อนไขที่เลือก");
+      return;
+    }
+
+    setExportingReports(true);
+    const fileName = `evaluation-report-${new Date().toISOString().slice(0, 10)}.csv`;
+    try {
+      const response = await fetch("/api/exports", {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          jobType: "SAFETY_EFFORT_REPORT_EXPORT",
+          fileName,
+          filters: {
+            search: reportSearchQuery,
+            year: reportYearFilter,
+            month: reportMonthFilter,
+            activity: reportActivityFilter,
+          },
+          rows,
+        }),
+      });
+      const payload = await response.json().catch(() => null);
+      const exportId = payload?.data?.export?.id;
+      if (!response.ok || !payload?.ok || !exportId) {
+        throw new Error(payload?.error || "export_failed");
+      }
+
+      const downloadResponse = await fetch(`/api/exports/${exportId}/download`, {
+        credentials: "include",
+      });
+      if (!downloadResponse.ok) throw new Error("download_failed");
+      const blob = await downloadResponse.blob();
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = fileName;
+      document.body.appendChild(anchor);
+      anchor.click();
+      anchor.remove();
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error("Failed to export report job", error);
+      window.alert("ส่งออกรายงานไม่สำเร็จ กรุณาลองใหม่อีกครั้ง");
+    } finally {
+      setExportingReports(false);
+    }
   };
 
   const handleOpenEditReport = (item) => {
@@ -585,9 +550,10 @@ export default function SafetyAdminExportReport() {
                 variant="brand"
                 size="lg"
                 onClick={handleExportReports}
+                disabled={exportingReports}
               >
                 <Download size={14} />
-                <span>ดาวน์โหลดรายงาน (Excel)</span>
+                <span>{exportingReports ? "กำลังสร้างไฟล์..." : "ดาวน์โหลดรายงาน (CSV)"}</span>
               </Button>
             </div>
           </div>

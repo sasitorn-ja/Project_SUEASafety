@@ -451,7 +451,7 @@ export function DesktopTopbar() {
                   className="absolute -top-[5px] -right-[5px] flex h-4 min-w-4 items-center justify-center rounded-full bg-[#0B82F0] px-[3px] text-[10px] font-bold text-white"
                   style={{ outline: "2px solid #FFFFFF" }}
                 >
-                  {Math.min(unreadNotificationCount, 9)}
+                  {unreadNotificationCount > 9 ? "9+" : unreadNotificationCount}
                 </span>
               ) : null}
             </button>

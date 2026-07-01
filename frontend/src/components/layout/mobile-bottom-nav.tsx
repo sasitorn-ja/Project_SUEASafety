@@ -86,7 +86,7 @@ export function MobileBottomNav({ hidden = false }: { hidden?: boolean }) {
                 <Icon className="h-[18px] w-[18px] transition-all" strokeWidth={active && enabled ? 2.45 : 2.1} />
                 {showBadge ? (
                   <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#0B82F0] px-[3px] text-[9px] font-black text-white ring-[1.5px] ring-white">
-                    {Math.min(unreadNotificationCount, 9)}
+                    {unreadNotificationCount > 9 ? "9+" : unreadNotificationCount}
                   </span>
                 ) : null}
               </span>

@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useState, useCallback, useEffect, type CSSProperties } from "react";
+import { useState, useCallback, useEffect, useRef, type CSSProperties } from "react";
 import {
   useAppState,
   useAppActions,
@@ -309,7 +309,7 @@ const MY_POSTS_CATEGORY = "โพสต์ของฉัน";
 
 export default function Page() {
   const { posts, feedEvents } = useAppState();
-  const { toggleLike, addComment, fetchComments, fetchPosts, updatePost, deletePost, updateComment, deleteComment } = useAppActions();
+  const { toggleLike, addComment, fetchComments, fetchPosts, fetchPostsPage, updatePost, deletePost, updateComment, deleteComment } = useAppActions();
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user: sessionUser } = useSessionUser();
@@ -351,6 +351,11 @@ export default function Page() {
   const [isActivityCarouselPaused, setIsActivityCarouselPaused] = useState(false);
   const [commentReactionState, setCommentReactionState] = useState<Record<string, { selected: string | null; counts: Record<string, number> }>>({});
   const [openCommentReactionPicker, setOpenCommentReactionPicker] = useState<string | null>(null);
+  const [extraFeedPosts, setExtraFeedPosts] = useState<Post[]>([]);
+  const [feedNextCursor, setFeedNextCursor] = useState<string | null>(null);
+  const [feedLoadingMore, setFeedLoadingMore] = useState(false);
+  const [feedExhausted, setFeedExhausted] = useState(false);
+  const feedSentinelRef = useRef<HTMLDivElement | null>(null);
   const expandedPost = expandedPostId
     ? (liveExpandedPost && liveExpandedPost.id === expandedPostId
       ? liveExpandedPost
@@ -414,13 +419,57 @@ export default function Page() {
     );
   }, [posts]);
 
+  const allFeedPosts = activeCategory === "ทั้งหมด"
+    ? [
+        ...posts,
+        ...extraFeedPosts.filter((extraPost) => !posts.some((post) => post.id === extraPost.id)),
+      ]
+    : posts;
+
   const filtered = activeCategory === "ทั้งหมด"
-    ? posts
+    ? allFeedPosts
     : activeCategory === MY_POSTS_CATEGORY
       ? posts.filter((post) => post.isYou)
       : activeCategory === "ทีมของฉัน"
         ? myTeamPosts
         : posts.filter((post) => post.category === activeCategory);
+
+  useEffect(() => {
+    setExtraFeedPosts([]);
+    const lastPost = posts[posts.length - 1];
+    setFeedNextCursor(posts.length >= 15 && lastPost ? String(lastPost.apiId || lastPost.id) : null);
+    setFeedExhausted(posts.length < 15);
+  }, [posts]);
+
+  const loadMoreFeedPosts = useCallback(async () => {
+    if (activeCategory !== "ทั้งหมด" || feedLoadingMore || feedExhausted || !feedNextCursor) return;
+    setFeedLoadingMore(true);
+    try {
+      const result = await fetchPostsPage({ scope: "all", limit: 15, cursor: feedNextCursor });
+      setExtraFeedPosts((current) => {
+        const seen = new Set([...posts, ...current].map((post) => post.id));
+        return [...current, ...result.items.filter((post) => !seen.has(post.id))];
+      });
+      setFeedNextCursor(result.nextCursor);
+      setFeedExhausted(!result.nextCursor || result.items.length === 0);
+    } catch {
+      setFeedExhausted(true);
+    } finally {
+      setFeedLoadingMore(false);
+    }
+  }, [activeCategory, feedExhausted, feedLoadingMore, feedNextCursor, fetchPostsPage, posts]);
+
+  useEffect(() => {
+    const target = feedSentinelRef.current;
+    if (!target || activeCategory !== "ทั้งหมด" || feedExhausted) return;
+    const observer = new IntersectionObserver((entries) => {
+      if (entries.some((entry) => entry.isIntersecting)) {
+        void loadMoreFeedPosts();
+      }
+    }, { rootMargin: "360px 0px" });
+    observer.observe(target);
+    return () => observer.disconnect();
+  }, [activeCategory, feedExhausted, loadMoreFeedPosts]);
 
   const getPostPhotos = useCallback((post: Post) => {
     if (Array.isArray(post.photos) && post.photos.length > 0) {
@@ -1266,6 +1315,16 @@ export default function Page() {
                 </Card>
               );
             })}
+
+            {activeCategory === "ทั้งหมด" && filtered.length > 0 && (
+              <div ref={feedSentinelRef} className="py-2 text-center text-[13px] font-black text-[#5f7591]">
+                {feedLoadingMore
+                  ? "กำลังโหลดโพสต์เพิ่มเติม..."
+                  : feedExhausted
+                    ? "แสดงโพสต์ครบแล้ว"
+                    : "เลื่อนลงเพื่อโหลดโพสต์เพิ่มเติม"}
+              </div>
+            )}
 
             {filtered.length === 0 && (
               <Card className="py-10 text-center font-bold text-muted-foreground text-[18px] font-sarabun">

@@ -1,0 +1,878 @@
+{
+  "generatedAt": "2026-07-01T10:50:32.797Z",
+  "overall": {
+    "current": 84,
+    "target": 92
+  },
+  "routeCount": 30,
+  "apiReferenceCount": 54,
+  "mockReferenceCount": 0,
+  "pages": [
+    {
+      "route": "/",
+      "module": "Home",
+      "current": 90,
+      "target": 95,
+      "notes": [
+        "Global post/comment hydration removed; home no longer preloads Safety Culture comments."
+      ]
+    },
+    {
+      "route": "/activity",
+      "module": "Safety Effort",
+      "current": 82,
+      "target": 90,
+      "notes": [
+        "Wizard steps pass state locally and persist through the final Safety Effort submissions API."
+      ]
+    },
+    {
+      "route": "/api-docs",
+      "module": "API Docs",
+      "current": 88,
+      "target": 95,
+      "notes": [
+        "API docs access is gated and RBAC permissions are seeded in CPAC_Safety."
+      ]
+    },
+    {
+      "route": "/assessment-summary",
+      "module": "Safety Effort",
+      "current": 82,
+      "target": 90,
+      "notes": [
+        "Wizard steps pass state locally and persist through the final Safety Effort submissions API."
+      ]
+    },
+    {
+      "route": "/category",
+      "module": "Safety Effort",
+      "current": 84,
+      "target": 92,
+      "notes": [
+        "Monthly count now requests pageSize=1 and uses API total instead of loading 500 submissions."
+      ]
+    },
+    {
+      "route": "/checkin",
+      "module": "Safety Effort",
+      "current": 82,
+      "target": 90,
+      "notes": [
+        "CPAC_Safety.locations has active, check-in-enabled rows referenced by real check-ins."
+      ]
+    },
+    {
+      "route": "/create-post",
+      "module": "Safety Effort",
+      "current": 84,
+      "target": 90,
+      "notes": [
+        "Create flow uses upload and post APIs; runtime media QA remains the main residual risk."
+      ]
+    },
+    {
+      "route": "/dashboard",
+      "module": "Dashboard",
+      "current": 82,
+      "target": 92,
+      "notes": [
+        "Dashboard reads real report APIs; load-test script added for concurrent smoke/regression checks."
+      ]
+    },
+    {
+      "route": "/dashboard-safety-effort",
+      "module": "Unscored",
+      "current": 90,
+      "target": 90,
+      "notes": [
+        "Redirect-only compatibility route; no extra data hydration."
+      ]
+    },
+    {
+      "route": "/linewalk",
+      "module": "Safety Effort",
+      "current": 82,
+      "target": 90,
+      "notes": [
+        "CPAC_Safety.locations has active, check-in-enabled rows referenced by real check-ins."
+      ]
+    },
+    {
+      "route": "/login",
+      "module": "Unscored",
+      "current": 90,
+      "target": 90,
+      "notes": [
+        "Production login uses SSO; demo login is disabled in production builds."
+      ]
+    },
+    {
+      "route": "/notifications",
+      "module": "Notifications",
+      "current": 84,
+      "target": 92,
+      "notes": [
+        "Notification bootstrap limit reduced to 30; post previews remain route-loaded."
+      ]
+    },
+    {
+      "route": "/profile",
+      "module": "Profile",
+      "current": 80,
+      "target": 95,
+      "notes": [
+        "Profile uses user + ranking data; route-loaded leaderboard applies."
+      ]
+    },
+    {
+      "route": "/profile/activity-history",
+      "module": "Profile",
+      "current": 72,
+      "target": 92,
+      "notes": [
+        "Activity history should be paginated if it grows."
+      ]
+    },
+    {
+      "route": "/safety-admin",
+      "module": "Safety Admin",
+      "current": 85,
+      "target": 95,
+      "notes": [
+        "Checklist/backdate are DB-backed."
+      ]
+    },
+    {
+      "route": "/safety-admin/export-report",
+      "module": "Safety Admin",
+      "current": 88,
+      "target": 92,
+      "notes": [
+        "Export creates export_jobs rows and downloads from the stored job snapshot."
+      ]
+    },
+    {
+      "route": "/safety-admin/manage-data",
+      "module": "Safety Admin",
+      "current": 84,
+      "target": 90,
+      "notes": [
+        "CPAC_Safety.locations has active, check-in-enabled rows referenced by real check-ins."
+      ]
+    },
+    {
+      "route": "/safety-admin/report-history",
+      "module": "Safety Admin",
+      "current": 86,
+      "target": 95,
+      "notes": [
+        "Mock fallback removed and initial report history payload reduced to 50 submissions."
+      ]
+    },
+    {
+      "route": "/safety-contact",
+      "module": "Safety Effort",
+      "current": 82,
+      "target": 90,
+      "notes": [
+        "Wizard steps pass state locally and persist through the final Safety Effort submissions API."
+      ]
+    },
+    {
+      "route": "/safety-culture",
+      "module": "Safety Culture",
+      "current": 90,
+      "target": 95,
+      "notes": [
+        "Initial feed is 15 posts, cursor loads 15 more, comments are lazy-loaded."
+      ]
+    },
+    {
+      "route": "/safety-culture/admin-awareness",
+      "module": "Culture Admin",
+      "current": 82,
+      "target": 95,
+      "notes": [
+        "Awareness question/settings are DB-backed."
+      ]
+    },
+    {
+      "route": "/safety-culture/admin-event",
+      "module": "Culture Admin",
+      "current": 78,
+      "target": 92,
+      "notes": [
+        "Event API exists; notification/write audit needed."
+      ]
+    },
+    {
+      "route": "/safety-culture/admin-leaderboard",
+      "module": "Culture Admin",
+      "current": 70,
+      "target": 92,
+      "notes": [
+        "Team/admin user selection needs permissions and scale audit."
+      ]
+    },
+    {
+      "route": "/safety-culture/admin-points",
+      "module": "Culture Admin",
+      "current": 94,
+      "target": 95,
+      "notes": [
+        "All required point rules are present in CPAC_Safety.point_rules."
+      ]
+    },
+    {
+      "route": "/safety-culture/admin-reward",
+      "module": "Culture Admin",
+      "current": 75,
+      "target": 92,
+      "notes": [
+        "Reward categories are settings-backed; image/upload audit needed."
+      ]
+    },
+    {
+      "route": "/safety-culture/admin-users",
+      "module": "IAM",
+      "current": 86,
+      "target": 92,
+      "notes": [
+        "Base permissions and role_permissions are seeded; user assignment workflow remains the scale/security audit item."
+      ]
+    },
+    {
+      "route": "/safety-culture/leaderboard",
+      "module": "Safety Culture",
+      "current": 82,
+      "target": 92,
+      "notes": [
+        "Leaderboard is route-loaded and no longer hydrated globally."
+      ]
+    },
+    {
+      "route": "/safety-culture/post",
+      "module": "Safety Culture",
+      "current": 84,
+      "target": 92,
+      "notes": [
+        "Create flow uses upload and post APIs; runtime media QA remains the main residual risk."
+      ]
+    },
+    {
+      "route": "/safety-culture/posts/[postId]",
+      "module": "Safety Culture",
+      "current": 88,
+      "target": 95,
+      "notes": [
+        "Post detail loads one post and first 30 comments, not 100 comments."
+      ]
+    },
+    {
+      "route": "/safety-culture/rewards",
+      "module": "Safety Culture",
+      "current": 84,
+      "target": 92,
+      "notes": [
+        "Rewards are route-loaded; stock/balance enforcement stays on the backend redeem API."
+      ]
+    }
+  ],
+  "moduleScores": {
+    "Home": {
+      "current": 90,
+      "target": 95
+    },
+    "Safety Effort": {
+      "current": 83,
+      "target": 90
+    },
+    "API Docs": {
+      "current": 88,
+      "target": 95
+    },
+    "Dashboard": {
+      "current": 82,
+      "target": 92
+    },
+    "Unscored": {
+      "current": 90,
+      "target": 90
+    },
+    "Notifications": {
+      "current": 84,
+      "target": 92
+    },
+    "Profile": {
+      "current": 76,
+      "target": 94
+    },
+    "Safety Admin": {
+      "current": 86,
+      "target": 93
+    },
+    "Safety Culture": {
+      "current": 86,
+      "target": 93
+    },
+    "Culture Admin": {
+      "current": 80,
+      "target": 93
+    },
+    "IAM": {
+      "current": 86,
+      "target": 92
+    }
+  },
+  "findings": [],
+  "mocks": [],
+  "apiRefs": [
+    {
+      "file": "frontend/src/app/profile/page.tsx",
+      "path": "/api/users/me"
+    },
+    {
+      "file": "frontend/src/app/safety-culture/page.tsx",
+      "path": "/api/safety-culture/comments/${commentId}/reactions"
+    },
+    {
+      "file": "frontend/src/app/safety-culture/posts/[postId]/page.tsx",
+      "path": "/api/safety-culture/comments/${comment.id}/reactions"
+    },
+    {
+      "file": "frontend/src/components/RestrictedDatePicker.tsx",
+      "path": "/api/safety-settings?key=safety_backdate"
+    },
+    {
+      "file": "frontend/src/components/layout/app-shell.tsx",
+      "path": "/api/auth/session"
+    },
+    {
+      "file": "frontend/src/components/layout/floating-safety-assistant.tsx",
+      "path": "/api/assistant/chat"
+    },
+    {
+      "file": "frontend/src/features/dashboard/SafePlusDashboard.tsx",
+      "path": "/api/safety-effort/submissions/me?from=${fromStr}&to=${toStr}&pageSize=500"
+    },
+    {
+      "file": "frontend/src/features/safety-effort/config/checklists.ts",
+      "path": "/api/safety-effort/checklists"
+    },
+    {
+      "file": "frontend/src/features/safety-effort/lib/upload-media.ts",
+      "path": "/api/uploads"
+    },
+    {
+      "file": "frontend/src/features/safety-effort/lib/upload-media.ts",
+      "path": "/api/uploads/${encodeURIComponent(id)}"
+    },
+    {
+      "file": "frontend/src/features/safety-effort/lib/upload-media.ts",
+      "path": "/api/uploads/${encodeURIComponent(id)}/link"
+    },
+    {
+      "file": "frontend/src/features/safety-effort/screens/AssessmentSummary.tsx",
+      "path": "/api/safety-effort/activities"
+    },
+    {
+      "file": "frontend/src/features/safety-effort/screens/AssessmentSummary.tsx",
+      "path": "/api/safety-effort/submissions"
+    },
+    {
+      "file": "frontend/src/features/safety-effort/screens/Category.tsx",
+      "path": "/api/safety-effort/submissions/me?from=${from}&to=${to}&pageSize=1"
+    },
+    {
+      "file": "frontend/src/features/safety-effort/screens/Checkin.tsx",
+      "path": "/api/locations/sites?limit=20&lat=${encodeURIComponent(point.lat)}&lng=${encodeURIComponent(point.lng)}"
+    },
+    {
+      "file": "frontend/src/features/safety-effort/screens/Checkin.tsx",
+      "path": "/api/locations/search?${params.toString()}"
+    },
+    {
+      "file": "frontend/src/features/safety-effort/screens/Checkin.tsx",
+      "path": "/api/locations"
+    },
+    {
+      "file": "frontend/src/features/safety-effort/screens/Checkin.tsx",
+      "path": "/api/checkins"
+    },
+    {
+      "file": "frontend/src/features/safety-effort/screens/DashboardSafetyEffort.tsx",
+      "path": "/api/safety-effort/reports/linewalk-overview"
+    },
+    {
+      "file": "frontend/src/features/safety-effort/screens/Linewalk.tsx",
+      "path": "/api/locations/plants?pageSize=1000"
+    },
+    {
+      "file": "frontend/src/features/safety-effort/screens/Linewalk.tsx",
+      "path": "/api/locations/offices?pageSize=30"
+    },
+    {
+      "file": "frontend/src/features/safety-effort/screens/Linewalk.tsx",
+      "path": "/api/organizations?pageSize=1000"
+    },
+    {
+      "file": "frontend/src/features/safety-effort/screens/Linewalk.tsx",
+      "path": "/api/locations/sites?q=${encodeURIComponent(siteName.trim())}&limit=30"
+    },
+    {
+      "file": "frontend/src/features/safety-effort/screens/SafetyAdmin.tsx",
+      "path": "/api/safety-settings?key=safety_backdate"
+    },
+    {
+      "file": "frontend/src/features/safety-effort/screens/SafetyAdminExportReport.tsx",
+      "path": "/api/safety-effort/submissions?pageSize=100"
+    },
+    {
+      "file": "frontend/src/features/safety-effort/screens/SafetyAdminExportReport.tsx",
+      "path": "/api/exports"
+    },
+    {
+      "file": "frontend/src/features/safety-effort/screens/SafetyAdminExportReport.tsx",
+      "path": "/api/exports/${exportId}/download"
+    },
+    {
+      "file": "frontend/src/features/safety-effort/screens/SafetyAdminExportReport.tsx",
+      "path": "/api/safety-effort/submissions/${editingReport.submissionId}"
+    },
+    {
+      "file": "frontend/src/features/safety-effort/screens/SafetyAdminExportReport.tsx",
+      "path": "/api/safety-effort/submissions/${submissionId}"
+    },
+    {
+      "file": "frontend/src/features/safety-effort/screens/SafetyAdminManageData.tsx",
+      "path": "/api/safety-effort/locations?type=${type}&source=ADMIN&limit=1000"
+    },
+    {
+      "file": "frontend/src/features/safety-effort/screens/SafetyAdminManageData.tsx",
+      "path": "/api/safety-effort/locations/${deletePlantId}"
+    },
+    {
+      "file": "frontend/src/features/safety-effort/screens/SafetyAdminReportHistory.tsx",
+      "path": "/api/safety-effort/submissions?pageSize=50"
+    },
+    {
+      "file": "frontend/src/lib/session-user.ts",
+      "path": "/api/auth/session"
+    },
+    {
+      "file": "frontend/src/providers/app-providers.tsx",
+      "path": "/api/auth/session"
+    },
+    {
+      "file": "frontend/src/providers/app-providers.tsx",
+      "path": "/api/notifications/${notificationId}/read"
+    },
+    {
+      "file": "frontend/src/providers/app-providers.tsx",
+      "path": "/api/notifications/read-all"
+    },
+    {
+      "file": "frontend/src/providers/app-providers.tsx",
+      "path": "/api/safety-culture/posts/${apiPostId}/reactions"
+    },
+    {
+      "file": "frontend/src/providers/app-providers.tsx",
+      "path": "/api/safety-culture/events"
+    },
+    {
+      "file": "frontend/src/providers/app-providers.tsx",
+      "path": "/api/safety-culture/events/${feedEventId}/notify"
+    },
+    {
+      "file": "frontend/src/providers/app-providers.tsx",
+      "path": "/api/safety-culture/teams"
+    },
+    {
+      "file": "frontend/src/providers/app-providers.tsx",
+      "path": "/api/safety-culture/rewards/${reward.id}"
+    },
+    {
+      "file": "frontend/src/providers/app-providers.tsx",
+      "path": "/api/safety-settings?key=safety_reward_categories"
+    },
+    {
+      "file": "frontend/src/providers/app-providers.tsx",
+      "path": "/api/safety-settings?key=safety_awareness_enabled"
+    },
+    {
+      "file": "frontend/src/providers/app-providers.tsx",
+      "path": "/api/safety-settings?key=safety_awareness_weekdays"
+    },
+    {
+      "file": "frontend/src/providers/app-providers.tsx",
+      "path": "/api/safety-settings?key=safety_awareness_active_start_time"
+    },
+    {
+      "file": "frontend/src/providers/app-providers.tsx",
+      "path": "/api/safety-settings?key=safety_awareness_active_end_time"
+    },
+    {
+      "file": "frontend/src/providers/app-providers.tsx",
+      "path": "/api/safety-settings?key=safety_awareness_schedule_start_date"
+    },
+    {
+      "file": "frontend/src/providers/app-providers.tsx",
+      "path": "/api/safety-settings?key=safety_awareness_schedule_end_date"
+    },
+    {
+      "file": "frontend/src/providers/app-providers.tsx",
+      "path": "/api/safety-settings?key=safety_awareness_description"
+    },
+    {
+      "file": "frontend/src/providers/app-providers.tsx",
+      "path": "/api/safety-awareness/questions/${question.id}"
+    },
+    {
+      "file": "frontend/src/providers/app-providers.tsx",
+      "path": "/api/holidays/${previous.id}"
+    },
+    {
+      "file": "frontend/src/services/adminUsersServices.ts",
+      "path": "/api/users?${params}"
+    },
+    {
+      "file": "frontend/src/services/adminUsersServices.ts",
+      "path": "/api/roles?pageSize=500"
+    },
+    {
+      "file": "frontend/src/services/adminUsersServices.ts",
+      "path": "/api/users/${userId}/roles"
+    }
+  ],
+  "db": {
+    "configured": true,
+    "host": "192.168.1.196",
+    "database": "CPAC_Safety",
+    "version": "8.0.46-0ubuntu0.24.04.3",
+    "tableCount": 46,
+    "tables": [
+      {
+        "tableName": "api_docs_access_users",
+        "approxRows": 1,
+        "collation": "utf8mb4_0900_ai_ci"
+      },
+      {
+        "tableName": "archived_notifications",
+        "approxRows": 0,
+        "collation": "utf8mb4_unicode_ci"
+      },
+      {
+        "tableName": "assessment_answers",
+        "approxRows": 0,
+        "collation": "utf8mb4_0900_ai_ci"
+      },
+      {
+        "tableName": "assessment_attachments",
+        "approxRows": 0,
+        "collation": "utf8mb4_unicode_ci"
+      },
+      {
+        "tableName": "assessment_questions",
+        "approxRows": 26,
+        "collation": "utf8mb4_0900_ai_ci"
+      },
+      {
+        "tableName": "assessment_runs",
+        "approxRows": 0,
+        "collation": "utf8mb4_0900_ai_ci"
+      },
+      {
+        "tableName": "assessment_templates",
+        "approxRows": 3,
+        "collation": "utf8mb4_0900_ai_ci"
+      },
+      {
+        "tableName": "audit_logs",
+        "approxRows": 9,
+        "collation": "utf8mb4_0900_ai_ci"
+      },
+      {
+        "tableName": "awareness_answers",
+        "approxRows": 66,
+        "collation": "utf8mb4_0900_ai_ci"
+      },
+      {
+        "tableName": "awareness_attempts",
+        "approxRows": 36,
+        "collation": "utf8mb4_0900_ai_ci"
+      },
+      {
+        "tableName": "awareness_questions",
+        "approxRows": 122,
+        "collation": "utf8mb4_0900_ai_ci"
+      },
+      {
+        "tableName": "checkin_attachments",
+        "approxRows": 0,
+        "collation": "utf8mb4_0900_ai_ci"
+      },
+      {
+        "tableName": "checkins",
+        "approxRows": 119,
+        "collation": "utf8mb4_0900_ai_ci"
+      },
+      {
+        "tableName": "comment_reactions",
+        "approxRows": 5,
+        "collation": "utf8mb4_unicode_ci"
+      },
+      {
+        "tableName": "comments",
+        "approxRows": 41,
+        "collation": "utf8mb4_0900_ai_ci"
+      },
+      {
+        "tableName": "corrective_action_comments",
+        "approxRows": 0,
+        "collation": "utf8mb4_unicode_ci"
+      },
+      {
+        "tableName": "corrective_actions",
+        "approxRows": 0,
+        "collation": "utf8mb4_0900_ai_ci"
+      },
+      {
+        "tableName": "export_jobs",
+        "approxRows": 0,
+        "collation": "utf8mb4_unicode_ci"
+      },
+      {
+        "tableName": "holidays",
+        "approxRows": 0,
+        "collation": "utf8mb4_0900_ai_ci"
+      },
+      {
+        "tableName": "locations",
+        "approxRows": 4,
+        "collation": "utf8mb4_0900_ai_ci"
+      },
+      {
+        "tableName": "media_assets",
+        "approxRows": 43,
+        "collation": "utf8mb4_unicode_ci"
+      },
+      {
+        "tableName": "notification_preferences",
+        "approxRows": 0,
+        "collation": "utf8mb4_unicode_ci"
+      },
+      {
+        "tableName": "notifications",
+        "approxRows": 128,
+        "collation": "utf8mb4_0900_ai_ci"
+      },
+      {
+        "tableName": "organizations",
+        "approxRows": 0,
+        "collation": "utf8mb4_0900_ai_ci"
+      },
+      {
+        "tableName": "permissions",
+        "approxRows": 0,
+        "collation": "utf8mb4_0900_ai_ci"
+      },
+      {
+        "tableName": "point_balances",
+        "approxRows": 9,
+        "collation": "utf8mb4_0900_ai_ci"
+      },
+      {
+        "tableName": "point_rules",
+        "approxRows": 1,
+        "collation": "utf8mb4_0900_ai_ci"
+      },
+      {
+        "tableName": "point_transactions",
+        "approxRows": 214,
+        "collation": "utf8mb4_0900_ai_ci"
+      },
+      {
+        "tableName": "post_media",
+        "approxRows": 14,
+        "collation": "utf8mb4_unicode_ci"
+      },
+      {
+        "tableName": "posts",
+        "approxRows": 34,
+        "collation": "utf8mb4_0900_ai_ci"
+      },
+      {
+        "tableName": "reactions",
+        "approxRows": 12,
+        "collation": "utf8mb4_0900_ai_ci"
+      },
+      {
+        "tableName": "reward_inventory_transactions",
+        "approxRows": 16,
+        "collation": "utf8mb4_0900_ai_ci"
+      },
+      {
+        "tableName": "reward_redemptions",
+        "approxRows": 21,
+        "collation": "utf8mb4_0900_ai_ci"
+      },
+      {
+        "tableName": "rewards",
+        "approxRows": 6,
+        "collation": "utf8mb4_0900_ai_ci"
+      },
+      {
+        "tableName": "role_permissions",
+        "approxRows": 0,
+        "collation": "utf8mb4_0900_ai_ci"
+      },
+      {
+        "tableName": "roles",
+        "approxRows": 0,
+        "collation": "utf8mb4_0900_ai_ci"
+      },
+      {
+        "tableName": "safety_activities",
+        "approxRows": 0,
+        "collation": "utf8mb4_0900_ai_ci"
+      },
+      {
+        "tableName": "safety_culture_events",
+        "approxRows": 20,
+        "collation": "utf8mb4_unicode_ci"
+      },
+      {
+        "tableName": "safety_effort_submissions",
+        "approxRows": 44,
+        "collation": "utf8mb4_unicode_ci"
+      },
+      {
+        "tableName": "safety_findings",
+        "approxRows": 0,
+        "collation": "utf8mb4_0900_ai_ci"
+      },
+      {
+        "tableName": "safety_old",
+        "approxRows": 1637,
+        "collation": "utf8mb4_0900_ai_ci"
+      },
+      {
+        "tableName": "safety_settings",
+        "approxRows": 7,
+        "collation": "utf8mb4_unicode_ci"
+      },
+      {
+        "tableName": "team_members",
+        "approxRows": 10,
+        "collation": "utf8mb4_0900_ai_ci"
+      },
+      {
+        "tableName": "teams",
+        "approxRows": 16,
+        "collation": "utf8mb4_0900_ai_ci"
+      },
+      {
+        "tableName": "user_roles",
+        "approxRows": 4,
+        "collation": "utf8mb4_0900_ai_ci"
+      },
+      {
+        "tableName": "users",
+        "approxRows": 10,
+        "collation": "utf8mb4_0900_ai_ci"
+      }
+    ],
+    "critical": {
+      "pointRules": [
+        {
+          "code": "commentCreated",
+          "points": 2,
+          "status": "ACTIVE"
+        },
+        {
+          "code": "reactionCreated",
+          "points": 1,
+          "status": "ACTIVE"
+        },
+        {
+          "code": "safetyAwarenessCompleted",
+          "points": 1,
+          "status": "ACTIVE"
+        },
+        {
+          "code": "safetyEffortCompleted",
+          "points": 10,
+          "status": "ACTIVE"
+        },
+        {
+          "code": "safetyPostApproved",
+          "points": 3,
+          "status": "ACTIVE"
+        }
+      ],
+      "roles": [
+        {
+          "id": 1,
+          "code": "ADMIN",
+          "name": "Administrator"
+        },
+        {
+          "id": 2,
+          "code": "SAFETY_ADMIN",
+          "name": "Safety Administrator"
+        }
+      ],
+      "permissions": [
+        {
+          "id": 1,
+          "code": "ADMIN.ACCESS",
+          "description": "Access the admin area"
+        },
+        {
+          "id": 2,
+          "code": "SAFETY.ADMIN",
+          "description": "Manage Safety settings and admin pages"
+        },
+        {
+          "id": 3,
+          "code": "SAFETY_EFFORT.ADMIN",
+          "description": "Manage Safety Effort templates, locations, reports, and exports"
+        },
+        {
+          "id": 4,
+          "code": "SAFETY_CULTURE.ADMIN",
+          "description": "Manage Safety Culture events, rewards, points, teams, and users"
+        },
+        {
+          "id": 5,
+          "code": "API_DOCS.ACCESS",
+          "description": "Access API documentation"
+        }
+      ],
+      "rolePermissions": 10,
+      "locations": [
+        {
+          "location_type": "OFFICE",
+          "source": "ADMIN",
+          "status": "ACTIVE",
+          "count": 2
+        },
+        {
+          "location_type": "PLANT",
+          "source": "ADMIN",
+          "status": "ACTIVE",
+          "count": 1
+        },
+        {
+          "location_type": "PLANT",
+          "source": "ADMIN",
+          "status": "INACTIVE",
+          "count": 1
+        }
+      ],
+      "submissions": 59,
+      "exportJobs": 1
+    }
+  }
+}

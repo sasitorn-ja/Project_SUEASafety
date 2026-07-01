@@ -14,7 +14,7 @@ export function SwaggerUiClient() {
       domNode: containerRef.current,
       deepLinking: true,
       docExpansion: "list",
-      persistAuthorization: true,
+      persistAuthorization: false,
       displayRequestDuration: true,
       tryItOutEnabled: true,
       requestInterceptor: (request: RequestInit & { credentials?: RequestCredentials }) => {
