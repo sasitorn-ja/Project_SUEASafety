@@ -349,7 +349,7 @@ export default function SafetyAdminReportHistory() {
             title={<>รายงานและส่งออก</>}
             description="ตรวจสอบรายละเอียดรายงาน Line Walk / Safety Contact ค้นหาข้อมูล และส่งออก Excel จากรายการชุดเดียวกัน"
             variant="community"
-            backgroundImage="/images/heroes/safety-report-history-hero.png"
+            backgroundImage="/images/heroes/Safety-Culture-Admin-Awareness1.png"
             backgroundOverlay="linear-gradient(90deg, rgba(210,235,255,.82) 0%, rgba(210,235,255,.60) 32%, rgba(210,235,255,.10) 56%, rgba(210,235,255,0) 74%)"
           />
         </div>

@@ -857,7 +857,7 @@ export default function SafetyAdminManageData() {
             title={<>จัดการสถานที่</>}
             description="แสดงเฉพาะสถานที่ที่ผู้ใช้เพิ่มเองในระบบ ไม่รวมข้อมูลจาก RMC"
             variant="community"
-            backgroundImage="/images/heroes/safety-location-admin-hero.png"
+            backgroundImage="/images/heroes/Safety-Culture-Admin-Awareness1.png"
             backgroundOverlay="linear-gradient(90deg, rgba(210,235,255,.82) 0%, rgba(210,235,255,.60) 32%, rgba(210,235,255,.10) 56%, rgba(210,235,255,0) 74%)"
           />
         </div>

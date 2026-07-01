@@ -578,8 +578,7 @@ export default function AdminAwarenessPage() {
         variant="community"
         backgroundImage="/images/heroes/Safety-Culture-Admin-Awareness1.png"
         backgroundOverlay="linear-gradient(90deg, rgba(210,235,255,.82) 0%, rgba(210,235,255,.60) 32%, rgba(210,235,255,.10) 56%, rgba(210,235,255,0) 74%)"
-        mascotSrc="/images/mascots/wangjai/7.png"
-        mascotAction="flashlight"
+
       />
       {isAwarenessLoading ? (
         <>
