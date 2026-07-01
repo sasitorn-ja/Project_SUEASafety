@@ -1616,7 +1616,8 @@ export function AppProviders({ children }: { children: ReactNode }) {
     pathname === "/safety-culture"
     || pathname === "/notifications";
   const shouldLoadLeaderboard =
-    pathname === "/safety-culture/leaderboard"
+    pathname === "/safety-culture"
+    || pathname === "/safety-culture/leaderboard"
     || pathname === "/safety-culture/admin-leaderboard"
     || pathname === "/profile";
   const shouldLoadRewards =
