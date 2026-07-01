@@ -132,15 +132,6 @@ function TeamStandingsCard({ className, style }: { className?: string; style?: C
                   </span>
                 ) : null}
               </div>
-              <div className="mt-1 flex items-center gap-1.5">
-                <div className="h-[4px] min-w-0 flex-1 overflow-hidden rounded-full bg-[var(--secondary)]">
-                  <div
-                    className="h-full rounded-full transition-[width] duration-1000 ease-out"
-                    style={{ width: `${team.percent}%`, backgroundColor: themedColor(team.color) }}
-                  />
-                </div>
-                <span className="flex-shrink-0 text-[10px] font-black" style={{ color: themedColor(team.color) }}>{team.percent}%</span>
-              </div>
             </div>
 
             <div className="flex-shrink-0 text-right">
@@ -164,6 +155,43 @@ function TeamStandingsCard({ className, style }: { className?: string; style?: C
       ) : null}
     </Card>
   );
+}
+
+function RankingAvatar({
+  imageUrl,
+  name,
+  className,
+}: {
+  imageUrl?: string | null;
+  name: string;
+  className: string;
+}) {
+  const [hasError, setHasError] = useState(false);
+
+  useEffect(() => {
+    setHasError(false);
+  }, [imageUrl]);
+
+  if (imageUrl && !hasError) {
+    return (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img
+        src={imageUrl}
+        alt={name}
+        className={className}
+        onError={() => setHasError(true)}
+      />
+    );
+  }
+
+  const initials = name
+    .split(" ")
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase() ?? "")
+    .join("");
+
+  return <span>{initials}</span>;
 }
 
 function PersonalRankingsCard({ className, style }: { className?: string; style?: CSSProperties }) {
@@ -206,6 +234,12 @@ function PersonalRankingsCard({ className, style }: { className?: string; style?
                 )}
               >
                 {user.rank}
+              </div>
+
+              {/* Profile Image Avatar */}
+              <div className="relative flex h-9 w-9 flex-shrink-0 items-center justify-center overflow-hidden rounded-full bg-[linear-gradient(180deg,var(--brand-accent),var(--brand-nav-active))] text-[12px] font-black text-white shadow-[0_2px_8px_rgba(0,0,0,0.1)]">
+                <RankingAvatar imageUrl={user.profileImageUrl} name={user.name} className="h-full w-full object-cover" />
+                <div className="absolute inset-x-0 bottom-0 h-1/2 bg-[linear-gradient(180deg,transparent,rgba(0,0,0,0.1))]" />
               </div>
 
               <div className="min-w-0">

@@ -266,13 +266,13 @@ function getFeedEventDurationMeta(startDate?: string, endDate?: string) {
 function getFeedEventStatusMeta(status: SafetyCultureFeedEvent["status"]) {
   return status === "open"
     ? {
-        label: "เปิดกิจกรรม",
-        tone: "border-[#12B981] bg-[#12B981] text-white",
-      }
+      label: "เปิดกิจกรรม",
+      tone: "border-[#12B981] bg-[#12B981] text-white",
+    }
     : {
-        label: "ปิดกิจกรรม",
-        tone: "border-[#FF6B4A] bg-[#FF6B4A] text-white",
-      };
+      label: "ปิดกิจกรรม",
+      tone: "border-[#FF6B4A] bg-[#FF6B4A] text-white",
+    };
 }
 
 function getFeedEventCardCopy(event: Pick<SafetyCultureFeedEvent, "details" | "summary">) {
@@ -770,9 +770,9 @@ export default function AdminEventPage() {
     const nextDraft =
       feedModalDraft.bonusMode === "multiplier" && Number.isFinite(normalizedMultiplier) && normalizedMultiplier > 0
         ? {
-            ...feedModalDraft,
-            multiplier: normalizedMultiplier,
-          }
+          ...feedModalDraft,
+          multiplier: normalizedMultiplier,
+        }
         : feedModalDraft;
     const nextEvents = draftFeedEvents.map((event) => (event.id === feedModalEventId ? syncFeedEventDateLabel(nextDraft) : event));
     setIsSavingFeedEvents(true);
@@ -810,53 +810,53 @@ export default function AdminEventPage() {
         />
 
         {editorMode === "bonus" ? (
-        <Card className="hidden mt-4 rounded-[22px] border border-[var(--c-e4d3b3)] bg-[var(--c-fffaf0)] p-3.5 shadow-[0_8px_18px_rgba(62,36,13,0.04)] md:p-4">
-          <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
-            <div className="flex flex-wrap gap-2">
-              <Badge className="rounded-xl border border-[var(--c-d7c5a7)] bg-white px-3 py-2 text-[11px] font-black text-[var(--c-5c3214)]">
-                สถานะ {activeStatusLabel}
-              </Badge>
-              <Badge className="rounded-xl border border-[var(--c-d7c5a7)] bg-[var(--c-fff6d6)] px-3 py-2 text-[11px] font-black text-[var(--c-8b5a12)]">
-                ตอนนี้ {phaseLabel}
-              </Badge>
-              <Badge className="rounded-xl border border-[var(--c-d7c5a7)] bg-white px-3 py-2 text-[11px] font-black text-[var(--c-5c3214)]">
-                โบนัส {bonusPreview}
-              </Badge>
-              <Badge
-                className={cn(
-                  "rounded-xl border px-3 py-2 text-[11px] font-black",
-                  bannerVisible
-                    ? "border-[#A7F3D0] bg-[#EAFBF5] text-[#087A5B]"
-                    : "border-[#e2c8c8] bg-[#fff4f4] text-[#7d3434]"
-                )}
-              >
-                Banner {bannerVisible ? "Visible" : "Hidden"}
-              </Badge>
-            </div>
+          <Card className="hidden mt-4 rounded-[22px] border border-[var(--c-e4d3b3)] bg-[var(--c-fffaf0)] p-3.5 shadow-[0_8px_18px_rgba(62,36,13,0.04)] md:p-4">
+            <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
+              <div className="flex flex-wrap gap-2">
+                <Badge className="rounded-xl border border-[var(--c-d7c5a7)] bg-white px-3 py-2 text-[11px] font-black text-[var(--c-5c3214)]">
+                  สถานะ {activeStatusLabel}
+                </Badge>
+                <Badge className="rounded-xl border border-[var(--c-d7c5a7)] bg-[var(--c-fff6d6)] px-3 py-2 text-[11px] font-black text-[var(--c-8b5a12)]">
+                  ตอนนี้ {phaseLabel}
+                </Badge>
+                <Badge className="rounded-xl border border-[var(--c-d7c5a7)] bg-white px-3 py-2 text-[11px] font-black text-[var(--c-5c3214)]">
+                  โบนัส {bonusPreview}
+                </Badge>
+                <Badge
+                  className={cn(
+                    "rounded-xl border px-3 py-2 text-[11px] font-black",
+                    bannerVisible
+                      ? "border-[#A7F3D0] bg-[#EAFBF5] text-[#087A5B]"
+                      : "border-[#e2c8c8] bg-[#fff4f4] text-[#7d3434]"
+                  )}
+                >
+                  Banner {bannerVisible ? "Visible" : "Hidden"}
+                </Badge>
+              </div>
 
-            <div className="flex flex-wrap gap-2">
-              <Button
-                variant="outline"
-                onClick={handleSaveDraft}
-                className="h-10 rounded-xl border-[var(--c-d7c5a7)] bg-[var(--c-fff8eb)] px-4 text-[13px] font-black text-[var(--c-5c3214)] hover:bg-[var(--c-fff2d8)]"
-              >
-                บันทึกเป็น Draft
-              </Button>
-              <Button
-                onClick={handlePublish}
-                disabled={!canPublish}
-                className="h-10 rounded-xl bg-[var(--c-5c3214)] px-4 text-[13px] font-black text-white hover:bg-[var(--c-4a280f)] disabled:bg-[var(--c-a79885)]"
-              >
-                Publish Event
-              </Button>
-              {saveLabel !== "idle" ? (
-                <div className="flex h-10 items-center rounded-xl border border-[var(--c-d7c5a7)] bg-white px-3 text-[12px] font-black text-[var(--c-5c3214)]">
-                  {saveLabel === "saved" ? "บันทึก Draft แล้ว" : "Publish แล้ว"}
-                </div>
-              ) : null}
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  variant="outline"
+                  onClick={handleSaveDraft}
+                  className="h-10 rounded-xl border-[var(--c-d7c5a7)] bg-[var(--c-fff8eb)] px-4 text-[13px] font-black text-[var(--c-5c3214)] hover:bg-[var(--c-fff2d8)]"
+                >
+                  บันทึกเป็น Draft
+                </Button>
+                <Button
+                  onClick={handlePublish}
+                  disabled={!canPublish}
+                  className="h-10 rounded-xl bg-[var(--c-5c3214)] px-4 text-[13px] font-black text-white hover:bg-[var(--c-4a280f)] disabled:bg-[var(--c-a79885)]"
+                >
+                  Publish Event
+                </Button>
+                {saveLabel !== "idle" ? (
+                  <div className="flex h-10 items-center rounded-xl border border-[var(--c-d7c5a7)] bg-white px-3 text-[12px] font-black text-[var(--c-5c3214)]">
+                    {saveLabel === "saved" ? "บันทึก Draft แล้ว" : "Publish แล้ว"}
+                  </div>
+                ) : null}
+              </div>
             </div>
-          </div>
-        </Card>
+          </Card>
         ) : null}
 
         {editorMode === "bonus" ? (
@@ -918,512 +918,512 @@ export default function AdminEventPage() {
           <div className="flex flex-col gap-4">
             {editorMode === "bonus" ? (
               <>
-            <SectionCard
-              title="เริ่มแบบเร็ว"
-              description="เลือก preset ก่อน ถ้าต้องการตั้งแบบไว"
-              icon={<WandSparkles className="h-5 w-5" strokeWidth={2.3} />}
-            >
-              <div className="flex flex-wrap gap-2">
-                {QUICK_PRESETS.map((preset) => (
-                  <button
-                    key={preset.id}
-                    type="button"
-                    onClick={() => applyPreset(preset)}
-                    className="rounded-full border border-[var(--c-d7c5a7)] bg-[var(--c-fffcf5)] px-4 py-2 text-[12px] font-black text-[var(--c-5c3214)] transition-colors hover:bg-[var(--c-fff3dd)]"
-                  >
-                    {preset.label}
-                  </button>
-                ))}
-              </div>
-            </SectionCard>
-
-            <SectionCard
-              title="ตั้งค่าหลัก"
-              description="กรอกเฉพาะข้อมูลที่จำเป็นก่อน"
-              icon={<Settings2 className="h-5 w-5" strokeWidth={2.3} />}
-            >
-              <div className="grid grid-cols-1 gap-4">
-                <div className="grid grid-cols-1 gap-4 md:grid-cols-[1.2fr_0.8fr]">
-                  <div className="flex flex-col gap-2">
-                    <Label htmlFor="event-name" className="text-[13px] font-black text-[var(--c-5c3214)]">
-                      ชื่ออีเว้น
-                    </Label>
-                    <Input
-                      id="event-name"
-                      value={eventName}
-                      onChange={(event) =>
-                        patchEvent(
-                          (current) => ({
-                            ...current,
-                            eventName: event.target.value,
-                          }),
-                          true
-                        )
-                      }
-                      className="h-11 rounded-xl border-[var(--c-d7c5a7)] bg-[var(--c-fffcf5)] px-3.5 text-[14px] font-bold text-[#1A1A1A] focus-visible:border-[var(--c-5c3214)] focus-visible:ring-0"
-                    />
-                  </div>
-
-                  <div className="flex flex-col gap-2">
-                    <Label htmlFor="event-code" className="text-[13px] font-black text-[var(--c-5c3214)]">
-                      รหัสอีเว้น
-                    </Label>
-                    <Input
-                      id="event-code"
-                      value={eventCode}
-                      onChange={(event) => updateField("eventCode", event.target.value)}
-                      className="h-11 rounded-xl border-[var(--c-d7c5a7)] bg-[var(--c-fffcf5)] px-3.5 text-[14px] font-bold text-[#1A1A1A] focus-visible:border-[var(--c-5c3214)] focus-visible:ring-0"
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-2 xl:grid-cols-4">
-                  {EVENT_STATUS_OPTIONS.map((option) => (
-                    <button
-                      key={option.id}
-                      type="button"
-                      onClick={() => updateField("status", option.id as SafetyCultureEventStatus)}
-                      className={cn(
-                        "rounded-[16px] border px-3 py-3 text-left transition-all",
-                        status === option.id
-                          ? "border-[var(--c-5c3214)] bg-[var(--c-5c3214)] text-white"
-                          : "border-[var(--c-e3d0ae)] bg-[var(--c-fffcf5)] text-[var(--c-4f4335)] hover:border-[var(--c-c89a4f)]"
-                      )}
-                    >
-                      <div className="text-[14px] font-black">{option.label}</div>
-                      <div className={cn("mt-1 text-[11px] font-bold leading-relaxed", status === option.id ? "text-white/78" : "text-[#8E8A81]")}>
-                        {option.note}
-                      </div>
-                    </button>
-                  ))}
-                </div>
-                <div className="rounded-[18px] border border-[var(--c-e3d0ae)] bg-[var(--c-fffcf5)] p-3.5">
-                  <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                    <div>
-                      <div className="text-[13px] font-black text-[var(--c-5c3214)]">การแสดง Banner บน Feed</div>
-                      <div className="mt-1 text-[12px] font-bold leading-relaxed text-[#8E8A81]">
-                        ซ่อนหรือแสดงแบนเนอร์กิจกรรมได้อิสระ โดยไม่กระทบสถานะอีเวนต์หรือการคำนวณโบนัส
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-2 gap-2">
+                <SectionCard
+                  title="เริ่มแบบเร็ว"
+                  description="เลือก preset ก่อน ถ้าต้องการตั้งแบบไว"
+                  icon={<WandSparkles className="h-5 w-5" strokeWidth={2.3} />}
+                >
+                  <div className="flex flex-wrap gap-2">
+                    {QUICK_PRESETS.map((preset) => (
                       <button
+                        key={preset.id}
                         type="button"
-                        onClick={() => updateField("bannerVisible", true)}
-                        className={cn(
-                          "rounded-[14px] border px-4 py-2.5 text-[12px] font-black transition-all",
-                          bannerVisible
-                            ? "border-[#12B981] bg-[#12B981] text-white"
-                            : "border-[var(--c-d7c5a7)] bg-white text-[var(--c-5c3214)] hover:border-[var(--c-c89a4f)]"
-                        )}
+                        onClick={() => applyPreset(preset)}
+                        className="rounded-full border border-[var(--c-d7c5a7)] bg-[var(--c-fffcf5)] px-4 py-2 text-[12px] font-black text-[var(--c-5c3214)] transition-colors hover:bg-[var(--c-fff3dd)]"
                       >
-                        แสดง Banner
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => updateField("bannerVisible", false)}
-                        className={cn(
-                          "rounded-[14px] border px-4 py-2.5 text-[12px] font-black transition-all",
-                          !bannerVisible
-                            ? "border-[#7d3434] bg-[#7d3434] text-white"
-                            : "border-[var(--c-d7c5a7)] bg-white text-[var(--c-5c3214)] hover:border-[var(--c-c89a4f)]"
-                        )}
-                      >
-                        ซ่อน Banner
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </SectionCard>
-
-            <SectionCard
-              title="ช่วงเวลาและโบนัส"
-              description="รวมการตั้งค่าเวลาและ Coin ไว้ในบล็อกเดียว"
-              icon={<CalendarClock className="h-5 w-5" strokeWidth={2.3} />}
-            >
-              <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(320px,0.84fr)]">
-                <div className="grid grid-cols-1 gap-4">
-                  <div className="rounded-[20px] border border-[var(--c-eee2cb)] bg-[var(--c-fffcf6)] p-3.5">
-                    <div className="mb-3 text-[13px] font-black text-[var(--c-5c3214)]">ช่วงเวลาอีเว้น</div>
-                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                      <div className="flex flex-col gap-2">
-                        <Label htmlFor="start-date" className="text-[13px] font-black text-[var(--c-5c3214)]">
-                          วันที่เริ่ม
-                        </Label>
-                        <Input
-                          id="start-date"
-                          type="date"
-                          value={startDate}
-                          onChange={(event) => updateField("startDate", event.target.value)}
-                          className="h-11 rounded-xl border-[var(--c-d7c5a7)] bg-white px-3.5 pr-4 text-[15px] font-bold text-[#1A1A1A] focus-visible:border-[var(--c-5c3214)] focus-visible:ring-0"
-                        />
-                      </div>
-                      <div className="flex flex-col gap-2">
-                        <Label htmlFor="start-time" className="text-[13px] font-black text-[var(--c-5c3214)]">
-                          เวลาเริ่ม
-                        </Label>
-                        <div className="relative">
-                          <Input
-                            id="start-time"
-                            type="text"
-                            value={startTime}
-                            onChange={(event) =>
-                              patchEvent(
-                                (current) => ({
-                                  ...current,
-                                  startTime: normalizeTimeInput(event.target.value),
-                                }),
-                                true
-                              )
-                            }
-                            inputMode="numeric"
-                            placeholder="14:00"
-                            maxLength={5}
-                            className="h-11 rounded-xl border-[var(--c-d7c5a7)] bg-white px-3.5 pr-11 text-[15px] font-bold text-[#1A1A1A] focus-visible:border-[var(--c-5c3214)] focus-visible:ring-0"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => setOpenTimePicker((current) => (current === "start" ? null : "start"))}
-                            className="absolute top-1/2 right-3 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full border border-[var(--c-d7c5a7)] bg-[var(--c-fffaf0)] text-[var(--c-5c3214)] transition-colors hover:bg-[var(--c-fff0cf)]"
-                            aria-label="เลือกเวลาเริ่ม"
-                          >
-                            <Clock3 className="h-3.5 w-3.5" strokeWidth={2.2} />
-                          </button>
-                          {openTimePicker === "start" ? (
-                            <div className="absolute top-[calc(100%+8px)] left-0 z-20 w-[280px] rounded-[18px] border border-[var(--c-e3d0ae)] bg-white p-3 shadow-[0_16px_34px_rgba(62,36,13,0.14)]">
-                              <div className="mb-3 flex items-center justify-between gap-2">
-                                <div>
-                                  <div className="text-[11px] font-black uppercase tracking-[0.16em] text-[#8E8A81]">เลือกเวลาเริ่ม</div>
-                                  <div className="mt-1 text-[18px] font-black text-[var(--c-5c3214)]">{startTime || "14:00"}</div>
-                                </div>
-                                <Button
-                                  type="button"
-                                  variant="outline"
-                                  onClick={() => pickTime("start", startTime || "14:00")}
-                                  className="h-8 rounded-lg border-[var(--c-d7c5a7)] bg-[var(--c-fffaf0)] px-3 text-[12px] font-black text-[var(--c-5c3214)] hover:bg-[var(--c-fff4df)]"
-                                >
-                                  เสร็จสิ้น
-                                </Button>
-                              </div>
-                              <div className="grid grid-cols-2 gap-3">
-                                <div className="flex flex-col gap-2">
-                                  <label className="text-[11px] font-black uppercase tracking-[0.14em] text-[#8E8A81]">ชั่วโมง</label>
-                                  <Combobox
-                                    value={getTimeParts(startTime).hour}
-                                    onValueChange={(v) => updateTimePart("start", "hour", v)}
-                                    aria-label="ชั่วโมงเริ่ม"
-                                    searchPlaceholder="ชั่วโมง"
-                                    className="h-11 rounded-xl border-[var(--c-d7c5a7)] bg-[var(--c-fffcf5)] text-[14px] font-black text-[var(--c-5c3214)]"
-                                    options={HOUR_OPTIONS.map((hour) => ({ value: hour, label: hour }))}
-                                  />
-                                </div>
-                                <div className="flex flex-col gap-2">
-                                  <label className="text-[11px] font-black uppercase tracking-[0.14em] text-[#8E8A81]">นาที</label>
-                                  <Combobox
-                                    value={roundMinutesToNearestFive(getTimeParts(startTime).minute)}
-                                    onValueChange={(v) => updateTimePart("start", "minute", v)}
-                                    aria-label="นาทีเริ่ม"
-                                    searchPlaceholder="นาที"
-                                    className="h-11 rounded-xl border-[var(--c-d7c5a7)] bg-[var(--c-fffcf5)] text-[14px] font-black text-[var(--c-5c3214)]"
-                                    options={MINUTE_OPTIONS.map((minute) => ({ value: minute, label: minute }))}
-                                  />
-                                </div>
-                              </div>
-                            </div>
-                          ) : null}
-                        </div>
-                      </div>
-                      <div className="flex flex-col gap-2">
-                        <Label htmlFor="end-date" className="text-[13px] font-black text-[var(--c-5c3214)]">
-                          วันที่จบ
-                        </Label>
-                        <Input
-                          id="end-date"
-                          type="date"
-                          value={endDate}
-                          onChange={(event) => updateField("endDate", event.target.value)}
-                          className="h-11 rounded-xl border-[var(--c-d7c5a7)] bg-white px-3.5 pr-4 text-[15px] font-bold text-[#1A1A1A] focus-visible:border-[var(--c-5c3214)] focus-visible:ring-0"
-                        />
-                      </div>
-                      <div className="flex flex-col gap-2">
-                        <Label htmlFor="end-time" className="text-[13px] font-black text-[var(--c-5c3214)]">
-                          เวลาจบ
-                        </Label>
-                        <div className="relative">
-                          <Input
-                            id="end-time"
-                            type="text"
-                            value={endTime}
-                            onChange={(event) =>
-                              patchEvent(
-                                (current) => ({
-                                  ...current,
-                                  endTime: normalizeTimeInput(event.target.value),
-                                }),
-                                true
-                              )
-                            }
-                            inputMode="numeric"
-                            placeholder="16:00"
-                            maxLength={5}
-                            className="h-11 rounded-xl border-[var(--c-d7c5a7)] bg-white px-3.5 pr-11 text-[15px] font-bold text-[#1A1A1A] focus-visible:border-[var(--c-5c3214)] focus-visible:ring-0"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => setOpenTimePicker((current) => (current === "end" ? null : "end"))}
-                            className="absolute top-1/2 right-3 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full border border-[var(--c-d7c5a7)] bg-[var(--c-fffaf0)] text-[var(--c-5c3214)] transition-colors hover:bg-[var(--c-fff0cf)]"
-                            aria-label="เลือกเวลาจบ"
-                          >
-                            <Clock3 className="h-3.5 w-3.5" strokeWidth={2.2} />
-                          </button>
-                          {openTimePicker === "end" ? (
-                            <div className="absolute top-[calc(100%+8px)] left-0 z-20 w-[280px] rounded-[18px] border border-[var(--c-e3d0ae)] bg-white p-3 shadow-[0_16px_34px_rgba(62,36,13,0.14)]">
-                              <div className="mb-3 flex items-center justify-between gap-2">
-                                <div>
-                                  <div className="text-[11px] font-black uppercase tracking-[0.16em] text-[#8E8A81]">เลือกเวลาจบ</div>
-                                  <div className="mt-1 text-[18px] font-black text-[var(--c-5c3214)]">{endTime || "16:00"}</div>
-                                </div>
-                                <Button
-                                  type="button"
-                                  variant="outline"
-                                  onClick={() => pickTime("end", endTime || "16:00")}
-                                  className="h-8 rounded-lg border-[var(--c-d7c5a7)] bg-[var(--c-fffaf0)] px-3 text-[12px] font-black text-[var(--c-5c3214)] hover:bg-[var(--c-fff4df)]"
-                                >
-                                  เสร็จสิ้น
-                                </Button>
-                              </div>
-                              <div className="grid grid-cols-2 gap-3">
-                                <div className="flex flex-col gap-2">
-                                  <label className="text-[11px] font-black uppercase tracking-[0.14em] text-[#8E8A81]">ชั่วโมง</label>
-                                  <Combobox
-                                    value={getTimeParts(endTime).hour}
-                                    onValueChange={(v) => updateTimePart("end", "hour", v)}
-                                    aria-label="ชั่วโมงจบ"
-                                    searchPlaceholder="ชั่วโมง"
-                                    className="h-11 rounded-xl border-[var(--c-d7c5a7)] bg-[var(--c-fffcf5)] text-[14px] font-black text-[var(--c-5c3214)]"
-                                    options={HOUR_OPTIONS.map((hour) => ({ value: hour, label: hour }))}
-                                  />
-                                </div>
-                                <div className="flex flex-col gap-2">
-                                  <label className="text-[11px] font-black uppercase tracking-[0.14em] text-[#8E8A81]">นาที</label>
-                                  <Combobox
-                                    value={roundMinutesToNearestFive(getTimeParts(endTime).minute)}
-                                    onValueChange={(v) => updateTimePart("end", "minute", v)}
-                                    aria-label="นาทีจบ"
-                                    searchPlaceholder="นาที"
-                                    className="h-11 rounded-xl border-[var(--c-d7c5a7)] bg-[var(--c-fffcf5)] text-[14px] font-black text-[var(--c-5c3214)]"
-                                    options={MINUTE_OPTIONS.map((minute) => ({ value: minute, label: minute }))}
-                                  />
-                                </div>
-                              </div>
-                            </div>
-                          ) : null}
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="mt-3 flex flex-wrap gap-2">
-                      {RANGE_PRESETS.map((preset) => (
-                        <button
-                          key={preset.label}
-                          type="button"
-                          onClick={() => applyRangePreset(preset.days)}
-                          className="rounded-full border border-[var(--c-d7c5a7)] bg-white px-3 py-1.5 text-[12px] font-black text-[var(--c-5c3214)] transition-colors hover:bg-[var(--c-fff3dd)]"
-                        >
-                          จบใน {preset.label}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="rounded-[20px] border border-[var(--c-eee2cb)] bg-[var(--c-fffcf6)] p-3.5">
-                    <div className="mb-3 flex items-center gap-2 text-[13px] font-black text-[var(--c-5c3214)]">
-                      <CalendarClock className="h-4 w-4 text-[var(--c-8b5a12)]" strokeWidth={2.2} />
-                      สรุปช่วงเวลา
-                    </div>
-                    <div className="text-[13px] font-bold leading-relaxed text-[var(--c-6e6254)]">{windowLabel}</div>
-                  </div>
-                </div>
-
-                <div className="rounded-[20px] border border-[var(--c-eee2cb)] bg-[var(--c-fffcf6)] p-3.5">
-                  <div className="mb-3 text-[13px] font-black text-[var(--c-5c3214)]">รูปแบบโบนัส</div>
-                  <div className="grid grid-cols-1 gap-2">
-                    {BONUS_MODE_OPTIONS.map((option) => (
-                      <button
-                        key={option.id}
-                        type="button"
-                        onClick={() =>
-                          patchEvent(
-                            (current) => ({
-                              ...current,
-                              bonusMode: option.id as SafetyCultureBonusMode,
-                            }),
-                            true
-                          )
-                        }
-                        className={cn(
-                          "rounded-[16px] border px-4 py-3 text-left transition-all",
-                          bonusMode === option.id
-                            ? "border-[var(--c-f5bb00)] bg-[var(--c-fff6d6)] text-[#1A1A1A]"
-                            : "border-[var(--c-e3d0ae)] bg-white text-[var(--c-4f4335)] hover:border-[var(--c-c89a4f)]"
-                        )}
-                      >
-                        <div className="flex items-center gap-2 text-[14px] font-black">
-                          <Percent className="h-4 w-4" strokeWidth={2.2} />
-                          {option.label}
-                        </div>
-                        <div className="mt-1 text-[12px] font-bold text-[#8E8A81]">{option.hint}</div>
+                        {preset.label}
                       </button>
                     ))}
                   </div>
+                </SectionCard>
 
-                  <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
-                    <div className="flex flex-col gap-2">
-                      <Label htmlFor="multiplier" className="text-[13px] font-black text-[var(--c-5c3214)]">
-                        ค่า Multiplier
-                      </Label>
-                      <Input
-                        id="multiplier"
-                        type="text"
-                        inputMode="decimal"
-                        value={multiplierInput}
-                        onChange={(event) => handleMultiplierChange(event.target.value)}
-                        onBlur={handleMultiplierBlur}
-                        disabled={bonusMode !== "multiplier"}
-                        className="h-11 rounded-xl border-[var(--c-d7c5a7)] bg-white px-3.5 text-[14px] font-bold text-[#1A1A1A] focus-visible:border-[var(--c-5c3214)] focus-visible:ring-0"
-                      />
+                <SectionCard
+                  title="ตั้งค่าหลัก"
+                  description="กรอกเฉพาะข้อมูลที่จำเป็นก่อน"
+                  icon={<Settings2 className="h-5 w-5" strokeWidth={2.3} />}
+                >
+                  <div className="grid grid-cols-1 gap-4">
+                    <div className="grid grid-cols-1 gap-4 md:grid-cols-[1.2fr_0.8fr]">
+                      <div className="flex flex-col gap-2">
+                        <Label htmlFor="event-name" className="text-[13px] font-black text-[var(--c-5c3214)]">
+                          ชื่ออีเว้น
+                        </Label>
+                        <Input
+                          id="event-name"
+                          value={eventName}
+                          onChange={(event) =>
+                            patchEvent(
+                              (current) => ({
+                                ...current,
+                                eventName: event.target.value,
+                              }),
+                              true
+                            )
+                          }
+                          className="h-11 rounded-xl border-[var(--c-d7c5a7)] bg-[var(--c-fffcf5)] px-3.5 text-[14px] font-bold text-[#1A1A1A] focus-visible:border-[var(--c-5c3214)] focus-visible:ring-0"
+                        />
+                      </div>
+
+                      <div className="flex flex-col gap-2">
+                        <Label htmlFor="event-code" className="text-[13px] font-black text-[var(--c-5c3214)]">
+                          รหัสอีเว้น
+                        </Label>
+                        <Input
+                          id="event-code"
+                          value={eventCode}
+                          onChange={(event) => updateField("eventCode", event.target.value)}
+                          className="h-11 rounded-xl border-[var(--c-d7c5a7)] bg-[var(--c-fffcf5)] px-3.5 text-[14px] font-bold text-[#1A1A1A] focus-visible:border-[var(--c-5c3214)] focus-visible:ring-0"
+                        />
+                      </div>
                     </div>
-                    <div className="flex flex-col gap-2">
-                      <Label htmlFor="fixed-points" className="text-[13px] font-black text-[var(--c-5c3214)]">
-                        Coin โบนัสคงที่
-                      </Label>
-                      <Input
-                        id="fixed-points"
-                        value={`${fixedPoints}`}
-                        onChange={(event) =>
-                          patchEvent(
-                            (current) => ({
-                              ...current,
-                              fixedPoints: Number(event.target.value) || 0,
-                            }),
-                            true
-                          )
-                        }
-                        disabled={bonusMode !== "fixed"}
-                        className="h-11 rounded-xl border-[var(--c-d7c5a7)] bg-white px-3.5 text-[14px] font-bold text-[#1A1A1A] focus-visible:border-[var(--c-5c3214)] focus-visible:ring-0"
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </SectionCard>
 
-            <SectionCard
-              title="กิจกรรมและข้อความ"
-              description="เลือกกิจกรรมที่ได้โบนัส และปรับข้อความที่ผู้ใช้จะเห็น"
-              icon={<Megaphone className="h-5 w-5" strokeWidth={2.3} />}
-            >
-              <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
-                <div className="rounded-[20px] border border-[var(--c-eee2cb)] bg-[var(--c-fffcf6)] p-3.5">
-                  <div className="mb-3 text-[13px] font-black text-[var(--c-5c3214)]">กิจกรรมที่ได้โบนัส</div>
-                  <div className="grid grid-cols-1 gap-2">
-                    {ACTION_OPTIONS.map((action) => {
-                      const active = enabledActions.includes(action.id);
-
-                      return (
+                    <div className="grid grid-cols-2 gap-2 xl:grid-cols-4">
+                      {EVENT_STATUS_OPTIONS.map((option) => (
                         <button
-                          key={action.id}
+                          key={option.id}
                           type="button"
-                          onClick={() => toggleAction(action.id as SafetyCultureEventAction)}
+                          onClick={() => updateField("status", option.id as SafetyCultureEventStatus)}
                           className={cn(
-                            "rounded-[16px] border px-4 py-3 text-left transition-all",
-                            active ? "border-[var(--c-5c3214)] bg-[var(--c-fff1dc)]" : "border-[var(--c-e3d0ae)] bg-white hover:border-[var(--c-c89a4f)]"
+                            "rounded-[16px] border px-3 py-3 text-left transition-all",
+                            status === option.id
+                              ? "border-[var(--c-5c3214)] bg-[var(--c-5c3214)] text-white"
+                              : "border-[var(--c-e3d0ae)] bg-[var(--c-fffcf5)] text-[var(--c-4f4335)] hover:border-[var(--c-c89a4f)]"
                           )}
                         >
-                          <div className="flex items-center justify-between gap-2">
-                            <span className="text-[14px] font-black text-[#1A1A1A]">{action.label}</span>
-                            {active ? <CheckCircle2 className="h-4 w-4 text-[var(--c-5c3214)]" strokeWidth={2.4} /> : null}
+                          <div className="text-[14px] font-black">{option.label}</div>
+                          <div className={cn("mt-1 text-[11px] font-bold leading-relaxed", status === option.id ? "text-white/78" : "text-[#8E8A81]")}>
+                            {option.note}
                           </div>
                         </button>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                <div className="rounded-[20px] border border-[var(--c-eee2cb)] bg-[var(--c-fffcf6)] p-3.5">
-                  <div className="mb-3 text-[13px] font-black text-[var(--c-5c3214)]">ข้อความบน Feed</div>
-                  <div className="grid grid-cols-1 gap-3">
-                    <div className="rounded-[16px] border border-[var(--c-eadcc7)] bg-white px-3 py-2.5">
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="min-w-0">
-                          <div className="text-[11px] font-black uppercase tracking-[0.16em] text-[#8E8A81]">หัวข้อแนะนำ</div>
-                          <div className="mt-1 truncate text-[13px] font-bold text-[var(--c-5c3214)]">{autoHeadline}</div>
+                      ))}
+                    </div>
+                    <div className="rounded-[18px] border border-[var(--c-e3d0ae)] bg-[var(--c-fffcf5)] p-3.5">
+                      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                        <div>
+                          <div className="text-[13px] font-black text-[var(--c-5c3214)]">การแสดง Banner บน Feed</div>
+                          <div className="mt-1 text-[12px] font-bold leading-relaxed text-[#8E8A81]">
+                            ซ่อนหรือแสดงแบนเนอร์กิจกรรมได้อิสระ โดยไม่กระทบสถานะอีเวนต์หรือการคำนวณโบนัส
+                          </div>
                         </div>
-                        <Button
-                          variant="outline"
-                          onClick={resetAutoHeadline}
-                          className="h-8 rounded-lg border-[var(--c-d7c5a7)] bg-white px-3 text-[12px] font-black text-[var(--c-5c3214)] hover:bg-[var(--c-fff4df)]"
-                        >
-                          ใช้
-                        </Button>
+                        <div className="grid grid-cols-2 gap-2">
+                          <button
+                            type="button"
+                            onClick={() => updateField("bannerVisible", true)}
+                            className={cn(
+                              "rounded-[14px] border px-4 py-2.5 text-[12px] font-black transition-all",
+                              bannerVisible
+                                ? "border-[#12B981] bg-[#12B981] text-white"
+                                : "border-[var(--c-d7c5a7)] bg-white text-[var(--c-5c3214)] hover:border-[var(--c-c89a4f)]"
+                            )}
+                          >
+                            แสดง Banner
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => updateField("bannerVisible", false)}
+                            className={cn(
+                              "rounded-[14px] border px-4 py-2.5 text-[12px] font-black transition-all",
+                              !bannerVisible
+                                ? "border-[#7d3434] bg-[#7d3434] text-white"
+                                : "border-[var(--c-d7c5a7)] bg-white text-[var(--c-5c3214)] hover:border-[var(--c-c89a4f)]"
+                            )}
+                          >
+                            ซ่อน Banner
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </SectionCard>
+
+                <SectionCard
+                  title="ช่วงเวลาและโบนัส"
+                  description="รวมการตั้งค่าเวลาและ Coin ไว้ในบล็อกเดียว"
+                  icon={<CalendarClock className="h-5 w-5" strokeWidth={2.3} />}
+                >
+                  <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(320px,0.84fr)]">
+                    <div className="grid grid-cols-1 gap-4">
+                      <div className="rounded-[20px] border border-[var(--c-eee2cb)] bg-[var(--c-fffcf6)] p-3.5">
+                        <div className="mb-3 text-[13px] font-black text-[var(--c-5c3214)]">ช่วงเวลาอีเว้น</div>
+                        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                          <div className="flex flex-col gap-2">
+                            <Label htmlFor="start-date" className="text-[13px] font-black text-[var(--c-5c3214)]">
+                              วันที่เริ่ม
+                            </Label>
+                            <Input
+                              id="start-date"
+                              type="date"
+                              value={startDate}
+                              onChange={(event) => updateField("startDate", event.target.value)}
+                              className="h-11 rounded-xl border-[var(--c-d7c5a7)] bg-white px-3.5 pr-4 text-[15px] font-bold text-[#1A1A1A] focus-visible:border-[var(--c-5c3214)] focus-visible:ring-0"
+                            />
+                          </div>
+                          <div className="flex flex-col gap-2">
+                            <Label htmlFor="start-time" className="text-[13px] font-black text-[var(--c-5c3214)]">
+                              เวลาเริ่ม
+                            </Label>
+                            <div className="relative">
+                              <Input
+                                id="start-time"
+                                type="text"
+                                value={startTime}
+                                onChange={(event) =>
+                                  patchEvent(
+                                    (current) => ({
+                                      ...current,
+                                      startTime: normalizeTimeInput(event.target.value),
+                                    }),
+                                    true
+                                  )
+                                }
+                                inputMode="numeric"
+                                placeholder="14:00"
+                                maxLength={5}
+                                className="h-11 rounded-xl border-[var(--c-d7c5a7)] bg-white px-3.5 pr-11 text-[15px] font-bold text-[#1A1A1A] focus-visible:border-[var(--c-5c3214)] focus-visible:ring-0"
+                              />
+                              <button
+                                type="button"
+                                onClick={() => setOpenTimePicker((current) => (current === "start" ? null : "start"))}
+                                className="absolute top-1/2 right-3 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full border border-[var(--c-d7c5a7)] bg-[var(--c-fffaf0)] text-[var(--c-5c3214)] transition-colors hover:bg-[var(--c-fff0cf)]"
+                                aria-label="เลือกเวลาเริ่ม"
+                              >
+                                <Clock3 className="h-3.5 w-3.5" strokeWidth={2.2} />
+                              </button>
+                              {openTimePicker === "start" ? (
+                                <div className="absolute top-[calc(100%+8px)] left-0 z-20 w-[280px] rounded-[18px] border border-[var(--c-e3d0ae)] bg-white p-3 shadow-[0_16px_34px_rgba(62,36,13,0.14)]">
+                                  <div className="mb-3 flex items-center justify-between gap-2">
+                                    <div>
+                                      <div className="text-[11px] font-black uppercase tracking-[0.16em] text-[#8E8A81]">เลือกเวลาเริ่ม</div>
+                                      <div className="mt-1 text-[18px] font-black text-[var(--c-5c3214)]">{startTime || "14:00"}</div>
+                                    </div>
+                                    <Button
+                                      type="button"
+                                      variant="outline"
+                                      onClick={() => pickTime("start", startTime || "14:00")}
+                                      className="h-8 rounded-lg border-[var(--c-d7c5a7)] bg-[var(--c-fffaf0)] px-3 text-[12px] font-black text-[var(--c-5c3214)] hover:bg-[var(--c-fff4df)]"
+                                    >
+                                      เสร็จสิ้น
+                                    </Button>
+                                  </div>
+                                  <div className="grid grid-cols-2 gap-3">
+                                    <div className="flex flex-col gap-2">
+                                      <label className="text-[11px] font-black uppercase tracking-[0.14em] text-[#8E8A81]">ชั่วโมง</label>
+                                      <Combobox
+                                        value={getTimeParts(startTime).hour}
+                                        onValueChange={(v) => updateTimePart("start", "hour", v)}
+                                        aria-label="ชั่วโมงเริ่ม"
+                                        searchPlaceholder="ชั่วโมง"
+                                        className="h-11 rounded-xl border-[var(--c-d7c5a7)] bg-[var(--c-fffcf5)] text-[14px] font-black text-[var(--c-5c3214)]"
+                                        options={HOUR_OPTIONS.map((hour) => ({ value: hour, label: hour }))}
+                                      />
+                                    </div>
+                                    <div className="flex flex-col gap-2">
+                                      <label className="text-[11px] font-black uppercase tracking-[0.14em] text-[#8E8A81]">นาที</label>
+                                      <Combobox
+                                        value={roundMinutesToNearestFive(getTimeParts(startTime).minute)}
+                                        onValueChange={(v) => updateTimePart("start", "minute", v)}
+                                        aria-label="นาทีเริ่ม"
+                                        searchPlaceholder="นาที"
+                                        className="h-11 rounded-xl border-[var(--c-d7c5a7)] bg-[var(--c-fffcf5)] text-[14px] font-black text-[var(--c-5c3214)]"
+                                        options={MINUTE_OPTIONS.map((minute) => ({ value: minute, label: minute }))}
+                                      />
+                                    </div>
+                                  </div>
+                                </div>
+                              ) : null}
+                            </div>
+                          </div>
+                          <div className="flex flex-col gap-2">
+                            <Label htmlFor="end-date" className="text-[13px] font-black text-[var(--c-5c3214)]">
+                              วันที่จบ
+                            </Label>
+                            <Input
+                              id="end-date"
+                              type="date"
+                              value={endDate}
+                              onChange={(event) => updateField("endDate", event.target.value)}
+                              className="h-11 rounded-xl border-[var(--c-d7c5a7)] bg-white px-3.5 pr-4 text-[15px] font-bold text-[#1A1A1A] focus-visible:border-[var(--c-5c3214)] focus-visible:ring-0"
+                            />
+                          </div>
+                          <div className="flex flex-col gap-2">
+                            <Label htmlFor="end-time" className="text-[13px] font-black text-[var(--c-5c3214)]">
+                              เวลาจบ
+                            </Label>
+                            <div className="relative">
+                              <Input
+                                id="end-time"
+                                type="text"
+                                value={endTime}
+                                onChange={(event) =>
+                                  patchEvent(
+                                    (current) => ({
+                                      ...current,
+                                      endTime: normalizeTimeInput(event.target.value),
+                                    }),
+                                    true
+                                  )
+                                }
+                                inputMode="numeric"
+                                placeholder="16:00"
+                                maxLength={5}
+                                className="h-11 rounded-xl border-[var(--c-d7c5a7)] bg-white px-3.5 pr-11 text-[15px] font-bold text-[#1A1A1A] focus-visible:border-[var(--c-5c3214)] focus-visible:ring-0"
+                              />
+                              <button
+                                type="button"
+                                onClick={() => setOpenTimePicker((current) => (current === "end" ? null : "end"))}
+                                className="absolute top-1/2 right-3 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full border border-[var(--c-d7c5a7)] bg-[var(--c-fffaf0)] text-[var(--c-5c3214)] transition-colors hover:bg-[var(--c-fff0cf)]"
+                                aria-label="เลือกเวลาจบ"
+                              >
+                                <Clock3 className="h-3.5 w-3.5" strokeWidth={2.2} />
+                              </button>
+                              {openTimePicker === "end" ? (
+                                <div className="absolute top-[calc(100%+8px)] left-0 z-20 w-[280px] rounded-[18px] border border-[var(--c-e3d0ae)] bg-white p-3 shadow-[0_16px_34px_rgba(62,36,13,0.14)]">
+                                  <div className="mb-3 flex items-center justify-between gap-2">
+                                    <div>
+                                      <div className="text-[11px] font-black uppercase tracking-[0.16em] text-[#8E8A81]">เลือกเวลาจบ</div>
+                                      <div className="mt-1 text-[18px] font-black text-[var(--c-5c3214)]">{endTime || "16:00"}</div>
+                                    </div>
+                                    <Button
+                                      type="button"
+                                      variant="outline"
+                                      onClick={() => pickTime("end", endTime || "16:00")}
+                                      className="h-8 rounded-lg border-[var(--c-d7c5a7)] bg-[var(--c-fffaf0)] px-3 text-[12px] font-black text-[var(--c-5c3214)] hover:bg-[var(--c-fff4df)]"
+                                    >
+                                      เสร็จสิ้น
+                                    </Button>
+                                  </div>
+                                  <div className="grid grid-cols-2 gap-3">
+                                    <div className="flex flex-col gap-2">
+                                      <label className="text-[11px] font-black uppercase tracking-[0.14em] text-[#8E8A81]">ชั่วโมง</label>
+                                      <Combobox
+                                        value={getTimeParts(endTime).hour}
+                                        onValueChange={(v) => updateTimePart("end", "hour", v)}
+                                        aria-label="ชั่วโมงจบ"
+                                        searchPlaceholder="ชั่วโมง"
+                                        className="h-11 rounded-xl border-[var(--c-d7c5a7)] bg-[var(--c-fffcf5)] text-[14px] font-black text-[var(--c-5c3214)]"
+                                        options={HOUR_OPTIONS.map((hour) => ({ value: hour, label: hour }))}
+                                      />
+                                    </div>
+                                    <div className="flex flex-col gap-2">
+                                      <label className="text-[11px] font-black uppercase tracking-[0.14em] text-[#8E8A81]">นาที</label>
+                                      <Combobox
+                                        value={roundMinutesToNearestFive(getTimeParts(endTime).minute)}
+                                        onValueChange={(v) => updateTimePart("end", "minute", v)}
+                                        aria-label="นาทีจบ"
+                                        searchPlaceholder="นาที"
+                                        className="h-11 rounded-xl border-[var(--c-d7c5a7)] bg-[var(--c-fffcf5)] text-[14px] font-black text-[var(--c-5c3214)]"
+                                        options={MINUTE_OPTIONS.map((minute) => ({ value: minute, label: minute }))}
+                                      />
+                                    </div>
+                                  </div>
+                                </div>
+                              ) : null}
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="mt-3 flex flex-wrap gap-2">
+                          {RANGE_PRESETS.map((preset) => (
+                            <button
+                              key={preset.label}
+                              type="button"
+                              onClick={() => applyRangePreset(preset.days)}
+                              className="rounded-full border border-[var(--c-d7c5a7)] bg-white px-3 py-1.5 text-[12px] font-black text-[var(--c-5c3214)] transition-colors hover:bg-[var(--c-fff3dd)]"
+                            >
+                              จบใน {preset.label}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div className="rounded-[20px] border border-[var(--c-eee2cb)] bg-[var(--c-fffcf6)] p-3.5">
+                        <div className="mb-3 flex items-center gap-2 text-[13px] font-black text-[var(--c-5c3214)]">
+                          <CalendarClock className="h-4 w-4 text-[var(--c-8b5a12)]" strokeWidth={2.2} />
+                          สรุปช่วงเวลา
+                        </div>
+                        <div className="text-[13px] font-bold leading-relaxed text-[var(--c-6e6254)]">{windowLabel}</div>
                       </div>
                     </div>
 
-                    <div className="flex flex-col gap-2">
-                      <Label htmlFor="headline" className="text-[13px] font-black text-[var(--c-5c3214)]">
-                        หัวข้อ
-                      </Label>
-                      <Input
-                        id="headline"
-                        value={headline}
-                        onChange={(event) => updateField("headline", event.target.value)}
-                        className="h-11 rounded-xl border-[var(--c-d7c5a7)] bg-white px-3.5 text-[14px] font-bold text-[#1A1A1A] focus-visible:border-[var(--c-5c3214)] focus-visible:ring-0"
-                      />
-                      {!usingAutoHeadline ? <div className="text-[12px] font-bold text-[var(--c-8b5a12)]">กำลังใช้หัวข้อแบบกำหนดเอง</div> : null}
-                    </div>
+                    <div className="rounded-[20px] border border-[var(--c-eee2cb)] bg-[var(--c-fffcf6)] p-3.5">
+                      <div className="mb-3 text-[13px] font-black text-[var(--c-5c3214)]">รูปแบบโบนัส</div>
+                      <div className="grid grid-cols-1 gap-2">
+                        {BONUS_MODE_OPTIONS.map((option) => (
+                          <button
+                            key={option.id}
+                            type="button"
+                            onClick={() =>
+                              patchEvent(
+                                (current) => ({
+                                  ...current,
+                                  bonusMode: option.id as SafetyCultureBonusMode,
+                                }),
+                                true
+                              )
+                            }
+                            className={cn(
+                              "rounded-[16px] border px-4 py-3 text-left transition-all",
+                              bonusMode === option.id
+                                ? "border-[var(--c-f5bb00)] bg-[var(--c-fff6d6)] text-[#1A1A1A]"
+                                : "border-[var(--c-e3d0ae)] bg-white text-[var(--c-4f4335)] hover:border-[var(--c-c89a4f)]"
+                            )}
+                          >
+                            <div className="flex items-center gap-2 text-[14px] font-black">
+                              <Percent className="h-4 w-4" strokeWidth={2.2} />
+                              {option.label}
+                            </div>
+                            <div className="mt-1 text-[12px] font-bold text-[#8E8A81]">{option.hint}</div>
+                          </button>
+                        ))}
+                      </div>
 
-                    <div className="rounded-[16px] border border-[var(--c-eadcc7)] bg-white px-3 py-2.5">
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="min-w-0">
-                          <div className="text-[11px] font-black uppercase tracking-[0.16em] text-[#8E8A81]">ข้อความรองแนะนำ</div>
-                          <div className="mt-1 line-clamp-2 text-[13px] font-bold text-[var(--c-5c3214)]">{autoSupportingText}</div>
+                      <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                        <div className="flex flex-col gap-2">
+                          <Label htmlFor="multiplier" className="text-[13px] font-black text-[var(--c-5c3214)]">
+                            ค่า Multiplier
+                          </Label>
+                          <Input
+                            id="multiplier"
+                            type="text"
+                            inputMode="decimal"
+                            value={multiplierInput}
+                            onChange={(event) => handleMultiplierChange(event.target.value)}
+                            onBlur={handleMultiplierBlur}
+                            disabled={bonusMode !== "multiplier"}
+                            className="h-11 rounded-xl border-[var(--c-d7c5a7)] bg-white px-3.5 text-[14px] font-bold text-[#1A1A1A] focus-visible:border-[var(--c-5c3214)] focus-visible:ring-0"
+                          />
                         </div>
-                        <Button
-                          variant="outline"
-                          onClick={resetAutoSupportingText}
-                          className="h-8 rounded-lg border-[var(--c-d7c5a7)] bg-white px-3 text-[12px] font-black text-[var(--c-5c3214)] hover:bg-[var(--c-fff4df)]"
-                        >
-                          ใช้
-                        </Button>
+                        <div className="flex flex-col gap-2">
+                          <Label htmlFor="fixed-points" className="text-[13px] font-black text-[var(--c-5c3214)]">
+                            Coin โบนัสคงที่
+                          </Label>
+                          <Input
+                            id="fixed-points"
+                            value={`${fixedPoints}`}
+                            onChange={(event) =>
+                              patchEvent(
+                                (current) => ({
+                                  ...current,
+                                  fixedPoints: Number(event.target.value) || 0,
+                                }),
+                                true
+                              )
+                            }
+                            disabled={bonusMode !== "fixed"}
+                            className="h-11 rounded-xl border-[var(--c-d7c5a7)] bg-white px-3.5 text-[14px] font-bold text-[#1A1A1A] focus-visible:border-[var(--c-5c3214)] focus-visible:ring-0"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </SectionCard>
+
+                <SectionCard
+                  title="กิจกรรมและข้อความ"
+                  description="เลือกกิจกรรมที่ได้โบนัส และปรับข้อความที่ผู้ใช้จะเห็น"
+                  icon={<Megaphone className="h-5 w-5" strokeWidth={2.3} />}
+                >
+                  <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
+                    <div className="rounded-[20px] border border-[var(--c-eee2cb)] bg-[var(--c-fffcf6)] p-3.5">
+                      <div className="mb-3 text-[13px] font-black text-[var(--c-5c3214)]">กิจกรรมที่ได้โบนัส</div>
+                      <div className="grid grid-cols-1 gap-2">
+                        {ACTION_OPTIONS.map((action) => {
+                          const active = enabledActions.includes(action.id);
+
+                          return (
+                            <button
+                              key={action.id}
+                              type="button"
+                              onClick={() => toggleAction(action.id as SafetyCultureEventAction)}
+                              className={cn(
+                                "rounded-[16px] border px-4 py-3 text-left transition-all",
+                                active ? "border-[var(--c-5c3214)] bg-[var(--c-fff1dc)]" : "border-[var(--c-e3d0ae)] bg-white hover:border-[var(--c-c89a4f)]"
+                              )}
+                            >
+                              <div className="flex items-center justify-between gap-2">
+                                <span className="text-[14px] font-black text-[#1A1A1A]">{action.label}</span>
+                                {active ? <CheckCircle2 className="h-4 w-4 text-[var(--c-5c3214)]" strokeWidth={2.4} /> : null}
+                              </div>
+                            </button>
+                          );
+                        })}
                       </div>
                     </div>
 
-                    <div className="flex flex-col gap-2">
-                      <Label htmlFor="supporting-text" className="text-[13px] font-black text-[var(--c-5c3214)]">
-                        ข้อความรอง
-                      </Label>
-                      <Textarea
-                        id="supporting-text"
-                        value={supportingText}
-                        onChange={(event) => updateField("supportingText", event.target.value)}
-                        className="min-h-[104px] rounded-[18px] border-[var(--c-d7c5a7)] bg-white px-3.5 py-3 text-[14px] font-bold leading-relaxed text-[#1A1A1A] focus-visible:border-[var(--c-5c3214)] focus-visible:ring-0"
-                      />
-                      {!usingAutoSupportingText ? <div className="text-[12px] font-bold text-[var(--c-8b5a12)]">กำลังใช้ข้อความรองแบบกำหนดเอง</div> : null}
+                    <div className="rounded-[20px] border border-[var(--c-eee2cb)] bg-[var(--c-fffcf6)] p-3.5">
+                      <div className="mb-3 text-[13px] font-black text-[var(--c-5c3214)]">ข้อความบน Feed</div>
+                      <div className="grid grid-cols-1 gap-3">
+                        <div className="rounded-[16px] border border-[var(--c-eadcc7)] bg-white px-3 py-2.5">
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="min-w-0">
+                              <div className="text-[11px] font-black uppercase tracking-[0.16em] text-[#8E8A81]">หัวข้อแนะนำ</div>
+                              <div className="mt-1 truncate text-[13px] font-bold text-[var(--c-5c3214)]">{autoHeadline}</div>
+                            </div>
+                            <Button
+                              variant="outline"
+                              onClick={resetAutoHeadline}
+                              className="h-8 rounded-lg border-[var(--c-d7c5a7)] bg-white px-3 text-[12px] font-black text-[var(--c-5c3214)] hover:bg-[var(--c-fff4df)]"
+                            >
+                              ใช้
+                            </Button>
+                          </div>
+                        </div>
+
+                        <div className="flex flex-col gap-2">
+                          <Label htmlFor="headline" className="text-[13px] font-black text-[var(--c-5c3214)]">
+                            หัวข้อ
+                          </Label>
+                          <Input
+                            id="headline"
+                            value={headline}
+                            onChange={(event) => updateField("headline", event.target.value)}
+                            className="h-11 rounded-xl border-[var(--c-d7c5a7)] bg-white px-3.5 text-[14px] font-bold text-[#1A1A1A] focus-visible:border-[var(--c-5c3214)] focus-visible:ring-0"
+                          />
+                          {!usingAutoHeadline ? <div className="text-[12px] font-bold text-[var(--c-8b5a12)]">กำลังใช้หัวข้อแบบกำหนดเอง</div> : null}
+                        </div>
+
+                        <div className="rounded-[16px] border border-[var(--c-eadcc7)] bg-white px-3 py-2.5">
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="min-w-0">
+                              <div className="text-[11px] font-black uppercase tracking-[0.16em] text-[#8E8A81]">ข้อความรองแนะนำ</div>
+                              <div className="mt-1 line-clamp-2 text-[13px] font-bold text-[var(--c-5c3214)]">{autoSupportingText}</div>
+                            </div>
+                            <Button
+                              variant="outline"
+                              onClick={resetAutoSupportingText}
+                              className="h-8 rounded-lg border-[var(--c-d7c5a7)] bg-white px-3 text-[12px] font-black text-[var(--c-5c3214)] hover:bg-[var(--c-fff4df)]"
+                            >
+                              ใช้
+                            </Button>
+                          </div>
+                        </div>
+
+                        <div className="flex flex-col gap-2">
+                          <Label htmlFor="supporting-text" className="text-[13px] font-black text-[var(--c-5c3214)]">
+                            ข้อความรอง
+                          </Label>
+                          <Textarea
+                            id="supporting-text"
+                            value={supportingText}
+                            onChange={(event) => updateField("supportingText", event.target.value)}
+                            className="min-h-[104px] rounded-[18px] border-[var(--c-d7c5a7)] bg-white px-3.5 py-3 text-[14px] font-bold leading-relaxed text-[#1A1A1A] focus-visible:border-[var(--c-5c3214)] focus-visible:ring-0"
+                          />
+                          {!usingAutoSupportingText ? <div className="text-[12px] font-bold text-[var(--c-8b5a12)]">กำลังใช้ข้อความรองแบบกำหนดเอง</div> : null}
+                        </div>
+                      </div>
                     </div>
                   </div>
-                </div>
-              </div>
-            </SectionCard>
+                </SectionCard>
               </>
             ) : null}
 
             {editorMode === "feed" ? (
-            <SectionCard
-              title="กิจกรรมบน Feed"
-              description="สร้างการ์ดกิจกรรมสำหรับหน้า Feed และกำหนดรายละเอียดที่จะเปิดเป็น Popup เมื่อผู้ใช้กดดูเพิ่มเติม"
-              icon={<Sparkles className="h-5 w-5" strokeWidth={2.3} />}
-            >
-              <div className="overflow-hidden rounded-[22px] border border-[var(--c-e7d8bc)] bg-[var(--c-fffdf7)] shadow-[0_10px_24px_rgba(62,36,13,0.05)]">
+              <SectionCard
+                title="กิจกรรมบน Feed"
+                description="สร้างการ์ดกิจกรรมสำหรับหน้า Feed และกำหนดรายละเอียดที่จะเปิดเป็น Popup เมื่อผู้ใช้กดดูเพิ่มเติม"
+                icon={<Sparkles className="h-5 w-5" strokeWidth={2.3} />}
+              >
+                <div className="overflow-hidden rounded-[22px] border border-[var(--c-e7d8bc)] bg-[var(--c-fffdf7)] shadow-[0_10px_24px_rgba(62,36,13,0.05)]">
                   <div className="flex flex-col gap-3 border-b border-[var(--c-eee2cb)] px-4 py-4 md:flex-row md:items-start md:justify-between md:px-5">
                     <div>
                       <div className="text-[16px] font-black text-[var(--c-2d241b)] md:text-[18px]">Activities Management</div>
@@ -1462,7 +1462,7 @@ export default function AdminEventPage() {
                       <div className="text-right">จัดการ</div>
                     </div>
 
-                      <div className="divide-y divide-[var(--c-eee2cb)]">
+                    <div className="divide-y divide-[var(--c-eee2cb)]">
                       {draftFeedEvents.map((activity) => {
                         const statusMeta = getFeedEventStatusMeta(activity.status);
                         const active = activity.id === editingFeedEventId;
@@ -1710,74 +1710,74 @@ export default function AdminEventPage() {
                     </div>
                   </div>
                 </div>
-            </SectionCard>
+              </SectionCard>
             ) : null}
           </div>
 
           <div className="flex flex-col gap-4 xl:sticky xl:top-24 xl:self-start">
             {editorMode === "bonus" ? (
               <>
-            <Card className="rounded-[24px] border border-[var(--c-e3d0ae)] bg-[var(--c-fffdfa)] p-4 shadow-[0_8px_18px_rgba(62,36,13,0.04)] md:p-5">
-              <div className="mb-3 flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[var(--c-fff1c9)] text-[var(--c-6d4716)]">
-                  <Clock3 className="h-5 w-5" strokeWidth={2.3} />
-                </div>
-                <div>
-                  <h3 className="text-[17px] font-black text-[#1A1A1A]">สถานะก่อน Publish</h3>
-                  <p className="text-[12px] font-bold text-[#8E8A81]">เช็กเฉพาะสิ่งที่ยังต้องแก้</p>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 gap-2.5">
-                <div
-                  className={cn(
-                    "rounded-[18px] px-3.5 py-3 text-[13px] font-bold",
-                    validation.length > 0
-                      ? "border border-[#e2b4b4] bg-[#fff4f4] text-[#6c2d2d]"
-                      : "border border-[#A7F3D0] bg-[#EAFBF5] text-[#087A5B]"
-                  )}
-                >
-                  {validation.length > 0 ? `ยังเหลือ ${validation.length} จุดที่ต้องแก้ก่อน Publish` : "ค่าจำเป็นครบแล้ว พร้อม Publish"}
-                </div>
-
-                {validation.length > 0
-                  ? validation.map((issue) => (
-                      <div key={issue} className="rounded-[16px] border border-[#e2b4b4] bg-[#fff9f9] px-3 py-2.5 text-[12px] font-bold text-[#6c2d2d]">
-                        {issue}
-                      </div>
-                    ))
-                  : null}
-              </div>
-            </Card>
-
-            <Card className="hidden overflow-hidden rounded-[24px] border border-[var(--c-c89a4f)] bg-[linear-gradient(135deg,var(--c-3f210d)_0%,var(--c-5b3214)_55%,var(--c-714413)_100%)] p-0 text-white shadow-[0_14px_28px_rgba(62,36,13,0.16)] xl:block">
-              <div className="h-2 bg-[repeating-linear-gradient(-45deg,var(--c-ffb000),var(--c-ffb000)_10px,var(--c-15120e)_10px,var(--c-15120e)_20px)]" />
-              <div className="p-4">
-                <div className="mb-3 flex items-center justify-between gap-2">
-                  <span className="rounded-full border border-[var(--c-d89b09)] bg-[rgba(255,176,0,0.14)] px-3 py-1 text-[10px] font-black tracking-[0.12em] text-[var(--c-ffd96a)]">
-                    ตัวอย่างบน FEED
-                  </span>
-                  <span className="text-[12px] font-black text-[var(--c-ffe7b0)]">{windowLabel}</span>
-                </div>
-                {!bannerVisible ? (
-                  <div className="mb-3 rounded-[16px] border border-white/14 bg-white/10 px-3 py-2 text-[12px] font-black text-[var(--c-ffe7b0)]">
-                    Banner นี้ถูกตั้งค่าให้ซ่อนบนหน้า Feed
+                <Card className="rounded-[24px] border border-[var(--c-e3d0ae)] bg-[var(--c-fffdfa)] p-4 shadow-[0_8px_18px_rgba(62,36,13,0.04)] md:p-5">
+                  <div className="mb-3 flex items-center gap-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[var(--c-fff1c9)] text-[var(--c-6d4716)]">
+                      <Clock3 className="h-5 w-5" strokeWidth={2.3} />
+                    </div>
+                    <div>
+                      <h3 className="text-[17px] font-black text-[#1A1A1A]">สถานะก่อน Publish</h3>
+                      <p className="text-[12px] font-bold text-[#8E8A81]">เช็กเฉพาะสิ่งที่ยังต้องแก้</p>
+                    </div>
                   </div>
-                ) : null}
-                <h3 className="text-[24px] font-black leading-tight text-white">{headline || autoHeadline}</h3>
-                <p className="mt-2 text-[13px] font-bold leading-relaxed text-[var(--c-f8ead7)]">{supportingText || autoSupportingText}</p>
-                <div className="mt-4 flex flex-wrap gap-2">
-                  <span className="rounded-full border border-white/12 bg-white/10 px-3 py-1 text-[11px] font-black text-[var(--c-ffe7b0)]">
-                    โบนัส {bonusPreview}
-                  </span>
-                  {selectedActions.map((action) => (
-                    <span key={action.id} className="rounded-full border border-white/12 bg-white/10 px-3 py-1 text-[11px] font-black text-[var(--c-ffe7b0)]">
-                      {action.label}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            </Card>
+
+                  <div className="grid grid-cols-1 gap-2.5">
+                    <div
+                      className={cn(
+                        "rounded-[18px] px-3.5 py-3 text-[13px] font-bold",
+                        validation.length > 0
+                          ? "border border-[#e2b4b4] bg-[#fff4f4] text-[#6c2d2d]"
+                          : "border border-[#A7F3D0] bg-[#EAFBF5] text-[#087A5B]"
+                      )}
+                    >
+                      {validation.length > 0 ? `ยังเหลือ ${validation.length} จุดที่ต้องแก้ก่อน Publish` : "ค่าจำเป็นครบแล้ว พร้อม Publish"}
+                    </div>
+
+                    {validation.length > 0
+                      ? validation.map((issue) => (
+                        <div key={issue} className="rounded-[16px] border border-[#e2b4b4] bg-[#fff9f9] px-3 py-2.5 text-[12px] font-bold text-[#6c2d2d]">
+                          {issue}
+                        </div>
+                      ))
+                      : null}
+                  </div>
+                </Card>
+
+                <Card className="hidden overflow-hidden rounded-[24px] border border-[var(--c-c89a4f)] bg-[linear-gradient(135deg,var(--c-3f210d)_0%,var(--c-5b3214)_55%,var(--c-714413)_100%)] p-0 text-white shadow-[0_14px_28px_rgba(62,36,13,0.16)] xl:block">
+                  <div className="h-2 bg-[repeating-linear-gradient(-45deg,var(--c-ffb000),var(--c-ffb000)_10px,var(--c-15120e)_10px,var(--c-15120e)_20px)]" />
+                  <div className="p-4">
+                    <div className="mb-3 flex items-center justify-between gap-2">
+                      <span className="rounded-full border border-[var(--c-d89b09)] bg-[rgba(255,176,0,0.14)] px-3 py-1 text-[10px] font-black tracking-[0.12em] text-[var(--c-ffd96a)]">
+                        ตัวอย่างบน FEED
+                      </span>
+                      <span className="text-[12px] font-black text-[var(--c-ffe7b0)]">{windowLabel}</span>
+                    </div>
+                    {!bannerVisible ? (
+                      <div className="mb-3 rounded-[16px] border border-white/14 bg-white/10 px-3 py-2 text-[12px] font-black text-[var(--c-ffe7b0)]">
+                        Banner นี้ถูกตั้งค่าให้ซ่อนบนหน้า Feed
+                      </div>
+                    ) : null}
+                    <h3 className="text-[24px] font-black leading-tight text-white">{headline || autoHeadline}</h3>
+                    <p className="mt-2 text-[13px] font-bold leading-relaxed text-[var(--c-f8ead7)]">{supportingText || autoSupportingText}</p>
+                    <div className="mt-4 flex flex-wrap gap-2">
+                      <span className="rounded-full border border-white/12 bg-white/10 px-3 py-1 text-[11px] font-black text-[var(--c-ffe7b0)]">
+                        โบนัส {bonusPreview}
+                      </span>
+                      {selectedActions.map((action) => (
+                        <span key={action.id} className="rounded-full border border-white/12 bg-white/10 px-3 py-1 text-[11px] font-black text-[var(--c-ffe7b0)]">
+                          {action.label}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                </Card>
               </>
             ) : null}
 
@@ -1792,244 +1792,244 @@ export default function AdminEventPage() {
           className="event-editor-popup z-[125] grid max-h-[min(82vh,640px)] w-[calc(100vw-20px)] grid-rows-[auto_minmax(0,1fr)_auto] sm:w-[calc(100vw-32px)] sm:!max-w-[760px] md:!max-w-[780px]"
         >
           {feedModalDraft ? (
-          <>
-            <AppDialogSectionHeader className="flex-row items-start justify-between gap-3 border-[#B9DCFF] bg-[linear-gradient(135deg,#FFFFFF_0%,#F1FAFF_58%,#E5F4FF_100%)] px-4 py-3 sm:px-4.5 sm:py-3.5 md:px-5 md:py-3.5">
-              <div className="min-w-0 pr-2">
-                <AppDialogTitle className="text-[21px] text-[#0B2F6B] sm:text-[23px]">{feedModalTitle}</AppDialogTitle>
-                <AppDialogDescription className="mt-0.5 text-[11.5px] text-[#55739B] sm:text-[12px]">{feedModalDescription}</AppDialogDescription>
-              </div>
-              <button
-                type="button"
-                onClick={closeFeedEditorModal}
-                aria-label="ปิด"
-                className="inline-flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-transparent text-[#0B82F0] transition-colors hover:bg-[#DFF1FF] hover:text-[#0057D9] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0B82F0]/45"
-              >
-                <X className="h-5 w-5" strokeWidth={2.2} />
-              </button>
-            </AppDialogSectionHeader>
+            <>
+              <AppDialogSectionHeader className="flex-row items-start justify-between gap-3 border-[#B9DCFF] bg-[linear-gradient(135deg,#FFFFFF_0%,#F1FAFF_58%,#E5F4FF_100%)] px-4 py-3 sm:px-4.5 sm:py-3.5 md:px-5 md:py-3.5">
+                <div className="min-w-0 pr-2">
+                  <AppDialogTitle className="text-[21px] text-[#0B2F6B] sm:text-[23px]">{feedModalTitle}</AppDialogTitle>
+                  <AppDialogDescription className="mt-0.5 text-[11.5px] text-[#55739B] sm:text-[12px]">{feedModalDescription}</AppDialogDescription>
+                </div>
+                <button
+                  type="button"
+                  onClick={closeFeedEditorModal}
+                  aria-label="ปิด"
+                  className="inline-flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-transparent text-[#0B82F0] transition-colors hover:bg-[#DFF1FF] hover:text-[#0057D9] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0B82F0]/45"
+                >
+                  <X className="h-5 w-5" strokeWidth={2.2} />
+                </button>
+              </AppDialogSectionHeader>
 
-            <AppDialogBody className="min-h-0 overflow-y-auto overscroll-contain px-4 py-4 md:px-5">
-              <div className="rounded-[18px] border border-[#B9DCFF] bg-[#F7FBFF] p-3.5 shadow-[0_12px_26px_rgba(185,220,255,0.18)] sm:p-4">
-                <div className="flex flex-col gap-3">
-                  <div className="text-[15px] font-black text-[#0B2F6B]">ข้อมูลหลักของกิจกรรม</div>
+              <AppDialogBody className="min-h-0 overflow-y-auto overscroll-contain px-4 py-4 md:px-5">
+                <div className="rounded-[18px] border border-[#B9DCFF] bg-[#F7FBFF] p-3.5 shadow-[0_12px_26px_rgba(185,220,255,0.18)] sm:p-4">
+                  <div className="flex flex-col gap-3">
+                    <div className="text-[15px] font-black text-[#0B2F6B]">ข้อมูลหลักของกิจกรรม</div>
 
-                  <div className="grid grid-cols-1 gap-4 md:grid-cols-[minmax(0,1.2fr)_minmax(220px,0.8fr)]">
-                    <div className="flex flex-col gap-3">
-                      <Label className="text-[13px] font-black text-[#075FCC]">หัวข้อกิจกรรม</Label>
-                      <Input
-                        value={feedModalDraft.title}
-                        onChange={(event) => patchFeedModalDraft((current) => ({ ...current, title: event.target.value }))}
-                        placeholder="เช่น เดินสำรวจความปลอดภัย"
-                        className="h-11 rounded-[14px] border-[#B9DCFF] bg-white text-[14px] font-bold text-[#0B2F6B] placeholder:text-[#7FA6CC] focus-visible:border-[#0B82F0] focus-visible:ring-2 focus-visible:ring-[#0B82F0]/20"
-                      />
-
-                      <div className="flex flex-col gap-2">
-                        <Label className="text-[13px] font-black text-[#075FCC]">รายละเอียดกิจกรรม</Label>
-                        <Textarea
-                          value={feedModalDraft.details}
-                          onChange={(event) => patchFeedModalDraft((current) => ({ ...current, details: event.target.value }))}
-                          placeholder="อธิบายวัตถุประสงค์ เงื่อนไข วิธีเข้าร่วม และสิ่งที่ผู้ใช้ต้องส่งให้ครบในส่วนนี้"
-                          className="min-h-[140px] rounded-[18px] border-[#B9DCFF] bg-white text-[14px] font-bold leading-relaxed text-[#0B2F6B] placeholder:text-[#7FA6CC] focus-visible:border-[#0B82F0] focus-visible:ring-2 focus-visible:ring-[#0B82F0]/20"
+                    <div className="grid grid-cols-1 gap-4 md:grid-cols-[minmax(0,1.2fr)_minmax(220px,0.8fr)]">
+                      <div className="flex flex-col gap-3">
+                        <Label className="text-[13px] font-black text-[#075FCC]">หัวข้อกิจกรรม</Label>
+                        <Input
+                          value={feedModalDraft.title}
+                          onChange={(event) => patchFeedModalDraft((current) => ({ ...current, title: event.target.value }))}
+                          placeholder="เช่น เดินสำรวจความปลอดภัย"
+                          className="h-11 rounded-[14px] border-[#B9DCFF] bg-white text-[14px] font-bold text-[#0B2F6B] placeholder:text-[#7FA6CC] focus-visible:border-[#0B82F0] focus-visible:ring-2 focus-visible:ring-[#0B82F0]/20"
                         />
+
+                        <div className="flex flex-col gap-2">
+                          <Label className="text-[13px] font-black text-[#075FCC]">รายละเอียดกิจกรรม</Label>
+                          <Textarea
+                            value={feedModalDraft.details}
+                            onChange={(event) => patchFeedModalDraft((current) => ({ ...current, details: event.target.value }))}
+                            placeholder="อธิบายวัตถุประสงค์ เงื่อนไข วิธีเข้าร่วม และสิ่งที่ผู้ใช้ต้องส่งให้ครบในส่วนนี้"
+                            className="min-h-[140px] rounded-[18px] border-[#B9DCFF] bg-white text-[14px] font-bold leading-relaxed text-[#0B2F6B] placeholder:text-[#7FA6CC] focus-visible:border-[#0B82F0] focus-visible:ring-2 focus-visible:ring-[#0B82F0]/20"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 gap-4">
+                        <div className="rounded-[18px] border border-[#D7EAFE] bg-white p-3.5 shadow-[0_8px_18px_rgba(185,220,255,0.14)]">
+                          <div className="flex flex-col gap-2">
+                            <Label className="text-[13px] font-black text-[#075FCC]">Coin กิจกรรม</Label>
+                            <Input
+                              type="number"
+                              min={0}
+                              inputMode="numeric"
+                              value={`${feedModalDraft.points}`}
+                              onChange={(event) =>
+                                patchFeedModalDraft((current) => ({
+                                  ...current,
+                                  points: Number(event.target.value) || 0,
+                                }))
+                              }
+                              className="h-11 rounded-[14px] border-[#B9DCFF] bg-white text-[14px] font-bold text-[#0B2F6B] focus-visible:border-[#0B82F0] focus-visible:ring-2 focus-visible:ring-[#0B82F0]/20"
+                            />
+                            <div className="text-[12px] font-bold leading-relaxed text-[#55739B]">Coin หลักของกิจกรรม</div>
+                          </div>
+                        </div>
+
+                        <div className="rounded-[18px] border border-[#D7EAFE] bg-white p-3.5 shadow-[0_8px_18px_rgba(185,220,255,0.14)]">
+                          <div className="flex flex-col gap-2">
+                            <Label className="text-[13px] font-black text-[#075FCC]">ข้อความรองบนการ์ด</Label>
+                            <Input
+                              value={feedModalDraft.subtitle}
+                              onChange={(event) => patchFeedModalDraft((current) => ({ ...current, subtitle: event.target.value }))}
+                              placeholder="เช่น รายละเอียดและการส่งกิจกรรม"
+                              className="h-11 rounded-[14px] border-[#B9DCFF] bg-white text-[14px] font-bold text-[#0B2F6B] placeholder:text-[#7FA6CC] focus-visible:border-[#0B82F0] focus-visible:ring-2 focus-visible:ring-[#0B82F0]/20"
+                            />
+                            <div className="text-[12px] font-bold leading-relaxed text-[#55739B]">ข้อความรองสั้น ๆ บนการ์ดหรือ popup</div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 gap-4 md:grid-cols-[minmax(0,1.1fr)_minmax(220px,0.9fr)]">
+                      <div className="flex flex-col gap-3 rounded-[18px] border border-[#D7EAFE] bg-white p-3.5 shadow-[0_8px_18px_rgba(185,220,255,0.14)]">
+                        <Label className="text-[13px] font-black text-[#075FCC]">ช่วงเวลากิจกรรม</Label>
+                        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                          <div className="flex flex-col gap-2">
+                            <Label className="text-[12px] font-black text-[#55739B]">วันที่เริ่ม</Label>
+                            <Input
+                              type="date"
+                              value={feedModalDraft.startDate || ""}
+                              onChange={(event) =>
+                                patchFeedModalDraft((current) => ({
+                                  ...current,
+                                  startDate: event.target.value,
+                                  endDate:
+                                    current.endDate && event.target.value && current.endDate < event.target.value
+                                      ? event.target.value
+                                      : current.endDate,
+                                }))
+                              }
+                              className="h-11 rounded-[14px] border-[#B9DCFF] bg-white text-[14px] font-bold text-[#0B2F6B] focus-visible:border-[#0B82F0] focus-visible:ring-2 focus-visible:ring-[#0B82F0]/20"
+                            />
+                          </div>
+                          <div className="flex flex-col gap-2">
+                            <Label className="text-[12px] font-black text-[#55739B]">วันที่สิ้นสุด</Label>
+                            <Input
+                              type="date"
+                              min={feedModalDraft.startDate || undefined}
+                              value={feedModalDraft.endDate || ""}
+                              onChange={(event) =>
+                                patchFeedModalDraft((current) => ({
+                                  ...current,
+                                  endDate: event.target.value,
+                                }))
+                              }
+                              className="h-11 rounded-[14px] border-[#B9DCFF] bg-white text-[14px] font-bold text-[#0B2F6B] focus-visible:border-[#0B82F0] focus-visible:ring-2 focus-visible:ring-[#0B82F0]/20"
+                            />
+                          </div>
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          {[7, 14, 30].map((days) => (
+                            <button
+                              key={days}
+                              type="button"
+                              disabled={!feedModalDraft.startDate}
+                              onClick={() =>
+                                patchFeedModalDraft((current) => ({
+                                  ...current,
+                                  endDate: addDaysToDateString(current.startDate || "", days - 1),
+                                }))
+                              }
+                              className="rounded-full border border-[#B9DCFF] bg-[#F4FAFF] px-3 py-1.5 text-[12px] font-black text-[#075FCC] transition-colors hover:border-[#35A8FF] hover:bg-[#EAF6FF] disabled:cursor-not-allowed disabled:opacity-45"
+                            >
+                              {days} วัน
+                            </button>
+                          ))}
+                        </div>
+                        <div className={cn("text-[12px] font-bold leading-relaxed", feedModalDurationMeta.tone)}>
+                          {feedModalDurationMeta.label}
+                        </div>
+                      </div>
+
+                      <div className="rounded-[18px] border border-[#D7EAFE] bg-white p-3.5 shadow-[0_8px_18px_rgba(185,220,255,0.14)]">
+                        <div className="flex flex-col gap-2">
+                          <Label className="text-[13px] font-black text-[#075FCC]">สถานะ</Label>
+                          <div className="grid grid-cols-2 gap-2">
+                            {(["open", "closed"] as const).map((statusOption) => {
+                              const meta = getFeedEventStatusMeta(statusOption);
+                              return (
+                                <button
+                                  key={statusOption}
+                                  type="button"
+                                  onClick={() => patchFeedModalDraft((current) => ({ ...current, status: statusOption }))}
+                                  className={cn(
+                                    "min-h-[52px] rounded-[14px] border px-3 py-2 text-[12px] font-black leading-tight transition-all",
+                                    feedModalDraft.status === statusOption ? meta.tone : "border-[#B9DCFF] bg-[#F4FAFF] text-[#55739B] hover:border-[#35A8FF] hover:bg-[#EAF6FF] hover:text-[#075FCC]"
+                                  )}
+                                >
+                                  {meta.label}
+                                </button>
+                              );
+                            })}
+                          </div>
+                          <div className="text-[12px] font-bold leading-relaxed text-[#55739B]">เปิดหรือปิดรับกิจกรรม</div>
+                        </div>
+                      </div>
+
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-4 rounded-[18px] border border-[#B9DCFF] bg-[#F7FBFF] p-3.5 shadow-[0_12px_26px_rgba(185,220,255,0.18)] sm:p-4">
+                  <div className="flex flex-col gap-3">
+                    <div className="flex items-center justify-between gap-3">
+                      <div>
+                        <div className="text-[15px] font-black text-[#0B2F6B]">การแสดงผลบนการ์ด</div>
                       </div>
                     </div>
 
                     <div className="grid grid-cols-1 gap-4">
-                      <div className="rounded-[18px] border border-[#D7EAFE] bg-white p-3.5 shadow-[0_8px_18px_rgba(185,220,255,0.14)]">
-                        <div className="flex flex-col gap-2">
-                          <Label className="text-[13px] font-black text-[#075FCC]">Coin กิจกรรม</Label>
-                          <Input
-                            type="number"
-                            min={0}
-                            inputMode="numeric"
-                            value={`${feedModalDraft.points}`}
-                            onChange={(event) =>
-                              patchFeedModalDraft((current) => ({
-                                ...current,
-                                points: Number(event.target.value) || 0,
-                              }))
-                            }
-                            className="h-11 rounded-[14px] border-[#B9DCFF] bg-white text-[14px] font-bold text-[#0B2F6B] focus-visible:border-[#0B82F0] focus-visible:ring-2 focus-visible:ring-[#0B82F0]/20"
-                          />
-                          <div className="text-[12px] font-bold leading-relaxed text-[#55739B]">Coin หลักของกิจกรรม</div>
-                        </div>
-                      </div>
-
-                      <div className="rounded-[18px] border border-[#D7EAFE] bg-white p-3.5 shadow-[0_8px_18px_rgba(185,220,255,0.14)]">
-                        <div className="flex flex-col gap-2">
-                          <Label className="text-[13px] font-black text-[#075FCC]">ข้อความรองบนการ์ด</Label>
-                          <Input
-                            value={feedModalDraft.subtitle}
-                            onChange={(event) => patchFeedModalDraft((current) => ({ ...current, subtitle: event.target.value }))}
-                            placeholder="เช่น รายละเอียดและการส่งกิจกรรม"
-                            className="h-11 rounded-[14px] border-[#B9DCFF] bg-white text-[14px] font-bold text-[#0B2F6B] placeholder:text-[#7FA6CC] focus-visible:border-[#0B82F0] focus-visible:ring-2 focus-visible:ring-[#0B82F0]/20"
-                          />
-                          <div className="text-[12px] font-bold leading-relaxed text-[#55739B]">ข้อความรองสั้น ๆ บนการ์ดหรือ popup</div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 gap-4 md:grid-cols-[minmax(0,1.1fr)_minmax(220px,0.9fr)]">
-                    <div className="flex flex-col gap-3 rounded-[18px] border border-[#D7EAFE] bg-white p-3.5 shadow-[0_8px_18px_rgba(185,220,255,0.14)]">
-                      <Label className="text-[13px] font-black text-[#075FCC]">ช่วงเวลากิจกรรม</Label>
-                      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                        <div className="flex flex-col gap-2">
-                          <Label className="text-[12px] font-black text-[#55739B]">วันที่เริ่ม</Label>
-                          <Input
-                            type="date"
-                            value={feedModalDraft.startDate || ""}
-                            onChange={(event) =>
-                              patchFeedModalDraft((current) => ({
-                                ...current,
-                                startDate: event.target.value,
-                                endDate:
-                                  current.endDate && event.target.value && current.endDate < event.target.value
-                                    ? event.target.value
-                                    : current.endDate,
-                              }))
-                            }
-                            className="h-11 rounded-[14px] border-[#B9DCFF] bg-white text-[14px] font-bold text-[#0B2F6B] focus-visible:border-[#0B82F0] focus-visible:ring-2 focus-visible:ring-[#0B82F0]/20"
-                          />
-                        </div>
-                        <div className="flex flex-col gap-2">
-                          <Label className="text-[12px] font-black text-[#55739B]">วันที่สิ้นสุด</Label>
-                          <Input
-                            type="date"
-                            min={feedModalDraft.startDate || undefined}
-                            value={feedModalDraft.endDate || ""}
-                            onChange={(event) =>
-                              patchFeedModalDraft((current) => ({
-                                ...current,
-                                endDate: event.target.value,
-                              }))
-                            }
-                            className="h-11 rounded-[14px] border-[#B9DCFF] bg-white text-[14px] font-bold text-[#0B2F6B] focus-visible:border-[#0B82F0] focus-visible:ring-2 focus-visible:ring-[#0B82F0]/20"
-                          />
-                        </div>
-                      </div>
-                      <div className="flex flex-wrap gap-2">
-                        {[7, 14, 30].map((days) => (
-                          <button
-                            key={days}
-                            type="button"
-                            disabled={!feedModalDraft.startDate}
-                            onClick={() =>
-                              patchFeedModalDraft((current) => ({
-                                ...current,
-                                endDate: addDaysToDateString(current.startDate || "", days - 1),
-                              }))
-                            }
-                            className="rounded-full border border-[#B9DCFF] bg-[#F4FAFF] px-3 py-1.5 text-[12px] font-black text-[#075FCC] transition-colors hover:border-[#35A8FF] hover:bg-[#EAF6FF] disabled:cursor-not-allowed disabled:opacity-45"
-                          >
-                            {days} วัน
-                          </button>
-                        ))}
-                      </div>
-                      <div className={cn("text-[12px] font-bold leading-relaxed", feedModalDurationMeta.tone)}>
-                        {feedModalDurationMeta.label}
-                      </div>
-                    </div>
-
-                    <div className="rounded-[18px] border border-[#D7EAFE] bg-white p-3.5 shadow-[0_8px_18px_rgba(185,220,255,0.14)]">
                       <div className="flex flex-col gap-2">
-                        <Label className="text-[13px] font-black text-[#075FCC]">สถานะ</Label>
+                        <Label className="text-[13px] font-black text-[#075FCC]">รูปกิจกรรม</Label>
+                        <div className="overflow-hidden rounded-[20px] border border-[#D7EAFE] bg-white shadow-[0_8px_18px_rgba(185,220,255,0.14)]">
+                          <div className="relative min-h-[220px] overflow-hidden bg-[#EAF6FF] lg:min-h-[260px]">
+                            {feedModalDraft.imageSrc ? (
+                              <img src={feedModalDraft.imageSrc} alt={feedModalDraft.title} className="absolute inset-0 block h-full w-full object-cover" />
+                            ) : (
+                              <div className="flex min-h-[220px] items-center justify-center px-6 text-center text-[16px] font-black text-[#55739B] lg:min-h-[260px]">
+                                {feedModalDraft.imageText}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        <input
+                          ref={imageInputRef}
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={(event) => {
+                            void handleFeedModalImageChange(event.target.files?.[0]);
+                            event.currentTarget.value = "";
+                          }}
+                        />
+
                         <div className="grid grid-cols-2 gap-2">
-                          {(["open", "closed"] as const).map((statusOption) => {
-                            const meta = getFeedEventStatusMeta(statusOption);
-                            return (
-                              <button
-                                key={statusOption}
-                                type="button"
-                                onClick={() => patchFeedModalDraft((current) => ({ ...current, status: statusOption }))}
-                                className={cn(
-                                  "min-h-[52px] rounded-[14px] border px-3 py-2 text-[12px] font-black leading-tight transition-all",
-                                  feedModalDraft.status === statusOption ? meta.tone : "border-[#B9DCFF] bg-[#F4FAFF] text-[#55739B] hover:border-[#35A8FF] hover:bg-[#EAF6FF] hover:text-[#075FCC]"
-                                )}
-                              >
-                                {meta.label}
-                              </button>
-                            );
-                          })}
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => imageInputRef.current?.click()}
+                            className="h-10 rounded-[14px] text-[12px] font-black text-[#075FCC] [&_svg]:text-[#0B82F0]"
+                          >
+                            <FileImage className="mr-1 h-4 w-4" />
+                            เปลี่ยนรูป
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => patchFeedModalDraft((current) => ({ ...current, imageSrc: null }))}
+                            className="h-10 rounded-[14px] border-[#FFD1C2] bg-[#FFF6F2] text-[12px] font-black text-[#D94A2B] hover:border-[#FF8A6B] hover:bg-[#FFEDE6] hover:text-[#B8321F]"
+                          >
+                            ล้างรูป
+                          </Button>
                         </div>
-                        <div className="text-[12px] font-bold leading-relaxed text-[#55739B]">เปิดหรือปิดรับกิจกรรม</div>
-                      </div>
-                    </div>
-
-                  </div>
-                </div>
-              </div>
-
-              <div className="mt-4 rounded-[18px] border border-[#B9DCFF] bg-[#F7FBFF] p-3.5 shadow-[0_12px_26px_rgba(185,220,255,0.18)] sm:p-4">
-                <div className="flex flex-col gap-3">
-                  <div className="flex items-center justify-between gap-3">
-                    <div>
-                      <div className="text-[15px] font-black text-[#0B2F6B]">การแสดงผลบนการ์ด</div>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 gap-4">
-                    <div className="flex flex-col gap-2">
-                      <Label className="text-[13px] font-black text-[#075FCC]">รูปกิจกรรม</Label>
-                      <div className="overflow-hidden rounded-[20px] border border-[#D7EAFE] bg-white shadow-[0_8px_18px_rgba(185,220,255,0.14)]">
-                        <div className="relative min-h-[220px] overflow-hidden bg-[#EAF6FF] lg:min-h-[260px]">
-                          {feedModalDraft.imageSrc ? (
-                            <img src={feedModalDraft.imageSrc} alt={feedModalDraft.title} className="absolute inset-0 block h-full w-full object-cover" />
-                          ) : (
-                            <div className="flex min-h-[220px] items-center justify-center px-6 text-center text-[16px] font-black text-[#55739B] lg:min-h-[260px]">
-                              {feedModalDraft.imageText}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-
-                      <input
-                        ref={imageInputRef}
-                        type="file"
-                        accept="image/*"
-                        className="hidden"
-                        onChange={(event) => {
-                          void handleFeedModalImageChange(event.target.files?.[0]);
-                          event.currentTarget.value = "";
-                        }}
-                      />
-
-                      <div className="grid grid-cols-2 gap-2">
-                        <Button
-                          type="button"
-                          variant="outline"
-                          onClick={() => imageInputRef.current?.click()}
-                          className="h-10 rounded-[14px] text-[12px] font-black text-[#075FCC] [&_svg]:text-[#0B82F0]"
-                        >
-                          <FileImage className="mr-1 h-4 w-4" />
-                          เปลี่ยนรูป
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          onClick={() => patchFeedModalDraft((current) => ({ ...current, imageSrc: null }))}
-                          className="h-10 rounded-[14px] border-[#FFD1C2] bg-[#FFF6F2] text-[12px] font-black text-[#D94A2B] hover:border-[#FF8A6B] hover:bg-[#FFEDE6] hover:text-[#B8321F]"
-                        >
-                          ล้างรูป
-                        </Button>
                       </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            </AppDialogBody>
+              </AppDialogBody>
 
-            <AppDialogSectionFooter className="px-4 py-3 sm:px-5">
-              <Button
-                type="button"
-                onClick={handleApplyFeedModal}
-                disabled={isSavingFeedEvents}
-                className="h-11 rounded-full bg-[#0B82F0] px-6 text-[13px] font-black text-white hover:bg-[#0973d6] disabled:opacity-50 transition-colors"
-              >
-                {isSavingFeedEvents ? "กำลังบันทึก..." : "บันทึก"}
-              </Button>
-            </AppDialogSectionFooter>
-          </>
+              <AppDialogSectionFooter className="px-4 py-3 sm:px-5">
+                <Button
+                  type="button"
+                  onClick={handleApplyFeedModal}
+                  disabled={isSavingFeedEvents}
+                  className="h-11 rounded-full bg-[#0B82F0] px-6 text-[13px] font-black text-white hover:bg-[#0973d6] disabled:opacity-50 transition-colors"
+                >
+                  {isSavingFeedEvents ? "กำลังบันทึก..." : "บันทึก"}
+                </Button>
+              </AppDialogSectionFooter>
+            </>
           ) : null}
         </AppDialogContent>
       </Dialog>
@@ -2037,43 +2037,35 @@ export default function AdminEventPage() {
       <Dialog open={!!pendingDeleteFeedEvent} onOpenChange={(open) => !open && closeDeleteFeedEventPrompt()}>
         <AppDialogContent aria-label="ยืนยันการลบกิจกรรม" className="z-[125] max-w-110">
           {pendingDeleteFeedEvent ? (
-          <>
-            <AppDialogSectionHeader>
-              <AppDialogTitle className="text-[#7d3434]">ยืนยันก่อนลบ</AppDialogTitle>
-              <AppDialogDescription className="mt-1">
-                กิจกรรมนี้จะถูกลบออกจากรายการบน Feed ทันทีเมื่อกดยืนยัน
-              </AppDialogDescription>
-            </AppDialogSectionHeader>
+            <>
+              <AppDialogSectionHeader>
+                <AppDialogTitle className="text-[#7d3434]">ยืนยันก่อนลบ</AppDialogTitle>
+                <AppDialogDescription className="mt-1">
+                  กิจกรรมนี้จะถูกลบออกจากรายการบน Feed ทันทีเมื่อกดยืนยัน
+                </AppDialogDescription>
+              </AppDialogSectionHeader>
 
-            <AppDialogBody>
-              <div className="rounded-[20px] border border-[#f0d8d8] bg-[#fff7f7] px-4 py-4">
-                <div className="text-[12px] font-black uppercase tracking-[0.12em] text-[#c05a5a]">Delete Activity</div>
-                <div className="mt-2 text-[18px] font-black text-[#2b2119]">{pendingDeleteFeedEvent.title}</div>
-                <div className="mt-2 text-[13px] font-bold leading-relaxed text-[#7b6d63]">
-                  หากลบแล้วจะต้องสร้างกิจกรรมใหม่หรือกู้คืนจากข้อมูลเดิมด้วยตนเอง
+              <AppDialogBody>
+                <div className="rounded-[20px] border border-[#f0d8d8] bg-[#fff7f7] px-4 py-4">
+                  <div className="text-[12px] font-black uppercase tracking-[0.12em] text-[#c05a5a]">Delete Activity</div>
+                  <div className="mt-2 text-[18px] font-black text-[#2b2119]">{pendingDeleteFeedEvent.title}</div>
+                  <div className="mt-2 text-[13px] font-bold leading-relaxed text-[#7b6d63]">
+                    หากลบแล้วจะต้องสร้างกิจกรรมใหม่หรือกู้คืนจากข้อมูลเดิมด้วยตนเอง
+                  </div>
                 </div>
-              </div>
-            </AppDialogBody>
+              </AppDialogBody>
 
-            <AppDialogSectionFooter>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={closeDeleteFeedEventPrompt}
-                className="h-10 rounded-[14px] border-(--c-d7c5a7) bg-white px-4 text-[13px] font-black text-(--c-5c3214) hover:bg-(--c-fff4df)"
-              >
-                ยกเลิก
-              </Button>
+              <AppDialogSectionFooter>
               <Button
                 type="button"
                 onClick={confirmDeleteFeedEvent}
                 disabled={isSavingFeedEvents}
-                className="h-10 rounded-[14px] bg-[#b74242] px-4 text-[13px] font-black text-white hover:bg-[#a33636]"
+                className="h-10 rounded-[14px] bg-[#b3271a] px-4 text-[13px] font-black text-white hover:bg-[#962113]"
               >
                 {isSavingFeedEvents ? "กำลังลบ..." : "ลบกิจกรรมนี้"}
               </Button>
-            </AppDialogSectionFooter>
-          </>
+              </AppDialogSectionFooter>
+            </>
           ) : null}
         </AppDialogContent>
       </Dialog>

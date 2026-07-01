@@ -237,6 +237,8 @@ type AppState = {
   awarenessActiveStartTime: string;
   awarenessActiveEndTime: string;
   awarenessScheduleStartDate: string;
+  awarenessScheduleEndDate: string;
+  awarenessDescription: string;
   /** วันแรกที่ผู้ใช้เริ่มใช้งาน (YYYY-MM-DD). วันก่อนหน้านี้จะไม่ถูกนับใน KPI. */
   awarenessStartDate: string;
   isEventLive: boolean;
@@ -270,6 +272,8 @@ type AppActions = {
   updateAwarenessWeekdays: (weekdays: number[]) => Promise<boolean>;
   updateAwarenessTimeWindow: (startTime: string, endTime: string) => Promise<boolean>;
   updateAwarenessScheduleStartDate: (startDate: string) => Promise<boolean>;
+  updateAwarenessScheduleEndDate: (endDate: string) => Promise<boolean>;
+  updateAwarenessDescription: (description: string) => Promise<boolean>;
   /** Mark today's Safety Awareness popup as completed. */
   markAwarenessDone: (completion: Omit<AwarenessCompletion, "date" | "completedAt">) => Promise<boolean>;
   awardSafetyEffortCompletion: (sourceId: string, label?: string) => void;
@@ -1629,6 +1633,8 @@ export function AppProviders({ children }: { children: ReactNode }) {
   const [awarenessActiveStartTime, setAwarenessActiveStartTimeState] = useState<string>("08:00");
   const [awarenessActiveEndTime, setAwarenessActiveEndTimeState] = useState<string>("17:00");
   const [awarenessScheduleStartDate, setAwarenessScheduleStartDateState] = useState<string>("");
+  const [awarenessScheduleEndDate, setAwarenessScheduleEndDateState] = useState<string>("");
+  const [awarenessDescription, setAwarenessDescriptionState] = useState<string>("");
   const [eventNow, setEventNow] = useState(0);
   const postsRef = useRef<Post[]>([]);
   const demoModeRef = useRef(false);
@@ -1740,8 +1746,9 @@ export function AppProviders({ children }: { children: ReactNode }) {
     }
 
     if (teamsResult.ok && Array.isArray(teamsResult.data?.items)) {
-      const maxPoints = Math.max(1, ...teamsResult.data.items.map((item) => Number(item.points || 0)));
-      setTeamStandings(teamsResult.data.items.map((item, index) => ({
+      const sortedItems = [...teamsResult.data.items].sort((a, b) => Number(b.points || 0) - Number(a.points || 0));
+      const maxPoints = Math.max(1, ...sortedItems.map((item) => Number(item.points || 0)));
+      setTeamStandings(sortedItems.map((item, index) => ({
         id: String(item.id),
         code: String(item.code || item.team_code || item.teamCode || ""),
         rank: index + 1,
@@ -1856,7 +1863,9 @@ export function AppProviders({ children }: { children: ReactNode }) {
         awarenessWeekdaysResult,
         campaignStartDateResult,
         campaignEndDateResult,
-        awarenessScheduleStartDateResult
+        awarenessScheduleStartDateResult,
+        awarenessScheduleEndDateResult,
+        awarenessDescriptionResult
       ] = await Promise.all([
         apiFetch<{ items: ApiPost[] }>("/api/safety-culture/posts?limit=50"),
         apiFetch<{ balance: { balance: number } }>("/api/safety-culture/points/me"),
@@ -1875,6 +1884,8 @@ export function AppProviders({ children }: { children: ReactNode }) {
         apiFetch<{ setting: { setting_value?: unknown } | null }>("/api/safety-settings?key=safety_awareness_active_start_time"),
         apiFetch<{ setting: { setting_value?: unknown } | null }>("/api/safety-settings?key=safety_awareness_active_end_time"),
         apiFetch<{ setting: { setting_value?: unknown } | null }>("/api/safety-settings?key=safety_awareness_schedule_start_date"),
+        apiFetch<{ setting: { setting_value?: unknown } | null }>("/api/safety-settings?key=safety_awareness_schedule_end_date"),
+        apiFetch<{ setting: { setting_value?: unknown } | null }>("/api/safety-settings?key=safety_awareness_description"),
       ]);
 
       if (cancelled) return;
@@ -1943,8 +1954,9 @@ export function AppProviders({ children }: { children: ReactNode }) {
       }
 
       if (teamsResult.ok && Array.isArray(teamsResult.data?.items)) {
-        const maxPoints = Math.max(1, ...teamsResult.data.items.map((item) => Number(item.points || 0)));
-        setTeamStandings(teamsResult.data.items.map((item, index) => ({
+        const sortedItems = [...teamsResult.data.items].sort((a, b) => Number(b.points || 0) - Number(a.points || 0));
+        const maxPoints = Math.max(1, ...sortedItems.map((item) => Number(item.points || 0)));
+        setTeamStandings(sortedItems.map((item, index) => ({
           id: String(item.id),
           code: String(item.code || item.team_code || item.teamCode || ""),
           rank: index + 1,
@@ -2038,6 +2050,22 @@ export function AppProviders({ children }: { children: ReactNode }) {
         const value = typeof raw === "string" ? JSON.parse(raw) : raw;
         if (value && typeof value === "object" && value.startDate !== undefined) {
           setAwarenessScheduleStartDateState(String(value.startDate || ""));
+        }
+      }
+
+      if (awarenessScheduleEndDateResult && awarenessScheduleEndDateResult.ok && awarenessScheduleEndDateResult.data?.setting) {
+        const raw = awarenessScheduleEndDateResult.data.setting.setting_value;
+        const value = typeof raw === "string" ? JSON.parse(raw) : raw;
+        if (value && typeof value === "object" && value.endDate !== undefined) {
+          setAwarenessScheduleEndDateState(String(value.endDate || ""));
+        }
+      }
+
+      if (awarenessDescriptionResult && awarenessDescriptionResult.ok && awarenessDescriptionResult.data?.setting) {
+        const raw = awarenessDescriptionResult.data.setting.setting_value;
+        const value = typeof raw === "string" ? JSON.parse(raw) : raw;
+        if (value && typeof value === "object" && value.description !== undefined) {
+          setAwarenessDescriptionState(String(value.description || ""));
         }
       }
 
@@ -2728,6 +2756,22 @@ export function AppProviders({ children }: { children: ReactNode }) {
     return true;
   }, []);
 
+  const updateAwarenessScheduleEndDate = useCallback(async (endDate: string) => {
+    setAwarenessScheduleEndDateState(endDate);
+    if (isAuthenticatedRef.current) {
+      void apiFetch("/api/safety-settings?key=safety_awareness_schedule_end_date", apiJson("PUT", { value: { endDate } })).catch(() => null);
+    }
+    return true;
+  }, []);
+
+  const updateAwarenessDescription = useCallback(async (description: string) => {
+    setAwarenessDescriptionState(description);
+    if (isAuthenticatedRef.current) {
+      void apiFetch("/api/safety-settings?key=safety_awareness_description", apiJson("PUT", { value: { description } })).catch(() => null);
+    }
+    return true;
+  }, []);
+
   const updateAwarenessQuestions = useCallback((questions: SafetyAwarenessQuestion[]) => {
     const existingByText = new Map(
       awarenessQuestions.map((question) => [question.text.trim(), question]),
@@ -3015,6 +3059,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
         return currentMin >= startMin && currentMin <= endMin;
       })() &&
       (!awarenessScheduleStartDate || awarenessTodayKey >= awarenessScheduleStartDate) &&
+      (!awarenessScheduleEndDate || awarenessTodayKey <= awarenessScheduleEndDate) &&
       !awarenessHolidays.some((holiday) => holiday.date === awarenessTodayKey) &&
       ![0, 6].includes(awarenessBangkokDay),
     awarenessEnabled,
@@ -3022,6 +3067,8 @@ export function AppProviders({ children }: { children: ReactNode }) {
     awarenessActiveStartTime,
     awarenessActiveEndTime,
     awarenessScheduleStartDate,
+    awarenessScheduleEndDate,
+    awarenessDescription,
     awarenessStartDate,
     isEventLive: isSafetyCultureEventLive(safetyCultureEvent, eventNow),
     eventNow,
@@ -3054,6 +3101,8 @@ export function AppProviders({ children }: { children: ReactNode }) {
     updateAwarenessWeekdays,
     updateAwarenessTimeWindow,
     updateAwarenessScheduleStartDate,
+    updateAwarenessScheduleEndDate,
+    updateAwarenessDescription,
     markAwarenessDone,
     awardSafetyEffortCompletion,
     redeemPoints,
