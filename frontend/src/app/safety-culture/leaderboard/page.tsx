@@ -225,7 +225,7 @@ export default function LeaderboardPage() {
                   {/* points */}
                   <div className="flex-shrink-0 text-right">
                     <p className="text-[16px] leading-none font-black text-[var(--foreground)] md:text-[20px]">{team.points.toLocaleString()}</p>
-                    <p className="mt-0.5 text-[9px] font-bold uppercase tracking-[0.1em] text-[var(--brand-muted-text)]">{POINT_UNIT}</p>
+                    <p className="mt-0.5 text-[9px] font-bold tracking-[0.1em] text-[var(--brand-muted-text)]">{POINT_UNIT}</p>
                   </div>
                 </button>
               ))}
@@ -306,7 +306,7 @@ export default function LeaderboardPage() {
 
                     <div className="flex-shrink-0 text-right">
                       <p className="text-[16px] leading-none font-black text-[var(--foreground)] md:text-[20px]">{user.points}</p>
-                      <p className="mt-0.5 text-[9px] font-bold uppercase tracking-[0.1em] text-[var(--brand-muted-text)]">{POINT_UNIT}</p>
+                      <p className="mt-0.5 text-[9px] font-bold tracking-[0.1em] text-[var(--brand-muted-text)]">{POINT_UNIT}</p>
                     </div>
                   </article>
                 );

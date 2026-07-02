@@ -256,7 +256,7 @@ function PersonalRankingsCard({ className, style }: { className?: string; style?
 
             <div className="flex-shrink-0 text-right">
               <p className="text-[20px] leading-none font-black text-[var(--foreground)]">{user.points}</p>
-              <p className="mt-1 text-[10px] font-bold uppercase tracking-[0.12em] text-[var(--brand-muted-text)]">{POINT_UNIT}</p>
+              <p className="mt-1 text-[10px] font-bold tracking-[0.12em] text-[var(--brand-muted-text)]">{POINT_UNIT}</p>
             </div>
           </article>
         ))}
