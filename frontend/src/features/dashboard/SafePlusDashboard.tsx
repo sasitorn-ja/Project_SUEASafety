@@ -150,15 +150,17 @@ function normalizeHomeHeroSlides(value: unknown): HomeHeroSlide[] {
     .map((item, index) => {
       const record = item && typeof item === "object" ? item as Record<string, unknown> : {};
       const fallback = HOME_HERO_SLIDES[index % HOME_HERO_SLIDES.length];
+      const enabled = record.enabled !== false;
       return {
         id: String(record.id || fallback.id || `home-hero-${index + 1}`),
         imageSrc: String(record.imageSrc || fallback.imageSrc || HERO_BG),
         eyebrow: String(record.eyebrow || fallback.eyebrow || ""),
         title: String(record.title || fallback.title || "Safety Caring"),
         description: String(record.description || fallback.description || ""),
+        enabled,
       };
     })
-    .filter((slide) => slide.title.trim() || slide.description.trim() || slide.imageSrc.trim());
+    .filter((slide) => slide.enabled && (slide.title.trim() || slide.description.trim() || slide.imageSrc.trim()));
   return slides.length > 0 ? slides : [...HOME_HERO_SLIDES];
 }
 

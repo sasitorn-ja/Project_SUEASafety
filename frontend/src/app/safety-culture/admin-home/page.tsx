@@ -121,6 +121,7 @@ export default function AdminHomeHeroPage() {
   // Add / Edit Banner Modal state
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [editingSlideId, setEditingSlideId] = useState<string | null>(null);
+  const [deleteConfirmSlideId, setDeleteConfirmSlideId] = useState<string | null>(null);
   const [newEyebrow, setNewEyebrow] = useState("ข่าวสารระบบ");
   const [newTitle, setNewTitle] = useState("");
   const [newDescription, setNewDescription] = useState("");
@@ -270,11 +271,18 @@ export default function AdminHomeHeroPage() {
       window.alert("ต้องมี Banner อย่างน้อย 1 รายการ");
       return;
     }
+    setDeleteConfirmSlideId(id);
+  };
+
+  const handleConfirmDeleteBanner = () => {
+    if (!deleteConfirmSlideId) return;
+    const id = deleteConfirmSlideId;
     const next = slides.filter(s => s.id !== id);
     setSlides(next);
     if (selectedSlideId === id) {
       setSelectedSlideId(next[0]?.id || "");
     }
+    setDeleteConfirmSlideId(null);
   };
 
   const handleMoveSlide = (index: number, direction: "up" | "down") => {
@@ -314,8 +322,13 @@ export default function AdminHomeHeroPage() {
     setDragOverId(null);
   };
 
+  const slideToDelete = useMemo(() => {
+    if (!deleteConfirmSlideId) return null;
+    return slides.find((s) => s.id === deleteConfirmSlideId) || null;
+  }, [slides, deleteConfirmSlideId]);
+
   return (
-    <div className="page-shell-wide min-h-screen bg-[#F0F5FA] pt-3 pb-12 font-sarabun">
+    <div className="min-h-screen bg-[#F4F8FA] p-4 font-sarabun text-[#112F59] sm:p-6 lg:p-8">
       {/* Top Hero Header */}
       <SafetyCultureHero
         eyebrow="HOME SETTINGS"
@@ -375,41 +388,8 @@ export default function AdminHomeHeroPage() {
 
       {/* Main Content Layout */}
       <div className="mt-4 grid gap-5 lg:grid-cols-[minmax(0,1fr)_380px]">
-        {/* Left Column: Search Filter & Banner List */}
+        {/* Left Column: Banner List */}
         <div className="flex flex-col gap-4">
-          {/* Search Filter Toolbar */}
-          <div className="flex items-center gap-2 rounded-[18px] border border-[#D9E5F3] bg-white p-2.5 shadow-[0_4px_16px_rgba(23,59,107,0.04)]">
-            <div className="relative flex-1">
-              <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[#8292A8]" />
-              <Input
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="ค้นหา Banner..."
-                className="h-10 border-[#E1F0FF] bg-[#F4F9FF] pl-9.5 text-[13px] font-extrabold placeholder:text-[#94A3B8] focus:bg-white"
-              />
-            </div>
-            <button
-              type="button"
-              className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#0B82F0] text-white shadow-sm"
-              title="ทั้งหมด"
-            >
-              <Layers className="h-4 w-4" />
-            </button>
-            <button
-              type="button"
-              className="flex h-10 w-10 items-center justify-center rounded-xl border border-[#D9E5F3] bg-white text-[#55739B] hover:bg-slate-50"
-              title="เฉพาะที่เปิดใช้งาน"
-            >
-              <Eye className="h-4 w-4" />
-            </button>
-            <button
-              type="button"
-              className="flex h-10 w-10 items-center justify-center rounded-xl border border-[#D9E5F3] bg-white text-[#55739B] hover:bg-slate-50"
-              title="เฉพาะที่ปิดใช้งาน"
-            >
-              <EyeOff className="h-4 w-4" />
-            </button>
-          </div>
 
           {/* Banner Cards Stack */}
           <div className="flex flex-col gap-3">
@@ -554,33 +534,33 @@ export default function AdminHomeHeroPage() {
               </span>
             </div>
 
-            {/* Simulated Home Page Hero Container */}
-            <div className="relative h-[160px] w-full overflow-hidden rounded-[20px] border border-[#D7EAFE] bg-slate-900 shadow-md">
+            {/* Exact Home Banner Preview Container matching reference image */}
+            <div className="relative h-[160px] w-full overflow-hidden rounded-[24px] border border-[#D7EAFE] bg-slate-900 shadow-lg">
+              {/* Full Width Slide Background Image */}
               {selectedSlide?.imageSrc ? (
-                <img src={selectedSlide.imageSrc} alt={selectedSlide.title} className="h-full w-full object-cover" />
+                <img src={selectedSlide.imageSrc} alt={selectedSlide.title} className="absolute inset-0 h-full w-full object-cover object-center" />
               ) : (
                 <div className="flex h-full w-full items-center justify-center bg-gradient-to-r from-[#0794FF] via-[#0B2F6B] to-[#FFB020] text-white font-black text-sm">
                   ไม่มีรูปภาพตัวอย่าง
                 </div>
               )}
-              <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(2,26,66,.75)0%,rgba(3,33,78,.45)40%,rgba(3,33,78,0)70%)]" />
 
-              {/* Home Page Content Card Frame Overlay */}
-              <div className="absolute inset-y-0 left-4 my-auto flex h-fit max-w-[280px] flex-col items-start gap-1 rounded-[16px] border border-white/75 bg-white/65 p-3 shadow-[0_8px_20px_rgba(11,130,240,.16)] backdrop-blur-[4px]">
-                <span className="rounded-[6px] border border-[#0B82F0] bg-white/90 px-2 py-0.5 text-[9px] font-black text-[#0B82F0]">
+              {/* Exact Announcement Glass Card Center-Right */}
+              <div className="absolute top-1/2 right-[100px] -translate-y-1/2 w-[220px] rounded-[20px] border border-white/80 bg-white/70 p-3.5 shadow-[0_12px_28px_rgba(11,130,240,.18)] backdrop-blur-[8px]">
+                <div className="text-[10px] font-black tracking-wider text-[#0B82F0]">
                   {selectedSlide?.eyebrow || "ข่าวสารระบบ"}
-                </span>
-                <h4 className="line-clamp-1 text-[16px] font-black leading-tight text-[#0B2F6B]">
-                  {selectedSlide?.title || "หัวข้อสไลด์"}
+                </div>
+                <h4 className="mt-0.5 line-clamp-1 text-[17px] font-black leading-tight text-[#0B2F6B]">
+                  {selectedSlide?.title || "หัวข้อ Banner"}
                 </h4>
-                <p className="line-clamp-2 text-[10px] font-bold leading-relaxed text-[#55739B]">
-                  {selectedSlide?.description || "รายละเอียดสไลด์เพิ่มเติม..."}
+                <p className="mt-1 line-clamp-1 text-[11px] font-bold text-[#55739B]">
+                  {selectedSlide?.description || "รายละเอียดสั้นๆ สำหรับ Banner..."}
                 </p>
               </div>
 
-              {/* Mascot representation on right side */}
-              <div className="absolute right-2 bottom-0 h-[85%] w-[100px] pointer-events-none">
-                <img src="/images/mascot-happy.png" alt="Mascot" className="h-full w-full object-contain object-bottom" />
+              {/* Mascot standing on the right edge */}
+              <div className="absolute right-1 bottom-0 h-[88%] w-[100px] pointer-events-none">
+                <img src="/images/mascots/scenes/wangjai-dashboard-hero-v2.png" alt="Mascot" className="h-full w-full object-contain object-bottom filter-[drop-shadow(0_8px_12px_rgba(4,37,86,.18))]" />
               </div>
             </div>
           </Card>
@@ -605,24 +585,23 @@ export default function AdminHomeHeroPage() {
             </button>
           </div>
 
-          {/* Live Preview Inside Modal */}
-          <div className="mt-2.5 overflow-hidden rounded-[16px] border border-[#D7EAFE] bg-slate-900 shadow-md">
-            <div className="relative h-[120px] w-full">
+          {/* Live Preview Inside Modal matching reference image */}
+          <div className="mt-2.5 overflow-hidden rounded-[20px] border border-[#D7EAFE] bg-slate-900 shadow-md">
+            <div className="relative h-[130px] w-full">
               {newImageSrc ? (
-                <img src={newImageSrc} alt={newTitle} className="h-full w-full object-cover" />
+                <img src={newImageSrc} alt={newTitle} className="absolute inset-0 h-full w-full object-cover object-center" />
               ) : (
                 <div className="flex h-full w-full items-center justify-center bg-gradient-to-r from-[#0794FF] via-[#0B2F6B] to-[#FFB020] text-white font-extrabold text-xs">
                   ไม่มีรูปภาพตัวอย่าง
                 </div>
               )}
-              <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(2,26,66,.75)0%,rgba(3,33,78,.45)40%,rgba(3,33,78,0)70%)]" />
-              
-              {/* Card Frame Content Overlay */}
-              <div className="absolute inset-y-0 left-3 my-auto flex h-fit max-w-[240px] flex-col items-start gap-0.5 rounded-[12px] border border-white/75 bg-white/70 p-2 shadow-xs backdrop-blur-[3px]">
-                <span className="rounded-[4px] border border-[#0B82F0] bg-white/90 px-1.5 py-0.5 text-[8px] font-black text-[#0B82F0]">
+
+              {/* Exact Announcement Card inside Modal Preview */}
+              <div className="absolute top-1/2 right-[80px] -translate-y-1/2 w-[180px] rounded-[16px] border border-white/80 bg-white/70 p-2.5 shadow-sm backdrop-blur-[6px]">
+                <span className="text-[9px] font-black text-[#0B82F0]">
                   {newEyebrow || "ข่าวสารระบบ"}
                 </span>
-                <h4 className="line-clamp-1 text-[13px] font-black leading-tight text-[#0B2F6B]">
+                <h4 className="line-clamp-1 text-[14px] font-black leading-tight text-[#0B2F6B]">
                   {newTitle || "ตัวอย่างชื่อ Banner"}
                 </h4>
                 <p className="line-clamp-1 text-[9.5px] font-bold text-[#55739B]">
@@ -631,8 +610,8 @@ export default function AdminHomeHeroPage() {
               </div>
 
               {/* Mascot representation on right side */}
-              <div className="absolute right-2 bottom-0 h-[85%] w-[75px] pointer-events-none">
-                <img src="/images/mascot-happy.png" alt="Mascot" className="h-full w-full object-contain object-bottom" />
+              <div className="absolute right-1 bottom-0 h-[88%] w-[80px] pointer-events-none">
+                <img src="/images/mascots/scenes/wangjai-dashboard-hero-v2.png" alt="Mascot" className="h-full w-full object-contain object-bottom" />
               </div>
             </div>
           </div>
@@ -726,6 +705,52 @@ export default function AdminHomeHeroPage() {
               <Check className="mr-1.5 h-4 w-4" strokeWidth={3} />
               บันทึก
             </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── Modal: ยืนยันก่อนลบ Banner ── */}
+      <Dialog open={Boolean(deleteConfirmSlideId)} onOpenChange={(open) => !open && setDeleteConfirmSlideId(null)}>
+        <DialogContent showCloseButton={false} className="max-w-[420px] rounded-[24px] border border-[#E8F1FC] bg-[#F7FAFC] p-6 shadow-[0_20px_60px_rgba(11,47,107,0.20)] font-sarabun">
+          {/* Header */}
+          <div className="flex items-start justify-between">
+            <div>
+              <h2 className="text-[20px] font-black text-[#5C2328]">ยืนยันก่อนลบ</h2>
+              <p className="mt-1 text-[13px] font-extrabold text-[#5C7FA8]">
+
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setDeleteConfirmSlideId(null)}
+              className="flex h-7 w-7 items-center justify-center rounded-full text-[#8292A8] hover:bg-slate-200 transition-colors"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+
+          {/* Card Box */}
+          <div className="mt-4 rounded-[18px] border border-[#E1EEFB] bg-white p-4 shadow-xs">
+            <span className="text-[10px] font-black tracking-widest text-[#B3525A] uppercase">
+              DELETE ACTIVITY
+            </span>
+            <h3 className="mt-1 text-[18px] font-black text-[#223548]">
+              {slideToDelete?.title || "Banner รายการนี้"}
+            </h3>
+            <p className="mt-2 text-[12px] font-bold text-[#758CA8] leading-relaxed">
+              หากลบแล้วจะต้องสร้างกิจกรรมใหม่หรือกู้คืนจากข้อมูลเดิมด้วยตนเอง
+            </p>
+          </div>
+
+          {/* Footer Action */}
+          <div className="mt-5 flex justify-end">
+            <button
+              type="button"
+              onClick={handleConfirmDeleteBanner}
+              className="h-10 rounded-[14px] border-2 border-[#80C0FF] bg-white px-5 text-[13px] font-black text-[#0B4A8F] shadow-xs hover:bg-[#EBF5FF] transition-all active:scale-95"
+            >
+              ลบกิจกรรมนี้
+            </button>
           </div>
         </DialogContent>
       </Dialog>

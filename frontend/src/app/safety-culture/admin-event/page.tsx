@@ -2051,7 +2051,7 @@ export default function AdminEventPage() {
               <AppDialogSectionHeader>
                 <AppDialogTitle className="text-[#7d3434]">ยืนยันก่อนลบ</AppDialogTitle>
                 <AppDialogDescription className="mt-1">
-                  กิจกรรมนี้จะถูกลบออกจากรายการบน Feed ทันทีเมื่อกดยืนยัน
+
                 </AppDialogDescription>
               </AppDialogSectionHeader>
 
@@ -2066,14 +2066,14 @@ export default function AdminEventPage() {
               </AppDialogBody>
 
               <AppDialogSectionFooter>
-              <Button
-                type="button"
-                onClick={confirmDeleteFeedEvent}
-                disabled={isSavingFeedEvents}
-                className="h-10 rounded-[14px] bg-[#b3271a] px-4 text-[13px] font-black text-white hover:bg-[#962113]"
-              >
-                {isSavingFeedEvents ? "กำลังลบ..." : "ลบกิจกรรมนี้"}
-              </Button>
+                <Button
+                  type="button"
+                  onClick={confirmDeleteFeedEvent}
+                  disabled={isSavingFeedEvents}
+                  className="h-10 rounded-[14px] bg-[#b3271a] px-4 text-[13px] font-black text-white hover:bg-[#962113]"
+                >
+                  {isSavingFeedEvents ? "กำลังลบ..." : "ลบกิจกรรมนี้"}
+                </Button>
               </AppDialogSectionFooter>
             </>
           ) : null}
