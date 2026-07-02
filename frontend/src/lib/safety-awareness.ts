@@ -256,6 +256,71 @@ export function todayKey(now = new Date()): string {
   return `${y}-${m}-${d}`;
 }
 
+export type AwarenessRequirementRules = {
+  enabled: boolean;
+  weekdays?: number[];
+  holidayDates?: Iterable<string>;
+  effectiveStartDate?: string;
+  endDate?: string;
+};
+
+function normalizeAwarenessWeekdays(weekdays?: number[]) {
+  if (!Array.isArray(weekdays) || weekdays.length === 0) return [];
+  return Array.from(new Set(weekdays.map(Number).filter((day) => Number.isInteger(day) && day >= 0 && day <= 6)));
+}
+
+export function bangkokWeekday(dateKey: string): number {
+  return new Date(`${dateKey}T00:00:00+07:00`).getDay();
+}
+
+export function isAwarenessTimeWindowActive(
+  now: Date,
+  activeStartTime?: string,
+  activeEndTime?: string,
+): boolean {
+  if (!activeStartTime || !activeEndTime) return true;
+
+  const utc = now.getTime() + now.getTimezoneOffset() * 60000;
+  const bangkok = new Date(utc + 7 * 60 * 60 * 1000);
+  const currentMin = bangkok.getHours() * 60 + bangkok.getMinutes();
+  const [startH, startM] = activeStartTime.split(":").map(Number);
+  const [endH, endM] = activeEndTime.split(":").map(Number);
+  const startMin = startH * 60 + startM;
+  const endMin = endH * 60 + endM;
+
+  if ([startMin, endMin].some((value) => Number.isNaN(value))) return true;
+  return currentMin >= startMin && currentMin <= endMin;
+}
+
+export function isAwarenessDateRequired(
+  dateKey: string,
+  rules: AwarenessRequirementRules,
+): boolean {
+  if (!rules.enabled) return false;
+  if (rules.effectiveStartDate && dateKey < rules.effectiveStartDate) return false;
+  if (rules.endDate && dateKey > rules.endDate) return false;
+
+  const weekdays = normalizeAwarenessWeekdays(rules.weekdays);
+  if (weekdays.length > 0 && !weekdays.includes(bangkokWeekday(dateKey))) return false;
+
+  const holidayDates = new Set(Array.from(rules.holidayDates || []));
+  if (holidayDates.has(dateKey)) return false;
+
+  return true;
+}
+
+export function isAwarenessRequiredNow(
+  now: Date,
+  rules: AwarenessRequirementRules & {
+    activeStartTime?: string;
+    activeEndTime?: string;
+  },
+): boolean {
+  const dateKey = todayKey(now);
+  return isAwarenessDateRequired(dateKey, rules)
+    && isAwarenessTimeWindowActive(now, rules.activeStartTime, rules.activeEndTime);
+}
+
 /** Fisher–Yates pick of n items. */
 export function pickRandom<T>(items: T[], n: number): T[] {
   const copy = [...items];

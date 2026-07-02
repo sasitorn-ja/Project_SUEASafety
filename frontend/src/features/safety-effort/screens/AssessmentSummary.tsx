@@ -1,5 +1,5 @@
 // @ts-nocheck
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate } from "@/lib/app-navigation";
 import TigerMascot from "@/components/TigerMascot";
 import { ProgressHeader } from "@/components/safety-effort/progress-mascot";
@@ -135,11 +135,13 @@ export default function AssessmentSummary() {
   const { user: sessionUser } = useSessionUser();
   const safetyEffortPoints = useSafetyPointValue("safetyEffortCompleted");
   const [showSuccessPopup, setShowSuccessPopup] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [hasInitializedExpanded, setHasInitializedExpanded] = useState(false);
   const [previewImages, setPreviewImages] = useState<string[] | null>(null);
   const [previewIndex, setPreviewIndex] = useState<number>(0);
   const [recoveredState, setRecoveredState] = useState(() => readAssessmentSummaryState());
+  const saveInFlightRef = useRef(false);
   const flowState = location.state ?? recoveredState;
   const checkin = flowState?.checkin ?? null;
   const activity = flowState?.activity ?? null;
@@ -321,6 +323,9 @@ export default function AssessmentSummary() {
   };
 
   const handleConfirmSave = async () => {
+    if (saveInFlightRef.current || isSaving) return;
+    saveInFlightRef.current = true;
+    setIsSaving(true);
     const submissionDate = linewalkData?.date || new Date().toISOString().split("T")[0];
     const normalizedCheckinId = normalizeNumericId(checkin?.checkinId);
     const isMockCheckin = String(checkin?.source || "").toUpperCase() === "MOCK";
@@ -425,6 +430,9 @@ export default function AssessmentSummary() {
       if (linewalkData?.isSafetyContact) {
         navigate("/category", { replace: true });
       }
+    } finally {
+      saveInFlightRef.current = false;
+      setIsSaving(false);
     }
   };
 
@@ -767,6 +775,7 @@ export default function AssessmentSummary() {
           <button
             type="button"
             onClick={handleBack}
+            disabled={isSaving}
             className="as-bottom-back-btn"
             style={{
               minWidth: 120,
@@ -778,7 +787,8 @@ export default function AssessmentSummary() {
               fontFamily: "inherit",
               fontSize: 15,
               fontWeight: 800,
-              cursor: "pointer",
+              cursor: isSaving ? "not-allowed" : "pointer",
+              opacity: isSaving ? 0.7 : 1,
               boxShadow: "0 4px 12px rgba(0,0,0,0.03)",
               transition: "all 0.2s",
             }}
@@ -788,6 +798,7 @@ export default function AssessmentSummary() {
           <button
             type="button"
             onClick={handleConfirmSave}
+            disabled={isSaving}
             style={{
               minWidth: 220,
               height: 50,
@@ -798,11 +809,12 @@ export default function AssessmentSummary() {
               fontFamily: "inherit",
               fontSize: 15,
               fontWeight: 800,
-              cursor: "pointer",
-              boxShadow: "0 12px 24px rgba(26,22,19,0.18)",
+              cursor: isSaving ? "not-allowed" : "pointer",
+              opacity: isSaving ? 0.7 : 1,
+              boxShadow: isSaving ? "0 8px 18px rgba(26,22,19,0.12)" : "0 12px 24px rgba(26,22,19,0.18)",
             }}
           >
-            บันทึกข้อมูล
+            {isSaving ? "กำลังบันทึก..." : "บันทึกข้อมูล"}
           </button>
         </div>
 

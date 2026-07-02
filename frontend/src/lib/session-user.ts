@@ -67,6 +67,18 @@ export function isDemoLoginActive() {
 }
 
 export async function getSessionSnapshot(options: { force?: boolean } = {}): Promise<SessionSnapshot> {
+  if (isDemoLoginActive()) {
+    const value = {
+      authenticated: true,
+      user: DEMO_ADMIN_USER,
+    };
+    sessionSnapshotCache = {
+      value,
+      expiresAt: Date.now() + SESSION_SNAPSHOT_CACHE_MS,
+    };
+    return value;
+  }
+
   const now = Date.now();
   if (!options.force && sessionSnapshotCache && sessionSnapshotCache.expiresAt > now) {
     return sessionSnapshotCache.value;

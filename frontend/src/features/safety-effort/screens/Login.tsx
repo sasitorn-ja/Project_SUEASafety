@@ -2,7 +2,7 @@
 import React, { useEffect, useMemo } from "react";
 import { useNavigate } from "@/lib/app-navigation";
 import { Lock, Info } from "lucide-react";
-import { DEMO_LOGIN_PERSISTED_KEY, DEMO_LOGIN_SESSION_KEY, isLocalDemoLoginHost } from "@/lib/session-user";
+import { clearSessionSnapshotCache, DEMO_LOGIN_PERSISTED_KEY, DEMO_LOGIN_SESSION_KEY, isLocalDemoLoginHost } from "@/lib/session-user";
 
 function getSafeReturnTo() {
   if (typeof window === "undefined") return "/";
@@ -31,6 +31,7 @@ export default function Login() {
     try {
       window.sessionStorage.setItem(DEMO_LOGIN_SESSION_KEY, "true");
       window.localStorage.setItem(DEMO_LOGIN_PERSISTED_KEY, "true");
+      clearSessionSnapshotCache();
     } catch {
       // The demo login still navigates home even without storage.
     }
@@ -41,6 +42,7 @@ export default function Login() {
     try {
       window.sessionStorage.removeItem(DEMO_LOGIN_SESSION_KEY);
       window.localStorage.removeItem(DEMO_LOGIN_PERSISTED_KEY);
+      clearSessionSnapshotCache();
     } catch {
       // Keep the login screen usable if browser storage is unavailable.
     }

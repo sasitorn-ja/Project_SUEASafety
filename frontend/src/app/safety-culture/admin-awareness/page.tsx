@@ -51,6 +51,8 @@ import { cn } from "@/lib/utils";
 import { type AwarenessHoliday, useAppActions, useAppState } from "@/providers/app-providers";
 import {
   createDefaultAwarenessQuestions,
+  isAwarenessDateRequired,
+  isAwarenessTimeWindowActive,
   type SafetyAwarenessQuestion,
 } from "@/lib/safety-awareness";
 
@@ -142,6 +144,7 @@ export default function AdminAwarenessPage() {
     awarenessQuestions,
     awarenessHolidays,
     awarenessEnabled,
+    awarenessWeekdays,
     awarenessActiveStartTime,
     awarenessActiveEndTime,
     awarenessScheduleStartDate,
@@ -266,14 +269,46 @@ export default function AdminAwarenessPage() {
   const scheduleSettingsChanged = scheduleDateChanged || timeWindowChanged;
   const awarenessExpired = awarenessEnabled && Boolean(tempScheduleEndDate) && bangkokTodayKey > tempScheduleEndDate;
   const awarenessScheduledForFuture = awarenessEnabled && Boolean(tempScheduleStartDate) && tempScheduleStartDate > bangkokTodayKey;
-  const awarenessEffectiveEnabled = awarenessEnabled && !awarenessScheduledForFuture && !awarenessExpired;
+  const awarenessHolidayDates = useMemo(
+    () => new Set(awarenessHolidays.map((holiday) => holiday.date)),
+    [awarenessHolidays],
+  );
+  const todayCountedBySchedule = useMemo(
+    () => isAwarenessDateRequired(bangkokTodayKey, {
+      enabled: awarenessEnabled,
+      weekdays: awarenessWeekdays,
+      holidayDates: awarenessHolidayDates,
+      effectiveStartDate: tempScheduleStartDate || undefined,
+      endDate: tempScheduleEndDate || undefined,
+    }),
+    [awarenessEnabled, awarenessHolidayDates, awarenessWeekdays, bangkokTodayKey, tempScheduleEndDate, tempScheduleStartDate],
+  );
+  const timeWindowActiveNow = useMemo(
+    () => isAwarenessTimeWindowActive(new Date(), tempStartTime, tempEndTime),
+    [tempEndTime, tempStartTime],
+  );
+  const awarenessEffectiveEnabled = awarenessEnabled && !awarenessScheduledForFuture && !awarenessExpired && todayCountedBySchedule && timeWindowActiveNow;
   const scheduleStartDateLabel = formatDisplayDate(tempScheduleStartDate);
   const scheduleEndDateLabel = formatDisplayDate(tempScheduleEndDate);
+  const weekdayLabels = ["อา.", "จ.", "อ.", "พ.", "พฤ.", "ศ.", "ส."];
+  const countedWeekdayLabels = awarenessWeekdays.length > 0
+    ? awarenessWeekdays.map((day) => weekdayLabels[day]).filter(Boolean)
+    : [];
+  const countedWeekdaySummary = countedWeekdayLabels.length > 0
+    ? countedWeekdayLabels.join(" / ")
+    : "ไม่มีวันที่นับ";
 
   const getScheduleStateSummary = () => {
     if (dateRangeInvalid) return "วันที่สิ้นสุดต้องไม่ก่อนวันที่เริ่มใช้งาน";
+    if (!awarenessEnabled) return "ระบบปิดใช้งานอยู่ ผู้ใช้จะไม่เห็น Safety Awareness";
     if (!tempScheduleStartDate && !tempScheduleEndDate) {
-      return "ยังไม่ได้ตั้งช่วงวันล่วงหน้า ระบบจะใช้สถานะและช่วงเวลาทันที";
+      if (!todayCountedBySchedule) {
+        return "วันนี้ไม่ถูกนับตามวันที่ทำงาน/วันหยุดที่ตั้งไว้ แม้ระบบจะเปิดใช้งานอยู่";
+      }
+      if (!timeWindowActiveNow) {
+        return "วันนี้อยู่ในวันทำงาน แต่ตอนนี้อยู่นอกช่วงเวลาที่ตั้งไว้";
+      }
+      return "ยังไม่ได้ตั้งช่วงวันล่วงหน้า ระบบจะใช้สถานะ วันทำงาน และช่วงเวลาทันที";
     }
     if (tempScheduleStartDate && tempScheduleEndDate) {
       if (bangkokTodayKey > tempScheduleEndDate) {
@@ -282,17 +317,35 @@ export default function AdminAwarenessPage() {
       if (bangkokTodayKey < tempScheduleStartDate) {
         return `ตั้งล่วงหน้าไว้แล้ว วันนี้ยังไม่แสดงให้ผู้ใช้เห็น ระบบจะเริ่มมีผลในช่วงวันที่ ${scheduleStartDateLabel} ถึง ${scheduleEndDateLabel}`;
       }
+      if (!todayCountedBySchedule) {
+        return `ระบบกำลังมีผลใช้งาน (ช่วงที่กำหนด: ${scheduleStartDateLabel} ถึง ${scheduleEndDateLabel}) แต่วันนี้ไม่ถูกนับตามวันที่ทำงาน/วันหยุด`;
+      }
+      if (!timeWindowActiveNow) {
+        return `ระบบกำลังมีผลใช้งาน (ช่วงที่กำหนด: ${scheduleStartDateLabel} ถึง ${scheduleEndDateLabel}) แต่ตอนนี้อยู่นอกช่วงเวลาที่ตั้งไว้`;
+      }
       return `ระบบกำลังมีผลใช้งาน (ช่วงที่กำหนด: ${scheduleStartDateLabel} ถึง ${scheduleEndDateLabel})`;
     }
     if (tempScheduleStartDate) {
       if (bangkokTodayKey < tempScheduleStartDate) {
         return `ตั้งล่วงหน้าไว้แล้ว วันนี้ยังไม่แสดงให้ผู้ใช้เห็น ระบบจะเริ่มมีผลตั้งแต่วันที่ ${scheduleStartDateLabel} เป็นต้นไป`;
       }
+      if (!todayCountedBySchedule) {
+        return `ระบบมีผลใช้งานตั้งแต่วันที่ ${scheduleStartDateLabel} เป็นต้นไป แต่วันนี้ไม่ถูกนับตามวันที่ทำงาน/วันหยุด`;
+      }
+      if (!timeWindowActiveNow) {
+        return `ระบบมีผลใช้งานตั้งแต่วันที่ ${scheduleStartDateLabel} เป็นต้นไป แต่ตอนนี้อยู่นอกช่วงเวลาที่ตั้งไว้`;
+      }
       return `ระบบมีผลใช้งานตั้งแต่วันที่ ${scheduleStartDateLabel} เป็นต้นไป`;
     }
     // Only end date set
     if (bangkokTodayKey > tempScheduleEndDate) {
       return `หมดเขตใช้งานแล้ว (ใช้งานได้จนถึงวันที่ ${scheduleEndDateLabel})`;
+    }
+    if (!todayCountedBySchedule) {
+      return `ระบบมีผลใช้งานได้จนถึงวันที่ ${scheduleEndDateLabel} แต่วันนี้ไม่ถูกนับตามวันที่ทำงาน/วันหยุด`;
+    }
+    if (!timeWindowActiveNow) {
+      return `ระบบมีผลใช้งานได้จนถึงวันที่ ${scheduleEndDateLabel} แต่ตอนนี้อยู่นอกช่วงเวลาที่ตั้งไว้`;
     }
     return `ระบบมีผลใช้งานได้จนถึงวันที่ ${scheduleEndDateLabel}`;
   };
@@ -648,13 +701,27 @@ export default function AdminAwarenessPage() {
                     "rounded-full border px-2.5 py-0.5 text-[10.5px] font-black shadow-none",
                     awarenessEffectiveEnabled
                       ? "border-[#B8E7D2] bg-[#EFFCF6] text-[#16845A]"
+                      : !awarenessEnabled
+                        ? "border-[#D7EAFE] bg-white text-[#55739B]"
                       : awarenessScheduledForFuture
                         ? "border-[#F6D99B] bg-[#FFF7DF] text-[#A86708]"
                         : awarenessExpired
                           ? "border-[#F3B9AE] bg-[#FFF1EE] text-[#D92D20]"
-                          : "border-[#D7EAFE] bg-white text-[#55739B]"
+                          : !todayCountedBySchedule
+                            ? "border-[#D7EAFE] bg-[#F8FCFF] text-[#55739B]"
+                            : "border-[#D7EAFE] bg-white text-[#55739B]"
                   )}>
-                    {awarenessEffectiveEnabled ? "เปิดใช้งาน" : awarenessScheduledForFuture ? "รอวันเริ่ม" : awarenessExpired ? "หมดเขต" : "ปิดใช้งาน"}
+                    {awarenessEffectiveEnabled
+                      ? "เปิดใช้งาน"
+                      : !awarenessEnabled
+                        ? "ปิดใช้งาน"
+                        : awarenessScheduledForFuture
+                          ? "รอวันเริ่ม"
+                          : awarenessExpired
+                            ? "หมดเขต"
+                            : !todayCountedBySchedule
+                              ? "ไม่นับวันนี้"
+                              : "นอกเวลา"}
                   </Badge>
                 </div>
                 <button
@@ -808,14 +875,14 @@ export default function AdminAwarenessPage() {
 
             <SectionCard
               title="วันที่ไม่นับ Coin Safety Awareness"
-              description="วันเสาร์และวันอาทิตย์ไม่นับอัตโนมัติ เพิ่มวันหยุดบริษัทหรือวันหยุดพิเศษที่ตรงกับวันทำงานได้ที่นี่ "
+              description="กำหนดวันหยุดหรือวันพิเศษที่ไม่ต้องแสดงป็อปอัพและไม่นำไปคิดเปอร์เซ็นต์ KPI"
               icon={<CalendarOff className="h-6 w-6" strokeWidth={2.2} />}
             >
               <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_220px]">
                 <div className="rounded-xl border border-[#CFE3F4] bg-[#F1F8FE] px-3.5 py-3 text-[12.5px] font-bold text-[#24567F]">
                   <div className="flex items-center gap-2 font-black">
                     <Info className="h-4 w-4 flex-shrink-0" />
-                    ระบบไม่นับวันเสาร์และวันอาทิตย์ทุกสัปดาห์
+                    ระบบนับเฉพาะวัน {countedWeekdaySummary}
                   </div>
                   <p className="mt-1 pl-6">
                     วันที่เพิ่มด้านล่างจะไม่แสดงป็อปอัพคำถาม และไม่ถูกนำไปคิดเปอร์เซ็นต์ KPI บนหน้า Home
@@ -887,7 +954,7 @@ export default function AdminAwarenessPage() {
 
                 {awarenessHolidays.length === 0 ? (
                   <div className="flex-1 flex items-center justify-center rounded-xl border border-dashed border-[#B9E0FF] bg-white px-4 py-6 text-center text-[12.5px] font-bold text-[#55739B] min-h-[160px]">
-                    ยังไม่มีวันหยุดเพิ่มเติม ระบบไม่นับเฉพาะวันเสาร์และวันอาทิตย์
+                    ยังไม่มีวันหยุดเพิ่มเติม ระบบจะอิงวันทำงาน {countedWeekdaySummary}
                   </div>
                 ) : visibleHolidays.length === 0 ? (
                   <div className="flex-1 flex items-center justify-center rounded-xl border border-dashed border-[#B9E0FF] bg-white px-4 py-6 text-center text-[12.5px] font-bold text-[#55739B] min-h-[160px]">

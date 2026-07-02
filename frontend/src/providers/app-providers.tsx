@@ -8,6 +8,8 @@ import {
   type RewardItem,
 } from "@/lib/safety-culture";
 import {
+  type AwarenessRequirementRules,
+  isAwarenessRequiredNow,
   type SafetyAwarenessQuestion,
   createDefaultAwarenessQuestions,
   normalizeAwarenessQuestions,
@@ -20,6 +22,7 @@ import {
   getSessionDisplayName,
   getSessionInitials,
   getSessionSnapshot,
+  isDemoLoginActive,
   type SessionUser,
 } from "@/lib/session-user";
 
@@ -574,8 +577,13 @@ function normalizeTeamStandings(teams: LeaderboardTeam[]) {
     .map((team, index) => ({
       ...team,
       rank: index + 1,
-      percent: highestPoints > 0 ? Math.max(8, Math.round((team.points / highestPoints) * 1000) / 10) : 0,
+      percent: calculateLeaderboardPercent(team.points, highestPoints),
     }));
+}
+
+function calculateLeaderboardPercent(points: number, highestPoints: number) {
+  if (highestPoints <= 0) return 0;
+  return Math.round((Math.max(0, Number(points) || 0) / highestPoints) * 1000) / 10;
 }
 
 function normalizePersonalRankings(rankings: LeaderboardPerson[]) {
@@ -971,7 +979,6 @@ function awarenessCompletionFromApi(item: ApiAwarenessAttempt): AwarenessComplet
         correct: Boolean(answer.correct),
       }))
     : [];
-  if (questions.length === 0) return null;
   return {
     date,
     completedAt: String(completedAt),
@@ -1631,7 +1638,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
   const rewardsPageSize = pathname === "/" || pathname === "/dashboard" ? 1 : 100;
   const shouldLoadNotifications = pathname === "/notifications";
   const shouldLoadAwareness = pathname !== "/login";
-  const shouldLoadAwarenessAttempts = pathname === "/";
+  const shouldLoadAwarenessAttempts = shouldLoadAwareness;
   const shouldLoadEvents =
     pathname === "/"
     || shouldLoadPosts
@@ -1707,6 +1714,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
 
   // true เมื่อมี session (ล็อกอินแล้ว) ใช้กันไม่ให้ยิง API ที่ต้องล็อกอินตอนยังไม่ล็อกอิน -> ไม่มี error 401 ใน console
   const isAuthenticatedRef = useRef(false);
+  const isDemoModeRef = useRef(false);
   const currentUserRef = useRef<SessionUser | null>(null);
 
   const loadPostComments = useCallback(async (postId: number | string, viewerId?: string | null) => {
@@ -1717,14 +1725,14 @@ export function AppProviders({ children }: { children: ReactNode }) {
   }, [resolvePostApiId]);
 
   const refreshInboxNotifications = useCallback(async (events: SafetyCultureFeedEvent[] = feedEvents) => {
-    if (!isAuthenticatedRef.current) return;
+    if (!isAuthenticatedRef.current || isDemoModeRef.current) return;
     const notificationsResult = await apiFetch<{ items: Array<Record<string, unknown>> }>("/api/notifications?limit=30");
     if (!notificationsResult.ok || !Array.isArray(notificationsResult.data?.items)) return;
     setInboxNotifications(notificationsResult.data.items.map((item) => inboxNotificationFromApi(item, events)));
   }, [feedEvents]);
 
   const refreshPostsSnapshot = useCallback(async () => {
-    if (!isAuthenticatedRef.current) return;
+    if (!isAuthenticatedRef.current || isDemoModeRef.current) return;
     const viewerId = currentUserRef.current?.id ? String(currentUserRef.current.id) : null;
     const result = await apiFetch<{ items: ApiPost[] }>("/api/safety-culture/posts?limit=50&scope=all");
     if (!result.ok || !Array.isArray(result.data?.items)) return;
@@ -1738,6 +1746,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
   }, []);
 
   const refreshPointBalance = useCallback(async () => {
+    if (isDemoModeRef.current) return;
     const balance = await apiFetch<{ balance: { balance: number } }>("/api/safety-culture/points/me");
     if (balance.ok && typeof balance.data?.balance?.balance === "number") {
       setCurrentUserPoints(Math.max(0, balance.data.balance.balance));
@@ -1745,6 +1754,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
   }, []);
 
   const refreshRewardsState = useCallback(async () => {
+    if (isDemoModeRef.current) return true;
     const [rewardsResult, rewardCategoriesResult] = await Promise.all([
       apiFetch<{ items: Array<Record<string, unknown>> }>(`/api/safety-culture/rewards?pageSize=${rewardsPageSize}`),
       shouldLoadRewardCategories
@@ -1801,7 +1811,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
         members: Number(item.members || item.member_count || item.memberCount || 0),
         color: String(item.color || "var(--brand-accent)"),
         points: Number(item.points || 0),
-        percent: (Number(item.points || 0) / maxPoints) * 100,
+        percent: calculateLeaderboardPercent(Number(item.points || 0), maxPoints),
         streak: Number(item.streak || 0),
         awards: Number(item.awards || 0),
         sourceDivisions: Array.isArray(item.source_divisions || item.sourceDivisions)
@@ -1842,6 +1852,39 @@ export function AppProviders({ children }: { children: ReactNode }) {
     async function loadBackendState() {
       setIsAppBootstrapping(true);
       setIsAwarenessLoading(true);
+      if (isDemoLoginActive()) {
+        const demoSnapshot = createDemoSafetyCultureSnapshot(createDemoSessionUser());
+        if (cancelled) return;
+        isAuthenticatedRef.current = true;
+        isDemoModeRef.current = true;
+        currentUserRef.current = demoSnapshot.user;
+        setCurrentUserPoints(demoSnapshot.currentUserPoints);
+        setPosts(demoSnapshot.posts);
+        setFeedEvents(demoSnapshot.feedEvents);
+        setTeamStandings(demoSnapshot.teamStandings);
+        setPersonalRankings(demoSnapshot.personalRankings);
+        setRewardsCatalog(demoSnapshot.rewardsCatalog);
+        setRewardCategories(demoSnapshot.rewardCategories);
+        setRewardRedemptions(demoSnapshot.rewardRedemptions);
+        setInboxNotifications(demoSnapshot.inboxNotifications);
+        setUserActivityHistory(demoSnapshot.userActivityHistory);
+        setAwarenessQuestions(demoSnapshot.awarenessQuestions);
+        setAwarenessHistory(demoSnapshot.awarenessHistory);
+        setAwarenessDoneDate(demoSnapshot.awarenessDoneDate);
+        setAwarenessHolidays(demoSnapshot.awarenessHolidays);
+        setSafetyCultureEvent(demoSnapshot.safetyCultureEvent);
+        setAwarenessEnabledState(true);
+        setAwarenessWeekdaysState([1, 2, 3, 4, 5]);
+        setAwarenessActiveStartTimeState("08:00");
+        setAwarenessActiveEndTimeState("17:00");
+        setAwarenessScheduleStartDateState("");
+        setAwarenessScheduleEndDateState("");
+        setAwarenessDescriptionState("Demo mode");
+        setIsAwarenessLoading(false);
+        setIsAppBootstrapping(false);
+        return;
+      }
+      isDemoModeRef.current = false;
       // ตรวจ session ก่อน ถ้ายังไม่ล็อกอินก็ไม่ต้องเรียก API ที่ต้องยืนยันตัวตน
       let authed = false;
       let sessionUser: SessionUser | null = null;
@@ -2016,7 +2059,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
           members: Number(item.members || item.member_count || item.memberCount || 0),
           color: String(item.color || "var(--brand-accent)"),
           points: Number(item.points || 0),
-          percent: (Number(item.points || 0) / maxPoints) * 100,
+          percent: calculateLeaderboardPercent(Number(item.points || 0), maxPoints),
           streak: Number(item.streak || 0),
           awards: Number(item.awards || 0),
           sourceDivisions: Array.isArray(item.source_divisions || item.sourceDivisions)
@@ -2161,7 +2204,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
   ]);
 
   useEffect(() => {
-    if (!isAuthenticatedRef.current) return;
+    if (!isAuthenticatedRef.current || isDemoModeRef.current) return;
 
     const refreshLiveSafetyCultureState = (force = false) => {
       const now = Date.now();
@@ -2224,7 +2267,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
         current.map((item) => (item.id === notificationId ? { ...item, read: true } : item))
       )
     );
-    if (isAuthenticatedRef.current) {
+    if (isAuthenticatedRef.current && !isDemoModeRef.current) {
       void apiFetch(`/api/notifications/${notificationId}/read`, apiJson("PATCH", {}));
     }
   }, []);
@@ -2233,13 +2276,20 @@ export function AppProviders({ children }: { children: ReactNode }) {
     setInboxNotifications((current) =>
       normalizeInboxNotifications(current.map((item) => ({ ...item, read: true })))
     );
-    if (isAuthenticatedRef.current) {
+    if (isAuthenticatedRef.current && !isDemoModeRef.current) {
       void apiFetch("/api/notifications/read-all", apiJson("PATCH", {}));
     }
   }, []);
 
   const fetchPostsPage = useCallback(async (options: { scope?: "all" | "my-team" | "mine"; category?: string | null; limit?: number; cursor?: string | null } = {}) => {
     if (!isAuthenticatedRef.current) return { items: [], nextCursor: null };
+    if (isDemoModeRef.current) {
+      const currentUserId = String(currentUserRef.current?.id || currentUserRef.current?.sub || "demo-admin");
+      return {
+        items: filterDemoPosts(postsRef.current, currentUserId, options),
+        nextCursor: null,
+      };
+    }
     const params = new URLSearchParams();
     params.set("limit", String(options.limit || 15));
     if (options.scope) params.set("scope", options.scope);
@@ -2269,6 +2319,36 @@ export function AppProviders({ children }: { children: ReactNode }) {
       : calculateAwardedPoints(basePoints, "approved-post", safetyCultureEvent);
     const pointsDelta = Math.max(0, awardedPoints);
     const occurredAt = post.createdAt || Date.now();
+
+    if (isAuthenticatedRef.current && isDemoModeRef.current) {
+      const savedPost = {
+        ...post,
+        id: Math.max(9100, Date.now()),
+        authorId: String(currentUserRef.current?.id || currentUserRef.current?.sub || "demo-admin"),
+        isYou: true,
+        createdAt: occurredAt,
+        points: pointsDelta,
+        hasLiked: false,
+      };
+      setPosts((prev) => [savedPost, ...prev]);
+      setCurrentUserPoints((prev) => prev + pointsDelta);
+      setUserActivityHistory((current) =>
+        normalizeUserActivityHistory([
+          {
+            id: `activity-post-${savedPost.id}-${occurredAt}`,
+            type: "post",
+            occurredAt,
+            postId: savedPost.id,
+            postAuthor: savedPost.author,
+            postCategory: savedPost.category,
+            postPreview: savedPost.body,
+            pointsDelta,
+          },
+          ...current,
+        ])
+      );
+      return savedPost;
+    }
 
     if (isAuthenticatedRef.current) {
       const result = await apiFetch<{ post: ApiPost }>("/api/safety-culture/posts", apiJson("POST", {
@@ -2330,7 +2410,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
     likeRequestStateRef.current[requestKey] = requestState;
 
     // ถ้ามี request วิ่งอยู่แล้ว ปล่อยให้ drain loop ด้านล่างเก็บ desiredLiked ล่าสุดไปส่งเอง
-    if (!isAuthenticatedRef.current || requestState.inFlight) return;
+    if (isDemoModeRef.current || !isAuthenticatedRef.current || requestState.inFlight) return;
 
     requestState.inFlight = true;
     void (async () => {
@@ -2391,6 +2471,10 @@ export function AppProviders({ children }: { children: ReactNode }) {
     const localPostId = Number(postId);
     const requestKey = String(postId);
     if (!isAuthenticatedRef.current) return [];
+    if (isDemoModeRef.current) {
+      const post = postsRef.current.find((item) => item.id === localPostId || item.apiId === requestKey);
+      return Array.isArray(post?.comments) ? post.comments : [];
+    }
     const comments = await loadPostComments(postId);
     if (!comments) return [];
     setPosts((current) => current.map((post) => (post.id === localPostId || post.apiId === requestKey ? { ...post, comments } : post)));
@@ -2459,6 +2543,8 @@ export function AppProviders({ children }: { children: ReactNode }) {
     }
     setCurrentUserPoints((prev) => prev + currentAwardedPoints);
 
+    if (isDemoModeRef.current) return true;
+
     const result = await apiFetch<{ comment: ApiComment }>(`/api/safety-culture/posts/${resolvePostApiId(postId)}/comments`, apiJson("POST", { content: text }));
     if (!result.ok || !result.data?.comment) {
       setPosts((current) => current.map((post) => {
@@ -2502,6 +2588,8 @@ export function AppProviders({ children }: { children: ReactNode }) {
         }),
       };
     }));
+    if (isDemoModeRef.current) return true;
+
     const result = await apiFetch<{ comment: ApiComment }>(`/api/safety-culture/comments/${commentId}`, apiJson("PATCH", { content: trimmed }));
     if (!result.ok || !result.data?.comment) {
       setPosts((current) => current.map((post) => {
@@ -2530,6 +2618,8 @@ export function AppProviders({ children }: { children: ReactNode }) {
       removed = removedIndex >= 0 ? post.comments[removedIndex] : undefined;
       return { ...post, comments: post.comments.filter((comment) => comment.id !== commentId) };
     }));
+    if (isDemoModeRef.current) return true;
+
     const result = await apiFetch<{ deleted: boolean }>(`/api/safety-culture/comments/${commentId}`, { method: "DELETE" });
     if (!result.ok || !result.data?.deleted) {
       const restored = removed;
@@ -2560,6 +2650,8 @@ export function AppProviders({ children }: { children: ReactNode }) {
         return { ...p, body: trimmed };
       })
     );
+    if (isDemoModeRef.current) return true;
+
     const result = await apiFetch<{ post: ApiPost }>(
       `/api/safety-culture/posts/${resolvePostApiId(postId)}`,
       apiJson("PATCH", { content: trimmed })
@@ -2586,6 +2678,14 @@ export function AppProviders({ children }: { children: ReactNode }) {
       removed = removedIndex >= 0 ? prev[removedIndex] : undefined;
       return prev.filter((p) => p.id !== localPostId && p.apiId !== requestKey);
     });
+    if (isDemoModeRef.current) {
+      if (removed?.points) {
+        setCurrentUserPoints((current) => Math.max(0, current - Math.max(0, removed?.points || 0)));
+      }
+      setUserActivityHistory((current) => current.filter((item) => !(item.type === "post" && item.postId === localPostId)));
+      return true;
+    }
+
     const result = await apiFetch<{ deleted: boolean; pointsReversed: number; balance: number | null }>(
       `/api/safety-culture/posts/${resolvePostApiId(postId)}`,
       apiJson("DELETE")
@@ -2614,7 +2714,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
 
   const updateSafetyCultureEvent = useCallback((data: SafetyCultureEventConfig) => {
     setSafetyCultureEvent(data);
-    if (isAuthenticatedRef.current) {
+    if (isAuthenticatedRef.current && !isDemoModeRef.current) {
       void apiFetch("/api/safety-culture/events", apiJson("POST", {
         title: data.eventName || data.headline,
         description: data.supportingText,
@@ -2629,7 +2729,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
   const updateFeedEvents = useCallback(async (events: SafetyCultureFeedEvent[]) => {
     const normalized = normalizeFeedEvents(events);
     const previousIds = new Set(feedEvents.map((event) => event.id));
-    if (!isAuthenticatedRef.current) {
+    if (!isAuthenticatedRef.current || isDemoModeRef.current) {
       setFeedEvents(normalized);
       return true;
     }
@@ -2692,7 +2792,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
         ...current,
       ])
     );
-    if (isAuthenticatedRef.current && /^\d+$/.test(feedEventId)) {
+    if (isAuthenticatedRef.current && !isDemoModeRef.current && /^\d+$/.test(feedEventId)) {
       void apiFetch(`/api/safety-culture/events/${feedEventId}/notify`, apiJson("POST", {}));
     }
 
@@ -2703,6 +2803,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
     const normalized = normalizeTeamStandings(teams);
     setTeamStandings(normalized);
     if (!isAuthenticatedRef.current) return false;
+    if (isDemoModeRef.current) return true;
     const result = await apiFetch("/api/safety-culture/teams", apiJson("PUT", {
       teams: normalized.map((team) => ({
         id: /^\d+$/.test(team.id) ? team.id : null,
@@ -2726,6 +2827,10 @@ export function AppProviders({ children }: { children: ReactNode }) {
     const previousIds = new Set(rewardsCatalog.map((reward) => reward.id));
     const nextIds = new Set(normalized.map((reward) => reward.id));
     if (!isAuthenticatedRef.current) return false;
+    if (isDemoModeRef.current) {
+      setRewardsCatalog(normalized);
+      return true;
+    }
     try {
       for (const reward of normalized) {
         const existing = previousIds.has(reward.id);
@@ -2755,6 +2860,10 @@ export function AppProviders({ children }: { children: ReactNode }) {
   const updateRewardCategories = useCallback(async (categories: RewardCategory[]) => {
     const normalized = normalizeRewardCategories(categories);
     if (!isAuthenticatedRef.current) return false;
+    if (isDemoModeRef.current) {
+      setRewardCategories(normalized);
+      return true;
+    }
     const result = await apiFetch("/api/safety-settings?key=safety_reward_categories", apiJson("PUT", { value: { categories: normalized } }));
     if (!result.ok) return false;
     setRewardCategories(normalized);
@@ -2762,7 +2871,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
   }, []);
 
   const updateAwarenessEnabled = useCallback(async (enabled: boolean) => {
-    if (isAuthenticatedRef.current) {
+    if (isAuthenticatedRef.current && !isDemoModeRef.current) {
       const result = await apiFetch("/api/safety-settings?key=safety_awareness_enabled", apiJson("PUT", { value: { enabled } }));
       if (!result.ok) return false;
     }
@@ -2771,7 +2880,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
   }, []);
 
   const updateAwarenessWeekdays = useCallback(async (weekdays: number[]) => {
-    if (isAuthenticatedRef.current) {
+    if (isAuthenticatedRef.current && !isDemoModeRef.current) {
       const result = await apiFetch("/api/safety-settings?key=safety_awareness_weekdays", apiJson("PUT", { value: { weekdays } }));
       if (!result.ok) return false;
     }
@@ -2780,7 +2889,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
   }, []);
 
   const updateAwarenessTimeWindow = useCallback(async (startTime: string, endTime: string) => {
-    if (isAuthenticatedRef.current) {
+    if (isAuthenticatedRef.current && !isDemoModeRef.current) {
       const [startResult, endResult] = await Promise.all([
         apiFetch("/api/safety-settings?key=safety_awareness_active_start_time", apiJson("PUT", { value: { startTime } })),
         apiFetch("/api/safety-settings?key=safety_awareness_active_end_time", apiJson("PUT", { value: { endTime } })),
@@ -2793,7 +2902,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
   }, []);
 
   const updateAwarenessScheduleStartDate = useCallback(async (startDate: string) => {
-    if (isAuthenticatedRef.current) {
+    if (isAuthenticatedRef.current && !isDemoModeRef.current) {
       const result = await apiFetch("/api/safety-settings?key=safety_awareness_schedule_start_date", apiJson("PUT", { value: { startDate } }));
       if (!result.ok) return false;
     }
@@ -2802,7 +2911,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
   }, []);
 
   const updateAwarenessScheduleEndDate = useCallback(async (endDate: string) => {
-    if (isAuthenticatedRef.current) {
+    if (isAuthenticatedRef.current && !isDemoModeRef.current) {
       const result = await apiFetch("/api/safety-settings?key=safety_awareness_schedule_end_date", apiJson("PUT", { value: { endDate } }));
       if (!result.ok) return false;
     }
@@ -2811,7 +2920,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
   }, []);
 
   const updateAwarenessDescription = useCallback(async (description: string) => {
-    if (isAuthenticatedRef.current) {
+    if (isAuthenticatedRef.current && !isDemoModeRef.current) {
       const result = await apiFetch("/api/safety-settings?key=safety_awareness_description", apiJson("PUT", { value: { description } }));
       if (!result.ok) return false;
     }
@@ -2834,7 +2943,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
     const previousIds = new Set(awarenessQuestions.map((question) => question.id));
     const nextIds = new Set(normalized.map((question) => question.id));
     setAwarenessQuestions(normalized);
-    if (isAuthenticatedRef.current) {
+    if (isAuthenticatedRef.current && !isDemoModeRef.current) {
       for (const question of normalized) {
         const existing = previousIds.has(question.id) && /^\d+$/.test(question.id);
         const previous = previousById.get(question.id);
@@ -2883,7 +2992,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
         }))
         .sort((a, b) => a.date.localeCompare(b.date));
     setAwarenessHolidays(normalized);
-    if (isAuthenticatedRef.current) {
+    if (isAuthenticatedRef.current && !isDemoModeRef.current) {
       void (async () => {
         const nextDates = new Set(normalized.map((holiday) => holiday.date));
         for (const previous of awarenessHolidays) {
@@ -2917,7 +3026,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
     const actorName = userDisplayName(currentUserRef.current);
     const alreadyCompletedToday = awarenessDoneDate === date || awarenessHistory.some((item) => item.date === date);
 
-    if (isAuthenticatedRef.current) {
+    if (isAuthenticatedRef.current && !isDemoModeRef.current) {
       const saved = await apiFetch<{ attempt: { attemptDate?: string; score?: number; total?: number } }>("/api/safety-awareness/attempts", apiJson("POST", {
         score: completion.score,
         total: completion.total,
@@ -2952,7 +3061,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
         ])
       );
     }
-    if (isAuthenticatedRef.current) {
+    if (isAuthenticatedRef.current && !isDemoModeRef.current) {
       await Promise.all([refreshPointBalance(), refreshAwarenessAttempts()]);
     }
     return true;
@@ -2990,16 +3099,20 @@ export function AppProviders({ children }: { children: ReactNode }) {
 
       const occurredAt = Date.now();
       const redeemedAtIso = new Date(occurredAt).toISOString();
-      const persisted = await apiFetch<{ redemption?: { balance?: number; pointsUsed?: number; rewardId?: string } }>(
-        `/api/safety-culture/rewards/${rewardId}/redeem`,
-        apiJson("POST", { points })
-      );
-      if (!persisted.ok) {
-        return { ok: false as const, reason: "api-error" as const };
+      let nextBalance: number | null = null;
+      if (!isDemoModeRef.current) {
+        const persisted = await apiFetch<{ redemption?: { balance?: number; pointsUsed?: number; rewardId?: string } }>(
+          `/api/safety-culture/rewards/${rewardId}/redeem`,
+          apiJson("POST", { points })
+        );
+        if (!persisted.ok) {
+          return { ok: false as const, reason: "api-error" as const };
+        }
+        const persistedBalance = Number(persisted.data?.redemption?.balance);
+        nextBalance = Number.isFinite(persistedBalance) ? persistedBalance : null;
       }
 
-      const nextBalance = Number(persisted.data?.redemption?.balance);
-      setCurrentUserPoints((prev) => (Number.isFinite(nextBalance) ? Math.max(0, nextBalance) : Math.max(0, prev - points)));
+      setCurrentUserPoints((prev) => (nextBalance !== null ? Math.max(0, nextBalance) : Math.max(0, prev - points)));
       setRewardRedemptions((current) =>
         normalizeRewardRedemptions([
           {
@@ -3054,15 +3167,16 @@ export function AppProviders({ children }: { children: ReactNode }) {
           })
         )
       );
-      void refreshPointBalance();
-      void refreshRewardsState();
+      if (!isDemoModeRef.current) {
+        void refreshPointBalance();
+        void refreshRewardsState();
+      }
       return { ok: true as const };
     },
     [currentUserPoints, refreshPointBalance, refreshRewardsState, rewardsCatalog]
   );
 
   const awarenessNow = new Date(eventNow);
-  const awarenessBangkokDay = new Date(awarenessNow.getTime() + 7 * 60 * 60 * 1000).getUTCDay();
   const awarenessTodayKey = todayKey(awarenessNow);
   // วันเริ่มใช้งานของผู้ใช้: ใช้บันทึก Awareness แรกสุดถ้ามี ไม่งั้น = วันนี้ (ผู้ใช้ใหม่)
   // เมื่อเชื่อม backend แล้วให้แทนที่ด้วย created_at ของผู้ใช้
@@ -3070,6 +3184,15 @@ export function AppProviders({ children }: { children: ReactNode }) {
     awarenessHistory.length > 0
       ? awarenessHistory.reduce((min, item) => (item.date < min ? item.date : min), awarenessHistory[0].date)
       : awarenessTodayKey;
+  const awarenessDoneToday = awarenessDoneDate === awarenessTodayKey
+    || awarenessHistory.some((item) => item.date === awarenessTodayKey);
+  const awarenessRequirementRules: AwarenessRequirementRules = {
+    enabled: awarenessEnabled,
+    weekdays: awarenessWeekdays,
+    holidayDates: awarenessHolidays.map((holiday) => holiday.date),
+    effectiveStartDate: awarenessScheduleStartDate || undefined,
+    endDate: awarenessScheduleEndDate || undefined,
+  };
 
   const state: AppState = {
     posts,
@@ -3087,28 +3210,14 @@ export function AppProviders({ children }: { children: ReactNode }) {
     isAppBootstrapping,
     isAwarenessLoading,
     awarenessQuestions,
-    awarenessDoneToday: awarenessDoneDate === awarenessTodayKey,
+    awarenessDoneToday,
     awarenessHistory,
     awarenessHolidays,
-    awarenessRequiredToday:
-      mounted &&
-      awarenessEnabled &&
-      (() => {
-        if (!awarenessActiveStartTime || !awarenessActiveEndTime) return true;
-        const now = new Date();
-        const utc = now.getTime() + now.getTimezoneOffset() * 60000;
-        const bkk = new Date(utc + 7 * 60 * 60 * 1000);
-        const currentMin = bkk.getHours() * 60 + bkk.getMinutes();
-        const [startH, startM] = awarenessActiveStartTime.split(":").map(Number);
-        const [endH, endM] = awarenessActiveEndTime.split(":").map(Number);
-        const startMin = startH * 60 + startM;
-        const endMin = endH * 60 + endM;
-        return currentMin >= startMin && currentMin <= endMin;
-      })() &&
-      (!awarenessScheduleStartDate || awarenessTodayKey >= awarenessScheduleStartDate) &&
-      (!awarenessScheduleEndDate || awarenessTodayKey <= awarenessScheduleEndDate) &&
-      !awarenessHolidays.some((holiday) => holiday.date === awarenessTodayKey) &&
-      ![0, 6].includes(awarenessBangkokDay),
+    awarenessRequiredToday: mounted && isAwarenessRequiredNow(awarenessNow, {
+      ...awarenessRequirementRules,
+      activeStartTime: awarenessActiveStartTime,
+      activeEndTime: awarenessActiveEndTime,
+    }),
     awarenessEnabled,
     awarenessWeekdays,
     awarenessActiveStartTime,

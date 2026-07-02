@@ -5,7 +5,8 @@ import Link from "next/link";
 import { type CSSProperties, useEffect, useMemo, useRef, useState } from "react";
 import { type SafetyCultureFeedEvent, useAppState } from "@/providers/app-providers";
 import { apiFetch } from "@/lib/api-client";
-import { isLocalDemoLoginHost, useSessionUser } from "@/lib/session-user";
+import { isAwarenessDateRequired } from "@/lib/safety-awareness";
+import { isDemoLoginActive, useSessionUser } from "@/lib/session-user";
 import { cn } from "@/lib/utils";
 import { formatDisplayDate } from "@/lib/utils";
 import { Card } from "@/components/ui/card";
@@ -44,8 +45,6 @@ const SAFETY_AWARENESS_ICON = "/images/dashboard/safety-awareness-icon.png";
 const HERO_BG = "/images/heroes/Home01.png";
 const HERO_ANNOUNCEMENT_BG = "/images/heroes/home-launch-announcement.png";
 const ACTIVITY_BANNER_BG = "/images/dashboard/cpac-activity-banner-bg.png";
-const DEMO_LOGIN_SESSION_KEY = "cpac-safety-login-session";
-
 const THAI_WEEKDAYS = ["อา.", "จ.", "อ.", "พ.", "พฤ.", "ศ.", "ส."];
 
 const DEMO_ACTIVITY_EVENTS: SafetyCultureFeedEvent[] = [
@@ -221,8 +220,10 @@ export default function SafePlusDashboard() {
     isAwarenessLoading,
     awarenessHistory,
     awarenessHolidays,
+    awarenessDoneToday,
     awarenessRequiredToday,
     awarenessEnabled,
+    awarenessWeekdays,
     awarenessActiveStartTime,
     awarenessActiveEndTime,
     awarenessScheduleStartDate,
@@ -233,7 +234,7 @@ export default function SafePlusDashboard() {
     userActivityHistory,
   } = useAppState();
   const { user: sessionUser } = useSessionUser();
-  const [isDemoLogin, setIsDemoLogin] = useState(false);
+  const [isDemoLogin, setIsDemoLogin] = useState(() => isDemoLoginActive());
   const currentYear = new Date().getFullYear();
   const [effortYear, setEffortYear] = useState(currentYear);
   const [effortMonthlyCounts, setEffortMonthlyCounts] = useState<Array<{ month: string; linewalk: number; contact: number }>>([]);
@@ -262,18 +263,11 @@ export default function SafePlusDashboard() {
   const [awarenessCalendarMonth, setAwarenessCalendarMonth] = useState(startOfBangkokMonth(effectiveAwarenessStartDate));
 
   useEffect(() => {
-    try {
-      const demoEnabled =
-        process.env.NODE_ENV !== "production"
-        && isLocalDemoLoginHost(window.location.hostname)
-        && window.sessionStorage.getItem(DEMO_LOGIN_SESSION_KEY) === "true";
-      setIsDemoLogin(demoEnabled);
-    } catch {
-      setIsDemoLogin(false);
-    }
+    setIsDemoLogin(isDemoLoginActive());
   }, []);
 
   useEffect(() => {
+    if (isDemoLogin) return;
     let cancelled = false;
     void apiFetch<{ setting: { setting_value?: unknown } | null }>("/api/safety-settings?key=home_hero_slides").then((result) => {
       if (cancelled || !result.ok) return;
@@ -284,7 +278,7 @@ export default function SafePlusDashboard() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [isDemoLogin]);
 
   useEffect(() => {
     if (heroBannerSlides.length <= 1) return;
@@ -380,12 +374,13 @@ export default function SafePlusDashboard() {
       date.setDate(now.getDate() + (index - 5));
       const dateKey = bangkokDateKey(date);
       const bkDate = new Date(`${dateKey}T00:00:00+07:00`);
-      const required =
-        awarenessEnabled &&
-        ![0, 6].includes(bkDate.getDay()) &&
-        !holidayDates.has(dateKey) &&
-        dateKey >= effectiveAwarenessStartDate &&
-        (!awarenessScheduleEndDate || dateKey <= awarenessScheduleEndDate);
+      const required = isAwarenessDateRequired(dateKey, {
+        enabled: awarenessEnabled,
+        weekdays: awarenessWeekdays,
+        holidayDates,
+        effectiveStartDate: effectiveAwarenessStartDate,
+        endDate: awarenessScheduleEndDate || undefined,
+      });
       const completion = historyByDate.get(dateKey) || null;
       const isFuture = dateKey > today;
       return {
@@ -400,12 +395,13 @@ export default function SafePlusDashboard() {
     const allRequiredDays: Array<{ dateKey: string; completion: boolean; isToday: boolean }> = [];
     let countDateKey = effectiveAwarenessStartDate;
     while (countDateKey <= today) {
-      const date = new Date(`${countDateKey}T00:00:00+07:00`);
-      const required =
-        awarenessEnabled &&
-        ![0, 6].includes(date.getDay()) &&
-        !holidayDates.has(countDateKey) &&
-        (!awarenessScheduleEndDate || countDateKey <= awarenessScheduleEndDate);
+      const required = isAwarenessDateRequired(countDateKey, {
+        enabled: awarenessEnabled,
+        weekdays: awarenessWeekdays,
+        holidayDates,
+        effectiveStartDate: effectiveAwarenessStartDate,
+        endDate: awarenessScheduleEndDate || undefined,
+      });
       if (required) {
         allRequiredDays.push({
           dateKey: countDateKey,
@@ -427,12 +423,13 @@ export default function SafePlusDashboard() {
       streakDate = previousBangkokDateKey(streakDate);
     }
     while (streakDate >= effectiveAwarenessStartDate) {
-      const date = new Date(`${streakDate}T00:00:00+07:00`);
-      const required =
-        awarenessEnabled &&
-        ![0, 6].includes(date.getDay()) &&
-        !holidayDates.has(streakDate) &&
-        (!awarenessScheduleEndDate || streakDate <= awarenessScheduleEndDate);
+      const required = isAwarenessDateRequired(streakDate, {
+        enabled: awarenessEnabled,
+        weekdays: awarenessWeekdays,
+        holidayDates,
+        effectiveStartDate: effectiveAwarenessStartDate,
+        endDate: awarenessScheduleEndDate || undefined,
+      });
       if (required) {
         if (!historyByDate.has(streakDate)) break;
         streak += 1;
@@ -440,10 +437,9 @@ export default function SafePlusDashboard() {
       streakDate = previousBangkokDateKey(streakDate);
     }
     return { days, done, missed, completionRate, latest, streak };
-  }, [awarenessEnabled, awarenessHistory, awarenessHolidays, awarenessScheduleEndDate, effectiveAwarenessStartDate]);
+  }, [awarenessEnabled, awarenessHistory, awarenessHolidays, awarenessScheduleEndDate, awarenessWeekdays, effectiveAwarenessStartDate]);
 
   const todayKey = bangkokDateKey(new Date());
-  const doneToday = awarenessHistory.some((item) => item.date === todayKey);
   const todayCalendarRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     todayCalendarRef.current?.scrollIntoView({ behavior: "instant" as ScrollBehavior, inline: "center", block: "nearest" });
@@ -467,13 +463,13 @@ export default function SafePlusDashboard() {
     return Array.from({ length: 42 }, (_, index) => {
       const dateKey = addBangkokDays(firstGridDateKey, index);
       const date = new Date(`${dateKey}T00:00:00+07:00`);
-      const required =
-        awarenessEnabled &&
-        ![0, 6].includes(date.getDay()) &&
-        !holidayDates.has(dateKey) &&
-        dateKey >= effectiveAwarenessStartDate &&
-        dateKey <= awarenessCalendarTodayKey &&
-        (!awarenessScheduleEndDate || dateKey <= awarenessScheduleEndDate);
+      const required = isAwarenessDateRequired(dateKey, {
+        enabled: awarenessEnabled,
+        weekdays: awarenessWeekdays,
+        holidayDates,
+        effectiveStartDate: effectiveAwarenessStartDate,
+        endDate: awarenessScheduleEndDate || undefined,
+      }) && dateKey <= awarenessCalendarTodayKey;
       const completion = historyByDate.get(dateKey) || null;
       const isCurrentMonth = dateKey.slice(0, 7) === awarenessCalendarMonth.slice(0, 7);
       const isFuture = dateKey > awarenessCalendarTodayKey;
@@ -497,6 +493,7 @@ export default function SafePlusDashboard() {
     awarenessHistory,
     awarenessHolidays,
     awarenessScheduleEndDate,
+    awarenessWeekdays,
     effectiveAwarenessStartDate,
   ]);
 
@@ -797,7 +794,7 @@ export default function SafePlusDashboard() {
                 <div className="flex flex-col items-start gap-1 sm:flex-row sm:flex-wrap sm:items-center sm:gap-2">
                   <span className="block text-[9.5px] font-black leading-tight text-[#536e94] sm:text-[10px]">เปอร์เซ็นต์การเข้าร่วม Safety Awareness</span>
                   <span className="rounded-full bg-[#dff8e9] px-2.5 py-0.5 text-[9px] font-black leading-none text-[#118646] sm:px-2.5 sm:text-[9px]">
-                    วันนี้: {!awarenessRequiredToday ? "ไม่นับ" : doneToday ? "ทำแล้ว" : "ยังไม่ได้ทำ"}
+                    วันนี้: {!awarenessRequiredToday ? "ไม่นับ" : awarenessDoneToday ? "ทำแล้ว" : "ยังไม่ได้ทำ"}
                   </span>
                 </div>
                 <div className="mt-1 flex flex-wrap items-center gap-1.5 text-[8.5px] font-bold leading-tight text-[#6b7f9e] sm:text-[9px]">

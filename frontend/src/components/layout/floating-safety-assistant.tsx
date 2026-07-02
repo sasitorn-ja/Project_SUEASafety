@@ -63,7 +63,7 @@ type AssistantContext = {
   urgent: boolean;
 };
 
-function getAssistantContext(pathname: string, awarenessDoneToday: boolean): AssistantContext {
+function getAssistantContext(pathname: string, awarenessDoneToday: boolean, awarenessRequiredToday: boolean): AssistantContext {
   if (pathname.startsWith("/safety-culture/rewards")) {
     return { action: "happy", greeting: "เลือกรางวัลกันไหม?", message: "ฉันช่วยดูว่า Coin ตอนนี้แลกอะไรได้บ้าง", urgent: false };
   }
@@ -79,8 +79,11 @@ function getAssistantContext(pathname: string, awarenessDoneToday: boolean): Ass
   if (pathname.startsWith("/safety-culture")) {
     return { action: "announce", greeting: "สวัสดีจาก Safety Culture", message: "ฉันช่วยแนะนำกิจกรรมและ Coin ที่น่าสนใจได้", urgent: false };
   }
-  if (!awarenessDoneToday) {
+  if (awarenessRequiredToday && !awarenessDoneToday) {
     return { action: "flashlight", greeting: "อย่าลืม Safety Awareness", message: "วันนี้ยังมีงาน Safety ที่ควรทำให้ครบก่อนเริ่มงาน", urgent: true };
+  }
+  if (!awarenessRequiredToday) {
+    return { action: "happy", greeting: "วันนี้ไม่มี Safety Awareness เพิ่ม", message: "ฉันช่วยแนะนำงานถัดไปหรือกิจกรรมอื่นต่อได้", urgent: false };
   }
   return { action: "happy", greeting: "วันนี้ทำได้ดีมาก", message: "ฉันช่วยแนะนำงานถัดไปเพื่อสะสม Coin ต่อได้", urgent: false };
 }
@@ -125,6 +128,7 @@ export function FloatingSafetyAssistant() {
   const {
     currentUserPoints,
     awarenessDoneToday,
+    awarenessRequiredToday,
     personalRankings,
   } = useAppState();
   const [open, setOpen] = useState(false);
@@ -145,8 +149,8 @@ export function FloatingSafetyAssistant() {
   const inputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const context = useMemo(
-    () => getAssistantContext(pathname, awarenessDoneToday),
-    [pathname, awarenessDoneToday]
+    () => getAssistantContext(pathname, awarenessDoneToday, awarenessRequiredToday),
+    [pathname, awarenessDoneToday, awarenessRequiredToday]
   );
   const activeUser = personalRankings.find((person) => person.active);
 
@@ -183,6 +187,7 @@ export function FloatingSafetyAssistant() {
             page: pathname,
             points: currentUserPoints,
             awarenessDoneToday,
+            awarenessRequiredToday,
             rank: activeUser?.rank ?? null,
             team: activeUser?.team ?? null,
           },
