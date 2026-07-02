@@ -17,7 +17,7 @@ const QUESTIONS_PER_DAY = 3;
  * and cannot be closed until all questions are answered.
  */
 export function SafetyAwarenessGate() {
-  const { awarenessQuestions, awarenessDoneToday, awarenessRequiredToday } = useAppState();
+  const { awarenessQuestions, awarenessDoneToday, awarenessRequiredToday, isAwarenessLoading } = useAppState();
   const { markAwarenessDone } = useAppActions();
   const { mascot } = useAppTheme();
 
@@ -39,11 +39,11 @@ export function SafetyAwarenessGate() {
 
   // Build the day's quiz exactly once, when the gate should open.
   useEffect(() => {
-    if (!mounted || awarenessDoneToday || !awarenessRequiredToday || enabled.length === 0 || quiz.length > 0) return;
+    if (isAwarenessLoading || !mounted || awarenessDoneToday || !awarenessRequiredToday || enabled.length === 0 || quiz.length > 0) return;
     setQuiz(pickRandom(enabled, QUESTIONS_PER_DAY));
-  }, [mounted, awarenessDoneToday, awarenessRequiredToday, enabled, quiz.length]);
+  }, [isAwarenessLoading, mounted, awarenessDoneToday, awarenessRequiredToday, enabled, quiz.length]);
 
-  const open = mounted && awarenessRequiredToday && !awarenessDoneToday && quiz.length > 0;
+  const open = !isAwarenessLoading && mounted && awarenessRequiredToday && !awarenessDoneToday && quiz.length > 0;
 
   // Lock background scrolling while the gate is open.
   useEffect(() => {

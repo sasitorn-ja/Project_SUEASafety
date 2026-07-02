@@ -1630,9 +1630,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
     || pathname === "/safety-culture/admin-reward";
   const rewardsPageSize = pathname === "/" || pathname === "/dashboard" ? 1 : 100;
   const shouldLoadNotifications = pathname === "/notifications";
-  const shouldLoadAwareness =
-    pathname === "/"
-    || pathname === "/safety-culture/admin-awareness";
+  const shouldLoadAwareness = pathname !== "/login";
   const shouldLoadAwarenessAttempts = pathname === "/";
   const shouldLoadEvents =
     pathname === "/"
@@ -1874,8 +1872,13 @@ export function AppProviders({ children }: { children: ReactNode }) {
         setAwarenessDoneDate("");
         setAwarenessHolidays([]);
         setSafetyCultureEvent(createDefaultSafetyCultureEvent());
+        setAwarenessEnabledState(false);
+        setAwarenessWeekdaysState([1, 2, 3, 4, 5]);
         setAwarenessActiveStartTimeState("08:00");
         setAwarenessActiveEndTimeState("17:00");
+        setAwarenessScheduleStartDateState("");
+        setAwarenessScheduleEndDateState("");
+        setAwarenessDescriptionState("");
         if (!cancelled) {
           setIsAwarenessLoading(false);
           setIsAppBootstrapping(false);
