@@ -1,10 +1,10 @@
 # Production Readiness Audit
 
-Generated: 2026-07-01T13:31:45.694Z
+Generated: 2026-07-02T00:29:06.514Z
 
 ## Overall
 
-- Current readiness: **85%**
+- Current readiness: **84%**
 - Target after backlog: **92%**
 - Database: **CPAC_Safety on 192.168.1.196**
 - Scoring weights: api 25%, db 25%, network 20%, mock 10%, security 10%, ux 10%
@@ -17,7 +17,7 @@ Generated: 2026-07-01T13:31:45.694Z
 | Safety Effort | 83% | 90% |
 | API Docs | 88% | 95% |
 | Dashboard | 90% | 92% |
-| Unscored | 90% | 90% |
+| Unscored | 82% | 90% |
 | Notifications | 84% | 92% |
 | Profile | 76% | 94% |
 | Safety Admin | 86% | 93% |
@@ -51,6 +51,7 @@ Generated: 2026-07-01T13:31:45.694Z
 | `/safety-culture` | Safety Culture | 90% | 95% | Initial feed is 15 posts, cursor loads 15 more, comments are lazy-loaded. |
 | `/safety-culture/admin-awareness` | Culture Admin | 90% | 95% | Awareness settings are fetched in one batch request and the admin page no longer loads user attempts. |
 | `/safety-culture/admin-event` | Culture Admin | 78% | 92% | Event API exists; notification/write audit needed. |
+| `/safety-culture/admin-home` | Unscored | 65% | 90% | Needs manual page scoring. |
 | `/safety-culture/admin-leaderboard` | Culture Admin | 70% | 92% | Team/admin user selection needs permissions and scale audit. |
 | `/safety-culture/admin-points` | Culture Admin | 94% | 95% | All point rules are in CPAC_Safety; Safety Effort dailyLimit is null and can be configured later. |
 | `/safety-culture/admin-reward` | Culture Admin | 75% | 92% | Reward categories are settings-backed; image/upload audit needed. |
@@ -71,8 +72,8 @@ Generated: 2026-07-01T13:31:45.694Z
 
 ## API / Mock Coverage
 
-- App routes found: 30
-- Frontend literal API references: 51
+- App routes found: 31
+- Frontend literal API references: 52
 - Mock/demo references found: 0
 
 ## DB Critical Summary
@@ -80,7 +81,7 @@ Generated: 2026-07-01T13:31:45.694Z
 - Tables: 46
 - Point rules in DB: commentCreated, reactionCreated, safetyAwarenessCompleted, safetyEffortCompleted, safetyPostApproved
 - role_permissions rows: 10
-- safety_effort_submissions rows: 59
+- safety_effort_submissions rows: 60
 - export_jobs rows: 1
 - Safety Effort daily limit: unlimited
 - API Docs active allowlist rows: 1

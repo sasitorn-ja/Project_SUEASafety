@@ -1,11 +1,11 @@
 {
-  "generatedAt": "2026-07-01T13:31:45.694Z",
+  "generatedAt": "2026-07-02T00:29:06.514Z",
   "overall": {
-    "current": 85,
+    "current": 84,
     "target": 92
   },
-  "routeCount": 30,
-  "apiReferenceCount": 51,
+  "routeCount": 31,
+  "apiReferenceCount": 52,
   "mockReferenceCount": 0,
   "pages": [
     {
@@ -207,6 +207,15 @@
       ]
     },
     {
+      "route": "/safety-culture/admin-home",
+      "module": "Unscored",
+      "current": 65,
+      "target": 90,
+      "notes": [
+        "Needs manual page scoring."
+      ]
+    },
+    {
       "route": "/safety-culture/admin-leaderboard",
       "module": "Culture Admin",
       "current": 70,
@@ -297,7 +306,7 @@
       "target": 92
     },
     "Unscored": {
-      "current": 90,
+      "current": 82,
       "target": 90
     },
     "Notifications": {
@@ -352,6 +361,10 @@
     {
       "file": "frontend/src/app/profile/page.tsx",
       "path": "/api/users/me"
+    },
+    {
+      "file": "frontend/src/app/safety-culture/admin-home/page.tsx",
+      "path": "/api/safety-settings?key=home_hero_slides"
     },
     {
       "file": "frontend/src/app/safety-culture/page.tsx",
@@ -880,12 +893,32 @@
           "count": 1
         }
       ],
-      "submissions": 59,
+      "submissions": 60,
       "exportJobs": 1,
       "apiDocsAccess": 1,
       "pointConditions": {
+        "commentCreated": {
+          "dailyLimit": 103,
+          "awardPostOwner": false,
+          "minCommentLength": 15
+        },
+        "reactionCreated": {
+          "dailyLimit": 3,
+          "awardPostOwner": true,
+          "minCommentLength": null
+        },
+        "safetyPostApproved": {
+          "dailyLimit": 3,
+          "awardPostOwner": false,
+          "minCommentLength": null
+        },
         "safetyEffortCompleted": {
           "dailyLimit": null,
+          "awardPostOwner": false,
+          "minCommentLength": null
+        },
+        "safetyAwarenessCompleted": {
+          "dailyLimit": 1,
           "awardPostOwner": false,
           "minCommentLength": null
         }
