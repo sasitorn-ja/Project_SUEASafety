@@ -1178,7 +1178,7 @@ export default function SafePlusDashboard() {
                   : "ปฏิทิน Safety Awareness"}
             </AppDialogTitle>
             <AppDialogDescription>
-              ตัวเลขด้านบนนับสะสมตั้งแต่วันเริ่มต้นถึงวันนี้ ส่วนปฏิทินนี้จะแสดงสถานะทุกวันที่นับ KPI
+              ตัวเลขด้านบนนับสะสมตั้งแต่วันเริ่มต้นถึงวันนี้ ส่วนปฏิทินนี้จะแสดงสถานะทุกวันที่นับ
             </AppDialogDescription>
           </AppDialogSectionHeader>
 
