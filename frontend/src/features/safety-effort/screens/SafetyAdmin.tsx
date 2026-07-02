@@ -1556,14 +1556,16 @@ export default function SafetyAdmin() {
                 style={{
                   width: 28,
                   height: 28,
-                  borderRadius: 8,
-                  background: "#f1f5f9",
+                  borderRadius: 0,
+                  background: "transparent",
                   border: "none",
                   color: "#64748b",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
-                  cursor: "pointer"
+                  cursor: "pointer",
+                  padding: 0,
+                  boxShadow: "none"
                 }}
               >
                 <X size={16} />
@@ -1798,23 +1800,6 @@ export default function SafetyAdmin() {
 
             {/* Action Buttons */}
             <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, marginTop: 2 }}>
-              <button
-                type="button"
-                onClick={handleCancelBackdateModal}
-                style={{
-                  height: 36,
-                  padding: "0 16px",
-                  borderRadius: 8,
-                  border: "1px solid #cbd5e1",
-                  background: "#ffffff",
-                  color: "#334155",
-                  fontSize: 12.5,
-                  fontWeight: 700,
-                  cursor: "pointer"
-                }}
-              >
-                ยกเลิก
-              </button>
               <button
                 type="button"
                 onClick={handleSaveBackdateModal}
