@@ -11,7 +11,7 @@ import {
   saveChecklistDraft,
 } from "@/features/safety-effort/config/checklists";
 import { uploadSafetyEffortMedia } from "@/features/safety-effort/lib/upload-media";
-import { GripVertical, Eye, Trash2, Search, X, Check, Settings, ChevronDown, ChevronUp, Pencil, ClipboardList, Building, Users, MapPin } from "lucide-react";
+import { GripVertical, Eye, Trash2, Search, X, Check, Settings, ChevronDown, ChevronUp, Pencil, ClipboardList, Building, Users, MapPin, ShieldAlert, ShieldCheck, Calendar, Plus } from "lucide-react";
 import { SafetyCultureHero } from "@/components/safety-culture/safety-culture-hero";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 
@@ -335,6 +335,7 @@ export default function SafetyAdmin() {
   const [locationDropdownOpen, setLocationDropdownOpen] = useState(false);
   const [draggedId, setDraggedId] = useState(null);
   const [dragOverId, setDragOverId] = useState(null);
+  const [dragOverPosition, setDragOverPosition] = useState(null);
   const [backdateMode, setBackdateMode] = useState("today");
 
   const handleToggleMode = (mode) => {
@@ -600,48 +601,69 @@ export default function SafetyAdmin() {
             flexShrink: 0,
           }}
         >
-          <div>
-            <div style={{ fontSize: 18, fontWeight: 900, color: T.ink, lineHeight: 1.1 }}>Safety Admin</div>
-            {lastSavedAt && <div style={{ fontSize: 10, color: T.sub, marginTop: 2 }}>เซฟล่าสุด: {lastSavedAt}</div>}
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            <div style={{
+              width: 44,
+              height: 44,
+              borderRadius: 14,
+              background: "linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              color: "#ffffff",
+              boxShadow: "0 6px 16px rgba(37, 99, 235, 0.3)"
+            }}>
+              <ShieldCheck size={24} strokeWidth={2.2} />
+            </div>
+            <div>
+              <div style={{ fontSize: 20, fontWeight: 800, color: "#1e293b", lineHeight: 1.2 }}>Safety Admin</div>
+              <div style={{ fontSize: 12, color: "#64748b", marginTop: 2 }}>ระบบจัดการแบบประเมินความปลอดภัย</div>
+            </div>
           </div>
 
-          {/* Toggle switch for Today vs Backdate */}
-          <div style={{ display: "flex", alignItems: "center", gap: 8, background: T.soft, padding: 4, borderRadius: 12, border: `1px solid ${T.line}` }}>
+          {/* Top Right Date/Backdate Pill Card */}
+          <div style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 12,
+            background: "#f8fafc",
+            border: "1px solid #e2e8f0",
+            padding: "6px 14px",
+            borderRadius: 12,
+          }}>
+            <div style={{
+              width: 32,
+              height: 32,
+              borderRadius: 8,
+              background: "#eff6ff",
+              color: "#2563eb",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center"
+            }}>
+              <Calendar size={18} />
+            </div>
+            <div style={{ textAlign: "right" }}>
+              <div style={{ fontSize: 10, color: "#64748b", fontWeight: 600 }}>การประเมินในข้อมูลเดิม</div>
+              <div style={{ fontSize: 13, color: "#1e293b", fontWeight: 800 }}>
+                {backdateMode === "backdate" ? `ทำย้อนหลังได้ (${tempBackdateLimit} วัน)` : "ทำได้เฉพาะวันนี้"}
+              </div>
+            </div>
             <button
               type="button"
-              onClick={() => handleToggleMode("today")}
+              onClick={() => setShowBackdateLimitModal(true)}
               style={{
-                height: 28,
-                padding: "0 12px",
-                borderRadius: 8,
+                background: "transparent",
                 border: "none",
-                background: backdateMode === "today" ? T.accent : "transparent",
-                color: backdateMode === "today" ? "#fff" : T.sub,
-                fontWeight: 800,
-                fontSize: 12,
+                color: "#94a3b8",
                 cursor: "pointer",
-                transition: "all 0.2s",
+                padding: 4,
+                display: "flex",
+                alignItems: "center"
               }}
+              title="ตั้งค่าทำย้อนหลัง"
             >
-              ทำวันนี้
-            </button>
-            <button
-              type="button"
-              onClick={() => handleToggleMode("backdate")}
-              style={{
-                height: 28,
-                padding: "0 12px",
-                borderRadius: 8,
-                border: "none",
-                background: backdateMode === "backdate" ? T.accent : "transparent",
-                color: backdateMode === "backdate" ? "#fff" : T.sub,
-                fontWeight: 800,
-                fontSize: 12,
-                cursor: "pointer",
-                transition: "all 0.2s",
-              }}
-            >
-              ทำย้อนหลัง
+              <Pencil size={14} />
             </button>
           </div>
         </div>
@@ -652,7 +674,7 @@ export default function SafetyAdmin() {
             display: isMobile ? "flex" : "grid",
             gridTemplateColumns: isMobile
               ? undefined
-              : "minmax(300px, 360px) minmax(0, 1fr)",
+              : "320px 1fr",
             flexDirection: isMobile ? "column" : undefined,
             gap: 16,
             minHeight: isMobile ? undefined : 0,
@@ -662,50 +684,78 @@ export default function SafetyAdmin() {
           {(!isMobile || mobileActiveView === "list") && (
             <aside
               style={{
-                background: T.card,
-                border: `1px solid ${T.line}`,
-                borderRadius: 24,
+                background: "#ffffff",
+                border: "1px solid #e2e8f0",
+                borderRadius: 16,
                 padding: 16,
-                boxShadow: T.shadow,
+                boxShadow: "0 4px 20px rgba(0, 0, 0, 0.03)",
                 display: "flex",
                 flexDirection: "column",
                 height: isMobile ? "auto" : "100%",
                 minHeight: isMobile ? undefined : 0,
               }}
             >
-              <div style={{ display: "flex", flexDirection: "column", gap: 10, flexShrink: 0 }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10 }}>
-                  <div>
-                    <div style={{ fontSize: 13, fontWeight: 800, color: T.accentDeep }}>รายการข้อประเมิน</div>
-                    <div style={{ fontSize: 12.5, color: T.sub }}>{LOCATION_TYPE_LABELS[selectedType]}</div>
-                  </div>
-                  <div style={{ display: "flex", gap: 6 }}>
-                    <button
-                      type="button"
-                      onClick={handleDuplicateQuestion}
-                      disabled={!selectedQuestion}
-                      style={{
-                        ...buttonGhostStyle,
-                        height: 32,
-                        padding: "0 12px",
-                        borderRadius: 8,
-                        fontSize: 12.5,
-                        opacity: !selectedQuestion ? 0.5 : 1,
-                        cursor: !selectedQuestion ? "not-allowed" : "pointer",
-                      }}
-                    >
-                      คัดลอก
-                    </button>
-                    <button type="button" onClick={handleAddQuestion} style={{ ...buttonPrimaryStyle, height: 32, padding: "0 12px", borderRadius: 8, fontSize: 12.5, boxShadow: "none" }}>
-                      + เพิ่มข้อ
-                    </button>
-                  </div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 12, flexShrink: 0 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <div style={{ fontSize: 15, fontWeight: 800, color: "#1e293b" }}>รายการข้อประเมิน</div>
                 </div>
 
-                <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="ค้นหาชื่อข้อหรือรายละเอียด" style={{ ...inputStyle, minHeight: 38, borderRadius: 10, fontSize: 13 }} />
+                <button
+                  type="button"
+                  onClick={handleAddQuestion}
+                  style={{
+                    height: 40,
+                    width: "100%",
+                    borderRadius: 10,
+                    border: "none",
+                    background: "linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)",
+                    color: "#ffffff",
+                    fontWeight: 700,
+                    fontSize: 13.5,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: 6,
+                    cursor: "pointer",
+                    boxShadow: "0 4px 12px rgba(37, 99, 235, 0.25)"
+                  }}
+                >
+                  <Plus size={16} />
+                  <span>เพิ่มข้อประเมิน</span>
+                </button>
+
+                <div style={{ position: "relative" }}>
+                  <Search size={15} style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: "#94a3b8" }} />
+                  <input
+                    value={query}
+                    onChange={(event) => setQuery(event.target.value)}
+                    placeholder="ค้นหาข้อประเมิน"
+                    style={{
+                      width: "100%",
+                      height: 38,
+                      borderRadius: 10,
+                      border: "1px solid #e2e8f0",
+                      background: "#f8fafc",
+                      paddingLeft: 34,
+                      paddingRight: 12,
+                      fontSize: 13,
+                      color: "#1e293b",
+                      outline: "none",
+                    }}
+                  />
+                </div>
               </div>
 
-              <div style={{ flex: isMobile ? "none" : 1, display: "flex", flexDirection: "column", gap: 8, overflowY: isMobile ? "visible" : "auto", marginTop: 12, paddingRight: 4 }}>
+              <div style={{
+                flex: isMobile ? "none" : 1,
+                maxHeight: isMobile ? "530px" : "calc(10 * 53px)",
+                display: "flex",
+                flexDirection: "column",
+                gap: 8,
+                overflowY: "auto",
+                marginTop: 12,
+                paddingRight: 4
+              }}>
                 {filteredList.map((item, index) => {
                   const active = item.id === selectedQuestionId;
                   const isDragging = draggedId === item.id;
@@ -725,35 +775,59 @@ export default function SafetyAdmin() {
                       }}
                       onDragOver={(e) => {
                         e.preventDefault();
-                      }}
-                      onDragEnter={() => {
-                        if (draggedId && draggedId !== item.id) {
+                        const rect = e.currentTarget.getBoundingClientRect();
+                        const offset = e.clientY - rect.top;
+                        const position = offset < rect.height / 2 ? "top" : "bottom";
+                        if (dragOverId !== item.id || dragOverPosition !== position) {
                           setDragOverId(item.id);
+                          setDragOverPosition(position);
                         }
                       }}
-                      onDragLeave={() => {
-                        setDragOverId((prev) => (prev === item.id ? null : prev));
+                      onDragLeave={(e) => {
+                        // Prevent flicker when moving over children
+                        if (!e.currentTarget.contains(e.relatedTarget)) {
+                          setDragOverId(null);
+                          setDragOverPosition(null);
+                        }
                       }}
                       onDragEnd={() => {
                         setDraggedId(null);
                         setDragOverId(null);
+                        setDragOverPosition(null);
                       }}
                       onDrop={(e) => {
                         e.preventDefault();
-                        if (!draggedId || draggedId === item.id) return;
+                        if (!draggedId || draggedId === item.id) {
+                          setDraggedId(null);
+                          setDragOverId(null);
+                          setDragOverPosition(null);
+                          return;
+                        }
+
+                        const rect = e.currentTarget.getBoundingClientRect();
+                        const offset = e.clientY - rect.top;
+                        const dropToBottom = offset >= rect.height / 2;
 
                         updateCurrentList((list) => {
                           const fromIndex = list.findIndex((x) => x.id === draggedId);
-                          const toIndex = list.findIndex((x) => x.id === item.id);
-                          if (fromIndex === -1 || toIndex === -1) return list;
+                          if (fromIndex === -1) return list;
 
                           const next = [...list];
                           const [draggedItem] = next.splice(fromIndex, 1);
-                          next.splice(toIndex, 0, draggedItem);
+                          
+                          let targetIndex = next.findIndex((x) => x.id === item.id);
+                          if (targetIndex === -1) return list;
+                          
+                          if (dropToBottom) {
+                            targetIndex += 1;
+                          }
+
+                          next.splice(targetIndex, 0, draggedItem);
                           return next;
                         });
                         setDraggedId(null);
                         setDragOverId(null);
+                        setDragOverPosition(null);
                       }}
                       onClick={() => {
                         setSelectedQuestionId(item.id);
@@ -767,64 +841,66 @@ export default function SafetyAdmin() {
                       }}
                       style={{
                         textAlign: "left",
-                        border: isOver
-                          ? `2px dashed ${T.accent}`
-                          : active
-                            ? `1px solid ${T.accent}`
-                            : `1px solid ${isEnabled ? T.line : "rgba(11,78,162,0.06)"}`,
+                        border: active
+                          ? "1.5px solid #3b82f6"
+                          : "1px solid #e2e8f0",
+                        borderTop: isOver && dragOverPosition === "top" ? "3px solid #2563eb" : active ? "1.5px solid #3b82f6" : "1px solid #e2e8f0",
+                        borderBottom: isOver && dragOverPosition === "bottom" ? "3px solid #2563eb" : active ? "1.5px solid #3b82f6" : "1px solid #e2e8f0",
                         background: active
-                          ? (isEnabled ? "var(--c-fff5de)" : "rgba(255, 245, 222, 0.65)")
-                          : (isEnabled ? "#fff" : "#f8fafc"),
-                        borderRadius: 14,
-                        padding: 10,
-                        display: "grid",
-                        gap: 4,
-                        cursor: isDragging ? "grabbing" : "grab",
+                          ? "#eff6ff"
+                          : "#ffffff",
+                        borderRadius: 10,
+                        padding: "10px 12px",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        gap: 10,
+                        cursor: isDragging ? "grabbing" : "pointer",
                         fontFamily: "inherit",
-                        opacity: isDragging ? 0.4 : isEnabled ? 1 : 0.65,
+                        opacity: isDragging ? 0.4 : isEnabled ? 1 : 0.6,
                         transition: "all 0.15s ease",
-                        transform: isOver ? "scale(0.98)" : "none",
+                        boxShadow: active ? "0 2px 8px rgba(37, 99, 235, 0.12)" : "none",
                         outline: "none",
                       }}
                     >
-                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
                         <span
                           style={{
-                            width: 22,
-                            height: 22,
+                            width: 24,
+                            height: 24,
                             borderRadius: 999,
                             display: "grid",
                             placeItems: "center",
-                            background: active
-                              ? (isEnabled ? T.accent : "#94a3b8")
-                              : (isEnabled ? T.accentSoft : "#f1f5f9"),
-                            color: active ? "#fff" : (isEnabled ? T.accentDeep : "#64748b"),
-                            fontSize: 11,
-                            fontWeight: 800,
+                            background: active ? "#2563eb" : "#f1f5f9",
+                            color: active ? "#ffffff" : "#64748b",
+                            fontSize: 12,
+                            fontWeight: 700,
                             flexShrink: 0,
                           }}
                         >
                           {index + 1}
                         </span>
-                        <GripVertical size={14} style={{ color: isEnabled ? T.sub : "#94a3b8", opacity: 0.6, cursor: "grab" }} />
+                        <span
+                          style={{
+                            fontSize: 13,
+                            fontWeight: active ? 700 : 500,
+                            color: active ? "#1e40af" : "#334155",
+                            whiteSpace: "nowrap",
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                          }}
+                        >
+                          {item.title}
+                        </span>
                       </div>
-                      <div
-                        style={{
-                          fontSize: 13,
-                          fontWeight: 800,
-                          lineHeight: 1.4,
-                          color: isEnabled ? T.ink : "#94a3b8",
-                        }}
-                      >
-                        {item.title}
-                      </div>
+                      <GripVertical size={14} style={{ color: "#94a3b8", flexShrink: 0, cursor: "grab" }} />
                     </div>
                   );
                 })}
 
                 {!filteredList.length ? (
-                  <div style={{ border: `1px dashed ${T.lineStrong}`, borderRadius: 18, padding: 18, color: T.sub, fontSize: 13 }}>
-                    ไม่พบข้อที่ตรงกับคำค้น
+                  <div style={{ border: "1px dashed #cbd5e1", borderRadius: 10, padding: 16, color: "#64748b", fontSize: 13, textAlign: "center" }}>
+                    ไม่พบข้อประเมิน
                   </div>
                 ) : null}
               </div>
@@ -850,11 +926,11 @@ export default function SafetyAdmin() {
                     {/* Question Details Editor Card */}
                     <div
                       style={{
-                        background: T.card,
-                        border: `1px solid ${T.line}`,
-                        borderRadius: 22,
+                        background: "#ffffff",
+                        border: "1px solid #e2e8f0",
+                        borderRadius: 16,
                         padding: isMobile ? 16 : 20,
-                        boxShadow: "0 16px 34px rgba(6, 43, 99, 0.10)",
+                        boxShadow: "0 4px 20px rgba(0, 0, 0, 0.03)",
                         display: "flex",
                         flexDirection: "column",
                         gap: 16,
@@ -868,502 +944,317 @@ export default function SafetyAdmin() {
                         justifyContent: "space-between",
                         gap: 12
                       }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                          {isMobile && (
-                            <button
-                              type="button"
-                              onClick={() => setMobileActiveView("list")}
-                              style={{
-                                ...buttonGhostStyle,
-                                height: 32,
-                                borderRadius: 8,
-                                fontSize: 12,
-                                padding: "0 10px",
-                                borderColor: T.accentDeep,
-                                color: T.accentDeep,
-                                marginRight: 6,
-                              }}
-                            >
-                              ← กลับรายการ
-                            </button>
-                          )}
-                          <div>
-                            <span style={{ fontSize: 11, fontWeight: 900, color: "#5f7591", textTransform: "uppercase", letterSpacing: "0.04em" }}>QUESTION EDITOR</span>
-                            <h2 style={{ fontSize: 24, fontWeight: 900, margin: "4px 0 0", color: T.ink, lineHeight: 1.1 }}>{selectedQuestion.title}</h2>
+                        <div>
+                          <span style={{ fontSize: 11, fontWeight: 800, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.05em" }}>QUESTION EDITOR</span>
+                          <h2 style={{ fontSize: 24, fontWeight: 800, margin: "2px 0 0", color: "#0f172a" }}>{selectedQuestion.title}</h2>
+                          <div style={{ display: "inline-flex", alignItems: "center", gap: 6, marginTop: 6, background: "#dcfce7", color: "#166534", padding: "3px 10px", borderRadius: 999, fontSize: 11.5, fontWeight: 700 }}>
+                            <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#22c55e" }} />
+                            <span>บันทึกข้อมูลล่าสุดเรียบร้อยแล้ว</span>
                           </div>
                         </div>
 
-                        {/* Top-Right Settings & Actions */}
-                        <div style={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: 12 }}>
-                          {/* Toggle switch for active state */}
+                        {/* Top-Right Toggle & Save */}
+                        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                          {/* Toggle Switch */}
                           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                            <span
-                              style={{
-                                fontSize: 12.5,
-                                fontWeight: 800,
-                                color: isQuestionActive(selectedQuestion) ? "#22c55e" : T.sub,
-                                transition: "color 0.15s ease",
-                              }}
-                            >
-                              {isQuestionActive(selectedQuestion) ? "เปิดใช้งาน" : "ปิดใช้งาน"}
-                            </span>
+                            <span style={{ fontSize: 12.5, fontWeight: 600, color: "#475569" }}>เปิดใช้งาน</span>
                             <button
                               type="button"
                               onClick={() => updateQuestion(selectedQuestion.id, (item) => ({ ...item, active: !isQuestionActive(item) }))}
                               style={{
                                 position: "relative",
-                                display: "inline-flex",
-                                width: 42,
-                                height: 22,
+                                width: 44,
+                                height: 24,
                                 borderRadius: 999,
                                 background: isQuestionActive(selectedQuestion) ? "#22c55e" : "#cbd5e1",
                                 border: "none",
                                 cursor: "pointer",
                                 transition: "background-color 0.2s ease",
                                 padding: 0,
-                                outline: "none",
                               }}
                             >
                               <span
                                 style={{
                                   position: "absolute",
-                                  top: 2,
-                                  left: isQuestionActive(selectedQuestion) ? 22 : 2,
+                                  top: 3,
+                                  left: isQuestionActive(selectedQuestion) ? 23 : 3,
                                   width: 18,
                                   height: 18,
                                   borderRadius: "50%",
-                                  background: "#fff",
-                                  boxShadow: "0 2px 4px rgba(0,0,0,0.15)",
-                                  transition: "left 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
+                                  background: "#ffffff",
+                                  boxShadow: "0 1px 3px rgba(0,0,0,0.2)",
+                                  transition: "left 0.2s ease",
                                 }}
                               />
                             </button>
                           </div>
 
-                          {/* Divider */}
-                          <div style={{ width: 1, height: 20, background: T.line }} />
-
-                          {/* Save Status Badge */}
-                          <div
-                            style={{
-                              display: "inline-flex",
-                              alignItems: "center",
-                              gap: 6,
-                              borderRadius: 8,
-                              background: dirty ? "var(--c-fff2cf)" : "#edf8f2",
-                              color: dirty ? T.accentDeep : T.ok,
-                              padding: "6px 10px",
-                              fontSize: 12,
-                              fontWeight: 800,
-                              border: `1px solid ${dirty ? "rgba(245,158,11,0.15)" : "rgba(31,122,85,0.12)"}`
-                            }}
-                          >
-                            <span style={{ width: 6, height: 6, borderRadius: 999, background: dirty ? T.accent : T.ok }} />
-                            {dirty ? "มีแก้ไขที่ยังไม่บันทึก" : "บันทึกข้อมูลแล้ว"}
-                          </div>
-
-                          {/* Buttons */}
                           <button
                             type="button"
                             onClick={handleRestoreDefault}
                             disabled={savingChecklists}
                             style={{
-                              ...buttonDangerStyle,
-                              height: 34,
+                              height: 36,
                               borderRadius: 8,
-                              fontSize: 12.5,
-                              padding: "0 12px",
-                              opacity: savingChecklists ? 0.6 : 1
+                              border: "1px solid #cbd5e1",
+                              background: "#ffffff",
+                              color: "#475569",
+                              fontSize: 13,
+                              fontWeight: 700,
+                              padding: "0 14px",
+                              cursor: "pointer"
                             }}
                           >
                             คืนค่าเริ่มต้น
                           </button>
+
                           <button
                             type="button"
                             onClick={handleSaveDraft}
                             disabled={savingChecklists}
                             style={{
-                              ...buttonPrimaryStyle,
-                              height: 34,
+                              height: 36,
                               borderRadius: 8,
-                              fontSize: 12.5,
-                              padding: "0 16px",
-                              boxShadow: "none",
-                              opacity: savingChecklists ? 0.7 : 1
+                              border: "none",
+                              background: "#2563eb",
+                              color: "#ffffff",
+                              fontSize: 13,
+                              fontWeight: 700,
+                              padding: "0 18px",
+                              cursor: "pointer",
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 6,
+                              boxShadow: "0 2px 8px rgba(37, 99, 235, 0.3)"
                             }}
                           >
-                            {savingChecklists ? "กำลังบันทึก..." : "บันทึก"}
+                            <Check size={16} />
+                            <span>บันทึก</span>
                           </button>
                         </div>
                       </div>
 
-                      <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 16, alignItems: "end" }}>
-                        <label style={fieldStyle}>
+                      {/* Form Row Inputs */}
+                      <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr 1fr 1fr", gap: 12, alignItems: "end" }}>
+                        <div style={fieldStyle}>
                           <span style={fieldLabelStyle}>หัวข้อ</span>
                           <input
                             value={selectedQuestion.title}
                             onChange={(event) => updateQuestion(selectedQuestion.id, (item) => ({ ...item, title: event.target.value }))}
-                            style={{ ...inputStyle, minHeight: 42, borderRadius: 12, fontSize: 14, padding: "0 12px", boxShadow: "inset 0 1px 2px rgba(6,43,99,0.04)" }}
+                            style={inputStylePremium}
                           />
-                        </label>
+                        </div>
 
-                        <label style={fieldStyle}>
+                        <div style={fieldStyle}>
                           <span style={fieldLabelStyle}>รายละเอียด</span>
                           <input
                             value={selectedQuestion.guideTitle === false ? "" : selectedQuestion.guideTitle || ""}
                             onChange={(event) => updateQuestion(selectedQuestion.id, (item) => ({ ...item, guideTitle: event.target.value }))}
-                            style={{ ...inputStyle, minHeight: 42, borderRadius: 12, fontSize: 14, padding: "0 12px", boxShadow: "inset 0 1px 2px rgba(6,43,99,0.04)" }}
-                            placeholder="เว้นว่างเพื่อสร้างอัตโนมัติ"
+                            placeholder="ใส่รายละเอียด"
+                            style={inputStylePremium}
                           />
-                        </label>
+                        </div>
 
                         {/* หมวดหมู่สถานที่ */}
-                        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                        <div style={fieldStyle}>
                           <span style={fieldLabelStyle}>หมวดหมู่สถานที่</span>
-                          <div style={{ position: "relative", zIndex: 30 }}>
-                            <button
-                              type="button"
-                              onClick={() => setLocationDropdownOpen(!locationDropdownOpen)}
-                              style={{
-                                width: "100%",
-                                height: 42,
-                                borderRadius: 12,
-                                border: `1px solid rgba(11, 78, 162, 0.18)`,
-                                background: "#fff",
-                                color: "#1d4ed8",
-                                padding: "0 14px",
-                                fontFamily: "inherit",
-                                fontWeight: 800,
-                                cursor: "pointer",
-                                fontSize: 13.5,
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "space-between",
-                                outline: "none",
-                                boxShadow: "0 2px 6px rgba(11, 78, 162, 0.04)",
-                                transition: "all 0.2s ease",
-                              }}
-                              onMouseOver={(e) => {
-                                e.currentTarget.style.background = "#eff6ff";
-                                e.currentTarget.style.borderColor = "#3b82f6";
-                              }}
-                              onMouseOut={(e) => {
-                                e.currentTarget.style.background = "#fff";
-                                e.currentTarget.style.borderColor = "rgba(11, 78, 162, 0.18)";
-                              }}
-                            >
-                              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                                {selectedType === "factory" && <Building size={16} style={{ color: "#1d4ed8" }} />}
-                                {selectedType === "office" && <Users size={16} style={{ color: "#1d4ed8" }} />}
-                                {selectedType === "site" && <MapPin size={16} style={{ color: "#1d4ed8" }} />}
-                                <span>{LOCATION_TYPE_LABELS[selectedType]}</span>
-                              </div>
-                              <ChevronDown size={14} style={{ color: "#1d4ed8", transform: locationDropdownOpen ? "rotate(180deg)" : "none", transition: "transform 0.15s ease" }} />
-                            </button>
-
-                            {locationDropdownOpen && (
-                              <div
-                                onClick={() => setLocationDropdownOpen(false)}
-                                style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, zIndex: 40 }}
-                              />
-                            )}
-
-                            {locationDropdownOpen && (
-                              <div
-                                style={{
-                                  position: "absolute",
-                                  top: "calc(100% + 6px)",
-                                  left: 0,
-                                  width: "100%",
-                                  background: "#fff",
-                                  border: `1px solid ${T.lineStrong}`,
-                                  borderRadius: 16,
-                                  boxShadow: "0 12px 36px rgba(6,43,99,0.16)",
-                                  zIndex: 50,
-                                  padding: 6,
-                                  display: "grid",
-                                  gap: 4,
-                                }}
-                              >
-                                {LOCATION_TYPE_OPTIONS.map((option) => {
-                                  const active = selectedType === option.key;
-                                  const count = draft[option.key].length;
-                                  return (
-                                    <button
-                                      key={option.key}
-                                      type="button"
-                                      onClick={() => {
-                                        setSelectedType(option.key);
-                                        setSelectedQuestionId(draft[option.key][0]?.id || "");
-                                        setLocationDropdownOpen(false);
-                                        if (isMobile) setMobileActiveView("list");
-                                      }}
-                                      style={{
-                                        width: "100%",
-                                        padding: "10px 12px",
-                                        borderRadius: 12,
-                                        border: "none",
-                                        background: active ? "#eff6ff" : "transparent",
-                                        color: active ? "#1d4ed8" : T.ink,
-                                        fontSize: 13.5,
-                                        fontWeight: 800,
-                                        textAlign: "left",
-                                        cursor: "pointer",
-                                        display: "flex",
-                                        alignItems: "center",
-                                        justifyContent: "space-between",
-                                        gap: 8,
-                                        outline: "none",
-                                      }}
-                                      onMouseOver={(e) => { if (!active) e.currentTarget.style.background = "#f1f5f9"; }}
-                                      onMouseOut={(e) => { if (!active) e.currentTarget.style.background = "transparent"; }}
-                                    >
-                                      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                                        <div
-                                          style={{
-                                            width: 28,
-                                            height: 28,
-                                            borderRadius: "50%",
-                                            background: active ? "#fff" : "#f1f5f9",
-                                            display: "grid",
-                                            placeItems: "center",
-                                            flexShrink: 0,
-                                          }}
-                                        >
-                                          {option.key === "factory" && <Building size={14} style={{ color: active ? "#1d4ed8" : "#475569" }} />}
-                                          {option.key === "office" && <Users size={14} style={{ color: active ? "#1d4ed8" : "#475569" }} />}
-                                          {option.key === "site" && <MapPin size={14} style={{ color: active ? "#1d4ed8" : "#475569" }} />}
-                                        </div>
-                                        <span>{option.label}</span>
-                                      </div>
-                                      <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                                        <span
-                                          style={{
-                                            minWidth: 22,
-                                            height: 22,
-                                            borderRadius: 999,
-                                            background: active ? "#fff" : "#f1f5f9",
-                                            color: active ? "#1d4ed8" : "#64748b",
-                                            display: "grid",
-                                            placeItems: "center",
-                                            fontSize: 11,
-                                            fontWeight: 800,
-                                            padding: "0 6px",
-                                          }}
-                                        >
-                                          {count}
-                                        </span>
-                                        {active && <Check size={14} style={{ color: "#1d4ed8" }} />}
-                                      </div>
-                                    </button>
-                                  );
-                                })}
-                              </div>
-                            )}
-                          </div>
+                          <select
+                            value={selectedType}
+                            onChange={(e) => {
+                              const newType = e.target.value;
+                              setSelectedType(newType);
+                              setSelectedQuestionId(draft[newType][0]?.id || "");
+                            }}
+                            style={selectStyle}
+                          >
+                            {LOCATION_TYPE_OPTIONS.map((option) => (
+                              <option key={option.key} value={option.key}>
+                                {option.label}
+                              </option>
+                            ))}
+                          </select>
                         </div>
 
                         {/* รูปแบบคำตอบ */}
-                        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                        <div style={fieldStyle}>
                           <span style={fieldLabelStyle}>รูปแบบคำตอบ</span>
-                          <div style={{ position: "relative", zIndex: 20 }}>
-                            <button
-                              type="button"
-                              onClick={() => setFormatDropdownOpen(!formatDropdownOpen)}
+                          <select
+                            value={selectedQuestion.format || "original"}
+                            onChange={(e) => updateQuestion(selectedQuestion.id, (item) => ({ ...item, format: e.target.value }))}
+                            style={selectStyle}
+                          >
+                            <option value="original">แบบตัวเลือก</option>
+                            <option value="text_box">แบบ Text Box</option>
+                          </select>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Guidelines Details Box & Live Preview Cards */}
+                    <div
+                      style={{
+                        background: "#ffffff",
+                        border: "1px solid #e2e8f0",
+                        borderRadius: 16,
+                        padding: 20,
+                        boxShadow: "0 4px 20px rgba(0, 0, 0, 0.03)",
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: 16,
+                      }}
+                    >
+                      <div>
+                        <h3 style={{ fontSize: 15, fontWeight: 800, color: "#1e293b", margin: 0 }}>รายละเอียดข้อประเมิน</h3>
+                        <p style={{ fontSize: 12, color: "#64748b", margin: "2px 0 0" }}>ใส่รายละเอียดที่ต้องประเมิน</p>
+                      </div>
+
+                      {/* Guidelines Box */}
+                      <div style={{
+                        border: "1px solid #e2e8f0",
+                        borderRadius: 12,
+                        background: "#ffffff",
+                        padding: 16,
+                        minHeight: 200,
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: 12
+                      }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                          <span style={{ fontSize: 16, fontWeight: 800, color: "#1e293b" }}>{selectedQuestion.title}</span>
+                          <span style={{ fontSize: 12, color: "#64748b" }}>{getGuideTitle(selectedQuestion) || `แนวทางการตรวจ ${selectedQuestion.title}`}</span>
+                        </div>
+
+                        <textarea
+                          value={Array.isArray(selectedQuestion.guidelines) ? selectedQuestion.guidelines.join("\n") : (selectedQuestion.guidelines || "")}
+                          onChange={(event) => updateQuestion(selectedQuestion.id, (item) => ({ ...item, guidelines: event.target.value.split("\n") }))}
+                          placeholder="ใส่รายละเอียดที่นี่..."
+                          style={{
+                            width: "100%",
+                            minHeight: 140,
+                            border: "none",
+                            outline: "none",
+                            resize: "vertical",
+                            fontSize: 14,
+                            color: "#334155",
+                            fontFamily: "inherit",
+                          }}
+                        />
+                      </div>
+
+                      {/* Bottom Options / Simulated Response Preview */}
+                      <div style={{ marginTop: 8 }}>
+                        {selectedQuestion.format === "text_box" ? (
+                          <>
+                            <div style={{ fontSize: 12, fontWeight: 700, color: "#64748b", marginBottom: 8 }}>
+                              จำลองรูปแบบการตรวจ - แบบ Text Box
+                            </div>
+                            <textarea
+                              disabled
+                              placeholder="กรอกคำตอบของคุณที่นี่..."
                               style={{
                                 width: "100%",
-                                height: 42,
                                 borderRadius: 12,
-                                border: `1px solid ${T.lineStrong}`,
-                                background: "#fff",
-                                color: T.ink,
-                                padding: "0 14px",
-                                fontSize: 13.5,
-                                fontWeight: 800,
+                                border: "1px solid #cbd5e1",
+                                background: "#f8fafc",
+                                minHeight: 70,
+                                padding: "10px 14px",
+                                fontSize: 13,
+                                color: "#64748b",
+                                fontFamily: "inherit",
+                                resize: "none",
+                              }}
+                            />
+                          </>
+                        ) : (
+                          <>
+                            <div style={{ fontSize: 12, fontWeight: 700, color: "#64748b", marginBottom: 10 }}>
+                              จำลองรูปแบบการตรวจ - แบบเดิม (มีตัวเลือก)
+                            </div>
+
+                            <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr 1fr", gap: 12 }}>
+                              {/* Safe Option */}
+                              <div style={{
+                                border: "1.5px solid #22c55e",
+                                background: "#f0fdf4",
+                                borderRadius: 12,
+                                padding: "12px 16px",
                                 display: "flex",
                                 alignItems: "center",
                                 justifyContent: "space-between",
-                                cursor: "pointer",
-                                outline: "none",
-                              }}
-                            >
-                              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                                {selectedQuestion.format === "text_box" ? (
-                                  <>
-                                    <div style={{ width: 24, height: 24, borderRadius: 6, background: "#eff6ff", display: "grid", placeItems: "center" }}>
-                                      <Pencil size={14} style={{ color: "#3b82f6" }} />
-                                    </div>
-                                    <span>Text Box</span>
-                                  </>
-                                ) : (
-                                  <>
-                                    <div style={{ width: 24, height: 24, borderRadius: 6, background: "#eff6ff", display: "grid", placeItems: "center" }}>
-                                      <ClipboardList size={14} style={{ color: "#3b82f6" }} />
-                                    </div>
-                                    <span>แบบตัวเลือก</span>
-                                  </>
-                                )}
+                                cursor: "pointer"
+                              }}>
+                                <span style={{ fontSize: 13.5, fontWeight: 700, color: "#15803d" }}>ปลอดภัย (Safe)</span>
+                                <span style={{ width: 18, height: 18, borderRadius: "50%", border: "2px solid #22c55e" }} />
                               </div>
-                              <ChevronDown size={16} style={{ color: T.sub, transform: formatDropdownOpen ? "rotate(180deg)" : "none", transition: "transform 0.15s ease" }} />
-                            </button>
 
-                            {formatDropdownOpen && (
-                              <div
-                                onClick={() => setFormatDropdownOpen(false)}
-                                style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, zIndex: 40 }}
-                              />
-                            )}
-
-                            {formatDropdownOpen && (
-                              <div
-                                style={{
-                                  position: "absolute",
-                                  top: "calc(100% + 6px)",
-                                  left: 0,
-                                  width: "100%",
-                                  background: "#fff",
-                                  border: `1px solid ${T.lineStrong}`,
-                                  borderRadius: 12,
-                                  boxShadow: "0 10px 25px rgba(0,0,0,0.1)",
-                                  zIndex: 50,
-                                  padding: 4,
-                                  display: "grid",
-                                  gap: 2,
-                                }}
-                              >
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    updateQuestion(selectedQuestion.id, (item) => ({ ...item, format: "original" }));
-                                    setFormatDropdownOpen(false);
-                                  }}
-                                  style={{
-                                    width: "100%",
-                                    padding: "10px 12px",
-                                    borderRadius: 8,
-                                    border: "none",
-                                    background: selectedQuestion.format !== "text_box" ? "#f1f5f9" : "transparent",
-                                    color: T.ink,
-                                    fontSize: 13,
-                                    fontWeight: 800,
-                                    textAlign: "left",
-                                    cursor: "pointer",
-                                    display: "flex",
-                                    alignItems: "center",
-                                    gap: 8,
-                                  }}
-                                >
-                                  <ClipboardList size={14} style={{ color: "#3b82f6" }} />
-                                  <span>แบบตัวเลือก</span>
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    updateQuestion(selectedQuestion.id, (item) => ({ ...item, format: "text_box" }));
-                                    setFormatDropdownOpen(false);
-                                  }}
-                                  style={{
-                                    width: "100%",
-                                    padding: "10px 12px",
-                                    borderRadius: 8,
-                                    border: "none",
-                                    background: selectedQuestion.format === "text_box" ? "#f1f5f9" : "transparent",
-                                    color: T.ink,
-                                    fontSize: 13,
-                                    fontWeight: 800,
-                                    textAlign: "left",
-                                    cursor: "pointer",
-                                    display: "flex",
-                                    alignItems: "center",
-                                    gap: 8,
-                                  }}
-                                >
-                                  <Pencil size={14} style={{ color: "#3b82f6" }} />
-                                  <span>Text Box</span>
-                                </button>
+                              {/* Unsafe Condition */}
+                              <div style={{
+                                border: "1.5px solid #ef4444",
+                                background: "#fef2f2",
+                                borderRadius: 12,
+                                padding: "12px 16px",
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "space-between",
+                                cursor: "pointer"
+                              }}>
+                                <span style={{ fontSize: 13.5, fontWeight: 700, color: "#b91c1c" }}>สภาพไม่ปลอดภัย (Unsafe Condition)</span>
+                                <span style={{ width: 18, height: 18, borderRadius: "50%", border: "2px solid #ef4444" }} />
                               </div>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
 
-                    {/* Guidelines Editor & Live Preview Card */}
-                    <div
-                      style={{
-                        background: T.card,
-                        border: `1px solid ${T.line}`,
-                        borderRadius: 24,
-                        padding: 16,
-                        boxShadow: T.shadow,
-                        display: "flex",
-                        flexDirection: "column",
-                        gap: 12,
-                        flexShrink: 0,
-                      }}
-                    >
-                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, flexShrink: 0 }}>
-                        <div>
-                          <div style={{ fontSize: 13, fontWeight: 800, color: T.accentDeep }}>รายละเอียดข้อประเมิน</div>
-                          <div style={{ fontSize: 12, color: T.sub }}>ใส่รายละเอียดที่ต้องประเมินแยกกันทีละบรรทัด (กด Enter เพื่อขึ้นบรรทัดใหม่)</div>
-                        </div>
+                              {/* Unsafe Act */}
+                              <div style={{
+                                border: "1.5px solid #f97316",
+                                background: "#fff7ed",
+                                borderRadius: 12,
+                                padding: "12px 16px",
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "space-between",
+                                cursor: "pointer"
+                              }}>
+                                <span style={{ fontSize: 13.5, fontWeight: 700, color: "#c2410c" }}>พฤติกรรมไม่ปลอดภัย (Unsafe Act)</span>
+                                <span style={{ width: 18, height: 18, borderRadius: "50%", border: "2px solid #f97316" }} />
+                              </div>
+                            </div>
+                          </>
+                        )}
                       </div>
-                      <div style={{ padding: 2 }}>
-                        <PreviewCard
-                          question={selectedQuestion}
-                          isEditable={true}
-                          onGuidelinesChange={(newLines) =>
-                            updateQuestion(selectedQuestion.id, (item) => ({
-                              ...item,
-                              guidelines: newLines,
-                            }))
-                          }
-                        />
-                      </div>
-                    </div>
 
-                    {/* Delete Question Button */}
-                    <div style={{ display: "flex", justifyContent: "flex-end", paddingRight: 4, marginTop: 8 }}>
-                      <button
-                        type="button"
-                        onClick={() => setDeleteTargetId(selectedQuestion.id)}
-                        style={{
-                          height: 38,
-                          borderRadius: 10,
-                          border: "1px solid #fecaca",
-                          background: "#fef2f2",
-                          color: "#dc2626",
-                          fontWeight: 800,
-                          fontSize: 12.5,
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          gap: 8,
-                          cursor: "pointer",
-                          transition: "all 0.15s ease",
-                          outline: "none",
-                          padding: "0 16px",
-                        }}
-                      >
-                        <Trash2 size={16} />
-                        <span>ลบข้อประเมินนี้</span>
-                      </button>
+                      {/* Delete Question Button */}
+                      <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 8 }}>
+                        <button
+                          type="button"
+                          onClick={() => setDeleteTargetId(selectedQuestion.id)}
+                          style={{
+                            height: 36,
+                            borderRadius: 10,
+                            border: "1px solid #fecaca",
+                            background: "#fff1f2",
+                            color: "#e11d48",
+                            fontWeight: 700,
+                            fontSize: 12.5,
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 6,
+                            cursor: "pointer",
+                            padding: "0 14px",
+                            transition: "all 0.15s ease",
+                          }}
+                        >
+                          <Trash2 size={15} />
+                          <span>ลบข้อประเมินนี้</span>
+                        </button>
+                      </div>
                     </div>
                   </>
                 ) : (
-                  <div
-                    style={{
-                      border: `1px dashed ${T.lineStrong}`,
-                      borderRadius: 24,
-                      padding: 28,
-                      background: "var(--brand-surface)",
-                      color: T.sub,
-                    }}
-                  >
-                    ยังไม่มีข้อประเมินในหมวดนี้
+                  <div style={{ border: "1px dashed #cbd5e1", borderRadius: 16, padding: 32, textAlign: "center", color: "#64748b" }}>
+                    ไม่มีข้อประเมิน
                   </div>
                 )}
               </section>
+
 
 
 
@@ -1493,7 +1384,7 @@ export default function SafetyAdmin() {
                       value={tempQuestion.guideTitle === false ? "" : tempQuestion.guideTitle || ""}
                       onChange={(e) => setTempQuestion(prev => ({ ...prev, guideTitle: e.target.value }))}
                       style={{ ...inputStyle, minHeight: 36, borderRadius: 8, fontSize: 13, padding: "0 10px" }}
-                      placeholder="เว้นว่างเพื่อสร้างอัตโนมัติ"
+                      placeholder="ใส่รายละเอียด"
                     />
                   </label>
 
@@ -1624,192 +1515,323 @@ export default function SafetyAdmin() {
       </Dialog>
 
       <Dialog open={showBackdateLimitModal} onOpenChange={(open) => !open && handleCancelBackdateModal()}>
-        <DialogContent showCloseButton={false} className="safety-admin-form-popup z-[1000] p-0 sm:max-w-[460px]">
+        <DialogContent showCloseButton={false} className="safety-admin-form-popup z-[1000] p-0 sm:max-w-[480px]">
           <div
             style={{
-              width: "min(100%, 460px)",
-              background: "var(--brand-surface)",
-              borderRadius: 24,
-              border: `1px solid ${T.line}`,
-              boxShadow: "0 24px 60px rgba(31,26,23,0.22)",
-              padding: 24,
-              display: "grid",
-              gap: 16,
-              maxHeight: "90vh",
-              overflowY: "auto",
+              width: "min(100%, 480px)",
+              background: "#ffffff",
+              borderRadius: 20,
+              boxShadow: "0 20px 50px rgba(0, 0, 0, 0.15)",
+              padding: "20px 24px",
+              display: "flex",
+              flexDirection: "column",
+              gap: 12,
+              position: "relative"
             }}
           >
-            <div style={{ fontSize: 20, fontWeight: 900, textAlign: "center" }}>ตั้งค่าระบบทำย้อนหลัง</div>
-            <div style={{ fontSize: 13, color: T.sub, lineHeight: 1.5, textAlign: "center" }}>
-              กำหนดจำนวนวันที่อนุญาตให้ทำรายการย้อนหลังได้ และเลือกตั้งค่าเปิดระบบเฉพาะบางวันได้
+            {/* Modal Header */}
+            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              <div style={{
+                width: 38,
+                height: 38,
+                borderRadius: 10,
+                background: "#eff6ff",
+                color: "#2563eb",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                flexShrink: 0
+              }}>
+                <Calendar size={20} />
+              </div>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 16, fontWeight: 800, color: "#0f172a", lineHeight: 1.2 }}>ตั้งค่าการทํารายการย้อนหลัง</div>
+                <div style={{ fontSize: 11.5, color: "#64748b", marginTop: 2 }}>
+                  กําหนดว่าในปฏิทินหน้าเช็คอิน ผู้ใช้เลือกทํารายการย้อนหลังได้กี่วัน
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={handleCancelBackdateModal}
+                style={{
+                  width: 28,
+                  height: 28,
+                  borderRadius: 8,
+                  background: "#f1f5f9",
+                  border: "none",
+                  color: "#64748b",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  cursor: "pointer"
+                }}
+              >
+                <X size={16} />
+              </button>
             </div>
 
-            {/* Part 1: Backdate Day Limit */}
-            <div style={{ display: "grid", gap: 6 }}>
-              <span style={fieldLabelStyle}>จำนวนวันย้อนหลัง (วัน)</span>
-              <input
-                type="number"
-                min="0"
-                max="90"
-                value={tempBackdateLimit}
-                onChange={(e) => setTempBackdateLimit(Math.max(0, parseInt(e.target.value) || 0))}
-                style={{ ...inputStyle, minHeight: 40, borderRadius: 10, fontSize: 14, textAlign: "center" }}
-              />
+            {/* Selection Cards (เฉพาะวันนี้ vs ทำย้อนหลังได้) */}
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+              <div
+                role="button"
+                tabIndex={0}
+                onClick={() => setBackdateMode("today")}
+                onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && setBackdateMode("today")}
+                style={{
+                  border: backdateMode === "today" ? "1.5px solid #2563eb" : "1px solid #e2e8f0",
+                  background: backdateMode === "today" ? "#eff6ff" : "#ffffff",
+                  borderRadius: 12,
+                  padding: "10px 14px",
+                  cursor: "pointer",
+                  transition: "all 0.15s ease",
+                  outline: "none",
+                }}
+              >
+                <div style={{ fontSize: 13.5, fontWeight: 800, color: "#0f172a" }}>เฉพาะวันนี้</div>
+                <div style={{ fontSize: 11, color: "#64748b", marginTop: 2 }}>เลือกได้แค่วันปัจจุบัน</div>
+              </div>
+
+              <div
+                role="button"
+                tabIndex={0}
+                onClick={() => setBackdateMode("backdate")}
+                onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && setBackdateMode("backdate")}
+                style={{
+                  border: backdateMode === "backdate" ? "1.5px solid #2563eb" : "1px solid #e2e8f0",
+                  background: backdateMode === "backdate" ? "#eff6ff" : "#ffffff",
+                  borderRadius: 12,
+                  padding: "10px 14px",
+                  cursor: "pointer",
+                  transition: "all 0.15s ease",
+                  outline: "none",
+                }}
+              >
+                <div style={{ fontSize: 13.5, fontWeight: 800, color: "#0f172a" }}>ทําย้อนหลังได้</div>
+                <div style={{ fontSize: 11, color: "#64748b", marginTop: 2 }}>เปิดให้เลือกวันก่อนหน้า</div>
+              </div>
             </div>
 
-            <hr style={{ border: "none", borderTop: `1px solid ${T.line}`, margin: "4px 0" }} />
-
-            {/* Part 2: Custom Allowed Days/Dates */}
-            <div style={{ display: "grid", gap: 10 }}>
-              <span style={fieldLabelStyle}>กำหนดวันเปิดระบบ</span>
-              <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer", fontSize: 13.5, fontWeight: 700 }}>
-                <input
-                  type="radio"
-                  name="allowedMode"
-                  value="all"
-                  checked={allowedMode === "all"}
-                  onChange={() => setAllowedMode("all")}
-                />
-                อนุญาตทุกวัน (ค่าเริ่มต้น)
-              </label>
-              <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer", fontSize: 13.5, fontWeight: 700 }}>
-                <input
-                  type="radio"
-                  name="allowedMode"
-                  value="custom"
-                  checked={allowedMode === "custom"}
-                  onChange={() => setAllowedMode("custom")}
-                />
-                กำหนดวันเปิดระบบด้วยตนเอง
-              </label>
-            </div>
-
-            {allowedMode === "custom" && (
-              <div style={{ display: "grid", gap: 14, borderTop: `1px dashed ${T.lineStrong}`, paddingTop: 14 }}>
-                {/* Weekday Selection */}
-                <div style={{ display: "grid", gap: 6 }}>
-                  <span style={fieldLabelStyle}>เลือกวันในสัปดาห์ที่เปิดระบบ</span>
-                  <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-                    {[
-                      { key: 0, label: "อา" },
-                      { key: 1, label: "จ" },
-                      { key: 2, label: "อ" },
-                      { key: 3, label: "พ" },
-                      { key: 4, label: "พฤ" },
-                      { key: 5, label: "ศ" },
-                      { key: 6, label: "ส" },
-                    ].map(day => {
-                      const checked = allowedWeekdays.includes(day.key);
-                      return (
-                        <button
-                          key={day.key}
-                          type="button"
-                          onClick={() => {
-                            setAllowedWeekdays(prev =>
-                              prev.includes(day.key)
-                                ? prev.filter(k => k !== day.key)
-                                : [...prev, day.key]
-                            );
-                          }}
-                          style={{
-                            height: 32,
-                            padding: "0 10px",
-                            borderRadius: 8,
-                            border: checked ? `1px solid ${T.accent}` : `1px solid ${T.line}`,
-                            background: checked ? T.accentSoft : "#fff",
-                            color: checked ? T.accentDeep : T.ink,
-                            fontSize: 12.5,
-                            fontWeight: 800,
-                            cursor: "pointer",
-                          }}
-                        >
-                          {day.label}
-                        </button>
-                      );
-                    })}
-                  </div>
+            {/* Stepper Card for Days limit (Appears when backdateMode === "backdate") */}
+            {backdateMode === "backdate" && (
+              <div style={{
+                border: "1px solid #e2e8f0",
+                background: "#f8fafc",
+                borderRadius: 12,
+                padding: "8px 14px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between"
+              }}>
+                <div>
+                  <div style={{ fontSize: 13, fontWeight: 800, color: "#0f172a" }}>ให้ทําย้อนหลังได้</div>
                 </div>
 
-                {/* Specific Date Picker */}
-                <div style={{ display: "grid", gap: 6 }}>
-                  <span style={fieldLabelStyle}>เพิ่มวันที่ที่เปิดระบบเพิ่มเติม</span>
-                  <div style={{ display: "flex", gap: 8 }}>
-                    <input
-                      type="date"
-                      value={newAllowedDate}
-                      onChange={(e) => setNewAllowedDate(e.target.value)}
-                      style={{ ...inputStyle, minHeight: 36, padding: "0 10px", borderRadius: 8, fontSize: 13, flex: 1 }}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => {
-                        if (newAllowedDate && !allowedDates.includes(newAllowedDate)) {
-                          setAllowedDates(prev => [...prev, newAllowedDate].sort());
-                          setNewAllowedDate("");
-                        }
-                      }}
-                      style={{ ...buttonPrimaryStyle, height: 36, borderRadius: 8, fontSize: 12.5, boxShadow: "none", padding: "0 14px" }}
-                    >
-                      เพิ่มวัน
-                    </button>
-                  </div>
-
-                  {/* Render list of specific dates */}
-                  {allowedDates.length > 0 && (
-                    <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 6, maxHeight: 100, overflowY: "auto", padding: 4, background: "#fdfdfb", borderRadius: 8, border: `1px solid ${T.line}` }}>
-                      {allowedDates.map(dateStr => (
-                        <span
-                          key={dateStr}
-                          style={{
-                            display: "inline-flex",
-                            alignItems: "center",
-                            gap: 6,
-                            padding: "2px 8px",
-                            background: "var(--brand-soft)",
-                            border: `1px solid ${T.line}`,
-                            borderRadius: 6,
-                            fontSize: 11.5,
-                            fontWeight: 800,
-                          }}
-                        >
-                          {dateStr}
-                          <button
-                            type="button"
-                            onClick={() => setAllowedDates(prev => prev.filter(d => d !== dateStr))}
-                            style={{
-                              border: "none",
-                              background: "transparent",
-                              color: T.danger,
-                              fontSize: 11,
-                              fontWeight: 900,
-                              cursor: "pointer",
-                              padding: "0 2px",
-                            }}
-                          >
-                            ×
-                          </button>
-                        </span>
-                      ))}
-                    </div>
-                  )}
+                <div style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 6,
+                  background: "#ffffff",
+                  border: "1px solid #cbd5e1",
+                  borderRadius: 8,
+                  padding: 3
+                }}>
+                  <button
+                    type="button"
+                    onClick={() => setTempBackdateLimit(Math.max(1, tempBackdateLimit - 1))}
+                    style={{
+                      width: 24,
+                      height: 24,
+                      borderRadius: 5,
+                      background: "#eff6ff",
+                      border: "none",
+                      color: "#2563eb",
+                      fontSize: 15,
+                      fontWeight: 800,
+                      cursor: "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center"
+                    }}
+                  >
+                    -
+                  </button>
+                  <span style={{ fontSize: 13, fontWeight: 800, color: "#0f172a", minWidth: 20, textAlign: "center" }}>
+                    {tempBackdateLimit}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setTempBackdateLimit(Math.min(90, tempBackdateLimit + 1))}
+                    style={{
+                      width: 24,
+                      height: 24,
+                      borderRadius: 5,
+                      background: "#eff6ff",
+                      border: "none",
+                      color: "#2563eb",
+                      fontSize: 15,
+                      fontWeight: 800,
+                      cursor: "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center"
+                    }}
+                  >
+                    +
+                  </button>
+                  <span style={{ fontSize: 11.5, fontWeight: 600, color: "#64748b", paddingRight: 4 }}>วัน</span>
                 </div>
               </div>
             )}
 
-            <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, marginTop: 10 }}>
+            {/* Calendar Preview Section */}
+            <div>
+              <div style={{ fontSize: 12, fontWeight: 700, color: "#475569", marginBottom: 6 }}>ตัวอย่างปฏิทินที่ผู้ใช้เห็น</div>
+              <div style={{
+                border: "1px solid #e2e8f0",
+                borderRadius: 14,
+                background: "#ffffff",
+                padding: "10px 12px",
+                display: "flex",
+                flexDirection: "column",
+                gap: 6
+              }}>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 4, textAlign: "center" }}>
+                  {["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"].map((d) => (
+                    <span key={d} style={{ fontSize: 9.5, fontWeight: 800, color: "#94a3b8" }}>{d}</span>
+                  ))}
+                </div>
+
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 4 }}>
+                  {(() => {
+                    const now = new Date();
+                    const todayDate = now.getDate();
+                    const year = now.getFullYear();
+                    const month = now.getMonth();
+
+                    const firstDayIndex = new Date(year, month, 1).getDay();
+                    const daysInMonth = new Date(year, month + 1, 0).getDate();
+                    const prevMonthDays = new Date(year, month, 0).getDate();
+
+                    const grid = [];
+
+                    // Prev month padding
+                    for (let i = firstDayIndex - 1; i >= 0; i--) {
+                      const dayNum = prevMonthDays - i;
+                      const diff = (firstDayIndex - i) + (todayDate - 1); // rough diff
+                      grid.push({ day: dayNum, isCurrentMonth: false, isToday: false, allowed: false });
+                    }
+
+                    // Current month days
+                    for (let d = 1; d <= daysInMonth; d++) {
+                      const isToday = d === todayDate;
+                      const isPast = d < todayDate;
+                      const diffDays = todayDate - d;
+                      const allowed = isPast && backdateMode === "backdate" && diffDays <= tempBackdateLimit;
+                      grid.push({ day: d, isCurrentMonth: true, isToday, allowed });
+                    }
+
+                    // Next month padding up to 35 cells total
+                    const totalCells = grid.length > 35 ? 42 : 35;
+                    let nextDay = 1;
+                    while (grid.length < totalCells) {
+                      grid.push({ day: nextDay++, isCurrentMonth: false, isToday: false, allowed: false });
+                    }
+
+                    return grid.map((item, idx) => {
+                      const isToday = item.isToday;
+                      const isAllowed = item.allowed;
+
+                      let bg = "#f8fafc";
+                      let color = "#94a3b8";
+                      let border = "none";
+
+                      if (isToday) {
+                        bg = "#2563eb";
+                        color = "#ffffff";
+                      } else if (isAllowed) {
+                        bg = "#eff6ff";
+                        color = "#2563eb";
+                        border = "1px solid #bfdbfe";
+                      }
+
+                      return (
+                        <div
+                          key={idx}
+                          style={{
+                            height: 26,
+                            borderRadius: 6,
+                            background: bg,
+                            color: color,
+                            border: border,
+                            fontSize: 11,
+                            fontWeight: isToday || isAllowed ? 800 : 500,
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            boxShadow: isToday ? "0 2px 6px rgba(37, 99, 235, 0.25)" : "none"
+                          }}
+                        >
+                          {item.day}
+                        </div>
+                      );
+                    });
+                  })()}
+                </div>
+              </div>
+
+              {/* Legend Footer */}
+              <div style={{ display: "flex", alignItems: "center", gap: 14, marginTop: 8, fontSize: 11, fontWeight: 600, color: "#475569" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
+                  <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#2563eb" }} />
+                  <span>วันนี้</span>
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
+                  <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#eff6ff", border: "1px solid #bfdbfe" }} />
+                  <span>เลือกได้</span>
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
+                  <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#f8fafc" }} />
+                  <span>เลือกไม่ได้</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, marginTop: 2 }}>
               <button
                 type="button"
                 onClick={handleCancelBackdateModal}
-                style={{ ...buttonGhostStyle, height: 38, borderRadius: 10, fontSize: 13 }}
+                style={{
+                  height: 36,
+                  padding: "0 16px",
+                  borderRadius: 8,
+                  border: "1px solid #cbd5e1",
+                  background: "#ffffff",
+                  color: "#334155",
+                  fontSize: 12.5,
+                  fontWeight: 700,
+                  cursor: "pointer"
+                }}
               >
                 ยกเลิก
               </button>
               <button
                 type="button"
                 onClick={handleSaveBackdateModal}
-                style={{ ...buttonPrimaryStyle, height: 38, borderRadius: 10, fontSize: 13, background: `linear-gradient(135deg, ${T.accent} 0%, ${T.accentDeep} 100%)`, boxShadow: "none" }}
+                style={{
+                  height: 36,
+                  padding: "0 18px",
+                  borderRadius: 8,
+                  border: "none",
+                  background: "#2563eb",
+                  color: "#ffffff",
+                  fontSize: 12.5,
+                  fontWeight: 700,
+                  cursor: "pointer",
+                  boxShadow: "0 3px 10px rgba(37, 99, 235, 0.3)"
+                }}
               >
-                บันทึก
+                บันทึกการตั้งค่า
               </button>
             </div>
           </div>
