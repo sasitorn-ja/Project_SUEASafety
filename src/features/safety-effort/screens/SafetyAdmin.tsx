@@ -933,7 +933,7 @@ export default function SafetyAdmin() {
                       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, flexShrink: 0 }}>
                         <div>
                           <div style={{ fontSize: 13, fontWeight: 800, color: T.accentDeep }}>รายละเอียดข้อประเมิน</div>
-                          <div style={{ fontSize: 12, color: T.sub }}>ใส่รายละเอียดที่ต้องประเมินแยกกันทีละบรรทัด (กด Enter เพื่อขึ้นบรรทัดใหม่)</div>
+                          <div style={{ fontSize: 12, color: T.sub }}>ใส่รายละเอียด</div>
                         </div>
                       </div>
                       <div style={{ padding: 2 }}>
