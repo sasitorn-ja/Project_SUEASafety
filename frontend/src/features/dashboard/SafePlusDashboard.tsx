@@ -10,6 +10,7 @@ import { isDemoLoginActive, useSessionUser } from "@/lib/session-user";
 import { cn } from "@/lib/utils";
 import { formatDisplayDate } from "@/lib/utils";
 import { Card } from "@/components/ui/card";
+import { CoinBadge } from "@/components/ui/coin-badge";
 import { Dialog } from "@/components/ui/dialog";
 import { AppDialogBody, AppDialogContent, AppDialogDescription, AppDialogSectionHeader, AppDialogTitle } from "@/components/ui/app-dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -594,10 +595,9 @@ export default function SafePlusDashboard() {
                 <span className="mb-1.5 text-[13px] font-black text-[#083B84] [text-shadow:0_1px_0_rgba(255,255,255,.78)]">Coin</span>
               </div>
               {weeklyPoints > 0 && (
-                <span className="mt-1.5 inline-flex w-fit items-center gap-1 rounded-full bg-[#e6f9ef] px-2.5 py-1 text-[10.5px] font-black text-[#1a8c52] shadow-[inset_0_0_0_1px_rgba(26,140,82,.18)]">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src="/images/icons/STCoin.png" alt="Coin" className="h-3 w-3 object-contain" />+{weeklyPoints} Coin จากสัปดาห์ที่แล้ว
-                </span>
+                <div className="mt-1.5">
+                  <CoinBadge amount={weeklyPoints} prefix="+" suffix="Coin จากสัปดาห์ที่แล้ว" size="sm" variant="blue" />
+                </div>
               )}
             </div>
 

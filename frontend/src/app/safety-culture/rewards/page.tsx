@@ -19,6 +19,7 @@ import {
 import { useAppActions, useAppState } from "@/providers/app-providers";
 import { cn, formatDisplayDateTime } from "@/lib/utils";
 import { useAppTheme } from "@/providers/theme-provider";
+import { CoinBadge } from "@/components/ui/coin-badge";
 
 const POINT_UNIT = "Coin";
 
@@ -228,11 +229,7 @@ export default function RewardsPage() {
             eyebrow="แลกของรางวัลรายบุคคล"
             title="ร้านแลกของรางวัล"
             rightSlot={
-              <div className="flex items-center gap-1.5 rounded-xl border-2 border-[var(--brand-accent)] bg-[var(--brand-soft)] px-3.5 py-1.5 text-[13.5px] font-black text-[var(--brand-text)] shadow-[0_2px_6px_rgba(var(--brand-accent-rgb),0.12)]">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/images/icons/STCoin.png" alt="Coin" className="h-5 w-5 object-contain" />
-                <span>{currentUserPoints.toLocaleString()} {POINT_UNIT}</span>
-              </div>
+              <CoinBadge amount={currentUserPoints} prefix="" size="md" variant="blue" />
             }
           />
         </div>
@@ -305,11 +302,9 @@ export default function RewardsPage() {
                 <div className="flex flex-1 flex-col gap-1">
                   <div className="flex items-start justify-between gap-3">
                     <span className="line-clamp-2 text-[14.5px] font-[850] text-foreground">{reward.name}</span>
-                    <span className="flex-shrink-0 inline-flex items-center gap-1 rounded-full bg-[var(--brand-soft)] px-2.5 py-1 text-[11px] font-black text-[var(--brand-text)]">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src="/images/icons/STCoin.png" alt="Coin" className="h-3.5 w-3.5 object-contain" />
-                      {reward.points.toLocaleString()} {POINT_UNIT}
-                    </span>
+                    <div className="flex-shrink-0">
+                      <CoinBadge amount={reward.points} prefix="" size="sm" variant="blue" />
+                    </div>
                   </div>
                   <p className="line-clamp-2 min-h-[2.5rem] text-[12.5px] font-bold leading-relaxed text-[#7d766b]">
                     {reward.description || "ยังไม่มีรายละเอียดรางวัล"}

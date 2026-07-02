@@ -13,6 +13,7 @@ import { useAppActions } from "@/providers/app-providers";
 import { getSessionDisplayName, useSessionUser } from "@/lib/session-user";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { useSafetyPointValue } from "@/hooks/useSafetyPointValue";
+import { CoinBadge } from "@/components/ui/coin-badge";
 
 
 const T = {
@@ -843,29 +844,12 @@ export default function AssessmentSummary() {
                 <h3 style={{ margin: 0, fontFamily: "'Prompt',sans-serif", fontSize: 20, fontWeight: 900, color: "#0e3e7d" }}>
                   บันทึกเสร็จสิ้น
                 </h3>
+                <div style={{ marginTop: -4 }}>
+                  <CoinBadge amount={safetyEffortPoints} size="md" variant="blue" />
+                </div>
                 <p style={{ margin: "6px 0 0", fontFamily: "'Prompt',sans-serif", fontSize: 13.5, fontWeight: 700, color: "#5f7591", lineHeight: 1.4 }}>
                   ทำบันทึกเสร็จเรียบร้อยแล้ว
                 </p>
-              </div>
-
-              <div style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: 6,
-                background: "#0B82F0",
-                border: "1.5px solid rgba(255,255,255,0.55)",
-                borderRadius: 99,
-                padding: "7px 16px",
-                fontSize: "14.5px",
-                fontWeight: 900,
-                color: "#fff",
-                lineHeight: 1,
-                fontFamily: "'Prompt',sans-serif",
-                marginTop: -4,
-                boxShadow: "0 6px 14px rgba(11,130,240,0.20)"
-              }}>
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/images/icons/STCoin.png" alt="Coin" style={{ width: 17, height: 17, objectFit: 'contain', display: 'inline-block', verticalAlign: 'middle', marginRight: 4 }} /> +{safetyEffortPoints} Coin
               </div>
 
               <button
