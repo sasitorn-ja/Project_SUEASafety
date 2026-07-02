@@ -708,25 +708,18 @@ export async function setReaction(postId: string, userId: string, reactionType =
   let ownerId: string | null = null;
 
   await withTransaction(async (connection) => {
-    const [existingRows] = await connection.execute<RowDataPacket[]>(
-      "SELECT reaction_type FROM reactions WHERE post_id=:postId AND user_id=:userId LIMIT 1", { postId, userId },
+    // Atomic upsert. Relies on UNIQUE(post_id, user_id) — enforced by migration 023 —
+    // so rapid duplicate clicks can never insert two reaction rows (race-free, unlike
+    // the previous SELECT-then-INSERT which double-inserted under concurrency).
+    // affectedRows: 1 = inserted new row, 2 = updated existing row, 0 = unchanged.
+    const [upsertResult] = await connection.execute<ResultSetHeader>(
+      `INSERT INTO reactions (post_id, user_id, reaction_type)
+       VALUES (:postId, :userId, :reactionType)
+       ON DUPLICATE KEY UPDATE reaction_type = VALUES(reaction_type)`,
+      { postId, userId, reactionType },
     );
-    const isNew = !existingRows[0];
+    const isNew = upsertResult.affectedRows === 1;
     createdNewReaction = isNew;
-
-    // Plain INSERT/UPDATE instead of "ON DUPLICATE KEY UPDATE" so this works even
-    // when the legacy reactions table has no UNIQUE(post_id, user_id) key.
-    if (isNew) {
-      await connection.execute<ResultSetHeader>(
-        "INSERT INTO reactions (post_id, user_id, reaction_type) VALUES (:postId, :userId, :reactionType)",
-        { postId, userId, reactionType },
-      );
-    } else {
-      await connection.execute<ResultSetHeader>(
-        "UPDATE reactions SET reaction_type=:reactionType WHERE post_id=:postId AND user_id=:userId",
-        { reactionType, postId, userId },
-      );
-    }
 
     if (isNew) {
       // A failure to notify the author must never block the like itself.

@@ -1674,8 +1674,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
   const [eventNow, setEventNow] = useState(0);
   const postsRef = useRef<Post[]>([]);
   const lastLiveRefreshAtRef = useRef(0);
-  const likeRequestStateRef = useRef<Record<string, { inFlight: boolean; pendingLiked?: boolean }>>({});
-  const likeCooldownUntilRef = useRef<Record<string, number>>({});
+  const likeRequestStateRef = useRef<Record<string, { inFlight: boolean; desiredLiked?: boolean }>>({});
   const delayedPointRefreshRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const resolvePostApiId = useCallback((postId: number | string) => {
     const key = String(postId);
@@ -2308,62 +2307,59 @@ export function AppProviders({ children }: { children: ReactNode }) {
     const requestKey = String(postId);
     const targetPost = postsRef.current.find((post) => post.id === localPostId || post.apiId === requestKey);
     if (!targetPost) return;
-    const requestState = likeRequestStateRef.current[requestKey] || { inFlight: false };
-    const now = Date.now();
-    if (requestState.inFlight) {
-      const pendingIsAdding = !targetPost.hasLiked;
-      const pendingPosts = postsRef.current.map((post) =>
-        post.id === localPostId || post.apiId === requestKey
-          ? {
-              ...post,
-              hasLiked: pendingIsAdding,
-              likes: pendingIsAdding ? post.likes + 1 : Math.max(0, post.likes - 1),
-            }
-          : post
-      );
-      postsRef.current = pendingPosts;
-      setPosts(pendingPosts);
-      requestState.pendingLiked = pendingIsAdding;
-      likeRequestStateRef.current[requestKey] = requestState;
-      return;
-    }
-    if ((likeCooldownUntilRef.current[requestKey] || 0) > now) return;
-    requestState.inFlight = true;
-    likeRequestStateRef.current[requestKey] = requestState;
-    likeCooldownUntilRef.current[requestKey] = now + 800;
 
-    const isAdding = !targetPost.hasLiked;
-
+    // ตอบสนองทันทีทุกคลิก (optimistic) — สถานะล่าสุดที่ผู้ใช้ต้องการเก็บใน desiredLiked
+    const nextLiked = !targetPost.hasLiked;
     const nextPosts = postsRef.current.map((post) =>
       post.id === localPostId || post.apiId === requestKey
         ? {
             ...post,
-            hasLiked: isAdding,
-            likes: isAdding ? post.likes + 1 : Math.max(0, post.likes - 1),
+            hasLiked: nextLiked,
+            likes: nextLiked ? post.likes + 1 : Math.max(0, post.likes - 1),
           }
         : post
     );
     postsRef.current = nextPosts;
     setPosts(nextPosts);
-    if (isAuthenticatedRef.current) {
-      void (async () => {
-        try {
-          const apiPostId = resolvePostApiId(postId);
-          const result = await apiFetch(
-            `/api/safety-culture/posts/${apiPostId}/reactions`,
-            apiJson(isAdding ? "POST" : "DELETE", { reactionType: "LIKE" })
-          );
+
+    const requestState = likeRequestStateRef.current[requestKey] || { inFlight: false };
+    requestState.desiredLiked = nextLiked;
+    likeRequestStateRef.current[requestKey] = requestState;
+
+    // ถ้ามี request วิ่งอยู่แล้ว ปล่อยให้ drain loop ด้านล่างเก็บ desiredLiked ล่าสุดไปส่งเอง
+    if (!isAuthenticatedRef.current || requestState.inFlight) return;
+
+    requestState.inFlight = true;
+    void (async () => {
+      try {
+        const apiPostId = resolvePostApiId(postId);
+        let lastSentLiked: boolean | undefined;
+
+        // Drain loop: ส่งซ้ำจนกว่าสถานะบน server จะตรงกับคลิกล่าสุดของผู้ใช้
+        // แล้วค่อย sync ค่าจริงจาก server ครั้งเดียวตอนจบ — ป้องกันค่าเก่าจาก
+        // server มาทับ UI ระหว่างที่ผู้ใช้ยังกดรัวอยู่ (สาเหตุที่เลขกระโดด)
+        for (;;) {
+          while (typeof requestState.desiredLiked === "boolean" && requestState.desiredLiked !== lastSentLiked) {
+            lastSentLiked = requestState.desiredLiked;
+            await apiFetch(
+              `/api/safety-culture/posts/${apiPostId}/reactions`,
+              apiJson(lastSentLiked ? "POST" : "DELETE", { reactionType: "LIKE" })
+            );
+          }
 
           const syncedPostResult = await apiFetch<{ post: ApiPost }>(`/api/safety-culture/posts/${apiPostId}`);
+
+          // มีคลิกใหม่เข้ามาระหว่างรอ sync → วนไปส่งต่อ อย่าเอาค่าเก่ามาทับจอ
+          if (typeof requestState.desiredLiked === "boolean" && requestState.desiredLiked !== lastSentLiked) continue;
+          delete requestState.desiredLiked;
+
           const syncedPostBase = syncedPostResult.ok && syncedPostResult.data?.post
             ? postFromApi(syncedPostResult.data.post)
             : null;
-
           if (syncedPostBase) {
             setPosts((current) => {
               const syncedPosts = current.map((post) =>
-                post.id === localPostId
-                || post.apiId === requestKey
+                post.id === localPostId || post.apiId === requestKey
                   ? {
                       ...post,
                       likes: syncedPostBase.likes,
@@ -2376,71 +2372,16 @@ export function AppProviders({ children }: { children: ReactNode }) {
               postsRef.current = syncedPosts;
               return syncedPosts;
             });
-          } else if (!result.ok) {
-            const revertedPosts = postsRef.current.map((post) =>
-              post.id === localPostId || post.apiId === requestKey
-                ? {
-                    ...post,
-                    hasLiked: targetPost.hasLiked,
-                    likes: targetPost.likes,
-                    points: targetPost.points,
-                    likedBy: targetPost.likedBy,
-                  }
-                : post
-            );
-            postsRef.current = revertedPosts;
-            setPosts(revertedPosts);
           }
-
-          await refreshInboxNotifications();
-          schedulePointRefresh();
-        } finally {
-          const activeState = likeRequestStateRef.current[requestKey];
-          const pendingLiked = activeState?.pendingLiked;
-          if (activeState) {
-            activeState.inFlight = false;
-            delete activeState.pendingLiked;
-          }
-          if (typeof pendingLiked === "boolean") {
-            activeState!.inFlight = true;
-            void (async () => {
-              try {
-                const apiPostId = resolvePostApiId(postId);
-                await apiFetch(
-                  `/api/safety-culture/posts/${apiPostId}/reactions`,
-                  apiJson(pendingLiked ? "POST" : "DELETE", { reactionType: "LIKE" })
-                );
-                const syncedPostResult = await apiFetch<{ post: ApiPost }>(`/api/safety-culture/posts/${apiPostId}`);
-                const syncedPostBase = syncedPostResult.ok && syncedPostResult.data?.post
-                  ? postFromApi(syncedPostResult.data.post)
-                  : null;
-                if (syncedPostBase) {
-                  setPosts((current) => {
-                    const syncedPosts = current.map((post) =>
-                      post.id === localPostId || post.apiId === requestKey
-                        ? {
-                            ...post,
-                            likes: syncedPostBase.likes,
-                            hasLiked: syncedPostBase.hasLiked,
-                            likedBy: syncedPostBase.likedBy,
-                            points: syncedPostBase.points,
-                          }
-                        : post
-                    );
-                    postsRef.current = syncedPosts;
-                    return syncedPosts;
-                  });
-                }
-                schedulePointRefresh();
-              } finally {
-                const latestState = likeRequestStateRef.current[requestKey];
-                if (latestState) latestState.inFlight = false;
-              }
-            })();
-          }
+          break;
         }
-      })();
-    }
+
+        await refreshInboxNotifications();
+        schedulePointRefresh();
+      } finally {
+        requestState.inFlight = false;
+      }
+    })();
   }, [refreshInboxNotifications, resolvePostApiId, schedulePointRefresh]);
 
   const fetchComments = useCallback(async (postId: number | string) => {

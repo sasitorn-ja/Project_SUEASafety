@@ -481,8 +481,10 @@ export async function retractPoints(input: {
   idempotencyKey: string;
 }) {
   await withTransaction(async (connection) => {
+    // FOR UPDATE locks the row so concurrent retract calls (rapid unlike clicks)
+    // serialize here instead of both reading the amount and double-decrementing.
     const [rows] = await connection.execute<RowDataPacket[]>(
-      "SELECT amount FROM point_transactions WHERE user_id = :userId AND idempotency_key = :idempotencyKey LIMIT 1",
+      "SELECT amount FROM point_transactions WHERE user_id = :userId AND idempotency_key = :idempotencyKey LIMIT 1 FOR UPDATE",
       { userId: input.userId, idempotencyKey: input.idempotencyKey },
     );
     const txn = rows[0] as (RowDataPacket & { amount: number | string }) | undefined;
@@ -490,10 +492,12 @@ export async function retractPoints(input: {
 
     const amount = Number(txn.amount);
 
-    await connection.execute(
+    const [deleteResult] = await connection.execute<ResultSetHeader>(
       "DELETE FROM point_transactions WHERE user_id = :userId AND idempotency_key = :idempotencyKey",
       { userId: input.userId, idempotencyKey: input.idempotencyKey },
     );
+    // Only adjust the balance if this call actually removed the transaction.
+    if (deleteResult.affectedRows === 0) return;
 
     const negAmount = -amount;
     await connection.execute<ResultSetHeader>(
