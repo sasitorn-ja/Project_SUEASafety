@@ -232,7 +232,13 @@ function PersonalRankingsCard({ className, style }: { className?: string; style?
               <div
                 className={cn(
                   "flex h-9 min-w-9 items-center justify-center rounded-full border text-[13px] font-black shadow-[inset_0_1px_0_rgba(255,255,255,0.45)]",
-                  user.active
+                  user.rank.replace(/[^\d]/g, "") === "1"
+                    ? "bg-gradient-to-b from-[#FFF2C5] to-[#F3C641] border-[#E4B11C] text-[#7A4B00] shadow-[0_2px_6px_rgba(243,198,65,0.25)]"
+                    : user.rank.replace(/[^\d]/g, "") === "2"
+                    ? "bg-gradient-to-b from-[#F1F3F5] to-[#CFD6DF] border-[#A8B4C2] text-[#4F5F74] shadow-[0_2px_6px_rgba(207,214,223,0.2)]"
+                    : user.rank.replace(/[^\d]/g, "") === "3"
+                    ? "bg-gradient-to-b from-[#FAE4D6] to-[#E3A882] border-[#C6855B] text-[#7B4422] shadow-[0_2px_6px_rgba(227,168,130,0.2)]"
+                    : user.active
                     ? "border-[rgba(var(--brand-accent-rgb),0.36)] bg-[var(--brand-soft)] text-[var(--brand-text)]"
                     : "border-[var(--border)] bg-[rgba(255,255,255,0.8)] text-[var(--brand-muted-text)]"
                 )}
