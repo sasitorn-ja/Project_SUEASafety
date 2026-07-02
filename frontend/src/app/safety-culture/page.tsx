@@ -35,6 +35,7 @@ import { CalendarDays, ChevronLeft, ChevronRight, ClipboardList, Clock3, ImageIc
 import { SafetyCultureHero } from "@/components/safety-culture/safety-culture-hero";
 import { FullscreenImageViewer } from "@/components/safety-culture/fullscreen-image-viewer";
 import { useAppTheme } from "@/providers/theme-provider";
+import { CoinBadge } from "@/components/ui/coin-badge";
 import styles from "./safety-culture-community.module.css";
 
 const POINT_UNIT = "Coin";
@@ -130,11 +131,6 @@ function TeamStandingsCard({ className, style }: { className?: string; style?: C
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-1.5">
                 <h4 className="truncate text-[13px] font-black leading-tight text-[var(--foreground)]">{team.name}</h4>
-                {idx === 0 ? (
-                  <span className="flex-shrink-0 rounded-full bg-[var(--brand-soft)] px-1.5 py-0.5 text-[8px] font-extrabold uppercase tracking-[0.08em] text-[var(--brand-text)]">
-                    LEADER
-                  </span>
-                ) : null}
               </div>
             </div>
 
@@ -292,7 +288,7 @@ function SUEATipCard({ className, style, tipText }: { className?: string; style?
 function getActivityStatusMeta(status: SafetyCultureFeedEvent["status"]) {
   return status === "open"
     ? {
-      label: "เปิดกิจกรรม",
+      label: "กิจกรรมกำลังดำเนินการ",
       badgeClass: "border-[#b8e7d2] bg-[#effff6] text-[#127a52]",
       iconClass: "text-[#18b989]",
       note: "กิจกรรมนี้ยังเปิดรับการมีส่วนร่วม",
@@ -760,19 +756,19 @@ export default function Page() {
                   <button
                     type="button"
                     onClick={() => setMobileActivityStartIndex((current) => (current <= 0 ? maxMobileActivityStartIndex : current - 1))}
-                    className="absolute top-1/2 left-[-10px] z-10 inline-flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-[#B9E0FF] bg-white/95 text-[#0B82F0] transition-all duration-200 hover:-translate-x-0.5 hover:bg-[#EAF6FF]"
+                    className="absolute top-1/2 left-1 z-20 inline-flex h-9 w-9 -translate-y-1/2 items-center justify-center text-white/75 transition-all duration-300 hover:scale-125 hover:text-white active:scale-95"
                     aria-label="เลื่อนดูกิจกรรมก่อนหน้า"
                   >
-                    <ChevronLeft className="h-4.5 w-4.5" strokeWidth={2.5} />
+                    <ChevronLeft className="h-6 w-6 drop-shadow-[0_2px_8px_rgba(0,0,0,0.4)]" strokeWidth={3} />
                   </button>
 
                   <button
                     type="button"
                     onClick={() => setMobileActivityStartIndex((current) => (current >= maxMobileActivityStartIndex ? 0 : current + 1))}
-                    className="absolute top-1/2 right-[-10px] z-10 inline-flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-[#B9E0FF] bg-white/95 text-[#0B82F0] transition-all duration-200 hover:translate-x-0.5 hover:bg-[#EAF6FF]"
+                    className="absolute top-1/2 right-1 z-20 inline-flex h-9 w-9 -translate-y-1/2 items-center justify-center text-white/75 transition-all duration-300 hover:scale-125 hover:text-white active:scale-95"
                     aria-label="เลื่อนดูกิจกรรมถัดไป"
                   >
-                    <ChevronRight className="h-4.5 w-4.5" strokeWidth={2.5} />
+                    <ChevronRight className="h-6 w-6 drop-shadow-[0_2px_8px_rgba(0,0,0,0.4)]" strokeWidth={3} />
                   </button>
                 </>
               ) : null}
@@ -798,7 +794,7 @@ export default function Page() {
                           </div>
                         )}
                         <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(3,18,48,.88)_0%,rgba(4,35,82,.60)_48%,rgba(4,35,82,.12)_100%)]" />
-                        <div className="absolute inset-x-0 top-0 flex items-center justify-between gap-3 px-4 py-3">
+                        <div className="absolute inset-x-0 top-0 flex items-center justify-between gap-3 pl-10 pr-4 py-3">
                           <span className={cn("rounded-full border px-2.5 py-1 text-[10px] font-black backdrop-blur-[3px]", statusMeta.badgeClass)}>
                             {statusMeta.label}
                           </span>
@@ -806,12 +802,12 @@ export default function Page() {
                             {activity.dateLabel}
                           </span>
                         </div>
-                        <div className="absolute inset-x-0 bottom-0 px-4 pb-8 pt-14">
-                          <div className="max-w-[78%]">
+                        <div className="absolute inset-x-0 bottom-0 pl-10 pr-4 pb-8 pt-14">
+                          <div className="max-w-[85%]">
                             <h3 className="line-clamp-2 text-[24px] font-black leading-tight text-white [text-shadow:0_2px_10px_rgba(0,0,0,.45)]">{activity.title}</h3>
                             <p className="mt-1.5 line-clamp-2 text-[12px] font-bold leading-relaxed text-white/88">{getActivityCardCopy(activity)}</p>
                             <div className="mt-3 flex flex-wrap items-center gap-2">
-                              <span className="rounded-full bg-[#18B989] px-3 py-1.5 text-[12px] font-black text-white">+{formatCoin(activity.points)} {POINT_UNIT}</span>
+                              <CoinBadge amount={activity.points} size="sm" variant="blue" />
                               <Button
                                 type="button"
                                 variant="secondary"
@@ -849,19 +845,19 @@ export default function Page() {
                   <button
                     type="button"
                     onClick={() => setDesktopActivityStartIndex((current) => (current <= 0 ? maxDesktopActivityStartIndex : current - 1))}
-                    className="absolute top-1/2 left-[-18px] z-10 inline-flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-[#B9E0FF] bg-white/95 text-[#0B82F0] transition-all duration-200 hover:-translate-x-0.5 hover:bg-[#EAF6FF]"
+                    className="absolute top-1/2 left-2 z-20 inline-flex h-12 w-12 -translate-y-1/2 items-center justify-center text-white/80 transition-all duration-300 hover:scale-125 hover:text-white active:scale-95"
                     aria-label="เลื่อนดูกิจกรรมก่อนหน้า"
                   >
-                    <ChevronLeft className="h-4.5 w-4.5" strokeWidth={2.5} />
+                    <ChevronLeft className="h-8 w-8 drop-shadow-[0_2px_10px_rgba(0,0,0,0.4)]" strokeWidth={3} />
                   </button>
 
                   <button
                     type="button"
                     onClick={() => setDesktopActivityStartIndex((current) => (current >= maxDesktopActivityStartIndex ? 0 : current + 1))}
-                    className="absolute top-1/2 right-[-18px] z-10 inline-flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-[#B9E0FF] bg-white/95 text-[#0B82F0] transition-all duration-200 hover:translate-x-0.5 hover:bg-[#EAF6FF]"
+                    className="absolute top-1/2 right-2 z-20 inline-flex h-12 w-12 -translate-y-1/2 items-center justify-center text-white/80 transition-all duration-300 hover:scale-125 hover:text-white active:scale-95"
                     aria-label="เลื่อนดูกิจกรรมถัดไป"
                   >
-                    <ChevronRight className="h-4.5 w-4.5" strokeWidth={2.5} />
+                    <ChevronRight className="h-8 w-8 drop-shadow-[0_2px_10px_rgba(0,0,0,0.4)]" strokeWidth={3} />
                   </button>
                 </>
               ) : null}
@@ -887,7 +883,7 @@ export default function Page() {
                           </div>
                         )}
                         <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(3,18,48,.90)_0%,rgba(4,35,82,.64)_42%,rgba(4,35,82,.10)_100%)]" />
-                        <div className="absolute inset-x-0 top-0 flex items-center justify-between gap-3 px-7 py-5">
+                        <div className="absolute inset-x-0 top-0 flex items-center justify-between gap-3 pl-16 pr-8 py-5">
                           <span className={cn("rounded-full border px-3 py-1.5 text-[11px] font-black backdrop-blur-[3px]", statusMeta.badgeClass)}>
                             {statusMeta.label}
                           </span>
@@ -895,11 +891,11 @@ export default function Page() {
                             {activity.dateLabel}
                           </span>
                         </div>
-                        <div className="absolute inset-y-0 left-0 flex w-[62%] flex-col justify-center px-8 py-8 xl:px-10">
+                        <div className="absolute inset-y-0 left-0 flex w-[62%] flex-col justify-center pl-16 pr-6 py-8 xl:pl-20">
                           <h3 className="line-clamp-2 text-[34px] font-black leading-[1.05] text-white [text-shadow:0_2px_12px_rgba(0,0,0,.45)] xl:text-[42px]">{activity.title}</h3>
                           <p className="mt-3 line-clamp-2 text-[15px] font-bold leading-relaxed text-white/88">{getActivityCardCopy(activity)}</p>
                           <div className="mt-5 flex flex-wrap items-center gap-3">
-                            <span className="rounded-full bg-[#18B989] px-4 py-2 text-[15px] font-black text-white">+{formatCoin(activity.points)} {POINT_UNIT}</span>
+                            <CoinBadge amount={activity.points} size="md" variant="blue" />
                             <Button
                               type="button"
                               variant="secondary"
@@ -1163,9 +1159,7 @@ export default function Page() {
                       </Link>
                     </div>
                     {post.isYou ? (
-                      <span className="w-fit rounded-full bg-[#e9fff4] px-2 py-0.5 text-[12px] font-black tracking-normal text-[#3D9A6A]">
-                        + {formatCoin(post.points)} {POINT_UNIT}
-                      </span>
+                      <CoinBadge amount={post.points} size="sm" variant="blue" />
                     ) : <span aria-hidden="true" />}
                   </div>
 
@@ -1405,9 +1399,7 @@ export default function Page() {
                       {expandedPost.category}
                     </span>
                     {expandedPost.isYou ? (
-                      <span className="w-fit rounded-full bg-[#e9fff4] px-2 py-0.5 text-[12px] font-black tracking-normal text-[#3D9A6A]">
-                        + {formatCoin(expandedPost.points)} {POINT_UNIT}
-                      </span>
+                      <CoinBadge amount={expandedPost.points} size="sm" variant="blue" />
                     ) : null}
                   </div>
 
@@ -1759,10 +1751,8 @@ export default function Page() {
                         <div className="text-[14px] font-black text-[var(--c-2f261d)] sm:text-[15px]">รายละเอียดของกิจกรรมนี้:</div>
                       </div>
                       <p className="text-[12px] font-bold leading-relaxed text-[#667085] sm:text-[13px]">{expandedActivity.details}</p>
-                      <div className="mt-4 inline-flex w-full items-center gap-2 rounded-full bg-[linear-gradient(90deg,#ecfff5,#eefdf3)] px-3 py-2 text-[12px] font-black text-[#18b989] sm:px-3.5 sm:text-[13px]">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src="/images/icons/STCoin.png" alt="Coin" className="h-[18px] w-[18px] object-contain mr-0.5" />
-                        {formatCoin(expandedActivity.points)} Coin
+                      <div className="mt-4">
+                        <CoinBadge amount={expandedActivity.points} size="md" variant="blue" />
                       </div>
                     </Card>
 

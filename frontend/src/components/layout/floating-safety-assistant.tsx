@@ -20,6 +20,7 @@ import {
 import { cn } from "@/lib/utils";
 import { type MascotAction, useAppTheme } from "@/providers/theme-provider";
 import { useAppState } from "@/providers/app-providers";
+import { CoinBadge } from "@/components/ui/coin-badge";
 
 type ChatRole = "user" | "assistant";
 type ChatMessage = { id: string; role: ChatRole; content: string; error?: boolean; image?: string };
@@ -586,11 +587,9 @@ export function FloatingSafetyAssistant() {
               <p className="truncate text-[13px] font-black leading-tight text-[#0D47A1]">
                 {ASSISTANT_NAME}
               </p>
-              <p className="flex items-center gap-1 text-[10px] font-bold leading-tight text-[#60748C]">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/images/icons/STCoin.png" alt="Coin" className="h-3 w-3 object-contain" />
-                {currentUserPoints.toLocaleString()} Coin
-              </p>
+              <div className="mt-0.5">
+                <CoinBadge amount={currentUserPoints} prefix="" size="sm" variant="blue" />
+              </div>
             </div>
             <button
               type="button"

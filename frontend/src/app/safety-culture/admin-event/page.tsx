@@ -20,6 +20,7 @@ import {
   X,
 } from "lucide-react";
 import { SafetyCultureHero } from "@/components/safety-culture/safety-culture-hero";
+import { CoinBadge } from "@/components/ui/coin-badge";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Combobox } from "@/components/ui/combobox";
@@ -275,7 +276,7 @@ function getFeedEventDurationMeta(startDate?: string, endDate?: string) {
 function getFeedEventStatusMeta(status: SafetyCultureFeedEvent["status"]) {
   return status === "open"
     ? {
-      label: "เปิดกิจกรรม",
+      label: "กิจกรรมกำลังดำเนินการ",
       tone: "border-[#12B981] bg-[#12B981] text-white",
     }
     : {
@@ -1528,7 +1529,7 @@ export default function AdminEventPage() {
                             </button>
 
                             <div className="flex items-center">
-                              <span className="rounded-full bg-[var(--brand-soft)] px-3 py-1 text-[12px] font-black text-[var(--brand-text)]">+{formatCoin(activity.points)} Coin</span>
+                              <CoinBadge amount={activity.points} prefix="+" size="sm" variant="blue" />
                             </div>
 
                             <div className="flex items-center text-[12px] font-bold text-[var(--c-5f5344)]">{activity.dateLabel}</div>
@@ -1658,7 +1659,7 @@ export default function AdminEventPage() {
                               <div className="mt-1 line-clamp-2 text-[12px] font-bold leading-relaxed text-[var(--c-6e6254)]">{getFeedEventCardCopy(activity)}</div>
                               <div className="mt-3 flex items-center justify-between gap-2 text-[11px] font-black">
                                 <span className="text-[#8E8A81]">{activity.dateLabel}</span>
-                                <span className="text-[#087A5B]">+{formatCoin(activity.points)} Coin</span>
+                                <CoinBadge amount={activity.points} prefix="+" size="sm" variant="blue" />
                               </div>
                               <div className="mt-3 flex items-center justify-between gap-2">
                                 <span className="flex items-center gap-1.5 text-[11px] font-black text-[#7a869a]">

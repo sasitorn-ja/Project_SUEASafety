@@ -13,7 +13,7 @@ function formatCoin(value: number) {
 function getActivityStatusMeta(status: SafetyCultureFeedEvent["status"]) {
   return status === "open"
     ? {
-        label: "เปิดกิจกรรม",
+        label: "กิจกรรมกำลังดำเนินการ",
         iconClass: "text-[#18b989]",
         note: "กิจกรรมนี้ยังเปิดรับการมีส่วนร่วม",
       }

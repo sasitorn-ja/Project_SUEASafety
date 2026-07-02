@@ -7,6 +7,7 @@ import { SafetyCultureHero } from "@/components/safety-culture/safety-culture-he
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { CoinBadge } from "@/components/ui/coin-badge";
 import {
   Dialog,
   DialogContent,
@@ -268,11 +269,7 @@ export default function AdminLeaderboardPage() {
               <Users className="mr-1.5 h-3.5 w-3.5" />
               {totalMembers.toLocaleString()} สมาชิก
             </Badge>
-            <Badge className="rounded-xl border border-[var(--border)] bg-white px-3 py-2 text-[12px] font-black text-[var(--brand-text)]">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/images/icons/STCoin.png" alt="Coin" className="mr-1.5 h-3.5 w-3.5 object-contain" />
-              {totalPoints.toLocaleString()} Coin รวม
-            </Badge>
+            <CoinBadge amount={totalPoints} prefix="" suffix="Coin รวม" size="sm" variant="blue" />
           </div>
           <Button onClick={openCreateDialog} className="h-9 rounded-xl px-3 text-[13px] font-black">
             <Plus className="h-4 w-4" />

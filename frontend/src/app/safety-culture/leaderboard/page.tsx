@@ -86,7 +86,7 @@ export default function LeaderboardPage() {
   const visibleTopScorers = showAllTopScorers ? topScorers.slice(0, 10) : topScorers.slice(0, 5);
   const selectedTeamColor = themedColor(
     teamStandings.find((team) => team.code === selectedTeamCode || team.name === selectedTeamName)?.color
-      ?? "var(--brand-accent)"
+    ?? "var(--brand-accent)"
   );
 
   useEffect(() => {

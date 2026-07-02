@@ -28,6 +28,7 @@ import { AppDialogBody, AppDialogContent, AppDialogDescription, AppDialogSection
 import { uploadMedia } from "@/features/safety-effort/lib/upload-media";
 import { SAFETY_CULTURE_CATEGORIES } from "@/lib/safety-culture";
 import { useSafetyPointValue } from "@/hooks/useSafetyPointValue";
+import { CoinBadge } from "@/components/ui/coin-badge";
 import { cn } from "@/lib/utils";
 import { getSessionDisplayName, getSessionInitials, getSessionProfileImage, useSessionUser } from "@/lib/session-user";
 import { useAppTheme } from "@/providers/theme-provider";
@@ -363,7 +364,7 @@ export default function PostSocialPage() {
 
   return (
     <>
-      <div className="mx-auto w-full max-w-[650px] px-4 pb-8 pt-2">
+      <div className="mx-auto w-full max-w-[650px] px-4 pb-8 pt-2 overflow-x-hidden sm:overflow-x-visible">
         {/* HTML stylesheet to completely hide scrollbars cross-browser */}
         <style dangerouslySetInnerHTML={{ __html: `
           .no-scrollbar::-webkit-scrollbar {
@@ -380,17 +381,17 @@ export default function PostSocialPage() {
           className="anim-fade flex items-center justify-between pb-4 pt-3 px-1"
           style={animStyle(0)}
         >
-          <div className="flex items-center gap-3.5">
-            <Link href="/safety-culture">
-              <div className="flex h-11 w-11 items-center justify-center rounded-full bg-white text-[#188fff] shadow-[0_4px_12px_rgba(24,143,255,0.15)] hover:scale-105 transition-transform cursor-pointer border border-[#e2edf9]">
-                <ArrowLeft className="h-5.5 w-5.5 stroke-[2.5]" />
+          <div className="flex items-center gap-2.5 sm:gap-3.5 min-w-0 flex-1 mr-2">
+            <Link href="/safety-culture" className="shrink-0">
+              <div className="flex h-10 w-10 sm:h-11 sm:w-11 items-center justify-center rounded-full bg-white text-[#188fff] shadow-[0_4px_12px_rgba(24,143,255,0.15)] hover:scale-105 transition-transform cursor-pointer border border-[#e2edf9]">
+                <ArrowLeft className="h-5 w-5 stroke-[2.5]" />
               </div>
             </Link>
-            <div>
-              <h1 className="text-xl font-extrabold text-[#112f59] leading-tight">
+            <div className="min-w-0">
+              <h1 className="text-lg sm:text-xl font-extrabold text-[#112f59] leading-tight truncate">
                 แชร์เรื่องปลอดภัย
               </h1>
-              <p className="text-[11.5px] font-bold text-[#8292a8]">
+              <p className="text-[10.5px] sm:text-[11.5px] font-bold text-[#8292a8] line-clamp-1">
                 แบ่งปันประสบการณ์ดี ๆ เพื่อสร้างวัฒนธรรมความปลอดภัยไปด้วยกัน
               </p>
             </div>
@@ -398,7 +399,7 @@ export default function PostSocialPage() {
           <Button
             onClick={handleSubmit}
             disabled={isProcessingPhotos || isSubmitting}
-            className="rounded-full bg-gradient-to-r from-[#188fff] to-[#0663d2] px-5 py-2.5 text-sm font-extrabold text-white transition-all hover:opacity-90 hover:scale-[1.02] shadow-[0_4px_12px_rgba(6,99,210,0.25)] flex items-center gap-1.5 disabled:cursor-wait disabled:opacity-70"
+            className="rounded-full bg-gradient-to-r from-[#188fff] to-[#0663d2] px-5 py-2.5 text-sm font-extrabold text-white transition-all hover:opacity-90 hover:scale-[1.02] shadow-[0_4px_12px_rgba(6,99,210,0.25)] flex items-center gap-1.5 disabled:cursor-wait disabled:opacity-70 shrink-0"
           >
             {isSubmitting ? (
               "กำลังโพสต์..."
@@ -415,58 +416,45 @@ export default function PostSocialPage() {
 
         {/* Mascot / Profile Banner */}
         <div 
-          className="anim-fade relative mb-3.5 flex items-center justify-between gap-2.5 overflow-hidden rounded-[20px] border border-[#d9e5f3] bg-gradient-to-r from-[#f0f7ff] to-[#e1f0ff] p-3.5 shadow-[0_10px_24px_rgba(23,59,107,0.08)]"
+          className="anim-fade relative mb-3.5 flex h-[90px] sm:h-[100px] items-center justify-between gap-2.5 overflow-hidden rounded-[20px] border border-[#d9e5f3] bg-gradient-to-r from-[#f0f7ff] via-[#e8f3ff] to-[#d6ebff] px-4 py-2.5 shadow-[0_8px_20px_rgba(23,59,107,0.06)]"
           style={animStyle(0.03)}
         >
-          {/* Left info & quote */}
-          <div className="z-10 flex-1 space-y-2.5">
-            {/* User details */}
-            <div className="flex items-center gap-2">
-              <div className="relative">
-                <div className="flex h-11 w-11 items-center justify-center overflow-hidden rounded-full bg-[var(--brand-soft)] text-[17px] font-extrabold text-[var(--brand-accent)] ring-2 ring-[rgba(var(--brand-accent-rgb),0.22)]">
-                  {getSessionProfileImage(sessionUser) ? (
-                    <Image src={getSessionProfileImage(sessionUser)} alt="" width={44} height={44} className="h-full w-full object-cover" />
-                  ) : (
-                    getSessionInitials(sessionUser)
-                  )}
-                </div>
-                {/* Pencil Edit Icon overlay */}
-                <div className="absolute -bottom-1 -right-1 rounded-full border-2 border-white bg-[#188fff] p-[3px] shadow-md">
-                  <svg className="h-2.5 w-2.5 text-white fill-current" viewBox="0 0 24 24">
-                    <path d="M3 17.25V21h3.75L17.81(9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
-                  </svg>
-                </div>
+          {/* Left info */}
+          <div className="z-10 flex items-center gap-3">
+            <div className="relative">
+              <div className="flex h-11 w-11 items-center justify-center overflow-hidden rounded-full bg-[var(--brand-soft)] text-[16px] font-extrabold text-[var(--brand-accent)] ring-2 ring-[rgba(var(--brand-accent-rgb),0.22)] shadow-sm">
+                {getSessionProfileImage(sessionUser) ? (
+                  <Image src={getSessionProfileImage(sessionUser)} alt="" width={44} height={44} className="h-full w-full object-cover" />
+                ) : (
+                  getSessionInitials(sessionUser)
+                )}
               </div>
-              <div className="flex flex-col gap-0.5">
-                <span className="text-[14px] font-extrabold text-[#112f59]">
-                  {getSessionDisplayName(sessionUser)}
-                </span>
-                <div className="flex w-fit items-center gap-1 rounded-full border border-[#bae0ff] bg-[#e6f4ff] px-2 py-0.5 text-[10px] font-bold text-[#188fff]">
-                  <span className="inline-block w-1.5 h-1.5 rounded-full bg-[#188fff] animate-pulse"></span>
-                  <span>Safety Culture</span>
-                </div>
+              {/* Pencil Edit Icon overlay */}
+              <div className="absolute -bottom-0.5 -right-0.5 rounded-full border-2 border-white bg-[#188fff] p-[3px] shadow-md">
+                <svg className="h-2.5 w-2.5 text-white fill-current" viewBox="0 0 24 24">
+                  <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
+                </svg>
               </div>
             </div>
-
-            {/* Quote bubble container */}
-            <div className="relative max-w-[230px] rounded-[14px] border border-[#bae0ff] bg-white/70 p-2.5 text-[11.5px] font-bold leading-relaxed text-[#1a539c] backdrop-blur-sm">
-              <span className="absolute -top-1 left-2 text-[18px] font-serif text-[#188fff]">“</span>
-              <p className="flex items-center flex-wrap gap-1 pl-3 pr-3">
-                <span>ทุกการแชร์ คือพลังเล็ก ๆ ที่ช่วยให้ทุกคนปลอดภัยมากขึ้น</span>
-                <Heart className="inline-block h-3 w-3 fill-[#188fff] text-[#188fff] animate-pulse" />
-              </p>
-              <span className="absolute bottom-1 right-2 text-[18px] font-serif text-[#188fff]">”</span>
+            <div className="flex flex-col gap-0.5">
+              <span className="text-[14px] font-extrabold text-[#112f59] leading-tight">
+                {getSessionDisplayName(sessionUser)}
+              </span>
+              <div className="flex w-fit items-center gap-1 rounded-full border border-[#bae0ff] bg-white/80 px-2.5 py-0.5 text-[10px] font-bold text-[#188fff] shadow-xs">
+                <span className="inline-block w-1.5 h-1.5 rounded-full bg-[#188fff] animate-pulse"></span>
+                <span>Safety Culture</span>
+              </div>
             </div>
           </div>
 
-          {/* Right Mascot */}
-          <div className="relative z-10 flex h-[116px] w-[138px] shrink-0 items-end justify-center">
+          {/* Right Mascot (Zoomed upper-body cropped at bottom edge inside box) */}
+          <div className="relative z-10 flex h-full w-[130px] sm:w-[150px] shrink-0 items-end justify-center overflow-hidden">
             <Image 
               src="/images/mascots/scenes/thumbsup-cool.png" 
               alt="Mascot" 
-              width={120} 
-              height={120} 
-              className="object-contain hover:scale-105 transition-transform duration-300"
+              width={180} 
+              height={180} 
+              className="h-[140%] w-auto max-w-none object-cover object-top translate-y-[10%] drop-shadow-[0_4px_10px_rgba(24,143,255,0.18)] transition-transform duration-300 hover:scale-105"
             />
           </div>
 
@@ -491,7 +479,7 @@ export default function PostSocialPage() {
             onMouseUp={handleMouseUp}
             onMouseMove={handleMouseMove}
             className={cn(
-              "flex flex-row overflow-x-auto gap-3 pb-1 -mx-4 px-4 sm:mx-0 sm:px-0 no-scrollbar",
+              "flex flex-row overflow-x-auto gap-3 pb-1 w-full max-w-full no-scrollbar",
               isMouseDown 
                 ? "cursor-grabbing select-none scroll-auto" 
                 : "cursor-grab snap-x snap-mandatory scroll-smooth"
@@ -506,36 +494,37 @@ export default function PostSocialPage() {
               type="button"
               onClick={() => setSelectedFeedEventId("")}
               className={cn(
-                "relative flex h-[76px] w-[214px] shrink-0 snap-start items-center gap-2.5 rounded-[17px] border p-2.5 text-left transition-all group select-none pointer-events-auto",
+                "relative flex h-[76px] w-[214px] shrink-0 snap-start items-center gap-2.5 rounded-[17px] border-[2px] overflow-hidden p-0 pr-2.5 text-left transition-all group select-none pointer-events-auto",
                 !selectedFeedEventId
-                  ? "border-[#0663d2] bg-gradient-to-br from-[#188fff] to-[#0663d2] text-white shadow-[0_8px_20px_rgba(24,143,255,0.25)]"
+                  ? "border-[#188fff] bg-white text-[#112f59] shadow-[0_4px_16px_rgba(24,143,255,0.18)] ring-1 ring-[#188fff]/30"
                   : "border-[#d9e5f3] bg-white text-[#555149] hover:border-[#188fff] hover:bg-slate-50"
               )}
             >
               {!selectedFeedEventId && (
-                <div className="absolute right-2 top-2 rounded-full bg-white p-0.5 text-[#0663d2] shadow-sm">
+                <div className="absolute right-2 top-2 z-10 rounded-full bg-[#188fff] p-0.5 text-white shadow-sm">
                   <svg className="h-3 w-3 fill-none stroke-current" viewBox="0 0 24 24" strokeWidth="4">
                     <polyline points="20 6 9 17 4 12"/>
                   </svg>
                 </div>
               )}
 
-              <div className={cn(
-                "flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-[14px]",
-                !selectedFeedEventId ? "bg-white/20 text-white" : "bg-[#e6f4ff] text-[#188fff]"
-              )}>
-                <svg className="mr-0.5 h-5.5 w-5.5 -rotate-45 fill-current" viewBox="0 0 24 24">
+              <div className="flex h-full w-[45%] shrink-0 items-center justify-center overflow-hidden rounded-l-[15px] bg-[#e6f4ff] text-[#188fff]">
+                <svg className="mr-0.5 h-7 w-7 -rotate-45 fill-current" viewBox="0 0 24 24">
                   <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
                 </svg>
               </div>
 
-              <div className="flex flex-col gap-0.5">
-                <span className={cn("text-[13px] font-extrabold leading-tight", !selectedFeedEventId ? "text-white" : "text-[#112f59]")}>
+              <div className="flex flex-col gap-1 flex-1 min-w-0">
+                <span className="text-[13px] font-extrabold leading-tight truncate text-[#112f59]">
                   โพสต์ทั่วไป
                 </span>
-                <span className={cn("text-[10.5px] font-bold", !selectedFeedEventId ? "text-white/80" : "text-[#8292a8]")}>
-                  ได้รับ {basePostPoints} Coin
-                </span>
+                <CoinBadge
+                  amount={basePostPoints}
+                  prefix="+"
+                  size="sm"
+                  variant="blue"
+                  className="w-fit text-[10px] px-2 py-0.5"
+                />
               </div>
             </button>
 
@@ -556,21 +545,21 @@ export default function PostSocialPage() {
                   type="button"
                   onClick={() => setSelectedFeedEventId(event.id)}
                   className={cn(
-                    "relative flex h-[76px] w-[214px] shrink-0 snap-start items-center gap-2.5 rounded-[17px] border p-2.5 text-left transition-all group select-none pointer-events-auto",
+                    "relative flex h-[76px] w-[214px] shrink-0 snap-start items-center gap-2.5 rounded-[17px] border-[2px] overflow-hidden p-0 pr-2.5 text-left transition-all group select-none pointer-events-auto",
                     isSelected
-                      ? "border-[#0663d2] bg-gradient-to-br from-[#188fff] to-[#0663d2] text-white shadow-[0_8px_20px_rgba(24,143,255,0.25)]"
+                      ? "border-[#188fff] bg-white text-[#112f59] shadow-[0_4px_16px_rgba(24,143,255,0.18)] ring-1 ring-[#188fff]/30"
                       : "border-[#d9e5f3] bg-white text-[#555149] hover:border-[#188fff] hover:bg-slate-50"
                   )}
                 >
                   {isSelected && (
-                    <div className="absolute right-2 top-2 rounded-full bg-white p-0.5 text-[#0663d2] shadow-sm">
+                    <div className="absolute right-2 top-2 z-10 rounded-full bg-[#188fff] p-0.5 text-white shadow-sm">
                       <svg className="h-3 w-3 fill-none stroke-current" viewBox="0 0 24 24" strokeWidth="4">
                         <polyline points="20 6 9 17 4 12"/>
                       </svg>
                     </div>
                   )}
 
-                  <div className="relative h-11 w-11 shrink-0 overflow-hidden rounded-[14px]">
+                  <div className="relative h-full w-[45%] shrink-0 overflow-hidden rounded-l-[15px]">
                     {event.imageSrc ? (
                       <img
                         src={themedImage(event.imageSrc)}
@@ -578,36 +567,27 @@ export default function PostSocialPage() {
                         className="h-full w-full object-cover"
                       />
                     ) : (
-                      cardInfo.icon(isSelected ? "bg-white/20 text-white w-full h-full flex items-center justify-center [&_svg]:h-5.5 [&_svg]:w-5.5" : "w-full h-full flex items-center justify-center [&_svg]:h-5.5 [&_svg]:w-5.5")
+                      cardInfo.icon(
+                        "bg-[#e6f4ff] text-[#188fff] w-full h-full flex items-center justify-center [&_svg]:h-7 [&_svg]:w-7"
+                      )
                     )}
                   </div>
 
-                  <div className="flex flex-col gap-0.5">
-                    <span className={cn("line-clamp-1 text-[13px] font-extrabold leading-tight", isSelected ? "text-white" : "text-[#112f59]")}>
+                  <div className="flex flex-col gap-1 flex-1 min-w-0">
+                    <span className="line-clamp-1 text-[13px] font-extrabold leading-tight text-[#112f59]">
                       {cardInfo.title}
                     </span>
-                    <span className={cn("line-clamp-1 text-[10.5px] font-bold", isSelected ? "text-white/80" : "text-[#8292a8]")}>
-                      ได้รับ {totalPoints} Coin
-                    </span>
+                    <CoinBadge
+                      amount={totalPoints}
+                      prefix="+"
+                      size="sm"
+                      variant="blue"
+                      className="w-fit text-[10px] px-2 py-0.5"
+                    />
                   </div>
                 </button>
               );
             })}
-          </div>
-
-          {/* Event Coin Explanation Banner */}
-          <div className="mt-3.5 border border-[#ffe58f] bg-[#fffbe6] px-4.5 py-3 rounded-[20px] shadow-sm flex items-center gap-2">
-            <span className="text-[13px] font-extrabold text-[#d48806] leading-relaxed">
-              {selectedFeedEvent ? (
-                selectedFeedEvent.bonusMode === "multiplier" ? (
-                  `กิจกรรม ${selectedFeedEvent.title} ได้ทั้งหมด ${selectedFeedEventPoints} Coin เมื่อโพสต์สำเร็จ (ฐาน ${basePostPoints} x ตัวคูณกิจกรรม ${selectedFeedEvent.multiplier})`
-                ) : (
-                  `กิจกรรม ${selectedFeedEvent.title} ได้ทั้งหมด ${selectedFeedEventPoints} Coin เมื่อโพสต์สำเร็จ (ฐาน ${basePostPoints} + กิจกรรม ${selectedFeedEventBonusPoints})`
-                )
-              ) : (
-                `โพสต์ทั่วไป ได้ทั้งหมด ${basePostPoints} Coin เมื่อโพสต์สำเร็จ (ฐาน ${basePostPoints})`
-              )}
-            </span>
           </div>
         </div>
 
@@ -762,24 +742,6 @@ export default function PostSocialPage() {
                 </div>
               )}
             </div>
-
-            {/* Polaroid photos graphic decoration */}
-            <div className="hidden sm:flex items-center gap-3 w-[150px] shrink-0 border-l border-[#e2edf9] pl-4">
-              <div className="relative w-full h-[80px] flex items-center justify-center">
-                <div className="absolute rotate-6 translate-x-3 w-[55px] h-[55px] border-2 border-white shadow-md bg-white rounded-lg overflow-hidden">
-                  <div className="w-full h-[70%] bg-blue-100 relative">
-                    <ImageIcon className="h-5 w-5 text-blue-400 absolute inset-0 m-auto" />
-                  </div>
-                </div>
-                <div className="-rotate-12 -translate-x-3 w-[55px] h-[55px] border-2 border-white shadow-md bg-[#188fff] rounded-lg overflow-hidden flex flex-col justify-between p-1">
-                  <div className="w-full h-[70%] bg-white/20 rounded flex items-center justify-center text-white">
-                    <svg className="h-5 w-5 fill-current" viewBox="0 0 24 24">
-                      <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
-                    </svg>
-                  </div>
-                </div>
-              </div>
-            </div>
           </div>
         </div>
 
@@ -817,25 +779,12 @@ export default function PostSocialPage() {
             </p>
           </div>
 
-          <div style={{
-            display: "inline-flex",
-            alignItems: "center",
-            gap: 6,
-            background: "#e6f4ff",
-            border: "1.5px solid #b3d8ff",
-            borderRadius: 99,
-            padding: "6px 16px",
-            fontSize: "14px",
-            fontWeight: 900,
-            color: "#0066cc",
-            lineHeight: 1,
-            fontFamily: "'Prompt',sans-serif",
-            marginTop: -2,
-            boxShadow: "0 4px 10px rgba(0,102,204,0.05)"
-          }}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/images/icons/STCoin.png" alt="Coin" className="h-[18px] w-[18px] object-contain" />
-            <span>+{selectedFeedEvent ? selectedFeedEventPoints : basePostPoints} Coin</span>
+          <div style={{ marginTop: -2 }}>
+            <CoinBadge
+              amount={selectedFeedEvent ? selectedFeedEventPoints : basePostPoints}
+              size="md"
+              variant="blue"
+            />
           </div>
 
           <button

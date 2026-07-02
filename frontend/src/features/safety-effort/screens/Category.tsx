@@ -20,6 +20,7 @@ import { SafetyCultureHero } from "@/components/safety-culture/safety-culture-he
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useSafetyPointValue } from "@/hooks/useSafetyPointValue";
+import { CoinBadge } from "@/components/ui/coin-badge";
 
 type MonthlyStats = {
   count: number | null;
@@ -111,11 +112,7 @@ export default function Category() {
                 <div>
                   <div className="flex flex-wrap items-center gap-2">
                     <h3 className="text-[16px] font-extrabold leading-tight sm:text-[18px]">ตรวจ Linewalk / Safety Contact</h3>
-                    <span className="inline-flex items-center gap-1.5 rounded-full bg-[#0B82F0] px-3.5 py-1.5 text-[14px] font-black leading-none text-white shadow-[0_6px_14px_rgba(11,130,240,0.20)]">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src="/images/icons/STCoin.png" alt="Coin" className="h-5 w-5 object-contain" />
-                      +{safetyEffortPoints} Coin
-                    </span>
+                    <CoinBadge amount={safetyEffortPoints} size="md" variant="blue" />
                   </div>
                   <p className="text-[12px] font-bold leading-relaxed text-[#55739B]">ความปลอดภัยเริ่มต้นที่นี่</p>
                 </div>
